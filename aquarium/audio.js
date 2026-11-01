@@ -151,6 +151,25 @@
         g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
         src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + 1);
       },
+      chime() {
+        if (!ctx || !on) return;
+        [0, 2, 4, 5, 3].forEach((i, k) => note(PENTA[i] * 2, 0.06, 1.4, true, ctx.currentTime + k * 0.09));
+      },
+      horn() {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime;
+        for (const [f, d] of [[146.8, 0], [196, 0.55]]) {
+          const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+          o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 700;
+          g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.12, t + d + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.9);
+          o.connect(lp); lp.connect(g); g.connect(master); o.start(t + d); o.stop(t + d + 1);
+        }
+      },
+      crackle() {
+        if (!ctx || !on) return;
+        for (let k = 0; k < 14; k++) setTimeout(() => on && burst(0.05 + Math.random() * 0.06, 'highpass', 1200 + Math.random() * 2400, 0.08), k * 90 + Math.random() * 60);
+        burst(1.2, 'lowpass', 400, 0.08);
+      },
       firework() { if (ctx && on) { burst(0.12, 'highpass', 1800, 0.12); setTimeout(() => on && burst(0.5, 'bandpass', 2400, 0.05), 140); } },
     };
   }

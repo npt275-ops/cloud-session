@@ -214,7 +214,7 @@
   // 168 tên đầu tiên không trùng nhau
   function nameOf(id) { const a = id % N1.length, b = (Math.floor(id / N1.length) + a * 5) % N2.length; return N1[a] + ' ' + N2[b]; }
   const FOOD_NAMES = ['Cối Xay Gió Bạc', 'Ruộng Mây Vàng', 'Cối Xay Sương Sớm', 'Đồi Lúa Biếc', 'Cối Xay Ba Cánh', 'Vườn Bậc Thang', 'Cối Xay Đồi Gió', 'Ruộng Trăng Non', 'Cối Xay Bên Suối', 'Ruộng Hạt Ngọc', 'Cối Xay Lam Chiều', 'Vườn Mật Ong', 'Cối Xay Đá Rêu', 'Ruộng Sao Rơi'];
-  const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu', 'Xưởng Hộp Nhạc', 'Lò Nến Thơm', 'Xưởng Ô Giấy', 'Xưởng Diều Gió', 'Lò Bánh Mật', 'Xưởng Thuyền Mây', 'Xưởng Mũ Lá'];
+  const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu', 'Xưởng Hộp Nhạc', 'Lò Nến Thơm', 'Xưởng Ô Giấy', 'Xưởng Diều Gió', 'Xưởng Pháo Hoa', 'Xưởng Thuyền Mây', 'Xưởng Mũ Lá'];
   function firmNameFor(w, sector) {
     const list = sector === 'food' ? FOOD_NAMES : GOODS_NAMES;
     const used = new Set(w.firms.filter((f) => f.alive).map((f) => f.name));
