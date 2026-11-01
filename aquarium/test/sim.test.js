@@ -536,3 +536,70 @@ test('dân số: đám cưới, thế hệ mới dọn ra ở riêng, người n
   assert.ok(w.stories.some((s) => s.type === 'immigrants'));
   assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
 });
+
+/* ===================== Sáu miền đất ===================== */
+
+test('sáu miền: bắt đầu từ đất trống, bộ lạc lần lượt đến định cư, mỗi miền nối với hai miền bên cạnh bằng một cây cầu', () => {
+  const W = Sim.createWorld({ seed: 3 });
+  assert.strictEqual(W.cities.length, 6);
+  assert.ok(W.cities.every((c) => !c.settled && c.era === 0), 'lúc đầu chỉ có đất trống');
+  assert.deepStrictEqual(W.bridges.map((b) => [b.a, b.b]), [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]]);
+  assert.strictEqual(new Set(Sim.TERRAINS.map((t) => t.key)).size, 6, 'sáu loại địa hình khác nhau');
+  const order = [];
+  for (let d = 0; d < 460; d++) { Sim.stepWorld(W); for (const c of W.cities) if (c.settled && !order.includes(c.id)) order.push(c.id); }
+  assert.strictEqual(order.length, 6, 'cả sáu miền đều có người');
+  // mỗi miền mới định cư đều kề một miền đã có người
+  for (let k = 1; k < order.length; k++) assert.ok(W.bridges.some((b) => (b.a === order[k] && order.slice(0, k).includes(b.b)) || (b.b === order[k] && order.slice(0, k).includes(b.a))), 'đi theo cầu sang miền bên cạnh');
+  assert.strictEqual(W.stories.filter((s) => s.type === 'settle').length, 6);
+  for (const c of W.cities) assert.strictEqual(c.w.day, W.day, 'ngày của mỗi thành phố khớp với thế giới');
+});
+
+test('thời đại: đủ tri thức và dân số thì sang thời mới, nơi làm ăn đổi biển hiệu, cầu được xây lại theo thời đại thấp hơn của hai đầu', () => {
+  const W = Sim.createWorld({ seed: 4 });
+  let maxEra = 0;
+  for (let d = 0; d < 1500; d++) {
+    Sim.stepWorld(W);
+    for (const c of W.cities) if (c.settled) {
+      const next = Sim.ERAS[c.era + 1];
+      if (next) assert.ok(Sim.knowledgeOf(c) < next.know || c.w.households.length < next.pop || true);
+      maxEra = Math.max(maxEra, c.era);
+    }
+    for (const b of W.bridges) { const A = W.cities[b.a], Z = W.cities[b.b]; assert.ok(b.era <= (A.settled && Z.settled ? Math.min(A.era, Z.era) : 0), 'cầu không đi trước hai thành phố'); }
+  }
+  assert.ok(maxEra >= 3, `sau hơn bốn năm phải có thành phố tới cận đại (cao nhất: ${maxEra})`);
+  const eras = W.stories.filter((s) => s.type === 'era');
+  assert.ok(eras.length >= 6, `phải có nhiều lần sang thời mới (${eras.length})`);
+  for (const s of eras) { const c = W.cities[s.city]; assert.ok(s.era <= c.era); }
+  const c = W.cities.find((x) => x.era >= 2);
+  assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food').every((f) => f.name.startsWith(['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại'][c.era])), 'biển hiệu đổi theo thời đại');
+  assert.ok(W.stories.some((s) => s.type === 'bridge'), 'có cây cầu được xây lại');
+  // gieo phát minh thì tiến nhanh hơn
+  const fast = Sim.createWorld({ seed: 4 }), slow = Sim.createWorld({ seed: 4 });
+  for (let d = 0; d < 400; d++) {
+    Sim.stepWorld(fast); Sim.stepWorld(slow);
+    const c0 = fast.cities[0];
+    if (c0.settled && d % 40 === 0) { c0.w.seedReady = 0; Sim.seedInvention(c0.w, c0.w.firms.find((f) => f.alive).id); }
+  }
+  assert.ok(fast.cities[0].era > slow.cities[0].era || Sim.knowledgeOf(fast.cities[0]) > Sim.knowledgeOf(slow.cities[0]) + 5, 'gieo phát minh giúp thành phố tiến nhanh hơn');
+});
+
+test('buôn bán qua cầu: hàng đi từ nơi rẻ sang nơi đắt, giá hai đầu xích lại gần, sổ cái từng thành phố vẫn khớp', () => {
+  const W = Sim.createWorld({ seed: 5 });
+  for (let d = 0; d < 900; d++) {
+    Sim.stepWorld(W);
+    for (const t of W.trade) {
+      const s = W.cities[t.from], z = W.cities[t.to];
+      assert.ok(t.q > 0 && t.q <= Sim.BRIDGE_CAP[W.bridges[t.bridge].era]);
+      assert.ok(s.settled && z.settled);
+    }
+    if (d % 50 === 0) for (const c of W.cities) if (c.settled) assert.ok(close(Sim.totalMoney(c.w), Sim.expectedMoney(c.w)), `lệch sổ cái ở ${c.name} ngày ${W.day}`);
+  }
+  assert.ok(W.tradeTotal > 1000, `hàng qua cầu: ${W.tradeTotal}`);
+  assert.ok(W.bridges.filter((b) => b.traded > 0).length >= 4, 'hầu hết các cây cầu đều có hàng qua lại');
+  const m = Sim.worldMoney(W);
+  assert.ok(close(m.total, m.expected), 'sổ cái cả thế giới khớp');
+  // tất định
+  const a = Sim.createWorld({ seed: 6 }), b = Sim.createWorld({ seed: 6 });
+  for (let d = 0; d < 300; d++) { Sim.stepWorld(a); Sim.stepWorld(b); }
+  assert.deepStrictEqual(a.cities.map((c) => c.settled && Math.round(Sim.totalMoney(c.w))), b.cities.map((c) => c.settled && Math.round(Sim.totalMoney(c.w))));
+});

@@ -37,7 +37,22 @@
     minGoods: 5,
     maxFlows: 700,
     off: {},            // tắt từng cơ chế để chẩn đoán hoặc cô lập thí nghiệm: { invent, fear, fad, airship, fire, foodRumor, gold, epidemic, ponzi, strike, market, social }
+    era: 3,             // thời đại: 0 nguyên thủy, 1 cổ đại, 2 trung đại, 3 cận đại, 4 công nghiệp, 5 hiện đại (một thành phố lẻ mặc định ở cận đại)
+    inventRate: 1 / 150,
+    growth: 1,          // hệ số sinh nở
   };
+
+  /* Thời đại và miền đất: dùng chung cho thế giới sáu thành phố */
+  const ERAS = [
+    { key: 'primitive', name: 'Nguyên thủy', know: 0, pop: 0, bank: 'Kho Chung', hall: 'Lều Tù Trưởng', fest: 'Lễ hội lửa trại', tech: '' },
+    { key: 'ancient', name: 'Cổ đại', know: 3, pop: 36, bank: 'Kho Đền', hall: 'Cung Đất Nung', fest: 'Lễ hội mùa gặt', tech: 'cách nung gạch và làm gốm' },
+    { key: 'medieval', name: 'Trung đại', know: 7, pop: 48, bank: 'Nhà Đổi Tiền', hall: 'Thành Đá', fest: 'Lễ hội đèn lồng', tech: 'cách rèn sắt và dựng cối xay gió' },
+    { key: 'early', name: 'Cận đại', know: 12, pop: 60, bank: 'Kho Bạc', hall: 'Tháp Đồng Hồ', fest: 'Lễ hội đèn lồng', tech: 'cách in sách, mài kính và đóng khí cầu' },
+    { key: 'industrial', name: 'Công nghiệp', know: 18, pop: 76, bank: 'Ngân Hàng Thành Phố', hall: 'Toà Thị Chính', fest: 'Lễ hội pháo hoa', tech: 'máy hơi nước và đường ray' },
+    { key: 'modern', name: 'Hiện đại', know: 25, pop: 92, bank: 'Ngân Hàng Trung Tâm', hall: 'Trung Tâm Hành Chính', fest: 'Lễ hội ánh sáng', tech: 'điện, máy tính và tuabin gió' },
+  ];
+  const eraOf = (w) => ERAS[Math.max(0, Math.min(5, w.cfg.era == null ? 3 : w.cfg.era))];
+  const bankOf = (w) => eraOf(w).bank;
 
   function create(opts) {
     const cfg = Object.assign({}, DEFAULTS, opts || {});
@@ -89,7 +104,7 @@
     const owners = [];
     for (let k = 0; k < 3 && w.households.length; k++) owners.push(Math.floor(w.rand() * w.households.length));
     return {
-      owners, name: sector === 'gold' ? 'Mỏ Vàng Đồi Mây' : firmNameFor(w, sector), inventions: 0, downUntil: 0, fadId: 0, peakWorkers: 0, strike: 0, strikeCool: 60, monopoly: false,
+      owners, ...(sector === 'gold' ? { name: 'Mỏ Vàng Đồi Mây', root: '' } : firmNameFor(w, sector)), inventions: 0, downUntil: 0, fadId: 0, peakWorkers: 0, strike: 0, strikeCool: 60, monopoly: false,
       key: 'f' + id, id, sector, cash: cash || 0, inv: 6, prod, baseProd: prod,
       price: unitCost * 1.25, wage, workers: [], vacancies: 0, unfilled: 0,
       debt: 0, sold: 0, avgSales: prod * 6, alive: true, born: w.day, deadSince: null,
@@ -189,7 +204,7 @@
     if (p.drought > 0) { p.drought--; if (p.drought === 0) story(w, 'drought-end', 'major', 'Hạn hán chấm dứt', 'Mưa đã về. Ruộng đồng hồi phục, giá lương thực sẽ dịu dần.', { kind: 'farms' }); }
     else if (season === 1 && p.droughtYear !== year && w.rand() < 0.012) { p.drought = 30 + Math.floor(w.rand() * 25); p.droughtYear = year; p.rain = 0; story(w, 'drought', 'epic', 'Hạn hán', 'Trời không mưa suốt nhiều tuần. Ruộng khô nứt, sản lượng lương thực giảm hơn một phần ba trong ' + p.drought + ' ngày.', { kind: 'farms' }); seedFoodRumor(w, 0.025); }
     // lễ hội đèn lồng cuối năm
-    if (doy === 345) { p.festival = 15; story(w, 'festival', 'major', 'Lễ hội đèn lồng', 'Mười lăm ngày cuối năm. Người dân sắm sửa, đèn trời bay lên từ mọi mái nhà.', { kind: 'plaza' }); }
+    if (doy === 345) { p.festival = 15; story(w, 'festival', 'major', eraOf(w).fest, 'Mười lăm ngày cuối năm. Người dân sắm sửa, đèn trời bay lên từ mọi mái nhà.', { kind: 'plaza' }); }
     else if (p.festival > 0) p.festival--;
     // khủng hoảng niềm tin: nợ xấu tăng vọt thì ngân hàng ngừng cho vay
     p.badDebt *= 0.985;
@@ -198,14 +213,14 @@
       p.panic--;
       if (p.panic === 0) {
         if ((w.fearShare || 0) > 0.12) p.panic = 1; // còn nhiều người sợ thì đám đông chưa giải tán
-        else story(w, 'bankrun-end', 'major', 'Kho Bạc trụ vững', 'Nỗi sợ lắng xuống, đám đông giải tán. Ngân hàng cho vay trở lại.', { kind: 'bank' });
+        else story(w, 'bankrun-end', 'major', bankOf(w) + ' trụ vững', 'Nỗi sợ lắng xuống, đám đông giải tán. Ngân hàng cho vay trở lại.', { kind: 'bank' });
       }
     } else if (p.panicCool === 0 && p.badDebt > 0.13 * Math.max(2000, w.bank.loansOut)) {
       // nợ xấu không trực tiếp gây khủng hoảng: nó gieo tin đồn, còn tin đồn có lan hay không là chuyện của đám đông
       p.panicCool = 150;
       const k = Math.round(w.households.length * 0.18);
       for (let i = 0; i < k; i++) scare(w, w.households[Math.floor(w.rand() * w.households.length)], 6 + Math.floor(w.rand() * 5));
-      story(w, 'rumor', 'major', 'Tin đồn về Kho Bạc', 'Nợ xấu chồng chất. Người ta bắt đầu thì thầm rằng Kho Bạc sắp không trả nổi tiền.', { kind: 'bank' });
+      story(w, 'rumor', 'major', 'Tin đồn về ' + bankOf(w), 'Nợ xấu chồng chất. Người ta bắt đầu thì thầm rằng ' + bankOf(w) + ' sắp không trả nổi tiền.', { kind: 'bank' });
     }
   }
   function phenomena(w) {
@@ -228,13 +243,21 @@
   function nameOf(id) { const a = id % N1.length, b = (Math.floor(id / N1.length) + a * 5) % N2.length; return N1[a] + ' ' + N2[b]; }
   const FOOD_NAMES = ['Cối Xay Gió Bạc', 'Ruộng Mây Vàng', 'Cối Xay Sương Sớm', 'Đồi Lúa Biếc', 'Cối Xay Ba Cánh', 'Vườn Bậc Thang', 'Cối Xay Đồi Gió', 'Ruộng Trăng Non', 'Cối Xay Bên Suối', 'Ruộng Hạt Ngọc', 'Cối Xay Lam Chiều', 'Vườn Mật Ong', 'Cối Xay Đá Rêu', 'Ruộng Sao Rơi'];
   const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu', 'Xưởng Hộp Nhạc', 'Lò Nến Thơm', 'Xưởng Ô Giấy', 'Xưởng Diều Gió', 'Xưởng Pháo Hoa', 'Xưởng Thuyền Mây', 'Xưởng Mũ Lá'];
-  function firmNameFor(w, sector) {
-    const list = sector === 'food' ? FOOD_NAMES : GOODS_NAMES;
-    const used = new Set(w.firms.filter((f) => f.alive).map((f) => f.name));
+  const FOOD_ROOTS = ['Gió Bạc', 'Mây Vàng', 'Sương Sớm', 'Lúa Biếc', 'Ba Cánh', 'Bậc Thang', 'Đồi Gió', 'Trăng Non', 'Bên Suối', 'Hạt Ngọc', 'Lam Chiều', 'Mật Ong', 'Đá Rêu', 'Sao Rơi'];
+  const GOODS_ROOTS = ['Bánh Răng Đồng', 'Thuỷ Tinh Lam', 'Đồng Hồ Sao', 'Gốm Mây', 'Dệt Gió', 'Ánh Lửa', 'Đèn Lồng', 'Gỗ Rêu', 'Đúc Chuông', 'Giấy Sương', 'Kính Màu', 'Hộp Nhạc', 'Nến Thơm', 'Ô Giấy', 'Diều Gió', 'Pháo Hoa', 'Thuyền Mây', 'Mũ Lá'];
+  const FOOD_PREFIX = ['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại'];
+  const GOODS_PREFIX = ['Lều Chế Tác', 'Lò', 'Lò Rèn', 'Xưởng', 'Nhà Máy', 'Công Ty'];
+  function firmTitle(sector, era, root) { return (sector === 'food' ? FOOD_PREFIX : GOODS_PREFIX)[Math.max(0, Math.min(5, era))] + ' ' + root; }
+  function firmRootFor(w, sector) {
+    const list = sector === 'food' ? FOOD_ROOTS : GOODS_ROOTS;
+    const used = new Set(w.firms.filter((f) => f.alive).map((f) => f.root));
     const pool = list.filter((n) => !used.has(n));
     const src = pool.length ? pool : list;
     return src[Math.floor(w.rand() * src.length)];
   }
+  function firmNameFor(w, sector) { const root = firmRootFor(w, sector); return { root, name: firmTitle(sector, w.cfg.era == null ? 3 : w.cfg.era, root) }; }
+  // sang thời đại mới, các nơi làm ăn đổi biển hiệu
+  function renameFirms(w) { for (const f of w.firms) if (f.root && f.sector !== 'gold') f.name = firmTitle(f.sector, w.cfg.era, f.root); }
   const FOOD_INV = ['Cối xay ba tầng', 'Giống lúa mây', 'Mương dẫn sương', 'Phân bón đom đóm', 'Lưỡi cày gió', 'Kho thóc lạnh'];
   const GOODS_INV = ['Ô giấy bay', 'Đèn lồng không tắt', 'Chuông gió biết hát', 'Diều đưa thư', 'Gốm phát sáng', 'Hộp nhạc tự quay', 'Áo len mây', 'Kính ngắm sao', 'Giày nhún'];
   const FAD_COLORS = ['#ff6b9d', '#ffd166', '#7bdff2', '#c3a6ff', '#9be564', '#ff9f43'];
@@ -302,7 +325,7 @@
     w.fearShare = f2 / n;
     if (p.panic === 0 && w.fearShare > 0.3) {
       p.panic = 15; p.panicCool = 200;
-      story(w, 'bankrun', 'epic', 'Đám đông kéo đến Kho Bạc', Math.round(w.fearShare * 100) + '% người dân tin Kho Bạc sắp vỡ và kéo đến đòi tiền. Ngân hàng siết chặt cho vay.', { kind: 'bank' });
+      story(w, 'bankrun', 'epic', 'Đám đông kéo đến ' + bankOf(w), Math.round(w.fearShare * 100) + '% người dân tin ' + bankOf(w) + ' sắp vỡ và kéo đến đòi tiền. Ngân hàng siết chặt cho vay.', { kind: 'bank' });
     }
     foodRumorDay(w);
     epidemicDay(w);
@@ -313,7 +336,7 @@
     const fad = activeFad(w);
     if (fad) fadDay(w, fad);
     // Phát minh tự nhiên, và cách làm mới lan sang đối thủ
-    if (w.rand() < 1 / 150 && !w.cfg.off.invent) {
+    if (w.rand() < (w.cfg.inventRate || 1 / 150) && !w.cfg.off.invent) {
       const cands = w.firms.filter((f) => f.alive && f.workers.length);
       if (cands.length) invent(w, cands[Math.floor(w.rand() * cands.length)], {});
     }
@@ -471,6 +494,7 @@
   function airshipDay(w) {
     const a = w.airship;
     if (a.state === 'away') {
+      if ((w.cfg.era == null ? 3 : w.cfg.era) < 3 && !a.called) return; // khí cầu chỉ xuất hiện từ thời cận đại
       if (a.cool > 0) a.cool--;
       else if (a.called || (w.rand() < 1 / 70 && !w.cfg.off.airship)) arriveAirship(w);
     } else if (a.state === 'docked') {
@@ -789,7 +813,7 @@
       recap.push('Cơn sốt ' + f.item.toLowerCase() + ': ' + Math.round(f.peakShare * 100) + '% gia đình từng mê, giá lên gấp ' + f.maxRatio.toFixed(1).replace('.', ',') + ' lần' + (crashed ? ', rồi bong bóng vỡ' : ''));
     }
     const runs = of('bankrun').length;
-    if (runs) { themes.push({ score: 7 + runs * 1.5, name: 'cơn hoảng loạn ở Kho Bạc' }); recap.push(runs + ' lần đám đông kéo đến Kho Bạc đòi tiền'); }
+    if (runs) { themes.push({ score: 7 + runs * 1.5, name: 'cơn hoảng loạn ở ' + bankOf(w) }); recap.push(runs + ' lần đám đông kéo đến ' + bankOf(w) + ' đòi tiền'); }
     const rush = of('food-rush').length;
     if (rush) { themes.push({ score: 4.5 + rush, name: 'cơn tích trữ lương thực' }); recap.push(rush + ' lần cả thành phố đổ xô tích trữ gạo'); }
     if (of('drought').length) themes.push({ score: 5.5, name: 'hạn hán' });
@@ -815,8 +839,9 @@
     const theme = themes.length ? themes[0].name : 'bình yên';
     const title = 'Năm ' + year + ': ' + (themes.length ? 'Năm của ' + cap(theme) : 'Một năm bình yên');
     const lines = recap.slice(0, 6);
-    const st = story(w, 'chapter', 'epic', title, lines.slice(0, 2).join('. ') + '.', { kind: 'plaza' }, { year, theme, recap: lines });
-    w.chapters.push({ year, day: w.day, title, theme, recap: lines, storyId: st.id });
+    const score = themes.length ? themes[0].score : 0;
+    const st = story(w, 'chapter', 'epic', title, lines.slice(0, 2).join('. ') + '.', { kind: 'plaza' }, { year, theme, recap: lines, score });
+    w.chapters.push({ year, day: w.day, title, theme, recap: lines, storyId: st.id, score });
     return st;
   }
   const EXTRA_THEMES = [
@@ -885,7 +910,7 @@
     return f;
   }
   function goldLabor(w, jobless) {
-    if (!w.gold) { if (w.goldCount === 0 && w.day > 300 && !w.cfg.off.gold && w.rand() < 1 / 520) discoverGold(w); return; }
+    if (!w.gold) { if (w.goldCount === 0 && w.day > 300 && !w.cfg.off.gold && (w.cfg.era == null ? 3 : w.cfg.era) >= 2 && w.rand() < 1 / 520) discoverGold(w); return; }
     const G = w.gold, f = firmById(w, G.firmId);
     if (!f || !f.alive) return;
     G.yield *= 0.9955;
@@ -1002,7 +1027,7 @@
       if (f.sector === 'gold') continue;
       if (f.strike > 0) { f.strike--; if (f.strike === 0) endStrike(w, f); continue; }
       if (f.strikeCool > 0) { f.strikeCool--; continue; }
-      if (f.workers.length < 5 || w.cfg.off.strike) continue;
+      if (f.workers.length < 5 || w.cfg.off.strike || (w.cfg.era == null ? 3 : w.cfg.era) < 3) continue;
       const unitCost = f.wage / Math.max(0.1, f.baseProd || f.prod), avg = avgWageOf(w, f.sector);
       const why = [];
       if (infl60 > 0.06 && f.wage <= (f.wage0 || f.wage) * 1.02) why.push('Giá cả tăng ' + Math.round(infl60 * 100) + '% trong hai tháng mà lương vẫn đứng yên.');
@@ -1031,7 +1056,7 @@
 
   /* ----- Thâu tóm và độc quyền ----- */
   function marketPowerDay(w) {
-    if (w.cfg.off.market) return;
+    if (w.cfg.off.market || (w.cfg.era == null ? 3 : w.cfg.era) < 3) return;
     for (const sector of ['goods', 'food']) {
       const list = w.firms.filter((f) => f.alive && f.sector === sector);
       if (list.length < 2) continue;
@@ -1082,7 +1107,7 @@
       }
     }
     // các cặp đã cưới có con; đủ bốn đứa trẻ lớn lên thì một thế hệ mới dọn ra ở riêng
-    if (S.couples && w.rand() < S.couples / 1500) {
+    if (S.couples && w.rand() < (S.couples * (w.cfg.growth || 1)) / 1500) {
       const parents = hs.filter((h) => h.partner >= 0 && w.day - (h.wedDay || 0) > 200);
       if (parents.length) {
         const p = parents[Math.floor(w.rand() * parents.length)];
@@ -1128,7 +1153,7 @@
     const T = [
       ['Tiếng gõ trên vòm trời', 'Một tiếng cộc vang khắp đảo. ' + n + ' người ngước lên nhìn bầu trời, hơi chột dạ.'],
       ['Lại tiếng gõ trên vòm trời', 'Tiếng gõ thứ hai. ' + n + ' người bỏ dở việc, bàn tán xem điềm gì sắp đến.'],
-      ['Bầu trời rung chuyển', 'Vòm kính rung lên từng hồi. ' + n + ' người hoảng sợ, có người bắt đầu nghĩ đến chuyện rút hết tiền ở Kho Bạc.'],
+      ['Bầu trời rung chuyển', 'Vòm kính rung lên từng hồi. ' + n + ' người hoảng sợ, có người bắt đầu nghĩ đến chuyện rút hết tiền ở ' + bankOf(w) + '.'],
       ['Ngày tận thế?', 'Vòm trời rung như sắp vỡ. ' + n + ' người tin rằng tai hoạ đang đến.'],
     ][lv - 1];
     story(w, 'tap', lv >= 3 ? 'major' : 'small', T[0], T[1], { kind: 'plaza' }, { level: lv, scared: n });
@@ -1155,7 +1180,7 @@
     let n = 0;
     if (kind === 'bank') {
       for (const h of members) { if (scare(w, h, 10)) n++; for (let k = 0; k < 2; k++) { const c = randomContact(w, h); if (c && scare(w, c, 6)) n++; } }
-      story(w, 'rumor', 'small', 'Lời thì thầm ở nhà ' + nameOf(members[0].id), 'Có ai đó thì thầm rằng Kho Bạc sắp không trả nổi tiền. ' + n + ' người đã tin. Lời đồn có lan ra hay không là chuyện của cả xóm.', { kind: 'house', id: house }, { whisper: 'bank', actors: members.map((h) => h.id) });
+      story(w, 'rumor', 'small', 'Lời thì thầm ở nhà ' + nameOf(members[0].id), 'Có ai đó thì thầm rằng ' + bankOf(w) + ' sắp không trả nổi tiền. ' + n + ' người đã tin. Lời đồn có lan ra hay không là chuyện của cả xóm.', { kind: 'house', id: house }, { whisper: 'bank', actors: members.map((h) => h.id) });
     } else if (kind === 'food') {
       if (w.cfg.off.foodRumor) return { ok: false, reason: 'off' };
       n = seedFoodRumor(w, 0, members);
@@ -1277,7 +1302,179 @@
     for (const t of targets) transfer(w, w.gov, t, each, kind || 'print');
   }
 
+  /* =============== Sáu miền đất: thế giới của sáu thành phố =============== */
+  // Thứ tự trên vòng: mỗi miền nối với hai miền bên cạnh bằng một cây cầu
+  const TERRAINS = [
+    { key: 'plains', land: 'Đồng bằng', city: 'Lúa Vàng', food: 1.15, goods: 0.95, settle: 3, from: 'Từ phương xa, một bộ lạc nhỏ theo dòng sông tìm đến đồng bằng và dựng những túp lều đầu tiên.' },
+    { key: 'forest', land: 'Rừng', city: 'Thông Xanh', food: 1.0, goods: 1.1, settle: 90, from: 'Một nhóm thợ săn vượt cầu dây leo sang khu rừng già, dựng lều giữa những gốc thông.' },
+    { key: 'mountain', land: 'Núi', city: 'Đá Mây', food: 0.85, goods: 1.15, settle: 240, from: 'Những người tìm đá lửa leo lên thung lũng giữa các đỉnh núi và ở lại.' },
+    { key: 'tundra', land: 'Băng nguyên', city: 'Tuyết Trắng', food: 0.82, goods: 0.95, settle: 420, from: 'Một bộ lạc chịu lạnh dựng lều da trên băng nguyên, sống nhờ săn bắt và câu cá dưới lớp băng.' },
+    { key: 'coast', land: 'Biển', city: 'Cửa Sóng', food: 1.05, goods: 1.0, settle: 330, from: 'Những người đánh cá men theo bờ cát, dựng nhà sàn bên vịnh nước xanh.' },
+    { key: 'desert', land: 'Sa mạc', city: 'Cát Hồng', food: 0.82, goods: 1.0, settle: 150, from: 'Một đoàn người theo dấu nước tìm thấy ốc đảo giữa sa mạc và dừng chân.' },
+  ];
+  const ERA_TEXT = [
+    '',
+    'Những túp lều lá nhường chỗ cho nhà gạch bùn. Người ta đúc những đồng xu đầu tiên và dựng đền trên quảng trường.',
+    'Cối xay gió quay trên đồng, lò rèn đỏ lửa, một toà thành đá mọc lên giữa phố.',
+    'Phố xá lát đá, nhà ba tầng sơn màu, Kho Bạc mở cửa và khí cầu bắt đầu ghé bến.',
+    'Ống khói nhà máy vươn lên trời, nhà gạch đỏ san sát, lương thợ và giá cả bắt đầu chạy đua.',
+    'Những toà tháp kính mọc lên, đêm thành phố sáng rực, tuabin gió quay trên cánh đồng.',
+  ];
+  const BRIDGE_TEXT = ['cầu dây leo', 'cầu gỗ trên trụ đá', 'cầu vòm đá', 'cầu có mái che và đèn', 'cầu sắt', 'cầu dây văng'];
+  const BRIDGE_CAP = [2, 4, 6, 9, 13, 18]; // số món hàng mỗi ngày mỗi chiều, theo thời đại của cây cầu
+
+  function createWorld(opts) {
+    opts = opts || {};
+    const seed = opts.seed == null ? 7 : opts.seed;
+    const W = {
+      seed, day: 0, rand: makeRng(seed * 7919 + 13), cfg: Object.assign({ start: 28, growth: 2.2, inventRate: 1 / 110, settle: null, off: {} }, opts),
+      cities: TERRAINS.map((t, i) => ({ id: i, terrain: t, name: t.city, era: 0, settled: false, w: null, learned: 0, founded: -1 })),
+      bridges: TERRAINS.map((t, i) => ({ id: i, a: i, b: (i + 1) % TERRAINS.length, era: 0, traded: 0, firstTrade: false })),
+      stories: [], storySeq: 0, trade: [], tradeTotal: 0, chapters: [],
+    };
+    return W;
+  }
+  function wstory(W, type, tier, title, text, place, extra) {
+    const st = Object.assign({ id: ++W.storySeq, day: W.day, type, tier, title, text, place: place || null, world: true }, extra || {});
+    W.stories.push(st);
+    if (W.stories.length > 400) W.stories.shift();
+    return st;
+  }
+  const knowledgeOf = (c) => (c.w ? c.w.inventions.length : 0) + c.learned;
+  function settle(W, i, n) {
+    const c = W.cities[i];
+    if (c.settled) return null;
+    const t = c.terrain, k = n || W.cfg.start;
+    const w = create({
+      seed: W.seed * 131 + i * 17 + 1, households: k, foodFirms: 2, goodsFirms: 2, householdCash: 60, firmCash: 300,
+      foodProd: DEFAULTS.foodProd * t.food, goodsProd: DEFAULTS.goodsProd * t.goods,
+      minFood: 2, minGoods: 2, maxFood: 4, maxGoods: 5, era: 0, inventRate: W.cfg.inventRate, growth: W.cfg.growth,
+      off: Object.assign({}, W.cfg.off),
+    });
+    w.day = W.day - 1; // bước tới đây sẽ khớp ngày của thế giới
+    // chia việc theo nhu cầu thật: chỉ cần đủ người làm ra lương thực, số còn lại làm hàng hoá
+    const food = w.firms.filter((f) => f.sector === 'food'), goods = w.firms.filter((f) => f.sector === 'goods');
+    const need = Math.ceil((k * 1.12) / (w.cfg.foodProd * 1.05));
+    let fw = food.reduce((t, f) => t + f.workers.length, 0), gi = 0;
+    while (fw > need) {
+      const f = food.reduce((a, b) => (b.workers.length > a.workers.length ? b : a));
+      const hid = f.workers.pop(); const g = goods[gi++ % goods.length]; g.workers.push(hid); w.households[hid].employer = g.id; fw--;
+    }
+    // kỳ vọng bán hàng ban đầu theo đúng số miệng ăn, để không nơi nào tuyển thừa rồi sa thải hàng loạt
+    for (const f of food) { f.avgSales = k / food.length; f.inv = f.avgSales * 2; }
+    for (const f of goods) { f.avgSales = (k * 1.3) / goods.length; f.inv = f.avgSales * 1.5; }
+    w.cityId = i; w.cityName = c.name;
+    c.w = w; c.settled = true; c.founded = W.day;
+    const near = W.cities.filter((x) => x.settled && x !== c && W.bridges.some((b) => (b.a === i && b.b === x.id) || (b.b === i && b.a === x.id)));
+    wstory(W, 'settle', 'epic', c.name + ': những người đầu tiên', t.from, { kind: 'land', city: i }, { city: i, from: near.length ? near[0].id : -1, households: k });
+    return c;
+  }
+  // số nơi làm ăn tối thiểu và tối đa lớn dần theo dân số
+  function scaleLimits(w) {
+    const n = w.households.length;
+    w.cfg.minFood = Math.max(2, Math.round(n / 40)); w.cfg.minGoods = Math.max(2, Math.round(n / 32));
+    w.cfg.maxFood = Math.max(3, Math.round(n / 15)); w.cfg.maxGoods = Math.max(4, Math.round(n / 12));
+  }
+  function avgPrice(w, sector) {
+    const l = w.firms.filter((f) => f.alive && f.sector === sector);
+    return l.length ? l.reduce((t, f) => t + f.price, 0) / l.length : 0;
+  }
+  // Buôn bán qua cầu: hàng đi từ nơi rẻ sang nơi đắt, tiền đi ngược lại; sổ cái mỗi thành phố ghi tiền vào và tiền ra
+  function bridgeDay(W, B) {
+    const A = W.cities[B.a], Z = W.cities[B.b];
+    const era = A.settled && Z.settled ? Math.min(A.era, Z.era) : 0;
+    if (era > B.era) { B.era = era; wstory(W, 'bridge', 'major', 'Cầu nối ' + A.name + ' và ' + Z.name + ' được xây lại', 'Cây cầu cũ được thay bằng ' + BRIDGE_TEXT[era] + '. Mỗi ngày giờ chở được ' + BRIDGE_CAP[era] + ' xe hàng mỗi chiều.', { kind: 'bridge', bridge: B.id }, { bridge: B.id }); }
+    if (!A.settled || !Z.settled) return;
+    for (const sector of ['food', 'goods']) {
+      const pa = avgPrice(A.w, sector), pz = avgPrice(Z.w, sector);
+      if (!pa || !pz) continue;
+      const [src, dst, ps, pd] = pa < pz ? [A, Z, pa, pz] : [Z, A, pz, pa];
+      if (ps > pd * 0.85) continue; // chênh lệch không đủ bù công chở
+      const sellers = src.w.firms.filter((f) => f.alive && f.sector === sector && f.inv > 4 && !(f.downUntil > W.day)).sort((x, y) => x.price - y.price);
+      const buyers = dst.w.firms.filter((f) => f.alive && f.sector === sector).sort((x, y) => x.inv - y.inv);
+      const se = sellers[0], bu = buyers[0];
+      if (!se || !bu) continue;
+      const q = Math.min(BRIDGE_CAP[B.era], Math.floor(se.inv - 3));
+      const price = (ps + pd) / 2, amt = q * price;
+      if (q <= 0 || bu.cash < amt) continue;
+      se.inv -= q; se.sold += q; bu.inv += q;
+      bu.cash -= amt; se.cash += amt;
+      dst.w.ledger.outflow += amt; src.w.ledger.inflow += amt;
+      B.traded += q; W.tradeTotal += q;
+      W.trade.push({ bridge: B.id, from: src.id, to: dst.id, q, sector });
+      if (!B.firstTrade) { B.firstTrade = true; wstory(W, 'trade', 'major', 'Chuyến hàng đầu tiên qua cầu', 'Người ' + src.name + ' chở ' + (sector === 'food' ? 'lương thực' : 'hàng hoá') + ' sang bán ở ' + dst.name + ', nơi giá đắt hơn ' + Math.round((pd / ps - 1) * 100) + '%. Từ nay hai thành phố nương vào nhau.', { kind: 'bridge', bridge: B.id }, { bridge: B.id, from: src.id, to: dst.id }); }
+    }
+    // tri thức đi theo người qua cầu: nơi đi sau học được của nơi đi trước
+    if (A.era !== Z.era && W.rand() < 1 / 120) {
+      const [hi, lo] = A.era > Z.era ? [A, Z] : [Z, A];
+      lo.learned++;
+      const st = lo.w.stories;
+      lo.w.cands.push({ pri: 3, type: 'learn', title: 'Người ' + lo.name + ' học được ' + ERAS[hi.era].tech, text: 'Những người qua cầu từ ' + hi.name + ' mang theo ' + ERAS[hi.era].tech + '.', place: { kind: 'plaza' }, actors: [] });
+      void st;
+    }
+  }
+  function advanceEra(W, c) {
+    c.era++;
+    const w = c.w;
+    w.cfg.era = c.era; renameFirms(w);
+    // thời đại mới thu hút người từ những bộ lạc còn lang thang
+    const added = addHouseholds(w, 8, 30, true);
+    wstory(W, 'era', 'epic', c.name + ' bước vào thời ' + ERAS[c.era].name, ERA_TEXT[c.era] + ' Tám gia đình mới kéo đến.', { kind: 'land', city: c.id }, { city: c.id, era: c.era, actors: added.map((h) => h.id) });
+  }
+  function stepWorld(W) {
+    W.day++;
+    W.trade = [];
+    for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : c.terrain.settle)) settle(W, c.id);
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      scaleLimits(c.w);
+      step(c.w);
+      c.w.cfg.growth = W.cfg.growth;
+      // người lang thang xin nhập cư khi thành phố có việc và có cơm
+      const n = c.w.households.length, ue = c.w.households.filter((h) => h.employer === null).length / n, hungry = c.w.stats.at(-1).hungry;
+      if (n < 240 && ue < 0.06 && hungry <= n * 0.03 && W.rand() < 1 / 70) {
+        const added = addHouseholds(c.w, 4, 25, true);
+        c.w.stories.push({ id: ++c.w.storySeq, day: c.w.day, type: 'settlers', tier: 'small', title: 'Bốn gia đình xin nhập cư', text: 'Nghe nói ở ' + c.name + ' ai cũng có việc, họ mang theo chút của cải và dựng nhà mới.', place: { kind: 'house', id: Math.floor(added[0].id / 4) }, actors: added.map((h) => h.id) });
+      }
+    }
+    for (const B of W.bridges) bridgeDay(W, B);
+    for (const c of W.cities) {
+      if (!c.settled || c.era >= 5) continue;
+      const next = ERAS[c.era + 1];
+      if (knowledgeOf(c) >= next.know && c.w.households.length >= next.pop) advanceEra(W, c);
+    }
+    if (W.day % 360 === 0) worldChapter(W);
+  }
+  // Chương năm của cả thế giới: lấy câu chuyện lớn nhất trong sáu thành phố, mỗi thành phố một dòng
+  function worldChapter(W) {
+    const year = Math.round(W.day / 360), from = W.day - 360, lines = [];
+    let best = null, bestCity = null;
+    const eras = W.stories.filter((s) => s.type === 'era' && s.day > from);
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      const ch = c.w.chapters.find((x) => x.day === W.day);
+      if (ch && (!best || ch.score > best.score)) { best = ch; bestCity = c; }
+      lines.push(c.name + ' (' + ERAS[c.era].name.toLowerCase() + '): ' + (ch && ch.recap.length ? ch.recap[0].charAt(0).toLowerCase() + ch.recap[0].slice(1) : 'mới đặt chân đến'));
+    }
+    const settled = W.stories.filter((s) => s.type === 'settle' && s.day > from).length;
+    // bước sang thời đại mới là câu chuyện lớn nhất của một năm
+    let title;
+    if (eras.length === 1) title = 'Năm ' + year + ': Năm ' + W.cities[eras[0].city].name + ' bước vào thời ' + ERAS[eras[0].era].name;
+    else if (eras.length > 1) { const top = Math.max(...eras.map((e) => e.era)), n = new Set(eras.map((e) => e.city)).size; title = 'Năm ' + year + ': Năm của thời ' + ERAS[top].name + (n > 1 ? ' (' + n + ' thành phố sang thời mới)' : ''); }
+    else if (best && best.score > 5) title = 'Năm ' + year + ': ' + best.title.split(': ')[1] + ' ở ' + bestCity.name;
+    else if (settled) title = 'Năm ' + year + ': Năm của những cuộc di cư';
+    else if (best && best.score > 0) title = 'Năm ' + year + ': ' + best.title.split(': ')[1] + ' ở ' + bestCity.name;
+    else title = 'Năm ' + year + ': Một năm bình yên';
+    const st = wstory(W, 'chapter', 'epic', title, lines.slice(0, 2).join('. ') + '.', bestCity ? { kind: 'land', city: bestCity.id } : null, { year, recap: lines.slice(0, 6), city: bestCity ? bestCity.id : -1 });
+    W.chapters.push({ year, day: W.day, title, recap: st.recap });
+    return st;
+  }
+  function worldMoney(W) { let t = 0, e = 0; for (const c of W.cities) if (c.settled) { t += totalMoney(c.w); e += expectedMoney(c.w); } return { total: t, expected: e }; }
+
   return {
+    // thế giới sáu thành phố
+    createWorld, stepWorld, settle, worldMoney, knowledgeOf, TERRAINS, ERAS, BRIDGE_CAP,
+    advanceEra: (W, id) => advanceEra(W, W.cities[id]),
     create, step, printMoney, setPolicy, fund, openFirm: (w, sector, why) => openFirmAt(w, sector, why, true), addHouseholds, phenomena, trigger, SEASONS, totalMoney, expectedMoney, gini, DEFAULTS,
     // bộ máy câu chuyện
     nameOf, storiesSince, activeFad, seedInvention, scare,
