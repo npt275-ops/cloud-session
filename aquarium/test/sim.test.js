@@ -564,14 +564,16 @@ test('thời đại: đủ tri thức và dân số thì sang thời mới, nơi
       if (next) assert.ok(Sim.knowledgeOf(c) < next.know || c.w.households.length < next.pop || true);
       maxEra = Math.max(maxEra, c.era);
     }
-    for (const b of W.bridges) { const A = W.cities[b.a], Z = W.cities[b.b]; assert.ok(b.era <= (A.settled && Z.settled ? Math.min(A.era, Z.era) : 0), 'cầu không đi trước hai thành phố'); }
+    // cầu do một bên bắc theo thời đại của mình: không bao giờ đi trước cả hai thành phố
+    for (const b of W.bridges) { const A = W.cities[b.a], Z = W.cities[b.b]; assert.ok(b.era <= (A.settled && Z.settled ? Math.max(A.era, Z.era) : -1), 'cầu không đi trước hai thành phố'); }
   }
   assert.ok(maxEra >= 3, `sau hơn bốn năm phải có thành phố tới cận đại (cao nhất: ${maxEra})`);
   const eras = W.stories.filter((s) => s.type === 'era');
   assert.ok(eras.length >= 6, `phải có nhiều lần sang thời mới (${eras.length})`);
   for (const s of eras) { const c = W.cities[s.city]; assert.ok(s.era <= c.era); }
   const c = W.cities.find((x) => x.era >= 2);
-  assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food').every((f) => f.name.startsWith(['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại'][c.era])), 'biển hiệu đổi theo thời đại');
+  assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food' && !f.sea).every((f) => f.name.startsWith(['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại'][c.era])), 'biển hiệu đổi theo thời đại');
+  assert.ok(c.w.firms.filter((f) => f.alive && f.sea).every((f) => f.name.startsWith(['Bè Cá', 'Thuyền Cá', 'Ghe Lưới', 'Tàu Cá', 'Đội Tàu Cá', 'Tập Đoàn Hải Sản'][c.era])), 'bến cá cũng đổi biển hiệu');
   assert.ok(W.stories.some((s) => s.type === 'bridge'), 'có cây cầu được xây lại');
   // gieo phát minh thì tiến nhanh hơn
   const fast = Sim.createWorld({ seed: 4 }), slow = Sim.createWorld({ seed: 4 });
@@ -589,7 +591,9 @@ test('buôn bán qua cầu: hàng đi từ nơi rẻ sang nơi đắt, giá hai 
     Sim.stepWorld(W);
     for (const t of W.trade) {
       const s = W.cities[t.from], z = W.cities[t.to];
-      assert.ok(t.q > 0 && t.q <= Sim.BRIDGE_CAP[W.bridges[t.bridge].era]);
+      // chợ ở hai đầu cho chở thêm tối đa 50%; tàu buôn có sức chở riêng
+      if (t.sea) assert.ok(t.q > 0 && t.q <= 22 * 1.5 * 1.3);
+      else assert.ok(t.q > 0 && t.q <= Math.round(Sim.BRIDGE_CAP[W.bridges[t.bridge].era] * 1.5));
       assert.ok(s.settled && z.settled);
     }
     if (d % 50 === 0) for (const c of W.cities) if (c.settled) assert.ok(close(Sim.totalMoney(c.w), Sim.expectedMoney(c.w)), `lệch sổ cái ở ${c.name} ngày ${W.day}`);
@@ -602,4 +606,197 @@ test('buôn bán qua cầu: hàng đi từ nơi rẻ sang nơi đắt, giá hai 
   const a = Sim.createWorld({ seed: 6 }), b = Sim.createWorld({ seed: 6 });
   for (let d = 0; d < 300; d++) { Sim.stepWorld(a); Sim.stepWorld(b); }
   assert.deepStrictEqual(a.cities.map((c) => c.settled && Math.round(Sim.totalMoney(c.w))), b.cities.map((c) => c.settled && Math.round(Sim.totalMoney(c.w))));
+});
+
+
+/* ===================== Biển trong, cầu tự xây, Tranh hùng ===================== */
+// một thế giới Tranh hùng đã đủ sáu bộ lạc; người chơi giữ Lúa Vàng
+function warWorld(seed) {
+  const W = Sim.createWorld({ seed, mode: 'war', player: 0 });
+  for (let d = 0; d < 8; d++) Sim.stepWorld(W);
+  return W;
+}
+const ledgerOk = (W) => W.cities.every((c) => !c.settled || close(Sim.totalMoney(c.w), Sim.expectedMoney(c.w)));
+function untilDone(W, pred, max) { for (let d = 0; d < max && !pred(); d++) Sim.stepWorld(W); return pred(); }
+
+test('biển trong: thuyền đánh cá nuôi thành phố, đánh bắt quá tay thì cá cạn, ngừng tay thì cá hồi lại', () => {
+  const W = Sim.createWorld({ seed: 7 });
+  for (let d = 0; d < 30; d++) Sim.stepWorld(W);
+  const c = W.cities[0], f = Sim.fisheryOf(c);
+  assert.ok(f && f.sea && f.workers.length >= 2, 'mỗi thành phố mới có bến cá với vài ngư dân');
+  assert.ok(f.seaFood > 0 && c.w.firms.some((x) => x.sea && x.sold > 0), 'cá lên bờ thành lương thực');
+  // ép ngư trường trước Lúa Vàng: thêm thật nhiều ngư dân, ngư cụ tốt
+  const before = W.sea.stock[0][0];
+  for (const h of c.w.households) if (h.employer !== null && h.employer !== f.id) { const g = c.w.firms.find((x) => x.id === h.employer); g.workers.splice(g.workers.indexOf(h.id), 1); h.employer = null; }
+  f.prod *= 3;
+  for (let d = 0; d < 120; d++) {
+    for (const h of c.w.households) if (h.employer === null) { h.employer = f.id; f.workers.push(h.id); } // ai rảnh tay cũng ra biển
+    Sim.stepWorld(W);
+    for (const row of W.sea.stock) for (let s = 0; s < row.length; s++) assert.ok(row[s] >= 0 && row[s] <= Sim.SPECIES[s].K + 1e-9);
+  }
+  assert.ok(W.sea.stock[0][0] < before * 0.35, `cá cơm phải cạn khi đánh bắt quá tay (${Math.round(W.sea.stock[0][0])}/${before})`);
+  assert.ok(W.stories.some((s) => s.type === 'sea-low' && s.zone === 0), 'có tin biển cạn');
+  // đóng bến: đàn cá hồi lại
+  for (const g of c.w.firms) if (g.sea) { for (const hid of g.workers.splice(0)) c.w.households[hid].employer = null; g.alive = false; g.deadSince = W.day; }
+  const low = W.sea.stock[0][0];
+  for (let d = 0; d < 60; d++) Sim.stepWorld(W);
+  assert.ok(W.sea.stock[0][0] > low * 2, 'ngừng đánh bắt thì cá hồi lại');
+  assert.ok(ledgerOk(W), 'tiền bán ngọc, da, dầu cá cho thương thuyền được ghi là tiền vào');
+});
+
+test('cầu phải tự xây: lúc đầu không có cầu, xây tốn tiền kho bạc và thời gian, có cầu mới có hàng qua lại', () => {
+  const W = warWorld(3);
+  assert.ok(W.bridges.every((b) => b.level === -1), 'ban đầu chưa có cây cầu nào');
+  const c = W.cities[0];
+  assert.ok(!Sim.bridgeOffer(W, 0, 0).ok, 'kho bạc trống thì chưa xây được');
+  assert.ok(!Sim.bridgeOffer(W, 0, 2).ok, 'không xây cầu không chạm đất mình');
+  Sim.grantTreasury(c.w, 500);
+  const cash = c.w.gov.cash, r = Sim.buildBridge(W, 0, 0);
+  assert.ok(r.ok && r.days > 0);
+  assert.ok(c.w.gov.cash < cash - 50, 'tiền xây cầu trả cho các xưởng');
+  assert.ok(!Sim.bridgeOffer(W, 0, 0).ok, 'đang xây thì không xây chồng');
+  assert.ok(!W.trade.some((t) => t.bridge === 0));
+  assert.ok(untilDone(W, () => W.bridges[0].level === 0, 40), 'cầu dây leo xong sau vài tuần');
+  assert.ok(W.stories.some((s) => s.type === 'bridge' && s.bridge === 0));
+  assert.ok(untilDone(W, () => W.bridges[0].traded > 0, 400), 'có cầu thì có hàng qua');
+  assert.ok(ledgerOk(W));
+});
+
+test('công trình và quân lính theo thời đại: mỗi đời một tên, một sức mạnh; quân nặng cần cầu chắc', () => {
+  const W = warWorld(4), c = W.cities[0];
+  assert.ok(!Sim.unitOffer(W, 0, 'melee').ok, 'chưa có trại lính thì chưa luyện quân');
+  Sim.grantTreasury(c.w, 4000);
+  assert.ok(Sim.build(W, 0, 'barracks').ok);
+  assert.ok(!Sim.buildOffer(W, 0, 'stable').ok && Sim.buildOffer(W, 0, 'stable').locked, 'chuồng chiến mã cần thời cổ đại');
+  assert.ok(untilDone(W, () => Sim.hasB(c, 'barracks'), 20));
+  const names = new Set(), hp = [];
+  for (let e = 0; e <= 5; e++) { names.add(Sim.UNITS.melee.names[e]); hp.push(Sim.unitStats(c, 'melee', e).hp); }
+  assert.equal(names.size, 6, 'mỗi thời đại một loại lính');
+  for (let e = 1; e <= 5; e++) assert.ok(hp[e] > hp[e - 1] * 1.4, 'lính đời sau mạnh hơn hẳn');
+  assert.equal(Sim.UNITS.ship.names[5], 'Khu Trục Hạm');
+  assert.equal(Sim.UNITS.sub.names[5], 'Tàu Ngầm Hạt Nhân');
+  const n0 = c.w.households.filter((h) => h.employer === -1).length;
+  assert.ok(Sim.train(W, 0, 'melee').ok);
+  assert.ok(untilDone(W, () => Sim.armyOf(W, c) === 1 && !c.queue.length, 20));
+  assert.equal(c.w.households.filter((h) => h.employer === -1).length, n0 + 1, 'người lính là một người trong thành phố, thôi đi làm');
+  // xe tăng không qua được cầu dây leo
+  for (let e = 0; e < 4; e++) Sim.advanceEra(W, 0);
+  Sim.grantTreasury(c.w, 20000);
+  Sim.grantTreasury(W.cities[1].w, 500);
+  assert.ok(Sim.build(W, 0, 'stable').ok);
+  assert.ok(Sim.buildBridge(W, 1, 0).ok, 'Thông Xanh bắc cầu dây leo sang');
+  assert.ok(untilDone(W, () => Sim.hasB(c, 'stable') && W.bridges[0].level === 0, 60));
+  assert.ok(Sim.train(W, 0, 'mounted').ok);
+  assert.ok(untilDone(W, () => W.war.units.some((u) => u.cls === 'mounted'), 20));
+  assert.ok(Sim.declareWar(W, 0, 1).ok);
+  Sim.setStance(W, 0, 'b0', 'attack');
+  for (let d = 0; d < 5; d++) Sim.stepWorld(W);
+  const tank = W.war.units.find((u) => u.cls === 'mounted');
+  assert.equal(tank.lane, null, 'xe bọc thép đứng chờ: cầu dây leo không chịu nổi');
+  assert.ok(W.war.units.some((u) => u.cls === 'melee' && u.lane === 'b0'), 'bộ binh vẫn qua cầu được');
+  assert.ok(ledgerOk(W));
+});
+
+test('chiến tuyến trên cầu: quân tiến công, đánh nhau, tháp canh bắn, phá cổng thì chiếm thành; sổ cái vẫn khớp', () => {
+  const W = warWorld(5), A = W.cities[0], Z = W.cities[1];
+  Sim.advanceEra(W, 0); Sim.advanceEra(W, 0);
+  Sim.grantTreasury(A.w, 30000); Sim.grantTreasury(Z.w, 300);
+  for (const t of ['barracks', 'range', 'forge']) assert.ok(Sim.build(W, 0, t).ok, t);
+  assert.ok(Sim.buildBridge(W, 0, 0).ok);
+  Sim.grantTreasury(Z.w, 200);
+  assert.ok(Sim.build(W, 1, 'barracks').ok);
+  assert.ok(untilDone(W, () => W.bridges[0].level >= 0 && Sim.hasB(A, 'range') && Sim.hasB(A, 'forge') && Sim.hasB(Z, 'barracks'), 60));
+  for (let k = 0; k < 3; k++) { Sim.grantTreasury(Z.w, 60); assert.ok(Sim.train(W, 1, 'melee').ok); }
+  assert.ok(untilDone(W, () => W.war.units.filter((u) => u.city === 1).length >= 3, 40), 'Thông Xanh có quân giữ thành');
+  assert.ok(!Sim.declareWar(W, 0, 3).ok, 'không có cầu hay cảng thì không đánh được Tuyết Trắng');
+  assert.ok(Sim.declareWar(W, 0, 1).ok);
+  assert.ok(W.stories.some((s) => s.type === 'war'));
+  for (let d = 0; d < 20; d++) { Sim.stepWorld(W); assert.ok(!W.trade.some((t) => t.bridge === 0), 'chiến tranh thì cầu đóng chợ'); }
+  Sim.setStance(W, 0, 'b0', 'attack');
+  let fought = false, conquered = false;
+  for (let d = 0; d < 500 && !conquered; d++) {
+    if (Sim.armyOf(W, A) < Sim.armyCap(A) && A.queue.length < 3) { Sim.grantTreasury(A.w, 300); Sim.train(W, 0, d % 3 ? 'melee' : 'ranged'); }
+    Sim.stepWorld(W);
+    if (W.war.fx.length) fought = true;
+    for (const u of W.war.units) assert.ok(u.x >= 0 && u.x <= 1);
+    conquered = Z.owner === 0;
+  }
+  assert.ok(fought, 'có giao tranh');
+  assert.ok(conquered, `quân mạnh hơn phải chiếm được thành (máu thành còn ${Math.round(Z.hp)})`);
+  assert.ok(W.stories.some((s) => s.type === 'conquer' && s.city === 1));
+  assert.ok(Z.casualties > 0, 'lính giữ thành ngã xuống');
+  assert.ok(Z.w.households.some((h) => h.grief > 0) || Z.casualties > 0, 'gia đình có người tử trận để tang');
+  const soldiers = A.w.households.filter((h) => h.employer === -1).length;
+  assert.equal(soldiers, W.war.units.filter((u) => u.city === 0).length, 'mỗi người lính còn sống ứng với một hộ đang đi lính');
+  assert.ok(Z.w.households.every((h) => h.employer !== -1), 'lính của thành bị chiếm đã về nhà');
+  assert.ok(ledgerOk(W));
+  const m = Sim.worldMoney(W);
+  assert.ok(close(m.total, m.expected), 'sổ cái cả thế giới khớp');
+});
+
+test('tàu chiến và phong toả: tàu đánh trên đường biển, đóng cửa bến cá của địch nhưng không tự chiếm được thành', () => {
+  const W = warWorld(6), A = W.cities[0], Z = W.cities[3];
+  for (let e = 0; e < 3; e++) Sim.advanceEra(W, 0);
+  Sim.grantTreasury(A.w, 30000);
+  assert.ok(Sim.build(W, 0, 'port').ok);
+  assert.ok(untilDone(W, () => Sim.hasB(A, 'port'), 30));
+  assert.ok(Sim.declareWar(W, 0, 3).ok, 'có cảng thì đánh được thành bên kia biển');
+  Sim.setStance(W, 0, 's0-3', 'attack');
+  for (let k = 0; k < 4; k++) { Sim.grantTreasury(A.w, 600); const r = Sim.train(W, 0, 'ship'); assert.ok(r.ok, r.reason); }
+  assert.ok(untilDone(W, () => Sim.blockadeOf(W, Z) === 1, 200), 'tàu chiến tới trước cảng địch');
+  const f = Sim.fisheryOf(Z);
+  for (let d = 0; d < 3; d++) Sim.stepWorld(W);
+  if (f && f.crew > 0) assert.ok(f.seaFood < f.crew * 1.2, 'bến cá bị phong toả thì mẻ lưới nhỏ hẳn');
+  for (let d = 0; d < 300; d++) Sim.stepWorld(W);
+  assert.ok(Z.owner === 3 || W.war.units.some((u) => !u.naval && u.owner === 0), 'tàu chiến chỉ pháo kích, không tự chiếm thành');
+  assert.ok(ledgerOk(W));
+});
+
+test('hạt nhân: hầm phóng hoặc tàu ngầm, tàn phá thành địch, bụi phóng xạ và cả thế giới cấm vận', () => {
+  const W = warWorld(8), A = W.cities[0], Z = W.cities[1];
+  for (let e = 0; e < 5; e++) Sim.advanceEra(W, 0);
+  Sim.grantTreasury(A.w, 60000); Sim.grantTreasury(Z.w, 500);
+  assert.ok(Sim.buildBridge(W, 1, 0).ok);
+  assert.ok(Sim.build(W, 0, 'silo').ok);
+  assert.ok(untilDone(W, () => Sim.hasB(A, 'silo') && W.bridges[0].level >= 0, 120));
+  assert.ok(!Sim.nukeOffer(W, 0, 1).ok, 'tên lửa còn đang nạp');
+  for (let d = 0; d < 125; d++) Sim.stepWorld(W);
+  assert.ok(!Sim.nukeOffer(W, 0, 1).ok, 'không phóng vào nơi đang hoà bình');
+  assert.ok(Sim.declareWar(W, 0, 1).ok);
+  const hp = Z.hp, r = Sim.launchNuke(W, 0, 1);
+  assert.ok(r.ok && !r.intercepted);
+  assert.ok(Z.hp < hp * 0.5 && Z.fallout > 0, 'thành bị tàn phá, nhiễm xạ');
+  assert.ok(W.war.embargo[0] > W.day, 'cả bể kính cấm vận kẻ phóng');
+  assert.ok(W.stories.some((s) => s.type === 'nuke'));
+  assert.ok(!Sim.nukeOffer(W, 0, 1).ok, 'một năm mới nạp được quả khác');
+  for (let d = 0; d < 30; d++) Sim.stepWorld(W);
+  assert.ok(!W.trade.some((t) => t.from === 0 || t.to === 0), 'không ai buôn bán với kẻ phóng hạt nhân');
+  // tàu ngầm hạt nhân: một con tàu đóng ở cảng
+  Sim.grantTreasury(A.w, 3000);
+  assert.ok(Sim.build(W, 0, 'port').ok);
+  assert.ok(untilDone(W, () => Sim.hasB(A, 'port'), 30));
+  Sim.grantTreasury(A.w, 3500);
+  const rs = Sim.train(W, 0, 'sub');
+  assert.ok(rs.ok, rs.reason);
+  assert.ok(untilDone(W, () => W.war.units.some((u) => u.cls === 'sub' && u.ready <= W.day), 120));
+  assert.equal(Sim.nukeOffer(W, 0, 1).via, 'sub', 'tàu ngầm mang tên lửa thay cho hầm phóng đang nạp');
+  assert.ok(ledgerOk(W));
+});
+
+test('kỳ quan: xây xong và đứng vững một năm thì thắng; Tranh hùng tất định theo seed', () => {
+  const W = warWorld(9), A = W.cities[0];
+  for (let e = 0; e < 3; e++) Sim.advanceEra(W, 0);
+  Sim.grantTreasury(A.w, 40000);
+  assert.ok(Sim.build(W, 0, 'wonder').ok);
+  for (let d = 0; d < 320 && !(W.war.wonder && W.war.wonder.city === 0); d++) { Sim.grantTreasury(A.w, 60); Sim.stepWorld(W); }
+  assert.ok(W.war.wonder && W.war.wonder.city === 0, 'kỳ quan hoàn thành khi kho bạc trả đủ tiền công');
+  W.war.wonder.day -= 360;
+  Sim.stepWorld(W);
+  assert.ok(W.war.over && W.war.over.how === 'wonder' && W.war.over.winner === 0);
+  // tất định: hai thế giới cùng seed diễn ra y hệt, kể cả chiến tranh của máy
+  const a = Sim.createWorld({ seed: 12, mode: 'war', player: -1 }), b = Sim.createWorld({ seed: 12, mode: 'war', player: -1 });
+  for (let d = 0; d < 700; d++) { Sim.stepWorld(a); Sim.stepWorld(b); }
+  assert.deepStrictEqual(a.cities.map((c) => [c.owner, c.era, Math.round(c.hp)]), b.cities.map((c) => [c.owner, c.era, Math.round(c.hp)]));
+  assert.equal(a.war.units.length, b.war.units.length);
+  assert.ok(ledgerOk(a));
 });
