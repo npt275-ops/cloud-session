@@ -143,6 +143,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
   window.addEventListener('resize', resize);
   resize();
+  if (window.innerWidth < 720) camera.position.multiplyScalar(1.55);
 
   /* =============== Bầu trời, ánh sáng =============== */
   const skyMat = new THREE.ShaderMaterial({
