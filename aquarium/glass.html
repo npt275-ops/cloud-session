@@ -19,7 +19,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
 .glass { background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
 
-body.day { --title: #13233a; --title-dim: rgba(19, 35, 58, 0.78); }
+body.day { --title: #13233a; --title-dim: rgba(19, 35, 58, 0.78); --glass: rgba(14, 22, 38, 0.6); }
 .brand, .clock { color: var(--title); transition: color 1.2s; }
 .brand p, .clock span { color: var(--title-dim) !important; }
 body.day .brand, body.day .clock { text-shadow: 0 1px 12px rgba(255, 255, 255, 0.55); }
@@ -50,6 +50,22 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .card li span:last-child { color: var(--ink-dim); text-align: right; }
 .card .x { position: absolute; right: 10px; top: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 16px; cursor: pointer; }
 .hint { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); transform: translateX(-50%); font-size: 13px; color: var(--ink-dim); pointer-events: none; transition: opacity 0.6s; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); white-space: nowrap; }
+.x { width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 16px; cursor: pointer; flex: 0 0 auto; }
+.panel { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 128px); width: min(330px, calc(100% - 40px)); max-height: calc(100vh - 230px); overflow: auto; border-radius: 18px; padding: 14px 16px 16px; display: grid; gap: 8px; animation: rise 0.3s ease-out; }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.panel h3 { margin: 0; font: 700 21px/1.1 var(--font-display); }
+.panel .sub { margin: -2px 0 2px; font-size: 13px; color: var(--ink-dim); }
+.big { text-align: left; border: 1px solid rgba(255, 210, 122, 0.5); background: rgba(255, 210, 122, 0.12); color: var(--ink); border-radius: 14px; padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; font: inherit; }
+.big:hover { background: rgba(255, 210, 122, 0.2); }
+.big b { font: 600 15px var(--font-body); color: var(--amber); }
+.big span { font-size: 13px; color: var(--ink-dim); }
+.sl { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; margin-top: 4px; }
+.sl output { font-variant-numeric: tabular-nums; color: var(--amber); font-weight: 600; }
+.panel input[type="range"] { width: 100%; accent-color: #ffd27a; margin: 0; }
+.note { margin: 0 0 2px; font-size: 12.5px; color: var(--ink-dim); min-height: 2.6em; }
+.toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 22px); transform: translateX(-50%); border-radius: 16px; padding: 10px 16px; font-size: 14px; max-width: min(560px, calc(100% - 40px)); text-align: center; animation: drop 0.35s ease-out; z-index: 5; }
+.toast b { color: var(--amber); font-weight: 600; }
+@keyframes drop { from { transform: translate(-50%, -8px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 .err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--ink-dim); }
 
 @media (max-width: 720px) {
@@ -59,8 +75,11 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   .bar button { padding: 8px 10px; font-size: 12.5px; }
   .card { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); }
   .hint { display: none; }
+  .panel { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 58vh; }
+  body.panel-open .pulse { display: none; }
+  .toast { top: calc(env(safe-area-inset-top, 0px) + 74px); }
 }
-@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .card, .panel, .toast { animation: none; } }
 </style>
 
 <canvas id="scene" aria-label="Một thành phố tưởng tượng trên hòn đảo bay, đặt trong bể kính"></canvas>
@@ -75,6 +94,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <div class="hint" id="hint">Kéo để xoay · cuộn để phóng to · bấm vào một ngôi nhà</div>
 
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
+  <button id="policyBtn" aria-pressed="false" aria-controls="policy">Chính sách</button>
   <button id="play" aria-pressed="false">Tạm dừng</button>
   <button id="speed">Tốc độ 1×</button>
   <button id="cycle" aria-pressed="true">Ngày và đêm</button>
@@ -89,6 +109,22 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   <p id="cText"></p>
   <ul id="cList"></ul>
 </div>
+
+<section class="panel glass" id="policy" hidden aria-labelledby="pTitle">
+  <div class="ph"><h3 id="pTitle">Bàn tay chính sách</h3><button class="x" id="pClose" aria-label="Đóng bảng chính sách">×</button></div>
+  <p class="sub">Mỗi quyết định thay đổi nền kinh tế thật. Thành phố sẽ báo lại hệ quả sau vài tuần.</p>
+  <button class="big" id="pRain"><b>Rắc 10.000 xu xuống thành phố</b><span>Vàng rơi xuống mọi nhà. Dân có thêm tiền tiêu, nhưng giá cả có thể tăng theo.</span></button>
+  <label class="sl" for="rRate"><span>Lãi suất ngân hàng</span><output id="oRate">5%</output></label>
+  <input type="range" id="rRate" min="0" max="20" step="1" value="5">
+  <p class="note" id="nRate"></p>
+  <label class="sl" for="rTax"><span>Thuế thu nhập</span><output id="oTax">10%</output></label>
+  <input type="range" id="rTax" min="0" max="50" step="1" value="10">
+  <p class="note" id="nTax"></p>
+  <label class="sl" for="rWage"><span>Lương tối thiểu mỗi ngày</span><output id="oWage">6 xu</output></label>
+  <input type="range" id="rWage" min="0" max="18" step="1" value="6">
+  <p class="note" id="nWage"></p>
+</section>
+<div class="toast glass" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -525,7 +561,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   let puffIdx = 0;
   function puff(worldPos, dark) { const p = puffs[puffIdx++ % puffs.length]; p.m.position.copy(worldPos); p.m.material.color.set(dark ? '#8d8d8d' : '#f4f4f4'); p.t0 = performance.now(); p.m.visible = true; }
   const motes = [];
-  for (let i = 0; i < 140; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffd36b', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); s.scale.set(0.9, 0.9, 1); s.visible = false; island.add(s); motes.push({ s, t0: -1 }); }
+  for (let i = 0; i < 220; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffd36b', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); s.scale.set(0.9, 0.9, 1); s.visible = false; island.add(s); motes.push({ s, t0: -1 }); }
   let moteIdx = 0, showMoney = true;
   function keyPos(key) {
     if (key === 'bank') return new THREE.Vector3(12, 8, -16);
@@ -541,7 +577,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       const f = fl[Math.floor(Math.random() * fl.length)];
       const a = keyPos(f.from), b = keyPos(f.to); if (!a || !b) continue;
       const m = motes[moteIdx++ % motes.length];
-      m.a = a; m.b = b; m.t0 = performance.now() + Math.random() * 700; m.dur = 1600 + Math.random() * 800;
+      m.a = a; m.b = b; m.t0 = performance.now() + Math.random() * 700; m.dur = 1600 + Math.random() * 800; m.force = false;
       m.s.material.color.set(f.kind === 'buy' ? '#ffd36b' : f.kind === 'wage' || f.kind === 'dividend' ? '#9df0c4' : f.kind === 'loan' || f.kind === 'interest' || f.kind === 'repay' ? '#ff9db8' : '#c8b6ff');
       m.s.visible = true;
     }
@@ -615,6 +651,10 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     }
     const loansGlow = clamp(Math.log10(1 + world.bank.loansOut) / 4, 0.2, 1.4);
     orbGlow.userData.level = loansGlow; orb.scale.setScalar(0.8 + loansGlow * 0.4);
+    const cold = clamp(world.policy.interestRate / 0.2, 0, 1);
+    orb.material.color.copy(C('#ffd36b').lerp(C('#9cc3ff'), cold));
+    orb.material.emissive.copy(C('#b8860b').lerp(C('#2f5f9f'), cold));
+    orbGlow.material.color.copy(C('#ffcf5a').lerp(C('#8fb8ff'), cold));
   }
 
   function pulse() {
@@ -675,7 +715,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       const f = world.firms.find((x) => x.id === sel.id), o = firmObj.get(sel.id);
       if (!f || !o) { sel = null; return card(); }
       kind = f.sector === 'food' ? 'Cối xay gió · lương thực' : 'Xưởng thủ công · hàng hoá';
-      title = (f.sector === 'food' ? FOOD_NAMES : GOODS_NAMES)[o.nameIdx % 9 + (f.sector === 'food' ? 0 : 0)] || 'Xưởng';
+      const names = f.sector === 'food' ? FOOD_NAMES : GOODS_NAMES;
+      title = names[o.nameIdx % names.length];
       text = !f.alive ? 'Đã đóng cửa. Cánh quạt ngừng quay, lò đã nguội.' : f.workers.length > 8 ? 'Đang rất bận rộn, ' + f.workers.length + ' người làm việc.' : f.workers.length ? f.workers.length + ' người đang làm việc ở đây.' : 'Vắng vẻ, chưa ai làm việc.';
       list = [['Giá bán', f.price.toFixed(1).replace('.', ',') + ' xu'], ['Lương mỗi ngày', f.wage.toFixed(1).replace('.', ',') + ' xu'], ['Hàng trong kho', fmt(f.inv)], ['Nợ ngân hàng', fmt(f.debt) + ' xu']];
     } else if (sel.type === 'bank') {
@@ -696,6 +737,161 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     $('card').hidden = false;
   }
 
+  /* =============== Bàn tay chính sách =============== */
+  function spawnMote(a, b, color, dur) {
+    const m = motes[moteIdx++ % motes.length];
+    m.a = a; m.b = b; m.t0 = performance.now() + Math.random() * 500; m.dur = dur || 1800; m.force = true;
+    m.s.material.color.set(color); m.s.visible = true;
+  }
+  // sóng lan trên mặt đất
+  const rings = [];
+  function ripple(pos, color) {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.82, 1, 72), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(pos.x, 0.4, pos.z); island.add(m);
+    rings.push({ m, t0: performance.now() });
+  }
+  // chữ nổi trong không gian
+  const floatLabels = [];
+  function label3d(text, pos, color) {
+    const c = document.createElement('canvas'); c.width = 640; c.height = 128;
+    const x = c.getContext('2d');
+    x.font = '600 50px Outfit, "Segoe UI", system-ui, sans-serif';
+    const w = Math.min(620, x.measureText(text).width + 70), x0 = (640 - w) / 2, r = 48;
+    x.beginPath(); x.moveTo(x0 + r, 16); x.arcTo(x0 + w, 16, x0 + w, 112, r); x.arcTo(x0 + w, 112, x0, 112, r); x.arcTo(x0, 112, x0, 16, r); x.arcTo(x0, 16, x0 + w, 16, r); x.closePath();
+    x.fillStyle = 'rgba(14,22,38,0.78)'; x.fill();
+    x.fillStyle = color; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, 320, 66);
+    const tex = new THREE.CanvasTexture(c);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, opacity: 0 }));
+    sp.renderOrder = 20; sp.scale.set(20, 4, 1); sp.position.copy(pos); island.add(sp);
+    floatLabels.push({ sp, t0: performance.now(), y: pos.y });
+  }
+  // mưa đồng xu vàng
+  const COINS = 280;
+  const coinMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.34, 0.34, 0.08, 14), new THREE.MeshStandardMaterial({ color: '#ffcf4d', metalness: 0.35, roughness: 0.3, emissive: '#a87400', emissiveIntensity: 0.55 }), COINS);
+  coinMesh.castShadow = true; coinMesh.frustumCulled = false; island.add(coinMesh);
+  const coins = Array.from({ length: COINS }, () => ({ alive: false }));
+  const cDummy = new THREE.Object3D();
+  function hideCoin(i) { cDummy.position.set(0, -80, 0); cDummy.scale.setScalar(0.001); cDummy.updateMatrix(); coinMesh.setMatrixAt(i, cDummy.matrix); }
+  for (let i = 0; i < COINS; i++) hideCoin(i);
+  coinMesh.instanceMatrix.needsUpdate = true;
+  function coinRain() {
+    const now = performance.now();
+    coins.forEach((c) => {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (R - 5);
+      Object.assign(c, { alive: true, x: Math.cos(a) * r, z: Math.sin(a) * r, y: 24 + Math.random() * 14, vy: -Math.random() * 2, t0: now + Math.random() * 1800, landed: 0, rx: Math.random() * 6, rz: Math.random() * 6, spin: 5 + Math.random() * 7 });
+    });
+    for (const H of houses) { const b = H.g.position; spawnMote(new THREE.Vector3(b.x, 26, b.z), new THREE.Vector3(b.x, 3, b.z), '#ffd36b', 1900); }
+  }
+  function updateCoins(dt, now) {
+    let any = false;
+    for (let i = 0; i < COINS; i++) {
+      const c = coins[i]; if (!c.alive) continue; any = true;
+      if (now < c.t0) { hideCoin(i); continue; }
+      const s = dt / 1000;
+      if (!c.landed) {
+        c.vy -= 30 * s; c.y += c.vy * s; c.rx += c.spin * s; c.rz += c.spin * 0.7 * s;
+        if (c.y <= 0.14) { c.y = 0.14; c.landed = now; c.rx = 0; c.rz = 0; }
+      }
+      const fade = c.landed ? 1 - clamp((now - c.landed - 1000) / 900, 0, 1) : 1;
+      if (fade <= 0) { c.alive = false; hideCoin(i); continue; }
+      cDummy.position.set(c.x, c.y, c.z); cDummy.rotation.set(c.rx, 0, c.rz); cDummy.scale.setScalar(fade); cDummy.updateMatrix(); coinMesh.setMatrixAt(i, cDummy.matrix);
+    }
+    if (any) coinMesh.instanceMatrix.needsUpdate = true;
+  }
+  function updatePolicyFx(now) {
+    for (let i = rings.length - 1; i >= 0; i--) {
+      const r = rings[i], k = (now - r.t0) / 2600;
+      if (k >= 1) { island.remove(r.m); r.m.geometry.dispose(); r.m.material.dispose(); rings.splice(i, 1); continue; }
+      r.m.scale.setScalar(1 + k * 34); r.m.material.opacity = 0.9 * (1 - k);
+    }
+    for (let i = floatLabels.length - 1; i >= 0; i--) {
+      const L = floatLabels[i], k = (now - L.t0) / 4200;
+      if (k >= 1) { island.remove(L.sp); L.sp.material.map.dispose(); L.sp.material.dispose(); floatLabels.splice(i, 1); continue; }
+      L.sp.position.y = L.y + k * 2.5; L.sp.material.opacity = Math.min(1, k * 6) * (1 - Math.max(0, (k - 0.75) / 0.25));
+    }
+  }
+
+  // Thông báo và theo dõi hệ quả
+  const toastQ = [];
+  let toastBusy = false;
+  function toast(html, ms) { toastQ.push([html, ms || 4200]); if (!toastBusy) nextToast(); }
+  function nextToast() {
+    const t = toastQ.shift();
+    if (!t) { toastBusy = false; $('toast').hidden = true; return; }
+    toastBusy = true; const el = $('toast'); el.hidden = true; void el.offsetWidth; el.innerHTML = t[0]; el.hidden = false;
+    setTimeout(nextToast, t[1]);
+  }
+  const fmtPct = (v) => (Math.abs(v) < 1.5 ? 'gần như không đổi' : (v > 0 ? 'tăng ' : 'giảm ') + Math.abs(v).toFixed(0) + '%');
+  const pp = (v) => v.toFixed(1).replace('.', ',') + '%';
+  function snap() {
+    const st = world.stats, s = st[st.length - 1], recent = st.slice(-10);
+    return { day: world.day, cpi: s.cpi, ue: s.unemployment, loans: world.bank.loansOut, hungry: recent.reduce((a, x) => a + x.hungry, 0) / recent.length, gov: world.gov.cash, wageAvg: world.firms.filter((f) => f.alive).reduce((a, f, _, arr) => a + f.wage / arr.length, 0) };
+  }
+  const watches = [];
+  function watch(days, fn) { watches.push({ at: world.day + days, before: snap(), fn }); }
+  function checkWatches() {
+    for (let i = watches.length - 1; i >= 0; i--) {
+      if (world.day < watches[i].at) continue;
+      const w = watches.splice(i, 1)[0], msg = w.fn(w.before, snap());
+      if (msg) toast(msg, 6500);
+    }
+  }
+
+  const NOTES = {
+    rRate: (v) => v <= 2 ? 'Rất thấp: vay gần như miễn phí. Kinh tế dễ nóng lên và nợ phình to.' : v <= 7 ? 'Vừa phải: doanh nghiệp vay để mở rộng khi cần.' : v <= 13 ? 'Cao: vay đắt, doanh nghiệp ngại mở rộng và có thể sa thải.' : 'Rất cao: tín dụng gần như đóng băng. Coi chừng suy thoái.',
+    rTax: (v) => v <= 4 ? 'Gần như không thu thuế: quỹ cạn, người mất việc không có trợ cấp.' : v <= 20 ? 'Vừa phải: đủ trợ cấp cho người chưa có việc.' : v <= 35 ? 'Cao: trợ cấp hào phóng, người đi làm giữ lại ít hơn.' : 'Rất cao: tiền chảy mạnh từ người đi làm sang quỹ thành phố.',
+    rWage: (v) => v <= 4 ? 'Thấp: dễ thuê người, nhưng lương có thể rất bèo.' : v <= 9 ? 'Vừa phải: gần với mức lương thị trường.' : v <= 13 ? 'Cao: người đi làm sống tốt hơn, giá cả sẽ nhích lên.' : 'Rất cao: nhiều nơi khó trả nổi, giá cả tăng mạnh.',
+  };
+  function refreshNotes() {
+    $('oRate').textContent = $('rRate').value + '%'; $('nRate').textContent = NOTES.rRate(+$('rRate').value);
+    $('oTax').textContent = $('rTax').value + '%'; $('nTax').textContent = NOTES.rTax(+$('rTax').value);
+    $('oWage').textContent = $('rWage').value + ' xu'; $('nWage').textContent = NOTES.rWage(+$('rWage').value);
+  }
+  function openPolicy(open) {
+    $('policy').hidden = !open; $('policyBtn').setAttribute('aria-pressed', String(open));
+    document.body.classList.toggle('panel-open', open);
+    if (open) { $('rRate').value = Math.round(world.policy.interestRate * 100); $('rTax').value = Math.round(world.policy.taxRate * 100); $('rWage').value = Math.round(world.policy.minWage); refreshNotes(); }
+  }
+  $('policyBtn').onclick = () => openPolicy($('policy').hidden);
+  $('pClose').onclick = () => openPolicy(false);
+  for (const id of ['rRate', 'rTax', 'rWage']) $(id).addEventListener('input', refreshNotes);
+
+  function doRain() {
+    Sim.printMoney(world, 10000);
+    coinRain();
+    label3d('+10.000 xu cho mọi nhà', new THREE.Vector3(PLAZA.x, 22, PLAZA.z), '#ffd27a');
+    toast('Vàng đang rơi xuống thành phố. Mỗi gia đình nhận khoảng <b>' + Math.round(10000 / world.households.length) + ' xu</b>.');
+    watch(30, (a, b) => 'Một tháng sau trận mưa vàng: giá cả <b>' + fmtPct((b.cpi / a.cpi - 1) * 100) + '</b>, thất nghiệp ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.');
+  }
+  $('pRain').onclick = doRain;
+  $('rRate').addEventListener('change', () => {
+    const v = +$('rRate').value / 100;
+    Sim.setPolicy(world, 'interestRate', v);
+    const cold = clamp(v / 0.2, 0, 1), col = '#' + C('#ffd36b').lerp(C('#9cc3ff'), cold).getHexString();
+    ripple(bank.position, col);
+    label3d('Lãi suất ' + Math.round(v * 100) + '% mỗi năm', new THREE.Vector3(bank.position.x, 14, bank.position.z), col);
+    toast('Kho Bạc đặt lãi suất mới: <b>' + Math.round(v * 100) + '% mỗi năm</b>. ' + (v >= 0.1 ? 'Quả cầu nguội dần sang màu xanh.' : 'Quả cầu ấm lên màu vàng.'));
+    watch(60, (a, b) => 'Hai tháng sau khi đổi lãi suất: dư nợ <b>' + fmtPct((b.loans / Math.max(1, a.loans) - 1) * 100) + '</b>, thất nghiệp ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.');
+  });
+  $('rTax').addEventListener('change', () => {
+    const v = +$('rTax').value / 100;
+    Sim.setPolicy(world, 'taxRate', v);
+    ripple(hall.position, '#c8b6ff');
+    label3d('Thuế thu nhập ' + Math.round(v * 100) + '%', new THREE.Vector3(hall.position.x, 21, hall.position.z), '#d9ccff');
+    for (let k = 0; k < 30; k++) { const H = houses[Math.floor(Math.random() * houses.length)].g.position; spawnMote(new THREE.Vector3(H.x, 3, H.z), new THREE.Vector3(hall.position.x, 12, hall.position.z), '#c8b6ff', 2000); }
+    toast('Tháp Đồng Hồ thu thuế mới: <b>' + Math.round(v * 100) + '%</b> thu nhập.');
+    watch(45, (a, b) => 'Sau khi đổi thuế: quỹ thành phố ' + Math.round(a.gov).toLocaleString('vi-VN') + ' → <b>' + Math.round(b.gov).toLocaleString('vi-VN') + ' xu</b>, số nhà thiếu ăn ' + a.hungry.toFixed(0) + ' → <b>' + b.hungry.toFixed(0) + '</b>.');
+  });
+  $('rWage').addEventListener('change', () => {
+    const v = +$('rWage').value;
+    Sim.setPolicy(world, 'minWage', v);
+    ripple(PLAZA, '#9df0c4');
+    label3d('Lương tối thiểu ' + v + ' xu', new THREE.Vector3(PLAZA.x, 19, PLAZA.z + 4), '#9df0c4');
+    for (const [, o] of firmObj) { const fp = o.g.position; for (let k = 0; k < 3; k++) { const H = houses[Math.floor(Math.random() * houses.length)].g.position; spawnMote(new THREE.Vector3(fp.x, 3, fp.z), new THREE.Vector3(H.x, 3, H.z), '#9df0c4', 2200); } }
+    toast('Lương tối thiểu mới: <b>' + v + ' xu mỗi ngày</b>.');
+    watch(45, (a, b) => 'Sau khi đổi lương tối thiểu: lương trung bình ' + a.wageAvg.toFixed(1).replace('.', ',') + ' → <b>' + b.wageAvg.toFixed(1).replace('.', ',') + ' xu</b>, giá cả <b>' + fmtPct((b.cpi / a.cpi - 1) * 100) + '</b>, thất nghiệp <b>' + pp(b.ue) + '</b>.');
+  });
+
   /* =============== Điều khiển =============== */
   let running = true, tps = 1.5, acc = 0;
   const speeds = [[1.5, '1×'], [5, '3×'], [14, '10×']];
@@ -705,7 +901,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
   $('money').onclick = () => { showMoney = !showMoney; $('money').setAttribute('aria-pressed', String(showMoney)); };
   $('orbit').onclick = () => { controls.autoRotate = !controls.autoRotate; $('orbit').setAttribute('aria-pressed', String(controls.autoRotate)); };
-  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world };
+  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world, openPolicy, doRain, ff: (n) => { for (let i = 0; i < n; i++) { Sim.step(world); syncFirms(); checkWatches(); } pulse(); } };
 
   /* =============== Vòng lặp =============== */
   syncFirms();
@@ -716,7 +912,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1;
       acc += (dt * tps) / 1000;
       let steps = 0;
-      while (acc >= 1 && steps < 4) { Sim.step(world); syncFirms(); spawnMotes(); acc -= 1; steps++; }
+      while (acc >= 1 && steps < 4) { Sim.step(world); syncFirms(); spawnMotes(); checkWatches(); acc -= 1; steps++; }
       if (steps) { pulse(); if (sel) card(); }
     }
     const { night } = applyTime();
@@ -751,12 +947,14 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (!m.s.visible) continue;
       const k = (now - m.t0) / m.dur;
       if (k < 0) { m.s.material.opacity = 0; continue; }
-      if (k > 1 || !showMoney) { m.s.visible = false; continue; }
+      if (k > 1 || (!showMoney && !m.force)) { m.s.visible = false; continue; }
       const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       m.s.position.lerpVectors(m.a, m.b, e); m.s.position.y += Math.sin(k * Math.PI) * 6;
       m.s.material.opacity = Math.sin(k * Math.PI) * 0.95;
     }
     updatePeople(tod, t);
+    updateCoins(dt, now);
+    updatePolicyFx(now);
     if (focus) {
       const k = clamp((now - focus.t0) / 1300, 0, 1), e = 1 - Math.pow(1 - k, 3);
       controls.target.lerpVectors(focus.from, focus.target, e);

@@ -71,3 +71,19 @@ test('nền kinh tế có nhịp sống: thất nghiệp tự nhiên, chu kỳ, 
     assert.ok(mean('hungry') < 12, `seed ${seed}: ${mean('hungry').toFixed(1)} hộ đói/ngày`);
   }
 });
+
+test('chính sách có tác động thật: lãi suất cao làm tăng thất nghiệp, lương tối thiểu nâng lương sàn và đẩy giá', () => {
+  function run(setup) {
+    const w = Sim.create({ seed: 5 });
+    for (let i = 0; i < 150; i++) Sim.step(w);
+    setup(w);
+    let ue = 0, n = 0;
+    for (let i = 0; i < 300; i++) { Sim.step(w); if (i > 100) { ue += w.stats.at(-1).unemployment; n++; } }
+    return { ue: ue / n, cpi: w.stats.at(-1).cpi, minWage: Math.min(...w.firms.filter((f) => f.alive).map((f) => f.wage)), w };
+  }
+  const base = run(() => {}), tight = run((w) => Sim.setPolicy(w, 'interestRate', 0.18)), mw = run((w) => Sim.setPolicy(w, 'minWage', 14));
+  assert.ok(tight.ue > base.ue + 5, `lãi 18%: thất nghiệp ${tight.ue.toFixed(1)}% so với ${base.ue.toFixed(1)}%`);
+  assert.ok(mw.minWage >= 14, `lương sàn ${mw.minWage}`);
+  assert.ok(mw.cpi > base.cpi * 1.15, `giá ${mw.cpi.toFixed(0)} so với ${base.cpi.toFixed(0)}`);
+  for (const r of [base, tight, mw]) assert.ok(close(Sim.totalMoney(r.w), Sim.expectedMoney(r.w)));
+});
