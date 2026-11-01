@@ -11,6 +11,7 @@
     airship: ['Khí cầu', '#7bdff2'], 'airship-leave': ['Khí cầu', '#7bdff2'], fire: ['Hoả hoạn', '#ff7a2f'],
     bankrupt: ['Phá sản', '#d49a9a'], open: ['Khai trương', '#9be564'], job: ['Việc làm', '#9df0c4'], layoff: ['Mất việc', '#b9a3a3'],
     rich: ['Giàu lên', '#f2c14e'], hungry: ['Thiếu ăn', '#e58f8f'], copy: ['Học theo', '#e8d38a'],
+    tap: ['Tiếng gõ', '#cfe8ff'], 'rumor-food': ['Tin đồn', '#f0b85a'], 'food-rush': ['Tích trữ', '#f0b85a'], 'food-rush-end': ['Tích trữ', '#c9b48a'], chapter: ['Chương mới', '#ffd27a'],
     season: ['Mùa', '#a6d6a0'], drought: ['Hạn hán', '#e0b060'], 'drought-end': ['Hạn hán', '#a6d6a0'], festival: ['Lễ hội', '#ffb36b'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
@@ -77,9 +78,9 @@
     }
     function spreadArcs() {
       const fad = Sim.activeFad(world), list = world.spread || [];
-      const fear = list.filter((s) => s.kind === 'fear'), hype = list.filter((s) => s.kind === 'hype');
-      const pick = [...fear.slice(0, 14), ...hype.slice(0, 14)];
-      for (const s of pick) spawnArc(housePos(Math.floor(s.from / 4)), housePos(Math.floor(s.to / 4)), s.kind === 'fear' ? '#ff5a5a' : fad ? fad.color : '#ffd166');
+      const fear = list.filter((s) => s.kind === 'fear'), hype = list.filter((s) => s.kind === 'hype'), food = list.filter((s) => s.kind === 'food');
+      const pick = [...fear.slice(0, 14), ...hype.slice(0, 14), ...food.slice(0, 12)];
+      for (const s of pick) spawnArc(housePos(Math.floor(s.from / 4)), housePos(Math.floor(s.to / 4)), s.kind === 'fear' ? '#ff5a5a' : s.kind === 'food' ? '#f0b85a' : fad ? fad.color : '#ffd166');
     }
 
     /* =============== Quầng sáng trên mái: nhà đang sợ, nhà đang mê =============== */
@@ -88,11 +89,11 @@
       while (auras.length < houses.length) { const s = new THREE.Sprite(additive('#ff5a5a')); s.scale.set(3.4, 3.4, 1); island.add(s); auras.push({ s, level: 0, target: 0 }); }
       const fad = Sim.activeFad(world);
       for (let i = 0; i < houses.length; i++) {
-        let fear = 0, hype = 0;
-        for (let k = 0; k < 4; k++) { const h = world.households[i * 4 + k]; if (!h) continue; if (h.fear > 0) fear++; if (fad && h.hype === fad.id) hype++; }
+        let fear = 0, hype = 0, food = 0;
+        for (let k = 0; k < 4; k++) { const h = world.households[i * 4 + k]; if (!h) continue; if (h.fear > 0) fear++; if (fad && h.hype === fad.id) hype++; if (h.foodRumor > 0) food++; }
         const A = auras[i];
-        A.target = Math.max(fear, hype) / 4;
-        A.s.material.color.set(fear >= hype && fear > 0 ? '#ff4d4d' : fad ? fad.color : '#ffd166');
+        A.target = Math.max(fear, hype, food) / 4;
+        A.s.material.color.set(fear >= hype && fear >= food && fear > 0 ? '#ff4d4d' : food >= hype && food > 0 ? '#f0b85a' : fad ? fad.color : '#ffd166');
       }
     }
     function updateAuras(t) {
@@ -235,7 +236,7 @@
     }
     function updateShip(t, dt) {
       const a = world.airship;
-      dock.visible = a.visits > 0;
+      dock.visible = a.visits > 0 || a.called;
       if (a.state === 'docked' && (shipVis.mode === 'hidden' || shipVis.mode === 'leaving')) { shipVis.mode = 'arriving'; shipVis.t0 = now(); shipVis.from.copy(ship.visible ? ship.position : farPoint); ship.visible = true; }
       if (a.state !== 'docked' && (shipVis.mode === 'arriving' || shipVis.mode === 'docked')) { shipVis.mode = 'leaving'; shipVis.t0 = now(); shipVis.from.copy(ship.position); }
       if (shipVis.mode === 'hidden') { ship.visible = false; return; }
@@ -304,6 +305,7 @@
     const chron = [];
     let unread = 0;
     function chronItem(st) {
+      if (st.type === 'chapter') return '<li class="t-chapter"><button data-id="' + st.id + '"><span class="cd">' + st.title.split(': ')[0] + ' khép lại · Ngày ' + st.day + '</span><b>' + (st.title.split(': ')[1] || st.title) + '</b><span class="ct">' + (st.recap || []).slice(0, 3).join(' · ') + '</span></button></li>';
       const [label, color] = typeOf(st.type);
       return '<li class="t-' + st.tier + '"><button data-id="' + st.id + '"><i style="background:' + color + ';color:' + color + '"></i><span class="cd">Ngày ' + st.day + ' · ' + label + '</span><b>' + st.title + '</b><span class="ct">' + st.text + '</span></button></li>';
     }
@@ -321,6 +323,7 @@
     $('chronList').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-id]'); if (!b) return;
       const st = chron.find((s) => s.id === +b.dataset.id); if (!st) return;
+      if (st.type === 'chapter') { X.closePanels(); showChapter(st); return; }
       goTo(st, true);
     });
     function goTo(st, manual) {
@@ -360,39 +363,64 @@
       else if (!overview && n - idleSince > 7000) { flyTo(new THREE.Vector3(0, 0, 0), 128); X.setAutoRotate(true); overview = true; }
     }
 
-    /* =============== Gieo phát minh =============== */
-    let seedMode = false;
+    /* =============== Công cụ của người giữ bể =============== */
+    let mode = null;
+    const HINT = {
+      seed: 'Chọn một xưởng hoặc cối xay để gieo hạt phát minh.',
+      tap: 'Chạm vào một chỗ trên đảo để gõ lên vòm kính phía trên. Gõ liên tiếp nhiều ngày thì nỗi sợ lan rộng hơn.',
+      'whisper-bank': 'Chọn một ngôi nhà để thì thầm: “Kho Bạc sắp vỡ”.',
+      'whisper-food': 'Chọn một ngôi nhà để thì thầm: “Năm nay sắp mất mùa”.',
+      'whisper-fad': 'Chọn một xưởng thủ công (mái vòm) để thì thầm về một món hàng mới.',
+    };
+    const TOOL_OF = { seed: 'toolSeed', tap: 'toolTap', 'whisper-bank': 'toolWhisper', 'whisper-food': 'toolWhisper', 'whisper-fad': 'toolWhisper' };
     const halos = new Map();
-    function setSeedMode(on) {
-      seedMode = on;
-      $('toolSeed').setAttribute('aria-pressed', String(on));
-      document.body.classList.toggle('seeding', on);
-      if (on) { X.closePanels(); select(null); toast('Chọn một xưởng hoặc cối xay để gieo hạt phát minh.', 3500); pausedUntil = now() + 30000; }
-      for (const [, s] of halos) s.visible = on;
+    function setMode(m) {
+      mode = m || null;
+      for (const id of ['toolSeed', 'toolTap', 'toolWhisper']) $(id).setAttribute('aria-pressed', String(!!mode && TOOL_OF[mode] === id));
+      document.body.classList.toggle('seeding', !!mode);
+      showMenu(false);
+      if (mode) { X.closePanels(); select(null); toast(HINT[mode], 3800); pausedUntil = now() + 30000; }
+      for (const [, sp] of halos) sp.visible = false;
+    }
+    function wants(sel) {
+      if (!mode) return false;
+      if (mode === 'tap') return true;
+      if (!sel) return false;
+      if (mode === 'seed') return sel.type === 'firm';
+      if (mode === 'whisper-fad') { const f = sel.type === 'firm' && firmOf(sel.id); return !!(f && f.alive && f.sector === 'goods'); }
+      return sel.type === 'house';
+    }
+    function haloAt(key, p, size, y) {
+      let sp = halos.get(key);
+      if (!sp) { sp = new THREE.Sprite(additive('#ffd36b', 0)); island.add(sp); halos.set(key, sp); }
+      sp.scale.set(size, size, 1); sp.position.set(p.x, y, p.z);
+      return sp;
     }
     function updateHalos(t) {
-      if (!seedMode) return;
-      for (const [id, o] of firmObj) {
-        let s = halos.get(id);
-        if (!s) { s = new THREE.Sprite(additive('#ffd36b', 0)); s.scale.set(7, 7, 1); island.add(s); halos.set(id, s); }
-        const f = firmOf(id); s.visible = !!(f && f.alive);
-        s.position.set(o.g.position.x, 3.5, o.g.position.z);
-        s.material.opacity = 0.35 + 0.25 * Math.sin(t * 0.005 + id);
+      if (!mode || mode === 'tap') return;
+      const color = mode === 'seed' ? '#ffd36b' : mode === 'whisper-bank' ? '#ff6b6b' : mode === 'whisper-food' ? '#f0b85a' : '#ff6b9d';
+      if (mode === 'seed' || mode === 'whisper-fad') {
+        for (const [id, o] of firmObj) {
+          const f = firmOf(id), sp = haloAt('f' + id, o.g.position, 7, 3.5);
+          sp.visible = !!(f && f.alive && !o.dying && (mode === 'seed' || f.sector === 'goods'));
+          sp.material.color.set(color); sp.material.opacity = 0.35 + 0.25 * Math.sin(t * 0.005 + id);
+        }
+      } else {
+        houses.forEach((H, i) => { const sp = haloAt('h' + i, H.g.position, 4.4, 2.6); sp.visible = true; sp.material.color.set(color); sp.material.opacity = 0.2 + 0.14 * Math.sin(t * 0.005 + i); });
       }
     }
-    function updateSeedUi() {
-      const wait = Math.max(0, world.seedReady - world.day);
-      $('seedWait').textContent = wait ? 'Ủ lại · còn ' + wait + ' ngày' : 'Sẵn sàng';
-      $('toolSeed').style.setProperty('--p', String(1 - wait / 40));
-      $('toolSeed').classList.toggle('ready', !wait);
+    // xử lý những chuyện vừa sinh ra (sau mỗi ngày, hoặc ngay sau khi người giữ bể ra tay)
+    function tellNow(type) {
+      const fresh = ingest(), st = fresh.filter((x) => x.type === type).pop();
+      if (st) { const qi = queue.indexOf(st); if (qi >= 0) queue.splice(qi, 1); }
+      return st;
     }
-    $('toolSeed').addEventListener('click', () => setSeedMode(!seedMode));
-    function handlePick(sel) {
-      if (!seedMode) return false;
-      if (!sel || sel.type !== 'firm') { toast('Hãy chọn một xưởng hoặc một cối xay gió.', 2500); return true; }
+
+    /* ----- Gieo phát minh ----- */
+    function doSeed(sel) {
       const r = Sim.seedInvention(world, sel.id);
       if (!r.ok) { toast(r.reason === 'wait' ? 'Hạt giống đang ủ lại, còn ' + r.wait + ' ngày nữa.' : 'Nơi này đã đóng cửa.', 3000); return true; }
-      setSeedMode(false); updateSeedUi();
+      setMode(null); updateToolUi();
       const f = firmOf(sel.id), share = () => { const g = world.firms.filter((x) => x.alive && x.sector === f.sector); return f.avgSales / Math.max(1e-9, g.reduce((a, x) => a + x.avgSales, 0)); };
       const s0 = share(), p0 = f.price;
       flyTo(firmPos(sel.id), 34); pausedUntil = now() + 15000;
@@ -404,40 +432,352 @@
       return true;
     }
 
+    /* ----- Gõ vào kính ----- */
+    const DOME = R + 6, GROUND = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const domePoint = (p) => new THREE.Vector3(p.x, Math.sqrt(Math.max(4, DOME * DOME - p.x * p.x - p.z * p.z)), p.z);
+    const ringGeo = new THREE.RingGeometry(0.9, 1, 64), glassFx = [];
+    let shake = null;
+    function groundPoint(ray) { const p = new THREE.Vector3(); if (!ray || !ray.ray.intersectPlane(GROUND, p)) return null; return Math.hypot(p.x, p.z) < R + 2 ? p : null; }
+    function glassRipple(p, level) {
+      const q = domePoint(p), n = q.clone().normalize();
+      for (let k = 0; k < 1 + level; k++) {
+        const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: level >= 3 ? '#ffd2d2' : '#e8f8ff', transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        m.position.copy(q); m.lookAt(q.clone().add(n)); island.add(m);
+        glassFx.push({ m, t0: now() + k * 170, dur: 1300 + level * 350, size: 5 + level * 3.5, kind: 'ring' });
+      }
+      const fl = new THREE.Sprite(additive('#ffffff', 1)); fl.position.copy(q); island.add(fl);
+      glassFx.push({ m: fl, t0: now(), dur: 700, size: 8 + level * 4, kind: 'flash' });
+      if (level < 3) return;
+      // vết rạn toả ra trên mặt kính, mờ dần sau vài giây
+      const t1 = new THREE.Vector3().crossVectors(n, new THREE.Vector3(0, 1, 0.01)).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1).normalize();
+      for (let k = 0; k < 5 + level * 2; k++) {
+        const a = (k / (5 + level * 2)) * Math.PI * 2 + Math.random() * 0.4, pts = [q.clone()];
+        let cur = q.clone(), dir = t1.clone().multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a));
+        for (let j = 0; j < 4; j++) {
+          dir.applyAxisAngle(n, (Math.random() - 0.5) * 0.8);
+          cur = cur.clone().addScaledVector(dir, 1.2 + Math.random() * 1.6 * (level - 1)).setLength(DOME - 0.05);
+          pts.push(cur);
+        }
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.9, depthWrite: false }));
+        island.add(line);
+        glassFx.push({ m: line, t0: now(), dur: 3600 + level * 900, kind: 'crack' });
+      }
+    }
+    function updateGlass() {
+      const n = now();
+      for (let i = glassFx.length - 1; i >= 0; i--) {
+        const G = glassFx[i], k = (n - G.t0) / G.dur;
+        if (k < 0) continue;
+        if (k >= 1) { island.remove(G.m); if (G.m.geometry !== ringGeo && G.kind !== 'flash') G.m.geometry.dispose(); G.m.material.dispose(); glassFx.splice(i, 1); continue; }
+        if (G.kind === 'ring') { G.m.scale.setScalar(0.5 + k * G.size); G.m.material.opacity = 0.85 * (1 - k); }
+        else if (G.kind === 'flash') { G.m.scale.setScalar(2 + k * G.size); G.m.material.opacity = 1 - k; }
+        else G.m.material.opacity = 0.9 * (1 - k * k);
+      }
+      if (shake) {
+        const k = (n - shake.t0) / 650;
+        if (k >= 1 || reduce) { island.position.set(0, 0, 0); shake = null; }
+        else { const a = shake.amp * (1 - k); island.position.set((Math.random() - 0.5) * a, (Math.random() - 0.5) * a * 0.5, (Math.random() - 0.5) * a); }
+      }
+    }
+    function doTap(p) {
+      const ids = [];
+      houses.forEach((H, i) => { if (Math.hypot(H.g.position.x - p.x, H.g.position.z - p.z) < 12) for (let k = 0; k < 4; k++) if (world.households[i * 4 + k]) ids.push(i * 4 + k); });
+      const r = Sim.tapGlass(world, ids);
+      if (!r.ok) { toast('Vòm kính còn đang rung. Sang ngày mới mới gõ tiếp được.', 2200); return; }
+      glassRipple(p, r.level);
+      shake = { t0: now(), amp: 0.1 + r.level * 0.12 };
+      if (audio) audio.knock(r.level);
+      const q = domePoint(p);
+      let shown = 0;
+      for (let i = 0; i < world.households.length && shown < 26; i++) { const h = world.households[i]; if (h.fear > 0 && (ids.includes(i) || r.level >= 3) && Math.random() < 0.6) { spawnArc(q, housePos(Math.floor(i / 4)), '#ff5a5a'); shown++; } }
+      const st = tellNow('tap');
+      if (st) showSub(st, 6500);
+      computeAuras(); updateToolUi();
+    }
+
+    /* ----- Thì thầm tin đồn ----- */
+    function showMenu(on) {
+      const m = $('whisperMenu'); m.hidden = !on; $('toolWhisper').setAttribute('aria-expanded', String(on));
+      if (!on) return;
+      const b = $('toolWhisper').getBoundingClientRect(), mw = Math.min(300, window.innerWidth - 24);
+      m.style.width = mw + 'px';
+      const left = b.right + 10 + mw < window.innerWidth ? b.right + 10 : Math.max(12, b.left - 10 - mw);
+      m.style.left = left + 'px'; m.style.top = Math.max(12, Math.min(window.innerHeight - m.offsetHeight - 90, b.top - 20)) + 'px';
+      m.querySelector('button').focus({ preventScroll: true });
+    }
+    $('toolWhisper').addEventListener('click', () => {
+      if (mode && mode.startsWith('whisper')) { setMode(null); return; }
+      const wait = world.keeper.whisperReady - world.day;
+      if (wait > 0) { toast('Lời thì thầm trước còn đang lan. ' + wait + ' ngày nữa mới thì thầm tiếp được.', 3000); return; }
+      if (!$('whisperMenu').hidden) { showMenu(false); return; }
+      setMode(null); showMenu(true);
+    });
+    $('whisperMenu').addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) setMode('whisper-' + b.dataset.k); });
+    $('scene').addEventListener('pointerdown', () => { if (!$('whisperMenu').hidden) showMenu(false); });
+    let rumorWatch = null;
+    function whisperFx(p, color, text) {
+      ripple(p, color);
+      for (let k = 0; k < 18; k++) { const a = (k / 18) * Math.PI * 4; spawnMote(new THREE.Vector3(p.x + Math.cos(a) * 6, 14 + k * 0.3, p.z + Math.sin(a) * 6), new THREE.Vector3(p.x, 3, p.z), color, 1300 + k * 40); }
+      label3d(text, new THREE.Vector3(p.x, 9, p.z), color);
+    }
+    function doWhisper(kind, sel) {
+      const r = Sim.whisper(world, kind, kind === 'fad' ? sel.id : sel.i);
+      if (!r.ok) { toast(r.reason === 'wait' ? 'Còn ' + r.wait + ' ngày nữa mới thì thầm tiếp được.' : r.reason === 'fad' ? 'Thành phố đang có một cơn sốt rồi. Chờ nó qua đã.' : 'Không thì thầm được ở đây.', 3200); return true; }
+      setMode(null);
+      const p = kind === 'fad' ? firmPos(sel.id) : housePos(sel.i);
+      flyTo(p, 30); pausedUntil = now() + 14000;
+      whisperFx(p, kind === 'bank' ? '#ff6b6b' : kind === 'food' ? '#f0b85a' : r.fad.color, kind === 'bank' ? '“Kho Bạc sắp vỡ…”' : kind === 'food' ? '“Sắp mất mùa…”' : '“' + r.item + '…”');
+      if (audio) audio.whisper();
+      const st = tellNow(kind === 'fad' ? 'fad' : kind === 'food' ? 'rumor-food' : 'rumor');
+      if (st) showSub(st, 8000);
+      const day0 = world.day;
+      if (kind === 'bank') { rumorWatch = { kind, peak: 0 }; const W = rumorWatch; X.watch(25, () => world.stories.some((x) => x.type === 'bankrun' && x.day > day0) ? 'Lời thì thầm về Kho Bạc đã thành <b>đám đông kéo đến đòi tiền</b>.' : 'Hai mươi lăm ngày sau lời thì thầm: nỗi sợ lan tới nhiều nhất <b>' + Math.round(W.peak * 100) + '%</b> dân rồi tự tắt.'); }
+      else if (kind === 'food') { rumorWatch = { kind, peak: 0 }; const W = rumorWatch, food = () => world.firms.filter((f) => f.alive && f.sector === 'food'), price = () => food().reduce((t, f) => t + f.price, 0) / Math.max(1, food().length), p0 = price(); X.watch(20, () => 'Hai mươi ngày sau lời thì thầm: tin mất mùa lan tới <b>' + Math.round(W.peak * 100) + '%</b> dân, giá lương thực ' + p0.toFixed(1).replace('.', ',') + ' → <b>' + price().toFixed(1).replace('.', ',') + ' xu</b>.'); }
+      else X.watch(30, () => { const f = r.fad; return 'Cơn sốt ' + f.item.toLowerCase() + ' từ lời thì thầm: <b>' + Math.round(f.peakShare * 100) + '%</b> dân từng mê, giá lên gấp <b>' + f.maxRatio.toFixed(1).replace('.', ',') + '</b> lần.'; });
+      updateToolUi();
+      return true;
+    }
+
+    /* ----- Gọi khí cầu ----- */
+    let beaconT0 = 0;
+    $('toolCall').addEventListener('click', () => {
+      const r = Sim.callAirship(world);
+      if (!r.ok) { toast(r.reason === 'docked' ? 'Khí cầu đang neo ở bến rồi.' : 'Đèn hiệu trên bến còn nóng, ' + r.wait + ' ngày nữa mới thắp lại được.', 3000); return; }
+      setMode(null);
+      beaconT0 = now(); dock.visible = true;
+      flyTo(dock.position, 38); pausedUntil = now() + 12000;
+      toast('Đèn hiệu trên bến đã thắp. Đoàn thương nhân sẽ đến vào ngày mai.', 4200);
+      if (audio) audio.chime();
+      const in0 = world.ledger.inflow;
+      X.watch(40, () => 'Chuyến khí cầu được gọi đã mang về <b>' + Math.round(world.ledger.inflow - in0).toLocaleString('vi-VN') + ' xu</b> từ bên ngoài đảo.');
+      updateToolUi();
+    });
+    $('toolSeed').addEventListener('click', () => setMode(mode === 'seed' ? null : 'seed'));
+    $('toolTap').addEventListener('click', () => setMode(mode === 'tap' ? null : 'tap'));
+
+    function ringUi(id, wait, total) { const b = $(id); b.style.setProperty('--p', String(clamp(1 - wait / total, 0, 1))); b.classList.toggle('ready', wait <= 0); }
+    function updateToolUi() {
+      const d = world.day, K = world.keeper, a = world.airship;
+      const sw = Math.max(0, world.seedReady - d);
+      $('seedWait').textContent = sw ? 'Ủ lại · còn ' + sw + ' ngày' : 'Sẵn sàng'; ringUi('toolSeed', sw, 40);
+      const live = K.tapLevel > 0 && d - K.lastTap <= 6;
+      $('tapWait').textContent = K.lastTap === d ? 'Kính còn rung' : live ? 'Gõ tiếp: mức ' + Math.min(4, K.tapLevel + 1) + '/4' : 'Chạm vào đảo'; ringUi('toolTap', K.lastTap === d ? 1 : 0, 1);
+      const ww = Math.max(0, K.whisperReady - d);
+      $('whisperWait').textContent = ww ? 'Còn ' + ww + ' ngày' : 'Sẵn sàng'; ringUi('toolWhisper', ww, 20);
+      const cw = Math.max(0, K.callReady - d), busy = a.state === 'docked' || a.called;
+      $('callWait').textContent = a.state === 'docked' ? 'Đang neo ở bến' : a.called ? 'Đang trên đường' : cw ? 'Còn ' + cw + ' ngày' : 'Sẵn sàng'; ringUi('toolCall', busy ? 1 : cw, busy ? 1 : 90);
+    }
+
+    function handlePick(sel, ray) {
+      if (!mode) return false;
+      if (mode === 'tap') { const p = groundPoint(ray); if (p) doTap(p); return true; }
+      if (!wants(sel)) { toast(mode === 'seed' ? 'Hãy chọn một xưởng hoặc một cối xay gió.' : mode === 'whisper-fad' ? 'Hãy chọn một xưởng thủ công còn mở cửa.' : 'Hãy chọn một ngôi nhà.', 2500); return true; }
+      return mode === 'seed' ? doSeed(sel) : doWhisper(mode.slice(8), sel);
+    }
+
+    /* =============== Ký ức: tượng, tàn tích, Đảo Đồ Cũ =============== */
+    const memo3d = new Map(); // id ký ức -> { g, kind, pos }
+    const exitAng = (X.plazaExits || []).map((e) => Math.atan2(e.z - PLAZA.z, e.x - PLAZA.x));
+    const statueSlots = [];
+    for (const [r, n, off] of [[4.9, 16, 0], [7.15, 22, 0.07]]) for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + off;
+      if (exitAng.every((e) => Math.abs(Math.atan2(Math.sin(a - e), Math.cos(a - e))) > 0.34)) statueSlots.push({ a, r, used: 0 });
+    }
+    const stoneMat = mat('#d3c8b2'), bronzeMat = mat('#a9824f', { metalness: 0.65, roughness: 0.35 }), plaqueMat = mat('#4b4238');
+    function buildStatue(m) {
+      let slot = statueSlots.find((x) => !x.used);
+      if (!slot) { // hết chỗ: tượng cũ nhất nhường chỗ
+        let old = null; for (const [id, o] of memo3d) if (o.kind === 'statue' && (!old || id < old[0])) old = [id, o];
+        if (!old) return null;
+        island.remove(old[1].g); X.unclickable(old[1].g); memo3d.delete(old[0]); slot = old[1].slot; slot.used = 0;
+      }
+      slot.used = m.id;
+      const g = new THREE.Group(); g.position.set(PLAZA.x + Math.cos(slot.a) * slot.r, 0.12, PLAZA.z + Math.sin(slot.a) * slot.r); g.rotation.y = Math.PI / 2 - slot.a;
+      mesh(box(0.9, 0.62, 0.9), stoneMat, 0, 0, 0, g); mesh(box(1.06, 0.12, 1.06), stoneMat, 0, 0.62, 0, g);
+      mesh(new THREE.CylinderGeometry(0.16, 0.27, 0.86, 7), bronzeMat, 0, 0.74 + 0.43, 0, g);
+      mesh(new THREE.SphereGeometry(0.19, 8, 6), bronzeMat, 0, 1.8, 0, g);
+      const arm = mesh(box(0.1, 0.56, 0.1), bronzeMat, 0.17, 1.42, 0, g); arm.rotation.z = -0.45;
+      mesh(new THREE.OctahedronGeometry(0.17, 0), new THREE.MeshStandardMaterial({ color: '#fff3c4', emissive: m.sector === 'food' ? '#8fdc5c' : '#ffc94d', emissiveIntensity: 1.2, flatShading: true }), 0.42, 2.08, 0, g);
+      mesh(box(0.52, 0.26, 0.04), plaqueMat, 0, 0.2, 0.46, g).castShadow = false;
+      island.add(g); X.clickable(g, { type: 'memo', id: m.id });
+      return { g, kind: 'statue', slot, rise: 0 };
+    }
+    const ruinStone = mat('#8f8373'), ruinDark = mat('#51473f'), charMat = mat('#3a3330'), deadPlot = mat('#8a7a5a');
+    function buildRuin(m, seen) {
+      const g = new THREE.Group(); g.position.copy(seen.pos); g.rotation.y = seen.rot;
+      if (seen.kind === 'shop') {
+        mesh(box(3.6, 0.95, 0.3), ruinStone, 0, 0, -1.15, g); mesh(box(0.3, 1.55, 2.6), ruinStone, -1.65, 0, 0, g); mesh(box(1.3, 0.55, 0.3), ruinStone, 1.1, 0, 1.15, g); mesh(box(0.3, 0.8, 1.0), ruinDark, 1.65, 0, -0.6, g);
+        const roofPiece = mesh(new THREE.CylinderGeometry(1.35, 1.35, 1.7, 10, 1, true, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: '#4d4740', flatShading: true, roughness: 0.9, side: THREE.DoubleSide }), 0.4, 0.5, 0.2, g); roofPiece.rotation.set(0.3, 0.5, Math.PI / 2 + 0.45);
+        const chim = mesh(new THREE.CylinderGeometry(0.28, 0.38, 3.2, 8), charMat, 0.9, 0.36, 0.1, g); chim.rotation.set(Math.PI / 2, 0, 0.7);
+      } else {
+        mesh(new THREE.CylinderGeometry(0.72, 1.05, 1.5, 8), ruinStone, 0, 0.75, -1.4, g);
+        const b1 = mesh(box(0.66, 0.05, 2.6), mat('#d9d2c2'), 0.9, 0.02, 0.4, g); b1.rotation.y = 0.7;
+        const b2 = mesh(box(0.11, 0.09, 3.0), mat('#6d4c35'), -0.7, 0.02, 0.8, g); b2.rotation.y = -0.4;
+        for (const cx of [-1.15, 1.15]) mesh(box(2.0, 0.12, 3.0), deadPlot, cx, 0, 1.5, g).castShadow = false;
+      }
+      for (let k = 0; k < 8; k++) mesh(new THREE.DodecahedronGeometry(0.16 + Math.random() * 0.22, 0), k % 2 ? ruinStone : ruinDark, (Math.random() - 0.5) * 3.2, 0.1, (Math.random() - 0.5) * 2.6, g);
+      island.add(g); X.clickable(g, { type: 'memo', id: m.id });
+      for (let k = 0; k < 6; k++) puff(new THREE.Vector3(seen.pos.x + (Math.random() - 0.5) * 3, 1 + Math.random(), seen.pos.z + (Math.random() - 0.5) * 3), true, '#9a8f84');
+      return { g, kind: 'ruin', pos: seen.pos.clone() };
+    }
+    // Đảo Đồ Cũ: hòn đảo nhỏ lơ lửng cạnh rìa, nơi đồ của những cơn sốt đã qua bị bỏ lại
+    const JA = 2.3, junk = new THREE.Group();
+    junk.position.set(Math.cos(JA) * (R + 8), -1.6, Math.sin(JA) * (R + 8)); junk.visible = false; island.add(junk);
+    (function buildJunk() {
+      const rock = mesh(new THREE.DodecahedronGeometry(4.3, 0), mat('#7b6a58'), 0, -2.7, 0, junk); rock.scale.set(1.25, 0.8, 1.1);
+      mesh(new THREE.CylinderGeometry(4.7, 4.1, 0.6, 9), mat('#86b86a'), 0, -0.3, 0, junk);
+      mesh(new THREE.CylinderGeometry(0.07, 0.09, 2.2, 5), mat('#6d5139'), -3.3, 1.1, 1.6, junk);
+      const sign = mesh(box(1.9, 0.6, 0.08), mat('#9b7653'), -3.3, 1.75, 1.6, junk); sign.rotation.y = 0.5;
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 80;
+      const c2 = cv.getContext('2d'); c2.fillStyle = '#9b7653'; c2.fillRect(0, 0, 256, 80); c2.fillStyle = '#fff3d6'; c2.font = '600 34px Outfit, "Segoe UI", sans-serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText('Đảo Đồ Cũ', 128, 42);
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(1.86, 0.56), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), roughness: 0.9 }));
+      face.position.set(0, 0.3, 0.045); sign.add(face);
+    })();
+    const junkSlots = [0, 1, 2, 3, 4, 5, 6].map((k) => ({ a: k * 0.95 + 0.4, r: k ? 2.4 : 0.4 }));
+    function buildPile(m, idx) {
+      const slot = junkSlots[idx % junkSlots.length], g = new THREE.Group();
+      g.position.set(Math.cos(slot.a) * slot.r, 0, Math.sin(slot.a) * slot.r); g.scale.setScalar(1.45); junk.add(g); junk.visible = true;
+      const c = m.color || '#ff6b9d', n = clamp(6 + Math.round((m.units || 0) / 3), 8, 22);
+      const coneM = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.7 }), dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(c).multiplyScalar(0.6), flatShading: true, roughness: 0.8 });
+      for (let k = 0; k < n; k++) {
+        const a = Math.random() * Math.PI * 2, r = Math.random() * 1.1, h = (1 - r / 1.3) * 0.9;
+        const it = mesh(k % 3 ? new THREE.ConeGeometry(0.42, 0.22, 8) : new THREE.BoxGeometry(0.34, 0.3, 0.34), k % 2 ? coneM : dark, Math.cos(a) * r, h, Math.sin(a) * r, g);
+        it.rotation.set((Math.random() - 0.5) * 2.4, Math.random() * 3, (Math.random() - 0.5) * 2.4);
+      }
+      X.clickable(g, { type: 'memo', id: m.id });
+      return { g, kind: 'pile' };
+    }
+    const lastSeen = new Map(); // id doanh nghiệp -> vị trí lô đất lần cuối nhìn thấy
+    let pileCount = 0;
+    function syncMemories(animate) {
+      for (const [id, o] of firmObj) if (!o.dying) lastSeen.set(id, { pos: o.g.position.clone(), rot: o.g.rotation.y, kind: o.kind });
+      for (const m of world.memorials) {
+        if (memo3d.has(m.id) || m.skip) continue;
+        let o = null;
+        if (m.kind === 'statue') o = buildStatue(m);
+        else if (m.kind === 'pile') o = buildPile(m, pileCount++);
+        else if (m.kind === 'ruin') {
+          if (firmObj.has(m.firmId)) continue; // còn đang sập dần
+          const seen = lastSeen.get(m.firmId);
+          if (!seen) { m.skip = true; continue; }
+          for (const [id, x] of memo3d) if (x.kind === 'ruin' && x.pos.distanceTo(seen.pos) < 1) { island.remove(x.g); X.unclickable(x.g); memo3d.delete(id); } // tàn tích mới đè lên tàn tích cũ
+          o = buildRuin(m, seen);
+        }
+        if (!o) { m.skip = true; continue; }
+        if (animate && o.kind === 'statue') { o.rise = 0.001; o.g.scale.y = 0.001; ripple(o.g.position, '#ffd36b'); }
+        memo3d.set(m.id, o);
+      }
+      // xưởng mới dựng trên nền cũ thì dọn tàn tích đi
+      for (const [id, x] of memo3d) {
+        if (x.kind !== 'ruin') continue;
+        for (const [, o] of firmObj) if (!o.dying && o.g.position.distanceTo(x.pos) < 1) { island.remove(x.g); X.unclickable(x.g); memo3d.delete(id); for (let k = 0; k < 5; k++) puff(new THREE.Vector3(x.pos.x + (Math.random() - 0.5) * 3, 1, x.pos.z + (Math.random() - 0.5) * 3), false, '#d8cbb3'); break; }
+      }
+    }
+    function memoOf(id) { return world.memorials.find((m) => m.id === id); }
+    function memoCard(id) {
+      const m = memoOf(id); if (!m) return null;
+      if (m.kind === 'statue') return { kind: 'Tượng nhà phát minh · năm ' + m.year, title: 'Tượng ' + Sim.nameOf(m.inventor), text: 'Dựng ở quảng trường để nhớ ngày ' + Sim.nameOf(m.inventor) + ' nghĩ ra ' + m.item.toLowerCase() + ' ở ' + m.firmName + '.' + (m.seeded ? ' Hạt giống phát minh do người giữ bể gieo xuống.' : ''), list: [['Phát minh', m.item], ['Nơi làm ra', m.firmName], ['Ngày', 'Ngày ' + m.day]] };
+      if (m.kind === 'ruin') return { kind: 'Tàn tích · năm ' + m.year, title: m.name, text: (m.workers ? 'Nơi này từng có ' + m.workers + ' người làm việc. ' : '') + 'Đóng cửa ngày ' + m.day + (m.debt ? ', để lại ' + m.debt.toLocaleString('vi-VN') + ' xu nợ cho Kho Bạc.' : '.') + ' Khi có người mở xưởng mới ở đây, tàn tích sẽ được dọn đi.', list: [] };
+      if (m.kind === 'pile') return { kind: 'Đảo Đồ Cũ · năm ' + m.year, title: 'Đống ' + m.item.toLowerCase(), text: 'Bị bỏ lại sau khi bong bóng ' + m.item.toLowerCase() + ' vỡ. Ai cũng từng muốn có một chiếc, rồi chẳng ai cần nữa.', list: [['Số món bị bỏ', String(m.units)], ['Nơi làm ra', m.firmName], ['Ngày vỡ', 'Ngày ' + m.day]] };
+      return null;
+    }
+    function memoPos(id) {
+      const o = memo3d.get(id); if (!o) return null;
+      if (o.kind === 'pile') return junk.position.clone();
+      return o.g.position.clone();
+    }
+    function updateMemories(dt, t) {
+      for (const [, o] of memo3d) if (o.rise > 0 && o.rise < 1) { o.rise = Math.min(1, o.rise + dt / 1600); o.g.scale.y = 1 - Math.pow(1 - o.rise, 3); }
+      if (junk.visible) { junk.position.y = -1.6 + (reduce ? 0 : Math.sin(t * 0.0007) * 0.35); junk.rotation.y = reduce ? 0 : Math.sin(t * 0.0002) * 0.1; }
+    }
+
+    /* =============== Đường mòn: lối đi tự hình thành từ những bước chân =============== */
+    const WEAR = 512, wearCv = document.createElement('canvas'); wearCv.width = wearCv.height = WEAR;
+    const wctx = wearCv.getContext('2d'), wearTex = new THREE.CanvasTexture(wearCv);
+    const wearMesh = new THREE.Mesh(new THREE.PlaneGeometry(2 * R, 2 * R), new THREE.MeshStandardMaterial({ map: wearTex, transparent: true, opacity: 0.6, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    wearMesh.rotation.x = -Math.PI / 2; wearMesh.position.y = 0.02; wearMesh.receiveShadow = true; wearMesh.renderOrder = -1; island.add(wearMesh);
+    const px = (v) => ((v + R) / (2 * R)) * WEAR;
+    let wearN = 0, wearDirty = false, lastWear = 0;
+    function wearDay() {
+      wctx.strokeStyle = 'rgba(158, 126, 84, 0.0065)'; wctx.lineWidth = 2.2; wctx.lineCap = 'round'; wctx.lineJoin = 'round';
+      const hs = world.households;
+      for (let i = 0; i < hs.length; i++) {
+        const h = hs[i];
+        const pts = h.employer !== null ? X.walkPath(h) : i % 3 === 0 ? [housePos(Math.floor(i / 4)), PLAZA] : null;
+        if (!pts) continue;
+        const jx = ((i * 7) % 5 - 2) * 0.13, jz = ((i * 3) % 5 - 2) * 0.13;
+        wctx.beginPath();
+        pts.forEach((p, k) => { const x = px(p.x + jx), y = px(p.z + jz); if (k) wctx.lineTo(x, y); else wctx.moveTo(x, y); });
+        wctx.stroke();
+      }
+      // cỏ mọc lại trên những lối không ai đi nữa
+      if (++wearN % 10 === 0) { wctx.globalCompositeOperation = 'destination-out'; wctx.fillStyle = 'rgba(0,0,0,0.1)'; wctx.fillRect(0, 0, WEAR, WEAR); wctx.globalCompositeOperation = 'source-over'; }
+      wearDirty = true;
+    }
+
+    /* =============== Chương năm =============== */
+    let chapterUntil = 0;
+    function showChapter(st) {
+      const [yr, ...rest] = st.title.split(': ');
+      $('cpYear').textContent = yr + ' khép lại';
+      $('cpTitle').textContent = rest.join(': ');
+      $('cpList').innerHTML = (st.recap || []).map((l) => '<li>' + l + '</li>').join('');
+      const el = $('chapter'); el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+      chapterUntil = now() + 16000;
+      flyTo(new THREE.Vector3(0, 0, 0), 120); X.setAutoRotate(true); overview = true; holdUntil = now() + 9000;
+      if (audio) audio.chime();
+    }
+    function hideChapter() { $('chapter').hidden = true; chapterUntil = 0; }
+    $('cpClose').addEventListener('click', hideChapter);
+
     /* =============== Nhịp ngày và khung hình =============== */
     let lastId = world.storySeq;
-    function onDay() {
+    function ingest() {
       const fresh = Sim.storiesSince(world, lastId);
       if (fresh.length) lastId = fresh[fresh.length - 1].id;
       for (const st of fresh) {
         addChron(st);
         if (st.type === 'invention' && st.seeded) continue; // đã kể khi hạt giống chạm đất
+        if (st.type === 'chapter') { showChapter(st); continue; }
         if (st.tier !== 'small' || Math.random() < 0.3) queue.push(st);
         if (st.type === 'invention') inventFlash(st.place.id, st.item);
         else if (st.type === 'fire' && audio) audio.crackle();
         else if (st.type === 'airship' && audio) audio.horn();
         else if (st.type === 'bankrun') label3d('Người dân kéo đến đòi tiền', new THREE.Vector3(bank.position.x, 14, bank.position.z), '#ff9b94');
+        else if (st.type === 'food-rush') { const p = placePos(st.place); label3d('Người dân đổ xô mua gạo', new THREE.Vector3(p.x, 11, p.z), '#f0c27a'); }
         else if (st.type === 'fad-crash') { const p = placePos(st.place); flashAt(p, '#ff9f43', 16); label3d('Bong bóng vỡ', new THREE.Vector3(p.x, 11, p.z), '#ffb27a'); }
       }
+      return fresh;
+    }
+    function onDay() {
+      ingest();
       while (queue.length > 14) queue.shift();
-      spreadArcs(); computeAuras(); sendCrates(); updateSeedUi();
+      if (rumorWatch) rumorWatch.peak = Math.max(rumorWatch.peak, rumorWatch.kind === 'bank' ? world.fearShare || 0 : (world.foodRumorN || 0) / world.households.length);
+      spreadArcs(); computeAuras(); sendCrates(); updateToolUi(); syncMemories(true); wearDay();
     }
     let lastSlow = 0;
     function update(dt, t) {
-      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateSub(); updateDirector(); updateHalos(t); updateQueue(t);
+      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateSub(); updateDirector(); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
       if (t - lastSlow > 250) { lastSlow = t; syncCrystals(t); syncFires(t); }
       else for (const [, c] of crystals) { c.g.rotation.y = t * 0.0012; }
       for (const [, fx] of fireFx) if (fx.burning) for (let k = 0; k < fx.flames.length; k++) { const s = fx.flames[k], fl = 0.6 + 0.4 * Math.sin(t * 0.02 + k * 2.1) * Math.sin(t * 0.013 + k); s.scale.setScalar(2.4 + fl * 2.2); s.material.opacity = 0.55 + 0.35 * fl; }
+      if (wearDirty && t - lastWear > 450) { wearTex.needsUpdate = true; wearDirty = false; lastWear = t; }
+      if (chapterUntil && now() > chapterUntil) hideChapter();
+      // đèn hiệu trên bến cháy sáng cho đến khi khí cầu đến
+      const calling = world.airship.called;
+      dockLamp.scale.setScalar(3 + (calling ? 4 + Math.sin(t * 0.008) * 1.5 : 0));
+      dockLamp.material.opacity = calling ? 1 : 0.7;
     }
-    updateSeedUi(); computeAuras();
+    updateToolUi(); computeAuras();
 
     return {
-      onDay, update, handlePick, renderChron,
+      onDay, update, handlePick, renderChron, wants, setMode, memoCard, memoPos, hideChapter,
       userMoved() { pausedUntil = now() + 25000; overview = false; },
       setDirector(on) { directorOn = on; if (on) { pausedUntil = 0; holdUntil = 0; } },
       get director() { return directorOn; },
-      get seedMode() { return seedMode; },
-      setSeedMode, inventFlash, showSub, queue, chron, placePos,
+      get mode() { return mode; },
+      get chapterOpen() { return !$('chapter').hidden; },
+      inventFlash, showSub, queue, chron, placePos,
     };
   }
 

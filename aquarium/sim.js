@@ -57,7 +57,7 @@
       airship: { state: 'away', days: 0, cool: 140, visits: 0, units: 0, revenue: 0, demand: 0, called: false },
       // người giữ bể và ký ức
       keeper: { tapLevel: 0, lastTap: -99, whisperReady: 0, callReady: 0 },
-      foodRumorN: 0, foodRush: null, memorials: [], chapters: [],
+      foodRumorN: 0, foodRush: null, memorials: [], memoSeq: 0, chapters: [],
     };
     for (let i = 0; i < cfg.households; i++) w.households.push(newHousehold(i, cfg.householdCash, rand()));
     for (let i = 0; i < cfg.foodFirms; i++) w.firms.push(newFirm(w, 'food', cfg.firmCash));
@@ -366,7 +366,7 @@
 
   /* ----- Ký ức: những dấu vết thành phố giữ lại mãi ----- */
   function memorial(w, m) {
-    m.day = w.day; m.year = Math.floor(Math.max(0, w.day - 1) / 360) + 1;
+    m.id = ++w.memoSeq; m.day = w.day; m.year = Math.floor(Math.max(0, w.day - 1) / 360) + 1;
     w.memorials.push(m);
     if (w.memorials.length > 120) w.memorials.shift();
     return m;

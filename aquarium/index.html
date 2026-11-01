@@ -115,6 +115,22 @@ body.intro .brand, body.intro .clock, body.intro .pulse, body.intro .bar, body.i
 .tool .tl em { font-style: normal; font-size: 12px; color: var(--ink-dim); }
 .tool[aria-pressed="true"] { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255, 210, 122, 0.25); }
 body.seeding #scene { cursor: crosshair; }
+.wmenu { position: fixed; bottom: auto; min-width: 0; z-index: 7; }
+.wmenu button { display: grid; gap: 2px; padding: 10px 12px; }
+.wmenu button b { font-weight: 600; font-size: 14px; }
+.wmenu button span { font-size: 12.5px; color: var(--ink-dim); line-height: 1.35; }
+.chapter { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -46%); width: min(560px, calc(100% - 32px)); padding: 26px 28px 22px; border-radius: 24px; z-index: 8; opacity: 0; transition: opacity 0.9s, transform 0.9s; text-align: center; }
+.chapter.in { opacity: 1; transform: translate(-50%, -50%); }
+.chapter .cy { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
+.chapter h2 { margin: 8px 0 14px; font: 700 clamp(26px, 4.2vw, 38px)/1.12 var(--font-display); }
+.chapter ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 7px; text-align: left; }
+.chapter li { font-size: 14.5px; color: var(--ink-dim); padding-left: 18px; position: relative; line-height: 1.4; }
+.chapter li::before { content: ""; position: absolute; left: 3px; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.chapter button { border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.08); color: var(--ink); font: 500 14px var(--font-body); padding: 9px 22px; border-radius: 999px; cursor: pointer; }
+.chapter button:hover { background: rgba(255, 255, 255, 0.16); }
+.chron-list .t-chapter button { grid-template-columns: 1fr; background: linear-gradient(90deg, rgba(255, 210, 122, 0.2), rgba(255, 210, 122, 0.04)); box-shadow: inset 3px 0 0 var(--amber); padding: 10px 12px; margin: 6px 0 2px; }
+.chron-list .t-chapter .cd { color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; }
+.chron-list .t-chapter b { font: 700 17px/1.2 var(--font-display); }
 .subtitle { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); transform: translateX(-50%); width: min(680px, calc(100% - 40px)); border-radius: 18px; padding: 12px 18px 13px; display: grid; gap: 2px; z-index: 4; opacity: 0; transition: opacity 0.5s, transform 0.5s; pointer-events: none; }
 .subtitle.in { opacity: 1; }
 .subtitle.out { opacity: 0; }
@@ -144,6 +160,8 @@ body.seeding #scene { cursor: crosshair; }
   .tool { padding: 5px; }
   .tool .tl { display: none; }
   .subtitle { bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 70px); width: calc(100% - 24px); }
+  .rail { top: 30%; gap: 8px; }
+  .chapter { padding: 20px 18px 16px; }
   .subtitle b { font-size: 17px; }
   .panel { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 58vh; }
   body.panel-open .pulse { display: none; }
@@ -185,7 +203,30 @@ body.seeding #scene { cursor: crosshair; }
     <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5l2.1 7.4L21.5 11l-7.4 2.1L12 20.5l-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span>
     <span class="tl"><b>Gieo phát minh</b><em id="seedWait">Sẵn sàng</em></span>
   </button>
+  <button class="tool ready" id="toolTap" aria-pressed="false">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 2.2a6.8 6.8 0 1 1 0 13.6 6.8 6.8 0 0 1 0-13.6zm0 3.3a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/></svg></span>
+    <span class="tl"><b>Gõ vào kính</b><em id="tapWait">Chạm vào đảo</em></span>
+  </button>
+  <button class="tool ready" id="toolWhisper" aria-pressed="false" aria-haspopup="menu" aria-expanded="false" aria-controls="whisperMenu">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm3 4.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm5 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm5 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg></span>
+    <span class="tl"><b>Thì thầm tin đồn</b><em id="whisperWait">Sẵn sàng</em></span>
+  </button>
+  <button class="tool ready" id="toolCall" aria-pressed="false">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2c4.4 0 8 2.9 8 6.5S16.4 15 12 15s-8-2.9-8-6.5S7.6 2 12 2zm-3 14h6l-.8 3h-4.4zm1 4h4v2h-4z"/></svg></span>
+    <span class="tl"><b>Gọi khí cầu</b><em id="callWait">Sẵn sàng</em></span>
+  </button>
 </nav>
+<div class="more glass wmenu" id="whisperMenu" role="menu" aria-label="Chọn lời thì thầm" hidden>
+  <button role="menuitem" data-k="bank"><b>“Kho Bạc sắp vỡ”</b><span>Gieo vào một ngôi nhà. Nỗi sợ có thể tự tắt, hoặc lan thành đám đông kéo đến rút tiền.</span></button>
+  <button role="menuitem" data-k="food"><b>“Năm nay sắp mất mùa”</b><span>Gieo vào một ngôi nhà. Người tin sẽ đổ xô mua gạo tích trữ, và chính họ làm giá lên.</span></button>
+  <button role="menuitem" data-k="fad"><b>“Xưởng kia có món mới”</b><span>Gieo vào một xưởng thủ công. Có thể bùng thành cơn sốt, rồi thành bong bóng.</span></button>
+</div>
+<section class="chapter glass" id="chapter" role="dialog" aria-labelledby="cpTitle" hidden>
+  <div class="cy" id="cpYear">Năm 1 khép lại</div>
+  <h2 id="cpTitle"></h2>
+  <ul id="cpList"></ul>
+  <button id="cpClose">Tiếp tục</button>
+</section>
 <div class="subtitle glass" id="subtitle" aria-live="polite" hidden></div>
 
 <div class="card glass" id="card" hidden>
@@ -237,6 +278,19 @@ body.seeding #scene { cursor: crosshair; }
     <li><i style="background:#9df0c4"></i><span><b>Xanh lá</b>: tiền lương và cổ tức.</span></li>
     <li><i style="background:#ff9db8"></i><span><b>Hồng</b>: tiền vay, trả lãi, trả nợ.</span></li>
     <li><i style="background:#c8b6ff"></i><span><b>Tím</b>: thuế, trợ cấp, tiền in.</span></li>
+  </ul>
+  <p class="legend-h">Sợi sáng giữa các mái nhà là chuyện đang lan</p>
+  <ul class="legend">
+    <li><i style="background:#ff5a5a"></i><span><b>Đỏ</b>: nỗi sợ. Ít người sợ thì tự tắt, quá ba phần mười dân sợ thì thành đám đông kéo đến Kho Bạc.</span></li>
+    <li><i style="background:#ff6b9d"></i><span><b>Màu của cơn sốt</b>: người mê món hàng mới, đội mũ cùng màu và chen trước cửa xưởng.</span></li>
+    <li><i style="background:#f0b85a"></i><span><b>Hổ phách</b>: tin đồn mất mùa. Người tin vác bao gạo về tích trữ.</span></li>
+  </ul>
+  <p class="legend-h">Thành phố ghi nhớ</p>
+  <ul class="legend">
+    <li><i style="background:#a9824f"></i><span><b>Tượng đồng quanh tháp đồng hồ</b>: mỗi phát minh dựng một bức. Bấm vào để đọc tên người nghĩ ra nó.</span></li>
+    <li><i style="background:#8f8373"></i><span><b>Tàn tích</b> trên lô đất: xưởng đã phá sản, nằm đó cho đến khi có người mở xưởng mới.</span></li>
+    <li><i style="background:#86b86a"></i><span><b>Đảo Đồ Cũ</b> lơ lửng cạnh rìa: đồ của những cơn sốt đã vỡ.</span></li>
+    <li><i style="background:#9e7e54"></i><span><b>Đường mòn</b> hằn dần trên cỏ theo lối người ta đi làm mỗi ngày.</span></li>
   </ul>
 </section>
 <section class="panel glass" id="chron" hidden aria-labelledby="cTitleH">
@@ -474,6 +528,7 @@ body.seeding #scene { cursor: crosshair; }
 
   const clickables = [];
   function clickable(group, sel) { group.traverse((o) => { if (o.isMesh) { o.userData.sel = sel; clickables.push(o); } }); }
+  function unclickable(group) { const gone = new Set(); group.traverse((o) => gone.add(o)); for (let i = clickables.length - 1; i >= 0; i--) if (gone.has(clickables[i])) clickables.splice(i, 1); }
 
   // Tháp đồng hồ (nhà nước)
   const hall = new THREE.Group(); hall.position.copy(PLAZA); island.add(hall);
@@ -695,6 +750,8 @@ body.seeding #scene { cursor: crosshair; }
   const parasols = new THREE.InstancedMesh(new THREE.ConeGeometry(0.48, 0.24, 8), new THREE.MeshStandardMaterial({ color: '#ff6b9d', flatShading: true, roughness: 0.7, emissive: '#3a1020', emissiveIntensity: 0.2 }), MAXP);
   parasols.castShadow = true; island.add(parasols);
   const zeroM = new THREE.Matrix4().makeScale(0, 0, 0);
+  const sacks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.2, 0), new THREE.MeshStandardMaterial({ color: '#d4b07a', flatShading: true, roughness: 0.95 }), MAXP);
+  sacks.castShadow = true; island.add(sacks);
   function updatePeople(tod, t) {
     const N = Math.min(MAXP, world.households.length), fadNow = Sim.activeFad(world);
     bodies.count = heads.count = N;
@@ -719,11 +776,14 @@ body.seeding #scene { cursor: crosshair; }
       }
       dummy.updateMatrix(); bodies.setMatrixAt(i, dummy.matrix);
       dummy.position.y += 0.47; dummy.updateMatrix(); heads.setMatrixAt(i, dummy.matrix);
+      if (p && h.foodRumor > 0) { dummy.position.x += 0.22; dummy.position.y -= 0.2; dummy.updateMatrix(); sacks.setMatrixAt(i, dummy.matrix); dummy.position.x -= 0.22; dummy.position.y += 0.2; }
+      else sacks.setMatrixAt(i, zeroM);
       if (fadNow && p && h.hype === fadNow.id) { dummy.position.y += 0.45; dummy.updateMatrix(); parasols.setMatrixAt(i, dummy.matrix); }
       else parasols.setMatrixAt(i, zeroM);
     }
     bodies.instanceMatrix.needsUpdate = true; heads.instanceMatrix.needsUpdate = true;
     parasols.count = N; parasols.instanceMatrix.needsUpdate = true;
+    sacks.count = N; sacks.instanceMatrix.needsUpdate = true;
     if (fadNow) parasols.material.color.set(fadNow.color);
   }
 
@@ -862,7 +922,8 @@ body.seeding #scene { cursor: crosshair; }
     const pl = ph.panic > 0 ? ['bad', 'Khủng hoảng niềm tin: Kho Bạc siết cho vay'] : ph.drought > 0 ? ['bad', 'Hạn hán: còn ' + ph.drought + ' ngày'] : ph.festival ? ['good', 'Lễ hội đèn lồng cuối năm'] : ph.snow ? ['info', 'Tuyết đang rơi'] : ph.rain ? ['info', 'Trời đang mưa'] : null;
     if (pl) { const cc = { good: 'var(--good)', bad: 'var(--bad)', info: '#9cc3ff' }[pl[0]]; $('pulse').insertAdjacentHTML('beforeend', '<div class="ph-line"><i style="background:' + cc + ';color:' + cc + '"></i><span>' + pl[1] + '</span></div>'); }
     const fadP = Sim.activeFad(world);
-    const sl = (world.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(world.fearShare * 100) + '% dân'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
+    const foodS = (world.foodRumorN || 0) / world.households.length;
+    const sl = (world.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(world.fearShare * 100) + '% dân'] : foodS > 0.05 ? ['#f0b85a', 'Tin đồn mất mùa: ' + Math.round(foodS * 100) + '% dân đang tích trữ gạo'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
     if (sl) $('pulse').insertAdjacentHTML('beforeend', '<div' + (pl ? '' : ' class="ph-line"') + '><i style="background:' + sl[0] + ';color:' + sl[0] + '"></i><span>' + sl[1] + '</span></div>');
   }
 
@@ -880,7 +941,7 @@ body.seeding #scene { cursor: crosshair; }
       if (lh) { buildAt(lh.object.userData.lot.kind, lh.object.userData.lot.i); return; }
     }
     const hit = ray.intersectObjects(clickables, false)[0];
-    if (story && story.handlePick(hit ? hit.object.userData.sel : null)) return;
+    if (story && story.handlePick(hit ? hit.object.userData.sel : null, ray)) return;
     if (buildKind && !hit) return;
     select(hit ? hit.object.userData.sel : null);
   });
@@ -889,7 +950,7 @@ body.seeding #scene { cursor: crosshair; }
     ray.setFromCamera(ndc, camera);
     if (buildKind) { const lh = ray.intersectObjects(markerDiscs, false)[0]; hoverLot = lh ? lh.object : null; if (hoverLot) { canvas.style.cursor = 'pointer'; return; } }
     const over = ray.intersectObjects(clickables, false)[0];
-    canvas.style.cursor = story && story.seedMode ? (over && over.object.userData.sel.type === 'firm' ? 'pointer' : 'crosshair') : over ? 'pointer' : 'grab';
+    canvas.style.cursor = story && story.mode ? (story.wants(over && over.object.userData.sel) ? 'pointer' : 'crosshair') : over ? 'pointer' : 'grab';
   });
   function selPos(s) {
     if (!s) return null;
@@ -898,6 +959,7 @@ body.seeding #scene { cursor: crosshair; }
     if (s.type === 'bank') return bank.position.clone();
     if (s.type === 'gov') return hall.position.clone();
     if (s.type === 'school') return school.position.clone();
+    if (s.type === 'memo') return story ? story.memoPos(s.id) : null;
   }
   function select(s) {
     sel = s;
@@ -937,6 +999,10 @@ body.seeding #scene { cursor: crosshair; }
       kind = 'Hội đồng thành phố'; title = 'Tháp Đồng Hồ';
       text = 'Nơi thu thuế và trả trợ cấp cho người chưa có việc. Đồng hồ sáng lên khi đêm xuống.';
       list = [['Thuế thu nhập', Math.round(world.policy.taxRate * 100) + '%'], ['Quỹ thành phố', fmt(world.gov.cash) + ' xu'], ['Người tìm việc', world.households.filter((h) => h.employer === null).length]];
+    } else if (sel.type === 'memo') {
+      const m = story && story.memoCard(sel.id);
+      if (!m) { sel = null; return card(); }
+      ({ kind, title, text, list } = m);
     } else if (sel.type === 'school') {
       kind = 'Trường học'; title = 'Đài Quan Sát Sao';
       text = 'Nơi trẻ em trong thành phố học đọc, học đếm và ngắm sao. Sau này, trường sẽ giúp người dân làm việc giỏi hơn.';
@@ -1447,7 +1513,9 @@ body.seeding #scene { cursor: crosshair; }
     if (e.key !== 'Escape') return;
     if (document.body.classList.contains('intro')) return enter(false);
     if (!$('more').hidden) return toggleMore(false);
-    if (story && story.seedMode) return story.setSeedMode(false);
+    if (story && story.chapterOpen) return story.hideChapter();
+    if (story && story.mode) return story.setMode(null);
+    if (!$('whisperMenu').hidden) return story.setMode(null);
     if (!$('policy').hidden || !$('build').hidden || !$('help').hidden || !$('chron').hidden) { closePanels(); return; }
     if (sel) select(null);
   });
@@ -1501,7 +1569,7 @@ body.seeding #scene { cursor: crosshair; }
   }
   $('moreBtn').onclick = (e) => { e.stopPropagation(); toggleMore($('more').hidden); };
   document.addEventListener('click', (e) => { if (!$('more').hidden && !e.target.closest('#more') && e.target !== $('moreBtn')) toggleMore(false); });
-  const story = window.Story3D ? Story3D.create({ THREE, island, world, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C, watch: (d, fn) => watch(d, fn), setAutoRotate, closePanels, people: { bodyGeo: bodies.geometry, headGeo: heads.geometry, headMat: heads.material, shirts: SHIRTS }, tod: () => tod }) : null;
+  const story = window.Story3D ? Story3D.create({ THREE, island, world, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C, watch: (d, fn) => watch(d, fn), setAutoRotate, closePanels, people: { bodyGeo: bodies.geometry, headGeo: heads.geometry, headMat: heads.material, shirts: SHIRTS }, tod: () => tod, clickable, unclickable, walkPath, plazaExits: bridges.map((bx) => new THREE.Vector3(bx, 0, riverZ(bx) - 3.2)) }) : null;
   $('dirBtn').onclick = () => { story.setDirector(!story.director); $('dirBtn').setAttribute('aria-pressed', String(story.director)); };
 
   /* =============== Vòng lặp =============== */
@@ -1527,7 +1595,7 @@ body.seeding #scene { cursor: crosshair; }
     const spin = reduce ? 0 : dt * 0.001;
     for (const [, o] of firmObj) {
       if (o.grow < 1 && !o.dying) { o.grow = Math.min(1, o.grow + dt / 2200); o.g.scale.y = 1 - Math.pow(1 - o.grow, 3); }
-      if (o.dying) { o.dying += dt / 1800; o.g.scale.setScalar(Math.max(0.001, 1.3 - o.dying * 0.3)); o.g.position.y = -(o.dying - 1) * 0.6; if (o.dying > 4.3) { island.remove(o.g); (o.kind === 'farm' ? farmOwner : shopOwner)[o.lot] = null; for (const [id, x] of firmObj) if (x === o) { firmObj.delete(id); slotOf.delete(id); } } }
+      if (o.dying) { o.dying += dt / 1800; o.g.scale.setScalar(Math.max(0.001, 1.3 - o.dying * 0.3)); o.g.position.y = -(o.dying - 1) * 0.6; if (o.dying > 4.3) { island.remove(o.g); unclickable(o.g); (o.kind === 'farm' ? farmOwner : shopOwner)[o.lot] = null; for (const [id, x] of firmObj) if (x === o) { firmObj.delete(id); slotOf.delete(id); } } }
       if (o.kind === 'farm') o.hub.rotation.z -= spin * (0.4 + (o.busy || 0) * 2.2);
       else o.gear.rotation.y += spin * (o.busy || 0) * 1.8;
     }

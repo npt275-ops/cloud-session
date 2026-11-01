@@ -170,6 +170,32 @@
         for (let k = 0; k < 14; k++) setTimeout(() => on && burst(0.05 + Math.random() * 0.06, 'highpass', 1200 + Math.random() * 2400, 0.08), k * 90 + Math.random() * 60);
         burst(1.2, 'lowpass', 400, 0.08);
       },
+      // gõ lên vòm kính: tiếng "cạch" trong và ngân, gõ càng mạnh càng trầm, mức 3 trở lên có tiếng rền
+      knock(level) {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, lv = level || 1;
+        for (let k = 0; k < Math.min(3, lv); k++) {
+          const t0 = t + k * 0.12, o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.setValueAtTime(1300 - lv * 140, t0); o.frequency.exponentialRampToValueAtTime(640, t0 + 0.2);
+          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5 + lv * 0.25);
+          o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 1.6);
+        }
+        burst(0.05, 'highpass', 2600, 0.2);
+        if (lv >= 3) {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.value = 55;
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.45, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+          o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.5);
+        }
+      },
+      whisper() {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = noiseBuffer('white'); f.type = 'bandpass'; f.Q.value = 2.5;
+        f.frequency.setValueAtTime(2800, t); f.frequency.linearRampToValueAtTime(1700, t + 1.2);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.1, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+        src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + 1.35);
+      },
       firework() { if (ctx && on) { burst(0.12, 'highpass', 1800, 0.12); setTimeout(() => on && burst(0.5, 'bandpass', 2400, 0.05), 140); } },
     };
   }
