@@ -674,7 +674,8 @@ test('công trình và quân lính theo thời đại: mỗi đời một tên, 
   assert.equal(names.size, 6, 'mỗi thời đại một loại lính');
   for (let e = 1; e <= 5; e++) assert.ok(hp[e] > hp[e - 1] * 1.4, 'lính đời sau mạnh hơn hẳn');
   assert.equal(Sim.UNITS.ship.names[5], 'Khu Trục Hạm');
-  assert.equal(Sim.UNITS.sub.names[5], 'Tàu Ngầm Hạt Nhân');
+  assert.equal(Sim.UNITS.sub.names[6], 'Tàu Ngầm Hạt Nhân', 'tàu ngầm hạt nhân thuộc thời tên lửa');
+  assert.equal(Sim.UNITS.melee.names[7], 'Robot Chiến Đấu');
   const n0 = c.w.households.filter((h) => h.employer === -1).length;
   assert.ok(Sim.train(W, 0, 'melee').ok);
   assert.ok(untilDone(W, () => Sim.armyOf(W, c) === 1 && !c.queue.length, 20));
@@ -754,7 +755,7 @@ test('tàu chiến và phong toả: tàu đánh trên đường biển, đóng c
 
 test('hạt nhân: hầm phóng hoặc tàu ngầm, tàn phá thành địch, bụi phóng xạ và cả thế giới cấm vận', () => {
   const W = warWorld(8), A = W.cities[0], Z = W.cities[1];
-  for (let e = 0; e < 5; e++) Sim.advanceEra(W, 0);
+  for (let e = 0; e < 6; e++) Sim.advanceEra(W, 0); // hạt nhân thuộc thời tên lửa
   Sim.grantTreasury(A.w, 60000); Sim.grantTreasury(Z.w, 500);
   assert.ok(Sim.buildBridge(W, 1, 0).ok);
   assert.ok(Sim.build(W, 0, 'silo').ok);
@@ -799,4 +800,74 @@ test('kỳ quan: xây xong và đứng vững một năm thì thắng; Tranh hù
   assert.deepStrictEqual(a.cities.map((c) => [c.owner, c.era, Math.round(c.hp)]), b.cities.map((c) => [c.owner, c.era, Math.round(c.hp)]));
   assert.equal(a.war.units.length, b.war.units.length);
   assert.ok(ledgerOk(a));
+});
+
+
+/* ===================== Tám thời đại và vị thần của bể kính ===================== */
+test('tám thời đại: tới tên lửa và robot AI, mọi công trình và quân lính đều có tên và sức mạnh riêng', () => {
+  assert.equal(Sim.ERAS.length, 8);
+  assert.deepStrictEqual(Sim.ERAS.slice(5).map((e) => e.name), ['Hiện đại', 'Tên lửa', 'Robot AI']);
+  for (let e = 1; e < 8; e++) assert.ok(Sim.ERAS[e].know > Sim.ERAS[e - 1].know && Sim.ERAS[e].pop > Sim.ERAS[e - 1].pop);
+  const W = warWorld(10), c = W.cities[0];
+  for (let e = 0; e < 7; e++) Sim.advanceEra(W, 0);
+  assert.equal(c.era, 7);
+  assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food' && !f.sea).every((f) => f.name.startsWith('Nông Trại Robot')));
+  for (const t of Object.keys(Sim.BUILDINGS)) { const o = Sim.buildOffer(W, 0, t); assert.ok(o.name || t === 'wonder', 'công trình ' + t + ' có tên ở thời robot'); }
+  for (const k of Object.keys(Sim.UNITS)) { const st = Sim.unitStats(c, k, 7); assert.ok(Number.isFinite(st.hp) && st.hp > 0 && Number.isFinite(st.range), k); assert.ok(Sim.UNITS[k].names[7], k); }
+  assert.ok(Sim.unitStats(c, 'melee', 7).hp > Sim.unitStats(c, 'melee', 5).hp * 2, 'robot mạnh hơn hẳn lính hiện đại');
+  assert.ok(!Sim.advanceOffer(W, 0).ok, 'không có thời nào sau robot AI');
+});
+
+test('vị thần: thiên tai và ban phước tốn thần lực, có thời gian hồi, làm dân sợ hay biết ơn mà tin; sổ cái vẫn khớp', () => {
+  const W = Sim.createWorld({ seed: 7, mode: 'god' });
+  assert.equal(W.mode, 'god'); assert.equal(W.war.player, -1, 'không phe nào là của người chơi');
+  for (let d = 0; d < 200; d++) Sim.stepWorld(W);
+  const c = W.cities[0], w = c.w;
+  W.god.power = 100;
+  const faith0 = c.faith;
+  // lũ: ruộng ngập, kho ướt, rồi phù sa
+  const food0 = w.firms.filter((f) => f.alive && f.sector === 'food').reduce((t, f) => t + f.inv, 0);
+  const r = Sim.godAct(W, 'flood', 0);
+  assert.ok(r.ok && r.fx.firms.length > 0);
+  assert.equal(W.god.power, 70, 'lũ tốn 30 thần lực');
+  assert.ok(w.firms.filter((f) => f.alive && f.sector === 'food').reduce((t, f) => t + f.inv, 0) < food0, 'kho lương ướt sũng');
+  assert.ok(c.faith > faith0, 'thiên tai làm dân sợ mà tin thần');
+  assert.ok(!Sim.godOffer(W, 'flood', 0).ok, 'phải chờ mới giáng lũ lần nữa');
+  assert.ok(W.stories.some((s) => s.type === 'god-flood'));
+  // hạn hán rồi mưa lành
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'drought', 0).ok); assert.ok(w.phen.drought > 0);
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'rain', 0).ok); assert.equal(w.phen.drought, 0, 'mưa lành chấm dứt hạn hán');
+  // động đất: nhà sập, có người bị thương, dư chấn sau vài ngày
+  W.god.power = 100; const q = Sim.godAct(W, 'quake', 0); assert.ok(q.ok);
+  assert.ok(w.households.some((h) => h.sick > 0), 'có người bị thương');
+  for (let d = 0; d < 6; d++) Sim.stepWorld(W);
+  assert.ok(W.stories.some((s) => s.type === 'god-aftershock'), 'dư chấn');
+  // dịch bệnh rồi chữa lành
+  const d1 = W.cities[1];
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'plague', 1).ok); assert.equal(d1.w.epi.state, 'spreading');
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'heal', 1).ok); assert.ok(d1.w.households.every((h) => !(h.sick > 0)), 'chữa lành tất cả');
+  // thần lực tự hồi theo đức tin
+  W.god.power = 0; for (let d = 0; d < 30; d++) Sim.stepWorld(W);
+  assert.ok(W.god.power > 10 && W.god.power < 40, 'thần lực hồi dần (' + W.god.power.toFixed(1) + ')');
+  W.god.power = 0; assert.ok(!Sim.godOffer(W, 'volcano', 2).ok, 'hết thần lực thì không giáng được');
+  for (let d = 0; d < 200; d++) Sim.stepWorld(W);
+  assert.ok(ledgerOk(W));
+  const m = Sim.worldMoney(W); assert.ok(close(m.total, m.expected));
+});
+
+test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi trận có bản tổng kết; thần buộc được đình chiến', () => {
+  const W = Sim.createWorld({ seed: 11, mode: 'god' });
+  let reports = 0, truce = false;
+  for (let d = 0; d < 1800 && !truce; d++) {
+    Sim.stepWorld(W);
+    reports = W.stories.filter((s) => s.type === 'battle-end').length;
+    const c = W.cities.find((x) => x.settled && W.war.factions.some((f) => f.alive && Sim.atWarF(W, x.owner, f.id)));
+    if (c && reports > 0) { W.god.power = 100; const r = Sim.godAct(W, 'truce', c.id); assert.ok(r.ok, r.reason); truce = true; assert.ok(!W.war.factions.some((f) => f.alive && Sim.atWarF(W, c.owner, f.id)), 'đình chiến chấm dứt mọi cuộc chiến của phe đó'); }
+  }
+  assert.ok(W.stories.some((s) => s.type === 'war'), 'các phe tự tuyên chiến');
+  assert.ok(reports > 0, 'có bản tổng kết trận đánh');
+  const rep = W.stories.find((s) => s.type === 'battle-end');
+  assert.ok(rep.text.includes('mất') && rep.lost, 'bản tổng kết nói rõ thương vong');
+  assert.ok(truce, 'thần buộc được đình chiến');
+  assert.ok(ledgerOk(W));
 });
