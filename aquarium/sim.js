@@ -213,7 +213,7 @@
       p.panic--;
       if (p.panic === 0) {
         if ((w.fearShare || 0) > 0.12) p.panic = 1; // còn nhiều người sợ thì đám đông chưa giải tán
-        else story(w, 'bankrun-end', 'major', bankOf(w) + ' trụ vững', 'Nỗi sợ lắng xuống, đám đông giải tán. Ngân hàng cho vay trở lại.', { kind: 'bank' });
+        else story(w, 'bankrun-end', 'major', bankOf(w) + ' trụ vững', 'Nỗi sợ lắng xuống, đám đông giải tán. ' + bankOf(w) + ' cho vay trở lại.', { kind: 'bank' });
       }
     } else if (p.panicCool === 0 && p.badDebt > 0.13 * Math.max(2000, w.bank.loansOut)) {
       // nợ xấu không trực tiếp gây khủng hoảng: nó gieo tin đồn, còn tin đồn có lan hay không là chuyện của đám đông
@@ -325,7 +325,7 @@
     w.fearShare = f2 / n;
     if (p.panic === 0 && w.fearShare > 0.3) {
       p.panic = 15; p.panicCool = 200;
-      story(w, 'bankrun', 'epic', 'Đám đông kéo đến ' + bankOf(w), Math.round(w.fearShare * 100) + '% người dân tin ' + bankOf(w) + ' sắp vỡ và kéo đến đòi tiền. Ngân hàng siết chặt cho vay.', { kind: 'bank' });
+      story(w, 'bankrun', 'epic', 'Đám đông kéo đến ' + bankOf(w), Math.round(w.fearShare * 100) + '% người dân tin ' + bankOf(w) + ' sắp vỡ và kéo đến đòi tiền. ' + bankOf(w) + ' siết chặt cho vay.', { kind: 'bank' });
     }
     foodRumorDay(w);
     epidemicDay(w);

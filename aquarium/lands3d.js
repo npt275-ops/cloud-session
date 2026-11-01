@@ -930,6 +930,53 @@
       cartMesh.instanceMatrix.needsUpdate = true;
     }
 
+    /* =============== Đoàn người di cư: từ thành phố láng giềng qua cầu vào quảng trường =============== */
+    const WALK_N = 160, walkers = [];
+    const wB = new THREE.InstancedMesh(bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), WALK_N);
+    const wH = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), WALK_N);
+    const wP = new THREE.InstancedMesh(new THREE.BoxGeometry(0.36, 0.32, 0.28), new THREE.MeshStandardMaterial({ color: '#c8a36a', flatShading: true, roughness: 0.9 }), WALK_N);
+    for (const m of [wB, wH, wP]) { m.frustumCulled = false; m.castShadow = true; scene.add(m); for (let n = 0; n < WALK_N; n++) m.setMatrixAt(n, ZERO); }
+    for (let n = 0; n < WALK_N; n++) walkers.push({ on: false });
+    let walkIdx = 0;
+    function procession(to, n, from) {
+      const L = lands[to], now = performance.now();
+      const B = from >= 0 ? bridges.find((b) => (b.a === from && b.b === to) || (b.b === from && b.a === to)) : null;
+      let base;
+      if (B) { const fwd = B.a === from; base = []; for (let k = 0; k <= 8; k++) base.push(bridgePoint(B, fwd ? k / 8 : 1 - k / 8, new THREE.Vector3())); }
+      else base = [L.world(L.out.clone().multiplyScalar(LAND_R + 6)).setY(-2), L.world(L.out.clone().multiplyScalar(LAND_R - 1))]; // bộ lạc đầu tiên đến từ phía ngoài bể
+      const pal = SHIRTS[Math.max(0, L.era)];
+      for (let k = 0; k < n; k++) {
+        const idx = walkIdx++ % WALK_N, w = walkers[idx], a = Math.random() * TAU, r = 2.5 + Math.random() * 4;
+        const pts = base.map((v) => v.clone());
+        pts.push(L.world(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)));
+        const lens = [0]; for (let j = 1; j < pts.length; j++) lens.push(lens[j - 1] + pts[j].distanceTo(pts[j - 1]));
+        Object.assign(w, { on: true, pts, lens, t0: now + k * 420, dur: lens[lens.length - 1] * 260 + Math.random() * 800, side: (Math.random() - 0.5) * 0.9 });
+        wB.setColorAt(idx, C(pal[(idx * 3) % pal.length]));
+      }
+      if (wB.instanceColor) wB.instanceColor.needsUpdate = true;
+    }
+    function updateWalkers(t) {
+      const now = performance.now();
+      let any = false;
+      walkers.forEach((w, n) => {
+        if (!w.on) return;
+        any = true;
+        const k = (now - w.t0) / w.dur;
+        if (k < 0) { wB.setMatrixAt(n, ZERO); wH.setMatrixAt(n, ZERO); wP.setMatrixAt(n, ZERO); return; }
+        if (k >= 1) { w.on = false; wB.setMatrixAt(n, ZERO); wH.setMatrixAt(n, ZERO); wP.setMatrixAt(n, ZERO); return; }
+        const d = k * w.lens[w.lens.length - 1];
+        let j = 1; while (j < w.lens.length - 1 && w.lens[j] < d) j++;
+        const s = (d - w.lens[j - 1]) / Math.max(1e-6, w.lens[j] - w.lens[j - 1]);
+        _v.lerpVectors(w.pts[j - 1], w.pts[j], s);
+        const dir = w.pts[j].clone().sub(w.pts[j - 1]).setY(0).normalize(), side = new THREE.Vector3(-dir.z, 0, dir.x);
+        const bob = reduce ? 0 : Math.abs(Math.sin(t * 0.012 + n)) * 0.08;
+        _o.position.copy(_v).addScaledVector(side, w.side).setY(_v.y + 0.31 + bob); _o.rotation.set(0, Math.atan2(dir.x, dir.z), 0); _o.scale.setScalar(1); _o.updateMatrix(); wB.setMatrixAt(n, _o.matrix);
+        _o.position.y += 0.47; _o.updateMatrix(); wH.setMatrixAt(n, _o.matrix);
+        _o.position.y -= 0.32; _o.translateZ(-0.24); _o.updateMatrix(); wP.setMatrixAt(n, _o.matrix);
+      });
+      if (any) { wB.instanceMatrix.needsUpdate = wH.instanceMatrix.needsUpdate = wP.instanceMatrix.needsUpdate = true; }
+    }
+
     /* =============== Khởi tạo =============== */
     for (let i = 0; i < 6; i++) makeLand(i);
     for (const b of W.bridges) { const B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); buildBridge(B, b.era); }
@@ -1028,7 +1075,7 @@
         for (const m of L.waterMats) m.emissiveIntensity = 0.25 + Math.sin(t * 0.002 + L.i) * 0.05 + night * 0.15;
       }
       for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2;
-      updateCarts();
+      updateCarts(); updateWalkers(t);
       if (t - lastSlow > 250) {
         lastSlow = t;
         for (const L of lands) { economyVisuals(L, night); updatePeople(L, tod, t, fadOf ? fadOf(L.i) : null); }
@@ -1051,7 +1098,7 @@
 
     const peopleKit = { bodyGeo, headGeo, headMat: new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), shirts: SHIRTS[3] };
     return {
-      lands, bridges, syncDay, animate, seasons, setEra, walkPath, people: peopleKit, LAND_R, RING,
+      lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING,
       landOf: (i) => lands[i],
       firmPos: (i, id) => { const L = lands[i], o = L.firmObj.get(id); return o ? o.g.position : null; },
       housePos: (i, idx) => { const L = lands[i], H = L.houses[idx]; return H ? L.houseLots[H.idx].p : null; },

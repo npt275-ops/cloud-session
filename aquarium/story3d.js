@@ -830,6 +830,7 @@
         else if (st.type === 'airship' && audio) audio.horn();
         else if (st.type === 'bankrun') label3d('Người dân kéo đến đòi tiền', new THREE.Vector3(bank.position.x, 14, bank.position.z), '#ff9b94');
         else if (st.type === 'wedding') weddingFx(st);
+        else if (st.type === 'settlers' || st.type === 'immigrants') X.procession(4);
         else if (st.type === 'gold') { flashAt(X.minePos, '#ffd36b', 30); ripple(X.minePos, '#ffd36b'); label3d('Mạch vàng!', new THREE.Vector3(X.minePos.x, 11, X.minePos.z), '#ffe08a'); if (audio) audio.chime(); }
         else if (st.type === 'ponzi-flee') { label3d('Bỏ trốn', new THREE.Vector3(ponziPos.x, 10, ponziPos.z), '#d4c2ff'); if (audio) audio.whoosh(); }
         else if (st.type === 'strike') { const p = placePos(st.place); label3d('Đình công', new THREE.Vector3(p.x, 9, p.z), '#ff9b8f'); }
@@ -1067,8 +1068,13 @@
         if (st.type === 'chapter') { showChapter(st); continue; }
         enqueue(st);
         const p = placeOf(st);
-        if (st.type === 'era') { G.label3d(W.cities[st.city].name + ' · thời ' + Sim.ERAS[st.era].name, p.clone().setY(26), '#ffe08a'); G.ripple(p, '#ffd27a'); if (audio) audio.chime(); }
-        else if (st.type === 'settle') { G.label3d('Những người đầu tiên', p.clone().setY(18), '#9df0c4'); G.ripple(p, '#9df0c4'); }
+        if (st.type === 'era') {
+          G.label3d(W.cities[st.city].name + ' · thời ' + Sim.ERAS[st.era].name, p.clone().setY(26), '#ffe08a'); G.ripple(p, '#ffd27a'); if (audio) audio.chime();
+          // người từ thành phố láng giềng kéo đến thành phố vừa sang thời mới
+          const nb = lands3d.lands[st.city].neighbors.filter((j) => W.cities[j].settled);
+          lands3d.procession(st.city, 10, nb.length ? nb[Math.floor(Math.random() * nb.length)] : -1);
+        }
+        else if (st.type === 'settle') { G.label3d('Những người đầu tiên', p.clone().setY(18), '#9df0c4'); G.ripple(p, '#9df0c4'); lands3d.procession(st.city, 18, st.from); }
         else if (st.type === 'bridge') G.label3d('Cầu mới', p.clone().setY(12), '#d9ccff');
       }
     }
@@ -1093,6 +1099,7 @@
         people: G.people, tod: G.tod,
         clickable: (g, sel) => G.clickable(g, Object.assign({ land: L.i }, sel)), unclickable: G.unclickable,
         walkPath: (h) => lands3d.walkPath(L, h),
+        procession: (n) => { const nb = L.neighbors.filter((j) => W.cities[j].settled); lands3d.procession(L.i, n, nb.length ? nb[Math.floor(Math.random() * nb.length)] : -1); },
       };
     }
     const N = { showSub, addChron, enqueue, dequeue, setMode, pause: (ms) => { pausedUntil = now() + ms; }, get mode() { return mode; } };
