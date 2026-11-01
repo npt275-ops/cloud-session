@@ -1,0 +1,225 @@
+<title>Phố Kinh Tế Thu Nhỏ · Phương án C</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Bố cục: một sân khấu game lớn; bản đồ nhìn chéo là màn hình chính, lát cắt bên trong mở ở khung bên phải. */
+:root {
+  --bg: #eef1ec; --surface: #fbfcfa; --fg: #17241f; --muted: #5f6f68; --line: #d3dbd5; --accent: #2f7d5b;
+  --hud: rgba(18, 30, 26, 0.8); --hud-fg: #f2f6f3; --gold: #f2c14e;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d1412; --surface: #141d1a; --fg: #e1ebe6; --muted: #92a69c; --line: #25332e; --accent: #6cc79a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0d1412; --surface: #141d1a; --fg: #e1ebe6; --muted: #92a69c; --line: #25332e; --accent: #6cc79a; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 40px; }
+.wrap { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.wrap > * { min-width: 0; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px; }
+.eyebrow { font: 600 11px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(26px, 3.6vw, 40px)/1 var(--font-display); margin: 6px 0 0; letter-spacing: -0.02em; }
+.lead { color: var(--muted); margin: 6px 0 0; max-width: 70ch; }
+
+.stage { position: relative; aspect-ratio: 16 / 9.4; max-width: 100%; border-radius: 16px; overflow: hidden; background: #cfe6e4; box-shadow: 0 0 0 1px var(--line), 0 18px 40px rgba(20, 40, 30, 0.14); user-select: none; touch-action: pan-y; }
+@media (max-width: 700px) { .stage { aspect-ratio: 3 / 5; } }
+.stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage.street > canvas { cursor: grab; }
+
+.hud-top { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); }
+.res { display: inline-flex; align-items: center; gap: 6px; background: var(--hud); color: var(--hud-fg); border-radius: 999px; padding: 5px 11px 5px 6px; font: 500 12.5px var(--font-data); font-variant-numeric: tabular-nums; backdrop-filter: blur(6px); }
+.res i { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font: 700 10px var(--font-data); font-style: normal; color: #17241f; }
+.modes { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); display: inline-flex; background: var(--hud); border-radius: 999px; padding: 4px; gap: 4px; backdrop-filter: blur(6px); }
+.modes button { border: 0; border-radius: 999px; padding: 6px 14px; font: 600 12.5px var(--font-body); color: var(--hud-fg); background: transparent; cursor: pointer; }
+.modes button[aria-pressed="true"] { background: var(--hud-fg); color: #17241f; }
+.modes button:focus-visible, .tool:focus-visible, .x:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.toolbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 6px; background: var(--hud); padding: 6px; border-radius: 14px; backdrop-filter: blur(6px); max-width: calc(100% - 20px); overflow-x: auto; }
+.tool { flex: 0 0 auto; display: grid; justify-items: center; gap: 2px; min-width: 64px; padding: 6px 8px; border: 1px solid transparent; border-radius: 10px; background: rgba(255, 255, 255, 0.06); color: var(--hud-fg); font: 500 11px var(--font-body); cursor: pointer; }
+.tool b { font: 600 13px var(--font-data); }
+.tool:hover { border-color: rgba(255, 255, 255, 0.3); }
+.tool.gold { background: rgba(242, 193, 78, 0.22); border-color: rgba(242, 193, 78, 0.6); }
+.tool[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+.inspect { position: absolute; right: 10px; top: 52px; width: min(360px, calc(100% - 20px)); background: rgba(250, 252, 250, 0.97); color: #17241f; border-radius: 16px; overflow: hidden; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25); }
+.inspect .view { position: relative; height: 210px; background: #dfeee8; }
+.inspect .view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.inspect .badge { position: absolute; left: 10px; top: 8px; font: 600 10px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; background: rgba(18, 30, 26, 0.75); color: #f2f6f3; padding: 3px 8px; border-radius: 999px; }
+.inspect .body { padding: 10px 14px 12px; }
+.inspect .kind { font: 600 10px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: #2f7d5b; }
+.inspect h3 { margin: 0; font: 700 17px var(--font-display); }
+.inspect dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 8px 0 0; font-size: 13px; }
+.inspect dt { color: #5f6f68; }
+.inspect dd { margin: 0; text-align: right; font: 500 12.5px var(--font-data); font-variant-numeric: tabular-nums; }
+.inspect .x { position: absolute; right: 8px; top: 6px; z-index: 2; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(18, 30, 26, 0.75); color: #fff; font-size: 16px; cursor: pointer; }
+@media (max-width: 700px) { .inspect { top: auto; bottom: 74px; right: 10px; } .inspect .view { height: 150px; } .inspect dl { grid-template-columns: auto 1fr auto 1fr; } }
+.hint { position: absolute; left: 12px; bottom: 74px; background: var(--hud); color: var(--hud-fg); font: 500 12px var(--font-body); padding: 5px 10px; border-radius: 8px; pointer-events: none; }
+@media (max-width: 700px) { .hint { display: none; } }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.note b { display: block; font: 600 14px var(--font-display); margin-bottom: 2px; }
+.note span { color: var(--muted); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Bể Kính Kinh Tế · Phương án C</div>
+      <h1>Phố Kinh Tế Thu Nhỏ</h1>
+      <p class="lead">Bản đồ nhìn chéo là màn hình chính. Bấm vào bất kỳ ngôi nhà, trang trại, nhà máy, ngân hàng hay toà thị chính để mở lát cắt bên trong. Chuyển sang "Đường phố" để đi dọc con phố và nhìn vào từng căn hộ.</p>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="main" aria-label="Thị trấn kinh tế thu nhỏ"></canvas>
+    <div class="hud-top" id="hud"></div>
+    <div class="modes" role="group" aria-label="Góc nhìn">
+      <button id="mMap" aria-pressed="true">Toàn cảnh</button>
+      <button id="mStreet" aria-pressed="false">Đường phố</button>
+    </div>
+    <div class="inspect" id="inspect" hidden>
+      <button class="x" id="close" aria-label="Đóng">×</button>
+      <div class="view"><canvas id="inside" aria-label="Lát cắt bên trong công trình"></canvas><span class="badge">Lát cắt bên trong</span></div>
+      <div class="body" id="info"></div>
+    </div>
+    <div class="hint" id="hint">Bấm vào một công trình để nhìn vào bên trong</div>
+    <div class="toolbar">
+      <button class="tool" id="play"><b>❚❚</b>Tạm dừng</button>
+      <button class="tool" id="speed"><b>3×</b>Tốc độ</button>
+      <button class="tool gold" id="print"><b>+10k</b>In tiền</button>
+      <button class="tool" id="rate"><b>5%</b>Lãi suất</button>
+      <button class="tool" id="tax"><b>10%</b>Thuế</button>
+      <button class="tool" disabled><b>+</b>Xây trường</button>
+      <button class="tool" disabled><b>+</b>Xây nhà</button>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><b>Toàn cảnh để điều hành</b><span>Nhìn cả thị trấn, thấy khu nào đang giàu lên, nhà máy nào bốc khói, ai đang tụ tập ở quảng trường vì thất nghiệp.</span></div>
+    <div class="note"><b>Lát cắt để thấu hiểu</b><span>Bấm vào một ngôi nhà để thấy 4 hộ bên trong: ai có cơm ăn, ai đang đói, ai thất nghiệp. Bấm vào ngân hàng để thấy kho tiền dưới lòng đất.</span></div>
+    <div class="note"><b>Đường phố để cảm nhận</b><span>Đi dọc con phố, nhìn dòng người đi làm, hàng trên kệ chợ, bánh răng nhà máy và hàng người tìm việc.</span></div>
+  </div>
+</div>
+
+<script src="sim.js"></script>
+<script src="town-iso.js"></script>
+<script src="town-side.js"></script>
+<script src="town-interior.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mono = '"IBM Plex Mono", ui-monospace, monospace';
+  const fmt = (v) => Math.round(v).toLocaleString('vi-VN');
+  const dec = (v) => v.toFixed(1).replace('.', ',');
+
+  const world = Sim.create({ seed: 42 });
+  for (let i = 0; i < 90; i++) Sim.step(world);
+
+  const canvas = $('main');
+  const iso = TownIso.create(canvas, { reduceMotion: reduce, font: mono });
+  const side = TownSide.create(canvas, { reduceMotion: reduce, font: mono });
+  const inside = TownInterior.create($('inside'), { reduceMotion: reduce, font: mono });
+  iso.setWorld(world); side.setWorld(world);
+  let view = iso, sel = null, running = true, tps = 3, acc = 0;
+
+  new ResizeObserver(() => { iso.resize(); side.resize(); }).observe($('stage'));
+  iso.resize(); side.resize();
+
+  // HUD
+  $('hud').innerHTML = [['day', '#cde3ff', 'N'], ['money', '#f2c14e', 'xu'], ['cpi', '#ffb3a1', '%'], ['ue', '#c7d0d8', 'TN'], ['hungry', '#ff8f8f', '!']]
+    .map(([k, c, ic]) => '<span class="res"><i style="background:' + c + '">' + ic + '</i><span id="h-' + k + '"></span></span>').join('');
+  function hud() {
+    const s = world.stats[world.stats.length - 1];
+    $('h-day').textContent = 'Ngày ' + world.day;
+    $('h-money').textContent = fmt(s.money);
+    $('h-cpi').textContent = 'Giá ' + Math.round(s.cpi);
+    $('h-ue').textContent = 'Thất nghiệp ' + dec(s.unemployment) + '%';
+    $('h-hungry').textContent = s.hungry + ' hộ đói';
+    info();
+  }
+
+  // Bảng thông tin dưới lát cắt
+  function info() {
+    if (!sel) { $('inspect').hidden = true; $('hint').hidden = false; return; }
+    $('inspect').hidden = false; $('hint').hidden = true;
+    let kind = '', title = '', rows = [];
+    if (sel.type === 'firm') {
+      const f = world.firms.find((x) => x.id === sel.id);
+      if (!f) { sel = null; return info(); }
+      kind = f.sector === 'food' ? 'Trang trại thực phẩm' : 'Nhà máy hàng hoá';
+      title = kind + ' #' + f.id;
+      rows = [['Nhân viên', f.workers.length], ['Lương', dec(f.wage) + ' xu'], ['Giá bán', dec(f.price) + ' xu'], ['Tồn kho', Math.round(f.inv)], ['Tiền mặt', fmt(f.cash) + ' xu'], ['Nợ', fmt(f.debt) + ' xu']];
+    } else if (sel.type === 'house' || sel.type === 'hh') {
+      const i = sel.type === 'house' ? sel.i : Math.floor(sel.id / 4);
+      const ms = [0, 1, 2, 3].map((k) => world.households[i * 4 + k]).filter(Boolean);
+      kind = 'Ngôi nhà'; title = 'Nhà số ' + (i + 1) + ' · ' + ms.length + ' hộ';
+      rows = [['Tổng tiền', fmt(ms.reduce((s, h) => s + h.cash, 0)) + ' xu'], ['Có việc làm', ms.filter((h) => h.employer !== null).length + '/' + ms.length], ['Có cơm hôm nay', ms.filter((h) => h.ateToday).length + '/' + ms.length], ['Hộ giàu nhất', fmt(Math.max(...ms.map((h) => h.cash))) + ' xu']];
+    } else if (sel.type === 'bank') {
+      kind = 'Ngân hàng'; title = 'Ngân hàng Thị trấn';
+      rows = [['Dư nợ', fmt(world.bank.loansOut) + ' xu'], ['Đã xoá nợ', fmt(world.bank.writtenOff) + ' xu'], ['Lãi suất', Math.round(world.policy.interestRate * 100) + '%/năm'], ['Tiền tạo ra', fmt(world.ledger.created) + ' xu']];
+    } else if (sel.type === 'gov') {
+      kind = 'Nhà nước'; title = 'Toà thị chính';
+      rows = [['Quỹ', fmt(world.gov.cash) + ' xu'], ['Thuế', Math.round(world.policy.taxRate * 100) + '%'], ['Lương tối thiểu', world.policy.minWage + ' xu'], ['Tiền đã in', fmt(world.ledger.printed) + ' xu']];
+    }
+    $('info').innerHTML = '<div class="kind">' + kind + '</div><h3>' + title + '</h3><dl>' + rows.map(([a, b]) => '<dt>' + a + '</dt><dd>' + b + '</dd>').join('') + '</dl>';
+  }
+  function select(s) {
+    sel = s; iso.select(s && s.type === 'hh' ? { type: 'house', i: Math.floor(s.id / 4) } : s); side.select(s);
+    if (s) requestAnimationFrame(() => inside.resize());
+    info();
+  }
+  $('close').onclick = () => select(null);
+
+  // Đổi góc nhìn
+  function setView(v) {
+    view = v === 'map' ? iso : side;
+    $('mMap').setAttribute('aria-pressed', String(v === 'map'));
+    $('mStreet').setAttribute('aria-pressed', String(v !== 'map'));
+    $('stage').classList.toggle('street', v !== 'map');
+    $('hint').textContent = v === 'map' ? 'Bấm vào một công trình để nhìn vào bên trong' : 'Kéo ngang để đi dọc phố · bấm vào một căn hộ';
+  }
+  $('mMap').onclick = () => setView('map');
+  $('mStreet').onclick = () => setView('street');
+
+  // Bấm chọn và kéo
+  let down = null, dragged = false;
+  canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX }; dragged = false; });
+  window.addEventListener('pointermove', (e) => { if (!down || view !== side) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 4) { dragged = true; side.pan(dx); down.x = e.clientX; } });
+  window.addEventListener('pointerup', (e) => {
+    if (!down) return;
+    if (!dragged && e.target === canvas) { const b = canvas.getBoundingClientRect(); select(view.pick(e.clientX - b.left, e.clientY - b.top)); }
+    down = null;
+  });
+
+  // Thanh công cụ
+  const rates = [0.02, 0.05, 0.1, 0.18], taxes = [0, 0.1, 0.25, 0.4], speeds = [1, 3, 8];
+  $('play').onclick = () => { running = !running; $('play').innerHTML = running ? '<b>❚❚</b>Tạm dừng' : '<b>▶</b>Chạy tiếp'; };
+  $('speed').onclick = () => { tps = speeds[(speeds.indexOf(tps) + 1) % speeds.length]; $('speed').querySelector('b').textContent = tps + '×'; };
+  $('print').onclick = () => { world.flows = []; Sim.printMoney(world, 10000); iso.onTick(world); side.onTick(world); hud(); };
+  $('rate').onclick = () => { const r = rates[(rates.indexOf(world.policy.interestRate) + 1) % rates.length]; Sim.setPolicy(world, 'interestRate', r); $('rate').querySelector('b').textContent = Math.round(r * 100) + '%'; info(); };
+  $('tax').onclick = () => { const r = taxes[(taxes.indexOf(world.policy.taxRate) + 1) % taxes.length]; Sim.setPolicy(world, 'taxRate', r); $('tax').querySelector('b').textContent = Math.round(r * 100) + '%'; info(); };
+
+  // Mở sẵn lát cắt một ngôi nhà để thấy ngay cách hoạt động
+  select({ type: 'house', i: 7 });
+  hud();
+
+  let last = performance.now();
+  function frame(t) {
+    const dt = Math.min(250, t - last); last = t;
+    if (running) {
+      acc += (dt * tps) / 1000;
+      while (acc >= 1) { Sim.step(world); iso.onTick(world); side.onTick(world); acc -= 1; hud(); }
+    }
+    view.draw(t);
+    if (sel) inside.draw(world, sel, t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame((t) => { last = t; frame(t); });
+})();
+</script>
