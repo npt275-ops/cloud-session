@@ -84,7 +84,8 @@ test('chính sách có tác động thật: lãi suất cao làm tăng thất ng
   const base = run(() => {}), tight = run((w) => Sim.setPolicy(w, 'interestRate', 0.18)), mw = run((w) => Sim.setPolicy(w, 'minWage', 14));
   assert.ok(tight.ue > base.ue + 5, `lãi 18%: thất nghiệp ${tight.ue.toFixed(1)}% so với ${base.ue.toFixed(1)}%`);
   assert.ok(mw.minWage >= 14, `lương sàn ${mw.minWage}`);
-  assert.ok(mw.cpi > base.cpi * 1.15, `giá ${mw.cpi.toFixed(0)} so với ${base.cpi.toFixed(0)}`);
+  // rổ giá dùng giá trung vị hàng hoá (không còn bị cơn sốt làm phồng): trên 5 thành phố hiệu ứng là +13% đến +36%
+  assert.ok(mw.cpi > base.cpi * 1.1, `giá ${mw.cpi.toFixed(0)} so với ${base.cpi.toFixed(0)}`);
   for (const r of [base, tight, mw]) assert.ok(close(Sim.totalMoney(r.w), Sim.expectedMoney(r.w)));
 });
 
@@ -116,7 +117,8 @@ test('lạm phát vừa phải và không ngành nào chết hẳn trên 8 thàn
     }
     const st = w.stats.slice(200), yrs = (st.length - 1) / 360;
     const infl = (Math.pow(st.at(-1).cpi / st[0].cpi, 1 / yrs) - 1) * 100;
-    assert.ok(infl > -3 && infl < 9, `seed ${seed}: lạm phát ${infl.toFixed(1)}%/năm`);
+    // rổ giá dùng giá trung vị hàng hoá; thành phố nhiều phát minh có thể giảm phát nhẹ do lương thực rẻ đi
+    assert.ok(infl > -5 && infl < 10, `seed ${seed}: lạm phát ${infl.toFixed(1)}%/năm`);
     assert.ok(minFood >= 2, `seed ${seed}: có lúc chỉ còn ${minFood} lò thực phẩm`);
     assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), `seed ${seed}: lệch sổ cái`);
   }
@@ -275,4 +277,117 @@ test('khí cầu thương nhân mang tiền từ bên ngoài vào; hoả hoạn 
   while (w.day < until) Sim.step(w);
   Sim.step(w); Sim.step(w);
   assert.ok(!f.alive || f.inv > 0 || f.workers.length === 0, 'dựng lại xong thì sản xuất trở lại');
+});
+
+/* ===================== Mốc 2: người giữ bể và ký ức ===================== */
+
+test('gõ vào kính: gõ một lần chỉ vài người giật mình, gõ liên tiếp thì nỗi sợ lan khắp thành phố', () => {
+  const w = Sim.create({ seed: 4 });
+  for (let i = 0; i < 60; i++) Sim.step(w);
+  const near = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const scared = () => w.households.filter((h) => h.fear > 0).length;
+  const r1 = Sim.tapGlass(w, near);
+  assert.ok(r1.ok && r1.level === 1, 'lần gõ đầu là mức 1');
+  assert.ok(r1.scared <= near.length, 'lần đầu chỉ người ở gần giật mình');
+  assert.strictEqual(Sim.tapGlass(w, near).ok, false, 'một ngày chỉ gõ được một lần');
+  const levels = [1];
+  for (let k = 0; k < 3; k++) { Sim.step(w); levels.push(Sim.tapGlass(w, near).level); }
+  assert.deepStrictEqual(levels, [1, 2, 3, 4], 'gõ liên tiếp thì mức tăng dần');
+  assert.ok(scared() > near.length, `gõ dồn dập phải làm người ở xa cũng sợ (${scared()} người)`);
+  for (let i = 0; i < 10; i++) Sim.step(w);
+  assert.strictEqual(Sim.tapGlass(w, near).level, 1, 'nghỉ lâu thì mức gõ trở về 1');
+  assert.ok(w.stories.some((s) => s.type === 'tap' && s.tier === 'major'), 'gõ mạnh thành chuyện lớn');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
+});
+
+test('thì thầm tin đồn: gieo nỗi sợ vào một ngôi nhà, khơi cơn sốt ở một xưởng, phải chờ 20 ngày giữa hai lời thì thầm', () => {
+  const w = Sim.create({ seed: 6 });
+  for (let i = 0; i < 80; i++) Sim.step(w);
+  while (Sim.activeFad(w)) Sim.step(w);
+  const r = Sim.whisper(w, 'bank', 3);
+  assert.ok(r.ok && r.believers >= 3, 'cả nhà nghe tin đồn Kho Bạc');
+  assert.ok([12, 13, 14, 15].some((id) => w.households[id].fear > 0 || w.households[id].calm > 0));
+  const again = Sim.whisper(w, 'bank', 5);
+  assert.ok(!again.ok && again.reason === 'wait' && again.wait === 20, 'phải chờ 20 ngày');
+  for (let i = 0; i < 20; i++) Sim.step(w);
+  while (Sim.activeFad(w)) Sim.step(w);
+  for (let i = 0; i < 20; i++) Sim.step(w);
+  const farm = w.firms.find((f) => f.alive && f.sector === 'food');
+  assert.strictEqual(Sim.whisper(w, 'fad', farm.id).reason, 'target', 'cơn sốt chỉ khơi ở xưởng hàng hoá');
+  const shop = w.firms.filter((f) => f.alive && f.sector === 'goods').sort((a, b) => b.workers.length - a.workers.length)[0];
+  const rf = Sim.whisper(w, 'fad', shop.id);
+  assert.ok(rf.ok && rf.fad && rf.fad.firmId === shop.id, 'lời thì thầm khơi cơn sốt ở đúng xưởng');
+  assert.ok(w.stories.at(-1).text.includes('thì thầm'));
+  for (let i = 0; i < 15; i++) Sim.step(w);
+  assert.ok(rf.fad.peakShare > 0.05, `cơn sốt phải lan ra (${(rf.fad.peakShare * 100).toFixed(0)}%)`);
+});
+
+test('tin đồn mất mùa tự thành sự thật: người ta tích trữ, kệ lương thực vơi, giá lên; tin qua đi thì đồ tích trữ được ăn dần và giá lại rơi', () => {
+  function run(rumor) {
+    const w = Sim.create({ seed: 11, off: { fad: true, fire: true, airship: true } });
+    for (let i = 0; i < 120; i++) Sim.step(w);
+    const food = () => w.firms.filter((f) => f.alive && f.sector === 'food');
+    const price = () => food().reduce((t, f) => t + f.price, 0) / food().length;
+    const price0 = price();
+    if (rumor) Sim.seedFoodRumor(w, 0.12);
+    let maxShare = 0, minInv = Infinity, maxPrice = 0, bought = 0, pantryPeak = 0;
+    for (let i = 0; i < 40; i++) {
+      Sim.step(w);
+      maxShare = Math.max(maxShare, w.foodRumorN / w.households.length);
+      pantryPeak = Math.max(pantryPeak, w.households.reduce((t, h) => t + h.pantry, 0));
+      if (i < 7) {
+        minInv = Math.min(minInv, food().reduce((t, f) => t + f.inv, 0));
+        bought += w.flows.filter((x) => x.kind === 'buy' && food().some((f) => f.key === x.to)).length;
+      }
+      if (i < 14) maxPrice = Math.max(maxPrice, price() / price0);
+    }
+    return { w, maxShare, minInv, maxPrice, bought, pantryPeak, pantryEnd: w.households.reduce((t, h) => t + h.pantry, 0), endPrice: price() / price0 };
+  }
+  const base = run(false), r = run(true);
+  assert.ok(r.maxShare > 0.15, `tin đồn phải lan (${(r.maxShare * 100).toFixed(0)}%)`);
+  assert.ok(r.bought > base.bought * 1.15, `tuần đầu phải mua nhiều lương thực hơn (${r.bought} so với ${base.bought})`);
+  assert.ok(r.minInv < base.minInv * 0.85, `kệ lương thực phải vơi (${r.minInv.toFixed(0)} so với ${base.minInv.toFixed(0)})`);
+  assert.ok(r.maxPrice > base.maxPrice, `giá lương thực phải lên nhiều hơn (${r.maxPrice.toFixed(2)} so với ${base.maxPrice.toFixed(2)})`);
+  assert.ok(r.pantryPeak > 100, `phải có tích trữ (${r.pantryPeak} phần)`);
+  assert.ok(r.pantryEnd < r.pantryPeak * 0.5, `tin qua đi thì đồ tích trữ được ăn dần (${r.pantryEnd}/${r.pantryPeak})`);
+  assert.ok(r.endPrice < r.maxPrice, 'sau cơn tích trữ giá phải hạ');
+  assert.ok(r.w.stories.some((s) => s.type === 'food-rush'), 'thành chuyện lớn');
+  assert.ok(close(Sim.totalMoney(r.w), Sim.expectedMoney(r.w)));
+});
+
+test('gọi khí cầu: đến ngay hôm sau, 90 ngày mới gọi lại được, không gọi được khi đang cập bến', () => {
+  const w = Sim.create({ seed: 2, off: { airship: true } });
+  for (let i = 0; i < 30; i++) Sim.step(w);
+  assert.ok(Sim.callAirship(w).ok);
+  Sim.step(w);
+  assert.strictEqual(w.airship.state, 'docked', 'khí cầu đến ngay hôm sau');
+  assert.ok(w.stories.some((s) => s.type === 'airship' && s.called), 'chuyện ghi rõ khí cầu được gọi');
+  assert.strictEqual(Sim.callAirship(w).reason, 'docked');
+  while (w.airship.state === 'docked') Sim.step(w);
+  const r = Sim.callAirship(w);
+  assert.ok(!r.ok && r.reason === 'wait' && r.wait > 0 && r.wait <= 90, 'phải chờ đèn hiệu nguội');
+});
+
+test('ký ức: phát minh dựng tượng, phá sản để lại tàn tích, bong bóng vỡ để lại đống đồ bỏ; mỗi năm thành một chương có tên', () => {
+  const w = Sim.create({ seed: 3 });
+  for (let i = 0; i < 360; i++) Sim.step(w);
+  const ch = w.chapters[0];
+  assert.ok(ch && ch.year === 1 && /^Năm 1: /.test(ch.title), 'cuối năm 1 có chương "Năm 1: ..."');
+  assert.ok(ch.recap.length >= 3, 'chương có tóm tắt');
+  assert.ok(w.stories.some((s) => s.type === 'chapter' && s.tier === 'epic' && s.year === 1));
+  Sim.step(w); // ngày 360 vẫn thuộc năm 1
+  const shop = w.firms.find((f) => f.alive && f.sector === 'goods');
+  w.seedReady = 0;
+  Sim.seedInvention(w, shop.id);
+  const statue = w.memorials.filter((m) => m.kind === 'statue').at(-1);
+  assert.ok(statue && statue.firmId === shop.id && statue.year === 2, 'phát minh dựng tượng, ghi năm');
+  assert.ok(w.memorials.some((m) => m.kind === 'ruin'), 'phá sản để lại tàn tích');
+  while (Sim.activeFad(w)) Sim.step(w);
+  Sim.startFad(w, shop.id, 'Ô thử nghiệm');
+  for (let i = 0; i < 160 && !w.memorials.some((m) => m.kind === 'pile'); i++) Sim.step(w);
+  const pile = w.memorials.find((m) => m.kind === 'pile');
+  assert.ok(pile && pile.color && pile.units >= 0, 'bong bóng vỡ để lại đống đồ bỏ');
+  for (let i = w.day; i < 720; i++) Sim.step(w);
+  assert.ok(w.chapters.length === 2 && w.chapters[1].year === 2, 'năm 2 cũng thành một chương');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
 });

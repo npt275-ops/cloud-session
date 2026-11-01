@@ -1,8 +1,10 @@
 // Bảng chỉ số vĩ mô trên 8 thành phố trong một lần chạy: node tools/metrics.js [ngày]
+// Tắt cơ chế để so sánh: OFF=foodRumor,fad node tools/metrics.js
 const Sim = require('../sim.js');
 const days = +process.argv[2] || 2000, rows = [];
+const off = {}; for (const k of (process.env.OFF || '').split(',').filter(Boolean)) off[k] = true;
 for (let seed = 1; seed <= 8; seed++) {
-  const w = Sim.create({ seed });
+  const w = Sim.create({ seed, off });
   let minFood = 99;
   for (let i = 0; i < days; i++) { Sim.step(w); if (i > 100) minFood = Math.min(minFood, w.firms.filter((f) => f.alive && f.sector === 'food').length); }
   const st = w.stats.slice(200), m = (k) => st.reduce((s, x) => s + x[k], 0) / st.length;

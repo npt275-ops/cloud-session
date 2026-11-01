@@ -36,7 +36,7 @@
     minFood: 4,
     minGoods: 5,
     maxFlows: 700,
-    off: {},            // tắt từng cơ chế câu chuyện để chẩn đoán: { invent, fear, fad, airship, fire }
+    off: {},            // tắt từng cơ chế câu chuyện để chẩn đoán: { invent, fear, fad, airship, fire, foodRumor }
   };
 
   function create(opts) {
@@ -55,6 +55,9 @@
       stories: [], storySeq: 0, cands: [], lastSmall: -99, spread: [], fearShare: 0,
       fads: [], fadSeq: 0, inventions: [], inventionsUsed: [], variety: 0, seedReady: 0,
       airship: { state: 'away', days: 0, cool: 140, visits: 0, units: 0, revenue: 0, demand: 0, called: false },
+      // người giữ bể và ký ức
+      keeper: { tapLevel: 0, lastTap: -99, whisperReady: 0, callReady: 0 },
+      foodRumorN: 0, foodRush: null, memorials: [], chapters: [],
     };
     for (let i = 0; i < cfg.households; i++) w.households.push(newHousehold(i, cfg.householdCash, rand()));
     for (let i = 0; i < cfg.foodFirms; i++) w.firms.push(newFirm(w, 'food', cfg.firmCash));
@@ -70,20 +73,21 @@
   }
 
   function newHousehold(id, cash, r) {
-    return { key: 'h' + id, id, cash, employer: null, hungry: 0, ateToday: true, skill: 0.7 + r * 0.7, fear: 0, calm: 0, hype: 0, bored: [], hoard: 0, joblessSince: 0, richFlag: false };
+    return { key: 'h' + id, id, cash, employer: null, hungry: 0, ateToday: true, skill: 0.7 + r * 0.7, fear: 0, calm: 0, hype: 0, bored: [], hoard: 0, joblessSince: 0, richFlag: false, foodRumor: 0, foodCalm: 0, pantry: 0 };
   }
 
   function newFirm(w, sector, cash) {
     const id = w.nextFirmId++;
     const prod = sector === 'food' ? w.cfg.foodProd : w.cfg.goodsProd;
-    const unitCost = w.cfg.wage / prod;
+    const wage = Math.max(w.cfg.wage, w.policy ? w.policy.minWage : 0); // xưởng mới cũng phải theo lương tối thiểu
+    const unitCost = wage / prod;
     // mỗi doanh nghiệp có 3 hộ làm chủ, nhận cổ tức
     const owners = [];
     for (let k = 0; k < 3 && w.households.length; k++) owners.push(Math.floor(w.rand() * w.households.length));
     return {
       owners, name: firmNameFor(w, sector), inventions: 0, downUntil: 0, fadId: 0, peakWorkers: 0,
       key: 'f' + id, id, sector, cash: cash || 0, inv: 6, prod, baseProd: prod,
-      price: unitCost * 1.25, wage: w.cfg.wage, workers: [], vacancies: 0, unfilled: 0,
+      price: unitCost * 1.25, wage, workers: [], vacancies: 0, unfilled: 0,
       debt: 0, sold: 0, avgSales: prod * 6, alive: true, born: w.day, deadSince: null,
     };
   }
@@ -174,7 +178,7 @@
     else if (p.drought === 0 && w.rand() < 0.035) { p.rain = 2 + Math.floor(w.rand() * 4); log(w, season === 3 ? 'Tuyết bắt đầu rơi trên thành phố.' : 'Trời đổ mưa.', 'nature'); }
     // hạn hán: có thể xảy ra một lần mỗi mùa hạ
     if (p.drought > 0) { p.drought--; if (p.drought === 0) story(w, 'drought-end', 'major', 'Hạn hán chấm dứt', 'Mưa đã về. Ruộng đồng hồi phục, giá lương thực sẽ dịu dần.', { kind: 'farms' }); }
-    else if (season === 1 && p.droughtYear !== year && w.rand() < 0.012) { p.drought = 30 + Math.floor(w.rand() * 25); p.droughtYear = year; p.rain = 0; story(w, 'drought', 'epic', 'Hạn hán', 'Trời không mưa suốt nhiều tuần. Ruộng khô nứt, sản lượng lương thực giảm hơn một phần ba trong ' + p.drought + ' ngày.', { kind: 'farms' }); }
+    else if (season === 1 && p.droughtYear !== year && w.rand() < 0.012) { p.drought = 30 + Math.floor(w.rand() * 25); p.droughtYear = year; p.rain = 0; story(w, 'drought', 'epic', 'Hạn hán', 'Trời không mưa suốt nhiều tuần. Ruộng khô nứt, sản lượng lương thực giảm hơn một phần ba trong ' + p.drought + ' ngày.', { kind: 'farms' }); seedFoodRumor(w, 0.025); }
     // lễ hội đèn lồng cuối năm
     if (doy === 345) { p.festival = 15; story(w, 'festival', 'major', 'Lễ hội đèn lồng', 'Mười lăm ngày cuối năm. Người dân sắm sửa, đèn trời bay lên từ mọi mái nhà.', { kind: 'plaza' }); }
     else if (p.festival > 0) p.festival--;
@@ -291,6 +295,7 @@
       p.panic = 15; p.panicCool = 200;
       story(w, 'bankrun', 'epic', 'Đám đông kéo đến Kho Bạc', Math.round(w.fearShare * 100) + '% người dân tin Kho Bạc sắp vỡ và kéo đến đòi tiền. Ngân hàng siết chặt cho vay.', { kind: 'bank' });
     }
+    foodRumorDay(w);
     // Cơn sốt
     const fad = activeFad(w);
     if (fad) fadDay(w, fad);
@@ -320,15 +325,62 @@
     }
   }
 
+  /* ----- Tin đồn mất mùa: người nghe tin mua tích trữ, chính việc tích trữ làm kệ trống và giá lên ----- */
+  function seedFoodRumor(w, share, list) {
+    if (w.cfg.off.foodRumor) return 0;
+    const hs = w.households, seeds = list || [];
+    if (!list) for (let i = 0; i < Math.round(hs.length * share); i++) seeds.push(hs[Math.floor(w.rand() * hs.length)]);
+    let n = 0;
+    for (const h of seeds) if (h && h.foodRumor <= 0 && !(h.foodCalm > 0)) { h.foodRumor = 7 + Math.floor(w.rand() * 3); n++; }
+    return n;
+  }
+  function foodRumorDay(w) {
+    const hs = w.households, n = hs.length;
+    let cnt = 0;
+    for (const h of hs) if (h.foodRumor > 0) cnt++;
+    if (!cnt) {
+      for (const h of hs) if (h.foodCalm > 0) h.foodCalm--;
+      w.foodRumorN = 0;
+      const R = w.foodRush;
+      if (R && R.active) { R.active = false; story(w, 'food-rush-end', 'small', 'Cơn tích trữ qua đi', 'Mùa màng vẫn bình thường. Nhà nào cũng còn gạo trong kho, chợ lương thực vắng hẳn mấy ngày.', { kind: 'farms' }); }
+      return;
+    }
+    const beta = 0.05 + 0.3 * (cnt / n), newly = [];
+    for (const h of hs) {
+      if (h.foodRumor <= 0) continue;
+      for (let k = 0; k < 2; k++) { const c = randomContact(w, h); if (c && c.foodRumor <= 0 && !(c.foodCalm > 0) && w.rand() < beta) newly.push([h, c]); }
+    }
+    for (const h of hs) { if (h.foodRumor > 0) { h.foodRumor--; if (h.foodRumor === 0) h.foodCalm = 120; } else if (h.foodCalm > 0) h.foodCalm--; }
+    for (const [a, c] of newly) if (c.foodRumor <= 0) { c.foodRumor = 5 + Math.floor(w.rand() * 4); note(w, a, c, 'food'); }
+    cnt = 0;
+    for (const h of hs) if (h.foodRumor > 0) cnt++;
+    w.foodRumorN = cnt;
+    const share = cnt / n;
+    if (share > 0.15 && !(w.foodRush && w.foodRush.active)) {
+      const food = w.firms.filter((f) => f.alive && f.sector === 'food');
+      const price = food.length ? food.reduce((t, f) => t + f.price, 0) / food.length : 0;
+      w.foodRush = { active: true, start: w.day, price, peak: share };
+      story(w, 'food-rush', 'major', 'Người dân đổ xô tích trữ lương thực', Math.round(share * 100) + '% gia đình tin sắp mất mùa và mua gấp đôi. Kệ hàng ở các cối xay vơi dần, và giá gạo bắt đầu nhích lên.', { kind: 'farms' });
+    } else if (w.foodRush && w.foodRush.active) w.foodRush.peak = Math.max(w.foodRush.peak, share);
+  }
+
+  /* ----- Ký ức: những dấu vết thành phố giữ lại mãi ----- */
+  function memorial(w, m) {
+    m.day = w.day; m.year = Math.floor(Math.max(0, w.day - 1) / 360) + 1;
+    w.memorials.push(m);
+    if (w.memorials.length > 120) w.memorials.shift();
+    return m;
+  }
+
   /* ----- Cơn sốt: lây lan, chán, miễn dịch; đầu cơ và vỡ bong bóng ----- */
-  function startFad(w, firm, item) {
+  function startFad(w, firm, item, text) {
     if (!firm || !firm.alive || activeFad(w) || w.cfg.off.fad) return null;
     const fad = { id: ++w.fadSeq, firmId: firm.id, item, color: FAD_COLORS[w.fadSeq % FAD_COLORS.length], start: w.day, state: 'rising', share: 0, peakShare: 0, peakDay: w.day, basePrice: firm.price, maxRatio: 1, hoarded: 0, units: 0 };
     w.fads.push(fad); firm.fadId = fad.id;
     const seeds = firm.workers.slice(0, 6).map((id) => w.households[id]);
     if (!seeds.length) seeds.push(w.households[Math.floor(w.rand() * w.households.length)]);
     for (const h of seeds) h.hype = fad.id;
-    story(w, 'fad', 'major', 'Cơn sốt ' + item.toLowerCase() + ' bắt đầu', 'Những người thợ ở ' + firm.name + ' mang ' + item.toLowerCase() + ' về khoe với hàng xóm. Ai nhìn thấy cũng muốn có một chiếc.', { kind: 'firm', id: firm.id }, { fadId: fad.id, color: fad.color });
+    story(w, 'fad', 'major', 'Cơn sốt ' + item.toLowerCase() + ' bắt đầu', text || 'Những người thợ ở ' + firm.name + ' mang ' + item.toLowerCase() + ' về khoe với hàng xóm. Ai nhìn thấy cũng muốn có một chiếc.', { kind: 'firm', id: firm.id }, { fadId: fad.id, color: fad.color });
     return fad;
   }
   function fadDay(w, fad) {
@@ -360,6 +412,7 @@
       const hoard = losers.reduce((t, h) => t + h.hoard, 0);
       for (const h of losers) { scare(w, h, 6 + Math.floor(w.rand() * 4)); h.hoard = 0; }
       firm.price *= 0.7;
+      memorial(w, { kind: 'pile', item: fad.item, color: fad.color, units: hoard + Math.round(Math.max(0, firm.inv)), fadId: fad.id, firmId: firm.id, firmName: firm.name });
       story(w, 'fad-crash', 'epic', 'Bong bóng ' + item + ' vỡ', 'Hết ai thèm ' + item + '. Hàng ế chất đống ở ' + firm.name + '. ' + losers.length + ' người đầu cơ ôm ' + hoard + ' chiếc không bán được, họ bắt đầu lo cho túi tiền của mình.', { kind: 'firm', id: firm.id }, { fadId: fad.id, color: fad.color, losers: losers.length, hoard });
     } else if (fad.state === 'crash' && fad.share < 0.02) {
       endFad(w, fad, null, 'small');
@@ -387,6 +440,7 @@
     firm.baseProd = Math.min(cap, (firm.baseProd || firm.prod) * 1.3);
     firm.inventions++; firm.lastInvention = item; firm.inventedDay = w.day;
     w.inventions.push({ day: w.day, firmId: firm.id, item, inventor, seeded: !!opts.seeded });
+    memorial(w, { kind: 'statue', item, inventor, firmId: firm.id, firmName: firm.name, sector: firm.sector, seeded: !!opts.seeded });
     const st = story(w, 'invention', 'major', 'Phát minh: ' + item, (opts.seeded ? 'Hạt giống phát minh rơi xuống ' + firm.name + '. ' : 'Ở ' + firm.name + ', ') + nameOf(inventor) + ' vừa nghĩ ra ' + item.toLowerCase() + '. Năng suất của nơi này tăng gần một phần ba.', { kind: 'firm', id: firm.id }, { actors: [inventor], item, seeded: !!opts.seeded });
     if (firm.sector === 'goods' && w.rand() < (opts.seeded ? 0.75 : 0.5)) startFad(w, firm, item);
     return st;
@@ -415,9 +469,9 @@
     }
   }
   function arriveAirship(w) {
-    const a = w.airship;
+    const a = w.airship, called = a.called;
     a.state = 'docked'; a.days = 18 + Math.floor(w.rand() * 12); a.units = 0; a.revenue = 0; a.demand = 6 + Math.floor(w.rand() * 8); a.visits++; a.called = false;
-    story(w, 'airship', 'epic', a.visits === 1 ? 'Khí cầu đầu tiên ghé đảo' : 'Khí cầu thương nhân cập bến', 'Đoàn thương nhân từ phương xa muốn mua ' + a.demand + ' món hàng mỗi ngày, trả bằng tiền của thế giới bên ngoài. Họ ở lại ' + a.days + ' ngày.', { kind: 'dock' });
+    story(w, 'airship', 'epic', called ? 'Khí cầu đáp lời người giữ bể' : a.visits === 1 ? 'Khí cầu đầu tiên ghé đảo' : 'Khí cầu thương nhân cập bến', (called ? 'Ngọn đèn hiệu trên bến đã được thắp. ' : '') + 'Đoàn thương nhân từ phương xa muốn mua ' + a.demand + ' món hàng mỗi ngày, trả bằng tiền của thế giới bên ngoài. Họ ở lại ' + a.days + ' ngày.', { kind: 'dock' }, { called });
   }
   function exportDay(w, goods) {
     const a = w.airship;
@@ -551,12 +605,21 @@
     const fadNow = activeFad(w), fadFirm = fadNow ? firmById(w, fadNow.firmId) : null;
     for (const h of shuffle(w, w.households.slice())) {
       h.ateToday = false;
-      const fs = cheapestOf(w, food, true);
-      if (fs && h.cash >= fs.price) {
-        transfer(w, h, fs, fs.price, 'buy'); fs.inv -= 1; fs.sold += 1;
-        h.ateToday = true; h.hungry = 0;
-      } else {
-        h.hungry++;
+      if (h.pantry > 0 && h.foodRumor <= 0 && w.rand() < 0.6) { h.pantry--; h.ateToday = true; h.hungry = 0; } // ăn dần gạo đã tích trữ
+      else {
+        const fs = cheapestOf(w, food, true);
+        if (fs && h.cash >= fs.price) {
+          transfer(w, h, fs, fs.price, 'buy'); fs.inv -= 1; fs.sold += 1;
+          h.ateToday = true; h.hungry = 0;
+        } else {
+          h.hungry++;
+        }
+      }
+      // nghe tin sắp mất mùa: mua thêm vài phần để dành mỗi ngày, ai càng nhiều tiền càng tích trữ được nhiều
+      for (let k = 0; k < 3 && h.foodRumor > 0 && h.pantry < 9 && h.cash > avgFoodPrice * 10; k++) {
+        const f2 = cheapestOf(w, food, true);
+        if (!f2) break;
+        transfer(w, h, f2, f2.price, 'buy'); f2.inv -= 1; f2.sold += 1; h.pantry++;
       }
       // Cơn sốt: người đang mê món hàng mới mua bằng được, người giàu còn mua tích trữ chờ giá lên
       if (h.hype && fadNow && h.hype === fadNow.id && fadFirm && fadFirm.alive && fadFirm.inv >= 1) {
@@ -627,6 +690,7 @@
         const big = f.debt > 300 || (f.peakWorkers || 0) >= 6;
         story(w, 'bankrupt', big ? 'major' : 'small', f.name + ' phá sản', (f.debt > 0 ? 'Không trả nổi ' + Math.round(f.debt).toLocaleString('vi-VN') + ' xu nợ, ' : '') + f.name + ' đóng cửa. Tin dữ lan trong xóm của những người chủ.', { kind: 'firm', id: f.id }, { actors: f.owners.slice() });
         for (const hid of f.owners) { const o = w.households[hid]; if (!o) continue; scare(w, o, 7); for (let k = 0; k < 3; k++) { const c = randomContact(w, o); if (c) scare(w, c, 5); } }
+        memorial(w, { kind: 'ruin', firmId: f.id, name: f.name, sector: f.sector, debt: Math.round(f.debt), workers: f.peakWorkers || 0 });
         if (f.debt > 0 && f.cash > 0) repay(w, f, f.cash); // trả nợ ngân hàng trước bằng tiền còn lại
         if (f.debt > 0) {
           w.bank.loansOut -= f.debt; w.bank.writtenOff += f.debt; w.bank.losses += f.debt; w.phen.badDebt += f.debt;
@@ -667,6 +731,118 @@
     richest(w);
     pickSmall(w);
     record(w);
+    if (w.day % 360 === 0) chapter(w);
+  }
+
+  /* ----- Chương năm: mỗi năm được đặt tên theo câu chuyện lớn nhất của nó ----- */
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  function chapter(w) {
+    const year = Math.round(w.day / 360), from = w.day - 360;
+    const sts = w.stories.filter((s) => s.day > from && s.day <= w.day);
+    const of = (t) => sts.filter((s) => s.type === t);
+    const themes = [], recap = [];
+    const inv = of('invention');
+    if (inv.length) {
+      themes.push({ score: inv.length * 1.7 + (inv.some((s) => s.seeded) ? 1 : 0), name: inv.length >= 3 ? 'những nhà phát minh' : inv[0].item.toLowerCase() });
+      recap.push(inv.length + ' phát minh: ' + inv.slice(0, 4).map((s) => s.item.toLowerCase()).join(', ') + (inv.length > 4 ? '…' : ''));
+    }
+    const fads = w.fads.filter((f) => f.start > from && f.peakShare > 0.12).sort((a, b) => b.peakShare - a.peakShare);
+    if (fads.length) {
+      const f = fads[0], crashed = sts.some((s) => s.type === 'fad-crash' && s.fadId === f.id);
+      themes.push({ score: 4 + f.peakShare * 8 + (crashed ? 2.5 : 0), name: 'cơn sốt ' + f.item.toLowerCase() });
+      recap.push('Cơn sốt ' + f.item.toLowerCase() + ': ' + Math.round(f.peakShare * 100) + '% gia đình từng mê, giá lên gấp ' + f.maxRatio.toFixed(1).replace('.', ',') + ' lần' + (crashed ? ', rồi bong bóng vỡ' : ''));
+    }
+    const runs = of('bankrun').length;
+    if (runs) { themes.push({ score: 7 + runs * 1.5, name: 'cơn hoảng loạn ở Kho Bạc' }); recap.push(runs + ' lần đám đông kéo đến Kho Bạc đòi tiền'); }
+    const rush = of('food-rush').length;
+    if (rush) { themes.push({ score: 4.5 + rush, name: 'cơn tích trữ lương thực' }); recap.push(rush + ' lần cả thành phố đổ xô tích trữ gạo'); }
+    if (of('drought').length) themes.push({ score: 5.5, name: 'hạn hán' });
+    const fires = of('fire');
+    if (fires.length) { themes.push({ score: 2.5 + fires.length * 1.2, name: fires.length > 1 ? 'những ngọn lửa' : 'ngọn lửa ở ' + fires[0].title.replace('Hoả hoạn ở ', '') }); recap.push(fires.length + ' vụ hoả hoạn'); }
+    const ships = of('airship');
+    if (ships.length) { themes.push({ score: 1.5 + ships.length * 1.6, name: ships.length > 1 ? 'những chuyến khí cầu' : 'khí cầu thương nhân' }); recap.push(ships.length + ' chuyến khí cầu ghé bến'); }
+    const taps = of('tap').filter((s) => s.level >= 3).length;
+    if (taps) themes.push({ score: 3 + taps, name: 'bầu trời rung chuyển' });
+    for (const t of EXTRA_THEMES) { const r = t(w, sts, from); if (r) { themes.push(r); if (r.line) recap.push(r.line); } }
+    const bk = of('bankrupt').length, op = of('open').length;
+    if (bk >= 4) themes.push({ score: bk * 0.75, name: 'những cánh cửa đóng lại' });
+    recap.push(bk + ' nơi đóng cửa, ' + op + ' nơi khai trương');
+    const st0 = w.stats.find((s) => s.day === from) || w.stats[0], st1 = w.stats[w.stats.length - 1];
+    const yr = w.stats.filter((s) => s.day > from);
+    const unemp = yr.reduce((t, s) => t + s.unemployment, 0) / Math.max(1, yr.length);
+    const dp = (st1.cpi / st0.cpi - 1) * 100;
+    recap.push('Giá cả ' + (dp >= 0 ? 'tăng ' : 'giảm ') + Math.abs(dp).toFixed(1).replace('.', ',') + '% cả năm, thất nghiệp trung bình ' + unemp.toFixed(1).replace('.', ',') + '%');
+    let top = w.households[0];
+    for (const h of w.households) if (h.cash > top.cash) top = h;
+    recap.push('Người giàu nhất: ' + nameOf(top.id) + ' với ' + Math.round(top.cash).toLocaleString('vi-VN') + ' xu');
+    themes.sort((a, b) => b.score - a.score);
+    const theme = themes.length ? themes[0].name : 'bình yên';
+    const title = 'Năm ' + year + ': ' + (themes.length ? 'Năm của ' + cap(theme) : 'Một năm bình yên');
+    const lines = recap.slice(0, 6);
+    const st = story(w, 'chapter', 'epic', title, lines.slice(0, 2).join('. ') + '.', { kind: 'plaza' }, { year, theme, recap: lines });
+    w.chapters.push({ year, day: w.day, title, theme, recap: lines, storyId: st.id });
+    return st;
+  }
+  const EXTRA_THEMES = []; // Mốc 3 thêm chủ đề: mỏ vàng, dịch bệnh, đình công, lừa đảo, độc quyền, dân số
+
+  /* ----- Công cụ của người giữ bể ----- */
+  // Gõ vào kính: người ở gần giật mình; gõ liên tiếp thì nỗi sợ lan rộng hơn
+  function tapGlass(w, ids) {
+    const K = w.keeper, hs = w.households;
+    if (K.lastTap === w.day) return { ok: false, reason: 'same-day', level: K.tapLevel };
+    K.tapLevel = w.day - K.lastTap <= 6 ? Math.min(4, K.tapLevel + 1) : 1;
+    K.lastTap = w.day;
+    const lv = K.tapLevel, share = [0.35, 0.65, 1, 1][lv - 1], days = [3, 5, 8, 10][lv - 1];
+    let n = 0;
+    for (const id of ids || []) if (hs[id] && w.rand() < share && scare(w, hs[id], days)) n++;
+    if (lv >= 3) for (let i = 0; i < Math.round(hs.length * (lv === 3 ? 0.08 : 0.16)); i++) if (scare(w, hs[Math.floor(w.rand() * hs.length)], days)) n++;
+    const T = [
+      ['Tiếng gõ trên vòm trời', 'Một tiếng cộc vang khắp đảo. ' + n + ' người ngước lên nhìn bầu trời, hơi chột dạ.'],
+      ['Lại tiếng gõ trên vòm trời', 'Tiếng gõ thứ hai. ' + n + ' người bỏ dở việc, bàn tán xem điềm gì sắp đến.'],
+      ['Bầu trời rung chuyển', 'Vòm kính rung lên từng hồi. ' + n + ' người hoảng sợ, có người bắt đầu nghĩ đến chuyện rút hết tiền ở Kho Bạc.'],
+      ['Ngày tận thế?', 'Vòm trời rung như sắp vỡ. ' + n + ' người tin rằng tai hoạ đang đến.'],
+    ][lv - 1];
+    story(w, 'tap', lv >= 3 ? 'major' : 'small', T[0], T[1], { kind: 'plaza' }, { level: lv, scared: n });
+    return { ok: true, level: lv, scared: n };
+  }
+  // Thì thầm tin đồn: 'bank' (Kho Bạc sắp vỡ) và 'food' (sắp mất mùa) gieo vào một ngôi nhà, 'fad' (món mới) gieo vào một xưởng
+  const WHISPER_ITEMS = ['Mũ lông vũ', 'Vòng tay vỏ ốc', 'Đèn đom đóm', 'Quạt giấy bướm', 'Gương soi trăng', 'Bút lông chim', 'Chuông bạc tí hon'];
+  function whisper(w, kind, target) {
+    const K = w.keeper, hs = w.households;
+    if (w.day < K.whisperReady) return { ok: false, reason: 'wait', wait: K.whisperReady - w.day };
+    if (kind === 'fad') {
+      const f = firmById(w, target);
+      if (!f || !f.alive || f.sector !== 'goods') return { ok: false, reason: 'target' };
+      if (activeFad(w)) return { ok: false, reason: 'fad' };
+      const used = w.fads.map((x) => x.item), pool = WHISPER_ITEMS.filter((x) => !used.includes(x));
+      const item = pool.length ? pool[Math.floor(w.rand() * pool.length)] : 'Món hàng mới số ' + (w.fadSeq + 1);
+      const fad = startFad(w, f, item, 'Có lời thì thầm rằng ' + f.name + ' vừa làm ra ' + item.toLowerCase() + ', thứ mà ai có rồi cũng phải khoe. Những người thợ là người đầu tiên tin.');
+      if (!fad) return { ok: false, reason: 'fad' };
+      K.whisperReady = w.day + 20;
+      return { ok: true, kind, item, fad };
+    }
+    const house = +target, members = [0, 1, 2, 3].map((k) => hs[house * 4 + k]).filter(Boolean);
+    if (!members.length) return { ok: false, reason: 'target' };
+    let n = 0;
+    if (kind === 'bank') {
+      for (const h of members) { if (scare(w, h, 10)) n++; for (let k = 0; k < 2; k++) { const c = randomContact(w, h); if (c && scare(w, c, 6)) n++; } }
+      story(w, 'rumor', 'small', 'Lời thì thầm ở nhà ' + nameOf(members[0].id), 'Có ai đó thì thầm rằng Kho Bạc sắp không trả nổi tiền. ' + n + ' người đã tin. Lời đồn có lan ra hay không là chuyện của cả xóm.', { kind: 'house', id: house }, { whisper: 'bank', actors: members.map((h) => h.id) });
+    } else if (kind === 'food') {
+      if (w.cfg.off.foodRumor) return { ok: false, reason: 'off' };
+      n = seedFoodRumor(w, 0, members);
+      for (const h of members) { const c = randomContact(w, h); if (c) n += seedFoodRumor(w, 0, [c]); }
+      story(w, 'rumor-food', 'small', 'Lời thì thầm ở nhà ' + nameOf(members[0].id), 'Có ai đó thì thầm rằng năm nay sắp mất mùa. ' + n + ' người vội đi mua gạo để dành.', { kind: 'house', id: house }, { whisper: 'food', actors: members.map((h) => h.id) });
+    } else return { ok: false, reason: 'kind' };
+    K.whisperReady = w.day + 20;
+    return { ok: true, kind, believers: n };
+  }
+  // Gọi khí cầu: thắp đèn hiệu trên bến, đoàn thương nhân đến ngay hôm sau; 90 ngày mới gọi lại được
+  function callAirship(w) {
+    const a = w.airship, K = w.keeper;
+    if (a.state === 'docked') return { ok: false, reason: 'docked' };
+    if (w.day < K.callReady) return { ok: false, reason: 'wait', wait: K.callReady - w.day };
+    K.callReady = w.day + 90; a.called = true; a.cool = 0;
+    return { ok: true };
   }
 
   /* Mở một doanh nghiệp mới, vốn khởi nghiệp vay từ ngân hàng. Dùng cho khởi nghiệp tự nhiên và cho người chơi xây. */
@@ -728,7 +904,10 @@
     const avg = (arr, fn) => (arr.length ? arr.reduce((s, x) => s + fn(x), 0) / arr.length : 0);
     const foodP = avg(alive.filter((f) => f.sector === 'food'), (f) => f.price);
     const goodsP = avg(alive.filter((f) => f.sector === 'goods'), (f) => f.price);
-    const basket = foodP + goodsP;
+    // rổ giá dùng giá trung vị của hàng hoá: một món đang sốt giá gấp 5 lần không phải là lạm phát của cả thành phố
+    const gp = alive.filter((f) => f.sector === 'goods').map((f) => f.price).sort((a, b) => a - b);
+    const goodsMed = gp.length ? (gp.length % 2 ? gp[(gp.length - 1) / 2] : (gp[gp.length / 2 - 1] + gp[gp.length / 2]) / 2) : 0;
+    const basket = foodP + goodsMed;
     if (w.basePrice === null) w.basePrice = basket;
     const unemployed = w.households.filter((h) => h.employer === null).length;
     const gdp = w.flows.filter((x) => x.kind === 'buy').reduce((s, x) => s + x.amt, 0);
@@ -777,5 +956,7 @@
     startFad: (w, firmId, item) => startFad(w, firmById(w, firmId), item || 'Món hàng mới'),
     burn: (w, firmId) => { const f = firmById(w, firmId); if (f && f.alive) burn(w, f); },
     arriveAirship,
+    // người giữ bể và ký ức
+    tapGlass, whisper, callAirship, chapter, seedFoodRumor: (w, share) => seedFoodRumor(w, share),
   };
 });
