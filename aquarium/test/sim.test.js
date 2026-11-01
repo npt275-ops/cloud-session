@@ -10,6 +10,8 @@ test('sổ cái: tiền không tự sinh ra hay mất đi', () => {
     if (i === 200) Sim.printMoney(w, 5000);
     if (i === 400) Sim.setPolicy(w, 'interestRate', 0.18);
     if (i === 700) Sim.setPolicy(w, 'taxRate', 0.4);
+    if (i === 900) Sim.fund(w, w.firms.filter((f) => f.alive && f.sector === 'food'), 2000, 'print');
+    if (i === 950) Sim.fund(w, w.households, 5000, 'print');
     Sim.step(w);
     assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), `lệch sổ cái ở ngày ${w.day}`);
   }
@@ -41,4 +43,13 @@ test('in nhiều tiền làm giá tăng', () => {
   for (let i = 0; i < 150; i++) { Sim.step(base); Sim.step(inflated); }
   assert.ok(inflated.stats.at(-1).cpi > base.stats.at(-1).cpi * 1.3,
     `CPI ${inflated.stats.at(-1).cpi.toFixed(0)} vs ${base.stats.at(-1).cpi.toFixed(0)}`);
+});
+
+test('cú sốc năng suất bằng 0 không làm giá thành vô hạn', () => {
+  const w = Sim.create({ seed: 3 });
+  for (let i = 0; i < 100; i++) Sim.step(w);
+  for (const f of w.firms) if (f.sector === 'goods') f.prod = 0;
+  for (let i = 0; i < 20; i++) Sim.step(w);
+  const s = w.stats.at(-1);
+  assert.ok(Number.isFinite(s.cpi) && s.cpi < 1000, `CPI ${s.cpi}`);
 });

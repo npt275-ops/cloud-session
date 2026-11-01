@@ -65,7 +65,7 @@
     const prod = sector === 'food' ? w.cfg.foodProd : w.cfg.goodsProd;
     const unitCost = w.cfg.wage / prod;
     return {
-      key: 'f' + id, id, sector, cash: cash || 0, inv: 6, prod,
+      key: 'f' + id, id, sector, cash: cash || 0, inv: 6, prod, baseProd: prod,
       price: unitCost * 1.25, wage: w.cfg.wage, workers: [], vacancies: 0, unfilled: 0,
       debt: 0, sold: 0, avgSales: prod * 6, alive: true, born: w.day, deadSince: null,
     };
@@ -139,7 +139,8 @@
     for (const f of alive) {
       f.avgSales = f.avgSales * 0.8 + f.sold * 0.2;
       const target = Math.max(4, f.avgSales * 2);
-      const unitCost = f.wage / f.prod;
+      // Giá vốn tính theo năng suất bình thường, để cú sốc tạm thời (đình công, hạn hán) không làm giá vô hạn
+      const unitCost = f.wage / Math.max(0.1, f.baseProd || f.prod);
       if (f.inv > target * 1.5) {
         f.price *= 1 - 0.03 * w.rand();
         if (f.workers.length > 1 && f.inv > target * 2.5) fire(w, f, f.workers[Math.floor(w.rand() * f.workers.length)]);
@@ -334,5 +335,14 @@
     log(w, names[key] + ' đổi thành ' + shown + '.', 'policy');
   }
 
-  return { create, step, printMoney, setPolicy, totalMoney, expectedMoney, gini, DEFAULTS };
+  /* In tiền và chuyển thẳng cho một nhóm tác nhân (dùng cho sự kiện: hỗ trợ nông dân, thưởng Tết...). */
+  function fund(w, targets, amount, kind) {
+    if (!(amount > 0) || !targets.length) return;
+    w.ledger.printed += amount;
+    w.gov.cash += amount;
+    const each = amount / targets.length;
+    for (const t of targets) transfer(w, w.gov, t, each, kind || 'print');
+  }
+
+  return { create, step, printMoney, setPolicy, fund, totalMoney, expectedMoney, gini, DEFAULTS };
 });

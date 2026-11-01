@@ -67,7 +67,7 @@
         if (wk > 0.75) { rr(x + 8, y + 8, 12, 14, 1, '#d9a92b'); ctx.fillStyle = '#5e8f6a'; ctx.fillRect(x + 10, y + 10, 8, 10); }
         if (wk > 0.5) { ctx.fillStyle = '#4f9a63'; ctx.beginPath(); ctx.arc(x + w - 10, y + rh - 18, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#9a6a3a'; ctx.fillRect(x + w - 13, y + rh - 13, 6, 7); }
         if (home) person(x + 54, y + rh - 6, h.ateToday ? '#8a96a3' : '#b06060', 0.85, t, false);
-        text('Hộ #' + h.id + ' · ' + compact(h.cash) + ' xu', x + w / 2, y + 12, 9.5, '#2c3a34');
+        text((opts.nameOf ? opts.nameOf(h.id) : 'Hộ #' + h.id) + ' · ' + compact(h.cash) + ' xu', x + w / 2, y + 12, 9.5, '#2c3a34');
         text(home ? (h.ateToday ? 'ở nhà, thất nghiệp' : 'thất nghiệp, đang đói') : (h.ateToday ? 'đi làm ở #' + h.employer : 'đi làm, nhưng đói'), x + w / 2, y + 24, 9, h.ateToday ? '#55635c' : '#a03a3a', 'center', 500);
       });
     }

@@ -23,7 +23,10 @@
     const font = opts.font || 'ui-monospace, monospace';
     let W = 0, H = 0, dpr = 1, scale = 1, ox = 0, oy = 0;
     let world = null, selected = null;
-    let coins = [], smoke = [];
+    let coins = [], smoke = [], fireworks = [];
+    const fx = opts.fx || (() => ({}));
+    let lens = 'normal', hover = null;
+    const showLabel = (id) => lens === 'price' || (selected && selected.type === 'firm' && selected.id === id) || (hover && hover.type === 'firm' && hover.id === id) || opts.labels === 'all';
 
     // nhà ở
     const houses = [];
@@ -160,7 +163,13 @@
       const lit = 'rgba(255,214,120,0.95)', dark = 'rgba(60,70,85,0.85)';
       winL(b, 0.15, 0.4, 6, 11, home > 0 ? lit : dark); winL(b, 0.6, 0.85, 6, 11, home > 1 ? lit : dark);
       winR(b, 0.3, 0.7, 6, 11, home > 2 ? lit : dark);
-      const roofCol = wealth > 0.66 ? [196, 84, 58] : wealth > 0.33 ? [168, 112, 78] : [128, 120, 112];
+      let roofCol = wealth > 0.66 ? [196, 84, 58] : wealth > 0.33 ? [168, 112, 78] : [128, 120, 112];
+      if (lens === 'mood') {
+        const mood = members.reduce((s, m) => s + (m.ateToday ? 0.5 : 0) + (m.employer !== null ? 0.3 : 0) + rk(m.cash) * 0.2, 0) / members.length;
+        roofCol = mood > 0.75 ? [72, 170, 98] : mood > 0.5 ? [226, 190, 70] : [214, 72, 66];
+      } else if (lens === 'wealth') {
+        roofCol = [Math.round(lerp(110, 240, wealth)), Math.round(lerp(110, 190, wealth)), Math.round(lerp(120, 60, wealth))];
+      }
       const apex = roof(b, 10, roofCol);
       if (hungry) {
         ctx.fillStyle = '#e5484d'; ctx.beginPath(); ctx.arc(apex.x, apex.y - 9, 5, 0, 7); ctx.fill();
@@ -172,7 +181,8 @@
     function drawFarm(s, t) {
       const f = s.f, alive = f.alive;
       const ripe = clamp(f.inv / Math.max(6, f.avgSales * 2), 0, 1);
-      const crop = alive ? mix([104, 168, 78], [226, 190, 84], ripe) : 'rgb(150,128,98)';
+      const dry = fx().drought;
+      const crop = !alive ? 'rgb(150,128,98)' : dry ? mix([176, 150, 96], [206, 178, 104], ripe) : mix([104, 168, 78], [226, 190, 84], ripe);
       for (const [dx, dy] of [[1, 0], [0, 1], [1, 1]]) {
         tile(s.x + dx, s.y + dy, crop);
         ctx.strokeStyle = 'rgba(60,80,40,0.35)'; ctx.lineWidth = 0.7;
@@ -186,7 +196,7 @@
         const fx = s.x + 0.3 + (k % 3) * 0.6 + (k >= 3 ? 0 : 0.4), fy = s.y + 1.2 + Math.floor(k / 3) * 0.45;
         person(fx, fy, '#3f8f5a', t, false);
       }
-      label(apex.x, apex.y - 8, alive ? compact(f.price) + ' xu' : 'ĐÓNG CỬA', alive ? 'rgba(20,40,30,0.8)' : 'rgba(120,30,30,0.85)', '#fff');
+      if (!alive || showLabel(f.id)) label(apex.x, apex.y - 8, alive ? compact(f.price) + ' xu' : 'ĐÓNG CỬA', alive ? 'rgba(20,40,30,0.8)' : 'rgba(120,30,30,0.85)', '#fff');
       if (selected && selected.type === 'firm' && selected.id === f.id) outline(s.x, s.y, 2, 2, t);
     }
 
@@ -204,9 +214,20 @@
       poly([up(b.D, 24), up(b.C, 24), up(b.C, 26), up(b.D, 26)], alive ? '#e07a4f' : '#7a6f69');
       const ch = box(s.x + 0.25, s.y + 0.2, 0.25, 0.25, 52, alive ? [120, 100, 96] : [96, 94, 92]);
       const top = up(iso(s.x + 0.375, s.y + 0.325), 52);
-      if (alive && f.workers.length && !reduce && Math.random() < 0.08) smoke.push({ x: top.x, y: top.y, t0: performance.now(), r: 3 });
+      const striking = fx().strike && alive;
+      if (striking) {
+        for (let k = 0; k < 4; k++) {
+          const px = s.x + 0.3 + k * 0.4, py = s.y + 2.05;
+          person(px, py, '#d9733f', t, false);
+          const p = iso(px, py), bob = reduce ? 0 : Math.sin(t * 0.01 + k) * 1.5;
+          ctx.strokeStyle = '#6b4b32'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(p.x + 2, p.y - 8); ctx.lineTo(p.x + 2, p.y - 20 - bob); ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.fillRect(p.x - 4, p.y - 27 - bob, 12, 7); ctx.fillStyle = '#c0392b'; ctx.fillRect(p.x - 3, p.y - 25 - bob, 10, 1.5); ctx.fillRect(p.x - 3, p.y - 22.5 - bob, 7, 1.5);
+        }
+      }
+      if (alive && !striking && f.workers.length && !reduce && Math.random() < 0.08) smoke.push({ x: top.x, y: top.y, t0: performance.now(), r: 3 });
       const mid = up(iso(s.x + 1, s.y + 0.75), 40);
-      label(mid.x, mid.y, alive ? compact(f.price) + ' xu' : 'ĐÓNG CỬA', alive ? 'rgba(60,30,20,0.8)' : 'rgba(120,30,30,0.85)', '#fff');
+      if (striking) label(mid.x, mid.y, 'ĐÌNH CÔNG', 'rgba(192,57,43,0.92)', '#fff');
+      else if (!alive || showLabel(f.id)) label(mid.x, mid.y, alive ? compact(f.price) + ' xu' : 'ĐÓNG CỬA', alive ? 'rgba(60,30,20,0.8)' : 'rgba(120,30,30,0.85)', '#fff');
       if (selected && selected.type === 'firm' && selected.id === f.id) outline(s.x, s.y, 2, 2, t);
     }
 
@@ -218,7 +239,19 @@
       ctx.strokeStyle = '#444'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(apex.x, apex.y); ctx.lineTo(apex.x, apex.y - 16); ctx.stroke();
       const wave = reduce ? 0 : Math.sin(t * 0.005) * 1.5;
       poly([{ x: apex.x, y: apex.y - 16 }, { x: apex.x + 10, y: apex.y - 13 + wave }, { x: apex.x, y: apex.y - 10 }], '#d64545');
-      label(apex.x, apex.y - 24, 'TOÀ THỊ CHÍNH · quỹ ' + compact(world.gov.cash), 'rgba(235,240,240,0.92)', '#183038');
+      if (fx().festival) {
+        // dây đèn lồng quanh quảng trường
+        const ring = [iso(4.1, 4.1), iso(7.9, 4.1), iso(7.9, 7.9), iso(4.1, 7.9), iso(4.1, 4.1)];
+        for (let k = 0; k < 4; k++) {
+          const a = up(ring[k], 18), b = up(ring[k + 1], 18);
+          ctx.strokeStyle = 'rgba(90,40,30,0.6)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + 8, b.x, b.y); ctx.stroke();
+          for (let j = 1; j < 8; j++) {
+            const u = j / 8, x = lerp(a.x, b.x, u), y = lerp(a.y, b.y, u) + Math.sin(u * Math.PI) * 4;
+            ctx.fillStyle = j % 2 ? '#e0352b' : '#f2b233'; ctx.beginPath(); ctx.ellipse(x, y + 3, 2.2, 2.8, 0, 0, 7); ctx.fill();
+          }
+        }
+      }
+      label(apex.x, apex.y - 24, 'TOÀ THỊ CHÍNH', 'rgba(235,240,240,0.92)', '#183038');
       if (selected && selected.type === 'gov') outline(HALL.x, HALL.y, 2, 2, t);
     }
     function drawBank(t) {
@@ -228,7 +261,7 @@
       const top = up(iso(BANK.x + 1, BANK.y + 1), 30);
       ctx.fillStyle = '#e8b931'; ctx.beginPath(); ctx.ellipse(top.x, top.y - 2, 9, 4.5, 0, 0, 7); ctx.fill();
       ctx.fillStyle = '#c9971c'; ctx.fillRect(top.x - 9, top.y - 6, 18, 4); ctx.beginPath(); ctx.ellipse(top.x, top.y - 6, 9, 4.5, 0, 0, 7); ctx.fillStyle = '#f2cd52'; ctx.fill();
-      label(top.x, top.y - 18, 'NGÂN HÀNG · dư nợ ' + compact(world.bank.loansOut), 'rgba(235,240,240,0.92)', '#183038');
+      label(top.x, top.y - 18, 'NGÂN HÀNG', 'rgba(235,240,240,0.92)', '#183038');
       if (selected && selected.type === 'bank') outline(BANK.x, BANK.y, 2, 2, t);
     }
     function drawSchool(t) {
@@ -337,6 +370,37 @@
         ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.6; ctx.stroke();
       }
       ctx.globalAlpha = 1;
+      if (fx().festival && !reduce) {
+        if (Math.random() < 0.04) {
+          const c = iso(4 + Math.random() * 4, 4 + Math.random() * 4);
+          const hue = ['#ff5a5a', '#ffd166', '#7bdff2', '#c3a6ff', '#9be564'][Math.floor(Math.random() * 5)];
+          fireworks.push({ x: c.x, y: c.y - 120 - Math.random() * 60, t0: now, col: hue });
+        }
+        fireworks = fireworks.filter((f) => now - f.t0 < 1400);
+        for (const f of fireworks) {
+          const k = (now - f.t0) / 1400;
+          ctx.globalAlpha = 1 - k; ctx.fillStyle = f.col;
+          for (let j = 0; j < 14; j++) { const a = (j / 14) * Math.PI * 2, r = 4 + k * 26; ctx.beginPath(); ctx.arc(f.x + Math.cos(a) * r, f.y + Math.sin(a) * r + k * k * 10, 1.4, 0, 7); ctx.fill(); }
+        }
+        ctx.globalAlpha = 1;
+      }
+      if (fx().drought) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const g = ctx.createRadialGradient(W * 0.85, 0, 10, W * 0.85, 0, W * 0.9);
+        g.addColorStop(0, 'rgba(255,190,90,0.32)'); g.addColorStop(1, 'rgba(255,190,90,0.06)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      }
+    }
+
+    function screenOf(sel) {
+      let tx, ty, h;
+      if (sel.type === 'house') { const hs = houses[sel.i]; tx = hs.x + 0.5; ty = hs.y + 0.5; h = 34; }
+      else if (sel.type === 'firm') { const s = slots.get(sel.id); if (!s) return null; tx = s.x + 1; ty = s.y + 1; h = 46; }
+      else if (sel.type === 'bank') { tx = BANK.x + 1; ty = BANK.y + 1; h = 50; }
+      else if (sel.type === 'gov') { tx = HALL.x + 1; ty = HALL.y + 1; h = 64; }
+      else return null;
+      const p = iso(tx, ty);
+      return { x: ox + p.x * scale, y: oy + (p.y - h) * scale };
     }
 
     /* ---------- bấm chọn ---------- */
@@ -358,7 +422,7 @@
     function select(sel) { selected = sel; }
     function setWorld(w) { world = w; coins = []; smoke = []; slots = firmSlots(); }
 
-    return { resize, draw, onTick, pick, select, setWorld, get selected() { return selected; } };
+    return { resize, draw, onTick, pick, select, setWorld, screenOf, setLens: (l) => { lens = l; }, setHover: (h) => { hover = h; }, get selected() { return selected; } };
   }
   root.TownIso = { create };
 })(typeof self !== 'undefined' ? self : this);

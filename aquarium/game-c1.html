@@ -1,0 +1,497 @@
+<title>Thị Trưởng Phố Nhỏ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Bố cục: sân khấu game toàn khung. Trái: thị trưởng + mục tiêu. Giữa trên: góc nhìn + lăng kính. Phải: lát cắt. Dưới: bản tin + công cụ. */
+:root {
+  --bg: #eef1ec; --surface: #fbfcfa; --fg: #17241f; --muted: #5f6f68; --line: #d3dbd5; --accent: #2f7d5b;
+  --hud: rgba(16, 28, 24, 0.82); --hud-2: rgba(255, 255, 255, 0.08); --hud-fg: #f2f6f3; --hud-muted: #a9bab2;
+  --gold: #f2c14e; --good: #3fb47a; --warn: #e2a72e; --bad: #e5534b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d1412; --surface: #141d1a; --fg: #e1ebe6; --muted: #92a69c; --line: #25332e; --accent: #6cc79a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0d1412; --surface: #141d1a; --fg: #e1ebe6; --muted: #92a69c; --line: #25332e; --accent: #6cc79a; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px; }
+.wrap { max-width: 1360px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.wrap > * { min-width: 0; }
+.titlebar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+h1 { font: 800 clamp(24px, 3.2vw, 36px)/1 var(--font-display); margin: 0; letter-spacing: -0.02em; }
+.titlebar p { margin: 0; color: var(--muted); }
+
+.stage { position: relative; aspect-ratio: 16 / 9.2; max-width: 100%; border-radius: 18px; overflow: hidden; background: #cfe6e4; box-shadow: 0 0 0 1px var(--line), 0 22px 50px rgba(20, 40, 30, 0.16); user-select: none; touch-action: pan-y; }
+@media (max-width: 760px) { .stage { aspect-ratio: 3 / 5.4; } }
+.stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage.street > canvas { cursor: grab; }
+.glass { background: var(--hud); color: var(--hud-fg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+/* Thị trưởng */
+.left { position: absolute; left: 10px; top: 10px; width: 262px; display: grid; gap: 8px; }
+.mayor { border-radius: 14px; padding: 10px 12px; display: grid; gap: 8px; }
+.mayor-head { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe2a8, #e0a43a); display: grid; place-items: center; font: 800 14px var(--font-display); color: #3a2506; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+.mayor-head b { display: block; font: 700 15px var(--font-display); }
+.mayor-head span { font: 500 11.5px var(--font-data); color: var(--hud-muted); }
+.approval-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--hud-muted); }
+.approval-row b { font: 700 20px var(--font-display); color: var(--hud-fg); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 99px; background: var(--hud-2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 99px; background: var(--good); transition: width 0.4s, background 0.4s; }
+.mini { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mini div { background: var(--hud-2); border-radius: 9px; padding: 5px 8px; display: grid; }
+.mini small { font-size: 10.5px; color: var(--hud-muted); letter-spacing: 0.04em; }
+.mini b { font: 600 13.5px var(--font-data); font-variant-numeric: tabular-nums; }
+.mini b[data-s="good"] { color: #8fe0b2; } .mini b[data-s="warn"] { color: #ffd27a; } .mini b[data-s="bad"] { color: #ff9b94; }
+.goals { border-radius: 14px; padding: 10px 12px; }
+.goals h4 { margin: 0 0 6px; font: 600 11px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--hud-muted); display: flex; justify-content: space-between; }
+.goal { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: center; font-size: 12.5px; padding: 3px 0; }
+.goal .dot { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font: 700 10px var(--font-data); color: #10201a; }
+.goal .dot[data-ok="1"] { background: var(--good); } .goal .dot[data-ok="0"] { background: rgba(255,255,255,0.18); color: var(--hud-fg); }
+.goal em { font: 500 11.5px var(--font-data); font-style: normal; color: var(--hud-muted); }
+.goals p { margin: 6px 0 0; font-size: 11.5px; color: var(--hud-muted); }
+
+/* Góc nhìn, lăng kính */
+.topc { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
+.seg { display: inline-flex; border-radius: 999px; padding: 3px; gap: 3px; }
+.seg button { border: 0; border-radius: 999px; padding: 6px 13px; font: 600 12.5px var(--font-body); color: var(--hud-fg); background: transparent; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--hud-fg); color: #17241f; }
+.seg.small button { padding: 4px 10px; font-size: 11.5px; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Lát cắt */
+.inspect { position: absolute; right: 10px; top: 10px; width: min(340px, calc(100% - 20px)); background: rgba(250, 252, 250, 0.97); color: #17241f; border-radius: 16px; overflow: hidden; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25); }
+.inspect .view { position: relative; height: 190px; background: #dfeee8; }
+.inspect .view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.inspect .badge { position: absolute; left: 10px; top: 8px; font: 600 10px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; background: rgba(18, 30, 26, 0.75); color: #f2f6f3; padding: 3px 8px; border-radius: 999px; }
+.inspect .body { padding: 10px 14px 12px; }
+.inspect .kind { font: 600 10px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: #2f7d5b; }
+.inspect h3 { margin: 0; font: 700 17px var(--font-display); }
+.inspect dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 8px 0 0; font-size: 13px; }
+.inspect dt { color: #5f6f68; }
+.inspect dd { margin: 0; text-align: right; font: 500 12.5px var(--font-data); font-variant-numeric: tabular-nums; }
+.inspect .x { position: absolute; right: 8px; top: 6px; z-index: 2; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(18, 30, 26, 0.75); color: #fff; font-size: 16px; cursor: pointer; }
+
+/* Bản tin, công cụ */
+.ticker { position: absolute; left: 10px; bottom: 74px; max-width: min(560px, calc(100% - 20px)); border-radius: 10px; display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; font-size: 13px; }
+.ticker b { flex: 0 0 auto; font: 700 10.5px var(--font-data); letter-spacing: 0.08em; background: #d64545; color: #fff; padding: 3px 7px; border-radius: 6px; }
+.ticker span { transition: opacity 0.35s; min-width: 0; }
+.toolbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px; border-radius: 14px; max-width: calc(100% - 20px); overflow-x: auto; }
+.tool { flex: 0 0 auto; display: grid; justify-items: center; gap: 2px; min-width: 62px; padding: 6px 8px; border: 1px solid transparent; border-radius: 10px; background: var(--hud-2); color: var(--hud-fg); font: 500 11px var(--font-body); cursor: pointer; }
+.tool b { font: 600 13px var(--font-data); }
+.tool:hover { border-color: rgba(255, 255, 255, 0.3); }
+.tool.gold { background: rgba(242, 193, 78, 0.22); border-color: rgba(242, 193, 78, 0.6); }
+.tool[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* Lời cư dân */
+.bubble { position: absolute; transform: translate(-50%, -100%); max-width: 210px; background: #fffdf7; color: #1d2a24; border-radius: 12px; padding: 6px 10px; font-size: 12.5px; line-height: 1.35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); pointer-events: none; animation: pop 0.25s ease-out; }
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); border: 6px solid transparent; border-bottom: 0; border-top-color: #fffdf7; }
+.bubble b { display: block; font: 600 10.5px var(--font-data); color: #2f7d5b; }
+.bubble.sad b { color: #c0392b; }
+.bubble.out { opacity: 0; transition: opacity 0.4s; }
+@keyframes pop { from { transform: translate(-50%, -90%) scale(0.85); opacity: 0; } to { transform: translate(-50%, -100%) scale(1); opacity: 1; } }
+
+/* Sự kiện */
+.modal { position: absolute; inset: 0; background: rgba(8, 16, 13, 0.45); display: grid; place-items: center; padding: 16px; z-index: 5; }
+.ev { width: min(520px, 100%); background: #fbfaf5; color: #17241f; border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35); animation: rise 0.35s ease-out; }
+@keyframes rise { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ev canvas { display: block; width: 100%; height: 150px; }
+.ev .in { padding: 14px 18px 18px; }
+.ev .eb { font: 600 11px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: #c0392b; }
+.ev h2 { margin: 2px 0 6px; font: 800 26px/1.1 var(--font-display); letter-spacing: -0.01em; }
+.ev p { margin: 0 0 12px; color: #4a5a53; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .choices { grid-template-columns: 1fr; } }
+.choice { text-align: left; border: 1.5px solid #d6ddd8; background: #fff; border-radius: 14px; padding: 10px 12px; cursor: pointer; display: grid; gap: 6px; font: inherit; color: inherit; }
+.choice:hover { border-color: #2f7d5b; box-shadow: 0 6px 16px rgba(47, 125, 91, 0.15); }
+.choice strong { font: 700 15px var(--font-display); }
+.fx { display: flex; flex-wrap: wrap; gap: 4px; }
+.fx span { font: 500 11px var(--font-data); padding: 2px 7px; border-radius: 99px; }
+.fx .g { background: #e3f4ea; color: #1f7a4c; } .fx .b { background: #fbe5e3; color: #b0362e; } .fx .n { background: #eef0f2; color: #4a5560; }
+.toast { position: absolute; left: 50%; top: 92px; transform: translateX(-50%); padding: 8px 14px; border-radius: 12px; font-size: 13px; z-index: 4; white-space: nowrap; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 760px) {
+  .left { width: calc(100% - 20px); }
+  .mini { grid-template-columns: repeat(4, 1fr); }
+  .goals { display: none; }
+  .left.show-goals .goals { display: block; }
+  .topc { top: auto; bottom: 120px; }
+  .inspect { top: auto; bottom: 120px; } .inspect .view { height: 140px; }
+  .ticker { bottom: 74px; }
+}
+@media (prefers-reduced-motion: reduce) { .bubble, .ev { animation: none; } }
+</style>
+
+<div class="wrap">
+  <div class="titlebar">
+    <h1>Thị Trưởng Phố Nhỏ</h1>
+    <p>Bạn điều hành một thị trấn 140 hộ. Giữ dân no, có việc, giá cả ổn định, và được tái cử.</p>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="main" aria-label="Thị trấn"></canvas>
+    <div id="bubbles"></div>
+
+    <div class="left" id="left">
+      <div class="mayor glass">
+        <div class="mayor-head"><div class="avatar">TT</div><div><b>Thị trưởng</b><span id="when">Năm 1 · Ngày 0/360</span></div></div>
+        <div>
+          <div class="approval-row"><span>Tín nhiệm của dân</span><b id="appr">60%</b></div>
+          <div class="bar"><i id="apprBar" style="width:60%"></i></div>
+        </div>
+        <div class="mini">
+          <div><small>Giá cả</small><b id="sPrice">100</b></div>
+          <div><small>Thất nghiệp</small><b id="sUe">0%</b></div>
+          <div><small>Hộ đói</small><b id="sHungry">0</b></div>
+          <div><small>Ngân sách</small><b id="sBudget">0</b></div>
+        </div>
+      </div>
+      <div class="goals glass">
+        <h4><span>Mục tiêu năm 1</span><span id="goalCount">0/3</span></h4>
+        <div id="goalList"></div>
+        <p>Cuối năm 4 bầu cử: cần tín nhiệm từ 50% để tái cử.</p>
+      </div>
+    </div>
+
+    <div class="topc">
+      <div class="seg glass" role="group" aria-label="Góc nhìn"><button id="mMap" aria-pressed="true">Toàn cảnh</button><button id="mStreet" aria-pressed="false">Đường phố</button></div>
+      <div class="seg glass small" role="group" aria-label="Lăng kính" id="lenses">
+        <button data-lens="normal" aria-pressed="true">Bình thường</button><button data-lens="mood" aria-pressed="false">Tâm trạng</button><button data-lens="wealth" aria-pressed="false">Giàu nghèo</button><button data-lens="price" aria-pressed="false">Giá bán</button>
+      </div>
+    </div>
+
+    <div class="inspect" id="inspect" hidden>
+      <button class="x" id="close" aria-label="Đóng">×</button>
+      <div class="view"><canvas id="inside" aria-label="Lát cắt bên trong"></canvas><span class="badge">Bên trong</span></div>
+      <div class="body" id="info"></div>
+    </div>
+
+    <div class="toast glass" id="toast" hidden></div>
+    <div class="ticker glass"><b>BẢN TIN</b><span id="news">Thị trấn bắt đầu một ngày mới.</span></div>
+
+    <div class="toolbar glass">
+      <button class="tool" id="play"><b>❚❚</b>Tạm dừng</button>
+      <button class="tool" id="speed"><b>3×</b>Tốc độ</button>
+      <button class="tool gold" id="print"><b>+10k</b>In tiền</button>
+      <button class="tool" id="rate"><b>5%</b>Lãi suất</button>
+      <button class="tool" id="tax"><b>10%</b>Thuế</button>
+      <button class="tool" id="goalsBtn"><b>3</b>Mục tiêu</button>
+      <button class="tool" disabled><b>+</b>Xây dựng</button>
+    </div>
+
+    <div class="modal" id="modal" hidden>
+      <div class="ev" role="dialog" aria-modal="true" aria-labelledby="evTitle">
+        <canvas id="evArt" aria-hidden="true"></canvas>
+        <div class="in">
+          <div class="eb" id="evEb">Sự kiện</div>
+          <h2 id="evTitle"></h2>
+          <p id="evText"></p>
+          <div class="choices" id="evChoices"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="sim.js"></script>
+<script src="town-iso.js"></script>
+<script src="town-side.js"></script>
+<script src="town-interior.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mono = '"IBM Plex Mono", ui-monospace, monospace';
+  const fmt = (v) => Math.round(v).toLocaleString('vi-VN');
+  const dec = (v) => v.toFixed(1).replace('.', ',');
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  /* ---------- Cư dân có tên ---------- */
+  const FAM = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Vũ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương'];
+  const GIV = ['Lan', 'Minh', 'Hùng', 'Mai', 'Tuấn', 'Hoa', 'Nam', 'Thảo', 'Long', 'Hương', 'Dũng', 'Linh', 'Quân', 'Trang', 'Phúc', 'Yến', 'Khoa', 'Ngọc', 'Sơn', 'Vy'];
+  const nameOf = (id) => FAM[(id * 5 + 1) % FAM.length] + ' ' + GIV[(id * 7 + 3) % GIV.length];
+
+  /* ---------- Thế giới ---------- */
+  const world = Sim.create({ seed: 42 });
+  for (let i = 0; i < 90; i++) Sim.step(world);
+  const fxState = { drought: 0, strike: 0, festival: 0 };
+  const fx = () => ({ drought: fxState.drought > 0, strike: fxState.strike > 0, festival: fxState.festival > 0 });
+
+  const canvas = $('main');
+  const iso = TownIso.create(canvas, { reduceMotion: reduce, font: mono, fx });
+  const side = TownSide.create(canvas, { reduceMotion: reduce, font: mono });
+  const inside = TownInterior.create($('inside'), { reduceMotion: reduce, font: mono, nameOf });
+  iso.setWorld(world); side.setWorld(world);
+  let view = iso, sel = null, running = true, tps = 3, acc = 0, modalOpen = false;
+  new ResizeObserver(() => { iso.resize(); side.resize(); }).observe($('stage'));
+  iso.resize(); side.resize();
+
+  /* ---------- Tín nhiệm và mục tiêu ---------- */
+  let approval = 62, mod = 0;
+  const yearStartCpi = world.stats[0].cpi;
+  function cpiChange(days) { const s = world.stats, a = s[Math.max(0, s.length - 1 - days)].cpi, b = s[s.length - 1].cpi; return (b / a - 1) * 100; }
+  function updateApproval() {
+    const s = world.stats[world.stats.length - 1];
+    const infl = cpiChange(30);
+    const target = 78 - s.unemployment * 2 - Math.min(30, s.hungry * 0.7) - Math.min(25, Math.max(0, infl) * 0.9) - Math.max(0, -infl) * 0.4 + mod;
+    approval = clamp(approval * 0.94 + target * 0.06, 0, 100);
+    mod *= 0.985;
+  }
+  function state(v, good, warn) { return v <= good ? 'good' : v <= warn ? 'warn' : 'bad'; }
+  const GOALS = [
+    { t: 'Thất nghiệp dưới 5%', v: (s) => s.unemployment, ok: (x) => x < 5, f: (x) => dec(x) + '%' },
+    { t: 'Không quá 3 hộ đói mỗi ngày', v: (s) => s.hungry, ok: (x) => x <= 3, f: (x) => x + ' hộ' },
+    { t: 'Giá cả cả năm tăng dưới 15%', v: (s) => (s.cpi / yearStartCpi - 1) * 100, ok: (x) => x < 15, f: (x) => (x >= 0 ? '+' : '') + dec(x) + '%' },
+  ];
+  function hud() {
+    const s = world.stats[world.stats.length - 1];
+    const year = Math.floor(world.day / 360) + 1;
+    $('when').textContent = 'Năm ' + year + ' · Ngày ' + (world.day % 360) + '/360';
+    $('appr').textContent = Math.round(approval) + '%';
+    $('apprBar').style.width = approval + '%';
+    $('apprBar').style.background = approval >= 60 ? 'var(--good)' : approval >= 45 ? 'var(--warn)' : 'var(--bad)';
+    const infl = cpiChange(30);
+    $('sPrice').textContent = Math.round(s.cpi) + (infl > 1 ? ' ↑' : infl < -1 ? ' ↓' : '');
+    $('sPrice').dataset.s = state(Math.abs(infl), 4, 10);
+    $('sUe').textContent = dec(s.unemployment) + '%'; $('sUe').dataset.s = state(s.unemployment, 5, 12);
+    $('sHungry').textContent = s.hungry; $('sHungry').dataset.s = state(s.hungry, 3, 10);
+    $('sBudget').textContent = fmt(world.gov.cash); $('sBudget').dataset.s = 'good';
+    let n = 0;
+    $('goalList').innerHTML = GOALS.map((g) => { const x = g.v(s), ok = g.ok(x); if (ok) n++; return '<div class="goal"><span class="dot" data-ok="' + (ok ? 1 : 0) + '">' + (ok ? '✓' : '') + '</span><span>' + g.t + '</span><em>' + g.f(x) + '</em></div>'; }).join('');
+    $('goalCount').textContent = n + '/3';
+    $('goalsBtn').querySelector('b').textContent = n + '/3';
+    info();
+  }
+
+  /* ---------- Bản tin ---------- */
+  const news = ['Thị trấn bắt đầu một ngày mới.'];
+  let newsIdx = 0, seenEvents = world.events.length;
+  function pushNews(t) { news.unshift(t); if (news.length > 12) news.pop(); newsIdx = 0; showNews(); }
+  function showNews() { const el = $('news'); el.style.opacity = 0; setTimeout(() => { el.textContent = news[newsIdx % news.length]; el.style.opacity = 1; }, 300); }
+  setInterval(() => { newsIdx++; showNews(); }, 5200);
+  function newsFromSim() {
+    const ev = world.events;
+    for (let i = Math.max(seenEvents, ev.length - 3); i < ev.length; i++) if (ev[i].kind === 'bad' || ev[i].kind === 'good') pushNews(ev[i].text);
+    seenEvents = ev.length;
+    if (world.day % 30 === 0) {
+      const c = cpiChange(30);
+      if (Math.abs(c) > 3) pushNews('Giá cả ' + (c > 0 ? 'tăng ' : 'giảm ') + dec(Math.abs(c)) + '% trong tháng qua.');
+    }
+  }
+
+  /* ---------- Sự kiện ---------- */
+  const saved = new Map();
+  function scaleProd(sector, k) { for (const f of world.firms) if (f.alive && f.sector === sector) { if (!saved.has(f.id)) saved.set(f.id, f.prod); f.prod = saved.get(f.id) * k; } }
+  function restoreProd(sector) { for (const f of world.firms) if (f.sector === sector && saved.has(f.id)) { f.prod = saved.get(f.id); saved.delete(f.id); } }
+  const EVENTS = {
+    drought: {
+      eb: 'Thiên tai', title: 'Hạn hán kéo dài', text: 'Ba tháng không mưa, ruộng khô nứt nẻ. Các trang trại báo sản lượng giảm gần một nửa. Giá thực phẩm sắp tăng mạnh.',
+      choices: [
+        { t: 'Hỗ trợ nông dân', fx: [['b', 'In 2.000 xu'], ['g', 'Sản lượng chỉ giảm 20%'], ['b', 'Có thể gây lạm phát'], ['g', 'Tín nhiệm +5']],
+          run() { Sim.fund(world, world.firms.filter((f) => f.alive && f.sector === 'food'), 2000, 'print'); fxState.drought = 40; scaleProd('food', 0.8); mod += 5; pushNews('Thị trưởng in 2.000 xu hỗ trợ nông dân chống hạn.'); } },
+        { t: 'Để thị trường tự lo', fx: [['g', 'Không tốn ngân sách'], ['b', 'Sản lượng giảm 45%'], ['b', 'Giá thực phẩm tăng'], ['b', 'Tín nhiệm −3']],
+          run() { fxState.drought = 40; scaleProd('food', 0.55); mod -= 3; pushNews('Hạn hán: thị trưởng không can thiệp, giá rau gạo bắt đầu leo thang.'); } },
+      ],
+    },
+    strike: {
+      eb: 'Lao động', title: 'Công nhân đình công', text: 'Công nhân các nhà máy hàng hoá đòi tăng lương 20%. Họ tuyên bố nghỉ làm cho tới khi được đáp ứng.',
+      choices: [
+        { t: 'Đồng ý tăng lương', fx: [['g', 'Lương nhà máy +20%'], ['b', 'Giá hàng hoá có thể tăng'], ['g', 'Tín nhiệm +4']],
+          run() { for (const f of world.firms) if (f.alive && f.sector === 'goods') f.wage *= 1.2; fxState.strike = 2; mod += 4; pushNews('Đình công kết thúc: công nhân nhà máy được tăng lương 20%.'); } },
+        { t: 'Từ chối yêu sách', fx: [['b', 'Nhà máy ngừng 12 ngày'], ['b', 'Hàng hoá khan hiếm'], ['b', 'Tín nhiệm −6']],
+          run() { fxState.strike = 12; scaleProd('goods', 0); mod -= 6; pushNews('Thị trưởng từ chối tăng lương, nhà máy đóng băng vì đình công.'); } },
+      ],
+    },
+    tet: {
+      eb: 'Lễ hội', title: 'Tết đến xuân về', text: 'Người dân nô nức sắm Tết. Các doanh nghiệp đề nghị thị trấn thưởng Tết cho mọi gia đình để kích cầu.',
+      choices: [
+        { t: 'Thưởng Tết mọi nhà', fx: [['b', 'In 5.000 xu'], ['g', 'Mua sắm bùng nổ'], ['b', 'Giá có thể tăng'], ['g', 'Tín nhiệm +8']],
+          run() { Sim.fund(world, world.households, 5000, 'print'); fxState.festival = 15; mod += 8; pushNews('Mỗi gia đình nhận thưởng Tết từ thị trấn. Chợ đông nghịt người.'); } },
+        { t: 'Ăn Tết tiết kiệm', fx: [['g', 'Giữ giá ổn định'], ['b', 'Tín nhiệm −4']],
+          run() { fxState.festival = 15; mod -= 4; pushNews('Tết năm nay tiết kiệm: thị trấn không thưởng Tết.'); } },
+      ],
+    },
+  };
+  let nextEventDay = world.day + 70, lastEvent = null;
+  function openEvent(key) {
+    const e = EVENTS[key]; lastEvent = key; modalOpen = true;
+    $('evEb').textContent = e.eb + ' · Ngày ' + world.day;
+    $('evTitle').textContent = e.title; $('evText').textContent = e.text;
+    $('evChoices').innerHTML = e.choices.map((c, i) => '<button class="choice" data-i="' + i + '"><strong>' + c.t + '</strong><span class="fx">' + c.fx.map(([k, t]) => '<span class="' + k + '">' + t + '</span>').join('') + '</span></button>').join('');
+    for (const b of $('evChoices').querySelectorAll('.choice')) b.onclick = () => choose(e, +b.dataset.i);
+    $('modal').hidden = false;
+    drawArt(key);
+    $('evChoices').querySelector('.choice').focus({ preventScroll: true });
+  }
+  function choose(e, i) {
+    const c = e.choices[i];
+    c.run(); $('modal').hidden = true; modalOpen = false;
+    toast('Bạn chọn: ' + c.t + ' · ' + c.fx.map((x) => x[1]).filter((x) => x.startsWith('Tín nhiệm')).join(''));
+    nextEventDay = world.day + 60 + Math.floor(Math.random() * 40);
+    hud();
+  }
+  function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (el.hidden = true), 3200); }
+  function tickEvents() {
+    for (const k of ['drought', 'strike', 'festival']) if (fxState[k] > 0) {
+      fxState[k]--;
+      if (fxState[k] === 0) { if (k === 'drought') { restoreProd('food'); pushNews('Mưa đã về, các trang trại hồi phục.'); } if (k === 'strike') restoreProd('goods'); }
+    }
+    if (world.day >= nextEventDay && !modalOpen) {
+      const keys = Object.keys(EVENTS).filter((k) => k !== lastEvent);
+      openEvent(keys[Math.floor(Math.random() * keys.length)]);
+    }
+  }
+
+  /* Hình minh hoạ sự kiện */
+  function drawArt(key) {
+    const c = $('evArt'), r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    c.width = r.width * d; c.height = r.height * d;
+    const x = c.getContext('2d'); x.setTransform(d, 0, 0, d, 0, 0);
+    const W = r.width, H = r.height;
+    if (key === 'drought') {
+      let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f6c66b'); g.addColorStop(1, '#f9e3b0'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.fillStyle = '#fff2c4'; x.beginPath(); x.arc(W * 0.78, 48, 30, 0, 7); x.fill();
+      x.strokeStyle = 'rgba(255,240,190,0.8)'; x.lineWidth = 3; for (let i = 0; i < 12; i++) { const a = (i / 12) * 6.283; x.beginPath(); x.moveTo(W * 0.78 + Math.cos(a) * 38, 48 + Math.sin(a) * 38); x.lineTo(W * 0.78 + Math.cos(a) * 50, 48 + Math.sin(a) * 50); x.stroke(); }
+      x.fillStyle = '#c99a5a'; x.fillRect(0, H * 0.62, W, H); x.strokeStyle = '#8f6534'; x.lineWidth = 1.5;
+      for (let i = 0; i < 30; i++) { const sx = (i * 53) % W, sy = H * 0.66 + ((i * 37) % (H * 0.3)); x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + 14, sy + 6); x.lineTo(sx + 22, sy + 2); x.stroke(); }
+      x.strokeStyle = '#9b7a3e'; x.lineWidth = 2; for (let i = 0; i < 9; i++) { const sx = 30 + i * (W / 9); x.beginPath(); x.moveTo(sx, H * 0.64); x.quadraticCurveTo(sx + 6, H * 0.5, sx + 14, H * 0.56); x.stroke(); }
+    } else if (key === 'strike') {
+      let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#9fb6c9'); g.addColorStop(1, '#dbe3ea'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.fillStyle = '#7d8a99'; x.fillRect(W * 0.1, H * 0.25, W * 0.8, H * 0.5); x.fillStyle = '#6b6460'; x.fillRect(W * 0.18, H * 0.05, 18, H * 0.25); x.fillRect(W * 0.32, H * 0.1, 18, H * 0.2);
+      x.fillStyle = '#5a6470'; x.fillRect(0, H * 0.75, W, H);
+      for (let i = 0; i < 9; i++) {
+        const px = 40 + i * (W - 80) / 8, py = H * 0.88;
+        x.fillStyle = '#d9733f'; x.fillRect(px - 6, py - 26, 12, 18); x.fillStyle = '#f1d3b3'; x.beginPath(); x.arc(px, py - 32, 6, 0, 7); x.fill();
+        if (i % 2 === 0) { x.strokeStyle = '#6b4b32'; x.lineWidth = 2; x.beginPath(); x.moveTo(px + 8, py - 20); x.lineTo(px + 8, py - 62); x.stroke(); x.fillStyle = '#fff'; x.fillRect(px - 8, py - 82, 34, 22); x.fillStyle = '#c0392b'; x.fillRect(px - 4, py - 76, 26, 3); x.fillRect(px - 4, py - 70, 18, 3); }
+      }
+    } else {
+      let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d2547'); g.addColorStop(1, '#5a3a5e'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      const cols = ['#ff5a5a', '#ffd166', '#7bdff2', '#c3a6ff'];
+      for (let f = 0; f < 4; f++) { const cx = W * (0.2 + f * 0.2), cy = 40 + (f % 2) * 20; x.fillStyle = cols[f]; for (let j = 0; j < 18; j++) { const a = (j / 18) * 6.283; x.beginPath(); x.arc(cx + Math.cos(a) * 26, cy + Math.sin(a) * 26, 2, 0, 7); x.fill(); } }
+      x.strokeStyle = 'rgba(255,220,180,0.6)'; x.lineWidth = 1.2; x.beginPath(); x.moveTo(0, H * 0.55); x.quadraticCurveTo(W / 2, H * 0.75, W, H * 0.55); x.stroke();
+      for (let j = 1; j < 12; j++) { const u = j / 12, px = u * W, py = H * 0.55 + Math.sin(u * Math.PI) * H * 0.1; x.fillStyle = j % 2 ? '#e0352b' : '#f2b233'; x.beginPath(); x.ellipse(px, py + 10, 8, 11, 0, 0, 7); x.fill(); x.fillStyle = '#7a1e14'; x.fillRect(px - 2, py + 20, 4, 6); }
+    }
+  }
+
+  /* ---------- Lời cư dân ---------- */
+  function speak() {
+    if (modalOpen || view !== iso) return;
+    const s = world.stats[world.stats.length - 1], infl = cpiChange(30), F = fx();
+    const cands = [];
+    for (const h of world.households) {
+      if (!h.ateToday) cands.push([h, 'Hôm nay nhà mình phải nhịn đói rồi...', 1]);
+      else if (h.employer === null) cands.push([h, 'Có ai cần người làm không?', 1]);
+    }
+    const sorted = world.households.slice().sort((a, b) => b.cash - a.cash);
+    for (const h of sorted.slice(0, 6)) cands.push([h, 'Năm nay làm ăn khấm khá thật!', 0]);
+    for (const h of world.households.filter((x) => x.employer !== null)) {
+      const f = world.firms.find((y) => y.id === h.employer);
+      if (!f) continue;
+      if (F.drought && f.sector === 'food' && Math.random() < 0.15) cands.push([h, 'Ruộng khô nứt hết cả rồi...', 1]);
+      if (F.strike && f.sector === 'goods' && Math.random() < 0.15) cands.push([h, 'Không tăng lương thì không đi làm!', 1]);
+    }
+    if (F.festival) for (const h of world.households) if (Math.random() < 0.05) cands.push([h, 'Tết này vui quá, chợ đông vui ghê!', 0]);
+    if (infl > 4) for (const h of world.households) if (Math.random() < 0.04) cands.push([h, 'Giá cả lại tăng nữa rồi!', 1]);
+    if (!cands.length) for (const h of world.households) if (Math.random() < 0.05) cands.push([h, ['Hôm nay trời đẹp ghê.', 'Chiều nay đi chợ mua gì nhỉ?', 'Con mình hôm nay được điểm 10!'][h.id % 3], 0]);
+    for (let k = 0; k < 2 && cands.length; k++) {
+      const [h, text, sad] = cands.splice(Math.floor(Math.random() * cands.length), 1)[0];
+      const p = iso.screenOf({ type: 'house', i: Math.floor(h.id / 4) });
+      if (!p) continue;
+      const el = document.createElement('div');
+      el.className = 'bubble' + (sad ? ' sad' : '');
+      const st = $('stage').getBoundingClientRect(); el.style.left = Math.min(st.width - 110, Math.max(110, p.x)) + 'px'; el.style.top = Math.max(150, p.y) + 'px';
+      el.innerHTML = '<b>' + nameOf(h.id) + '</b>' + text;
+      $('bubbles').appendChild(el);
+      setTimeout(() => el.classList.add('out'), 3300);
+      setTimeout(() => el.remove(), 3800);
+    }
+  }
+  setInterval(speak, 3800);
+
+  /* ---------- Lát cắt và thông tin ---------- */
+  function info() {
+    if (!sel) { $('inspect').hidden = true; return; }
+    $('inspect').hidden = false;
+    let kind = '', title = '', rows = [];
+    if (sel.type === 'firm') {
+      const f = world.firms.find((x) => x.id === sel.id);
+      if (!f) { sel = null; return info(); }
+      kind = f.sector === 'food' ? 'Trang trại thực phẩm' : 'Nhà máy hàng hoá';
+      title = kind + ' #' + f.id;
+      rows = [['Nhân viên', f.workers.length], ['Lương', dec(f.wage) + ' xu'], ['Giá bán', dec(f.price) + ' xu'], ['Tồn kho', Math.round(f.inv)], ['Tiền mặt', fmt(f.cash) + ' xu'], ['Nợ', fmt(f.debt) + ' xu']];
+    } else if (sel.type === 'house' || sel.type === 'hh') {
+      const i = sel.type === 'house' ? sel.i : Math.floor(sel.id / 4);
+      const ms = [0, 1, 2, 3].map((k) => world.households[i * 4 + k]).filter(Boolean);
+      kind = 'Ngôi nhà số ' + (i + 1); title = 'Nhà ' + nameOf(ms[0].id).split(' ')[0] + ' và hàng xóm';
+      rows = ms.map((h) => [nameOf(h.id), fmt(h.cash) + ' xu · ' + (h.employer === null ? 'thất nghiệp' : 'đi làm') + (h.ateToday ? '' : ' · đói')]);
+    } else if (sel.type === 'bank') {
+      kind = 'Ngân hàng'; title = 'Ngân hàng Thị trấn';
+      rows = [['Dư nợ', fmt(world.bank.loansOut) + ' xu'], ['Đã xoá nợ', fmt(world.bank.writtenOff) + ' xu'], ['Lãi suất', Math.round(world.policy.interestRate * 100) + '%/năm'], ['Tiền tạo ra', fmt(world.ledger.created) + ' xu']];
+    } else if (sel.type === 'gov') {
+      kind = 'Nhà nước'; title = 'Toà thị chính';
+      rows = [['Quỹ', fmt(world.gov.cash) + ' xu'], ['Thuế', Math.round(world.policy.taxRate * 100) + '%'], ['Lương tối thiểu', world.policy.minWage + ' xu'], ['Tiền đã in', fmt(world.ledger.printed) + ' xu']];
+    }
+    $('info').innerHTML = '<div class="kind">' + kind + '</div><h3>' + title + '</h3><dl>' + rows.map(([a, b]) => '<dt>' + a + '</dt><dd>' + b + '</dd>').join('') + '</dl>';
+  }
+  function select(s) {
+    sel = s; iso.select(s && s.type === 'hh' ? { type: 'house', i: Math.floor(s.id / 4) } : s); side.select(s);
+    if (s) requestAnimationFrame(() => inside.resize());
+    info();
+  }
+  $('close').onclick = () => select(null);
+
+  /* ---------- Điều khiển ---------- */
+  function setView(v) {
+    view = v === 'map' ? iso : side;
+    $('mMap').setAttribute('aria-pressed', String(v === 'map'));
+    $('mStreet').setAttribute('aria-pressed', String(v !== 'map'));
+    $('stage').classList.toggle('street', v !== 'map');
+    $('lenses').hidden = v !== 'map';
+    $('bubbles').innerHTML = '';
+  }
+  $('mMap').onclick = () => setView('map');
+  $('mStreet').onclick = () => setView('street');
+  for (const b of $('lenses').querySelectorAll('button')) b.onclick = () => {
+    iso.setLens(b.dataset.lens);
+    for (const o of $('lenses').querySelectorAll('button')) o.setAttribute('aria-pressed', String(o === b));
+  };
+  let down = null, dragged = false;
+  canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX }; dragged = false; });
+  canvas.addEventListener('pointermove', (e) => { if (view === iso && !down) { const b = canvas.getBoundingClientRect(); iso.setHover(iso.pick(e.clientX - b.left, e.clientY - b.top)); } });
+  window.addEventListener('pointermove', (e) => { if (!down || view !== side) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 4) { dragged = true; side.pan(dx); down.x = e.clientX; } });
+  window.addEventListener('pointerup', (e) => {
+    if (!down) return;
+    if (!dragged && e.target === canvas) { const b = canvas.getBoundingClientRect(); select(view.pick(e.clientX - b.left, e.clientY - b.top)); }
+    down = null;
+  });
+  const rates = [0.02, 0.05, 0.1, 0.18], taxes = [0, 0.1, 0.25, 0.4], speeds = [1, 3, 8];
+  $('play').onclick = () => { running = !running; $('play').innerHTML = running ? '<b>❚❚</b>Tạm dừng' : '<b>▶</b>Chạy tiếp'; };
+  $('speed').onclick = () => { tps = speeds[(speeds.indexOf(tps) + 1) % speeds.length]; $('speed').querySelector('b').textContent = tps + '×'; };
+  $('print').onclick = () => { world.flows = []; Sim.printMoney(world, 10000); iso.onTick(world); side.onTick(world); mod += 2; pushNews('Thị trưởng in thêm 10.000 xu phát cho dân.'); hud(); };
+  $('rate').onclick = () => { const r = rates[(rates.indexOf(world.policy.interestRate) + 1) % rates.length]; Sim.setPolicy(world, 'interestRate', r); $('rate').querySelector('b').textContent = Math.round(r * 100) + '%'; pushNews('Lãi suất được điều chỉnh thành ' + Math.round(r * 100) + '%/năm.'); };
+  $('tax').onclick = () => { const r = taxes[(taxes.indexOf(world.policy.taxRate) + 1) % taxes.length]; Sim.setPolicy(world, 'taxRate', r); $('tax').querySelector('b').textContent = Math.round(r * 100) + '%'; mod += r > world.policy.taxRate ? -2 : 1; pushNews('Thuế thu nhập đổi thành ' + Math.round(r * 100) + '%.'); };
+  $('goalsBtn').onclick = () => $('left').classList.toggle('show-goals');
+
+  /* ---------- Vòng lặp ---------- */
+  hud();
+  setTimeout(() => openEvent('drought'), 1400); // sự kiện đầu tiên để thấy ngay cách chơi
+  window.__c1 = { openEvent, setLens: (l) => document.querySelector('[data-lens="' + l + '"]').click(), select };
+  let last = performance.now();
+  function frame(t) {
+    const dt = Math.min(250, t - last); last = t;
+    if (running && !modalOpen) {
+      acc += (dt * tps) / 1000;
+      while (acc >= 1) { Sim.step(world); iso.onTick(world); side.onTick(world); acc -= 1; updateApproval(); tickEvents(); newsFromSim(); hud(); }
+    }
+    view.draw(t);
+    if (sel) inside.draw(world, sel, t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame((t) => { last = t; frame(t); });
+})();
+</script>
