@@ -28,8 +28,12 @@
     minWage: 6,
     taxRate: 0.1,
     interestRate: 0.05, // năm
-    foodProd: 3,
-    goodsProd: 2,
+    foodProd: 3.4,
+    goodsProd: 2.3,
+    maxFood: 9,
+    maxGoods: 11,
+    minFood: 4,
+    minGoods: 5,
     maxFlows: 700,
   };
 
@@ -46,7 +50,7 @@
       stats: [], events: [], flows: [], nextFirmId: 0, basePrice: null,
     };
     for (let i = 0; i < cfg.households; i++) {
-      w.households.push({ key: 'h' + i, id: i, cash: cfg.householdCash, employer: null, hungry: 0, ateToday: true });
+      w.households.push({ key: 'h' + i, id: i, cash: cfg.householdCash, employer: null, hungry: 0, ateToday: true, skill: 0.7 + rand() * 0.7 });
     }
     for (let i = 0; i < cfg.foodFirms; i++) w.firms.push(newFirm(w, 'food', cfg.firmCash));
     for (let i = 0; i < cfg.goodsFirms; i++) w.firms.push(newFirm(w, 'goods', cfg.firmCash));
@@ -64,7 +68,11 @@
     const id = w.nextFirmId++;
     const prod = sector === 'food' ? w.cfg.foodProd : w.cfg.goodsProd;
     const unitCost = w.cfg.wage / prod;
+    // mỗi doanh nghiệp có 3 hộ làm chủ, nhận cổ tức
+    const owners = [];
+    for (let k = 0; k < 3 && w.households.length; k++) owners.push(Math.floor(w.rand() * w.households.length));
     return {
+      owners,
       key: 'f' + id, id, sector, cash: cash || 0, inv: 6, prod, baseProd: prod,
       price: unitCost * 1.25, wage: w.cfg.wage, workers: [], vacancies: 0, unfilled: 0,
       debt: 0, sold: 0, avgSales: prod * 6, alive: true, born: w.day, deadSince: null,
@@ -124,6 +132,13 @@
     w.households[hid].employer = null;
   }
   function firmById(w, id) { return w.firms.find((f) => f.id === id); }
+  function payrollOf(w, f) { let s = 0; for (const hid of f.workers) s += f.wage * w.households[hid].skill; return s; }
+  function outputOf(w, f) { let s = 0; for (const hid of f.workers) s += f.prod * w.households[hid].skill; return s; }
+  function payToOwners(w, f, amt) {
+    if (!(amt > 0)) return;
+    const os = f.owners && f.owners.length ? f.owners : [Math.floor(w.rand() * w.households.length)];
+    for (const hid of os) transfer(w, f, w.households[hid], amt / os.length, 'dividend');
+  }
   function creditLimit(firm) { return Math.max(150, firm.wage * Math.max(1, firm.workers.length) * 25); }
   function canBorrow(firm, amt) { return firm.debt + amt <= creditLimit(firm); }
 
@@ -141,11 +156,13 @@
       const target = Math.max(4, f.avgSales * 2);
       // Giá vốn tính theo năng suất bình thường, để cú sốc tạm thời (đình công, hạn hán) không làm giá vô hạn
       const unitCost = f.wage / Math.max(0.1, f.baseProd || f.prod);
+      const capacity = outputOf(w, f);
       if (f.inv > target * 1.5) {
         f.price *= 1 - 0.03 * w.rand();
-        if (f.workers.length > 1 && f.inv > target * 2.5) fire(w, f, f.workers[Math.floor(w.rand() * f.workers.length)]);
+        // chỉ sa thải khi sản lượng thật sự vượt sức mua
+        if (f.workers.length > 1 && f.inv > target * 2.5 && f.avgSales < capacity * 0.9) fire(w, f, f.workers[Math.floor(w.rand() * f.workers.length)]);
         f.vacancies = 0;
-      } else if (f.inv < target * 0.6) {
+      } else if (f.inv < target * 0.6 && f.avgSales > capacity * 0.92) {
         f.price *= 1 + 0.03 * w.rand();
         // Mở rộng: lãi suất càng cao càng ngại tuyển thêm bằng tiền vay
         const appetite = Math.max(0, 1 - P.interestRate / 0.15);
@@ -156,8 +173,9 @@
       }
       f.price = Math.max(f.price, unitCost * 0.7, 0.2);
       if (f.vacancies > 0) f.unfilled++; else f.unfilled = 0;
-      if (f.unfilled > 3) { f.wage *= 1.02; f.unfilled = 0; }
-      if (unemployedShare > 0.15 && w.rand() < 0.05) f.wage *= 0.99;
+      // Lương chỉ tăng khi thị trường lao động thật sự căng; giảm chậm khi thất nghiệp cao
+      if (f.unfilled > 3) { if (unemployedShare < 0.04) f.wage *= 1.007; f.unfilled = 0; }
+      if (unemployedShare > 0.1 && w.rand() < 0.025) f.wage *= 0.99;
       f.wage = Math.max(f.wage, P.minWage);
       f.sold = 0;
     }
@@ -171,25 +189,27 @@
 
     // 3. Trả lương (vay nếu thiếu tiền, sa thải nếu không vay được)
     for (const f of alive) {
-      let payroll = f.wage * f.workers.length;
+      let payroll = payrollOf(w, f);
       if (f.cash < payroll) {
         const need = payroll - f.cash + f.wage * 2;
         if (canBorrow(f, need)) lend(w, f, need);
-        while (f.cash < payroll && f.workers.length) {
+        // không sa thải hàng loạt: tối đa 2 người mỗi ngày, phần còn thiếu thì trả lương chậm theo tỷ lệ
+        for (let k = 0; k < 2 && f.cash < payroll && f.workers.length; k++) {
           fire(w, f, f.workers[f.workers.length - 1]);
-          payroll = f.wage * f.workers.length;
+          payroll = payrollOf(w, f);
         }
       }
+      const payScale = payroll > 0 ? Math.min(1, Math.max(0, f.cash) / payroll) : 1;
       for (const hid of f.workers) {
         const h = w.households[hid];
-        const tax = f.wage * P.taxRate;
-        transfer(w, f, h, f.wage - tax, 'wage');
+        const pay = f.wage * h.skill * payScale, tax = pay * P.taxRate;
+        transfer(w, f, h, pay - tax, 'wage');
         transfer(w, f, w.gov, tax, 'tax');
       }
     }
 
     // 4. Sản xuất
-    for (const f of alive) f.inv += f.workers.length * f.prod;
+    for (const f of alive) f.inv += outputOf(w, f);
 
     // 5. Tiêu dùng
     const food = alive.filter((f) => f.sector === 'food');
@@ -204,8 +224,15 @@
       } else {
         h.hungry++;
       }
-      let budget = Math.max(0, h.cash - avgFoodPrice * 3) * 0.3;
-      for (let k = 0; k < 3; k++) {
+      // Tiết kiệm phòng thân: giữ lại tiền ăn nhiều ngày, người thất nghiệp và lúc kinh tế xấu thì chi tiêu dè dặt hơn
+      const jobless = h.employer === null;
+      const reserveDays = jobless ? 14 : 8 + unemployedShare * 25;
+      const propensity = jobless ? 0.12 : 0.26;
+      let budget = Math.max(0, h.cash - avgFoodPrice * reserveDays) * propensity;
+      // Bão hoà: mỗi hộ muốn khoảng 1,5 món hàng mỗi ngày, không mua vô hạn
+      // người giàu tiêu xa xỉ hơn: thêm món theo mức tài sản
+      const wants = 1 + (w.rand() < 0.55 ? 1 : 0) + (h.cash > avgFoodPrice * 90 ? 1 : 0);
+      for (let k = 0; k < wants; k++) {
         const g = cheapestOf(w, goods);
         if (!g || budget < g.price) break;
         transfer(w, h, g, g.price, 'buy'); g.inv -= 1; g.sold += 1; budget -= g.price;
@@ -226,7 +253,7 @@
       const buffer = Math.max(60, f.wage * f.workers.length * 8);
       let excess = f.cash - buffer;
       if (excess > 0 && f.debt > 0) { repay(w, f, excess * 0.6); excess = f.cash - buffer; }
-      if (excess > 0) payToHouseholds(w, f, excess * 0.5, 'dividend', 8);
+      if (excess > 0) { payToOwners(w, f, excess * 0.3); payToHouseholds(w, f, excess * 0.2, 'dividend', 8); }
     }
     if (w.bank.cash > 1) payToHouseholds(w, w.bank, w.bank.cash * 0.5, 'dividend', 6);
 
@@ -254,13 +281,28 @@
         if (f.inv > 0) f.inv = 0;
       }
     }
+    const openFirm = (sector, why) => {
+      const nf = newFirm(w, sector, 0);
+      lend(w, nf, 250);
+      w.firms.push(nf);
+      log(w, 'Một ' + (sector === 'food' ? 'lò thực phẩm' : 'xưởng hàng') + ' mới (#' + nf.id + ') mở cửa' + why + '.', 'good');
+    };
     for (const f of w.firms) {
       if (!f.alive && f.deadSince !== null && w.day - f.deadSince >= 12) {
-        f.deadSince = null; // chỉ thay một lần
-        const nf = newFirm(w, f.sector, 0);
-        lend(w, nf, 250);
-        w.firms.push(nf);
-        log(w, 'Một ' + (nf.sector === 'food' ? 'lò thực phẩm' : 'xưởng hàng') + ' mới (#' + nf.id + ') mở cửa bằng khoản vay 250 xu.', 'good');
+        f.deadSince = null;
+        const n = w.firms.filter((x) => x.alive && x.sector === f.sector).length;
+        if (n < (f.sector === 'food' ? w.cfg.minFood : w.cfg.minGoods)) openFirm(f.sector, ' thế chỗ, bằng khoản vay 250 xu');
+      }
+    }
+    // Khởi nghiệp: khi ngành đang lãi tốt và còn người tìm việc
+    if (w.day % 20 === 0) {
+      for (const sector of ['food', 'goods']) {
+        const list = w.firms.filter((x) => x.alive && x.sector === sector);
+        const max = sector === 'food' ? w.cfg.maxFood : w.cfg.maxGoods;
+        if (!list.length || list.length >= max) continue;
+        const margin = list.reduce((s, f) => s + f.price / (f.wage / (f.baseProd || f.prod)), 0) / list.length;
+        const short = list.filter((f) => f.inv < Math.max(4, f.avgSales)).length / list.length;
+        if ((margin > 1.25 || short > 0.5) && unemployedShare > 0.02 && w.rand() < 0.6) openFirm(sector, ' vì ngành đang làm ăn tốt');
       }
     }
     // dọn xác doanh nghiệp đã chết lâu

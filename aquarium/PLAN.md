@@ -1,25 +1,33 @@
-# Bể Kính Kinh Tế — Kế hoạch tổng và ngân sách
+# Bể Kính — Kế hoạch xây dựng
 
-Ngân sách: **$247** cloud session credit. Con số cho từng bước là ước tính; số thật xem ở đồng hồ
-"Cloud session credits" trong app. Sau mỗi bước, đối chiếu đồng hồ rồi điều chỉnh các bước sau.
+Giao diện đã chốt: **thành phố tưởng tượng 3D low-poly trên hòn đảo bay trong bể kính** (`glass.html`).
+Thành phố là nhân vật chính; kinh tế chạy ngầm và hiện ra bằng hình ảnh, không bằng bảng số liệu.
 
-| # | Bước | Kết quả bạn nhìn thấy | Ngân sách |
+Ngân sách là ước tính trên credit còn lại. Số thật xem ở đồng hồ "Cloud session credits";
+đối chiếu sau mỗi bước rồi điều chỉnh các bước sau.
+
+| # | Bước | Kết quả | Trạng thái |
 |---|---|---|---|
-| 1 | **Bể kính sống đầu tiên** | Trang web chạy: hộ gia đình, doanh nghiệp, ngân hàng, nhà nước, dòng tiền, 6 đồng hồ vĩ mô, in tiền, lãi suất, thuế, lương tối thiểu. Sổ cái kiểm tra bảo toàn tiền. | $15 |
-| 2 | **Lõi kinh tế đầy đủ** | Ngân hàng có vốn và dự trữ (rút tiền ồ ạt, ngân hàng phá sản), thị trường nhà đất và nhà đầu cơ (bong bóng), tiết kiệm và vay tiêu dùng của hộ gia đình. | $35 |
-| 3 | **Cân chỉnh để nền kinh tế "sống"** | Có chu kỳ tự nhiên: bùng nổ, suy thoái, phá sản, khởi nghiệp. Không sụp ngay, không đứng yên. Bộ test kiểm tra hành vi vĩ mô. | $40 |
-| 4 | **Bàn tay của luật mở rộng** | Thêm cần gạt: dự trữ bắt buộc, cấm đầu cơ, trần giá, trợ cấp. Sự kiện: hạn hán, tin đồn ngân hàng, đột phá công nghệ. Thả "kẻ lạ": bot arbitrage, tập đoàn độc quyền. | $30 |
-| 5 | **Kịch bản dựng sẵn** | Siêu lạm phát, Bong bóng nhà đất, Rút tiền ồ ạt, Khi máy giao dịch với máy. Mỗi kịch bản có lời dẫn và mục tiêu. | $30 |
-| 6 | **Soi một cá thể** | Bấm vào bất kỳ chấm nào để xem cuộc đời và sổ cái riêng của nó. | $20 |
-| 7 | **Chia sẻ một ván chơi** | Link chứa seed và các thao tác; người mở link xem lại đúng lịch sử đó và chơi tiếp. | $15 |
-| 8 | **Hoàn thiện** | Giao diện, hiệu năng, điện thoại, trải nghiệm lần đầu vào trang. | $20 |
-| — | **Dự phòng** | Sửa lỗi, đổi ý, ý tưởng mới giữa chừng. | $42 |
-|   | **Tổng** | | **$247** |
+| 1 | **Kinh tế sống** | Thất nghiệp tự nhiên, chu kỳ bùng nổ và suy thoái, phá sản và khởi nghiệp, giàu nghèo, lạm phát vừa phải. Có test khoá các đặc tính này. | Xong |
+| 2 | **Bàn tay chính sách trong 3D** | In tiền (vàng rơi từ trời), lãi suất, thuế, với phản hồi bằng hình ảnh. | |
+| 3 | **Xây dựng** | Bấm lô đất trống để xây nhà, xưởng, cối xay. Thành phố lớn dần. | |
+| 4 | **Hiện tượng tự nhiên** | Mưa, hạn hán, lễ hội đèn lồng, đám đông trước kho bạc. Hình ảnh, không thẻ bắt chọn. | |
+| 5 | **Hoàn thiện** | Hiệu năng điện thoại, âm thanh, trang chính, dọn bản đề xuất cũ. | |
 
-## Nguyên tắc tiêu credit
-- Mỗi bước kết thúc bằng một phiên bản chạy được, publish lên cùng một link.
-- Lõi mô phỏng luôn có test. Bất biến quan trọng nhất là bảo toàn tiền trong sổ cái.
-- Không mở rộng phạm vi giữa chừng. Ý tưởng mới đi vào hàng chờ và lấy tiền từ quỹ dự phòng.
+## Kết quả cân chỉnh kinh tế (Bước 1, 6 seed × 2.000 ngày)
 
-## Trạng thái
-- [x] Bước 1: Bể kính sống đầu tiên
+| Chỉ số | Trước | Sau |
+|---|---|---|
+| Thất nghiệp trung bình | 0,5–1,3% | 2,2–3,1%, suy thoái lên 25–30% rồi hồi phục |
+| Lạm phát | ~10%/năm | ~4–8%/năm |
+| Doanh nghiệp phá sản | 1–6 | 6–13 |
+| Gini | 0,08 | 0,33–0,42 |
+
+Cơ chế thêm vào lõi: tay nghề khác nhau, chủ sở hữu nhận cổ tức, tiết kiệm phòng thân,
+tiêu dùng bão hoà và tiêu xa xỉ theo tài sản, tuyển và sa thải theo cầu thực, lương chỉ tăng khi lao động khan hiếm,
+khởi nghiệp theo lợi nhuận. Chạy `node tools/calibrate.js` để đo lại.
+
+## Nguyên tắc
+- Mỗi bước kết thúc bằng một phiên bản chạy được, publish lên cùng link.
+- Lõi mô phỏng luôn có test; bất biến quan trọng nhất là bảo toàn tiền trong sổ cái.
+- Ý tưởng mới đi vào hàng chờ, không mở rộng phạm vi giữa chừng.
