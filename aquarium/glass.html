@@ -63,6 +63,15 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .sl output { font-variant-numeric: tabular-nums; color: var(--amber); font-weight: 600; }
 .panel input[type="range"] { width: 100%; accent-color: #ffd27a; margin: 0; }
 .note { margin: 0 0 2px; font-size: 12.5px; color: var(--ink-dim); min-height: 2.6em; }
+.kinds { display: grid; gap: 8px; }
+.kind { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.05); color: var(--ink); border-radius: 14px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: 14px 1fr; column-gap: 10px; row-gap: 2px; font: inherit; }
+.kind i { grid-row: 1 / span 3; width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; box-shadow: 0 0 10px currentColor; }
+.kind b { font: 600 15px var(--font-body); }
+.kind span { font-size: 13px; color: var(--ink-dim); }
+.kind em { font-style: normal; font-size: 12px; color: var(--amber); }
+.kind:hover { background: rgba(255, 255, 255, 0.1); }
+.kind[aria-checked="true"] { border-color: var(--amber); background: rgba(255, 210, 122, 0.14); }
+.hintline { margin: 2px 0 0; font-size: 13px; color: var(--amber); }
 .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 22px); transform: translateX(-50%); border-radius: 16px; padding: 10px 16px; font-size: 14px; max-width: min(560px, calc(100% - 40px)); text-align: center; animation: drop 0.35s ease-out; z-index: 5; }
 .toast b { color: var(--amber); font-weight: 600; }
 @keyframes drop { from { transform: translate(-50%, -8px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
@@ -86,7 +95,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
 <div class="brand">
   <h1>Bể Kính</h1>
-  <p>Một thành phố nhỏ trên hòn đảo bay. 140 gia đình sống, làm việc, mua bán. Nền kinh tế vận hành thật bên dưới từng ô cửa sổ.</p>
+  <p>Một thành phố nhỏ trên hòn đảo bay. <span id="pop">140</span> gia đình sống, làm việc, mua bán. Nền kinh tế vận hành thật bên dưới từng ô cửa sổ.</p>
 </div>
 <div class="clock"><b id="time">06:00</b><span id="day">Ngày 1</span></div>
 
@@ -95,6 +104,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="policyBtn" aria-pressed="false" aria-controls="policy">Chính sách</button>
+  <button id="buildBtn" aria-pressed="false" aria-controls="build">Xây dựng</button>
   <button id="play" aria-pressed="false">Tạm dừng</button>
   <button id="speed">Tốc độ 1×</button>
   <button id="cycle" aria-pressed="true">Ngày và đêm</button>
@@ -124,6 +134,15 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   <input type="range" id="rWage" min="0" max="18" step="1" value="6">
   <p class="note" id="nWage"></p>
 </section>
+<section class="panel glass" id="build" hidden aria-labelledby="bTitle">
+  <div class="ph"><h3 id="bTitle">Xây dựng</h3><button class="x" id="bClose" aria-label="Đóng chế độ xây">×</button></div>
+  <div class="kinds" role="radiogroup" aria-label="Loại công trình">
+    <button class="kind" data-kind="house" role="radio" aria-checked="false"><i style="background:#ffd27a;color:#ffd27a"></i><b>Nhà ở</b><span>4 gia đình mới chuyển đến, mang theo tiền tiết kiệm. Thêm người làm, thêm người mua.</span><em id="cHouse"></em></button>
+    <button class="kind" data-kind="farm" role="radio" aria-checked="false"><i style="background:#a6f0a0;color:#a6f0a0"></i><b>Cối xay gió</b><span>Trang trại lương thực mới. Vay 250 xu để khởi nghiệp, cần người làm.</span><em id="cFarm"></em></button>
+    <button class="kind" data-kind="shop" role="radio" aria-checked="false"><i style="background:#ffb27a;color:#ffb27a"></i><b>Xưởng thủ công</b><span>Xưởng hàng hoá mới. Vay 250 xu để khởi nghiệp, cần người làm.</span><em id="cShop"></em></button>
+  </div>
+  <p class="hintline" id="bHint"></p>
+</section>
 <div class="toast glass" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -151,8 +170,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const N1 = ['Sương', 'Mây', 'Gió', 'Sỏi', 'Lá', 'Rêu', 'Nắng', 'Trăng', 'Suối', 'Đá', 'Mưa', 'Cỏ', 'Khói', 'Sao'];
   const N2 = ['Bạc', 'Lam', 'Biếc', 'Hồng', 'Ngọc', 'Xanh', 'Vàng', 'Tím', 'Nâu', 'Trắng', 'Mờ', 'Thơm'];
   const nameOf = (id) => N1[(id * 5 + 2) % N1.length] + ' ' + N2[(id * 7 + 3) % N2.length];
-  const FOOD_NAMES = ['Cối Xay Gió Bạc', 'Ruộng Mây Vàng', 'Cối Xay Sương Sớm', 'Đồi Lúa Biếc', 'Cối Xay Ba Cánh', 'Vườn Bậc Thang', 'Cối Xay Đồi Gió', 'Ruộng Trăng Non', 'Cối Xay Bên Suối'];
-  const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu'];
+  const FOOD_NAMES = ['Cối Xay Gió Bạc', 'Ruộng Mây Vàng', 'Cối Xay Sương Sớm', 'Đồi Lúa Biếc', 'Cối Xay Ba Cánh', 'Vườn Bậc Thang', 'Cối Xay Đồi Gió', 'Ruộng Trăng Non', 'Cối Xay Bên Suối', 'Ruộng Hạt Ngọc', 'Cối Xay Lam Chiều', 'Vườn Mật Ong', 'Cối Xay Đá Rêu', 'Ruộng Sao Rơi'];
+  const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu', 'Xưởng Hộp Nhạc', 'Lò Nến Thơm', 'Xưởng Ô Giấy', 'Xưởng Diều Gió', 'Lò Bánh Mật', 'Xưởng Thuyền Mây', 'Xưởng Mũ Lá'];
 
   /* =============== Renderer, camera =============== */
   const canvas = $('scene');
@@ -162,7 +181,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 900);
-  camera.position.set(78, 58, 92);
+  camera.position.set(86, 64, 101);
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.target.set(0, 0, 0);
   controls.enableDamping = true; controls.dampingFactor = 0.07;
@@ -204,7 +223,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const sun = new THREE.DirectionalLight(0xfff1d6, 1.1);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -48, right: 48, top: 48, bottom: -48, near: 10, far: 260 });
+  Object.assign(sun.shadow.camera, { left: -54, right: 54, top: 54, bottom: -54, near: 10, far: 280 });
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
   scene.add(sun); scene.add(sun.target);
   const moon = new THREE.DirectionalLight(0x8fa8ff, 0.0);
@@ -247,14 +266,14 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   /* =============== Hòn đảo bay =============== */
   const island = new THREE.Group();
   scene.add(island);
-  const R = 36;
+  const R = 40;
   // mặt cỏ
-  const top = mesh(new THREE.CylinderGeometry(R, R - 1.5, 2.6, 22), mat('#86b86a'), 0, -1.3, 0, island);
+  const top = mesh(new THREE.CylinderGeometry(R, R - 1.5, 2.6, 26), mat('#82b566'), 0, -1.3, 0, island);
   top.castShadow = false;
   // đất đá phía dưới, có vân theo tầng
   (function () {
-    const g = new THREE.ConeGeometry(R - 1.5, 34, 22, 6);
-    g.rotateX(Math.PI); g.translate(0, -2.6 - 17, 0);
+    const g = new THREE.ConeGeometry(R - 1.5, 38, 24, 6);
+    g.rotateX(Math.PI); g.translate(0, -2.6 - 19, 0);
     const p = g.attributes.position, cols = [];
     const strata = [C('#8a6a4c'), C('#7b5d45'), C('#6d6359'), C('#5b5248'), C('#4b4741')];
     for (let i = 0; i < p.count; i++) {
@@ -386,9 +405,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
   /* =============== Bố trí lô đất =============== */
   const taken = [];
-  const free = (x, z, r) => x * x + z * z < (R - 3.5) ** 2 && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2) && Math.abs(z - riverZ(x)) > 3.2 + r;
+  const free = (x, z, r) => x * x + z * z < (R - 3.0 - r * 0.3) ** 2 && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2) && Math.abs(z - riverZ(x)) > 3.0 + r;
   [[PLAZA.x, PLAZA.z, 9], [12, -16, 5], [-12, -16, 5]].forEach(([x, z, r]) => taken.push({ x, z, r }));
-  for (const bx of bridges) taken.push({ x: bx, z: riverZ(bx), r: 4 });
+  for (const bx of bridges) { taken.push({ x: bx, z: riverZ(bx) - 4, r: 2.5 }); taken.push({ x: bx, z: riverZ(bx) + 4, r: 2.5 }); }
   function slots(n, region, r, seed) {
     const out = [];
     for (let i = 0; i < 4000 && out.length < n; i++) {
@@ -397,14 +416,33 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     }
     return out;
   }
-  const FARM_SLOTS = slots(10, [-32, 2, 11, 32], 4.6, 100);
-  const SHOP_SLOTS = slots(12, [4, 32, 10, 32], 3.9, 300);
-  const HOUSE_SLOTS = slots(35, [-32, 32, -34, 2], 2.15, 500).sort((a, b) => a.distanceTo(PLAZA) - b.distanceTo(PLAZA));
+  // Lưới tổ ong: cách xếp lô dày đặc nhất, có chút lệch để trông tự nhiên
+  function hexLots(region, r, gap, seed, cap) {
+    const sp = 2 * r + gap, out = [];
+    for (let j = 0; ; j++) {
+      const z = region[2] + j * sp * 0.866; if (z > region[3]) break;
+      for (let x = region[0] + (j % 2 ? sp / 2 : 0); x <= region[1]; x += sp) {
+        if (out.length >= cap) return out;
+        const jx = x + (hash(seed + j * 31 + x) - 0.5) * gap, jz = z + (hash(seed + j * 17 + x * 3) - 0.5) * gap;
+        if (free(jx, jz, r)) { taken.push({ x: jx, z: jz, r }); out.push(new THREE.Vector3(jx, 0, jz)); }
+      }
+    }
+    return out;
+  }
+  const LOT_R = { house: 2.1, farm: 3.7, shop: 3.0 };
+  const westBridge = new THREE.Vector3(bridges[0], 0, riverZ(bridges[0]) + 4), eastBridge = new THREE.Vector3(bridges[1], 0, riverZ(bridges[1]) + 4);
+  const FARM_SLOTS = hexLots([-R, 2, 6, R], LOT_R.farm, 0.3, 1, 11).sort((a, b) => a.distanceTo(westBridge) - b.distanceTo(westBridge));
+  const SHOP_SLOTS = hexLots([-4, R, 6, R], LOT_R.shop, 0.3, 2, 16).sort((a, b) => a.distanceTo(eastBridge) - b.distanceTo(eastBridge));
+  const HOUSE_SLOTS = hexLots([-R, R, -R, 4], LOT_R.house, 0.3, 3, 90).sort((a, b) => a.distanceTo(PLAZA) - b.distanceTo(PLAZA));
+  const farmOwner = FARM_SLOTS.map(() => null), shopOwner = SHOP_SLOTS.map(() => null);
+  const houseLots = HOUSE_SLOTS.map((p) => ({ p, used: false }));
 
   /* =============== Nhà ở =============== */
   const ROOFS = ['#3d8b8b', '#7a4e7e', '#d9734e', '#d4a537', '#4f5d75', '#a14a4a', '#5b8c5a'];
   const WALLS = ['#f3e6cf', '#efe0d6', '#e6efe4', '#f1e9d2', '#e9e1f0', '#f4ddc9'];
-  const houses = HOUSE_SLOTS.map((p, i) => {
+  const houses = [];
+  function buildHouse(lotIdx, grow) {
+    const p = houseLots[lotIdx].p, i = houses.length;
     const g = new THREE.Group(); g.position.copy(p); g.rotation.y = Math.atan2(PLAZA.x - p.x, PLAZA.z - p.z) + (hash(i) - 0.5) * 0.4; island.add(g);
     mesh(box(2.9, 0.35, 2.9), mat('#a99c88'), 0, 0, 0, g);
     const winMat = new THREE.MeshStandardMaterial({ color: '#41506a', emissive: '#ffcf7a', emissiveIntensity: 0, flatShading: true, roughness: 0.6 });
@@ -427,10 +465,13 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     const chimney = mesh(box(0.38, 1.3, 0.38), mat('#8a6f5c'), 0.7, 0.2, -0.5, roof);
     const bloom = [];
     for (let k = 0; k < 3; k++) bloom.push(mesh(new THREE.IcosahedronGeometry(0.22, 0), mat(['#e36f8f', '#f2c14e', '#9b7be0'][k]), -0.7 + k * 0.7, 0.55, 1.35, g));
-    const sel = { type: 'house', i };
-    clickable(g, sel);
-    return { g, floors, roof, chimney, winMat, bloom, level: 1, smokeT: hash(i) * 3 };
-  });
+    clickable(g, { type: 'house', i });
+    const H = { g, floors, roof, chimney, winMat, bloom, level: 1, smokeT: hash(i) * 3, lot: lotIdx, grow: grow ? 0.001 : 1 };
+    if (grow) g.scale.y = 0.001;
+    houses.push(H); houseLots[lotIdx].used = true;
+    return H;
+  }
+  for (let i = 0; i < Math.ceil(world.households.length / 4); i++) buildHouse(i, false);
 
   /* =============== Trang trại cối xay gió và xưởng =============== */
   const firmObj = new Map();  // id -> object
@@ -438,63 +479,69 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   function buildFarm(f, p, idx) {
     const g = new THREE.Group(); g.position.copy(p); g.rotation.y = hash(idx + 9) * Math.PI * 2; island.add(g);
     const plots = [];
-    for (let k = 0; k < 3; k++) {
+    for (let k = 0; k < 2; k++) {
       const pm = new THREE.MeshStandardMaterial({ color: '#7fb35b', flatShading: true, roughness: 0.95 });
-      const plot = mesh(box(2.3, 0.22, 4.2), pm, -2.6 + k * 2.6, 0, 2.8, g); plot.castShadow = false;
-      for (let r = 0; r < 4; r++) mesh(box(0.22, 0.25, 3.8), pm, -2.6 + k * 2.6 - 0.8 + r * 0.53, 0.22, 2.8, g).castShadow = false;
+      const cx = k ? 1.15 : -1.15;
+      const plot = mesh(box(2.0, 0.2, 3.0), pm, cx, 0, 1.5, g); plot.castShadow = false;
+      for (let r = 0; r < 3; r++) mesh(box(0.24, 0.24, 2.7), pm, cx - 0.6 + r * 0.6, 0.2, 1.5, g).castShadow = false;
       plots.push(pm);
     }
-    mesh(new THREE.CylinderGeometry(0.85, 1.3, 4.6, 8), mat('#efe3c8'), 0, 2.3, -1.2, g);
-    mesh(new THREE.ConeGeometry(1.25, 1.6, 8), mat('#b5523b'), 0, 4.6 + 0.8, -1.2, g);
-    mesh(new THREE.BoxGeometry(0.6, 0.9, 0.1), mat('#6d4c35'), 0, 0.45, -0.1, g);
-    const hub = new THREE.Group(); hub.position.set(0, 4.3, -0.15); g.add(hub);
-    mesh(new THREE.SphereGeometry(0.28, 8, 6), mat('#5a4636'), 0, 0, 0, hub);
+    mesh(new THREE.CylinderGeometry(0.75, 1.1, 4.2, 8), mat('#efe3c8'), 0, 2.1, -1.4, g);
+    mesh(new THREE.ConeGeometry(1.05, 1.4, 8), mat('#b5523b'), 0, 4.2 + 0.7, -1.4, g);
+    mesh(new THREE.BoxGeometry(0.55, 0.85, 0.1), mat('#6d4c35'), 0, 0.42, -0.36, g);
+    const hub = new THREE.Group(); hub.position.set(0, 3.9, -0.55); g.add(hub);
+    mesh(new THREE.SphereGeometry(0.25, 8, 6), mat('#5a4636'), 0, 0, 0, hub);
     for (let k = 0; k < 4; k++) {
       const blade = new THREE.Group(); blade.rotation.z = (k * Math.PI) / 2; hub.add(blade);
-      mesh(new THREE.BoxGeometry(0.12, 3.4, 0.08), mat('#6d4c35'), 0, 1.7, 0.05, blade);
-      mesh(new THREE.BoxGeometry(0.75, 2.5, 0.04), mat('#f7f2e6'), 0.42, 2, 0.07, blade);
+      mesh(new THREE.BoxGeometry(0.11, 3.0, 0.08), mat('#6d4c35'), 0, 1.5, 0.05, blade);
+      mesh(new THREE.BoxGeometry(0.66, 2.2, 0.04), mat('#f7f2e6'), 0.37, 1.75, 0.07, blade);
     }
-    glow('#ffc970', 2.6, g, 0.6, 1.3, 0);
+    glow('#ffc970', 2.4, g, 0.5, 1.2, -0.3);
     clickable(g, { type: 'firm', id: f.id });
     return { g, kind: 'farm', plots, hub, grow: 0, dying: 0, nameIdx: idx };
   }
   function buildShop(f, p, idx) {
     const g = new THREE.Group(); g.position.copy(p); g.rotation.y = Math.round(hash(idx + 19) * 4) * (Math.PI / 2) + 0.25; island.add(g);
-    mesh(box(4.6, 2.6, 3.4), mat('#cdb99a'), 0, 0, 0, g);
-    const roof = mesh(new THREE.CylinderGeometry(1.75, 1.75, 4.8, 12, 1, false, 0, Math.PI), mat('#4f8a7c', { metalness: 0.35, roughness: 0.5 }), 0, 2.6, 0, g);
+    mesh(box(3.6, 2.3, 2.6), mat(['#cdb99a', '#d6c3a5', '#c9b08f'][idx % 3]), 0, 0, 0, g);
+    const roof = mesh(new THREE.CylinderGeometry(1.35, 1.35, 3.8, 12, 1, false, 0, Math.PI), mat(['#4f8a7c', '#5a7fa0', '#8a5a4f'][idx % 3], { metalness: 0.35, roughness: 0.5 }), 0, 2.3, 0, g);
     roof.rotation.z = Math.PI / 2; roof.rotation.y = Math.PI / 2;
     const furnaceMat = new THREE.MeshStandardMaterial({ color: '#3a2a22', emissive: '#ff7a2f', emissiveIntensity: 0.8, flatShading: true });
-    mesh(new THREE.BoxGeometry(1.4, 1.3, 0.1), furnaceMat, -0.8, 0.1, 1.72, g).castShadow = false;
-    const fglow = glow('#ff8a3d', 3.4, g, -0.8, 0.8, 2.1, false);
-    mesh(new THREE.CylinderGeometry(0.35, 0.48, 5.2, 8), mat('#9a5a44'), 1.6, 2.6, -1, g);
-    const gear = new THREE.Group(); gear.position.set(2.36, 1.6, 0.4); gear.rotation.z = Math.PI / 2; g.add(gear);
-    mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.22, 12), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), 0, 0, 0, gear);
-    for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; mesh(new THREE.BoxGeometry(0.28, 0.22, 0.3), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), Math.cos(a) * 0.98, 0, Math.sin(a) * 0.98, gear); }
+    mesh(new THREE.BoxGeometry(1.1, 1.1, 0.1), furnaceMat, -0.7, 0.1, 1.32, g).castShadow = false;
+    const fglow = glow('#ff8a3d', 3.0, g, -0.7, 0.75, 1.7, false);
+    mesh(new THREE.CylinderGeometry(0.28, 0.4, 4.6, 8), mat('#9a5a44'), 1.1, 2.3, -0.7, g);
+    const gear = new THREE.Group(); gear.position.set(1.86, 1.4, 0.2); gear.rotation.z = Math.PI / 2; g.add(gear);
+    mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.2, 12), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), 0, 0, 0, gear);
+    for (let k = 0; k < 9; k++) { const a = (k / 9) * Math.PI * 2; mesh(new THREE.BoxGeometry(0.24, 0.2, 0.26), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), Math.cos(a) * 0.72, 0, Math.sin(a) * 0.72, gear); }
     const crates = [];
-    for (let k = 0; k < 9; k++) { const c = mesh(box(0.6, 0.6, 0.6), mat('#c49a62'), 0.6 + (k % 3) * 0.66, Math.floor(k / 3) * 0.6, 2.2 + 0.0, g); crates.push(c); }
+    for (let k = 0; k < 9; k++) { const c = mesh(box(0.48, 0.48, 0.48), mat('#c49a62'), 0.3 + (k % 3) * 0.54, Math.floor(k / 3) * 0.48, 1.85, g); crates.push(c); }
     clickable(g, { type: 'firm', id: f.id });
     return { g, kind: 'shop', furnaceMat, fglow, gear, crates, grow: 0, dying: 0, nameIdx: idx };
   }
+  let firstSync = true;
   function syncFirms() {
     const vis = world.firms.filter((f) => f.alive || (f.deadSince !== null && world.day - f.deadSince < 12));
     const visIds = new Set(vis.map((f) => f.id));
     for (const f of vis) {
       if (firmObj.has(f.id)) continue;
-      const slotsArr = f.sector === 'food' ? FARM_SLOTS : SHOP_SLOTS;
-      const used = new Set([...slotOf.entries()].filter(([id]) => (world.firms.find((x) => x.id === id) || {}).sector === f.sector).map(([, s]) => s));
-      let s = 0; while (used.has(s) && s < slotsArr.length) s++;
-      if (s >= slotsArr.length) continue;
-      slotOf.set(f.id, s);
+      const slotsArr = f.sector === 'food' ? FARM_SLOTS : SHOP_SLOTS, owners = f.sector === 'food' ? farmOwner : shopOwner;
+      let s = slotOf.has(f.id) ? slotOf.get(f.id) : -1;
+      if (s < 0 || (owners[s] !== null && owners[s] !== f.id)) s = owners.indexOf(null);
+      if (s < 0) continue;
+      slotOf.set(f.id, s); owners[s] = f.id;
       const o = (f.sector === 'food' ? buildFarm : buildShop)(f, slotsArr[s], s);
-      o.grow = world.day < 62 ? 1 : 0.001;
+      o.lot = s;
+      o.grow = firstSync ? 1 : 0.001;
       o.g.scale.set(1, o.grow, 1);
       firmObj.set(f.id, o);
+      if (!firstSync && buildFx) buildFx(slotsArr[s]);
     }
     for (const [id, o] of firmObj) if (!visIds.has(id) && !o.dying) o.dying = 1;
+    firstSync = false;
   }
+  let buildFx = null;
 
   /* =============== Cây, bụi hoa =============== */
-  const treeSpots = slots(110, [-34, 34, -34, 34], 1.1, 900);
+  const treeSpots = slots(150, [-R + 1, R - 1, -R + 1, R - 1], 1.1, 900);
   for (const [i, p] of treeSpots.entries()) {
     const g = new THREE.Group(); g.position.copy(p); island.add(g);
     const s = 0.8 + hash(i) * 0.7;
@@ -506,12 +553,12 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
 
   /* =============== Cư dân (hình nhân nhỏ) =============== */
-  const N = world.households.length;
-  const bodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.24, 0.62, 6), new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), N);
-  const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 8, 6), new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), N);
+  const MAXP = houseLots.length * 4;
+  const bodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.24, 0.62, 6), new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), MAXP);
+  const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 8, 6), new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), MAXP);
   bodies.castShadow = heads.castShadow = true;
   const SHIRTS = ['#d9733f', '#4d7cc9', '#3f8f5a', '#a14a7e', '#e0b23a', '#5b6f8a'];
-  for (let i = 0; i < N; i++) bodies.setColorAt(i, C(SHIRTS[i % SHIRTS.length]));
+  for (let i = 0; i < MAXP; i++) bodies.setColorAt(i, C(SHIRTS[i % SHIRTS.length]));
   island.add(bodies); island.add(heads);
   const dummy = new THREE.Object3D();
   function firmPos(id) { const o = firmObj.get(id); return o ? o.g.position : null; }
@@ -529,6 +576,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
   function bridgeLift(p) { for (const bx of bridges) { const dz = p.z - riverZ(bx); if (Math.abs(p.x - bx) < 1.4 && Math.abs(dz) < 3.2) return 0.15 + Math.cos((dz / 6.4) * Math.PI) * 0.7 + 0.12; } return 0; }
   function updatePeople(tod, t) {
+    const N = Math.min(MAXP, world.households.length);
+    bodies.count = heads.count = N;
     for (let i = 0; i < N; i++) {
       const h = world.households[i];
       const off = (hash(i) - 0.5) * 0.06;
@@ -559,7 +608,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const puffs = [];
   for (let i = 0; i < 90; i++) { const m = new THREE.Mesh(puffGeo, new THREE.MeshStandardMaterial({ color: '#f2f2f2', transparent: true, opacity: 0, flatShading: true, roughness: 1, depthWrite: false })); m.visible = false; island.add(m); puffs.push({ m, t0: -1 }); }
   let puffIdx = 0;
-  function puff(worldPos, dark) { const p = puffs[puffIdx++ % puffs.length]; p.m.position.copy(worldPos); p.m.material.color.set(dark ? '#8d8d8d' : '#f4f4f4'); p.t0 = performance.now(); p.m.visible = true; }
+  function puff(worldPos, dark, color) { const p = puffs[puffIdx++ % puffs.length]; p.m.position.copy(worldPos); p.m.material.color.set(color || (dark ? '#8d8d8d' : '#f4f4f4')); p.t0 = performance.now(); p.m.visible = true; }
   const motes = [];
   for (let i = 0; i < 220; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffd36b', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); s.scale.set(0.9, 0.9, 1); s.visible = false; island.add(s); motes.push({ s, t0: -1 }); }
   let moteIdx = 0, showMoney = true;
@@ -668,6 +717,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     const col = { good: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)' };
     $('pulse').innerHTML = rows.map(([k, t]) => '<div><i style="background:' + col[k] + ';color:' + col[k] + '"></i><span>' + t + '</span></div>').join('');
     $('day').textContent = 'Ngày ' + world.day;
+    $('pop').textContent = world.households.length;
   }
 
   /* =============== Bấm chọn =============== */
@@ -678,12 +728,18 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
     ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
+    if (buildKind) {
+      const lh = ray.intersectObjects(markerDiscs, false)[0];
+      if (lh) { buildAt(lh.object.userData.lot.kind, lh.object.userData.lot.i); return; }
+    }
     const hit = ray.intersectObjects(clickables, false)[0];
+    if (buildKind && !hit) return;
     select(hit ? hit.object.userData.sel : null);
   });
   canvas.addEventListener('pointermove', (e) => {
     ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
+    if (buildKind) { const lh = ray.intersectObjects(markerDiscs, false)[0]; hoverLot = lh ? lh.object : null; if (hoverLot) { canvas.style.cursor = 'pointer'; return; } }
     canvas.style.cursor = ray.intersectObjects(clickables, false).length ? 'pointer' : 'grab';
   });
   function selPos(s) {
@@ -825,7 +881,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const pp = (v) => v.toFixed(1).replace('.', ',') + '%';
   function snap() {
     const st = world.stats, s = st[st.length - 1], recent = st.slice(-10);
-    return { day: world.day, cpi: s.cpi, ue: s.unemployment, loans: world.bank.loansOut, hungry: recent.reduce((a, x) => a + x.hungry, 0) / recent.length, gov: world.gov.cash, wageAvg: world.firms.filter((f) => f.alive).reduce((a, f, _, arr) => a + f.wage / arr.length, 0) };
+    return { day: world.day, pop: world.households.length, cpi: s.cpi, ue: s.unemployment, loans: world.bank.loansOut, hungry: recent.reduce((a, x) => a + x.hungry, 0) / recent.length, gov: world.gov.cash, wageAvg: world.firms.filter((f) => f.alive).reduce((a, f, _, arr) => a + f.wage / arr.length, 0) };
   }
   const watches = [];
   function watch(days, fn) { watches.push({ at: world.day + days, before: snap(), fn }); }
@@ -849,7 +905,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
   function openPolicy(open) {
     $('policy').hidden = !open; $('policyBtn').setAttribute('aria-pressed', String(open));
-    document.body.classList.toggle('panel-open', open);
+    if (open) openBuild(false);
+    document.body.classList.toggle('panel-open', open || !$('build').hidden);
     if (open) { $('rRate').value = Math.round(world.policy.interestRate * 100); $('rTax').value = Math.round(world.policy.taxRate * 100); $('rWage').value = Math.round(world.policy.minWage); refreshNotes(); }
   }
   $('policyBtn').onclick = () => openPolicy($('policy').hidden);
@@ -892,6 +949,125 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     watch(45, (a, b) => 'Sau khi đổi lương tối thiểu: lương trung bình ' + a.wageAvg.toFixed(1).replace('.', ',') + ' → <b>' + b.wageAvg.toFixed(1).replace('.', ',') + ' xu</b>, giá cả <b>' + fmtPct((b.cpi / a.cpi - 1) * 100) + '</b>, thất nghiệp <b>' + pp(b.ue) + '</b>.');
   });
 
+  /* =============== Xây dựng =============== */
+  // bụi hoa trên lô trống, biến mất khi có công trình
+  const lotDecor = { house: [], farm: [], shop: [] };
+  const flowerGeo = new THREE.IcosahedronGeometry(0.14, 0), bushGeo = new THREE.IcosahedronGeometry(0.42, 0);
+  function decorAt(p, r, seed, kind) {
+    const g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.rotation.y = hash(seed) * 6; island.add(g);
+    const ground = kind === 'house' ? '#73a95a' : kind === 'farm' ? '#97c462' : '#c4b896';
+    const patch = mesh(new THREE.CylinderGeometry(r * 0.78, r * 0.84, 0.06, 7), mat(ground), 0, 0.03, 0, g); patch.castShadow = false;
+    if (kind === 'house') {
+      // vườn nhỏ: hai bụi cây, vài bông hoa, cọc rào
+      for (let k = 0; k < 2; k++) mesh(bushGeo, mat(k ? '#4f8d48' : '#5f9f58'), (k ? 0.6 : -0.7), 0.35, (k ? -0.4 : 0.5), g);
+      for (let k = 0; k < 6; k++) mesh(flowerGeo, mat(['#e36f8f', '#f2c14e', '#ffffff', '#c9a0e0'][(seed + k) % 4]), Math.cos(k * 1.1) * 1.1, 0.16, Math.sin(k * 1.1) * 1.1, g).castShadow = false;
+      for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2; mesh(box(0.08, 0.35, 0.08), mat('#8a6a4c'), Math.cos(a) * r * 0.74, 0.03, Math.sin(a) * r * 0.74, g).castShadow = false; }
+    } else if (kind === 'farm') {
+      // đồng hoa dại
+      for (let k = 0; k < 18; k++) { const a = hash(seed + k * 7) * Math.PI * 2, d = Math.sqrt(hash(seed + k * 11)) * r * 0.7; mesh(flowerGeo, mat(['#f2d04e', '#ffffff', '#e8a0c0', '#f2a65a'][k % 4]), Math.cos(a) * d, 0.14, Math.sin(a) * d, g).castShadow = false; }
+    } else {
+      // bãi sỏi với đống gỗ chờ khởi công
+      for (let k = 0; k < 3; k++) { const log = mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.6, 7), mat('#9a7350'), -0.4 + k * 0.34, 0.2 + (k === 1 ? 0.28 : 0), 0.3, g); log.rotation.z = Math.PI / 2; }
+      mesh(box(0.5, 0.5, 0.5), mat('#c49a62'), 0.9, 0.03, -0.6, g);
+    }
+    return g;
+  }
+  houseLots.forEach((l, i) => lotDecor.house.push(decorAt(l.p, LOT_R.house, 700 + i, 'house')));
+  FARM_SLOTS.forEach((p, i) => lotDecor.farm.push(decorAt(p, LOT_R.farm, 800 + i, 'farm')));
+  SHOP_SLOTS.forEach((p, i) => lotDecor.shop.push(decorAt(p, LOT_R.shop, 900 + i, 'shop')));
+  // mảng cỏ đậm nhạt cho mặt đảo có kết cấu
+  for (const [i, p] of slots(60, [-R + 2, R - 2, -R + 2, R - 2], 1.8, 1300).entries()) {
+    const m = mesh(new THREE.CylinderGeometry(1.6 + hash(i) * 1.6, 1.8 + hash(i) * 1.6, 0.04, 6), mat(['#7aae5f', '#8cc06d', '#76a85a'][i % 3]), p.x, 0.02, p.z, island);
+    m.castShadow = false; m.rotation.y = hash(i + 4) * 6;
+  }
+  function refreshDecor() {
+    houseLots.forEach((l, i) => (lotDecor.house[i].visible = !l.used));
+    farmOwner.forEach((o, i) => (lotDecor.farm[i].visible = o === null));
+    shopOwner.forEach((o, i) => (lotDecor.shop[i].visible = o === null));
+  }
+
+  const KINDS = { house: { color: '#ffd27a', name: 'nhà ở' }, farm: { color: '#a6f0a0', name: 'cối xay gió' }, shop: { color: '#ffb27a', name: 'xưởng thủ công' } };
+  let buildKind = null, markerSig = '', hoverLot = null;
+  const markers = [], markerDiscs = [], markerRoot = new THREE.Group(); island.add(markerRoot);
+  const gemGeo = new THREE.OctahedronGeometry(0.42, 0), discGeo = {}, ringGeo = {};
+  for (const k of Object.keys(LOT_R)) { discGeo[k] = new THREE.CircleGeometry(LOT_R[k] * 0.95, 40); ringGeo[k] = new THREE.RingGeometry(LOT_R[k] * 0.88, LOT_R[k] * 0.95, 48); }
+  const lotPos = (kind, i) => (kind === 'house' ? houseLots[i].p : (kind === 'farm' ? FARM_SLOTS : SHOP_SLOTS)[i]);
+  function freeLots(kind) {
+    if (kind === 'house') return houseLots.map((l, i) => (l.used ? -1 : i)).filter((i) => i >= 0);
+    return (kind === 'farm' ? farmOwner : shopOwner).map((o, i) => (o === null ? i : -1)).filter((i) => i >= 0);
+  }
+  function showMarkers() {
+    const list = buildKind ? freeLots(buildKind) : [];
+    const sig = buildKind + ':' + list.join(',');
+    if (sig === markerSig) return;
+    for (const m of markers) { markerRoot.remove(m.g); m.disc.material.dispose(); m.ring.material.dispose(); m.gem.material.dispose(); }
+    markers.length = 0; markerDiscs.length = 0; markerSig = sig; hoverLot = null;
+    if (!buildKind) return;
+    const col = KINDS[buildKind].color;
+    for (const i of list) {
+      const p = lotPos(buildKind, i), g = new THREE.Group(); g.position.set(p.x, 0, p.z);
+      const disc = new THREE.Mesh(discGeo[buildKind], new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.2, depthWrite: false }));
+      disc.rotation.x = -Math.PI / 2; disc.position.y = 0.25; disc.userData.lot = { kind: buildKind, i }; g.add(disc);
+      const ring = new THREE.Mesh(ringGeo[buildKind], new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.27; g.add(ring);
+      const gem = new THREE.Mesh(gemGeo, new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.9, flatShading: true }));
+      gem.position.y = 2.4; g.add(gem);
+      markerRoot.add(g); markers.push({ g, disc, ring, gem, ph: hash(i) * 6 }); markerDiscs.push(disc);
+    }
+  }
+  function updateMarkers(t) {
+    for (const m of markers) {
+      const hov = hoverLot === m.disc;
+      m.disc.material.opacity = hov ? 0.5 : 0.17 + Math.sin(t * 0.004 + m.ph) * 0.06;
+      m.ring.material.opacity = hov ? 1 : 0.7;
+      m.gem.position.y = 2.4 + (reduce ? 0 : Math.sin(t * 0.003 + m.ph) * 0.3); m.gem.rotation.y = t * 0.0015;
+      m.gem.scale.setScalar(hov ? 1.5 : 1);
+    }
+  }
+  function dustAt(p) { if (reduce) return; for (let k = 0; k < 16; k++) puff(new THREE.Vector3(p.x + (Math.random() - 0.5) * 3.5, 0.4 + Math.random() * 0.8, p.z + (Math.random() - 0.5) * 3.5), false, '#dccbab'); }
+  buildFx = dustAt;
+  function updateBuildPanel() {
+    $('cHouse').textContent = 'Còn ' + freeLots('house').length + ' lô trống';
+    $('cFarm').textContent = 'Còn ' + freeLots('farm').length + ' lô trống';
+    $('cShop').textContent = 'Còn ' + freeLots('shop').length + ' lô trống';
+    for (const b of document.querySelectorAll('#build .kind')) b.setAttribute('aria-checked', String(b.dataset.kind === buildKind));
+    $('bHint').textContent = buildKind ? (freeLots(buildKind).length ? 'Bấm vào một lô đất đang phát sáng để xây ' + KINDS[buildKind].name + '.' : 'Đã hết lô trống cho ' + KINDS[buildKind].name + '.') : 'Chọn loại công trình, rồi bấm vào một lô đất đang phát sáng trên đảo.';
+  }
+  function setBuild(kind) { buildKind = kind; showMarkers(); updateBuildPanel(); if (kind) stopOrbit(); }
+  function openBuild(open) {
+    $('build').hidden = !open; $('buildBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openPolicy(false); select(null); updateBuildPanel(); } else setBuild(null);
+    document.body.classList.toggle('panel-open', open || !$('policy').hidden);
+  }
+  $('buildBtn').onclick = () => openBuild($('build').hidden);
+  $('bClose').onclick = () => openBuild(false);
+  for (const b of document.querySelectorAll('#build .kind')) b.onclick = () => setBuild(buildKind === b.dataset.kind ? null : b.dataset.kind);
+
+  function buildAt(kind, i) {
+    const p = lotPos(kind, i);
+    if (kind === 'house') {
+      if (houseLots[i].used || (houses.length + 1) * 4 > MAXP) return;
+      const popBefore = world.households.length;
+      const added = Sim.addHouseholds(world, 4, 30);
+      buildHouse(i, true);
+      dustAt(p);
+      label3d('4 gia đình mới chuyển đến', new THREE.Vector3(p.x, 8, p.z), '#ffd27a');
+      toast('Nhà mới đã dựng xong. <b>' + nameOf(added[0].id) + '</b> và 3 gia đình khác chuyển đến, mỗi nhà mang theo 30 xu.');
+      watch(45, (a, b) => 'Sau khi đón dân mới: thành phố có <b>' + b.pop + ' gia đình</b> (trước khi xây ' + popBefore + '), thất nghiệp ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.');
+    } else {
+      const owners = kind === 'farm' ? farmOwner : shopOwner;
+      if (owners[i] !== null) return;
+      const f = Sim.openFirm(world, kind === 'farm' ? 'food' : 'goods', ' do bạn xây');
+      slotOf.set(f.id, i);
+      syncFirms();
+      const names = kind === 'farm' ? FOOD_NAMES : GOODS_NAMES, nm = names[i % names.length];
+      label3d(nm, new THREE.Vector3(p.x, 8, p.z), KINDS[kind].color);
+      toast('<b>' + nm + '</b> khởi công, vay 250 xu từ Kho Bạc để bắt đầu và đang tuyển người làm.');
+      watch(60, (a, b) => { const ff = world.firms.find((x) => x.id === f.id); return '<b>' + nm + '</b> sau hai tháng: ' + (!ff || !ff.alive ? 'đã phải đóng cửa' : ff.workers.length + ' người làm, nợ ' + Math.round(ff.debt).toLocaleString('vi-VN') + ' xu') + '. Thất nghiệp toàn thành phố ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.'; });
+    }
+    refreshDecor(); showMarkers(); updateBuildPanel(); pulse();
+  }
+
   /* =============== Điều khiển =============== */
   let running = true, tps = 1.5, acc = 0;
   const speeds = [[1.5, '1×'], [5, '3×'], [14, '10×']];
@@ -901,10 +1077,11 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
   $('money').onclick = () => { showMoney = !showMoney; $('money').setAttribute('aria-pressed', String(showMoney)); };
   $('orbit').onclick = () => { controls.autoRotate = !controls.autoRotate; $('orbit').setAttribute('aria-pressed', String(controls.autoRotate)); };
-  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world, openPolicy, doRain, ff: (n) => { for (let i = 0; i < n; i++) { Sim.step(world); syncFirms(); checkWatches(); } pulse(); } };
+  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world, openPolicy, doRain, openBuild, setBuild, buildAt, freeLots, houses, lots: () => ({ house: houseLots.length, farm: FARM_SLOTS.length, shop: SHOP_SLOTS.length, firmsShown: firmObj.size, firmsAlive: world.firms.filter((f) => f.alive).length }), ff: (n) => { for (let i = 0; i < n; i++) { Sim.step(world); syncFirms(); checkWatches(); } pulse(); } };
 
   /* =============== Vòng lặp =============== */
   syncFirms();
+  refreshDecor();
   let last = performance.now(), lastEcon = 0;
   function frame(t) {
     const dt = Math.min(100, t - last); last = t;
@@ -916,15 +1093,17 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (steps) { pulse(); if (sel) card(); }
     }
     const { night } = applyTime();
-    if (t - lastEcon > 250) { updateEconomyVisuals(night); lastEcon = t; }
+    if (t - lastEcon > 250) { updateEconomyVisuals(night); refreshDecor(); if (buildKind) { showMarkers(); updateBuildPanel(); } lastEcon = t; }
+    if (buildKind) updateMarkers(t);
     // hoạt cảnh
     const spin = reduce ? 0 : dt * 0.001;
     for (const [, o] of firmObj) {
       if (o.grow < 1 && !o.dying) { o.grow = Math.min(1, o.grow + dt / 2200); o.g.scale.y = 1 - Math.pow(1 - o.grow, 3); }
-      if (o.dying) { o.dying += dt / 1800; o.g.scale.setScalar(Math.max(0.001, 1.3 - o.dying * 0.3)); o.g.position.y = -(o.dying - 1) * 0.6; if (o.dying > 4.3) { island.remove(o.g); for (const [id, x] of firmObj) if (x === o) { firmObj.delete(id); slotOf.delete(id); } } }
+      if (o.dying) { o.dying += dt / 1800; o.g.scale.setScalar(Math.max(0.001, 1.3 - o.dying * 0.3)); o.g.position.y = -(o.dying - 1) * 0.6; if (o.dying > 4.3) { island.remove(o.g); (o.kind === 'farm' ? farmOwner : shopOwner)[o.lot] = null; for (const [id, x] of firmObj) if (x === o) { firmObj.delete(id); slotOf.delete(id); } } }
       if (o.kind === 'farm') o.hub.rotation.z -= spin * (0.4 + (o.busy || 0) * 2.2);
       else o.gear.rotation.y += spin * (o.busy || 0) * 1.8;
     }
+    for (const H of houses) if (H.grow < 1) { H.grow = Math.min(1, H.grow + dt / 2000); H.g.scale.y = 1 - Math.pow(1 - H.grow, 3); }
     orb.rotation.y += spin * 0.6; orb.position.y = 9 + (reduce ? 0 : Math.sin(t * 0.0015) * 0.3);
     for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0006 + f.ph) * 0.8);
     for (const c of clouds) { if (!reduce) c.a += c.v * dt * 0.06; c.g.position.x = Math.cos(c.a) * c.r; c.g.position.z = Math.sin(c.a) * c.r; }

@@ -45,7 +45,7 @@
       households: [], firms: [],
       bank: { key: 'bank', cash: 0, loansOut: 0, writtenOff: 0 },
       gov: { key: 'gov', cash: 0 },
-      ledger: { M0: 0, printed: 0, created: 0, destroyed: 0 },
+      ledger: { M0: 0, printed: 0, inflow: 0, created: 0, destroyed: 0 },
       policy: { taxRate: cfg.taxRate, interestRate: cfg.interestRate, minWage: cfg.minWage },
       stats: [], events: [], flows: [], nextFirmId: 0, basePrice: null,
     };
@@ -110,7 +110,7 @@
   }
   function expectedMoney(w) {
     const L = w.ledger;
-    return L.M0 + L.printed + L.created - L.destroyed;
+    return L.M0 + L.printed + (L.inflow || 0) + L.created - L.destroyed;
   }
 
   /* ---------- Tiện ích ---------- */
@@ -281,12 +281,7 @@
         if (f.inv > 0) f.inv = 0;
       }
     }
-    const openFirm = (sector, why) => {
-      const nf = newFirm(w, sector, 0);
-      lend(w, nf, 250);
-      w.firms.push(nf);
-      log(w, 'Một ' + (sector === 'food' ? 'lò thực phẩm' : 'xưởng hàng') + ' mới (#' + nf.id + ') mở cửa' + why + '.', 'good');
-    };
+    const openFirm = (sector, why) => openFirmAt(w, sector, why);
     for (const f of w.firms) {
       if (!f.alive && f.deadSince !== null && w.day - f.deadSince >= 12) {
         f.deadSince = null;
@@ -312,6 +307,30 @@
       if (h.hungry === 3) log(w, 'Hộ #' + h.id + ' đã nhịn đói 3 ngày liền.', 'warn');
     }
     record(w);
+  }
+
+  /* Mở một doanh nghiệp mới, vốn khởi nghiệp vay từ ngân hàng. Dùng cho khởi nghiệp tự nhiên và cho người chơi xây. */
+  function openFirmAt(w, sector, why) {
+    const nf = newFirm(w, sector, 0);
+    lend(w, nf, 250);
+    w.firms.push(nf);
+    log(w, 'Một ' + (sector === 'food' ? 'lò thực phẩm' : 'xưởng hàng') + ' mới (#' + nf.id + ') mở cửa' + (why || '') + '.', 'good');
+    return nf;
+  }
+
+  /* Dân nhập cư: n gia đình mới mang theo tiền tiết kiệm từ bên ngoài đảo (sổ cái ghi là dòng tiền vào). */
+  function addHouseholds(w, n, savings) {
+    const added = [];
+    savings = savings || 0;
+    for (let k = 0; k < n; k++) {
+      const id = w.households.length;
+      const h = { key: 'h' + id, id, cash: savings, employer: null, hungry: 0, ateToday: true, skill: 0.7 + w.rand() * 0.7 };
+      w.households.push(h);
+      added.push(h);
+    }
+    w.ledger.inflow = (w.ledger.inflow || 0) + n * savings;
+    log(w, n + ' gia đình mới chuyển đến thành phố.', 'good');
+    return added;
   }
 
   function cheapestOf(w, list) {
@@ -386,5 +405,5 @@
     for (const t of targets) transfer(w, w.gov, t, each, kind || 'print');
   }
 
-  return { create, step, printMoney, setPolicy, fund, totalMoney, expectedMoney, gini, DEFAULTS };
+  return { create, step, printMoney, setPolicy, fund, openFirm: openFirmAt, addHouseholds, totalMoney, expectedMoney, gini, DEFAULTS };
 });

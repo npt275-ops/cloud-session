@@ -87,3 +87,21 @@ test('chính sách có tác động thật: lãi suất cao làm tăng thất ng
   assert.ok(mw.cpi > base.cpi * 1.15, `giá ${mw.cpi.toFixed(0)} so với ${base.cpi.toFixed(0)}`);
   for (const r of [base, tight, mw]) assert.ok(close(Sim.totalMoney(r.w), Sim.expectedMoney(r.w)));
 });
+
+test('xây dựng: dân nhập cư và doanh nghiệp do người chơi xây giữ sổ cái khớp và có tác động thật', () => {
+  const w = Sim.create({ seed: 8 });
+  for (let i = 0; i < 200; i++) Sim.step(w);
+  const n0 = w.households.length, firms0 = w.firms.filter((f) => f.alive).length;
+  for (let k = 0; k < 5; k++) Sim.addHouseholds(w, 4, 30);
+  assert.strictEqual(w.households.length, n0 + 20);
+  assert.ok(w.households.every((h, i) => h.id === i), 'id hộ gia đình phải trùng chỉ số');
+  const shop = Sim.openFirm(w, 'goods', ' do người chơi xây');
+  assert.ok(shop.alive && shop.debt === 250 && shop.cash === 250);
+  assert.strictEqual(w.firms.filter((f) => f.alive).length, firms0 + 1);
+  for (let i = 0; i < 400; i++) {
+    Sim.step(w);
+    assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), `lệch sổ cái ở ngày ${w.day}`);
+  }
+  const newcomers = w.households.slice(n0);
+  assert.ok(newcomers.some((h) => h.employer !== null), 'người mới phải tìm được việc');
+});
