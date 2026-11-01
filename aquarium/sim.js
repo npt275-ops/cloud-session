@@ -1994,7 +1994,7 @@
   }
   function hit(W, L, u, t, us, dt) {
     const dmg = u.atk * (CLASS_MULT[u.cls][t.cls] || 1) * (u.cls === 'ranged' && u.era >= 5 && t.cls === 'mounted' ? 2 : 1) * dt;
-    t.hp -= dmg; t.lastBy = u.owner;
+    t.hp -= dmg; t.lastBy = u.owner; u.fight = W.day; t.hurt = W.day;
     if (u.splash) for (const v of us) if (v !== t && v.hp > 0 && v.owner === t.owner && Math.abs(v.x - t.x) * L.len <= u.splash) v.hp -= dmg * 0.4;
     fxPush(W, { lane: L.key, kind: u.cls, era: u.era, x0: u.x, x1: t.x, side: u.side, owner: u.owner });
   }
@@ -2002,6 +2002,7 @@
     const dmg = u.atk * u.vsGate * dt * 0.5;
     // tàu chiến chỉ pháo kích được, muốn chiếm thành phải có quân bộ
     const floor = u.naval ? foe.hpMax * 0.15 : 0;
+    u.fight = W.day;
     foe.hp = Math.max(Math.min(foe.hp, floor), foe.hp - dmg);
     foe.lastHit = W.day;
     fxPush(W, { lane: L.key, kind: u.cls, era: u.era, x0: u.x, x1: u.side === 0 ? 1 : 0, side: u.side, owner: u.owner, gate: foe.id });

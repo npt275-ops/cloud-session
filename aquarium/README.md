@@ -23,7 +23,39 @@ nơi đắt (cầu càng hiện đại chở càng nhiều), tri thức đi theo
 đi trước. Đủ **tri thức** (phát minh và điều học được) và **dân số**, thành phố sang thời đại mới; cây cầu được xây lại
 theo thời đại thấp hơn của hai đầu. Gieo phát minh giúp một thành phố tiến nhanh hơn.
 
-## Biển trong, cảng và Tranh hùng
+## Vai của người chơi: vị thần của bể kính
+
+Người chơi đứng ngoài vách kính, trên cả sáu nền văn minh. Sáu bộ lạc tự sống, tự buôn bán, tự đánh nhau (có thể tắt
+chiến tranh ở màn chào). Thần không ra lệnh cho ai, thần chỉ quyết định trời đất:
+
+| Thiên tai | Hậu quả trong nền kinh tế |
+|---|---|
+| Lũ lụt | Ruộng ngập, kho ướt, cầu yếu bị cuốn trôi, lính trên cầu bị cuốn; nước rút để lại phù sa (+20% lương thực bốn tháng) |
+| Hạn hán | Mất mùa hơn hai tháng, giá gạo leo thang |
+| Động đất | Nhà xưởng sập, tường thành nứt, cầu gãy, người bị thương, dư chấn sau năm ngày; nhà thời mới chịu được tốt hơn |
+| Lốc xoáy | Cột gió đi qua đúng những xưởng bị cuốn, hàng hoá bay mất |
+| Dịch bệnh | Người ốm không đi làm được, quân lính yếu đi, dịch theo người buôn lan sang láng giềng |
+| Núi lửa | Thành tan hoang, tro phủ ruộng ba tháng, rồi đất tro màu mỡ hơn một năm |
+| Sóng thần | Bến cá và cảng tan tác, tàu neo bến bị nhấn chìm, cá trước bến giảm |
+| Sét lửa | Cháy lan sang những xưởng nằm sát nhau |
+
+Ban phước: mưa lành, mùa bội thu, khai sáng (một phát minh), chữa lành, đình chiến (buộc một phe ngưng chiến một năm).
+Mỗi quyền năng tốn **thần lực** và có thời gian chờ. Thần lực hồi lại nhờ **đức tin**: thiên tai làm dân sợ mà tin,
+ban phước làm dân biết ơn mà tin, và thời đại càng mới người ta càng ít tin. Ở thời Robot AI, những cỗ máy đo được
+độ cong của bầu trời, hiểu mình đang sống trong một chiếc bể, và gõ lên kính từ phía bên trong.
+
+## Tám thời đại
+
+Nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, **tên lửa** (bệ phóng, vệ tinh, điện hạt nhân, tàu ngầm
+hạt nhân) và **robot AI** (robot chiến đấu, bầy máy bay không người lái, cỗ máy bọc thép, pháo điện từ, chiến hạm tự hành).
+Người dân là hình người có khớp: chân tay cử động khi đi và khi đánh, quần áo theo từng thời (da thú, áo choàng, áo khoác
+thời cận đại, đồ thợ, đồ hiện đại, áo liền quần thời tên lửa, robot đi giữa phố thời AI).
+
+Mỗi đơn vị quân là một tiểu đội: máu vơi thì từng người ngã xuống, xác nằm lại trên cầu một lúc. Thành bị vây thì cổng
+bốc khói, sức chịu xuống thấp thì cổng gãy. Bảng **Thế giới** cho xem sáu nền văn minh và các trận đang diễn ra; bấm
+"Xem" để bay tới một trận và theo dõi quân số, thương vong, sức chịu của hai thành. Mỗi trận khép lại có một bản tổng kết.
+
+## Biển trong, cảng và chiến tranh
 
 Giữa vòng sáu miền là **biển trong**, một ngư trường chung chia bảy vùng: sáu vùng ven bờ trước bến của mỗi thành phố
 và vùng khơi ở giữa. Mười một loài sinh sôi theo đường cong logistic. Cá cơm, cá thu, tôm cua thành lương thực;
@@ -58,7 +90,7 @@ viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi c
 
 ## Chạy
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `story3d.js` cùng thư mục):
+Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
 
 ```bash
 cd aquarium && python3 -m http.server 8000
@@ -72,11 +104,12 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 |---|---|
 | `index.html` | Bể kính, bầu trời, ngày đêm, thời tiết, giao diện, thanh sáu thành phố, chính sách, màn chào, chú giải |
 | `lands3d.js` | Địa hình sáu miền, công trình theo sáu thời đại (gộp hình học để nhẹ), cầu nối, cư dân, đoàn hàng qua cầu |
+| `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 38 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong và Tranh hùng |
+| `test/sim.test.js` | 41 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, tám thời đại và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |

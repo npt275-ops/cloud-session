@@ -22,6 +22,10 @@
     catch: ['Biển', '#7fd6ff'], 'sea-low': ['Biển cạn', '#e8a59d'], 'sea-back': ['Biển hồi sinh', '#9df0c4'], dispute: ['Tranh chấp biển', '#ffb36b'], build: ['Công trình', '#c8d3e0'],
     war: ['Chiến tranh', '#ff6b6b'], peace: ['Hoà bình', '#9df0c4'], battle: ['Giao tranh', '#ff8a6b'], siege: ['Vây thành', '#ff7b6b'], conquer: ['Đổi chủ', '#ffd27a'], fall: ['Diệt vong', '#c9a3a3'],
     'wonder-start': ['Kỳ quan', '#ffe08a'], wonder: ['Kỳ quan', '#ffe08a'], nuke: ['Hạt nhân', '#ff4d4d'], 'nuke-stopped': ['Đánh chặn', '#9cc3ff'], victory: ['Kết cục', '#ffd27a'],
+    'god-flood': ['Thần giáng lũ', '#7fb8d9'], 'god-drought': ['Thần giáng hạn', '#e0b060'], 'god-quake': ['Thần làm rung đất', '#c9a37a'], 'god-tornado': ['Thần gọi lốc', '#a6b0bb'],
+    'god-plague': ['Thần gieo dịch', '#9fe07a'], 'god-volcano': ['Núi lửa', '#ff7a2a'], 'god-tsunami': ['Sóng thần', '#5fb0d9'], 'god-fire': ['Sét lửa', '#ffd36b'],
+    'god-rain': ['Mưa lành', '#9fd3f0'], 'god-harvest': ['Bội thu', '#ffd36b'], 'god-enlighten': ['Khai sáng', '#fff3c4'], 'god-heal': ['Chữa lành', '#bff5c8'], 'god-truce': ['Đình chiến', '#f4fbff'],
+    'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
@@ -126,7 +130,7 @@
     /* =============== Hàng người chen mua món đang sốt =============== */
     const QN = 18, P = X.people;
     const hatMat = new THREE.MeshStandardMaterial({ color: '#ff6b9d', flatShading: true, roughness: 0.7, emissive: '#3a1020', emissiveIntensity: 0.25 });
-    const qBodies = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), QN);
+    const qBodies = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), QN);
     const qHeads = new THREE.InstancedMesh(P.headGeo, P.headMat, QN);
     const qHats = new THREE.InstancedMesh(new THREE.ConeGeometry(0.48, 0.24, 8), hatMat, QN);
     for (let i = 0; i < QN; i++) qBodies.setColorAt(i, C(P.shirts[(i * 5) % P.shirts.length]));
@@ -465,7 +469,7 @@
     }
 
     /* ----- Đám đông trước nơi giữ tiền khi nỗi sợ lan rộng ----- */
-    const CROWD = 40, crowdB = new THREE.InstancedMesh(X.people.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), CROWD), crowdH = new THREE.InstancedMesh(X.people.headGeo, X.people.headMat, CROWD);
+    const CROWD = 40, crowdB = new THREE.InstancedMesh(X.people.bodyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), CROWD), crowdH = new THREE.InstancedMesh(X.people.headGeo, X.people.headMat, CROWD);
     for (let i = 0; i < CROWD; i++) crowdB.setColorAt(i, C(X.people.shirts[(i * 7) % X.people.shirts.length]));
     for (const m of [crowdB, crowdH]) { m.castShadow = true; m.frustumCulled = false; island.add(m); }
     let panicLv = 0;
@@ -716,7 +720,7 @@
     // --- Đám đông: người ốm trước trạm xá, người góp tiền trước lều
     const CN = 16, crowds = {};
     function makeCrowd(key, hatColor) {
-      const bodies = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), CN), heads = new THREE.InstancedMesh(P.headGeo, P.headMat, CN);
+      const bodies = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), CN), heads = new THREE.InstancedMesh(P.headGeo, P.headMat, CN);
       for (let i = 0; i < CN; i++) bodies.setColorAt(i, C(P.shirts[(i * 3 + key.length) % P.shirts.length]));
       for (const m of [bodies, heads]) { m.castShadow = true; m.frustumCulled = false; m.visible = false; island.add(m); }
       crowds[key] = { bodies, heads, level: 0 };
@@ -748,7 +752,7 @@
     }
 
     // --- Đình công: thợ cầm biển đỏ đứng chắn trước cửa xưởng
-    const PK = 9, picketB = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), PK * 3), picketH = new THREE.InstancedMesh(P.headGeo, P.headMat, PK * 3);
+    const PK = 9, picketB = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), PK * 3), picketH = new THREE.InstancedMesh(P.headGeo, P.headMat, PK * 3);
     const signs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.62, 0.42, 0.05), new THREE.MeshStandardMaterial({ color: '#d9473a', flatShading: true, roughness: 0.7, emissive: '#5a120c', emissiveIntensity: 0.25 }), PK * 3);
     for (let i = 0; i < PK * 3; i++) picketB.setColorAt(i, C(P.shirts[(i * 5 + 2) % P.shirts.length]));
     for (const m of [picketB, picketH, signs]) { m.castShadow = true; m.frustumCulled = false; island.add(m); }
@@ -942,7 +946,7 @@
     /* ----- Đạo diễn ----- */
     let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
     const queue = [];
-    const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1 };
+    const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1, 'battle-end': 1, awaken: 5, 'plague-spread': 1 };
     const pri = (st) => TIER_PRI[st.tier] + (PRI_BONUS[st.type] || 0);
     function takeNext(minPri) {
       for (let i = queue.length - 1; i >= 0; i--) if (W.day - queue[i].day > TIER_AGE[queue[i].tier]) queue.splice(i, 1);
@@ -1087,6 +1091,8 @@
         else if (st.type === 'wonder') { G.label3d(st.title, p.clone().setY(30), '#ffe08a'); G.ripple(p, '#ffe08a'); if (audio) audio.chime(); }
         else if (st.type === 'siege') G.label3d('Vây thành', p.clone().setY(10), '#ff9b8f');
         else if (st.type === 'sea-low') G.label3d('Biển cạn', p.clone().setY(8), '#ffb3a8');
+        else if (st.type === 'awaken') { G.label3d('Những cỗ máy đã thấy bạn', p.clone().setY(30), '#7ff0ff'); G.ripple(p, '#7ff0ff'); if (audio) audio.chime(); }
+        else if (st.type && st.type.startsWith('god-') && st.type !== 'god-aftershock') G.label3d(typeOf(st.type)[0], p.clone().setY(28), typeOf(st.type)[1]);
       }
     }
 

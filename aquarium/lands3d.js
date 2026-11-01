@@ -22,6 +22,7 @@
     const DOD = () => base('dod', () => new THREE.DodecahedronGeometry(1, 0));
     const OCT = () => base('oct', () => new THREE.OctahedronGeometry(1, 0));
     const GABLE = () => base('gable', () => { const s = new THREE.Shape(); s.moveTo(-0.5, 0); s.lineTo(0.5, 0); s.lineTo(0, 1); s.lineTo(-0.5, 0); const g = new THREE.ExtrudeGeometry(s, { depth: 1, bevelEnabled: false }); g.translate(0, 0, -0.5); g.rotateY(Math.PI / 2); return g; });
+    const TORUS = () => base('torus', () => new THREE.TorusGeometry(1, 0.07, 6, 28));
     const VAULT = () => base('vault', () => { const g = new THREE.CylinderGeometry(1, 1, 1, 12, 1, false, 0, Math.PI); g.rotateZ(Math.PI / 2); return g; });
     const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _c = new THREE.Color();
     function Kit() { this.b = []; this.l = []; }
@@ -85,8 +86,8 @@
       win: '#41506a',
     };
     const pick = (arr, v) => arr[Math.floor(Math.abs(v) * arr.length) % arr.length];
-    const ROAD = ['#b0916a', '#c4a87c', '#b8ad99', '#d3c6ad', '#9a948a', '#55585e'];
-    const PLAZA_C = ['#b08f66', '#d9c9a3', '#bcb3a3', '#cbbd9f', '#b9b2a6', '#e4e6e8'];
+    const ROAD = ['#b0916a', '#c4a87c', '#b8ad99', '#d3c6ad', '#9a948a', '#55585e', '#3a3d42', '#23262b'];
+    const PLAZA_C = ['#b08f66', '#d9c9a3', '#bcb3a3', '#cbbd9f', '#b9b2a6', '#e4e6e8', '#eef1f4', '#f4f6f8'];
 
     /* =============== Công trình theo thời đại =============== */
     // Nhà ở: mỗi lô bốn gia đình. lv 1..3 là mức giàu, thêm tầng.
@@ -138,7 +139,7 @@
         if (ter === 'tundra') k.gable('#f4f8fb', 0, y + 1.35, 0, 2.82, 0.42, 0.72);
         return;
       }
-      if (e >= 3 && ter !== 'plains') return houseStyled(k, e, ter, v, lv);
+      if (e >= 3 && (ter !== 'plains' || e >= 6)) return houseStyled(k, e, ter, v, lv);
       if (e === 3) {
         const wall = pick(PAL.e3walls, v), roof = pick(PAL.e3roofs, v2);
         k.box('#a99c88', 0, 0, 0, 2.9, 0.35, 2.9);
@@ -225,29 +226,49 @@
         else { k.box(S.trim, 0, top, 0, 2.5, 0.14, 2.5); for (let f = 1; f < floors; f++) { k.box('#2f3540', 0, 0.2 + f * 1.3, 1.45, 1.6, 0.06, 0.5); k.box('#2f3540', 0, 0.2 + f * 1.3 + 0.3, 1.68, 1.6, 0.04, 0.04); } k.add(UBOX(), pick(['#c0392b', '#3f7fd6', '#e0b23a'], v2), 0, 1.05, 1.4, 1.4, 0.05, 0.6, 0, -0.3, 0); }
         return;
       }
-      const floors = 3 + lv * 2 + Math.floor(v * 3), H = floors * 1.05;
+      const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2, H = floors * 1.05;
       if (ter === 'tundra' || ter === 'coast') {
         const sx = ter === 'coast' ? 1.25 : 1.1, sz = ter === 'coast' ? 0.9 : 1.1;
         k.add(UCYL(14), wall, 0, 0, 0, sx, H, sz);
         for (let f = 0; f < floors; f++) k.add(UCYL(14), pick(PAL.glass, v2), 0, 0.3 + f * 1.05, 0, sx + 0.02, 0.55, sz + 0.02, 0, 0, 0, true);
         if (ter === 'tundra') k.add(ICO(), S.roof, 0, H, 0, 1.15, 0.85, 1.15);
         else k.add(VAULT(), '#ffffff', 0, H, 0, 0.9, 1.6, 0.35, 0, 0.5, 0);
-        return;
-      }
-      if (ter === 'mountain') {
+      } else if (ter === 'mountain') {
         let y = 0;
         for (let f = 0; f < floors; f += 2) { const off = ((f / 2) % 2 ? 0.35 : -0.35); k.box(tint(S.wall, ((f / 2) % 2) * 0.05), off, y, 0, 2.4, 2.1, 2.3); for (const sx of [-0.7, 0, 0.7]) win(off + sx, y + 0.8, 1.17, 0.18, 1.0); y += 2.1; }
         k.box(S.roof, 0, y, 0, 2.9, 0.4, 2.8); k.box(S.trim, 0.9, y + 0.4, 0.8, 0.3, 0.5, 0.3);
-        return;
+      } else {
+        k.box(wall, 0, 0, 0, 2.3, H, 2.3);
+        for (let f = 0; f < floors; f++) { const y = 0.3 + f * 1.05; k.box(pick(PAL.glass, v2), 0, y, 1.16, 2.0, 0.6, 0.04, 0, true); k.box(pick(PAL.glass, v2), 1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(pick(PAL.glass, v2), -1.16, y, 0, 0.04, 0.6, 2.0, 0, true); }
+        if (ter === 'forest') { for (let f = 1; f < floors; f += 2) { k.box('#5f9f4a', 0, f * 1.05, 1.35, 2.3, 0.18, 0.5); k.blob(ICO(), '#6aa85a', -0.7 + (f % 3) * 0.6, f * 1.05 + 0.4, 1.4, 0.32); } k.box('#5f9f4a', 0, H, 0, 2.1, 0.22, 2.1); k.cone('#4f8f45', 0.5, H + 0.2, 0.3, 0.45, 1.1, 6); }
+        else if (ter === 'plains') { for (let f = 2; f < floors; f += 3) k.box(S.wall2, 0, f * 1.05, 1.28, 2.5, 0.12, 0.3); k.box(S.roof, 0, H, 0, 2.2, 0.2, 2.2); }
+        else { for (let r = 0; r < 7; r++) k.box(S.wall2, -1.0 + r * 0.333, 0, 1.2, 0.07, H, 0.07); for (let i = 0; i < 2; i++) k.add(UBOX(), '#24345a', -0.5 + i, H + 0.15, 0, 0.9, 0.05, 1.8, 0, 0.35, 0); }
       }
-      k.box(wall, 0, 0, 0, 2.3, H, 2.3);
-      for (let f = 0; f < floors; f++) { const y = 0.3 + f * 1.05; k.box(pick(PAL.glass, v2), 0, y, 1.16, 2.0, 0.6, 0.04, 0, true); k.box(pick(PAL.glass, v2), 1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(pick(PAL.glass, v2), -1.16, y, 0, 0.04, 0.6, 2.0, 0, true); }
-      if (ter === 'forest') { for (let f = 1; f < floors; f += 2) { k.box('#5f9f4a', 0, f * 1.05, 1.35, 2.3, 0.18, 0.5); k.blob(ICO(), '#6aa85a', -0.7 + (f % 3) * 0.6, f * 1.05 + 0.4, 1.4, 0.32); } k.box('#5f9f4a', 0, H, 0, 2.1, 0.22, 2.1); k.cone('#4f8f45', 0.5, H + 0.2, 0.3, 0.45, 1.1, 6); }
-      else { for (let r = 0; r < 7; r++) k.box(S.wall2, -1.0 + r * 0.333, 0, 1.2, 0.07, H, 0.07); for (let i = 0; i < 2; i++) k.add(UBOX(), '#24345a', -0.5 + i, H + 0.15, 0, 0.9, 0.05, 1.8, 0, 0.35, 0); }
+      // thời tên lửa: cột ăng-ten, chảo vệ tinh, đèn báo máy bay; thời robot: viền sáng, vòng lơ lửng, bãi đỗ máy bay không người lái
+      if (e === 6) { k.cyl('#c9d1d9', 0.6, H, -0.6, 0.05, 2.4, 5); k.add(SPHG(), '#f4f4f4', -0.5, H + 0.35, 0.4, 0.45, 0.18, 0.45, 0, -0.6, 0); k.box('#ff5a4f', 0.6, H + 2.4, -0.6, 0.14, 0.14, 0.14, 0, true); }
+      if (e === 7) {
+        for (const [x, z] of [[-1.17, 1.17], [1.17, 1.17], [-1.17, -1.17], [1.17, -1.17]]) k.box('#7ff0ff', x, 0.3, z, 0.06, H - 0.3, 0.06, 0, true);
+        k.add(TORUS(), S.wall2, 0, H + 0.9, 0, 1.5, 1.5, 1.5, 0, Math.PI / 2, 0, true);
+        k.cyl('#3a3f48', 0, H, 0, 0.7, 0.12, 12); k.box('#7ff0ff', 0, H + 0.13, 0, 0.5, 0.02, 0.08, 0, true);
+      }
     }
 
     // Ruộng, nơi làm ra lương thực. Lô rộng; phần quay (cối xay, tuabin) trả về riêng để quay theo độ bận rộn.
     function buildFarm(k, e, ter, v) {
+      if (e >= 6) {
+        if (e === 6) {
+          for (const x of [-1.2, 1.2]) { k.box('#e8eef0', x, 0, 1.0, 2.0, 0.14, 2.8); k.add(VAULT(), '#bfeeca', x, 0.14, 1.0, 0.9, 0.9, 1.4, 0, 0, 0, true); }
+          k.box('#dfe7ee', -1.4, 0, -1.6, 1.6, 0.2, 1.6); k.box('#cfe8d6', -1.4, 0.2, -1.6, 1.4, 4.2, 1.4, 0, true); for (let f = 0; f < 5; f++) k.box('#5f9f4a', -1.4, 0.5 + f * 0.8, -1.6, 1.46, 0.12, 1.46);
+          k.tcyl('#eef1f4', 1.6, 0, -1.6, 0.18, 0.1, 7.4, 8); k.box('#eef1f4', 1.6, 7.3, -1.75, 0.35, 0.35, 0.7);
+          return { hub: [1.6, 7.5, -1.35], blades: 'turbine' };
+        }
+        const plot = ter === 'desert' ? '#9cb25a' : ter === 'tundra' ? '#a7b79a' : '#7fb35b';
+        for (let r = 0; r < 5; r++) k.box(r % 2 ? plot : '#6aa85a', -1.8 + r * 0.9, 0, 1.2, 0.8, 0.22, 2.6);
+        k.box('#e0b23a', 0.4, 0.22, 1.6, 0.9, 0.6, 1.2); k.add(UBOX(), '#3a3f48', 0.4, 0.82, 1.6, 0.15, 1.2, 0.15, 0, 0.5, 0); k.box('#7ff0ff', 0.4, 0.6, 2.21, 0.5, 0.08, 0.02, 0, true);
+        k.box('#2b2f36', -1.0, 0, -1.6, 2.0, 0.3, 2.0); k.box('#cfe8d6', -1.0, 0.3, -1.6, 1.7, 6.0, 1.7, 0, true); for (let f = 0; f < 7; f++) k.box('#4f8f45', -1.0, 0.6 + f * 0.8, -1.6, 1.76, 0.1, 1.76);
+        k.box('#7ff0ff', -1.0, 6.3, -1.6, 1.8, 0.1, 1.8, 0, true); k.cyl('#3a3f48', 1.6, 0, -1.4, 0.8, 0.1, 12); k.box('#7ff0ff', 1.6, 0.11, -1.4, 0.6, 0.02, 0.1, 0, true);
+        return null;
+      }
       const plot = ter === 'desert' ? '#9cb25a' : ter === 'tundra' ? '#a7b79a' : '#7fb35b';
       const grain = ter === 'tundra' ? '#cdd7c8' : '#d9c25e';
       const rows = (x, z, w, d, c) => { k.box(c, x, 0, z, w, 0.2, d); for (let r = 0; r < 3; r++) k.box(c, x - w / 2 + w * (r + 0.5) / 3, 0.2, z, 0.22, 0.2, d * 0.9); };
@@ -315,13 +336,15 @@
         k.box('#2a1d17', -0.5, 0.2, 1.02, 1.0, 1.0, 0.05); k.box('#3a3a3d', 0.9, 0, 1.6, 0.6, 0.55, 0.35);
         return { fire: [-0.5, 0.7, 1.15] };
       }
-      if (e >= 3 && ter !== 'plains') {
+      if (e >= 3 && (ter !== 'plains' || e >= 6)) {
         const S = STY[ter][e];
         k.box(S.base, 0, 0, 0, 3.9, 0.2, 2.9);
-        k.box(tint(S.wall, (v - 0.5) * 0.12), 0, 0.2, 0, 3.6, e === 5 ? 2.6 : 2.3, 2.6);
+        k.box(tint(S.wall, (v - 0.5) * 0.12), 0, 0.2, 0, 3.6, e >= 5 ? 2.6 : 2.3, 2.6);
         k.box(S.glass ? pick(PAL.glass, v) : PAL.win, 0, 0.8, 1.31, 3.2, 0.8, 0.04, 0, true);
         k.box(S.trim, 0, 1.75, 1.33, 3.4, 0.35, 0.06);
-        roofOn(k, S, 0, e === 5 ? 2.8 : 2.5, 0, 3.6, 2.6);
+        roofOn(k, S, 0, e >= 5 ? 2.8 : 2.5, 0, 3.6, 2.6);
+        if (e === 6) { k.box('#9aa0a6', 1.9, 0, 1.9, 1.0, 0.3, 1.0); k.add(UCYL(10), '#f4f6f8', 1.9, 0.3, 1.9, 0.26, 2.8, 0.26); k.cone('#e05a6a', 1.9, 3.1, 1.9, 0.26, 0.6, 10); return null; }
+        if (e >= 7) { k.box('#f2a541', 1.8, 0, 1.7, 0.4, 0.5, 0.4); k.add(UBOX(), '#f2a541', 1.8, 0.5, 1.7, 0.16, 1.2, 0.16, 0, 0.6, 0); k.add(UBOX(), '#f2a541', 1.8, 1.4, 2.25, 0.14, 0.8, 0.14, 0, -0.9, 0); k.box('#7ff0ff', 0, 2.0, 1.33, 3.0, 0.08, 0.04, 0, true); return null; }
         if (e === 4) { k.tcyl('#7a3a2e', 1.3, 0, -1.0, 0.36, 0.26, 6.0, 10); return { smoke: [[1.3, 6.2, -1.0]], fire: [0, 0.6, 1.5] }; }
         if (e === 3) { k.cyl(S.wall2, 1.1, 2.0, -0.7, 0.3, 2.4, 8); for (let j = 0; j < 4; j++) k.box('#c49a62', 0.3 + (j % 2) * 0.54, Math.floor(j / 2) * 0.48, 1.85, 0.48, 0.48, 0.48); return { fire: [-0.7, 0.75, 1.7], gear: [1.86, 1.4, 0.2] }; }
         k.cyl('#9aa3ad', 1.4, 2.6, 1.0, 0.06, 1.4, 6); k.box(S.trim, 1.4, 3.9, 1.0, 0.7, 0.45, 0.12, 0, true);
@@ -351,6 +374,21 @@
 
     // Nơi của chính quyền, đứng giữa quảng trường
     function buildHall(k, e, ter) {
+      if (e === 6) {
+        k.box('#eef1f4', 0, 0, 0, 7.0, 1.2, 7.0); k.box('#9fd3f0', 0, 0.2, 3.51, 6.6, 0.8, 0.04, 0, true);
+        k.add(UCYL(16), '#f4f6f8', 0, 1.2, 0, 1.7, 20, 1.7);
+        for (let f = 0; f < 9; f++) k.add(UCYL(16), '#9fd3f0', 0, 2.2 + f * 2.1, 0, 1.72, 0.7, 1.72, 0, 0, 0, true);
+        k.add(UCYL(16), '#dfe7ee', 0, 21.2, 0, 3.2, 1.0, 3.2); k.add(UCYL(16), '#9fd3f0', 0, 21.4, 0, 3.22, 0.55, 3.22, 0, 0, 0, true); k.dome('#f4f6f8', 0, 22.2, 0, 2.4, 0.5, 16);
+        k.cyl('#c9d1d9', 0, 23.2, 0, 0.1, 5.0, 6); k.add(SPHG(), '#f4f4f4', 1.6, 23.0, 0, 1.2, 0.4, 1.2, 0, -0.7, 0); k.box('#ff5a4f', 0, 28.2, 0, 0.25, 0.25, 0.25, 0, true);
+        return { beacon: [0, 28.4, 0] };
+      }
+      if (e >= 7) {
+        k.box('#20252c', 0, 0, 0, 7.4, 0.8, 7.4); k.box('#7ff0ff', 0, 0.8, 0, 7.0, 0.05, 7.0, 0, true);
+        k.add(TCYL(0.25, 6), '#2b313a', 0, 0.8, 0, 2.2, 26, 2.2);
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.add(UBOX(), '#7ff0ff', Math.cos(a) * 1.25, 1.0, Math.sin(a) * 1.25, 0.08, 22, 0.08, -a, 0, 0, true); }
+        for (let r = 0; r < 3; r++) k.add(TORUS(), '#dfe7ee', 0, 8 + r * 7, 0, 3.6 - r * 0.8, 3.6 - r * 0.8, 3.6 - r * 0.8, 0, Math.PI / 2, 0, true);
+        return { beacon: [0, 27.4, 0] };
+      }
       if (e === 0) {
         k.cyl('#9c7a52', 0, 0, 0, 2.3, 1.4, 12); k.cone(ter === 'tundra' ? '#cdb592' : '#c9a45c', 0, 1.4, 0, 3.0, 2.6, 12);
         k.box('#3b2a1d', 0, 0, 2.25, 0.7, 1.0, 0.06);
@@ -404,6 +442,18 @@
 
     // Nơi giữ tiền: kho chung, kho đền, nhà đổi tiền, Kho Bạc, ngân hàng, toà tháp ngân hàng
     function buildBank(k, e, ter) {
+      if (e === 6) {
+        k.box('#eef1f4', 0, 0, 0, 5.6, 0.6, 5.6); k.box('#9fd3f0', 0, 0.6, 0, 4.8, 4.8, 4.8, 0, true);
+        for (let f = 1; f < 4; f++) k.box('#dfe7ee', 0, 0.6 + f * 1.2, 0, 4.9, 0.08, 4.9);
+        k.box('#3fa7d6', 0, 5.0, 0, 5.0, 0.35, 5.0, 0, true); k.box('#eef1f4', 0, 5.4, 0, 5.0, 0.2, 5.0);
+        return { orb: [0, 6.6, 0] };
+      }
+      if (e >= 7) {
+        k.box('#20252c', 0, 0, 0, 5.0, 0.5, 5.0); k.box('#15181d', 0, 0.5, 0, 2.6, 11.5, 1.4);
+        for (let i = 0; i < 5; i++) k.box('#ffd36b', 0, 1.5 + i * 2.1, 0.71, 2.0, 0.06, 0.02, 0, true);
+        k.box('#ffd36b', 0, 0.5, 0.71, 0.06, 11.5, 0.02, 0, true);
+        return { orb: [0, 13.6, 0] };
+      }
       if (e === 0) {
         for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.cyl('#6d5139', x, 0, z, 0.09, 1.3, 5);
         k.box('#8f6a46', 0, 1.25, 0, 2.5, 0.12, 2.5);
@@ -446,6 +496,18 @@
 
     // Trường, đền, thư viện: nơi tri thức được giữ lại
     function buildSchool(k, e, ter) {
+      if (e === 6) {
+        k.box('#eef1f4', 0, 0, 0, 6.2, 1.6, 4.4); k.box('#9fd3f0', 0, 0.4, 2.21, 5.6, 0.8, 0.04, 0, true);
+        k.dome('#f4f6f8', -1.2, 1.6, 0, 2.2, 1, 18);
+        k.box('#9aa0a6', 2.4, 0, -1.2, 1.6, 0.4, 1.6); k.add(UCYL(10), '#f4f6f8', 2.4, 0.4, -1.2, 0.42, 5.2, 0.42); k.cone('#e05a6a', 2.4, 5.6, -1.2, 0.42, 1.1, 10);
+        for (let i = 0; i < 3; i++) { const a = (i / 3) * TAU; k.add(UBOX(), '#e05a6a', 2.4 + Math.cos(a) * 0.45, 0.4, -1.2 + Math.sin(a) * 0.45, 0.06, 1.0, 0.4, -a); }
+        return null;
+      }
+      if (e >= 7) {
+        for (const [x, z, h] of [[-1.6, 0, 3.2], [1.2, -0.8, 4.6], [0.4, 1.4, 2.4]]) { k.box('#cfe8f5', x, 0, z, 2.2, h, 2.2, 0, true); k.box('#7ff0ff', x, h, z, 2.3, 0.08, 2.3, 0, true); }
+        k.add(ICO(), '#7ff0ff', 0, 6.4, 0, 0.9, 0.9, 0.9, 0, 0, 0, true); k.add(TORUS(), '#dfe7ee', 0, 6.4, 0, 1.6, 1.6, 1.6, 0, 0.6, 0);
+        return null;
+      }
       if (e === 0) {
         for (let s = 0; s < 9; s++) { const a = (s / 9) * TAU; k.add(UBOX(), '#8d8a84', Math.cos(a) * 2.5, 0, Math.sin(a) * 2.5, 0.55, 1.6 + (s % 3) * 0.35, 0.35, -a, 0, (s % 2 ? 0.08 : -0.06)); }
         k.box('#7d7a74', 0, 0, 0, 0.9, 0.5, 0.6);
@@ -486,6 +548,8 @@
 
     // Đèn quanh quảng trường và dọc đường
     function buildLamp(k, e) {
+      if (e === 6) { k.cyl('#dfe7ee', 0, 0, 0, 0.07, 4.0, 8); k.add(TORUS(), '#f4fbff', 0, 4.1, 0, 0.35, 0.35, 0.35, 0, Math.PI / 2, 0, true); return [0, 4.1, 0]; }
+      if (e >= 7) { k.cyl('#2b313a', 0, 0, 0, 0.18, 0.3, 8); k.add(ICO(), '#7ff0ff', 0, 2.6, 0, 0.26, 0.26, 0.26, 0, 0, 0, true); return [0, 2.6, 0]; }
       if (e === 0) { k.cyl('#6d5139', 0, 0, 0, 0.07, 1.7, 5); k.cone('#3b2a1d', 0, 1.65, 0, 0.14, 0.25, 5); return [0, 2.0, 0]; }
       if (e === 1) { for (let l = 0; l < 3; l++) { const a = (l / 3) * TAU; k.add(UCYL(4), '#6b4b32', Math.cos(a) * 0.25, 0, Math.sin(a) * 0.25, 0.05, 1.3, 0.05, 0, Math.sin(a) * 0.2, -Math.cos(a) * 0.2); } k.dome('#8a6a46', 0, 1.25, 0, 0.36, -0.6, 8); return [0, 1.45, 0]; }
       if (e === 2) { k.cyl('#5a4030', 0, 0, 0, 0.08, 2.2, 6); k.box('#5a4030', 0.25, 2.1, 0, 0.55, 0.06, 0.06); k.box('#ffd98a', 0.45, 1.75, 0, 0.22, 0.32, 0.22, 0, true); return [0.45, 1.9, 0]; }
@@ -498,12 +562,12 @@
     /* =============== Phong cách kiến trúc: sáu miền × sáu thời đại =============== */
     // [tường, tường phụ, mái, kiểu mái, viền, nền, kính]
     const STY_RAW = {
-      plains: [['#a07850', '#8a6a46', '#c9a94e', 'thatch', '#6d5139', '#7d6a55'], ['#c9a46e', '#b48a58', '#a8603e', 'flat', '#e6dcc6', '#9b8466'], ['#d8cbb0', '#8a6a46', '#9b4a35', 'gable', '#5a4030', '#a39b8e'], ['#c8734f', '#efe6d2', '#5b4a44', 'hip', '#f4efe2', '#9a8f80'], ['#9b3f2e', '#6b6560', '#4a4d52', 'saw', '#d9c9a8', '#5d5f63'], ['#dfe7ee', '#7fb0d6', '#eef1f4', 'flat', '#3fa7d6', '#c9ced4', 1]],
-      forest: [['#7a5a3a', '#5f4630', '#6b7f3a', 'tent', '#4a3826', '#5b4a3a'], ['#8a6440', '#6d5139', '#5f6e3b', 'gable', '#3d2f22', '#6d6359'], ['#6d5139', '#4a3826', '#3f3a35', 'steep', '#c9a14e', '#6d6359'], ['#efe6d2', '#5f4630', '#7a3a2e', 'steep', '#5f4630', '#8a8174'], ['#6d5139', '#4f5a46', '#4f6b4a', 'saw', '#2f3540', '#5d5f63'], ['#c9a87c', '#5f9f4a', '#6aa85a', 'garden', '#f4f4f4', '#9fa69a', 1]],
-      mountain: [['#8b8577', '#7c776b', '#5f6b62', 'slate', '#6d695f', '#6d695f'], ['#b8b2a4', '#a9a294', '#8a5a3a', 'flat', '#d9d2c2', '#948d7e'], ['#9d9589', '#7f7a6e', '#4a4d52', 'cone', '#c9bda4', '#7f7a6e'], ['#c9bda4', '#7a5a3a', '#7a4e3e', 'gable', '#efe6d2', '#9d9589'], ['#8f8a80', '#5d5f63', '#3f4650', 'flat', '#c46a2e', '#6d695f'], ['#b9b5ad', '#8f8a80', '#9aa0a6', 'brutal', '#e05a6a', '#8f8a80', 1]],
-      tundra: [['#eef3f6', '#c8b49a', '#eef3f6', 'igloo', '#9aa4ad', '#d6e4ec'], ['#8a6a46', '#6d5139', '#6f8a4a', 'turf', '#c8b49a', '#9aa4ad'], ['#7d5a3a', '#9aa4ad', '#4a4d52', 'steep', '#e8eef2', '#8a949d'], ['#d96b4f', '#f2e2c8', '#3f8f5a', 'onion', '#f4d35e', '#9aa4ad'], ['#9aa4ad', '#6c757e', '#c46a2e', 'vault', '#e8eef2', '#6c757e'], ['#f4f7f9', '#bfe3f2', '#dff2fa', 'geo', '#5fc6e6', '#c8d3da', 1]],
-      coast: [['#c8a36a', '#8f6a46', '#d8c27a', 'thatch', '#6d5139', '#8f6a46'], ['#f2ede2', '#d9cbb0', '#e8dcc6', 'flat', '#3f7fd6', '#c9bda4'], ['#e3d6bd', '#b9a07a', '#c4603e', 'hip', '#5a4030', '#b1a99c'], ['#fbfaf6', '#e8e4da', '#3f7fd6', 'dome', '#3f7fd6', '#d9d2c2'], ['#a14a3a', '#5d5f63', '#3f4650', 'gable', '#f2ede2', '#6d695f'], ['#ffffff', '#cfe8f5', '#ffffff', 'sail', '#3f9cc6', '#d9dfe4', 1]],
-      desert: [['#c98a5a', '#b87b4f', '#d9a46e', 'mud', '#8f5f3e', '#b87b4f'], ['#d9a46e', '#c98a5a', '#d9a46e', 'flat', '#8f5f3e', '#c98a5a'], ['#e2bd85', '#c98a5a', '#3fb0b8', 'dome', '#8f5f3e', '#c9a06e'], ['#e8c08e', '#c98a5a', '#e8c08e', 'wind', '#5f8fb0', '#c9a06e'], ['#c98a5a', '#5d5f63', '#8f5f3e', 'flat', '#2f3540', '#8f5f3e'], ['#e8d2b0', '#c98a5a', '#f2e6d0', 'lattice', '#e05a6a', '#c9a06e', 1]],
+      plains: [['#a07850', '#8a6a46', '#c9a94e', 'thatch', '#6d5139', '#7d6a55'], ['#c9a46e', '#b48a58', '#a8603e', 'flat', '#e6dcc6', '#9b8466'], ['#d8cbb0', '#8a6a46', '#9b4a35', 'gable', '#5a4030', '#a39b8e'], ['#c8734f', '#efe6d2', '#5b4a44', 'hip', '#f4efe2', '#9a8f80'], ['#9b3f2e', '#6b6560', '#4a4d52', 'saw', '#d9c9a8', '#5d5f63'], ['#dfe7ee', '#7fb0d6', '#eef1f4', 'flat', '#3fa7d6', '#c9ced4', 1], ['#e9edf2', '#b8c4cf', '#f4f6f8', 'flat', '#e05a6a', '#cfd5db', 1], ['#f4f7fa', '#5fe0ff', '#e8eef3', 'sail', '#5fe0ff', '#d9dfe4', 1]],
+      forest: [['#7a5a3a', '#5f4630', '#6b7f3a', 'tent', '#4a3826', '#5b4a3a'], ['#8a6440', '#6d5139', '#5f6e3b', 'gable', '#3d2f22', '#6d6359'], ['#6d5139', '#4a3826', '#3f3a35', 'steep', '#c9a14e', '#6d6359'], ['#efe6d2', '#5f4630', '#7a3a2e', 'steep', '#5f4630', '#8a8174'], ['#6d5139', '#4f5a46', '#4f6b4a', 'saw', '#2f3540', '#5d5f63'], ['#c9a87c', '#5f9f4a', '#6aa85a', 'garden', '#f4f4f4', '#9fa69a', 1], ['#d9c3a0', '#6aa85a', '#5f9f4a', 'garden', '#f4f4f4', '#9fa69a', 1], ['#c9b48a', '#7fd98a', '#4f8f45', 'garden', '#7fd98a', '#8f9a88', 1]],
+      mountain: [['#8b8577', '#7c776b', '#5f6b62', 'slate', '#6d695f', '#6d695f'], ['#b8b2a4', '#a9a294', '#8a5a3a', 'flat', '#d9d2c2', '#948d7e'], ['#9d9589', '#7f7a6e', '#4a4d52', 'cone', '#c9bda4', '#7f7a6e'], ['#c9bda4', '#7a5a3a', '#7a4e3e', 'gable', '#efe6d2', '#9d9589'], ['#8f8a80', '#5d5f63', '#3f4650', 'flat', '#c46a2e', '#6d695f'], ['#b9b5ad', '#8f8a80', '#9aa0a6', 'brutal', '#e05a6a', '#8f8a80', 1], ['#c9ced4', '#8f8a80', '#aab0b6', 'brutal', '#f2a541', '#8f8a80', 1], ['#dfe3e8', '#5fe0ff', '#b8bec4', 'geo', '#5fe0ff', '#9aa0a6', 1]],
+      tundra: [['#eef3f6', '#c8b49a', '#eef3f6', 'igloo', '#9aa4ad', '#d6e4ec'], ['#8a6a46', '#6d5139', '#6f8a4a', 'turf', '#c8b49a', '#9aa4ad'], ['#7d5a3a', '#9aa4ad', '#4a4d52', 'steep', '#e8eef2', '#8a949d'], ['#d96b4f', '#f2e2c8', '#3f8f5a', 'onion', '#f4d35e', '#9aa4ad'], ['#9aa4ad', '#6c757e', '#c46a2e', 'vault', '#e8eef2', '#6c757e'], ['#f4f7f9', '#bfe3f2', '#dff2fa', 'geo', '#5fc6e6', '#c8d3da', 1], ['#f4f7f9', '#9fd3f0', '#e8f0f4', 'geo', '#e05a6a', '#c8d3da', 1], ['#ffffff', '#7ff0ff', '#dff2fa', 'geo', '#7ff0ff', '#c8d3da', 1]],
+      coast: [['#c8a36a', '#8f6a46', '#d8c27a', 'thatch', '#6d5139', '#8f6a46'], ['#f2ede2', '#d9cbb0', '#e8dcc6', 'flat', '#3f7fd6', '#c9bda4'], ['#e3d6bd', '#b9a07a', '#c4603e', 'hip', '#5a4030', '#b1a99c'], ['#fbfaf6', '#e8e4da', '#3f7fd6', 'dome', '#3f7fd6', '#d9d2c2'], ['#a14a3a', '#5d5f63', '#3f4650', 'gable', '#f2ede2', '#6d695f'], ['#ffffff', '#cfe8f5', '#ffffff', 'sail', '#3f9cc6', '#d9dfe4', 1], ['#ffffff', '#9fd3f0', '#eef6fb', 'sail', '#f2a541', '#d9dfe4', 1], ['#f7fbfd', '#5fe0ff', '#ffffff', 'sail', '#5fe0ff', '#d9dfe4', 1]],
+      desert: [['#c98a5a', '#b87b4f', '#d9a46e', 'mud', '#8f5f3e', '#b87b4f'], ['#d9a46e', '#c98a5a', '#d9a46e', 'flat', '#8f5f3e', '#c98a5a'], ['#e2bd85', '#c98a5a', '#3fb0b8', 'dome', '#8f5f3e', '#c9a06e'], ['#e8c08e', '#c98a5a', '#e8c08e', 'wind', '#5f8fb0', '#c9a06e'], ['#c98a5a', '#5d5f63', '#8f5f3e', 'flat', '#2f3540', '#8f5f3e'], ['#e8d2b0', '#c98a5a', '#f2e6d0', 'lattice', '#e05a6a', '#c9a06e', 1], ['#efdcc0', '#c98a5a', '#f6ead6', 'lattice', '#3fa7d6', '#c9a06e', 1], ['#f4e6cf', '#ffd36b', '#f8efe0', 'lattice', '#ffd36b', '#c9a06e', 1]],
     };
     const STY = {};
     for (const ter in STY_RAW) STY[ter] = STY_RAW[ter].map(([wall, wall2, roof, roofT, trim, base, glass], e) => ({ wall, wall2, roof, roofT, trim, base, glass: !!glass, e, ter }));
@@ -811,23 +875,156 @@
       return L;
     }
 
+    /* =============== Nhân vật có khớp: chân tay cử động bằng shader, quần áo theo thời đại =============== */
+    // Mỗi đỉnh mang mã chi (0 thân, 1 chân trái, 2 chân phải, 3 tay trái, 4 tay phải) và mã màu (0 màu sẵn, 1 áo, 2 quần,
+    // 3 tóc hay mũ, 4 da). Mỗi bản sao có pha bước, độ bước, độ vung tay đánh, tốc độ, và bốn màu riêng.
+    const FIG_UNI = { uTime: { value: 0 } };
+    function figMaterial() {
+      const m = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.72, metalness: 0.04 });
+      m.onBeforeCompile = (sh) => {
+        sh.uniforms.uTime = FIG_UNI.uTime;
+        sh.vertexShader = 'attribute float limb;\nattribute float slot;\nattribute vec4 anim;\nattribute vec3 cA;\nattribute vec3 cB;\nattribute vec3 cC;\nattribute vec3 cD;\nuniform float uTime;\n' + sh.vertexShader
+          .replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef USE_COLOR\nif (slot > 0.5 && slot < 1.5) vColor = cA; else if (slot > 1.5 && slot < 2.5) vColor = cB; else if (slot > 2.5 && slot < 3.5) vColor = cC; else if (slot > 3.5) vColor = cD;\n#endif')
+          .replace('#include <begin_vertex>', [
+            'vec3 transformed = vec3(position);',
+            'if (limb > 0.5) {',
+            '  float ph = uTime * (5.5 + anim.w * 5.0) + anim.x;',
+            '  float sd = (limb < 1.5 || (limb > 2.5 && limb < 3.5)) ? 1.0 : -1.0;',
+            '  float ang; float pv;',
+            '  if (limb < 2.5) { ang = sin(ph) * 0.6 * anim.y * sd; pv = 0.46; }',
+            '  else { ang = -sin(ph) * 0.5 * anim.y * sd; pv = 0.84; if (limb > 3.5) ang -= (0.7 + 0.7 * sin(uTime * 9.0 + anim.x)) * anim.z; else ang -= 0.35 * anim.z; }',
+            '  float c = cos(ang); float s = sin(ang);',
+            '  vec3 p = transformed - vec3(0.0, pv, 0.0);',
+            '  transformed = vec3(p.x, p.y * c - p.z * s, p.y * s + p.z * c) + vec3(0.0, pv, 0.0);',
+            '}',
+          ].join('\n'));
+      };
+      return m;
+    }
+    function FigKit() { this.parts = []; }
+    FigKit.prototype.add = function (g0, color, slot, limb, x, y, z, sx, sy, sz, ry, rx, rz) {
+      const g = g0.index ? g0.toNonIndexed() : g0.clone();
+      if (g.attributes.uv) g.deleteAttribute('uv');
+      _e.set(rx || 0, ry || 0, rz || 0, 'YXZ'); _q.setFromEuler(_e); _s.set(sx, sy, sz);
+      g.applyMatrix4(_m.compose(_p.set(x, y, z), _q, _s));
+      _c.set(color);
+      const n = g.attributes.position.count, col = new Float32Array(n * 3), lb = new Float32Array(n).fill(limb), sl = new Float32Array(n).fill(slot);
+      for (let i = 0; i < n; i++) { col[i * 3] = _c.r; col[i * 3 + 1] = _c.g; col[i * 3 + 2] = _c.b; }
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('limb', new THREE.BufferAttribute(lb, 1)); g.setAttribute('slot', new THREE.BufferAttribute(sl, 1));
+      this.parts.push(g);
+      return this;
+    };
+    FigKit.prototype.box = function (c, slot, limb, x, y, z, w, h, d, ry, rx, rz) { return this.add(UBOX(), c, slot, limb, x, y, z, w, h, d, ry, rx, rz); };
+    FigKit.prototype.bake = function () {
+      let n = 0;
+      for (const g of this.parts) n += g.attributes.position.count;
+      const out = new THREE.BufferGeometry(), keys = [['position', 3], ['normal', 3], ['color', 3], ['limb', 1], ['slot', 1]];
+      for (const [k, sz] of keys) {
+        const arr = new Float32Array(n * sz);
+        let o = 0;
+        for (const g of this.parts) { if (g.attributes[k]) arr.set(g.attributes[k].array, o * sz); o += g.attributes.position.count; }
+        out.setAttribute(k, new THREE.BufferAttribute(arr, sz));
+      }
+      for (const g of this.parts) g.dispose();
+      out.computeBoundingSphere();
+      return out;
+    };
+    // Dáng người theo thời đại; biến thể 1 là áo dài, váy hay áo choàng
+    const SKIN_T = ['#f1d3b3', '#e8c4a0', '#d9a77e', '#c68d64', '#a8714e', '#8a5a3c'];
+    function personShape(k, e, robe) {
+      const robot = e >= 7 && robe === 2;
+      if (robot) { // người máy đi giữa phố
+        for (const [lb, sx] of [[1, -0.08], [2, 0.08]]) { k.box('#8f99a3', 0, lb, sx, 0.02, 0, 0.1, 0.44, 0.12); k.box('#5d6670', 0, lb, sx, 0, 0.03, 0.12, 0.05, 0.16); }
+        k.box('#c8d0d8', 0, 0, 0, 0.44, 0, 0.34, 0.42, 0.22); k.box('#5fe0ff', 0, 0, 0, 0.62, 0.111, 0.14, 0.05, 0.01);
+        for (const [lb, sx] of [[3, -0.22], [4, 0.22]]) k.box('#9aa3ad', 0, lb, sx, 0.46, 0, 0.08, 0.38, 0.09);
+        k.box('#d9dfe4', 0, 0, 0, 0.88, 0, 0.24, 0.2, 0.2); k.box('#5fe0ff', 0, 0, 0, 0.95, 0.101, 0.18, 0.05, 0.01);
+        k.add(UCYL(5), '#9aa3ad', 0, 0, 0.08, 1.08, 0, 0.012, 0.12, 0.012);
+        return;
+      }
+      // chân và giày
+      const bare = e === 0 || (e === 1 && robe !== 1);
+      for (const [lb, sx] of [[1, -0.075], [2, 0.075]]) { k.box('#fff', bare ? 4 : 2, lb, sx, 0.05, 0, 0.12, 0.42, 0.13); k.box(e >= 4 ? '#2b2b2b' : '#5b4630', 0, lb, sx, 0, 0.03, 0.13, 0.06, 0.18); }
+      // thân áo
+      k.box('#fff', 1, 0, 0, 0.45, 0, 0.32, 0.4, 0.2);
+      if (e >= 2 && e <= 4) k.box('#3a2a1e', 0, 0, 0, 0.47, 0, 0.33, 0.04, 0.21); // thắt lưng
+      if (e === 3 || (e === 4 && robe)) k.box('#fff', 1, 0, 0, 0.2, -0.02, 0.33, 0.27, 0.21); // vạt áo khoác dài
+      if (e === 6) { k.box('#fff', 3, 0, 0, 0.82, 0, 0.34, 0.06, 0.22); k.box('#9aa3ad', 0, 0, 0, 0.5, -0.13, 0.2, 0.26, 0.08); } // cổ áo, ba lô
+      if (e === 7) { k.box('#5fe0ff', 0, 0, 0, 0.5, 0.101, 0.03, 0.34, 0.01); k.box('#5fe0ff', 0, 0, 0, 0.6, 0.101, 0.3, 0.02, 0.01); }
+      if (robe === 1) { // áo dài, váy, áo choàng: phủ một phần chân, không cử động
+        const len = e <= 2 ? 0.4 : e === 3 ? 0.36 : 0.3;
+        k.add(TCYL(0.66, 8), '#fff', 2, 0, 0, 0.46 - len, 0, 0.24, len + 0.02, 0.18);
+      }
+      if (e === 0) k.add(TCYL(0.8, 6), '#fff', 1, 0, 0, 0.62, -0.02, 0.24, 0.26, 0.16); // áo choàng da thú
+      // tay
+      for (const [lb, sx] of [[3, -0.205], [4, 0.205]]) { k.box('#fff', e === 0 ? 4 : 1, lb, sx, 0.5, 0, 0.09, 0.36, 0.1); k.box('#fff', 4, lb, sx, 0.44, 0.01, 0.08, 0.07, 0.08); }
+      // cổ, đầu, tóc, mũ
+      k.box('#fff', 4, 0, 0, 0.84, 0, 0.09, 0.06, 0.09);
+      k.add(ICO(), '#fff', 4, 0, 0, 0.98, 0, 0.13, 0.14, 0.13);
+      k.add(SPHG(), '#fff', 3, 0, 0, 1.0, -0.01, 0.142, 0.13, 0.142);
+      if (robe === 1 && e <= 5) k.box('#fff', 3, 0, 0, 0.92, -0.1, 0.2, 0.2, 0.06); // tóc dài sau lưng
+      if (e === 3 && !robe) k.add(UCONE(3), '#fff', 3, 0, 0, 1.08, 0, 0.2, 0.12, 0.2); // mũ ba góc
+      if (e === 4 && !robe) k.add(UCYL(8), '#fff', 3, 0, 0, 1.09, 0.02, 0.15, 0.05, 0.16); // mũ lưỡi trai thợ
+      if (e === 2 && !robe) k.add(UCONE(6), '#fff', 3, 0, 0, 1.06, 0, 0.13, 0.14, 0.13);
+      if (e === 7 && robe !== 1) k.box('#5fe0ff', 0, 0, 0, 0.99, 0.12, 0.2, 0.05, 0.02); // kính hiển thị
+    }
+    // bảng màu mặc theo thời đại: [áo], [quần hay váy], [tóc hay mũ]
+    const DRESS = [
+      [['#8a6a4a', '#a0785a', '#6b5a45', '#9c8466'], ['#7a5a3a', '#6b4a32'], ['#2b1d14', '#4a3426', '#6b4a32']],
+      [['#e6dcc6', '#c9a46e', '#b5764a', '#d8c27a'], ['#e6dcc6', '#c27a4a', '#8a5a3a'], ['#2b1d14', '#3a2a1e', '#c0392b']],
+      [['#7a4e3a', '#3d6b8b', '#9b4a35', '#5f6b4a', '#8a6a46'], ['#5b4630', '#6b5a45', '#7a3a2e'], ['#2b1d14', '#5a4030', '#6b6b6b']],
+      [['#3d5a8b', '#9b4a35', '#3f6b4a', '#7a3a5e', '#efe6d2'], ['#efe6d2', '#3a2a1e', '#d9c9a8'], ['#1a1a1a', '#2b1d14', '#efe6d2']],
+      [['#3f4650', '#6b5a4a', '#2f3e58', '#7a3a2e', '#556b4f'], ['#2f3540', '#4a4a52', '#3a2a1e'], ['#2b2b2b', '#4a4a52', '#2b1d14']],
+      [['#3fa7d6', '#f2a541', '#59c3a4', '#e05a6a', '#8e7cc3', '#f4f4f4'], ['#2f4a6b', '#3a3a42', '#c9b08f', '#5a5a62'], ['#2b1d14', '#5a3a22', '#d9b36b', '#1a1a1a']],
+      [['#e8ecef', '#f2a541', '#3fa7d6', '#e05a6a', '#c8d0d8'], ['#e8ecef', '#9aa3ad', '#f2a541'], ['#f4f4f4', '#2b1d14', '#d9b36b']],
+      [['#f4f7f9', '#2b2f36', '#dfe7ee', '#3a3f48'], ['#2b2f36', '#dfe7ee', '#5d6670'], ['#dfe7ee', '#2b1d14', '#9aa3ad']],
+    ];
+    // Một nhóm người: hai biến thể (quần và áo dài) cùng chung các thuộc tính bản sao; thời robot có thêm người máy
+    function crowdSet(parent, cap, e) {
+      const vars = e >= 7 ? [0, 1, 2] : [0, 1], mat = figMaterial(), set = { meshes: [], cap, e, n: [] };
+      for (const v of vars) {
+        const k = new FigKit(); personShape(k, e, v);
+        const geo = k.bake(), m = new THREE.InstancedMesh(geo, mat, cap);
+        geo.setAttribute('anim', new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4));
+        for (const a of ['cA', 'cB', 'cC', 'cD']) geo.setAttribute(a, new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3));
+        m.count = 0; m.castShadow = true; m.frustumCulled = false; m.raycast = () => {};
+        parent.add(m); set.meshes.push(m); set.n.push(0);
+      }
+      return set;
+    }
+    function crowdBegin(set) { set.n.fill(0); }
+    // đặt một người: v biến thể, p vị trí, ry hướng, walk 0..1, atk 0..1, seed để chọn màu cố định
+    function crowdPut(set, v, p, ry, walk, atk, seed, scale, colors, tilt) {
+      v = Math.min(v, set.meshes.length - 1);
+      const m = set.meshes[v], i = set.n[v];
+      if (i >= set.cap) return;
+      set.n[v]++;
+      _o.position.copy(p); _o.rotation.set(tilt || 0, ry, 0); _o.scale.setScalar(scale || 1); _o.updateMatrix(); m.setMatrixAt(i, _o.matrix);
+      const g = m.geometry, an = g.attributes.anim.array;
+      an[i * 4] = (seed * 2.399) % 6.283; an[i * 4 + 1] = walk; an[i * 4 + 2] = atk; an[i * 4 + 3] = 0.6 + (seed % 7) * 0.08;
+      if (!colors) { const D = DRESS[set.e]; colors = [D[0][seed % D[0].length], D[1][(seed * 3 + 1) % D[1].length], D[2][(seed * 5 + 2) % D[2].length], SKIN_T[(seed * 7 + 3) % SKIN_T.length]]; }
+      for (let j = 0; j < 4; j++) { _c.set(colors[j]); const a = g.attributes[['cA', 'cB', 'cC', 'cD'][j]].array; a[i * 3] = _c.r; a[i * 3 + 1] = _c.g; a[i * 3 + 2] = _c.b; }
+    }
+    function crowdEnd(set) {
+      set.meshes.forEach((m, v) => { m.count = set.n[v]; m.instanceMatrix.needsUpdate = true; const g = m.geometry; for (const a of ['anim', 'cA', 'cB', 'cC', 'cD']) g.attributes[a].needsUpdate = true; });
+    }
+    function crowdDispose(set) { for (const m of set.meshes) { if (m.parent) m.parent.remove(m); m.geometry.dispose(); } }
+
     /* =============== Cư dân =============== */
-    const bodyGeo = new THREE.CylinderGeometry(0.17, 0.24, 0.62, 6), headGeo = new THREE.SphereGeometry(0.17, 8, 6);
-    const SHIRTS = [['#8a6a4a', '#a0785a', '#6b5a45', '#9c8466'], ['#c9a46e', '#a8603e', '#e6dcc6', '#7a5a3a'], ['#7a4e3a', '#3d6b8b', '#9b4a35', '#5f6b4a'], ['#d9733f', '#4d7cc9', '#3f8f5a', '#a14a7e', '#e0b23a', '#5b6f8a'], ['#3f4650', '#6b5a4a', '#2f3e58', '#7a3a2e', '#556b4f'], ['#3fa7d6', '#f2a541', '#59c3a4', '#e05a6a', '#8e7cc3', '#f4f4f4']];
+    const bodyGeo = (() => { const k = new Kit(); for (const sx of [-0.07, 0.07]) k.box('#5a5560', sx, 0, 0, 0.11, 0.3, 0.12); k.box('#ffffff', 0, 0.28, 0, 0.3, 0.32, 0.19); for (const sx of [-0.19, 0.19]) k.box('#ffffff', sx, 0.28, 0, 0.08, 0.3, 0.09); k.box('#f1d3b3', 0, 0.58, 0, 0.08, 0.05, 0.08); const g = k.bake().body; g.translate(0, -0.31, 0); return g; })();
+    const headGeo = (() => { const k = new Kit(); k.add(ICO(), '#ffffff', 0, -0.02, 0, 0.13, 0.14, 0.13); k.add(SPHG(), '#4a3426', 0, 0.0, -0.01, 0.142, 0.13, 0.142); return k.bake().body; })();
+    const SHIRTS_X = [['#e8ecef', '#f2a541', '#3fa7d6', '#e05a6a', '#c8d0d8'], ['#f4f7f9', '#2b2f36', '#dfe7ee', '#3a3f48']];
+    const SHIRTS = [['#8a6a4a', '#a0785a', '#6b5a45', '#9c8466'], ['#c9a46e', '#a8603e', '#e6dcc6', '#7a5a3a'], ['#7a4e3a', '#3d6b8b', '#9b4a35', '#5f6b4a'], ['#d9733f', '#4d7cc9', '#3f8f5a', '#a14a7e', '#e0b23a', '#5b6f8a'], ['#3f4650', '#6b5a4a', '#2f3e58', '#7a3a2e', '#556b4f'], ['#3fa7d6', '#f2a541', '#59c3a4', '#e05a6a', '#8e7cc3', '#f4f4f4'], ...SHIRTS_X];
     function people(L) {
       const N = L.houseLots.length * 4;
-      L.bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), N);
-      L.heads = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), N);
-      L.hats = new THREE.InstancedMesh(new THREE.ConeGeometry(0.48, 0.24, 8), new THREE.MeshStandardMaterial({ color: '#ff6b9d', flatShading: true, roughness: 0.7 }), N);
-      for (const m of [L.bodies, L.heads, L.hats]) { m.castShadow = true; m.count = 0; L.g.add(m); }
-      L.peopleN = N; L.shirtEra = -1;
+      L.hats = new THREE.InstancedMesh(new THREE.ConeGeometry(0.42, 0.22, 8), new THREE.MeshStandardMaterial({ color: '#ff6b9d', flatShading: true, roughness: 0.7 }), N);
+      L.hats.castShadow = true; L.hats.count = 0; L.g.add(L.hats);
+      L.peopleN = N; L.shirtEra = -1; L.crowd = null;
     }
     function shirtColors(L, e) {
       if (L.shirtEra === e) return;
       L.shirtEra = e;
-      const pal = SHIRTS[Math.max(0, e)];
-      for (let n = 0; n < L.peopleN; n++) L.bodies.setColorAt(n, C(pal[(n * 7 + L.i) % pal.length]));
-      if (L.bodies.instanceColor) L.bodies.instanceColor.needsUpdate = true;
+      if (L.crowd) crowdDispose(L.crowd);
+      L.crowd = crowdSet(L.g, Math.ceil(L.peopleN * 0.75), Math.max(0, e));
     }
 
     /* =============== Quảng trường, đường, đèn và công trình chung theo thời đại =============== */
@@ -838,7 +1035,7 @@
       // quảng trường và đường đến hai cây cầu
       const k = new Kit(), pc = PLAZA_C[e];
       k.cyl(pc, 0, 0.03, 0, 6.9, 0.1, 28); k.cyl(e >= 3 ? '#c0b292' : pc, 0, 0.05, 0, 5.4, 0.1, 28);
-      for (const p of L.landing) { const len = p.length() - 6.2, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.2 + len / 2); k.box(ROAD[e], m.x, 0.02, m.z, e >= 4 ? 2.8 : 1.8, 0.08, len, a); if (e === 5) k.box('#f4f4f4', m.x, 0.1, m.z, 0.12, 0.02, len - 1, a); }
+      for (const p of L.landing) { const len = p.length() - 6.2, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.2 + len / 2); k.box(ROAD[e], m.x, 0.02, m.z, e >= 4 ? 2.8 : 1.8, 0.08, len, a); if (e >= 5) k.box(e === 7 ? '#7ff0ff' : '#f4f4f4', m.x, 0.1, m.z, 0.12, 0.02, len - 1, a, e === 7); }
       // lối nhỏ tới ngân hàng và trường
       for (const p of [L.bankPos, L.schoolPos]) { const len = p.length() - 6.0, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.0 + len / 2 - 1.3); k.box(ROAD[e], m.x, 0.025, m.z, 1.5, 0.08, len - 2.6, a); }
       { const a = L.bankPos.clone().multiplyScalar(1.3), b = L.harbor, len = a.distanceTo(b), m = a.clone().lerp(b, 0.5); k.box(ROAD[e], m.x, 0.025, m.z, 1.6, 0.08, len, Math.atan2(b.x - a.x, b.z - a.z)); }
@@ -854,7 +1051,7 @@
       const kb = new Kit(), bx = buildBank(kb, e, L.ter);
       L.civic.bank = meshOf(kb, L.litMat, L.g, L.bankPos.x, L.bankPos.z, Math.atan2(-L.bankPos.x, -L.bankPos.z));
       clickable(L.civic.bank, { type: 'bank', land: L.i });
-      L.orb = bx && bx.orb ? addGlow(L, L.civic.bank, '#ffd36b', e === 5 ? 5 : 4, bx.orb, false) : null;
+      L.orb = bx && bx.orb ? addGlow(L, L.civic.bank, e === 7 ? '#ffe9a8' : '#ffd36b', e >= 5 ? 5 : 4, bx.orb, false) : null;
       const ks = new Kit(); buildSchool(ks, e, L.ter);
       L.civic.school = meshOf(ks, L.litMat, L.g, L.schoolPos.x, L.schoolPos.z, Math.atan2(-L.schoolPos.x, -L.schoolPos.z));
       clickable(L.civic.school, { type: 'school', land: L.i });
@@ -869,8 +1066,8 @@
         L.lamps.push([x + top[0], top[1], z + top[2]]);
       }
       L.civic.lamps = meshOf(kl, L.litMat, L.g, 0, 0, 0);
-      const lc = e <= 2 ? '#ff9a45' : e === 5 ? '#e8f6ff' : '#ffc970';
-      for (const [x, y, z] of L.lamps) addGlow(L, L.g, lc, e === 5 ? 3.6 : 3.0, [x, y, z], true);
+      const lc = e <= 2 ? '#ff9a45' : e === 7 ? '#7ff0ff' : e >= 5 ? '#e8f6ff' : '#ffc970';
+      for (const [x, y, z] of L.lamps) addGlow(L, L.g, lc, e >= 5 ? 3.6 : 3.0, [x, y, z], true);
       clearTrees(L, 0, 0, 7.6); clearTrees(L, L.bankPos.x, L.bankPos.z, 4.2); clearTrees(L, L.schoolPos.x, L.schoolPos.z, 4.2);
       for (const p of L.landing) for (let u = 0.2; u <= 1.0; u += 0.1) clearTrees(L, p.x * u, p.z * u, 2.4);
     }
@@ -927,7 +1124,7 @@
     const lotOf = (L, o) => (o.kind === 'dock' ? L.dockPos : o.kind === 'farm' ? L.farmLots[o.lot] : L.shopLots[o.lot]);
     // bến cá: cầu tàu vươn ra biển trong, lều phơi cá, rồi kho lạnh và cảng cá
     function buildDock(k, e, S) {
-      const pier = ['#8f6a46', '#8a6a46', '#a39b8e', '#9a8f80', '#9a948a', '#c9ced4'][e], wid = [1.2, 1.8, 2.4, 2.4, 2.8, 3.2][e];
+      const pier = ['#8f6a46', '#8a6a46', '#a39b8e', '#9a8f80', '#9a948a', '#c9ced4', '#d9dfe4', '#e8eef3'][e], wid = [1.2, 1.8, 2.4, 2.4, 2.8, 3.2, 3.4, 3.6][e];
       for (let z = 0.6; z < 8.4; z += 0.9) k.box(pier, 0, -0.1, z, wid, 0.16, 0.86);
       for (let z = 1.2; z < 8.4; z += 2.2) for (const sx of [-1, 1]) k.cyl(e >= 4 ? '#7d7a74' : '#5b4630', sx * wid * 0.45, -2.2, z, 0.12, 2.2, 6);
       if (e <= 1) { for (let i = 0; i < 2; i++) { const x = -2.6 + i * 1.4; k.cyl('#6d5139', x, 0, -1.6, 0.06, 1.6, 5); k.cyl('#6d5139', x + 1.0, 0, -1.6, 0.06, 1.6, 5); k.add(UBOX(), '#6d5139', x + 0.5, 1.5, -1.6, 1.1, 0.06, 0.06); for (let f2 = 0; f2 < 3; f2++) k.box('#b9c4c9', x + 0.2 + f2 * 0.3, 1.0, -1.6, 0.1, 0.45, 0.05); } }
@@ -935,7 +1132,8 @@
       if (e === 2 || e === 3) { k.cyl('#6d5139', -1.2, 0, 4.0, 0.12, 3.2, 6); k.add(UBOX(), '#6d5139', -0.4, 3.0, 4.0, 1.9, 0.12, 0.12); k.box('#c8b07a', 0.4, 2.2, 4.0, 0.06, 0.8, 0.06); }
       if (e === 3) { k.cyl('#efe6d2', -1.0, 0, 8.0, 0.34, 3.2, 8); k.cyl('#ffe08a', -1.0, 3.2, 8.0, 0.36, 0.5, 8, true); k.cone('#9b4a35', -1.0, 3.7, 8.0, 0.42, 0.5, 8); }
       if (e === 4) { k.cyl('#7a3a2e', 3.0, h - 0.4, -3.4, 0.28, 2.6, 8); for (let i = 0; i < 4; i++) k.box(pick(['#3f7fd6', '#c46a2e', '#7a8a5a'], i * 0.27), -1.6 + (i % 2) * 0.9, 0, -0.6 - Math.floor(i / 2) * 0.9, 0.8, 0.6, 0.8); }
-      if (e === 5) { k.box('#eef1f4', -1.4, 0, 7.4, 0.3, 4.2, 0.3); k.box('#e05a6a', -0.6, 4.0, 7.4, 2.0, 0.25, 0.3); k.box('#9fd3f0', 1.6, 0.4, -2.6 + 1.31, 3.2, 0.9, 0.05, 0, true); }
+      if (e >= 5) { k.box('#eef1f4', -1.4, 0, 7.4, 0.3, 4.2, 0.3); k.box(e === 7 ? '#7ff0ff' : '#e05a6a', -0.6, 4.0, 7.4, 2.0, 0.25, 0.3, 0, e === 7); k.box('#9fd3f0', 1.6, 0.4, -2.6 + 1.31, 3.2, 0.9, 0.05, 0, true); }
+      if (e >= 6) for (let i = 0; i < 3; i++) { k.add(TORUS(), '#c8d0d8', 3.2 + (i % 2) * 2.4, -0.45, 3.0 + i * 2.2, 1.1, 1.1, 1.1, 0, Math.PI / 2, 0); k.cyl('#5d6670', 3.2 + (i % 2) * 2.4, -0.5, 3.0 + i * 2.2, 1.0, 0.04, 12); }
       return e === 4 ? { smoke: [3.0, h + 2.4, -3.4] } : null;
     }
     function makeFirm(L, f, slot, e) {
@@ -1062,6 +1260,19 @@
         k.box('#5d5f63', len / 2, -0.25, 0, len, 0.35, 2.8);
         // giàn thép: hai thanh dọc, cột đứng và thanh chéo đan xen hình chữ V
         for (const sz of [-1.4, 1.4]) { k.box('#8f2f26', len / 2, 2.2, sz, len, 0.18, 0.18); k.box('#8f2f26', len / 2, 0.0, sz, len, 0.2, 0.2); for (let s = 0; s <= 8; s++) { const x = (s / 8) * len; k.box('#8f2f26', x, 0, sz, 0.15, 2.3, 0.15); if (s < 8) { const pw = len / 8, ang = Math.atan2(pw, 2.2); if (s % 2 === 0) k.add(UBOX(), '#8f2f26', x, 0, sz, 0.12, Math.hypot(pw, 2.2), 0.12, 0, 0, -ang); else k.add(UBOX(), '#8f2f26', x + pw, 0, sz, 0.12, Math.hypot(pw, 2.2), 0.12, 0, 0, ang); } } }
+      } else if (e === 6) {
+        k.box('#3a3d42', len / 2, -0.3, 0, len, 0.4, 3.6); k.box('#7fd7ff', len / 2, 0.11, 0, len - 0.6, 0.06, 0.3, 0, true);
+        for (const u of [0.22, 0.78]) { k.box('#eef1f4', u * len, -0.3, -1.6, 0.6, 15, 0.6); k.box('#eef1f4', u * len, -0.3, 1.6, 0.6, 15, 0.6); k.box('#eef1f4', u * len, 13.8, 0, 0.6, 0.6, 3.8); k.box('#ff5a4f', u * len, 14.5, 0, 0.3, 0.3, 0.3, 0, true); }
+        for (const sz of [-1.6, 1.6]) for (let s = 0; s < 24; s++) {
+          const u0 = s / 24, u1 = (s + 1) / 24, cy = (u) => (u < 0.22 ? 14.4 * (u / 0.22) : u > 0.78 ? 14.4 * ((1 - u) / 0.22) : 2 + 12.4 * Math.pow((u - 0.5) / 0.28, 2));
+          const x0 = u0 * len, x1 = u1 * len, y0 = cy(u0), y1 = cy(u1);
+          k.add(UBOX(), '#c9d1d9', (x0 + x1) / 2, (y0 + y1) / 2, sz, Math.hypot(x1 - x0, y1 - y0) + 0.05, 0.08, 0.08, 0, 0, Math.atan2(y1 - y0, x1 - x0));
+          if (s % 2 === 0 && u0 > 0.22 && u0 < 0.78) k.add(UBOX(), '#c9d1d9', x0, 0, sz, 0.03, y0, 0.03);
+        }
+      } else if (e >= 7) {
+        k.box('#7ff0ff', len / 2, -0.1, 0, len, 0.12, 2.8, 0, true); k.box('#20252c', len / 2, -0.3, 0, len, 0.2, 3.2);
+        for (let i = 1; i < 6; i++) k.add(TORUS(), '#dfe7ee', (i / 6) * len, 1.6, 0, 2.2, 2.2, 2.2, Math.PI / 2, 0, 0, true);
+        for (const sz of [-1.5, 1.5]) k.box('#7ff0ff', len / 2, 0.5, sz, len, 0.05, 0.05, 0, true);
       } else {
         k.box('#4a4d52', len / 2, -0.3, 0, len, 0.4, 3.4); k.box('#f4f4f4', len / 2, 0.11, 0, len - 1, 0.02, 0.12);
         k.box('#eef1f4', len / 2, -0.3, 0, 1.0, 13, 1.0); k.box('#eef1f4', len / 2, 12.6, 0, 1.4, 0.4, 1.4);
@@ -1125,10 +1336,9 @@
 
     /* =============== Đoàn người di cư: từ thành phố láng giềng qua cầu vào quảng trường =============== */
     const WALK_N = 160, walkers = [];
-    const wB = new THREE.InstancedMesh(bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), WALK_N);
-    const wH = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), WALK_N);
-    const wP = new THREE.InstancedMesh(new THREE.BoxGeometry(0.36, 0.32, 0.28), new THREE.MeshStandardMaterial({ color: '#c8a36a', flatShading: true, roughness: 0.9 }), WALK_N);
-    for (const m of [wB, wH, wP]) { m.frustumCulled = false; m.castShadow = true; scene.add(m); for (let n = 0; n < WALK_N; n++) m.setMatrixAt(n, ZERO); }
+    const wP = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, 0.3, 0.26), new THREE.MeshStandardMaterial({ color: '#c8a36a', flatShading: true, roughness: 0.9 }), WALK_N);
+    for (const m of [wP]) { m.frustumCulled = false; m.castShadow = true; scene.add(m); for (let n = 0; n < WALK_N; n++) m.setMatrixAt(n, ZERO); }
+    const walkSets = [];
     for (let n = 0; n < WALK_N; n++) walkers.push({ on: false });
     let walkIdx = 0;
     function procession(to, n, from) {
@@ -1143,31 +1353,33 @@
         const pts = base.map((v) => v.clone());
         pts.push(L.world(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)));
         const lens = [0]; for (let j = 1; j < pts.length; j++) lens.push(lens[j - 1] + pts[j].distanceTo(pts[j - 1]));
-        Object.assign(w, { on: true, pts, lens, t0: now + k * 420, dur: lens[lens.length - 1] * 260 + Math.random() * 800, side: (Math.random() - 0.5) * 0.9 });
-        wB.setColorAt(idx, C(pal[(idx * 3) % pal.length]));
+        Object.assign(w, { on: true, pts, lens, t0: now + k * 420, dur: lens[lens.length - 1] * 260 + Math.random() * 800, side: (Math.random() - 0.5) * 0.9, e: Math.max(0, L.era), seed: idx * 17 + to });
       }
-      if (wB.instanceColor) wB.instanceColor.needsUpdate = true;
+      void pal;
     }
     function updateWalkers(t) {
       const now = performance.now();
       let any = false;
+      for (const S of walkSets) if (S) crowdBegin(S);
       walkers.forEach((w, n) => {
         if (!w.on) return;
         any = true;
         const k = (now - w.t0) / w.dur;
-        if (k < 0) { wB.setMatrixAt(n, ZERO); wH.setMatrixAt(n, ZERO); wP.setMatrixAt(n, ZERO); return; }
-        if (k >= 1) { w.on = false; wB.setMatrixAt(n, ZERO); wH.setMatrixAt(n, ZERO); wP.setMatrixAt(n, ZERO); return; }
+        if (k < 0) { wP.setMatrixAt(n, ZERO); return; }
+        if (k >= 1) { w.on = false; wP.setMatrixAt(n, ZERO); return; }
         const d = k * w.lens[w.lens.length - 1];
         let j = 1; while (j < w.lens.length - 1 && w.lens[j] < d) j++;
         const s = (d - w.lens[j - 1]) / Math.max(1e-6, w.lens[j] - w.lens[j - 1]);
         _v.lerpVectors(w.pts[j - 1], w.pts[j], s);
         const dir = w.pts[j].clone().sub(w.pts[j - 1]).setY(0).normalize(), side = new THREE.Vector3(-dir.z, 0, dir.x);
         const bob = reduce ? 0 : Math.abs(Math.sin(t * 0.012 + n)) * 0.08;
-        _o.position.copy(_v).addScaledVector(side, w.side).setY(_v.y + 0.31 + bob); _o.rotation.set(0, Math.atan2(dir.x, dir.z), 0); _o.scale.setScalar(1); _o.updateMatrix(); wB.setMatrixAt(n, _o.matrix);
-        _o.position.y += 0.47; _o.updateMatrix(); wH.setMatrixAt(n, _o.matrix);
-        _o.position.y -= 0.32; _o.translateZ(-0.24); _o.updateMatrix(); wP.setMatrixAt(n, _o.matrix);
+        const S = walkSets[w.e] || (walkSets[w.e] = crowdSet(scene, 60, w.e)), pos = _v.clone().addScaledVector(side, w.side);
+        crowdPut(S, n % 3 === 0 ? 1 : 0, pos, Math.atan2(dir.x, dir.z), reduce ? 0 : 1, 0, w.seed, 1.05);
+        void bob;
+        _o.position.copy(pos).setY(pos.y + 0.66); _o.rotation.set(0, Math.atan2(dir.x, dir.z), 0); _o.scale.setScalar(1); _o.translateZ(-0.22); _o.updateMatrix(); wP.setMatrixAt(n, _o.matrix);
       });
-      if (any) { wB.instanceMatrix.needsUpdate = wH.instanceMatrix.needsUpdate = wP.instanceMatrix.needsUpdate = true; }
+      for (const S of walkSets) if (S) crowdEnd(S);
+      if (any) wP.instanceMatrix.needsUpdate = true;
     }
 
     /* =============== Khởi tạo =============== */
@@ -1203,33 +1415,35 @@
       if (G && !G.closed && h.employer === G.firmId) return [home, L.minePos]; // thợ mỏ lên Đồi Mây
       return null;
     }
+    const _dir2 = new THREE.Vector3();
     function updatePeople(L, tod, t, fadNow) {
-      const w = W.cities[L.i].w;
-      if (!w) { L.bodies.count = L.heads.count = L.hats.count = 0; return; }
+      const w = W.cities[L.i].w, S = L.crowd;
+      if (!w || !S) { L.hats.count = 0; return; }
       const N = Math.min(L.peopleN, w.households.length);
-      L.bodies.count = L.heads.count = L.hats.count = N;
+      crowdBegin(S);
+      let nh = 0;
       for (let n = 0; n < N; n++) {
         const h = w.households[n], off = (hashI(n + L.i * 1000) - 0.5) * 0.06;
-        let p = null, walking = false;
+        let p = null, walking = false, ry = hashI(n + 21) * TAU;
         if (h.sick > 0) { /* nằm nhà */ }
         else if (h.employer !== null) {
           const pts = walkPath(L, h);
           if (pts) {
-            if (tod > 0.24 + off && tod < 0.33 + off) { p = _v.copy(pts[0]).lerp(pts[1], (tod - 0.24 - off) / 0.09); walking = true; }
-            else if (tod > 0.7 + off && tod < 0.79 + off) { p = _v.copy(pts[1]).lerp(pts[0], (tod - 0.7 - off) / 0.09); walking = true; }
+            if (tod > 0.24 + off && tod < 0.33 + off) { p = _v.copy(pts[0]).lerp(pts[1], (tod - 0.24 - off) / 0.09); walking = true; _dir2.copy(pts[1]).sub(pts[0]); ry = Math.atan2(_dir2.x, _dir2.z); }
+            else if (tod > 0.7 + off && tod < 0.79 + off) { p = _v.copy(pts[1]).lerp(pts[0], (tod - 0.7 - off) / 0.09); walking = true; _dir2.copy(pts[0]).sub(pts[1]); ry = Math.atan2(_dir2.x, _dir2.z); }
           }
         } else if (tod > 0.3 && tod < 0.74) {
-          const a = hashI(n + 3) * TAU + t * 0.00006 * (hashI(n) > 0.5 ? 1 : -1), r = 4.6 + hashI(n + 4) * 2.0;
-          p = _v.set(Math.cos(a) * r, 0, Math.sin(a) * r); walking = true;
+          const sgn = hashI(n) > 0.5 ? 1 : -1, a = hashI(n + 3) * TAU + t * 0.00006 * sgn, r = 4.6 + hashI(n + 4) * 2.0;
+          p = _v.set(Math.cos(a) * r, 0, Math.sin(a) * r); walking = true; ry = -a + (sgn > 0 ? 0 : Math.PI);
         }
-        if (!p) { L.bodies.setMatrixAt(n, ZERO); L.heads.setMatrixAt(n, ZERO); L.hats.setMatrixAt(n, ZERO); continue; }
-        const bob = walking && !reduce ? Math.abs(Math.sin(t * 0.012 + n)) * 0.08 : 0;
-        _o.position.set(p.x + (hashI(n + 8) - 0.5) * 0.8, 0.31 + bob, p.z + (hashI(n + 9) - 0.5) * 0.8); _o.rotation.set(0, 0, 0); _o.scale.setScalar(1); _o.updateMatrix();
-        L.bodies.setMatrixAt(n, _o.matrix);
-        _o.position.y += 0.47; _o.updateMatrix(); L.heads.setMatrixAt(n, _o.matrix);
-        if (fadNow && h.hype === fadNow.id) { _o.position.y += 0.45; _o.updateMatrix(); L.hats.setMatrixAt(n, _o.matrix); } else L.hats.setMatrixAt(n, ZERO);
+        if (!p) continue;
+        p.x += (hashI(n + 8) - 0.5) * 0.8; p.z += (hashI(n + 9) - 0.5) * 0.8;
+        const v = S.e >= 7 && n % 5 === 0 ? 2 : n % 3 === 0 ? 1 : 0;
+        crowdPut(S, v, p, ry, walking && !reduce ? 1 : 0, 0, n * 13 + L.i * 7, 1.05);
+        if (fadNow && h.hype === fadNow.id && nh < L.peopleN) { _o.position.set(p.x, 1.24, p.z); _o.rotation.set(0, 0, 0); _o.scale.setScalar(0.7); _o.updateMatrix(); L.hats.setMatrixAt(nh++, _o.matrix); }
       }
-      L.bodies.instanceMatrix.needsUpdate = L.heads.instanceMatrix.needsUpdate = L.hats.instanceMatrix.needsUpdate = true;
+      crowdEnd(S);
+      L.hats.count = nh; L.hats.instanceMatrix.needsUpdate = true;
       if (fadNow) L.hats.material.color.set(fadNow.color);
     }
     function economyVisuals(L, night) {
@@ -1248,6 +1462,7 @@
       L.litMat.emissiveIntensity = night * (1.25 - hungry * 0.8);
     }
     function animate(dt, t, night, tod, fadOf) {
+      FIG_UNI.uTime.value = reduce ? 0 : t * 0.001;
       const now = performance.now(), spin = reduce ? 0 : dt * 0.001;
       for (const L of lands) {
         runQueue(L, dt);
@@ -1290,10 +1505,11 @@
       }
     }
 
-    const peopleKit = { bodyGeo, headGeo, headMat: new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), shirts: SHIRTS[3] };
+    const peopleKit = { bodyGeo, headGeo, headMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), shirts: SHIRTS[3] };
     return {
       lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING, bridgePoint, deckY,
-      kit: { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng },
+      fig: { FigKit, figMaterial, crowdSet, crowdBegin, crowdPut, crowdEnd, crowdDispose, DRESS, SKIN_T, FIG_UNI, personShape },
+      kit: { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng },
       landOf: (i) => lands[i],
       firmPos: (i, id) => { const L = lands[i], o = L.firmObj.get(id); return o ? o.g.position : null; },
       housePos: (i, idx) => { const L = lands[i], H = L.houses[idx]; return H ? L.houseLots[H.idx].p : null; },

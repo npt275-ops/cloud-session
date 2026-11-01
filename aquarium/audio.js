@@ -197,6 +197,49 @@
         src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + 1.35);
       },
       firework() { if (ctx && on) { burst(0.12, 'highpass', 1800, 0.12); setTimeout(() => on && burst(0.5, 'bandpass', 2400, 0.05), 140); } },
+      // thiên tai: đất rền, gió xoáy, sấm, sóng dữ; chiến trận: gươm khua, súng nổ, pháo, tia laser
+      rumble(sec) {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, L = sec || 3, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = noiseBuffer('brown'); f.type = 'lowpass'; f.frequency.value = 140;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + L);
+        src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + L + 0.1);
+        const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(42, t); o.frequency.linearRampToValueAtTime(30, t + L);
+        og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.4, t + 0.2); og.gain.exponentialRampToValueAtTime(0.0001, t + L); o.connect(og); og.connect(master); o.start(t); o.stop(t + L + 0.1);
+      },
+      gust(sec) {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, L = sec || 5, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = noiseBuffer('pink'); f.type = 'bandpass'; f.Q.value = 3;
+        for (let k = 0; k <= 10; k++) f.frequency.setValueAtTime(260 + 500 * Math.abs(Math.sin(k * 1.3)), t + (k / 10) * L);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.8); g.gain.setValueAtTime(0.55, t + L - 1); g.gain.exponentialRampToValueAtTime(0.0001, t + L);
+        src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + L + 0.1);
+      },
+      thunder() { if (ctx && on) { burst(0.18, 'highpass', 900, 0.5); setTimeout(() => { if (on) this.rumble(2.2); }, 120); } },
+      surge(sec) {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, L = sec || 3, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = noiseBuffer('pink'); f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2200, t + L * 0.6); f.frequency.exponentialRampToValueAtTime(400, t + L);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + L * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + L);
+        src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + L + 0.1);
+      },
+      bless() { if (ctx && on) [0, 2, 4, 2, 5].forEach((i, k) => note(PENTA[i] * 2, 0.05, 2.2, true, ctx.currentTime + k * 0.16)); },
+      clash() { if (ctx && on) { burst(0.07, 'bandpass', 3400 + Math.random() * 1600, 0.12); setTimeout(() => on && burst(0.05, 'bandpass', 4200, 0.07), 60); } },
+      shot(era) { if (ctx && on) burst(era >= 5 ? 0.06 : 0.14, era >= 5 ? 'highpass' : 'lowpass', era >= 5 ? 1400 : 900, era >= 5 ? 0.16 : 0.22); },
+      boom(big) {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, L = big ? 2.2 : 0.9;
+        burst(L, 'lowpass', big ? 220 : 480, big ? 0.9 : 0.4);
+        const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(big ? 70 : 120, t); o.frequency.exponentialRampToValueAtTime(30, t + L);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(big ? 0.7 : 0.3, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + L); o.connect(g); g.connect(master); o.start(t); o.stop(t + L + 0.05);
+      },
+      laser() {
+        if (!ctx || !on) return;
+        const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(2400, t); o.frequency.exponentialRampToValueAtTime(300, t + 0.18);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.22);
+      },
     };
   }
   root.CityAudio = { create };

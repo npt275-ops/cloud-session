@@ -6,7 +6,8 @@
 
   function create(K) {
     const { THREE, scene, Sim, W, lands3d, hash, C, clamp, lerp, reduce, glowTex, puff, label3d } = K;
-    const { Kit, meshOf, UBOX, UCYL, UCONE, DOME, GABLE, VAULT, ICO, DOD, SPHG, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, clearTrees, dust } = lands3d.kit;
+    const { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, clearTrees, dust } = lands3d.kit;
+    const F = lands3d.fig;
     const lands = lands3d.lands;
     const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
     const flat = (p) => v3(p.x, 0, p.z);
@@ -87,6 +88,8 @@
       (k, kt) => { hull(k, '#5b6f8a', 3.6, 1.0, 0.55, 0); k.cyl('#6d5139', 0, 0.5, 0, 0.05, 2.6, 5); sail(kt, 0, 0.9, 0.06, 1.2, 1.4); k.box('#efe6d2', 0, 0.55, -1.0, 0.8, 0.5, 0.8); },
       (k, kt) => { hull(k, '#3f4650', 4.0, 1.2, 0.7, 0); k.box('#e8e4da', 0, 0.7, -0.7, 0.9, 0.8, 1.0); k.cyl('#7a3a2e', 0, 1.4, -0.7, 0.16, 0.9, 6); kt.box('#ffffff', 0, 0.72, -1.25, 0.5, 0.3, 0.04); },
       (k, kt) => { hull(k, '#d9472f', 4.4, 1.3, 0.8, 0); k.box('#ffffff', 0, 0.8, -0.9, 1.0, 1.0, 1.1); k.box('#3f4650', 0, 1.8, -0.9, 0.06, 1.0, 0.06); k.add(UBOX(), '#e0b23a', 0, 1.0, 0.8, 0.08, 0.08, 1.6, 0, 0.6, 0); kt.box('#ffffff', 0, 1.3, -0.33, 0.7, 0.2, 0.04); },
+      (k, kt) => { hull(k, '#2f6b8f', 5.0, 1.4, 0.9, 0); k.box('#f4f6f8', 0, 0.9, -1.1, 1.1, 1.2, 1.3); k.add(SPHG(), '#ffffff', 0, 2.1, -1.1, 0.4, 0.4, 0.4); k.add(UBOX(), '#f2a541', 0, 1.1, 0.9, 0.09, 0.09, 1.8, 0, 0.55, 0); kt.box('#ffffff', 0, 1.5, -0.44, 0.8, 0.22, 0.04); },
+      (k, kt) => { for (const sx of [-0.6, 0.6]) k.add(UCYL(8), '#e8ecef', sx, 0.15, 0, 0.3, 3.6, 0.3, 0, Math.PI / 2, 0); k.box('#2b313a', 0, 0.45, 0, 1.5, 0.3, 1.8); k.box('#7ff0ff', 0, 0.76, 0, 1.2, 0.04, 1.4); kt.box('#ffffff', 0, 0.62, -0.92, 1.0, 0.2, 0.04); },
     ];
     const MERCHANT = [null,
       (k, kt) => { hull(k, '#8a6440', 3.6, 1.1, 0.6, 0); k.cyl('#6d5139', 0, 0.5, 0, 0.06, 2.6, 5); sail(kt, 0, 1.0, 0.07, 1.6, 1.4); for (let i = 0; i < 3; i++) k.box('#c8a36a', -0.25 + i * 0.25, 0.6, -0.9, 0.3, 0.3, 0.3); },
@@ -94,6 +97,8 @@
       (k, kt) => { hull(k, '#5a4030', 6.0, 1.8, 1.0, 0); k.box('#3a2a1e', 0, 1.0, -2.2, 1.6, 0.8, 1.2); for (const z of [-1.2, 0.4, 1.8]) { k.cyl('#6d5139', 0, 0.9, z, 0.08, 3.6, 5); k.box('#f4efe2', 0, 1.8, z + 0.07, 2.2, 1.6, 0.06); } kt.box('#ffffff', 0, 4.2, 0.4, 0.6, 0.35, 0.04); },
       (k, kt) => { hull(k, '#2f3540', 6.4, 1.9, 1.1, 0); k.box('#efe6d2', 0, 1.1, -1.8, 1.4, 1.0, 1.6); k.cyl('#c46a2e', 0, 2.1, -1.4, 0.3, 1.4, 8); k.box('#9b8466', 0, 1.1, 1.0, 1.4, 0.5, 2.2); kt.box('#ffffff', 0, 2.2, -2.0, 0.6, 0.3, 0.04); },
       (k, kt) => { hull(k, '#a33a2e', 8.0, 2.2, 1.0, 0); k.box('#ffffff', 0, 1.0, -3.0, 1.8, 1.6, 1.0); const cc = ['#3f7fd6', '#e0b23a', '#3f9a5a', '#e05a6a', '#8e7cc3']; for (let r = 0; r < 2; r++) for (let i = 0; i < 4; i++) k.box(cc[(r * 4 + i) % 5], 0, 1.0 + r * 0.5, -1.6 + i * 1.0, 1.9, 0.48, 0.95); kt.box('#ffffff', 0, 2.65, -3.0, 0.6, 0.3, 0.04); },
+      (k, kt) => { hull(k, '#2b3d5a', 10.0, 2.6, 1.2, 0); k.box('#ffffff', 0, 1.2, -4.0, 2.2, 2.2, 1.2); const cc = ['#3f7fd6', '#e0b23a', '#3f9a5a', '#e05a6a', '#8e7cc3', '#f2a541']; for (let r = 0; r < 3; r++) for (let i = 0; i < 6; i++) k.box(cc[(r * 6 + i) % 6], 0, 1.2 + r * 0.5, -2.6 + i * 1.0, 2.3, 0.48, 0.95); kt.box('#ffffff', 0, 3.5, -4.0, 0.7, 0.35, 0.04); },
+      (k, kt) => { for (const sx of [-0.9, 0.9]) k.add(UCYL(10), '#f4f7f9', sx, 0.2, 0, 0.45, 7.0, 0.45, 0, Math.PI / 2, 0); k.box('#f4f7f9', 0, 0.7, 0, 2.4, 0.9, 5.4); for (let i = 0; i < 3; i++) k.add(UBOX(), '#24345a', 0, 1.65, -1.8 + i * 1.8, 2.2, 0.05, 1.5, 0, 0.12, 0); k.box('#7ff0ff', 0, 0.75, 2.71, 2.0, 0.12, 0.02); kt.box('#ffffff', 0, 1.0, -2.71, 1.2, 0.3, 0.04); },
     ];
     // chiến thuyền mỗi thời; tàu ngầm hạt nhân
     const WARSHIP = [null,
@@ -102,7 +107,11 @@
       (k, kt) => { hull(k, '#3a2a1e', 7.0, 2.2, 1.4, 0); for (let r = 0; r < 2; r++) for (let i = 0; i < 7; i++) for (const sx of [-1, 1]) k.box('#1a1a1a', sx * 1.11, 0.5 + r * 0.45, -2.6 + i * 0.75, 0.04, 0.22, 0.3); k.box('#e0b23a', 0, 1.4, -2.9, 2.1, 0.12, 1.0); for (const z of [-1.6, 0.3, 2.0]) { k.cyl('#5b4630', 0, 1.4, z, 0.1, 4.2, 5); k.box('#f4efe2', 0, 2.4, z + 0.08, 2.4, 1.8, 0.06); } kt.box('#ffffff', 0, 5.2, 0.3, 0.8, 0.45, 0.04); },
       (k, kt) => { hull(k, '#4a4d52', 7.4, 2.2, 1.2, 0); k.box('#6b6e73', 0, 1.2, -0.6, 1.4, 1.1, 2.0); for (const z of [-0.9, 0.0]) k.cyl('#2f3540', 0, 2.3, z, 0.28, 1.4, 8); for (const z of [-2.6, 2.0]) { k.cyl('#5d5f63', 0, 1.2, z, 0.55, 0.45, 10); k.add(UCYL(6), '#2f3540', 0, 1.45, z + (z > 0 ? 0.9 : -0.9), 0.08, 1.6, 0.08, 0, Math.PI / 2, 0); } k.box('#3f4650', 0, 2.3, -0.4, 0.06, 1.8, 0.06); kt.box('#ffffff', 0, 3.8, -0.4, 0.6, 0.35, 0.04); },
       (k, kt) => { hull(k, '#7d848c', 8.0, 2.0, 1.1, 0); k.box('#9aa0a6', 0, 1.1, -0.8, 1.5, 1.4, 2.6); k.add(UCONE(4), '#9aa0a6', 0, 2.5, -0.8, 0.5, 1.6, 0.5, Math.PI / 4); k.add(UBOX(), '#2f3540', 0, 3.4, -0.8, 1.4, 0.08, 0.08); k.cyl('#5d5f63', 0, 1.1, 2.0, 0.45, 0.4, 10); k.add(UCYL(6), '#2f3540', 0, 1.3, 2.8, 0.07, 1.3, 0.07, 0, Math.PI / 2, 0); for (let i = 0; i < 4; i++) k.box('#3f4650', -0.3 + (i % 2) * 0.6, 1.1, 0.8 + Math.floor(i / 2) * 0.4, 0.35, 0.12, 0.3); kt.box('#ffffff', 0, 2.2, -2.15, 0.7, 0.4, 0.04); },
+      (k, kt) => { hull(k, '#6b737c', 9.4, 2.3, 1.2, 0); k.box('#8f969e', 0, 1.2, -1.2, 1.8, 1.8, 3.2); k.add(SPHG(), '#f4f6f8', 0, 3.0, -1.2, 0.7, 0.7, 0.7); for (let i = 0; i < 8; i++) k.box('#2b313a', -0.45 + (i % 2) * 0.9, 1.2, 1.2 + Math.floor(i / 2) * 0.55, 0.6, 0.1, 0.4); k.cyl('#5d5f63', 0, 1.2, 3.6, 0.4, 0.4, 10); kt.box('#ffffff', 0, 2.8, -2.81, 0.8, 0.45, 0.04); },
+      (k, kt) => { k.add(UCONE(4), '#2b313a', 0, 0.4, 0, 1.3, 9.0, 0.9, Math.PI / 4, Math.PI / 2, 0); k.box('#20252c', 0, 0.2, -0.6, 2.0, 0.7, 6.0); k.add(UCONE(4), '#2b313a', 0, 0.9, -0.8, 1.0, 1.6, 2.2, Math.PI / 4); k.box('#7ff0ff', 0, 0.56, -0.6, 2.02, 0.05, 5.0); k.box('#7ff0ff', 0, 2.0, -0.8, 0.5, 0.05, 0.5); kt.box('#ffffff', 0, 0.9, -3.61, 1.4, 0.12, 0.04); },
     ];
+    const SUB7 = (k, kt) => { k.add(UCYL(12), '#1c2128', 0, 0, -2.8, 0.6, 5.6, 0.6, 0, Math.PI / 2, 0); k.add(SPHG(), '#1c2128', 0, 0, 2.8, 0.6, 0.6, 1.4, 0, Math.PI / 2, 0); for (const z of [-2, 0, 2]) k.add(TORUS(), '#7ff0ff', 0, 0, z, 0.62, 0.62, 0.62); k.box('#1c2128', 0, 0.35, 0.4, 0.2, 0.8, 1.6); kt.box('#ffffff', 0, 0.8, 0.4, 0.22, 0.14, 1.62); };
+    const DRONES = (k, kt) => { for (const [x, z] of [[0, 0.6], [-0.7, -0.5], [0.7, -0.5]]) { k.box('#2b313a', x, 0, z, 0.32, 0.14, 0.32); for (const [ax, az] of [[-0.24, -0.24], [0.24, -0.24], [-0.24, 0.24], [0.24, 0.24]]) { k.add(UBOX(), '#2b313a', x + ax / 2, 0.05, z + az / 2, 0.05, 0.05, 0.36, Math.atan2(ax, az)); k.cyl('#7ff0ff', x + ax, 0.08, z + az, 0.13, 0.02, 10); } kt.box('#ffffff', x, 0.15, z, 0.2, 0.04, 0.2); k.box('#ff4d4d', x, -0.08, z + 0.17, 0.06, 0.04, 0.02); } };
     const SUB = (k, kt) => { k.add(UCYL(10), '#2b3138', 0, 0, -3.0, 0.7, 6.0, 0.7, 0, Math.PI / 2, 0); k.add(SPHG(), '#2b3138', 0, 0, 3.0, 0.7, 0.7, 1.2, 0, Math.PI / 2, 0); k.box('#2b3138', 0, 0.4, 0.6, 0.35, 1.3, 1.3); kt.box('#ffffff', 0, 1.2, 0.6, 0.38, 0.18, 1.32); };
     // lính bộ theo thời đại: đầu, mũ, áo, vũ khí; lá cờ nhỏ sau lưng mang màu phe
     const SKIN = '#e8c4a0';
@@ -150,10 +159,16 @@
         k.box('#5f6b4a', 0, 0.35, 0, 1.0, 0.6, 1.8); k.box('#55613f', 0, 0.95, -0.2, 0.6, 0.35, 0.7); k.add(UCYL(6), '#2f3540', 0, 1.1, 0.4, 0.05, 0.7, 0.05, 0, Math.PI / 2, 0);
         for (const [x, z] of [[-0.55, 0.6], [0.55, 0.6], [-0.55, -0.6], [0.55, -0.6]]) k.add(UCYL(8), '#1a1a1a', x, 0.3, z, 0.28, 0.16, 0.28, 0, 0, Math.PI / 2);
         kt.cyl('#ffffff', 0.35, 1.2, -0.6, 0.015, 0.8, 4); kt.box('#ffffff', 0.47, 1.85, -0.6, 0.24, 0.16, 0.02);
-      } else {
+      } else if (e <= 6) {
         k.box('#55613f', 0, 0.3, 0, 1.3, 0.45, 2.2); for (const sx of [-0.62, 0.62]) k.box('#2a2a2a', sx, 0.05, 0, 0.3, 0.42, 2.3);
         k.box('#5f6b4a', 0, 0.75, -0.15, 0.9, 0.35, 1.0); k.add(UCYL(8), '#3f4a35', 0, 0.92, 0.9, 0.07, 1.5, 0.07, 0, Math.PI / 2, 0);
+        if (e === 6) for (const sx of [-0.55, 0.55]) { k.box('#e8ecef', sx, 0.85, -0.2, 0.22, 0.26, 0.9); k.box('#e05a6a', sx, 0.85, 0.27, 0.2, 0.2, 0.06); }
         kt.box('#ffffff', 0, 0.76, -0.66, 0.92, 0.1, 0.06); kt.cyl('#ffffff', -0.35, 0.9, -0.5, 0.015, 0.8, 4); kt.box('#ffffff', -0.23, 1.55, -0.5, 0.24, 0.16, 0.02);
+      } else { // cỗ máy bọc thép đi hai chân
+        for (const sx of [-0.4, 0.4]) { k.box('#5d6670', sx, 0, 0.1, 0.28, 0.9, 0.36); k.box('#3a3f48', sx, 0, 0.25, 0.36, 0.12, 0.6); k.box('#5d6670', sx, 0.85, -0.05, 0.3, 0.6, 0.3); }
+        k.box('#8f99a3', 0, 1.4, 0, 1.1, 0.7, 0.9); k.box('#7ff0ff', 0, 1.65, 0.46, 0.5, 0.12, 0.02);
+        for (const sx of [-0.68, 0.68]) { k.box('#5d6670', sx, 1.35, 0.2, 0.26, 0.3, 0.7); k.add(UCYL(8), '#2b313a', sx, 1.45, 0.55, 0.08, 0.9, 0.08, 0, Math.PI / 2, 0); }
+        kt.box('#ffffff', 0, 1.8, -0.1, 0.9, 0.12, 0.6); kt.box('#ffffff', 0, 1.42, -0.46, 0.7, 0.4, 0.02);
       }
     }
     function siegeM(k, kt, e) {
@@ -162,18 +177,80 @@
       else if (e === 2) { k.box('#6d5139', 0, 0.3, 0, 1.1, 0.15, 1.8); for (const sx of [-0.4, 0.4]) { k.add(UBOX(), '#6d5139', sx, 0.3, 0.3, 0.1, 1.5, 0.1, 0, 0.35, 0); k.add(UBOX(), '#6d5139', sx, 0.3, -0.3, 0.1, 1.5, 0.1, 0, -0.35, 0); } k.add(UBOX(), '#8f6a46', 0, 1.6, 0, 0.1, 0.1, 2.4, 0, 0.5, 0); k.box('#7d7a74', 0, 0.9, -0.6, 0.4, 0.4, 0.4); wheels(0.6, 0.25); wheels(-0.6, 0.25); kt.box('#ffffff', 0.4, 1.7, 0, 0.03, 0.22, 0.3); }
       else if (e === 3) { k.box('#6d5139', 0, 0.3, -0.2, 0.5, 0.25, 1.2); k.add(UCYL(10), '#2b2b2b', 0, 0.62, 0.2, 0.15, 1.5, 0.15, 0, Math.PI / 2 - 0.12, 0); wheels(0, 0.42); kt.cyl('#ffffff', 0, 0.3, -0.8, 0.015, 1.0, 4); kt.box('#ffffff', 0.12, 1.2, -0.8, 0.24, 0.16, 0.02); }
       else if (e === 4) { for (const sx of [-0.25, 0.25]) k.add(UBOX(), '#4f5a3f', sx, 0.15, -0.8, 0.1, 0.1, 1.4, 0, 0, sx); k.box('#5f6b4a', 0, 0.45, 0.1, 1.0, 0.7, 0.08); k.add(UCYL(10), '#3f4a35', 0, 0.75, 0.6, 0.12, 2.0, 0.12, 0, Math.PI / 2 - 0.35, 0); wheels(0, 0.4); kt.box('#ffffff', 0, 0.9, 0.06, 0.4, 0.16, 0.02); }
+      else if (e === 5) { k.box('#55613f', 0, 0.3, 0, 1.3, 0.5, 2.4); for (const sx of [-0.62, 0.62]) k.box('#2a2a2a', sx, 0.05, 0, 0.3, 0.42, 2.5); k.box('#5f6b4a', 0, 0.8, -0.3, 1.1, 0.6, 1.3); k.add(UCYL(10), '#3f4a35', 0, 1.1, 0.9, 0.11, 2.6, 0.11, 0, Math.PI / 2 - 0.25, 0); kt.box('#ffffff', 0, 1.41, -0.3, 0.6, 0.06, 0.6); }
+      else if (e >= 7) { k.box('#2b313a', 0, 0.2, 0, 1.4, 0.4, 2.4); for (const sx of [-0.3, 0.3]) { k.box('#9aa3ad', sx, 0.6, 0.6, 0.16, 0.2, 3.4); k.box('#7ff0ff', sx, 0.72, 0.6, 0.06, 0.04, 3.4); } k.box('#5d6670', 0, 0.6, -0.8, 1.0, 0.6, 0.8); for (let i = 0; i < 3; i++) k.cyl('#7ff0ff', -0.35 + i * 0.35, 0.9, -0.8, 0.12, 0.3, 8); kt.box('#ffffff', 0, 0.42, -1.21, 1.0, 0.2, 0.02); }
       else { k.box('#5f6b4a', 0, 0.45, 0.9, 1.2, 0.9, 0.9); k.box('#4f5a3f', 0, 0.35, -0.4, 1.2, 0.3, 1.9); k.add(UBOX(), '#6b7a55', 0, 0.6, -0.6, 1.0, 0.6, 1.8, 0, 0.45, 0); for (let i = 0; i < 4; i++) k.box('#e8e8e8', -0.32 + (i % 2) * 0.64, 1.25, -0.5 - Math.floor(i / 2) * 0.35, 0.3, 0.3, 0.3); for (const z of [0.9, 0.0, -0.9]) for (const sx of [-0.6, 0.6]) k.add(UCYL(8), '#1a1a1a', sx, 0.28, z, 0.28, 0.14, 0.28, 0, 0, Math.PI / 2); kt.box('#ffffff', 0, 0.92, 1.36, 0.5, 0.2, 0.02); }
     }
+    // Lính bộ là người có khớp: tay phải cầm vũ khí nên vung theo nhịp đánh, khiên ở tay trái, cờ nhỏ màu phe sau lưng
+    function soldierShape(k, cls, e) {
+      if (e >= 7) {
+        for (const [lb, sx] of [[1, -0.09], [2, 0.09]]) { k.box('#5d6670', 0, lb, sx, 0.02, 0, 0.13, 0.44, 0.14); k.box('#3a3f48', 0, lb, sx, 0, 0.03, 0.15, 0.06, 0.2); }
+        k.box('#8f99a3', 0, 0, 0, 0.44, 0, 0.38, 0.44, 0.24); k.box('#fff', 1, 0, 0, 0.56, 0.121, 0.3, 0.22, 0.02);
+        for (const [lb, sx] of [[3, -0.25], [4, 0.25]]) { k.box('#fff', 1, lb, sx, 0.78, 0, 0.16, 0.1, 0.16); k.box('#8f99a3', 0, lb, sx, 0.46, 0, 0.1, 0.36, 0.1); }
+        k.add(UCYL(8), '#2b313a', 0, 4, 0.25, 0.44, 0.14, 0.06, 0.42, 0.06, 0, Math.PI / 2, 0);
+        k.box('#c8d0d8', 0, 0, 0, 0.9, 0, 0.24, 0.22, 0.22); k.box('#fff', 3, 0, 0, 0.98, 0.111, 0.18, 0.05, 0.01);
+        return;
+      }
+      for (const [lb, sx] of [[1, -0.075], [2, 0.075]]) { k.box('#fff', 2, lb, sx, 0.05, 0, 0.12, 0.42, 0.13); k.box(e >= 4 ? '#2b2b2b' : '#4a3426', 0, lb, sx, 0, 0.03, 0.13, 0.08, 0.18); }
+      const wide = e === 6 ? 0.4 : 0.32;
+      k.box('#fff', 1, 0, 0, 0.45, 0, wide, 0.42, 0.21);
+      if (e >= 5) k.box(e === 6 ? '#dfe3e8' : '#3f4a35', 0, 0, 0, 0.52, 0, wide + 0.03, 0.3, 0.24);
+      if (e === 6) for (const sx of [-0.25, 0.25]) k.box('#dfe3e8', 0, 0, sx, 0.8, 0, 0.14, 0.1, 0.24);
+      for (const [lb, sx] of [[3, -0.205 - (e === 6 ? 0.04 : 0)], [4, 0.205 + (e === 6 ? 0.04 : 0)]]) { k.box('#fff', 1, lb, sx, 0.5, 0, 0.09, 0.36, 0.1); k.box('#fff', e === 6 ? 0 : 4, lb, sx, 0.44, 0.01, 0.08, 0.07, 0.08); }
+      k.box('#fff', 4, 0, 0, 0.84, 0, 0.09, 0.06, 0.09);
+      k.add(ICO(), '#fff', 4, 0, 0, 0.98, 0, 0.13, 0.14, 0.13);
+      if (e === 0) k.add(SPHG(), '#fff', 3, 0, 0, 1.0, -0.01, 0.142, 0.13, 0.142);
+      else if (e === 1) { k.add(SPHG(), '#fff', 3, 0, 0, 1.0, 0, 0.155, 0.15, 0.155); k.box('#c0392b', 0, 0, 0, 1.08, 0, 0.03, 0.12, 0.24); }
+      else if (e === 2) k.add(UCYL(8), '#fff', 3, 0, 0, 0.9, 0, 0.15, 0.24, 0.15);
+      else if (e === 3) k.add(UCYL(8), '#fff', 3, 0, 0, 1.0, 0, 0.13, 0.22, 0.13);
+      else if (e === 4) k.add(SPHG(), '#fff', 3, 0, 0, 1.02, 0, 0.21, 0.07, 0.21);
+      else if (e === 5) k.add(SPHG(), '#fff', 3, 0, 0, 1.0, -0.01, 0.16, 0.14, 0.17);
+      else { k.add(SPHG(), '#fff', 3, 0, 0, 0.94, 0, 0.17, 0.22, 0.18); k.box('#5fe0ff', 0, 0, 0, 0.97, 0.13, 0.2, 0.06, 0.04); }
+      k.add(UCYL(4), '#5b4630', 0, 0, 0, 0.5, -0.16, 0.012, 0.95, 0.012); k.box('#fff', 1, 0, 0.11, 1.32, -0.16, 0.22, 0.14, 0.015);
+      const hand = (c, x, y, z, w, h, d, rx) => k.add(UBOX(), c, 0, 4, 0.205 + x, y, z, w, h, d, 0, rx || 0, 0);
+      if (cls === 'melee') {
+        if (e === 0) { hand('#6d5139', 0, 0.44, 0.08, 0.05, 0.05, 0.5); k.add(DOD(), '#7d7a74', 0, 4, 0.205, 0.44, 0.34, 0.08, 0.08, 0.08); }
+        else if (e === 1) { k.add(UCYL(5), '#6d5139', 0, 4, 0.205, 0.08, 0.1, 0.022, 1.5, 0.022); k.add(UCONE(4), '#b08d57', 0, 4, 0.205, 1.58, 0.1, 0.045, 0.16, 0.045); k.add(UCYL(10), '#fff', 1, 3, -0.27, 0.6, 0.06, 0.19, 0.04, 0.19, 0, Math.PI / 2, 0); }
+        else if (e === 2) { hand('#dfe6ea', 0, 0.44, 0.24, 0.035, 0.05, 0.6, -0.2); k.box('#fff', 1, 3, -0.27, 0.42, 0.04, 0.04, 0.4, 0.26); }
+        else if (e <= 4) { hand(e === 3 ? '#5b4630' : '#3a3a3a', 0, 0.46, 0.2, 0.05, 0.06, 0.9, -0.35); if (e === 3) hand('#dfe6ea', 0, 0.62, 0.62, 0.02, 0.02, 0.24, -0.35); }
+        else hand('#2b2b2b', 0, 0.5, 0.18, 0.06, 0.09, 0.62, -0.1);
+      } else {
+        if (e === 0) k.add(DOD(), '#8b8577', 0, 4, 0.205, 0.44, 0.06, 0.06, 0.06, 0.06);
+        else if (e === 1) { for (let i = -1; i <= 1; i++) k.add(UBOX(), '#6d5139', 0, 3, -0.27, 0.6 + i * 0.2, 0.12 - Math.abs(i) * 0.06, 0.025, 0.24, 0.025, 0, i * 0.5, 0); k.add(UCYL(5), '#8f6a46', 0, 0, 0.1, 0.5, -0.14, 0.05, 0.36, 0.05); }
+        else if (e === 2) { hand('#6d5139', 0, 0.5, 0.22, 0.06, 0.06, 0.42); hand('#5b4630', 0, 0.5, 0.42, 0.36, 0.03, 0.03); }
+        else if (e === 3) hand('#5b4630', 0, 0.46, 0.22, 0.05, 0.05, 1.0, -0.2);
+        else if (e === 4) { hand('#2b2b2b', 0, 0.46, 0.18, 0.09, 0.11, 0.66); hand('#2b2b2b', 0, 0.4, 0.4, 0.02, 0.16, 0.02); }
+        else k.add(UCYL(8), e === 6 ? '#dfe3e8' : '#4f5a3f', 0, 0, 0.18, 0.86, -0.32, e === 6 ? 0.1 : 0.08, 1.1, e === 6 ? 0.1 : 0.08, 0, Math.PI / 2, 0);
+      }
+    }
+    const SOLDIER_SETS = {};
+    function soldierSet(cls, e) {
+      const key = cls + ':' + e;
+      if (SOLDIER_SETS[key]) return SOLDIER_SETS[key];
+      const cap = 300, mat = F.figMaterial(), k = new F.FigKit(); soldierShape(k, cls, e);
+      const geo = k.bake(), m = new THREE.InstancedMesh(geo, mat, cap);
+      geo.setAttribute('anim', new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4));
+      for (const a of ['cA', 'cB', 'cC', 'cD']) geo.setAttribute(a, new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3));
+      m.count = 0; m.castShadow = true; m.frustumCulled = false; m.raycast = () => {}; scene.add(m);
+      return (SOLDIER_SETS[key] = { meshes: [m], cap, e, n: [0] });
+    }
+    const PANTS = ['#7a5a3a', '#c9a46e', '#5b4630', '#efe6d2', '#6b6b45', '#4f5a3f', '#5d6670', '#2b313a'];
+    const HELMS = ['#2b1d14', '#b08d57', '#9aa0a6', '#1a1a1a', '#6b6b45', '#4f5a3f', '#e8ecef', '#ff4d4d'];
+    const squadSize = (u) => (u.cls === 'melee' ? (u.era >= 7 ? 3 : 5) : 4);
+    const FORM = [[0, 0.35], [-0.6, 0], [0.6, 0], [-0.3, -0.65], [0.3, -0.65], [0, -1.2]];
+    const corpses = [];
+    const isFig = (u) => (u.cls === 'melee' || u.cls === 'ranged') && !(u.cls === 'ranged' && u.era >= 7);
     const MODELS = {};
     function modelOf(key) {
       if (MODELS[key]) return MODELS[key];
       const [cls, es] = key.split(':'), e = +es;
       let geos, cap = 48;
-      if (cls === 'melee' || cls === 'ranged') geos = bake2((k, kt) => trooper(k, kt, cls, e));
+      if (cls === 'ranged' && e >= 7) { geos = bake2(DRONES); cap = 40; }
+      else if (cls === 'melee' || cls === 'ranged') geos = bake2((k, kt) => trooper(k, kt, cls, Math.min(5, e)));
       else if (cls === 'mounted') geos = bake2((k, kt) => mounted(k, kt, e));
       else if (cls === 'siege') geos = bake2((k, kt) => siegeM(k, kt, e));
       else if (cls === 'ship') { geos = bake2(WARSHIP[e]); cap = 24; }
-      else if (cls === 'sub') { geos = bake2(SUB); cap = 8; }
+      else if (cls === 'sub') { geos = bake2(e >= 7 ? SUB7 : SUB); cap = 8; }
       else if (cls === 'fish') { geos = bake2(FISHBOAT[e]); cap = 40; }
       else if (cls === 'trade') { geos = bake2(MERCHANT[Math.max(1, e)]); cap = 20; }
       MODELS[key] = instSet(geos, cap);
@@ -229,18 +306,19 @@
       const out = {};
       if (type === 'barracks') {
         if (e === 0) { styHall(k, S, 0, -1.2, 2.4, 1.4, 1.8); k.cyl('#5b4630', 0.6, 0, 1.2, 0.5, 0.15, 8); k.add(DOD(), '#ff8a3d', 0.6, 0.2, 1.2, 0.25, 0.25, 0.25); for (let i = 0; i < 3; i++) { k.cyl('#6d5139', -1.6 + i * 0.7, 0, 1.6, 0.08, 1.4, 5); k.box('#6d5139', -1.6 + i * 0.7, 1.0, 1.6, 0.5, 0.08, 0.08); } }
-        else { const h = styHall(k, S, 0, -1.0, e >= 3 ? 4.8 : 4.2, e === 3 ? 3.0 : 2.0, 2.4); void h; k.box(S.base, 0, 0, 1.6, 4.8, 0.06, 2.6); if (e <= 2) for (let i = 0; i <= 8; i++) k.cyl('#6d5139', -2.4 + i * 0.6, 0, 2.9, 0.06, 0.9, 5); if (e >= 4) for (const sx of [-1.6, 1.6]) k.box('#b8a37a', sx, 0, 2.4, 1.4, 0.6, 0.5); if (e === 5) { k.cyl('#3f4650', 1.4, 0.02, 1.4, 1.0, 0.04, 16); k.box('#f4f4f4', 1.4, 0.06, 1.4, 0.15, 0.02, 0.9); k.box('#f4f4f4', 1.4, 0.06, 1.4, 0.6, 0.02, 0.15); } for (let i = 0; i < 2; i++) { k.cyl('#6d5139', -1.4 + i * 0.9, 0, 1.4, 0.07, 1.3, 5); k.box('#c8b07a', -1.4 + i * 0.9, 0.9, 1.4, 0.5, 0.07, 0.07); } }
+        else { const h = styHall(k, S, 0, -1.0, e >= 3 ? 4.8 : 4.2, e === 3 ? 3.0 : 2.0, 2.4); void h; k.box(S.base, 0, 0, 1.6, 4.8, 0.06, 2.6); if (e <= 2) for (let i = 0; i <= 8; i++) k.cyl('#6d5139', -2.4 + i * 0.6, 0, 2.9, 0.06, 0.9, 5); if (e >= 4) for (const sx of [-1.6, 1.6]) k.box('#b8a37a', sx, 0, 2.4, 1.4, 0.6, 0.5); if (e >= 5) { k.cyl('#3f4650', 1.4, 0.02, 1.4, 1.0, 0.04, 16); k.box('#f4f4f4', 1.4, 0.06, 1.4, 0.15, 0.02, 0.9); k.box('#f4f4f4', 1.4, 0.06, 1.4, 0.6, 0.02, 0.15); } if (e >= 7) for (const sx of [-1.6, 1.6]) { k.box('#f2a541', sx, 0, 0.6, 0.4, 0.5, 0.4); k.add(UBOX(), '#f2a541', sx, 0.5, 0.6, 0.14, 1.2, 0.14, 0, 0.6, 0); k.box('#7ff0ff', 0, 1.5, 0.21, 3.6, 0.06, 0.02); } for (let i = 0; i < 2; i++) { k.cyl('#6d5139', -1.4 + i * 0.9, 0, 1.4, 0.07, 1.3, 5); k.box('#c8b07a', -1.4 + i * 0.9, 0.9, 1.4, 0.5, 0.07, 0.07); } }
         out.flag = [2.2, 1.6];
       } else if (type === 'range') {
         styHall(k, S, -1.6, -1.6, 2.0, e >= 3 ? 1.8 : 1.4, 1.6);
         if (e === 4) k.box('#7a6a4a', 0.6, 0, 2.4, 4.4, 1.0, 0.9);
         for (let i = 0; i < 3; i++) { const x = -0.6 + i * 1.2; if (e === 0) { k.add(DOD(), '#8b8577', x, 0.3, 1.6, 0.35, 0.35, 0.35); k.add(DOD(), '#9d9589', x, 0.75, 1.6, 0.25, 0.25, 0.25); } else { k.cyl('#6d5139', x, 0, 1.6, 0.05, 0.9, 5); k.add(UCYL(12), e >= 4 ? '#f4f4f4' : '#d8c27a', x, 1.2, 1.6, 0.42, 0.08, 0.42, 0, Math.PI / 2, 0); k.add(UCYL(12), '#c0392b', x, 1.2, 1.64, 0.22, 0.04, 0.22, 0, Math.PI / 2, 0); } }
         if (e === 2) for (let i = 0; i < 3; i++) k.box(S.wall2, -0.6 + i * 1.2, 0, -0.4, 0.6, 0.8, 0.08);
-        if (e === 5) k.box('#5f6b4a', 1.8, 0, -1.4, 1.4, 1.2, 2.4);
+        if (e === 5 || e === 6) k.box('#5f6b4a', 1.8, 0, -1.4, 1.4, 1.2, 2.4);
+        if (e >= 7) { k.add(UCYL(6), '#3a3f48', 1.8, 0, -1.2, 1.0, 3.4, 1.0); for (let i = 0; i < 3; i++) { k.cyl('#7ff0ff', 1.8, 1.0 + i * 1.0, -1.2, 1.05, 0.05, 6); } k.box('#2b313a', 1.8, 3.6, -1.2, 0.5, 0.1, 0.5); }
         out.flag = [-2.4, 0.4];
       } else if (type === 'stable') {
         if (e <= 3) { styHall(k, S, 0, -1.4, 5.0, 1.5, 2.0); for (let i = 0; i <= 8; i++) k.cyl('#6d5139', -2.4 + i * 0.6, 0, 2.6, 0.05, 0.8, 5); for (const x of [-2.4, 2.4]) for (let z = 0; z < 2.6; z += 0.6) k.cyl('#6d5139', x, 0, z, 0.05, 0.8, 5); k.box('#6d5139', 0, 0.6, 2.6, 4.8, 0.06, 0.06); k.cyl('#e0c06a', 1.6, 0, 0.6, 0.4, 0.5, 8); const hk = new Kit(); void hk; k.box('#7a5a3a', -1.0, 0.45, 1.2, 0.35, 0.35, 0.9); k.box('#7a5a3a', -1.0, 0.75, 1.65, 0.16, 0.4, 0.2); }
-        else { styHall(k, S, 0, -1.0, 5.0, 2.4, 2.8); for (let i = 0; i < 3; i++) k.box('#3f4650', -1.6 + i * 1.6, 0.2, 0.41, 1.2, 1.6, 0.04); k.box('#55613f', 1.2, 0.3, 2.0, 1.2, 0.4, 2.0); k.box('#5f6b4a', 1.2, 0.7, 1.9, 0.8, 0.3, 0.9); if (e === 5) k.add(UCYL(6), '#3f4a35', 1.2, 0.85, 2.8, 0.06, 1.2, 0.06, 0, Math.PI / 2, 0); }
+        else { styHall(k, S, 0, -1.0, 5.0, 2.4, 2.8); for (let i = 0; i < 3; i++) k.box('#3f4650', -1.6 + i * 1.6, 0.2, 0.41, 1.2, 1.6, 0.04); k.box('#55613f', 1.2, 0.3, 2.0, 1.2, 0.4, 2.0); k.box('#5f6b4a', 1.2, 0.7, 1.9, 0.8, 0.3, 0.9); if (e >= 5) k.add(UCYL(6), '#3f4a35', 1.2, 0.85, 2.8, 0.06, 1.2, 0.06, 0, Math.PI / 2, 0); if (e >= 7) { for (const sx of [-0.3, 0.3]) k.box('#5d6670', -1.4 + sx, 0, 2.0, 0.22, 0.8, 0.3); k.box('#8f99a3', -1.4, 0.8, 2.0, 0.9, 0.55, 0.7); } }
         out.flag = [-2.6, 2.6];
       } else if (type === 'siege') {
         styHall(k, S, -1.4, -1.6, 2.4, e >= 3 ? 2.2 : 1.6, 2.0);
@@ -248,7 +326,9 @@
         else if (e === 2) { for (const sx of [0.6, 1.8]) { k.add(UBOX(), '#6d5139', sx, 0, 0.4, 0.12, 2.6, 0.12, 0, 0.3, 0); k.add(UBOX(), '#6d5139', sx, 0, 1.6, 0.12, 2.6, 0.12, 0, -0.3, 0); } k.add(UBOX(), '#8f6a46', 1.2, 2.4, 1.0, 0.12, 0.12, 3.6, 0, 0.7, 0); k.box('#7d7a74', 1.2, 1.2, -0.2, 0.7, 0.7, 0.7); }
         else if (e === 3) { k.cyl('#7a3a2e', -2.2, 2.2, -2.2, 0.3, 2.2, 8); k.box('#6d5139', 1.2, 0.3, 1.0, 0.6, 0.3, 1.4); k.add(UCYL(10), '#2b2b2b', 1.2, 0.7, 1.4, 0.18, 1.8, 0.18, 0, Math.PI / 2 - 0.15, 0); for (let i = 0; i < 6; i++) k.add(SPHG(), '#2b2b2b', -0.2 + (i % 3) * 0.3, 0, 1.6 + Math.floor(i / 3) * 0.3, 0.14, 0.28, 0.14); }
         else if (e === 4) { k.box(S.wall2, 1.2, 0, 1.0, 2.0, 1.6, 2.4); k.add(UCYL(10), '#3f4a35', 1.2, 1.0, 2.2, 0.14, 2.2, 0.14, 0, Math.PI / 2 - 0.4, 0); }
-        else { k.box('#9aa0a6', 1.2, 0, 0.4, 2.0, 0.5, 1.2); k.add(UCYL(10), '#f4f4f4', 1.2, 0.5, 0.4, 0.3, 4.0, 0.3, 0, 0.35, 0); k.cone('#c0392b', 1.2 + 0, 4.2, 0.4 + 1.42, 0.3, 0.7, 10); k.cyl('#9aa0a6', -1.8, 2.2, 1.6, 0.06, 1.0, 5); k.add(SPHG(), '#e8e8e8', -1.8, 3.1, 1.6, 0.7, 0.25, 0.7, 0, -0.6, 0); }
+        else if (e === 5) { k.box(S.wall2, 1.2, 0, 1.0, 2.2, 1.4, 2.6); k.box('#55613f', 1.2, 0.2, 2.6, 1.2, 0.45, 2.0); k.add(UCYL(10), '#3f4a35', 1.2, 0.8, 3.0, 0.11, 2.2, 0.11, 0, Math.PI / 2 - 0.3, 0); }
+        else if (e === 6) { k.box('#9aa0a6', 1.2, 0, 0.4, 2.0, 0.5, 1.2); k.add(UCYL(10), '#f4f4f4', 1.2, 0.5, 0.4, 0.3, 4.0, 0.3, 0, 0.35, 0); k.cone('#c0392b', 1.2 + 0, 4.2, 0.4 + 1.42, 0.3, 0.7, 10); k.cyl('#9aa0a6', -1.8, 2.2, 1.6, 0.06, 1.0, 5); k.add(SPHG(), '#e8e8e8', -1.8, 3.1, 1.6, 0.7, 0.25, 0.7, 0, -0.6, 0); }
+        else { k.box('#2b313a', 1.2, 0, 0.6, 2.4, 0.6, 2.4); for (const sx of [-0.35, 0.35]) { k.add(UBOX(), '#9aa3ad', 1.2 + sx, 0.9, 1.2, 0.2, 0.25, 4.2, 0, -0.35, 0); k.add(UBOX(), '#7ff0ff', 1.2 + sx, 1.07, 1.2, 0.06, 0.04, 4.2, 0, -0.35, 0, true); } }
         out.flag = [2.4, -2.4];
       } else if (type === 'forge') {
         const h = styHall(k, S, 0, -0.6, e >= 4 ? 4.4 : 3.4, e >= 4 ? 2.8 : 1.8, 2.6);
@@ -257,12 +337,13 @@
         for (const [x, z] of stacks) { const sh = e >= 4 ? 4.8 : 2.6; k.cyl(e >= 4 ? '#7a3a2e' : S.wall2, x, h - 0.6, z, e >= 4 ? 0.32 : 0.26, sh, 8); out.smoke.push([x, h - 0.6 + sh + 0.3, z]); }
         k.box('#2b2b2b', -1.0, 0, 1.4, 0.5, 0.45, 0.3); k.box('#2b2b2b', -1.0, 0.45, 1.4, 0.8, 0.12, 0.35);
         out.fire = [0.9, 0.5, 0.75];
-        if (e === 5) for (let i = 0; i < 3; i++) k.add(UBOX(), '#24345a', -1.2 + i * 1.2, h + 0.15, 0, 1.0, 0.05, 1.6, 0, 0.35, 0);
+        if (e >= 5) for (let i = 0; i < 3; i++) k.add(UBOX(), '#24345a', -1.2 + i * 1.2, h + 0.15, 0, 1.0, 0.05, 1.6, 0, 0.35, 0);
+        if (e >= 7) k.box('#7ff0ff', 0, 1.0, 0.71, 2.6, 0.3, 0.02, 0, true);
       } else if (type === 'granary') {
         if (e === 0) { for (const [x, z] of [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]]) k.cyl('#6d5139', x, 0, z, 0.08, 1.0, 5); k.box('#8f6a46', 0, 1.0, 0, 1.6, 0.12, 1.6); styHall(k, Object.assign({}, S, { roofT: S.roofT === 'igloo' || S.roofT === 'mud' ? 'thatch' : S.roofT }), 0, 0, 1.3, 0.7, 1.3, { wall: S.wall }); }
         else if (e === 1 || e === 3) { for (let i = 0; i < 3; i++) { const x = -1.6 + i * 1.6; k.cyl(S.wall, x, 0, 0, 0.75, 2.0, 10); k.dome(S.roof, x, 2.0, 0, 0.75, 0.8, 10); } if (e === 3) styHall(k, S, 0, -2.0, 4.0, 1.2, 1.2); }
         else if (e === 2) { styHall(k, S, 0, 0, 4.0, 2.2, 2.4); k.cyl(S.wall2, 2.4, 0, 1.4, 0.6, 2.4, 10); k.cone(S.roof, 2.4, 2.4, 1.4, 0.75, 0.8, 10); }
-        else { for (let i = 0; i < 3; i++) { const x = -1.6 + i * 1.6; k.cyl(e === 5 ? '#eef1f4' : '#b8bec4', x, 0, -0.6, 0.72, 3.4, 12); k.cone(e === 5 ? '#d9dfe4' : '#9aa0a6', x, 3.4, -0.6, 0.76, 0.7, 12); } k.add(UBOX(), '#6b6e73', 0, 2.6, 0.6, 0.3, 0.3, 3.6, 0, 0.5, 0); if (e === 5) styHall(k, S, 0, 1.8, 3.6, 1.4, 1.4); }
+        else { for (let i = 0; i < 3; i++) { const x = -1.6 + i * 1.6; k.cyl(e >= 5 ? '#eef1f4' : '#b8bec4', x, 0, -0.6, 0.72, 3.4, 12); k.cone(e >= 5 ? '#d9dfe4' : '#9aa0a6', x, 3.4, -0.6, 0.76, 0.7, 12); } k.add(UBOX(), '#6b6e73', 0, 2.6, 0.6, 0.3, 0.3, 3.6, 0, 0.5, 0); if (e >= 5) styHall(k, S, 0, 1.8, 3.6, 1.4, 1.4); }
       } else if (type === 'academy') {
         if (e === 0) { for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU; k.box('#8b8577', Math.cos(a) * 2.0, 0, Math.sin(a) * 2.0, 0.45, 1.5 + (i % 2) * 0.4, 0.3, -a); } k.cyl('#5b4630', 0, 0, 0, 0.45, 0.12, 8); k.add(DOD(), '#ff8a3d', 0, 0.2, 0, 0.22, 0.22, 0.22); out.fire = [0, 0.4, 0]; }
         else {
@@ -271,7 +352,9 @@
           if (e === 2) { k.box(S.wall2, 1.5, 0, -1.6, 1.0, 4.4, 1.0); roofOn(k, Object.assign({}, S, { roofT: 'cone' }), 1.5, 4.4, -1.6, 1.0, 1.0); }
           if (e === 3) { k.dome('#efe6d2', 0, h + 0.2, -0.8, 1.0, 1, 12); k.box('#2f3540', 0, h + 0.6, -0.1, 0.25, 0.7, 0.2); }
           if (e === 4) { k.box(S.wall, 0, h, -0.8, 1.0, 2.2, 1.0); k.cyl('#f4efe2', 0, h + 1.3, -0.29, 0.32, 0.05, 12); roofOn(k, Object.assign({}, S, { roofT: 'cone' }), 0, h + 2.2, -0.8, 1.0, 1.0); }
-          if (e === 5) { k.cyl('#9aa0a6', 1.6, 0, 1.4, 0.07, 1.6, 5); k.add(SPHG(), '#f4f4f4', 1.6, 1.8, 1.4, 0.9, 0.3, 0.9, 0, -0.7, 0); k.cyl('#9aa0a6', -1.4, h, -1.2, 0.04, 2.4, 4); }
+          if (e >= 5) { k.cyl('#9aa0a6', 1.6, 0, 1.4, 0.07, 1.6, 5); k.add(SPHG(), '#f4f4f4', 1.6, 1.8, 1.4, 0.9, 0.3, 0.9, 0, -0.7, 0); k.cyl('#9aa0a6', -1.4, h, -1.2, 0.04, 2.4, 4); }
+          if (e === 6) { k.add(UCYL(10), '#f4f6f8', -1.8, 0, 1.6, 0.3, 3.4, 0.3); k.cone('#e05a6a', -1.8, 3.4, 1.6, 0.3, 0.7, 10); }
+          if (e >= 7) { k.add(ICO(), '#7ff0ff', 0, h + 1.4, -0.8, 0.6, 0.6, 0.6, 0, 0, 0, true); k.add(TORUS(), '#dfe7ee', 0, h + 1.4, -0.8, 1.1, 1.1, 1.1, 0, 0.5, 0); }
         }
       } else if (type === 'market') {
         if (e === 1) { const cs = ['#c0392b', '#e0b23a', '#3f7fd6', '#3f9a5a']; for (let i = 0; i < 4; i++) { const x = -1.8 + (i % 2) * 3.6 * 0.5 + (i > 1 ? 1.8 : 0), z = i > 1 ? 1.0 : -1.0; for (const [dx, dz] of [[-0.6, -0.5], [0.6, -0.5], [-0.6, 0.5], [0.6, 0.5]]) k.cyl('#6d5139', x + dx, 0, z + dz, 0.05, 1.3, 5); k.add(UBOX(), cs[i], x, 1.3, z, 1.5, 0.06, 1.3, 0, 0.18, 0); k.box('#8f6a46', x, 0.6, z, 1.1, 0.12, 0.6); } }
@@ -280,7 +363,7 @@
         else if (e === 4) { const h = styHall(k, S, 0, -0.8, 4.4, 2.6, 2.4); for (let i = 0; i < 5; i++) k.cyl('#efe6d2', -1.8 + i * 0.9, 0, 0.6, 0.15, h - 0.2, 8); k.gable('#efe6d2', 0, h, 0.6, 4.6, 0.7, 0.5); }
         else { const h = styHall(k, S, 0, -0.4, 4.6, 3.0, 3.0); k.dome('#bfe3f2', 0, h, -0.4, 1.3, 0.7, 12); }
       } else if (type === 'port') {
-        const pier = ['#8f6a46', '#8f6a46', '#a39b8e', '#9a8f80', '#9a948a', '#c9ced4'][e];
+        const pier = ['#8f6a46', '#8f6a46', '#a39b8e', '#9a8f80', '#9a948a', '#c9ced4', '#d9dfe4', '#e8eef3'][e];
         for (let z = 0; z < 9.6; z += 1.2) k.box(pier, 0, -0.12, z + 0.6, 3.2, 0.2, 1.16);
         for (let z = 1; z < 10; z += 2.4) for (const sx of [-1.4, 1.4]) k.cyl('#5b4630', sx, -2.4, z, 0.16, 2.4, 6);
         styHall(k, S, -2.6, -1.2, 3.2, e >= 3 ? 2.6 : 1.8, 2.4);
@@ -289,6 +372,8 @@
         if (e === 2) { k.cyl('#6d5139', 1.6, 0, 6.0, 0.14, 3.0, 6); k.add(UBOX(), '#6d5139', 1.6, 2.9, 6.8, 0.12, 0.12, 1.8); k.add(UCYL(12), '#8f6a46', 1.6, 0.9, 5.4, 0.8, 0.25, 0.8, 0, 0, Math.PI / 2); }
         if (e === 3) { k.cyl('#efe6d2', -1.2, 0, 9.4, 0.5, 4.2, 10); k.cyl('#ffe08a', -1.2, 4.2, 9.4, 0.52, 0.6, 10); k.cone('#c0392b', -1.2, 4.8, 9.4, 0.6, 0.7, 10); out.lamp = [-1.2, 4.5, 9.4]; }
         if (e === 4) { for (const z of [4.0, 7.6]) { k.box('#a33a2e', 1.1, 0, z, 0.2, 4.4, 0.2); k.add(UBOX(), '#a33a2e', 0.6, 4.3, z, 2.6, 0.18, 0.18); k.box('#2f3540', -0.5, 3.3, z, 0.04, 1.0, 0.04); } }
+        if (e === 6) { k.box('#9aa0a6', 0, 0, 8.2, 3.0, 0.4, 3.0); k.box('#c46a2e', 1.3, 0.4, 8.2, 0.3, 7.0, 0.3); k.add(UCYL(12), '#f4f6f8', 0, 0.4, 8.2, 0.45, 6.0, 0.45); k.cone('#e05a6a', 0, 6.4, 8.2, 0.45, 1.2, 12); }
+        if (e >= 7) { for (const z of [4.0, 7.0]) { k.box('#f4f7fa', 1.3, 0, z, 0.3, 4.6, 0.3); k.add(UBOX(), '#f4f7fa', 0.5, 4.4, z, 2.2, 0.25, 0.3); k.box('#7ff0ff', 0.5, 4.3, z, 2.2, 0.05, 0.32, 0, true); } }
         if (e === 5) { for (const sx of [-1.4, 1.4]) for (const z of [4.6, 7.4]) k.box('#e05a6a', sx, 0, z, 0.25, 5.2, 0.25); k.box('#e05a6a', 0, 5.0, 6.0, 3.4, 0.3, 3.4); k.box('#e05a6a', 0, 5.0, 9.0, 0.6, 0.3, 3.0); const cc = ['#3f7fd6', '#e0b23a', '#3f9a5a', '#e05a6a']; for (let i = 0; i < 6; i++) k.box(cc[i % 4], -2.6 + (i % 3) * 0.95, Math.floor(i / 3) * 0.5, 1.8, 0.9, 0.48, 1.6); }
         out.flag = [-2.6, 1.2];
       } else if (type === 'tower') {
@@ -297,6 +382,8 @@
         else if (e === 2) { k.cyl(S.wall, 0, 0, 0, 1.05, 5.2, 10); k.cyl(S.wall2, 0, 5.2, 0, 1.25, 0.4, 10); for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU; k.box(S.wall2, Math.cos(a) * 1.1, 5.6, Math.sin(a) * 1.1, 0.35, 0.45, 0.35, -a); } roofOn(k, Object.assign({}, S, { roofT: 'cone' }), 0, 5.6, 0, 1.8, 1.8); out.top = 6.0; }
         else if (e === 3) { k.add(UCYL(5), S.wall, 0, 0, 0, 1.9, 1.6, 1.9); k.box('#6d5139', 0, 1.6, 0.2, 0.5, 0.3, 0.9); k.add(UCYL(10), '#2b2b2b', 0, 1.9, 0.9, 0.14, 1.1, 0.14, 0, Math.PI / 2 - 0.1, 0); out.top = 2.2; }
         else if (e === 4) { k.add(UCYL(6), '#8f8a80', 0, 0, 0, 1.4, 1.2, 1.4); k.box('#1a1a1a', 0, 0.7, 1.15, 1.2, 0.18, 0.1); for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.box('#b8a37a', Math.cos(a) * 1.9, 0, Math.sin(a) * 1.9, 0.9, 0.5, 0.4, -a + Math.PI / 2); } out.top = 1.4; }
+        else if (e === 6) { k.box('#9aa0a6', 0, 0, 0, 2.2, 0.6, 2.2); for (let i = 0; i < 6; i++) k.add(UCYL(8), '#f4f4f4', -0.6 + (i % 3) * 0.6, 0.6, -0.4 + Math.floor(i / 3) * 0.8, 0.18, 1.6, 0.18); k.cyl('#9aa0a6', 1.6, 0, -1.4, 0.08, 2.6, 5); k.add(SPHG(), '#f4f4f4', 1.6, 2.6, -1.4, 0.9, 0.9, 0.9); out.top = 2.2; }
+        else if (e >= 7) { k.add(UCYL(8), '#2b313a', 0, 0, 0, 0.7, 0.5, 0.7); k.add(TCYL(0.4, 8), '#dfe3e8', 0, 0.5, 0, 0.45, 5.2, 0.45); k.add(ICO(), '#ff4d4d', 0, 5.9, 0, 0.36, 0.36, 0.36, 0, 0, 0, true); k.add(TORUS(), '#7ff0ff', 0, 5.9, 0, 0.6, 0.6, 0.6, 0, Math.PI / 2, 0, true); out.top = 5.9; }
         else { k.box('#7d848c', 0, 0, 0, 1.8, 0.6, 1.8); k.add(UBOX(), '#5d6b4a', 0, 0.6, 0, 1.4, 0.9, 1.6, 0, -0.5, 0); for (let i = 0; i < 4; i++) k.add(UCYL(6), '#e8e8e8', -0.45 + (i % 2) * 0.9, 1.15, 0.45 - Math.floor(i / 2) * 0.5, 0.15, 0.6, 0.15, 0, -0.5 + Math.PI / 2, 0); k.cyl('#9aa0a6', 1.4, 0, -1.2, 0.06, 2.2, 5); k.add(SPHG(), '#f4f4f4', 1.4, 2.4, -1.2, 0.6, 0.2, 0.6, 0, -0.6, 0); out.top = 1.6; }
         out.flag = e <= 2 ? [0.6, 0.6] : null;
       } else if (type === 'silo') {
@@ -327,7 +414,17 @@
         else if (e === 2) { k.box(S.wall, x, 0, z, len, 2.2, 0.8, ry); if (i % 2 === 0) k.box(S.wall2, x, 2.2, z, len * 0.45, 0.45, 0.85, ry); if (i % 12 === 0) { k.cyl(S.wall, x, 0, z, 1.0, 3.2, 8); roofOn(k, Object.assign({}, S, { roofT: 'cone' }), x, 3.2, z, 1.6, 1.6); } }
         else if (e === 3) { k.box(S.wall2, x, 0, z, len, 1.4, 1.6, ry); if (i % 8 === 0) k.add(UCONE(3), S.wall2, Math.cos(mid) * (R + 1.2), 0, Math.sin(mid) * (R + 1.2), 1.8, 1.4, 1.8, ry + Math.PI / 6); }
         else if (e === 4) { k.box('#b8a37a', x, 0, z, len, 0.55, 0.5, ry); if (i % 2 === 0) k.cyl('#5d5f63', Math.cos(mid) * (R + 0.9), 0, Math.sin(mid) * (R + 0.9), 0.04, 0.8, 4); }
-        else k.box('#c9ced4', x, 0, z, len - 0.08, 2.4, 0.5, ry);
+        else if (e === 5) k.box('#c9ced4', x, 0, z, len - 0.08, 2.4, 0.5, ry);
+        else if (e === 6) { k.box('#8a98a8', x, 0, z, len - 0.05, 3.0, 0.4, ry); k.box('#dfe3e8', x, 3.0, z, len, 0.2, 0.6, ry); }
+        else { k.box('#2b313a', x, 0, z, 0.25, 2.6, 0.25, ry); k.box('#7ff0ff', x, 0.6, z, len, 1.6, 0.05, ry, true); }
+      }
+      // cổng thành ở hai đầu cầu: hai tháp, xà ngang, cánh cổng; thành sắp vỡ thì cổng gãy
+      if (e >= 1) for (const g of L.landing) {
+        const a = Math.atan2(g.z, g.x), ry = -a + Math.PI / 2, tx = -Math.sin(a), tz = Math.cos(a), cx = Math.cos(a) * R, cz = Math.sin(a) * R;
+        for (const sd of [-1, 1]) { const x = cx + tx * sd * 2.4, z = cz + tz * sd * 2.4; if (e <= 4) { k.box(e <= 1 ? S.wall2 : S.wall, x, 0, z, 1.4, e === 1 ? 2.0 : 3.4, 1.4, ry); if (e >= 2) k.box(S.wall2, x, e === 1 ? 2.0 : 3.4, z, 1.6, 0.4, 1.6, ry); } else k.box(e >= 7 ? '#2b313a' : '#9aa0a6', x, 0, z, 0.9, 3.2, 0.9, ry); }
+        if (e <= 4) k.box(S.wall2, cx, e === 1 ? 1.6 : 2.8, cz, 4.2, 0.6, 1.0, ry);
+        if (!L._broken) for (const sd of [-1, 1]) k.box(e >= 5 ? '#5d6670' : '#5b4630', cx + tx * sd * 0.85, 0, cz + tz * sd * 0.85, 1.6, e === 1 ? 1.6 : 2.6, 0.18, ry);
+        else k.add(UBOX(), '#3a2a1e', cx + tx * 0.9, 0, cz + tz * 0.9, 1.6, 0.18, 2.4, ry, 0, 0);
       }
     }
     const FLAGS = [];
@@ -340,7 +437,7 @@
           const b = c.bld[type];
           const step = b.done ? 10 : Math.floor((1 - b.left / b.total) * 5);
           if (type === 'tower') L.towerPos.forEach((p, i) => want.set('tower' + i, { type, p, step, e: c.era }));
-          else if (type === 'wall') want.set('wall', { type, p: v3(0, 0, 0), step, e: c.era });
+          else if (type === 'wall') want.set('wall', { type, p: v3(0, 0, 0), step: step + (c.hp / c.hpMax < 0.35 ? 100 : 0), e: c.era, broken: c.hp / c.hpMax < 0.35 });
           else want.set(type, { type, p: type === 'port' ? L.portPos : type === 'wonder' ? L.wonderPos : type === 'silo' ? L.siloPos : L.milLot[type], step, e: c.era });
         }
         for (const [key, o] of Object.entries(BLD_OF)) { if (!key.startsWith(L.i + ':')) continue; const k2 = key.slice(key.indexOf(':') + 1); if (!want.has(k2)) { L.g.remove(o.g); disposeGroup(o.g); K.unclickable(o.g); delete BLD_OF[key]; L.fires = L.fires.filter((f) => f.owner !== 'bld' + key); } }
@@ -351,9 +448,9 @@
           if (cur) { L.g.remove(cur.g); disposeGroup(cur.g); K.unclickable(cur.g); L.fires = L.fires.filter((f) => f.owner !== 'bld' + key); }
           const k = new Kit(), S = STY[L.ter][d.e];
           let out = {};
-          if (d.type === 'wall') wallModel(k, L, d.e);
+          if (d.type === 'wall') { L._broken = !!d.broken; wallModel(k, L, d.e); }
           else out = buildModel(d.type, k, S, d.e, L.ter) || {};
-          const building = d.step < 10;
+          const building = d.step < 10 && d.type !== 'wall' ? true : d.type === 'wall' && d.step % 100 < 10;
           if (building && d.type !== 'wall') scaffold(k, d.type === 'wonder' ? 8 : 5, d.type === 'wonder' ? 8 : 4.6, d.type === 'wonder' ? 6 + d.step * 2 : 3.2);
           const ry = d.type === 'port' ? Math.atan2(d.p.x, d.p.z) : d.type === 'wall' ? 0 : Math.atan2(-d.p.x, -d.p.z);
           const g = meshOf(k, L.litMat, L.g, d.p.x, d.p.z, ry, false);
@@ -436,14 +533,28 @@
     function flash(p, color, size, dur) { const s = flashPool[flashIdx++ % flashPool.length]; s.position.copy(p); s.material.color.set(color); s.visible = true; flashes.push({ s, t0: performance.now(), dur: dur || 380, size: size || 2 }); }
     // kiểu đạn theo binh chủng và thời đại: [dạng, màu, cỡ, độ cong, tốc độ, nổ khi trúng]
     function shotStyle(kind, e) {
-      if (kind === 'tower') kind = ['ranged', 'ranged', 'ranged', 'siege', 'ranged', 'siege'][e];
-      if (kind === 'ranged') return [['ball', '#8b8577', 0.12, 1.4, 600], ['bolt', '#6d5139', 0.7, 1.1, 520], ['bolt', '#3a2a1e', 0.6, 0.5, 420], ['ball', '#2b2b2b', 0.06, 0.05, 180, 'smoke'], ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#f4f4f4', 0.14, 0.3, 380, 'boom']][e];
-      if (kind === 'siege') return [['ball', '#8b8577', 0.3, 2, 900], ['ball', '#8b8577', 0.1, 0, 300, 'dust'], ['ball', '#8b8577', 0.35, 4.5, 1300, 'dust'], ['ball', '#2b2b2b', 0.2, 2.2, 900, 'smoke'], ['ball', '#3a3a3a', 0.2, 4, 1100, 'boom'], ['bolt', '#f4f4f4', 1.2, 6, 1400, 'boom']][e];
-      if (kind === 'ship') return [null, ['bolt', '#6d5139', 0.7, 1.2, 600], ['ball', '#ff8a3d', 0.18, 1.6, 800, 'fire'], ['ball', '#2b2b2b', 0.2, 1.2, 700, 'smoke'], ['ball', '#3a3a3a', 0.22, 3, 1000, 'boom'], ['bolt', '#f4f4f4', 1.0, 4, 1100, 'boom']][e];
-      if (kind === 'mounted' && e >= 4) return e === 4 ? ['bolt', '#ffd36b', 0.9, 0, 140] : ['ball', '#ffcf7a', 0.12, 0.2, 260, 'boom'];
+      if (kind === 'tower') kind = ['ranged', 'ranged', 'ranged', 'siege', 'ranged', 'siege', 'siege', 'ranged'][e];
+      if (kind === 'ranged') return [['ball', '#8b8577', 0.12, 1.4, 600], ['bolt', '#6d5139', 0.7, 1.1, 520], ['bolt', '#3a2a1e', 0.6, 0.5, 420], ['ball', '#2b2b2b', 0.06, 0.05, 180, 'smoke'], ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#f4f4f4', 0.14, 0.3, 380, 'boom'], ['bolt', '#f4f4f4', 1.0, 1.2, 420, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110]][e];
+      if (kind === 'siege') return [['ball', '#8b8577', 0.3, 2, 900], ['ball', '#8b8577', 0.1, 0, 300, 'dust'], ['ball', '#8b8577', 0.35, 4.5, 1300, 'dust'], ['ball', '#2b2b2b', 0.2, 2.2, 900, 'smoke'], ['ball', '#3a3a3a', 0.2, 4, 1100, 'boom'], ['ball', '#3a3a3a', 0.22, 3, 900, 'boom'], ['bolt', '#f4f4f4', 1.4, 7, 1500, 'boom'], ['bolt', '#7ff0ff', 2.6, 0, 150, 'boom']][e];
+      if (kind === 'ship') return [null, ['bolt', '#6d5139', 0.7, 1.2, 600], ['ball', '#ff8a3d', 0.18, 1.6, 800, 'fire'], ['ball', '#2b2b2b', 0.2, 1.2, 700, 'smoke'], ['ball', '#3a3a3a', 0.22, 3, 1000, 'boom'], ['bolt', '#f4f4f4', 1.0, 4, 1100, 'boom'], ['bolt', '#f4f4f4', 1.2, 5, 1200, 'boom'], ['bolt', '#7ff0ff', 2.2, 0, 150, 'boom']][e];
+      if (kind === 'mounted' && e >= 4) return [null, null, null, null, ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#ffcf7a', 0.12, 0.2, 260, 'boom'], ['bolt', '#f4f4f4', 1.0, 1, 500, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110]][e];
       return null;
     }
     const _p = v3(0, 0, 0), _d = v3(0, 0, 0), _q = v3(0, 0, 0);
+    // tiếng trận: chỉ nghe khi camera ở gần, mỗi nhịp một tiếng
+    let sfxAt = 0;
+    function sfx(fx, p) {
+      const A = K.audio; if (!A || !A.on || !K.camera) return;
+      const t = performance.now(); if (t < sfxAt || K.camera.position.distanceTo(p) > 140) return;
+      sfxAt = t + 140;
+      const e = fx.era;
+      if (fx.kind === 'melee' || (fx.kind === 'mounted' && e < 4)) A.clash();
+      else if (e >= 7) A.laser();
+      else if (fx.kind === 'siege' || fx.kind === 'ship' || (fx.kind === 'mounted' && e >= 5)) A.boom(false);
+      else if (e >= 3) A.shot(e);
+      else A.whoosh && Math.random() < 0.3 && A.whoosh();
+    }
+    function shotRaw(from, to, color, size, arc, dur, hit) { shots.push({ from, to, t0: performance.now(), dur, form: 'ball', color, size, arc, hit, gate: false }); }
     function onFx(fx, dayMs) {
       if (fx.kind === 'nuke') return nukeFx(fx);
       if (!fx.lane || !W.war.lanes[fx.lane]) return;
@@ -459,12 +570,33 @@
       const st = shotStyle(fx.kind, fx.era);
       if (!st) { setTimeout(() => flash(to.clone().setY(to.y + 0.3), '#fff2c0', 0.9, 160), delay); return; }
       shots.push({ from, to, t0: performance.now() + delay, dur: st[4] * (0.8 + Math.random() * 0.4), form: st[0], color: st[1], size: st[2], arc: st[3], hit: st[5], gate: fx.gate != null });
+      setTimeout(() => sfx(fx, from), delay);
       if (st[5] === 'smoke' && !reduce) setTimeout(() => puff(from.clone(), false, '#e8e8e8'), delay);
+    }
+    const _sq = v3(0, 0, 0);
+    // một đơn vị là một tiểu đội; máu vơi thì người ngã xuống, xác nằm lại
+    function drawSquad(u, base, ry, moving, fighting, col, now) {
+      const S = soldierSet(u.cls, u.era), size = squadSize(u), n = Math.max(1, Math.ceil(size * clamp(u.hp / u.hpMax, 0, 1)));
+      const fx = Math.sin(ry), fz = Math.cos(ry), rx = fz, rz = -fx, sc = u.era >= 7 ? 1.4 : 1.2, sp = 0.85 * sc;
+      const at = (i, lunge) => _sq.set(base.x + rx * FORM[i][0] * sp + fx * (FORM[i][1] * sp + lunge), base.y, base.z + rz * FORM[i][0] * sp + fz * (FORM[i][1] * sp + lunge));
+      if (u.shown != null && n < u.shown) for (let i = n; i < Math.min(u.shown, FORM.length); i++) addCorpse(u, at(i, 0).clone(), ry, i, col, sc, now);
+      u.shown = n;
+      for (let i = 0; i < n; i++) {
+        const lunge = fighting && u.cls === 'melee' && !reduce ? Math.max(0, Math.sin(now * 0.009 + u.id + i * 1.7)) * 0.3 : 0;
+        F.crowdPut(S, 0, at(i, lunge), ry + (fighting ? Math.sin(u.id + i) * 0.15 : 0), moving && !reduce ? 1 : 0, fighting && !reduce ? 1 : 0, u.id * 7 + i, sc, [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[(u.id + i) % 6]]);
+      }
+    }
+    function addCorpse(u, p, ry, i, col, sc, now) {
+      if (corpses.length > 220) corpses.shift();
+      p.y += 0.12 * sc;
+      corpses.push({ cls: u.cls, era: u.era, p, ry: ry + (Math.random() - 0.5) * 1.6, seed: u.id * 7 + i, sc, colors: [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[(u.id + i) % 6]], t0: now });
+      if (!reduce) puff(p.clone().setY(p.y + 0.4), false, '#b9ab98');
     }
     function onDeath(d) {
       if (!d.lane || !W.war.lanes[d.lane]) return;
       const p = v3(0, 0, 0);
       if (!lanePos(d.lane, d.x, d.lat, p, _d)) return;
+      if ((d.cls === 'melee' || d.cls === 'ranged') && !(d.cls === 'ranged' && d.era >= 7)) { addCorpse({ cls: d.cls, era: d.era, id: Math.floor(Math.random() * 1e4) }, p.clone(), Math.random() * TAU, 0, K.factionColor(d.owner), d.era >= 7 ? 1.4 : 1.2, performance.now()); return; }
       const big = d.cls === 'ship' || (d.cls === 'mounted' && d.era >= 4) || (d.cls === 'siege' && d.era >= 3);
       wrecks.push({ p, t0: performance.now(), dur: big ? 3200 : 1600, big, sea: W.war.lanes[d.lane].kind === 'sea', color: K.factionColor(d.owner) });
       if (!reduce) puff(p.clone().setY(p.y + 0.6), big, big ? '#5d5d5d' : '#b9ab98');
@@ -559,7 +691,7 @@
         const blocked = W.war.on && Sim.blockadeOf(W, c);
         if (now > b.t0 + b.dur) {
           b.t0 = now;
-          if (b.state === 'dock' && !blocked && !b.retire) { const deep = Math.random() < [0, 0.2, 0.35, 0.45, 0.5, 0.55][e], zc = zoneC(deep ? 6 : b.city), a = Math.random() * TAU, r = Math.random() * (deep ? 16 : 8); b.spot = v3(zc.x + Math.cos(a) * r, SEA_Y, zc.z + Math.sin(a) * r); b.state = 'out'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
+          if (b.state === 'dock' && !blocked && !b.retire) { const deep = Math.random() < [0, 0.2, 0.35, 0.45, 0.5, 0.55, 0.6, 0.62][e], zc = zoneC(deep ? 6 : b.city), a = Math.random() * TAU, r = Math.random() * (deep ? 16 : 8); b.spot = v3(zc.x + Math.cos(a) * r, SEA_Y, zc.z + Math.sin(a) * r); b.state = 'out'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
           else if (b.state === 'out') { b.state = 'fish'; b.dur = 5000 + Math.random() * 6000; }
           else if (b.state === 'fish') { b.state = 'back'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
           else { b.state = 'dock'; b.dur = 3000 + Math.random() * 5000; }
@@ -578,36 +710,50 @@
         bez(s.a, s.ctrl, s.b, u, _pos); bez(s.a, s.ctrl, s.b, Math.min(1, u + 0.01), _p);
         put(modelOf('trade:' + s.era), _pos.setY(SEA_Y + Math.sin(ts * 1.6 + i) * 0.08), Math.atan2(_p.x - _pos.x, _p.z - _pos.z), 1, s.color);
       }
-      // quân lính: trên tuyến thì nội suy vị trí giữa hai ngày; trong doanh trại thì tập luyện
+      // quân lính: trên tuyến thì nội suy vị trí giữa hai ngày; trong doanh trại thì đứng thành hàng
+      for (const key in SOLDIER_SETS) F.crowdBegin(SOLDIER_SETS[key]);
       if (W.war.on) {
         const garrison = {};
         for (const u of W.war.units) {
           if (u.dead) continue;
-          const key = u.cls + ':' + u.era, S = modelOf(key), col = K.factionColor(u.owner);
+          const col = K.factionColor(u.owner), fig = isFig(u), fighting = W.day - (u.fight == null ? -9 : u.fight) <= 1;
           if (u.lane && W.war.lanes[u.lane]) {
             const x = lerp(u.px, u.x, clamp(frac, 0, 1));
             if (!lanePos(u.lane, x, u.lat, _pos, _dir)) continue;
-            const moving = Math.abs(u.x - u.px) > 1e-4, fwd = u.side === 0 ? 1 : -1;
-            const naval = u.naval;
-            if (!naval && moving) _pos.y += Math.abs(Math.sin(ts * 9 + u.id)) * 0.08;
+            const moving = Math.abs(u.x - u.px) > 1e-4, fwd = u.side === 0 ? 1 : -1, ry = Math.atan2(_dir.x * fwd, _dir.z * fwd);
+            if (fig) { drawSquad(u, _pos, ry, moving, fighting, col, now); continue; }
+            const S = modelOf(u.cls + ':' + u.era), naval = u.naval;
+            if (!naval && moving) _pos.y += Math.abs(Math.sin(ts * 9 + u.id)) * 0.06;
             if (naval) _pos.y = SEA_Y + Math.sin(ts * 1.4 + u.id) * 0.07;
-            put(S, _pos, Math.atan2(_dir.x * fwd, _dir.z * fwd), naval ? 1 : 1.25, col);
+            if (u.cls === 'ranged') _pos.y += 2.2 + Math.sin(ts * 3 + u.id) * 0.2; // bầy máy bay không người lái
+            if (fighting && (u.cls === 'mounted' || u.cls === 'siege') && !reduce) _pos.addScaledVector(_dir, -fwd * Math.max(0, Math.sin(ts * 14 + u.id)) * 0.12); // giật lùi khi bắn
+            put(S, _pos, ry, naval ? 1 : 1.25, col);
           } else {
-            const L = lands[u.city], g = garrison[u.city + (u.naval ? 'n' : 'l')] = (garrison[u.city + (u.naval ? 'n' : 'l')] || 0) + 1;
+            const L = lands[u.city], gk = u.city + (u.naval ? 'n' : 'l'), g = garrison[gk] = (garrison[gk] || 0) + 1;
             if (u.naval) {
               if (g > 4) continue;
               const p = portWater(L).addScaledVector(v3(-L.inw.z, 0, L.inw.x), (g - 2.5) * 3.2);
               p.y = u.cls === 'sub' ? SEA_Y - 0.55 : SEA_Y + Math.sin(ts + g) * 0.06;
-              put(S, p, Math.atan2(L.inw.x, L.inw.z), 1, col);
+              put(modelOf(u.cls + ':' + u.era), p, Math.atan2(L.inw.x, L.inw.z), 1, col);
             } else {
-              if (g > 8) continue;
-              const lot = L.milLot.barracks || L.gates[0];
-              const p = L.world(lot).add(v3(((g - 1) % 4) * 0.9 - 1.35, 0, Math.floor((g - 1) / 4) * 1.0 + 1.2).applyAxisAngle(v3(0, 1, 0), Math.atan2(-lot.x, -lot.z)));
-              p.y += Math.max(0, Math.sin(ts * 3 + g)) * 0.06;
-              put(S, p, Math.atan2(-lot.x, -lot.z) + Math.sin(ts * 0.7 + g) * 0.3, 1.2, col);
+              if (g > 10) continue;
+              const lot = L.milLot.barracks || L.gates[0], face = Math.atan2(-lot.x, -lot.z);
+              const p = L.world(lot).add(v3(((g - 1) % 5) * 0.8 - 1.6, 0, Math.floor((g - 1) / 5) * 0.9 + 1.4).applyAxisAngle(v3(0, 1, 0), face));
+              if (fig) F.crowdPut(soldierSet(u.cls, u.era), 0, p, face, 0, Math.sin(ts * 0.8 + u.id) > 0.7 ? 0.5 : 0, u.id * 7, u.era >= 7 ? 1.35 : 1.15, [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[u.id % 6]]);
+              else { if (u.cls === 'ranged') p.y += 2; put(modelOf(u.cls + ':' + u.era), p, face, 1.1, col); }
             }
           }
         }
+      }
+      // xác lính nằm lại trên chiến trường một lúc
+      for (let i = corpses.length - 1; i >= 0; i--) { const c = corpses[i]; if (now - c.t0 > 24000) { corpses.splice(i, 1); continue; } F.crowdPut(soldierSet(c.cls, c.era), 0, c.p, c.ry, 0, 0, c.seed, c.sc, c.colors, -Math.PI / 2); }
+      for (const key in SOLDIER_SETS) F.crowdEnd(SOLDIER_SETS[key]);
+      // thành đang bị vây: khói lửa ở cổng
+      if (!reduce && W.war.on && Math.random() < 0.25) for (const c of W.cities) {
+        if (!c.settled || W.day - c.lastHit > 2 || c.hp / c.hpMax > 0.75) continue;
+        const L = lands[c.id], gt = L.gates[Math.floor(Math.random() * L.gates.length)];
+        puff(L.world(gt).setY(1.5 + Math.random() * 2), true, '#4a4a4a');
+        if (Math.random() < 0.3) flash(L.world(gt).setY(1.2), '#ff8a3d', 2.4, 500);
       }
       for (const key in MODELS) flush(MODELS[key]);
       // đạn
@@ -659,7 +805,7 @@
       }
     }
 
-    return { syncDay, animate, lanePos, portWater, zoneC, SEA_R, SEA_Y, buildings: BLD_OF };
+    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, SEA_R, SEA_Y, buildings: BLD_OF };
   }
 
   root.War3D = { create, SEA_R, SEA_Y };
