@@ -3,6 +3,8 @@ const test = require('node:test');
 const Sim = require('../sim.js');
 
 const close = (a, b) => Math.abs(a - b) < 1e-6 * Math.max(1, Math.abs(b));
+// Các thí nghiệm về một hiện tượng riêng lẻ tắt những cơ chế của Mốc 3 không liên quan, để chỉ đo đúng thứ cần đo
+const M3OFF = { gold: true, epidemic: true, ponzi: true, strike: true, market: true, social: true };
 
 test('sổ cái: tiền không tự sinh ra hay mất đi', () => {
   const w = Sim.create({ seed: 7 });
@@ -134,7 +136,7 @@ test('hiện tượng: bốn mùa đổi sản lượng lương thực', () => {
 
 test('hiện tượng: hạn hán làm thiếu lương thực, lễ hội làm người dân mua sắm nhiều hơn', () => {
   function pair(kind, from, days) {
-    const a = Sim.create({ seed: 4 }), b = Sim.create({ seed: 4 });
+    const a = Sim.create({ seed: 4, off: M3OFF }), b = Sim.create({ seed: 4, off: M3OFF });
     for (let i = 0; i < from; i++) { Sim.step(a); Sim.step(b); }
     a.phen.drought = 0; b.phen.drought = 0; a.phen.festival = 0; b.phen.festival = 0;
     Sim.trigger(b, kind, days);
@@ -192,7 +194,8 @@ test('câu chuyện: thành phố tự sinh ra chuyện dày đặc và đa dạ
   assert.ok(by('major') >= 30, `biến cố: ${by('major')}`);
   assert.ok(by('epic') >= 8, `đại sự: ${by('epic')}`);
   const types = new Set(w.stories.map((s) => s.type));
-  for (const t of ['invention', 'fad', 'airship', 'bankrupt', 'job', 'layoff']) assert.ok(types.has(t), `thiếu loại chuyện ${t}`);
+  for (const t of ['invention', 'fad', 'airship', 'bankrupt', 'job', 'layoff', 'gold', 'wedding', 'chapter']) assert.ok(types.has(t), `thiếu loại chuyện ${t}`);
+  assert.ok(types.size >= 25, `chỉ có ${types.size} loại chuyện`);
   for (const s of w.stories) { assert.ok(s.title && s.text, 'chuyện phải có tiêu đề và nội dung'); }
   assert.ok(w.stories.filter((s) => s.place).length / w.stories.length > 0.9, 'hầu hết chuyện phải có địa điểm để camera bay tới');
   assert.notStrictEqual(Sim.nameOf(0), Sim.nameOf(1));
@@ -219,7 +222,7 @@ test('gieo phát minh: năng suất tăng, phải chờ hạt giống ủ lại,
 });
 
 test('cơn sốt: lan như dịch, giá vọt lên, có đầu cơ, rồi bong bóng vỡ và lắng xuống', () => {
-  const w = Sim.create({ seed: 5 });
+  const w = Sim.create({ seed: 5, off: M3OFF });
   for (let i = 0; i < 150; i++) Sim.step(w);
   for (const fd of w.fads) fd.state = 'over';
   const f = w.firms.filter((x) => x.alive && x.sector === 'goods').sort((a, b) => b.workers.length - a.workers.length)[0];
@@ -389,5 +392,147 @@ test('ký ức: phát minh dựng tượng, phá sản để lại tàn tích, b
   assert.ok(pile && pile.color && pile.units >= 0, 'bong bóng vỡ để lại đống đồ bỏ');
   for (let i = w.day; i < 720; i++) Sim.step(w);
   assert.ok(w.chapters.length === 2 && w.chapters[1].year === 2, 'năm 2 cũng thành một chương');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
+});
+
+/* ===================== Mốc 3: thế giới rộng hơn ===================== */
+
+test('dịch sốt: lây qua người gặp người, người ốm nghỉ làm nên sản lượng giảm, rồi dịch tự tắt nhờ miễn dịch', () => {
+  function run(sick) {
+    const w = Sim.create({ seed: 12, off: Object.assign({}, M3OFF, { fad: true, fire: true }) });
+    for (let i = 0; i < 100; i++) Sim.step(w);
+    if (sick) { w.cfg.off.epidemic = false; Sim.startEpidemic(w, 6, 'Thử nghiệm.'); }
+    let peak = 0, out = 0;
+    for (let i = 0; i < 25; i++) {
+      Sim.step(w);
+      peak = Math.max(peak, w.sickN / w.households.length);
+      out += w.firms.filter((f) => f.alive).reduce((t, f) => t + f.sold, 0);
+    }
+    for (let i = 0; i < 150 && w.epi.state !== 'none'; i++) Sim.step(w);
+    return { w, peak, out };
+  }
+  const base = run(false), r = run(true);
+  assert.ok(r.peak > 0.1, `dịch phải lan (${(r.peak * 100).toFixed(0)}% dân ốm cùng lúc)`);
+  assert.ok(r.peak < 0.6, 'không phải ai cũng ốm cùng lúc');
+  assert.ok(r.out < base.out * 0.97, `người ốm nằm nhà: hàng bán ra ${r.out.toFixed(0)} so với ${base.out.toFixed(0)}`);
+  assert.strictEqual(r.w.epi.state, 'none', 'dịch phải tự tắt');
+  assert.ok(r.w.households.some((h) => h.immune > 0), 'người khỏi bệnh có miễn dịch');
+  const types = r.w.stories.map((s) => s.type);
+  assert.ok(types.includes('epidemic-start') && types.includes('epidemic') && types.includes('epidemic-end'), types.filter((t) => t.startsWith('epi')).join(','));
+  assert.ok(close(Sim.totalMoney(r.w), Sim.expectedMoney(r.w)));
+});
+
+test('mạch vàng: tiền từ bên ngoài đổ vào, thợ bỏ ruộng bỏ xưởng lên đồi, lương bị kéo lên; mạch cạn thì thợ mỏ mất việc cùng lúc', () => {
+  const w = Sim.create({ seed: 13, off: { gold: true } });
+  for (let i = 0; i < 120; i++) Sim.step(w);
+  const others = () => w.firms.filter((f) => f.alive && f.sector !== 'gold').reduce((t, f) => t + f.workers.length, 0);
+  const wage = () => { const l = w.firms.filter((f) => f.alive && f.sector !== 'gold'); return l.reduce((t, f) => t + f.wage, 0) / l.length; };
+  const o0 = others(), w0 = wage(), in0 = w.ledger.inflow;
+  w.cfg.off.gold = false;
+  const mine = Sim.discoverGold(w);
+  assert.ok(mine && mine.sector === 'gold');
+  let peak = 0, minOthers = o0;
+  for (let i = 0; i < 60; i++) { Sim.step(w); peak = Math.max(peak, mine.workers.length); minOthers = Math.min(minOthers, others()); }
+  assert.ok(peak >= 15, `mỏ phải thu hút nhiều thợ (${peak})`);
+  assert.ok(minOthers < o0 - 8, `ruộng và xưởng mất thợ (${o0} → ${minOthers})`);
+  assert.ok(w.ledger.inflow > in0 + 3000, 'vàng bán ra ngoài mang tiền vào');
+  assert.ok(wage() > w0 * 1.02, `lương ở nơi khác bị kéo lên (${w0.toFixed(1)} → ${wage().toFixed(1)})`);
+  assert.ok(w.ledger.outflow > 0, 'người giàu lên mua hàng ngoại, tiền chảy ra');
+  let jobless0 = 0;
+  for (let i = 0; i < 400 && mine.alive; i++) { jobless0 = w.households.filter((h) => h.employer === null).length; Sim.step(w); }
+  assert.ok(!mine.alive, 'mạch vàng phải cạn');
+  const after = w.households.filter((h) => h.employer === null).length;
+  assert.ok(after >= jobless0, 'thợ mỏ mất việc cùng lúc');
+  const types = w.stories.map((s) => s.type);
+  for (const t of ['gold', 'gold-rush', 'gold-end']) assert.ok(types.includes(t), `thiếu chuyện ${t}`);
+  assert.ok(w.memorials.some((m) => m.kind === 'mine'), 'mỏ cạn để lại ký ức');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), 'sổ cái phải khớp cả tiền vào lẫn tiền ra');
+});
+
+test('kẻ hứa lãi: người góp trước được trả bằng tiền người góp sau, lời đồn lan, rồi kẻ đó bỏ trốn mang tiền ra khỏi đảo', () => {
+  const w = Sim.create({ seed: 14, off: M3OFF });
+  for (let i = 0; i < 80; i++) Sim.step(w);
+  const P = Sim.startPonzi(w);
+  assert.ok(P && P.state === 'open');
+  let maxInv = 0, paid = 0;
+  for (let i = 0; i < 200 && P.state === 'open'; i++) { Sim.step(w); maxInv = Math.max(maxInv, P.investors.length); paid = P.paid; assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), `lệch sổ ngày ${w.day}`); }
+  assert.ok(maxInv >= 10, `lời hứa phải lan ra (${maxInv} gia đình góp tiền)`);
+  assert.ok(paid > 0, 'người góp sớm được trả "lãi"');
+  assert.strictEqual(P.state, 'fled', 'cuối cùng kẻ hứa lãi bỏ trốn');
+  assert.ok(P.amount > 0 && w.ledger.outflow > P.amount - 1, 'số tiền mang đi rời khỏi đảo (P.amount đã làm tròn)');
+  assert.ok(P.investors.some((id) => w.households[id].fear > 0 || w.households[id].calm > 0), 'người mất tiền hoảng sợ');
+  assert.ok(w.stories.some((s) => s.type === 'ponzi-flee' && s.victims === P.investors.length));
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
+});
+
+test('đình công: giá lên mà lương đứng yên thì thợ bỏ búa, xưởng ngừng sản xuất và không trả lương, xong thì lương tăng', () => {
+  const w = Sim.create({ seed: 15, off: Object.assign({}, M3OFF, { strike: false }) });
+  for (let i = 0; i < 150; i++) Sim.step(w);
+  const f = w.firms.filter((x) => x.alive && x.sector === 'goods').sort((a, b) => b.workers.length - a.workers.length)[0];
+  // dựng điều kiện bất bình: giá cả 2 tháng qua tăng mạnh, xưởng lãi to mà lương thấp
+  Sim.startStrike(w, f.id);
+  for (let i = w.stats.length - 61; i < w.stats.length - 1; i++) w.stats[i].cpi = w.stats.at(-1).cpi * 0.85;
+  f.price = (f.wage / f.baseProd) * 1.8; f.cash += 3000; w.gov.cash -= 3000; f.wage *= 0.85;
+  let started = -1;
+  for (let i = 0; i < 400 && started < 0; i++) {
+    for (let k = w.stats.length - 61; k < w.stats.length - 1; k++) w.stats[k].cpi = Math.min(w.stats[k].cpi, w.stats.at(-1).cpi * 0.85);
+    Sim.step(w); if (f.strike > 0) started = w.day;
+  }
+  assert.ok(started > 0, 'thợ phải đình công');
+  const wage0 = f.strikeWage, inv0 = f.inv;
+  const wagesBefore = f.workers.map((id) => w.households[id].cash);
+  Sim.step(w);
+  assert.ok(f.inv <= inv0, 'đình công thì không sản xuất');
+  assert.ok(!w.flows.some((x) => x.kind === 'wage' && x.from === f.key), 'đình công thì không có lương');
+  while (f.strike > 0) Sim.step(w);
+  const end = w.stories.filter((s) => s.type === 'strike-end').at(-1);
+  assert.ok(end, 'cuộc đình công phải kết thúc');
+  assert.ok(f.wage > wage0 * 1.05 || end.title.includes('quay lại'), `thợ thắng thì lương tăng (${wage0.toFixed(1)} → ${f.wage.toFixed(1)})`);
+  assert.ok(wagesBefore.length > 0);
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
+});
+
+test('thâu tóm và độc quyền: nơi lớn trả nợ thay và nhận thợ của nơi nhỏ; giữ hơn nửa thị trường một tháng thì thành độc quyền và giá nhích lên', () => {
+  const w = Sim.create({ seed: 16, off: M3OFF });
+  for (let i = 0; i < 120; i++) Sim.step(w);
+  const goods = () => w.firms.filter((f) => f.alive && f.sector === 'goods');
+  const [big, small] = goods().sort((a, b) => b.workers.length - a.workers.length).slice(0, 2).reverse().reverse();
+  const target = goods().sort((a, b) => a.workers.length - b.workers.length)[0];
+  target.debt += 200; target.cash += 200; w.bank.loansOut += 200; w.ledger.created += 200; // cho nơi nhỏ mắc nợ
+  big.cash += 2000; w.gov.cash -= 2000;
+  const n = target.workers.length, nb = big.workers.length, loans0 = w.bank.loansOut;
+  Sim.acquire(w, big.id, target.id);
+  assert.ok(!target.alive && target.merged === big.id, 'nơi bị mua đóng cửa');
+  assert.strictEqual(big.workers.length, nb + n, 'thợ chuyển sang nơi mua');
+  assert.ok(w.bank.loansOut < loans0, 'nợ của nơi bị mua được trả');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), 'thâu tóm không làm sai sổ cái');
+  // độc quyền: cho nơi lớn bán gần hết hàng của ngành
+  w.cfg.off.market = false;
+  let mono = false;
+  const p0 = big.price;
+  for (let i = 0; i < 80 && !mono; i++) { for (const f of goods()) f.avgSales = f === big ? 100 : 5; Sim.step(w); for (const f of goods()) f.avgSales = f === big ? 100 : 5; mono = big.monopoly; }
+  assert.ok(mono, 'phải thành độc quyền');
+  assert.ok(w.stories.some((s) => s.type === 'monopoly' && s.firmName === big.name));
+  for (let i = 0; i < 30; i++) Sim.step(w);
+  assert.ok(big.price > p0 * 0.98, 'độc quyền thì giá không còn bị ép xuống');
+  assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
+});
+
+test('dân số: đám cưới, thế hệ mới dọn ra ở riêng, người nhập cư theo khí cầu khi ai cũng có việc', () => {
+  const w = Sim.create({ seed: 17, off: Object.assign({}, M3OFF, { social: false, airship: true }) });
+  for (let i = 0; i < 1200; i++) Sim.step(w);
+  const t = (k) => w.stories.filter((s) => s.type === k).length;
+  assert.ok(t('wedding') >= 8, `đám cưới: ${t('wedding')}`);
+  assert.ok(w.households.filter((h) => h.partner >= 0).length >= 16, 'có nhiều cặp vợ chồng');
+  assert.ok(t('generation') >= 1 && w.households.length > 140, `thế hệ mới: ${t('generation')}, dân số ${w.households.length}`);
+  assert.strictEqual(w.households.length % 4, 0, 'mỗi lần thêm đúng một ngôi nhà bốn gia đình');
+  // người nhập cư: khí cầu ghé lúc ai cũng có việc
+  const pop = w.households.length, in0 = w.ledger.inflow;
+  for (const h of w.households) if (h.employer === null) { const f = w.firms.find((x) => x.alive && x.sector === 'goods'); h.employer = f.id; f.workers.push(h.id); }
+  let came = false;
+  for (let k = 0; k < 20 && !came; k++) { w.airship.state = 'away'; Sim.arriveAirship(w); came = w.households.length > pop; }
+  assert.ok(came, 'phải có gia đình nhập cư');
+  assert.ok(w.ledger.inflow > in0, 'họ mang tiền dành dụm từ bên ngoài vào');
+  assert.ok(w.stories.some((s) => s.type === 'immigrants'));
   assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)));
 });
