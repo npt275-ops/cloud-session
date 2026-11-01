@@ -284,6 +284,15 @@ body.seeding #scene { cursor: crosshair; }
     <li><i style="background:#ff5a5a"></i><span><b>Đỏ</b>: nỗi sợ. Ít người sợ thì tự tắt, quá ba phần mười dân sợ thì thành đám đông kéo đến Kho Bạc.</span></li>
     <li><i style="background:#ff6b9d"></i><span><b>Màu của cơn sốt</b>: người mê món hàng mới, đội mũ cùng màu và chen trước cửa xưởng.</span></li>
     <li><i style="background:#f0b85a"></i><span><b>Hổ phách</b>: tin đồn mất mùa. Người tin vác bao gạo về tích trữ.</span></li>
+    <li><i style="background:#8fdc9a"></i><span><b>Xanh lá</b>: dịch sốt. Người ốm nằm nhà, đường phố vắng hẳn, trạm xá dựng cạnh Đài Quan Sát Sao.</span></li>
+    <li><i style="background:#c3a6ff"></i><span><b>Tím</b>: lời đồn về chiếc lều hứa lãi ba phần trăm mỗi tuần cạnh Kho Bạc.</span></li>
+  </ul>
+  <p class="legend-h">Những biến cố lớn</p>
+  <ul class="legend">
+    <li><i style="background:#ffd36b"></i><span><b>Tháp giếng trên Đồi Mây</b>: mạch vàng. Bánh xe quay khi có thợ đào, bụi vàng bay lên là vàng được bán ra ngoài đảo.</span></li>
+    <li><i style="background:#d9473a"></i><span><b>Biển đỏ trước xưởng</b>: thợ đang đình công. Lò nguội, không ai nhận lương.</span></li>
+    <li><i style="background:#ffd04d"></i><span><b>Cờ vàng trên mái</b>: nơi này độc quyền, giá cứ nhích lên cho đến khi có đối thủ mới.</span></li>
+    <li><i style="background:#ffb3c7"></i><span><b>Hoa hồng bay giữa hai nhà</b>: một đám cưới. Khi đủ bốn đứa trẻ lớn lên, một ngôi nhà mới mọc lên.</span></li>
   </ul>
   <p class="legend-h">Thành phố ghi nhớ</p>
   <ul class="legend">
@@ -579,6 +588,8 @@ body.seeding #scene { cursor: crosshair; }
   const taken = [];
   const free = (x, z, r) => x * x + z * z < (R - 3.0 - r * 0.3) ** 2 && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2) && Math.abs(z - riverZ(x)) > 3.0 + r;
   [[PLAZA.x, PLAZA.z, 9], [12, -16, 5], [-12, -16, 5]].forEach(([x, z, r]) => taken.push({ x, z, r }));
+  const MINE = new THREE.Vector3(Math.cos(-0.35) * 34.5, 0, Math.sin(-0.35) * 34.5); // Đồi Mây: nơi mạch vàng lộ ra
+  taken.push({ x: MINE.x, z: MINE.z, r: 4.4 });
   for (const bx of bridges) { taken.push({ x: bx, z: riverZ(bx) - 4, r: 2.5 }); taken.push({ x: bx, z: riverZ(bx) + 4, r: 2.5 }); }
   function slots(n, region, r, seed) {
     const out = [];
@@ -644,6 +655,14 @@ body.seeding #scene { cursor: crosshair; }
     return H;
   }
   for (let i = 0; i < Math.ceil(world.households.length / 4); i++) buildHouse(i, false);
+  function syncHouses() {
+    while (houses.length * 4 < world.households.length) {
+      const lot = houseLots.findIndex((l) => !l.used);
+      if (lot < 0 || (houses.length + 1) * 4 > MAXP) break;
+      buildHouse(lot, true);
+      if (buildFx) buildFx(houseLots[lot].p);
+    }
+  }
 
   /* =============== Trang trại cối xay gió và xưởng =============== */
   const firmObj = new Map();  // id -> object
@@ -733,10 +752,13 @@ body.seeding #scene { cursor: crosshair; }
   for (let i = 0; i < MAXP; i++) bodies.setColorAt(i, C(SHIRTS[i % SHIRTS.length]));
   island.add(bodies); island.add(heads);
   const dummy = new THREE.Object3D();
-  function firmPos(id) { const o = firmObj.get(id); return o ? o.g.position : null; }
+  let extraFirmPos = null; // vị trí những nơi làm việc không nằm trên lô xưởng (mỏ vàng)
+  function firmPos(id) { const o = firmObj.get(id); return o ? o.g.position : extraFirmPos ? extraFirmPos(id) : null; }
   function walkPath(h) {
-    const home = houses[Math.floor(h.id / 4)].g.position, wp = firmPos(h.employer);
-    if (!wp) return null;
+    const H = houses[Math.floor(h.id / 4)], wp = firmPos(h.employer);
+    if (!wp || !H) return null;
+    const home = H.g.position;
+    if (wp.z < riverZ(wp.x) - 2) return [home, wp]; // nơi làm ở bờ bắc: đi thẳng, không qua cầu
     const bx = wp.x < 3 ? bridges[0] : bridges[1];
     return [home, new THREE.Vector3(bx, 0, riverZ(bx) - 3.4), new THREE.Vector3(bx, 0, riverZ(bx) + 3.4), wp];
   }
@@ -759,7 +781,7 @@ body.seeding #scene { cursor: crosshair; }
       const h = world.households[i];
       const off = (hash(i) - 0.5) * 0.06;
       let p = null, walking = false;
-      if (h.employer !== null) {
+      if (h.sick > 0) { /* người ốm nằm nhà */ } else if (h.employer !== null) {
         const pts = walkPath(h);
         if (pts) {
           if (tod > 0.24 + off && tod < 0.33 + off) { p = along(pts, (tod - 0.24 - off) / 0.09); walking = true; }
@@ -886,7 +908,7 @@ body.seeding #scene { cursor: crosshair; }
     });
     for (const [id, o] of firmObj) {
       const f = world.firms.find((x) => x.id === id); if (!f) continue;
-      const busy = f.alive ? clamp(f.workers.length / 8, 0, 1) : 0;
+      const busy = f.alive && !(f.strike > 0) ? clamp(f.workers.length / 8, 0, 1) : 0; // đình công: lò nguội
       o.busy = busy;
       if (o.kind === 'farm') {
         const ripe = clamp(f.inv / Math.max(6, f.avgSales * 2), 0, 1);
@@ -922,8 +944,10 @@ body.seeding #scene { cursor: crosshair; }
     const pl = ph.panic > 0 ? ['bad', 'Khủng hoảng niềm tin: Kho Bạc siết cho vay'] : ph.drought > 0 ? ['bad', 'Hạn hán: còn ' + ph.drought + ' ngày'] : ph.festival ? ['good', 'Lễ hội đèn lồng cuối năm'] : ph.snow ? ['info', 'Tuyết đang rơi'] : ph.rain ? ['info', 'Trời đang mưa'] : null;
     if (pl) { const cc = { good: 'var(--good)', bad: 'var(--bad)', info: '#9cc3ff' }[pl[0]]; $('pulse').insertAdjacentHTML('beforeend', '<div class="ph-line"><i style="background:' + cc + ';color:' + cc + '"></i><span>' + pl[1] + '</span></div>'); }
     const fadP = Sim.activeFad(world);
-    const foodS = (world.foodRumorN || 0) / world.households.length;
-    const sl = (world.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(world.fearShare * 100) + '% dân'] : foodS > 0.05 ? ['#f0b85a', 'Tin đồn mất mùa: ' + Math.round(foodS * 100) + '% dân đang tích trữ gạo'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
+    const foodS = (world.foodRumorN || 0) / world.households.length, sickS = (world.sickN || 0) / world.households.length;
+    const G = world.gold && !world.gold.closed ? world.firms.find((f) => f.id === world.gold.firmId) : null, P = world.ponzi && world.ponzi.state === 'open' ? world.ponzi : null;
+    const striking = world.firms.filter((f) => f.alive && f.strike > 0);
+    const sl = (world.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(world.fearShare * 100) + '% dân'] : sickS > 0.04 ? ['#8fdc9a', 'Dịch sốt: ' + Math.round(sickS * 100) + '% dân đang nằm nhà'] : P && P.investors.length >= 3 ? ['#c3a6ff', P.investors.length + ' gia đình đã góp tiền cho ' + P.name] : striking.length ? ['#ff7b6b', 'Đình công ở ' + striking.map((f) => f.name).join(', ')] : G && G.workers.length ? ['#ffd36b', 'Cơn sốt vàng: ' + G.workers.length + ' người đang đào trên Đồi Mây'] : foodS > 0.05 ? ['#f0b85a', 'Tin đồn mất mùa: ' + Math.round(foodS * 100) + '% dân đang tích trữ gạo'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
     if (sl) $('pulse').insertAdjacentHTML('beforeend', '<div' + (pl ? '' : ' class="ph-line"') + '><i style="background:' + sl[0] + ';color:' + sl[0] + '"></i><span>' + sl[1] + '</span></div>');
   }
 
@@ -959,7 +983,7 @@ body.seeding #scene { cursor: crosshair; }
     if (s.type === 'bank') return bank.position.clone();
     if (s.type === 'gov') return hall.position.clone();
     if (s.type === 'school') return school.position.clone();
-    if (s.type === 'memo') return story ? story.memoPos(s.id) : null;
+    if (story && story.customPos(s)) return story.customPos(s);
   }
   function select(s) {
     sel = s;
@@ -999,8 +1023,8 @@ body.seeding #scene { cursor: crosshair; }
       kind = 'Hội đồng thành phố'; title = 'Tháp Đồng Hồ';
       text = 'Nơi thu thuế và trả trợ cấp cho người chưa có việc. Đồng hồ sáng lên khi đêm xuống.';
       list = [['Thuế thu nhập', Math.round(world.policy.taxRate * 100) + '%'], ['Quỹ thành phố', fmt(world.gov.cash) + ' xu'], ['Người tìm việc', world.households.filter((h) => h.employer === null).length]];
-    } else if (sel.type === 'memo') {
-      const m = story && story.memoCard(sel.id);
+    } else if (['memo', 'mine', 'ponzi', 'clinic'].includes(sel.type)) {
+      const m = story && story.customCard(sel);
       if (!m) { sel = null; return card(); }
       ({ kind, title, text, list } = m);
     } else if (sel.type === 'school') {
@@ -1552,7 +1576,7 @@ body.seeding #scene { cursor: crosshair; }
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
   $('money').onclick = () => { showMoney = !showMoney; $('money').setAttribute('aria-pressed', String(showMoney)); };
   $('orbit').onclick = () => { controls.autoRotate = !controls.autoRotate; $('orbit').setAttribute('aria-pressed', String(controls.autoRotate)); };
-  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world, firmObj, openPolicy, doRain, openBuild, setBuild, buildAt, freeLots, houses, lots: () => ({ house: houseLots.length, farm: FARM_SLOTS.length, shop: SHOP_SLOTS.length, firmsShown: firmObj.size, firmsAlive: world.firms.filter((f) => f.alive).length }), ff: (n) => { for (let i = 0; i < n; i++) { Sim.step(world); syncFirms(); checkWatches(); } seenEv = world.events.length; story.onDay(); pulse(); }, trigger: (k, d) => { Sim.trigger(world, k, d); pulse(); }, wx, enter, openHelp, lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality, audio, jumpTo: (doy) => { const target = Math.floor(world.day / 360) * 360 + doy + (doy < world.day % 360 ? 360 : 0); while (world.day < target) { Sim.step(world); syncFirms(); } seenEv = world.events.length; story.onDay(); pulse(); }, story: () => story };
+  window.__glass = { setTime: (v) => { tod = v; cycleOn = false; }, select, camera, controls, world, firmObj, openPolicy, doRain, openBuild, setBuild, buildAt, freeLots, houses, lots: () => ({ house: houseLots.length, farm: FARM_SLOTS.length, shop: SHOP_SLOTS.length, firmsShown: firmObj.size, firmsAlive: world.firms.filter((f) => f.alive).length }), ff: (n) => { for (let i = 0; i < n; i++) { Sim.step(world); syncFirms(); syncHouses(); checkWatches(); } seenEv = world.events.length; story.onDay(); pulse(); }, trigger: (k, d) => { Sim.trigger(world, k, d); pulse(); }, wx, enter, openHelp, lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality, audio, jumpTo: (doy) => { const target = Math.floor(world.day / 360) * 360 + doy + (doy < world.day % 360 ? 360 : 0); while (world.day < target) { Sim.step(world); syncFirms(); syncHouses(); } seenEv = world.events.length; story.onDay(); pulse(); }, story: () => story };
 
   /* =============== Biên niên sử, thanh phụ, bộ máy câu chuyện =============== */
   function openChron(open) {
@@ -1569,7 +1593,8 @@ body.seeding #scene { cursor: crosshair; }
   }
   $('moreBtn').onclick = (e) => { e.stopPropagation(); toggleMore($('more').hidden); };
   document.addEventListener('click', (e) => { if (!$('more').hidden && !e.target.closest('#more') && e.target !== $('moreBtn')) toggleMore(false); });
-  const story = window.Story3D ? Story3D.create({ THREE, island, world, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C, watch: (d, fn) => watch(d, fn), setAutoRotate, closePanels, people: { bodyGeo: bodies.geometry, headGeo: heads.geometry, headMat: heads.material, shirts: SHIRTS }, tod: () => tod, clickable, unclickable, walkPath, plazaExits: bridges.map((bx) => new THREE.Vector3(bx, 0, riverZ(bx) - 3.2)) }) : null;
+  const story = window.Story3D ? Story3D.create({ THREE, island, world, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C, watch: (d, fn) => watch(d, fn), setAutoRotate, closePanels, people: { bodyGeo: bodies.geometry, headGeo: heads.geometry, headMat: heads.material, shirts: SHIRTS }, tod: () => tod, clickable, unclickable, walkPath, minePos: MINE, school, riverZ, plazaExits: bridges.map((bx) => new THREE.Vector3(bx, 0, riverZ(bx) - 3.2)) }) : null;
+  if (story) extraFirmPos = story.extraPos;
   $('dirBtn').onclick = () => { story.setDirector(!story.director); $('dirBtn').setAttribute('aria-pressed', String(story.director)); };
 
   /* =============== Vòng lặp =============== */
@@ -1583,7 +1608,7 @@ body.seeding #scene { cursor: crosshair; }
       if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1;
       acc += (dt * tps) / 1000;
       let steps = 0;
-      while (acc >= 1 && steps < 4) { Sim.step(world); syncFirms(); spawnMotes(); checkWatches(); story.onDay(); acc -= 1; steps++; }
+      while (acc >= 1 && steps < 4) { Sim.step(world); syncFirms(); syncHouses(); spawnMotes(); checkWatches(); story.onDay(); acc -= 1; steps++; }
       if (steps) { pulse(); if (sel) card(); }
     }
     const { night } = applyTime();

@@ -11,6 +11,11 @@
     airship: ['Khí cầu', '#7bdff2'], 'airship-leave': ['Khí cầu', '#7bdff2'], fire: ['Hoả hoạn', '#ff7a2f'],
     bankrupt: ['Phá sản', '#d49a9a'], open: ['Khai trương', '#9be564'], job: ['Việc làm', '#9df0c4'], layoff: ['Mất việc', '#b9a3a3'],
     rich: ['Giàu lên', '#f2c14e'], hungry: ['Thiếu ăn', '#e58f8f'], copy: ['Học theo', '#e8d38a'],
+    'epidemic-start': ['Dịch sốt', '#8fdc9a'], epidemic: ['Dịch sốt', '#8fdc9a'], 'epidemic-end': ['Dịch sốt', '#b9d8bd'],
+    gold: ['Mạch vàng', '#ffd36b'], 'gold-rush': ['Cơn sốt vàng', '#ffd36b'], 'gold-farms': ['Mạch vàng', '#e0b060'], 'gold-imports': ['Hàng ngoại', '#e8c98a'], 'gold-end': ['Mạch vàng cạn', '#c9a35a'],
+    ponzi: ['Người lạ', '#c3a6ff'], 'ponzi-grow': ['Người lạ', '#c3a6ff'], 'ponzi-flee': ['Bỏ trốn', '#a98bff'],
+    strike: ['Đình công', '#ff7b6b'], 'strike-end': ['Đình công', '#e8a59d'], merger: ['Thâu tóm', '#e8c98a'], monopoly: ['Độc quyền', '#ffcf5a'], 'monopoly-end': ['Độc quyền', '#d9c58f'],
+    wedding: ['Đám cưới', '#ffb3c7'], baby: ['Em bé', '#ffd1dc'], generation: ['Thế hệ mới', '#9df0c4'], immigrants: ['Người đến', '#7bdff2'],
     tap: ['Tiếng gõ', '#cfe8ff'], 'rumor-food': ['Tin đồn', '#f0b85a'], 'food-rush': ['Tích trữ', '#f0b85a'], 'food-rush-end': ['Tích trữ', '#c9b48a'], chapter: ['Chương mới', '#ffd27a'],
     season: ['Mùa', '#a6d6a0'], drought: ['Hạn hán', '#e0b060'], 'drought-end': ['Hạn hán', '#a6d6a0'], festival: ['Lễ hội', '#ffb36b'],
   };
@@ -36,6 +41,8 @@
       if (place.kind === 'firm') return firmPos(place.id) || PLAZA;
       if (place.kind === 'bank') return bank.position;
       if (place.kind === 'dock') return dockHover.clone().setY(0).addScaledVector(outDir, -4);
+      if (place.kind === 'mine') return X.minePos;
+      if (place.kind === 'ponzi') return ponziPos;
       if (place.kind === 'farms') { const fs = [...firmObj.values()].filter((o) => o.kind === 'farm'); if (!fs.length) return PLAZA; const p = new THREE.Vector3(); for (const o of fs) p.add(o.g.position); return p.multiplyScalar(1 / fs.length); }
       return PLAZA;
     }
@@ -78,9 +85,10 @@
     }
     function spreadArcs() {
       const fad = Sim.activeFad(world), list = world.spread || [];
-      const fear = list.filter((s) => s.kind === 'fear'), hype = list.filter((s) => s.kind === 'hype'), food = list.filter((s) => s.kind === 'food');
-      const pick = [...fear.slice(0, 14), ...hype.slice(0, 14), ...food.slice(0, 12)];
-      for (const s of pick) spawnArc(housePos(Math.floor(s.from / 4)), housePos(Math.floor(s.to / 4)), s.kind === 'fear' ? '#ff5a5a' : s.kind === 'food' ? '#f0b85a' : fad ? fad.color : '#ffd166');
+      const of = (k, n) => list.filter((s) => s.kind === k).slice(0, n);
+      const pick = [...of('fear', 14), ...of('hype', 14), ...of('food', 12), ...of('sick', 12), ...of('greed', 10)];
+      const COL = { fear: '#ff5a5a', food: '#f0b85a', sick: '#8fdc9a', greed: '#c3a6ff' };
+      for (const s of pick) spawnArc(housePos(Math.floor(s.from / 4)), housePos(Math.floor(s.to / 4)), COL[s.kind] || (fad ? fad.color : '#ffd166'));
     }
 
     /* =============== Quầng sáng trên mái: nhà đang sợ, nhà đang mê =============== */
@@ -89,11 +97,11 @@
       while (auras.length < houses.length) { const s = new THREE.Sprite(additive('#ff5a5a')); s.scale.set(3.4, 3.4, 1); island.add(s); auras.push({ s, level: 0, target: 0 }); }
       const fad = Sim.activeFad(world);
       for (let i = 0; i < houses.length; i++) {
-        let fear = 0, hype = 0, food = 0;
-        for (let k = 0; k < 4; k++) { const h = world.households[i * 4 + k]; if (!h) continue; if (h.fear > 0) fear++; if (fad && h.hype === fad.id) hype++; if (h.foodRumor > 0) food++; }
-        const A = auras[i];
-        A.target = Math.max(fear, hype, food) / 4;
-        A.s.material.color.set(fear >= hype && fear >= food && fear > 0 ? '#ff4d4d' : food >= hype && food > 0 ? '#f0b85a' : fad ? fad.color : '#ffd166');
+        const c = { fear: 0, hype: 0, food: 0, sick: 0 };
+        for (let k = 0; k < 4; k++) { const h = world.households[i * 4 + k]; if (!h) continue; if (h.fear > 0) c.fear++; if (fad && h.hype === fad.id) c.hype++; if (h.foodRumor > 0) c.food++; if (h.sick > 0) c.sick++; }
+        const A = auras[i], top = Object.keys(c).reduce((a, b) => (c[b] > c[a] ? b : a), 'fear');
+        A.target = c[top] / 4;
+        A.s.material.color.set({ fear: '#ff4d4d', food: '#f0b85a', sick: '#8fdc9a', hype: fad ? fad.color : '#ffd166' }[top]);
       }
     }
     function updateAuras(t) {
@@ -730,6 +738,196 @@
     function hideChapter() { $('chapter').hidden = true; chapterUntil = 0; }
     $('cpClose').addEventListener('click', hideChapter);
 
+    /* =============== Mốc 3: Đồi Mây, trạm xá, lều người lạ, đình công, độc quyền, đám cưới =============== */
+    // --- Tháp giếng mỏ trên Đồi Mây
+    const minePos = X.minePos, mineG = new THREE.Group();
+    mineG.position.copy(minePos); mineG.rotation.y = Math.atan2(minePos.x, minePos.z); mineG.visible = false; island.add(mineG);
+    const wood = mat('#7a5638'), darkWood = mat('#4e3a2a'), goldMat = new THREE.MeshStandardMaterial({ color: '#fff1b0', emissive: '#ffc23d', emissiveIntensity: 1.1, flatShading: true, roughness: 0.3, metalness: 0.4 });
+    const mineParts = { wheel: null, crystals: [], bucket: null, glow: null };
+    (function buildMine() {
+      mesh(new THREE.CylinderGeometry(3.9, 4.3, 0.5, 9), mat('#9b8a72'), 0, 0.25, 0, mineG).castShadow = false; // nền đá
+      const hole = mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.12, 12), mat('#1d1712'), 0, 0.52, 0.6, mineG); hole.castShadow = false;
+      for (const sx of [-1, 1]) { const leg = mesh(box(0.22, 5.4, 0.22), wood, sx * 1.15, 0.5, 0.6, mineG); leg.rotation.z = -sx * 0.14; const leg2 = mesh(box(0.22, 5.2, 0.22), wood, sx * 1.15, 0.5, -0.6, mineG); leg2.rotation.z = -sx * 0.14; }
+      mesh(box(2.0, 0.22, 1.6), wood, 0, 5.7, 0, mineG);
+      const wheel = new THREE.Group(); wheel.position.set(0, 6.25, 0); mineG.add(wheel); mineParts.wheel = wheel;
+      mesh(new THREE.TorusGeometry(0.75, 0.08, 6, 18), darkWood, 0, 0, 0, wheel);
+      for (let k = 0; k < 4; k++) { const sp = mesh(box(0.08, 1.5, 0.08), darkWood, 0, -0.75, 0, wheel); sp.geometry = new THREE.BoxGeometry(0.08, 1.5, 0.08); sp.position.set(0, 0, 0); sp.rotation.z = (k * Math.PI) / 4; }
+      const bucket = mesh(new THREE.CylinderGeometry(0.35, 0.28, 0.45, 8), darkWood, 0.75, 3.2, 0, mineG); mineParts.bucket = bucket;
+      const shed = mesh(box(2.2, 1.6, 1.8), mat('#b08a62'), -2.4, 0.5, -1.2, mineG); shed.rotation.y = 0.3;
+      const roof = mesh(new THREE.ConeGeometry(1.7, 0.9, 4), mat('#6b4a33'), -2.4, 2.55, -1.2, mineG); roof.rotation.y = Math.PI / 4 + 0.3;
+      for (let k = 0; k < 7; k++) { const a = k * 0.9, r = 2.3 + (k % 3) * 0.5; const c = mesh(new THREE.OctahedronGeometry(0.22 + (k % 3) * 0.08, 0), goldMat, Math.cos(a) * r, 0.75, Math.sin(a) * r + 0.6, mineG); c.rotation.set(k, k * 2, 0); mineParts.crystals.push(c); }
+      for (const rx of [1.55, 2.05]) mesh(box(0.07, 0.07, 2.8), mat('#5b5f66', { metalness: 0.6, roughness: 0.4 }), rx, 0.55, 2.7, mineG);
+      for (let k = 0; k < 5; k++) mesh(box(0.75, 0.05, 0.14), darkWood, 1.8, 0.5, 1.5 + k * 0.6, mineG).castShadow = false;
+      const cart = mesh(box(0.6, 0.38, 0.8), mat('#5b5f66', { metalness: 0.5, roughness: 0.5 }), 1.8, 0.62, 3.4, mineG);
+      for (let k = 0; k < 3; k++) mesh(new THREE.OctahedronGeometry(0.15, 0), goldMat, 1.65 + k * 0.15, 1.05, 3.3 + (k % 2) * 0.15, mineG);
+      mineParts.cart = cart;
+      const g = new THREE.Sprite(additive('#ffd36b', 0)); g.scale.set(9, 9, 1); g.position.set(0, 2, 0.6); mineG.add(g); mineParts.glow = g;
+    })();
+    X.clickable(mineG, { type: 'mine' });
+    function mineFirm() { const G = world.gold; return G ? world.firms.find((f) => f.id === G.firmId) : null; }
+    function updateMine(t, dt) {
+      const G = world.gold, f = mineFirm();
+      mineG.visible = !!G;
+      if (!G) return;
+      const active = f && f.alive && !G.closed, busy = active ? clamp(f.workers.length / 20, 0, 1) : 0;
+      mineParts.wheel.rotation.z -= dt * 0.004 * busy;
+      mineParts.bucket.position.y = 1.2 + (Math.sin(t * 0.0016) * 0.5 + 0.5) * 3.6 * (busy > 0 ? 1 : 0);
+      goldMat.emissiveIntensity = active ? 0.6 + 0.6 * clamp(G.yield, 0, 1) : 0.05;
+      for (const c of mineParts.crystals) c.visible = active || G.yield > 0.3;
+      mineParts.glow.material.opacity = active ? (0.25 + 0.25 * Math.sin(t * 0.004)) * clamp(G.yield, 0.2, 1) : 0;
+      // bụi vàng bay lên: vàng được bán ra ngoài đảo
+      if (active && busy > 0 && !reduce && Math.random() < 0.08 * busy) spawnMote(new THREE.Vector3(minePos.x, 3, minePos.z), new THREE.Vector3(minePos.x + (Math.random() - 0.5) * 6, 30 + Math.random() * 8, minePos.z + (Math.random() - 0.5) * 6), '#ffd36b', 2200);
+    }
+
+    // --- Trạm xá dựng tạm cạnh Đài Quan Sát Sao trong mùa dịch
+    const sp0 = X.school.position, toPlazaS = new THREE.Vector3(PLAZA.x - sp0.x, 0, PLAZA.z - sp0.z).normalize();
+    const clinicPos = sp0.clone().addScaledVector(toPlazaS, 3.9), clinic = new THREE.Group();
+    clinic.position.copy(clinicPos); clinic.visible = false; island.add(clinic);
+    (function buildClinic() {
+      mesh(new THREE.ConeGeometry(1.45, 1.9, 6), mat('#f4f1e8'), 0, 0.95, 0, clinic);
+      mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.5, 6), mat('#e9e4d6'), 0, 0, 0, clinic).castShadow = false;
+      mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.6, 5), mat('#6d5139'), 0, 1.3, 0, clinic);
+      const flag = mesh(box(0.7, 0.42, 0.04), mat('#5fbf7a'), 0.36, 2.2, 0, clinic); flag.castShadow = false;
+    })();
+    X.clickable(clinic, { type: 'clinic' });
+    // --- Lều sặc sỡ của người lạ, dựng ngay cạnh Kho Bạc
+    const toPlazaB = new THREE.Vector3(PLAZA.x - bank.position.x, 0, PLAZA.z - bank.position.z).normalize();
+    const ponziPos = bank.position.clone().addScaledVector(toPlazaB, 3.9), tent = new THREE.Group();
+    tent.position.copy(ponziPos); tent.visible = false; island.add(tent);
+    const tentParts = {};
+    (function buildTent() {
+      const g = new THREE.Group(); tent.add(g); tentParts.body = g;
+      for (let k = 0; k < 8; k++) { const seg = mesh(new THREE.CylinderGeometry(0.01, 1.5, 2.1, 8, 1, false, (k / 8) * Math.PI * 2, Math.PI / 4), new THREE.MeshStandardMaterial({ color: k % 2 ? '#7d4cc9' : '#f2c14e', flatShading: true, roughness: 0.6, side: THREE.DoubleSide }), 0, 1.05 + 0.6, 0, g); seg.castShadow = true; }
+      mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.6, 8), mat('#5b3a8f'), 0, 0, 0, g);
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96;
+      const c2 = cv.getContext('2d'); c2.fillStyle = '#2b1c45'; c2.fillRect(0, 0, 256, 96); c2.strokeStyle = '#f2c14e'; c2.lineWidth = 6; c2.strokeRect(4, 4, 248, 88); c2.fillStyle = '#ffe08a'; c2.font = '700 38px Outfit, "Segoe UI", sans-serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText('Lãi 3%/tuần', 128, 50);
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.64), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), emissive: '#ffffff', emissiveMap: new THREE.CanvasTexture(cv), emissiveIntensity: 0.35, side: THREE.DoubleSide }));
+      sign.position.set(0, 1.2, 1.55); g.add(sign);
+      const glowS = new THREE.Sprite(additive('#c3a6ff', 0.5)); glowS.scale.set(6, 6, 1); glowS.position.y = 2; g.add(glowS); tentParts.glow = glowS;
+      const balloon = new THREE.Group(); balloon.visible = false; tent.add(balloon); tentParts.balloon = balloon;
+      mesh(new THREE.SphereGeometry(1.1, 12, 10), mat('#7d4cc9'), 0, 2.4, 0, balloon);
+      mesh(new THREE.CylinderGeometry(0.45, 0.35, 0.4, 8), wood, 0, 0.9, 0, balloon);
+    })();
+    tent.rotation.y = Math.atan2(toPlazaB.x, toPlazaB.z);
+    X.clickable(tent, { type: 'ponzi' });
+    let fleeT0 = 0;
+    function updateTent(t) {
+      const P = world.ponzi;
+      const open = P && P.state === 'open', fled = P && P.state === 'fled' && world.day - P.fled < 60;
+      tent.visible = !!(open || fled);
+      if (!tent.visible) return;
+      tentParts.glow.material.opacity = open ? 0.35 + 0.2 * Math.sin(t * 0.005) : 0;
+      tentParts.body.scale.y = open ? 1 : 0.35; // lều xẹp xuống sau khi người lạ bỏ đi
+      const B = tentParts.balloon;
+      if (fled && !fleeT0) fleeT0 = now();
+      if (!fled) fleeT0 = 0;
+      const k = fleeT0 ? (now() - fleeT0) / 9000 : 0;
+      B.visible = fled && k < 1;
+      if (B.visible) { B.position.set(k * k * 30, k * 34, -k * 12); B.rotation.y = k * 3; }
+    }
+
+    // --- Đám đông: người ốm trước trạm xá, người góp tiền trước lều
+    const CN = 16, crowds = {};
+    function makeCrowd(key, hatColor) {
+      const bodies = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), CN), heads = new THREE.InstancedMesh(P.headGeo, P.headMat, CN);
+      for (let i = 0; i < CN; i++) bodies.setColorAt(i, C(P.shirts[(i * 3 + key.length) % P.shirts.length]));
+      for (const m of [bodies, heads]) { m.castShadow = true; m.frustumCulled = false; m.visible = false; island.add(m); }
+      crowds[key] = { bodies, heads, level: 0 };
+    }
+    makeCrowd('clinic'); makeCrowd('ponzi');
+    function updateCrowd(key, origin, dir, target, t) {
+      const Cr = crowds[key];
+      Cr.level += (target - Cr.level) * 0.03;
+      const show = Cr.level > 0.01;
+      Cr.bodies.visible = Cr.heads.visible = show;
+      if (!show) return;
+      // một cụm 4×4 đứng bên hông lều, trong khoảng đất trống của công trình bên cạnh
+      const n = Cr.level * CN, side = new THREE.Vector3(-dir.z, 0, dir.x);
+      for (let i = 0; i < CN; i++) {
+        if (i >= n) { qd.position.set(0, -80, 0); qd.scale.setScalar(0.001); }
+        else { const row = Math.floor(i / 4), col = i % 4, jig = reduce ? 0 : Math.sin(t * 0.006 + i) * 0.05; qd.position.copy(origin).addScaledVector(side, 2.3 + row * 0.6).addScaledVector(dir, (col - 1.5) * 0.6 + jig); qd.position.y = 0.31 + Math.abs(Math.sin(t * 0.007 + i)) * 0.04; qd.scale.setScalar(1); }
+        qd.updateMatrix(); Cr.bodies.setMatrixAt(i, qd.matrix);
+        qd.position.y += 0.47; qd.updateMatrix(); Cr.heads.setMatrixAt(i, qd.matrix);
+      }
+      Cr.bodies.instanceMatrix.needsUpdate = Cr.heads.instanceMatrix.needsUpdate = true;
+    }
+    function updateEpidemic(t) {
+      const sick = (world.sickN || 0) / world.households.length, on = world.epi.state !== 'none';
+      clinic.visible = on || sick > 0;
+      const tod = X.tod(), day = tod > 0.3 && tod < 0.74;
+      updateCrowd('clinic', clinicPos, toPlazaS, on && day ? clamp(sick * 3, 0.12, 1) : 0, t);
+      const P = world.ponzi;
+      updateCrowd('ponzi', ponziPos, toPlazaB, P && P.state === 'open' && day ? clamp(P.investors.length / 30, 0.1, 1) : 0, t);
+    }
+
+    // --- Đình công: thợ cầm biển đỏ đứng chắn trước cửa xưởng
+    const PK = 9, picketB = new THREE.InstancedMesh(P.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), PK * 3), picketH = new THREE.InstancedMesh(P.headGeo, P.headMat, PK * 3);
+    const signs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.62, 0.42, 0.05), new THREE.MeshStandardMaterial({ color: '#d9473a', flatShading: true, roughness: 0.7, emissive: '#5a120c', emissiveIntensity: 0.25 }), PK * 3);
+    for (let i = 0; i < PK * 3; i++) picketB.setColorAt(i, C(P.shirts[(i * 5 + 2) % P.shirts.length]));
+    for (const m of [picketB, picketH, signs]) { m.castShadow = true; m.frustumCulled = false; island.add(m); }
+    function updatePickets(t) {
+      const list = [];
+      for (const [id, o] of firmObj) { const f = firmOf(id); if (f && f.alive && f.strike > 0 && !o.dying) list.push(o); }
+      for (let i = 0; i < PK * 3; i++) {
+        const o = list[Math.floor(i / PK)];
+        if (!o) { qd.position.set(0, -80, 0); qd.scale.setScalar(0.001); qd.updateMatrix(); picketB.setMatrixAt(i, qd.matrix); picketH.setMatrixAt(i, qd.matrix); signs.setMatrixAt(i, qd.matrix); continue; }
+        const k = i % PK, th = o.g.rotation.y, cs = Math.cos(th), sn = Math.sin(th), lx = (k - (PK - 1) / 2) * 0.55, lz = 2.7 + (k % 2) * 0.35;
+        const bob = reduce ? 0 : Math.abs(Math.sin(t * 0.005 + k)) * 0.12;
+        qd.position.set(o.g.position.x + lx * cs + lz * sn, 0.31 + bob * 0.3, o.g.position.z - lx * sn + lz * cs); qd.scale.setScalar(1); qd.rotation.set(0, th, 0);
+        qd.updateMatrix(); picketB.setMatrixAt(i, qd.matrix);
+        qd.position.y += 0.47; qd.updateMatrix(); picketH.setMatrixAt(i, qd.matrix);
+        if (k % 3 === 1) { qd.position.y += 0.75 + bob; qd.updateMatrix(); signs.setMatrixAt(i, qd.matrix); } else { qd.scale.setScalar(0.001); qd.updateMatrix(); signs.setMatrixAt(i, qd.matrix); }
+        qd.rotation.set(0, 0, 0);
+      }
+      picketB.instanceMatrix.needsUpdate = picketH.instanceMatrix.needsUpdate = signs.instanceMatrix.needsUpdate = true;
+    }
+
+    // --- Độc quyền: cờ vàng trên mái
+    const flags = new Map(), flagMat = new THREE.MeshStandardMaterial({ color: '#ffd04d', emissive: '#7a5200', emissiveIntensity: 0.35, flatShading: true, side: THREE.DoubleSide });
+    function syncFlags(t) {
+      for (const [id, o] of firmObj) {
+        const f = firmOf(id), on = !!(f && f.alive && f.monopoly);
+        let fl = flags.get(id);
+        if (on && !fl) { fl = new THREE.Group(); mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 5), mat('#3b3b3b'), 0, 1.2, 0, fl); const cloth = mesh(new THREE.PlaneGeometry(1.2, 0.7), flagMat, 0.62, 2.0, 0, fl); fl.userData.cloth = cloth; fl.position.set(-1.0, o.kind === 'farm' ? 4.6 : 3.6, 0.4); o.g.add(fl); flags.set(id, fl); }
+        if (!on && fl) { fl.parent.remove(fl); flags.delete(id); }
+        if (fl) fl.userData.cloth.rotation.y = Math.sin(t * 0.004 + id) * 0.35;
+      }
+    }
+
+    // --- Đám cưới: hoa rải từ nhà này sang nhà kia
+    function weddingFx(st) {
+      const a = housePos(st.from), b = housePos(st.to);
+      for (let k = 0; k < 30; k++) spawnMote(new THREE.Vector3(a.x, 3 + Math.random(), a.z), new THREE.Vector3(b.x + (Math.random() - 0.5) * 2, 3, b.z + (Math.random() - 0.5) * 2), k % 3 ? '#ffb3c7' : '#fff1f5', 2600 + k * 40);
+      label3d('Đám cưới', new THREE.Vector3(b.x, 8, b.z), '#ffc2d4');
+    }
+
+    function extraPos(id) { const G = world.gold; return G && G.firmId === id ? minePos : null; }
+    function customCard(sel) {
+      if (sel.type === 'memo') return memoCard(sel.id);
+      if (sel.type === 'mine') {
+        const G = world.gold, f = mineFirm(); if (!G) return null;
+        const open = f && f.alive && !G.closed;
+        return { kind: open ? 'Mỏ vàng · đang khai thác' : 'Mỏ vàng · đã cạn', title: 'Mỏ Vàng Đồi Mây', text: open ? 'Mạch vàng tìm thấy ngày ' + G.start + '. Lương ở đây gấp rưỡi xưởng thường, nên thợ khắp đảo bỏ việc lên đồi. Mạch vàng mỏng dần mỗi ngày.' : 'Mạch vàng đã cạn sau ' + (G.closed - G.start) + ' ngày. Tháp giếng còn đứng đó, bánh xe không quay nữa.', list: [['Thợ mỏ', open ? f.workers.length : 0], ['Độ dày mạch vàng', Math.round(clamp(G.yield, 0, 1) * 100) + '%'], ['Vàng đã bán ra ngoài', Math.round(G.revenue).toLocaleString('vi-VN') + ' xu'], ['Tiền theo hàng ngoại ra đi', Math.round(G.imports || 0).toLocaleString('vi-VN') + ' xu']] };
+      }
+      if (sel.type === 'ponzi') {
+        const Pz = world.ponzi; if (!Pz) return null;
+        const open = Pz.state === 'open';
+        return { kind: open ? 'Lều của người lạ' : 'Lều bỏ hoang', title: Pz.name, text: open ? 'Hứa trả lãi ba phần trăm mỗi tuần. Lãi của người góp trước được trả bằng tiền của người góp sau.' : Pz.name + ' đã bỏ trốn ngày ' + Pz.fled + ', mang theo ' + Pz.amount.toLocaleString('vi-VN') + ' xu.', list: [['Gia đình đã góp', Pz.investors.length], ['Tiền đã nhận', Math.round(Pz.pool).toLocaleString('vi-VN') + ' xu'], ['"Lãi" đã trả', Math.round(Pz.paid).toLocaleString('vi-VN') + ' xu']] };
+      }
+      if (sel.type === 'clinic') {
+        const sick = world.sickN || 0;
+        return { kind: 'Trạm xá dựng tạm', title: 'Trạm xá Đài Sao', text: sick ? sick + ' người đang nằm nhà vì sốt. Người ốm không đi làm, không đi chợ; khỏi rồi thì một thời gian không mắc lại.' : 'Dịch đã qua. Trạm xá sắp được dỡ đi.', list: [['Lúc cao điểm', Math.round(world.epi.peak * 100) + '% dân'], ['Ngày công đã mất', Math.round(world.epi.lost)]] };
+      }
+      return null;
+    }
+    function customPos(sel) {
+      if (sel.type === 'memo') return memoPos(sel.id);
+      if (sel.type === 'mine') return minePos.clone();
+      if (sel.type === 'ponzi') return ponziPos.clone();
+      if (sel.type === 'clinic') return clinicPos.clone();
+      return null;
+    }
+
     /* =============== Nhịp ngày và khung hình =============== */
     let lastId = world.storySeq;
     function ingest() {
@@ -744,6 +942,11 @@
         else if (st.type === 'fire' && audio) audio.crackle();
         else if (st.type === 'airship' && audio) audio.horn();
         else if (st.type === 'bankrun') label3d('Người dân kéo đến đòi tiền', new THREE.Vector3(bank.position.x, 14, bank.position.z), '#ff9b94');
+        else if (st.type === 'wedding') weddingFx(st);
+        else if (st.type === 'gold') { flashAt(X.minePos, '#ffd36b', 30); ripple(X.minePos, '#ffd36b'); label3d('Mạch vàng!', new THREE.Vector3(X.minePos.x, 11, X.minePos.z), '#ffe08a'); if (audio) audio.chime(); }
+        else if (st.type === 'ponzi-flee') { label3d('Bỏ trốn', new THREE.Vector3(ponziPos.x, 10, ponziPos.z), '#d4c2ff'); if (audio) audio.whoosh(); }
+        else if (st.type === 'strike') { const p = placePos(st.place); label3d('Đình công', new THREE.Vector3(p.x, 9, p.z), '#ff9b8f'); }
+        else if (st.type === 'monopoly') { const p = placePos(st.place); flashAt(p, '#ffd04d', 18); label3d('Độc quyền', new THREE.Vector3(p.x, 10, p.z), '#ffe08a'); }
         else if (st.type === 'food-rush') { const p = placePos(st.place); label3d('Người dân đổ xô mua gạo', new THREE.Vector3(p.x, 11, p.z), '#f0c27a'); }
         else if (st.type === 'fad-crash') { const p = placePos(st.place); flashAt(p, '#ff9f43', 16); label3d('Bong bóng vỡ', new THREE.Vector3(p.x, 11, p.z), '#ffb27a'); }
       }
@@ -758,7 +961,8 @@
     let lastSlow = 0;
     function update(dt, t) {
       updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateSub(); updateDirector(); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
-      if (t - lastSlow > 250) { lastSlow = t; syncCrystals(t); syncFires(t); }
+      updateMine(t, dt); updateTent(t); updateEpidemic(t); updatePickets(t);
+      if (t - lastSlow > 250) { lastSlow = t; syncCrystals(t); syncFires(t); syncFlags(t); }
       else for (const [, c] of crystals) { c.g.rotation.y = t * 0.0012; }
       for (const [, fx] of fireFx) if (fx.burning) for (let k = 0; k < fx.flames.length; k++) { const s = fx.flames[k], fl = 0.6 + 0.4 * Math.sin(t * 0.02 + k * 2.1) * Math.sin(t * 0.013 + k); s.scale.setScalar(2.4 + fl * 2.2); s.material.opacity = 0.55 + 0.35 * fl; }
       if (wearDirty && t - lastWear > 450) { wearTex.needsUpdate = true; wearDirty = false; lastWear = t; }
@@ -771,7 +975,7 @@
     updateToolUi(); computeAuras();
 
     return {
-      onDay, update, handlePick, renderChron, wants, setMode, memoCard, memoPos, hideChapter,
+      onDay, update, handlePick, renderChron, wants, setMode, customCard, customPos, extraPos, hideChapter,
       userMoved() { pausedUntil = now() + 25000; overview = false; },
       setDirector(on) { directorOn = on; if (on) { pausedUntil = 0; holdUntil = 0; } },
       get director() { return directorOn; },
