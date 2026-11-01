@@ -1,0 +1,496 @@
+<title>Bể Kính Kinh Tế</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Bố cục: bể kính là sân khấu chính bên trái, cột đồng hồ vĩ mô bên phải, bàn điều khiển và nhật ký bên dưới. */
+:root {
+  --bg: #e9eff1;
+  --surface: #f7fafb;
+  --fg: #12232b;
+  --muted: #5a6f78;
+  --line: #cbd8dd;
+  --accent: #1d6f86;
+  --water-top: #0f3a4a;
+  --water-bot: #071a23;
+  --tank-ink: #cfe4ea;
+  --money: #f2c14e;
+  --food: #6cc79a;
+  --goods: #f08a6b;
+  --bank: #dfe3ee;
+  --gov: #a493f2;
+  --loan: #ff6b81;
+  --bad: #c2453b;
+  --good: #2f8a5b;
+  --warn: #b7791f;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #081318; --surface: #0e1d24; --fg: #dbe8ec; --muted: #8aa1aa; --line: #1f343d;
+    --accent: #5cc0d8; --bad: #ff7a6e; --good: #6cd39b; --warn: #f0b456; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #081318; --surface: #0e1d24; --fg: #dbe8ec; --muted: #8aa1aa; --line: #1f343d;
+  --accent: #5cc0d8; --bad: #ff7a6e; --good: #6cd39b; --warn: #f0b456; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4vw, 44px); line-height: 1; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 60ch; }
+.day { font-family: var(--font-data); text-align: right; }
+.day b { display: block; font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 40px); line-height: 1; font-variant-numeric: tabular-nums; }
+.day span { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+@media (max-width: 920px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+.tank {
+  position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%;
+  background: radial-gradient(120% 90% at 50% 0%, var(--water-top), var(--water-bot));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 -40px 80px rgba(0,0,0,0.35);
+}
+@media (max-width: 560px) { .tank { aspect-ratio: 4 / 5; } }
+.tank canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--font-data); font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+.gauges { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (max-width: 920px) { .gauges { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); } }
+.gauge { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.gauge .lbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.gauge .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.gauge .val { font-family: var(--font-data); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.gauge .delta { font-family: var(--font-data); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gauge canvas { width: 100%; height: 34px; display: block; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.panel h2 { font-family: var(--font-display); font-size: 18px; font-weight: 500; margin: 0 0 10px; }
+.controls { display: grid; grid-template-columns: auto auto 1fr; gap: 14px 22px; align-items: center; }
+@media (max-width: 920px) { .controls { grid-template-columns: 1fr; } }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 14px var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 14px; cursor: pointer; min-height: 38px;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+button.print { border-color: var(--money); }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; min-width: 46px; font-family: var(--font-data); }
+.sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 18px; }
+.slider label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slider output { font-family: var(--font-data); color: var(--fg); font-variant-numeric: tabular-nums; }
+.slider input { width: 100%; accent-color: var(--accent); }
+
+.bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 920px) { .bottom { grid-template-columns: minmax(0, 1fr); } }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; max-height: 260px; overflow: auto; }
+.log li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; }
+.log time { font-family: var(--font-data); color: var(--muted); font-size: 12px; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.log li[data-kind="bad"] span { color: var(--bad); }
+.log li[data-kind="good"] span { color: var(--good); }
+.log li[data-kind="warn"] span { color: var(--warn); }
+.log li[data-kind="policy"] span { font-weight: 600; }
+.about p { margin: 0 0 8px; color: var(--muted); max-width: 65ch; }
+.about p b { color: var(--fg); font-weight: 600; }
+.status { font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bể Kính Kinh Tế</h1>
+      <p class="sub">Một nền kinh tế nhỏ đang sống: 140 hộ gia đình, 13 doanh nghiệp, một ngân hàng và một nhà nước. Mỗi chấm làm theo vài quy tắc đơn giản. Lạm phát, thất nghiệp và nợ tự nổi lên từ đó.</p>
+    </div>
+    <div class="day"><span>Ngày</span><b id="day">0</b></div>
+  </header>
+
+  <section class="stage">
+    <div>
+      <div class="tank" id="tank"><canvas id="canvas" aria-label="Bể kính: các hộ gia đình và doanh nghiệp, dòng tiền chảy giữa họ"></canvas></div>
+      <div class="legend" aria-label="Chú thích">
+        <span><i style="background:var(--food)"></i>Lò thực phẩm</span>
+        <span><i style="background:var(--goods)"></i>Xưởng hàng</span>
+        <span><i style="background:var(--money)"></i>Tiền mua hàng</span>
+        <span><i style="background:var(--tank-ink)"></i>Tiền lương</span>
+        <span><i style="background:var(--loan)"></i>Vay và lãi</span>
+        <span><i style="background:var(--gov)"></i>Thuế, trợ cấp, tiền in</span>
+      </div>
+    </div>
+    <div class="gauges" id="gauges"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Bàn tay của luật</h2>
+    <div class="controls">
+      <div class="btns">
+        <button class="primary" id="play" aria-pressed="false">Tạm dừng</button>
+        <div class="seg" role="group" aria-label="Tốc độ">
+          <button id="sp1" data-speed="2">1×</button>
+          <button id="sp3" data-speed="6" aria-pressed="true">3×</button>
+          <button id="sp10" data-speed="20">10×</button>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="print" id="print">In 10.000 xu</button>
+        <button id="reset">Ván mới</button>
+      </div>
+      <div class="sliders">
+        <div class="slider"><label for="rate">Lãi suất năm <output id="rateOut">5%</output></label><input id="rate" type="range" min="0" max="30" step="1" value="5"></div>
+        <div class="slider"><label for="tax">Thuế thu nhập <output id="taxOut">10%</output></label><input id="tax" type="range" min="0" max="60" step="1" value="10"></div>
+        <div class="slider"><label for="minw">Lương tối thiểu <output id="minwOut">6 xu</output></label><input id="minw" type="range" min="0" max="20" step="1" value="6"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bottom">
+    <div class="panel">
+      <h2>Nhật ký</h2>
+      <ol class="log" id="log"></ol>
+    </div>
+    <div class="panel about">
+      <h2>Đang xem gì</h2>
+      <p><b>Chấm nhỏ</b> là hộ gia đình. Chúng bơi quanh nơi làm việc, hoặc trôi xuống đáy bể khi thất nghiệp. Màu càng vàng là càng nhiều tiền. Viền đỏ là hôm nay không đủ tiền mua thực phẩm.</p>
+      <p><b>Chấm lớn</b> là doanh nghiệp. Vòng cung quanh nó là lượng hàng tồn kho. Ngân hàng ở trên cùng, nhà nước ở đáy.</p>
+      <p><b>Hạt sáng</b> là tiền đang chảy. Tiền chỉ sinh ra khi ngân hàng cho vay hoặc khi bạn bấm in tiền, và mất đi khi nợ gốc được trả. Sổ cái kiểm tra điều này mỗi ngày.</p>
+      <p class="status" id="ledger">Sổ cái: khớp</p>
+    </div>
+  </section>
+</div>
+
+<script src="sim.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let world, running = true, tps = 6, acc = 0, last = performance.now();
+  let particles = [], bubbles = [];
+  const pos = new Map(); // key -> {x,y}
+  const vis = new Map(); // household id -> {x,y}
+  let colors = {};
+
+  function readColors() {
+    colors = {
+      money: css('--money'), food: css('--food'), goods: css('--goods'), bank: css('--bank'), gov: css('--gov'),
+      loan: css('--loan'), ink: css('--tank-ink'), fg: css('--fg'), muted: css('--muted'), accent: css('--accent'), bad: css('--bad'),
+    };
+  }
+  readColors();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); drawGauges(); });
+  new MutationObserver(() => { readColors(); drawGauges(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---------- Canvas ---------- */
+  const canvas = $('canvas'), ctx = canvas.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+  function resize() {
+    const r = $('tank').getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  new ResizeObserver(resize).observe($('tank'));
+  resize();
+
+  function hash(n) { let x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+  function layout() {
+    const narrow = W < 520;
+    pos.set('bank', { x: W * 0.5, y: H * 0.11 });
+    pos.set('gov', { x: W * 0.5, y: H * 0.93 });
+    const visible = world.firms.filter((f) => f.alive || (f.deadSince !== null && world.day - f.deadSince < 12));
+    for (const sector of ['food', 'goods']) {
+      const list = visible.filter((f) => f.sector === sector);
+      const cols = narrow ? 2 : 3;
+      const x0 = sector === 'food' ? (narrow ? 0.12 : 0.1) : (narrow ? 0.62 : 0.6);
+      const x1 = sector === 'food' ? (narrow ? 0.38 : 0.4) : (narrow ? 0.88 : 0.9);
+      const rows = Math.max(1, Math.ceil(list.length / cols));
+      list.forEach((f, i) => {
+        const c = i % cols, r = Math.floor(i / cols);
+        const tx = W * (x0 + (cols === 1 ? 0.5 : c / (cols - 1)) * (x1 - x0));
+        const ty = H * (0.3 + (rows === 1 ? 0.2 : r / (rows - 1)) * (narrow ? 0.38 : 0.36)) + (c % 2 ? H * 0.04 : 0);
+        const p = pos.get(f.key);
+        if (!p) pos.set(f.key, { x: tx, y: ty, tx, ty });
+        else { p.tx = tx; p.ty = ty; }
+      });
+    }
+    for (const [k, p] of pos) {
+      if (p.tx !== undefined) { p.x += (p.tx - p.x) * 0.08; p.y += (p.ty - p.y) * 0.08; }
+    }
+  }
+
+  function householdTarget(h, t) {
+    if (h.employer !== null) {
+      const f = world.firms.find((x) => x.id === h.employer);
+      const p = f && pos.get(f.key);
+      if (p) {
+        const a = hash(h.id) * Math.PI * 2 + t * 0.00025 * (hash(h.id + 9) > 0.5 ? 1 : -1);
+        const r = 26 + hash(h.id + 3) * 20 + Math.sqrt(f.workers.length) * 2;
+        return { x: p.x + Math.cos(a) * r, y: p.y + Math.sin(a) * r * 0.8 };
+      }
+    }
+    return { x: W * (0.32 + hash(h.id + 5) * 0.36), y: H * (0.78 + hash(h.id + 7) * 0.08) + Math.sin(t * 0.001 + h.id) * 3 };
+  }
+
+  function keyPos(key) {
+    if (key[0] === 'h') { const v = vis.get(+key.slice(1)); return v; }
+    return pos.get(key);
+  }
+
+  const kindColor = (k) => k === 'buy' ? colors.money : k === 'wage' || k === 'dividend' ? colors.ink : k === 'loan' || k === 'interest' || k === 'repay' ? colors.loan : colors.gov;
+
+  function spawnParticles() {
+    const fl = world.flows;
+    if (!fl.length) return;
+    const budget = reduceMotion ? 12 : Math.min(90, Math.max(30, 400 / tps));
+    const important = fl.filter((f) => f.kind !== 'buy' && f.kind !== 'wage');
+    const common = fl.filter((f) => f.kind === 'buy' || f.kind === 'wage');
+    const pick = important.slice(0, Math.floor(budget / 3));
+    while (pick.length < budget && common.length) pick.push(common.splice(Math.floor(Math.random() * common.length), 1)[0]);
+    const dur = Math.max(450, Math.min(1100, 2200 / tps));
+    const now = performance.now();
+    for (const f of pick) {
+      const a = keyPos(f.from), b = keyPos(f.to);
+      if (!a || !b) continue;
+      particles.push({ ax: a.x, ay: a.y, bx: b.x, by: b.y, t0: now + Math.random() * dur * 0.4, dur, c: kindColor(f.kind), r: Math.min(4, 1.2 + Math.log10(1 + f.amt) * 0.9), bend: (Math.random() - 0.5) * 60 });
+    }
+    if (particles.length > 900) particles.splice(0, particles.length - 900);
+  }
+
+  function wealthColor(rank) {
+    // từ xanh lạnh (nghèo) tới vàng (giàu)
+    const c0 = [110, 150, 170], c1 = [242, 193, 78];
+    const m = c0.map((v, i) => Math.round(v + (c1[i] - v) * rank));
+    return 'rgb(' + m.join(',') + ')';
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    // bong bóng nền
+    if (!reduceMotion) {
+      if (bubbles.length < 26 && Math.random() < 0.1) bubbles.push({ x: Math.random() * W, y: H + 10, r: 1 + Math.random() * 2.5, v: 0.2 + Math.random() * 0.5 });
+      ctx.strokeStyle = 'rgba(207,228,234,0.14)'; ctx.lineWidth = 1;
+      for (const b of bubbles) { b.y -= b.v; b.x += Math.sin((t + b.r * 1000) * 0.001) * 0.2; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.stroke(); }
+      bubbles = bubbles.filter((b) => b.y > -10);
+    }
+    layout();
+
+    // nhãn khu vực
+    ctx.font = '500 11px ' + css('--font-data');
+    ctx.fillStyle = 'rgba(207,228,234,0.45)';
+    ctx.textAlign = 'center';
+    const narrow = W < 520;
+    ctx.fillText('THỰC PHẨM', W * (narrow ? 0.25 : 0.25), H * 0.21);
+    ctx.fillText('HÀNG HOÁ', W * (narrow ? 0.75 : 0.75), H * 0.21);
+    ctx.fillText('THẤT NGHIỆP', W * 0.5, H * 0.75);
+
+    // ngân hàng & nhà nước
+    const bank = pos.get('bank'), gov = pos.get('gov');
+    drawInstitution(bank, colors.bank, 'NGÂN HÀNG', 'nợ ' + fmt(world.bank.loansOut));
+    drawInstitution(gov, colors.gov, 'NHÀ NƯỚC', 'quỹ ' + fmt(world.gov.cash), true);
+
+    // doanh nghiệp
+    for (const f of world.firms) {
+      const p = pos.get(f.key);
+      if (!p) continue;
+      const deadAge = f.alive ? 0 : world.day - (f.deadSince ?? world.day);
+      if (!f.alive && (f.deadSince === null || deadAge >= 12)) continue;
+      const r = 9 + Math.sqrt(f.workers.length) * 3.2;
+      ctx.globalAlpha = f.alive ? 1 : Math.max(0.1, 0.6 - deadAge * 0.05);
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      if (f.alive) { ctx.fillStyle = f.sector === 'food' ? colors.food : colors.goods; ctx.fill(); }
+      else { ctx.strokeStyle = 'rgba(207,228,234,0.6)'; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]); }
+      if (f.alive) {
+        const target = Math.max(4, f.avgSales * 2);
+        const frac = Math.min(1, f.inv / (target * 2));
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 4, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+        ctx.strokeStyle = 'rgba(207,228,234,0.7)'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
+        if (f.debt > 0) { ctx.fillStyle = colors.loan; ctx.beginPath(); ctx.arc(p.x + r * 0.7, p.y - r * 0.7, Math.min(5, 1.5 + f.debt / 200), 0, 7); ctx.fill(); }
+        ctx.fillStyle = 'rgba(7,26,35,0.85)'; ctx.font = '500 10px ' + css('--font-data');
+        ctx.fillText(f.price.toFixed(1), p.x, p.y + 3.5);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // hộ gia đình
+    const sorted = world.households.map((h) => h.cash).sort((a, b) => a - b);
+    const n = sorted.length;
+    for (const h of world.households) {
+      let v = vis.get(h.id);
+      const tg = householdTarget(h, t);
+      if (!v) { v = { x: tg.x, y: tg.y }; vis.set(h.id, v); }
+      v.x += (tg.x - v.x) * 0.06; v.y += (tg.y - v.y) * 0.06;
+      let lo = 0, hi = n; while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < h.cash) lo = m + 1; else hi = m; }
+      ctx.beginPath(); ctx.arc(v.x, v.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = wealthColor(lo / Math.max(1, n - 1)); ctx.fill();
+      if (!h.ateToday) { ctx.strokeStyle = colors.bad; ctx.lineWidth = 1.5; ctx.stroke(); ctx.lineWidth = 1; }
+    }
+
+    // hạt tiền
+    const now = performance.now();
+    particles = particles.filter((p) => now - p.t0 < p.dur);
+    for (const p of particles) {
+      const k = (now - p.t0) / p.dur;
+      if (k < 0) continue;
+      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const mx = (p.ax + p.bx) / 2 + p.bend, my = (p.ay + p.by) / 2 - Math.abs(p.bend) * 0.5;
+      const x = (1 - e) * (1 - e) * p.ax + 2 * (1 - e) * e * mx + e * e * p.bx;
+      const y = (1 - e) * (1 - e) * p.ay + 2 * (1 - e) * e * my + e * e * p.by;
+      ctx.globalAlpha = Math.sin(k * Math.PI) * 0.95;
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawInstitution(p, color, label, sub, below) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.fillStyle = color; ctx.globalAlpha = 0.95;
+    roundRect(-46, -14, 92, 28, 8); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = '#0b1f28'; ctx.font = '600 11px ' + css('--font-data'); ctx.textAlign = 'center';
+    ctx.fillText(label, 0, 4);
+    ctx.fillStyle = 'rgba(207,228,234,0.7)'; ctx.font = '400 11px ' + css('--font-data');
+    ctx.fillText(sub, 0, below ? -22 : 30);
+    ctx.restore();
+  }
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  const fmt = (v) => Math.round(v).toLocaleString('vi-VN');
+
+  /* ---------- Đồng hồ vĩ mô ---------- */
+  const GAUGES = [
+    { key: 'cpi', label: 'Mặt bằng giá', unit: '', f: (v) => v.toFixed(0), hint: '100 = ngày đầu' },
+    { key: 'unemployment', label: 'Thất nghiệp', f: (v) => v.toFixed(1) + '%' },
+    { key: 'money', label: 'Tổng lượng tiền', f: (v) => fmt(v) + ' xu' },
+    { key: 'debt', label: 'Dư nợ ngân hàng', f: (v) => fmt(v) + ' xu' },
+    { key: 'gini', label: 'Bất bình đẳng (Gini)', f: (v) => v.toFixed(2) },
+    { key: 'hungry', label: 'Hộ đói hôm nay', f: (v) => String(v) },
+  ];
+  const gEl = $('gauges');
+  for (const g of GAUGES) {
+    const d = document.createElement('div');
+    d.className = 'gauge';
+    d.innerHTML = '<span class="lbl">' + g.label + '</span><div class="row"><span class="val" id="gv-' + g.key + '">–</span><span class="delta" id="gd-' + g.key + '"></span></div><canvas id="gc-' + g.key + '"></canvas>';
+    gEl.appendChild(d);
+  }
+  function drawGauges() {
+    if (!world) return;
+    const s = world.stats, lastS = s[s.length - 1];
+    const span = s.slice(-240);
+    for (const g of GAUGES) {
+      $('gv-' + g.key).textContent = g.f(lastS[g.key]);
+      const ago = s[Math.max(0, s.length - 31)][g.key];
+      const diff = lastS[g.key] - ago;
+      $('gd-' + g.key).textContent = g.hint && s.length < 32 ? g.hint : (diff >= 0 ? '+' : '−') + g.f(Math.abs(diff)).replace(' xu', '') + ' /30 ngày';
+      const c = $('gc-' + g.key), cx = c.getContext('2d');
+      const w = c.clientWidth, h = c.clientHeight;
+      if (!w) continue;
+      c.width = w * dpr; c.height = h * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const vals = span.map((x) => x[g.key]);
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+      const X = (i) => (i / Math.max(1, vals.length - 1)) * (w - 4) + 2;
+      const Y = (v) => h - 3 - ((v - lo) / (hi - lo)) * (h - 6);
+      cx.beginPath(); vals.forEach((v, i) => (i ? cx.lineTo(X(i), Y(v)) : cx.moveTo(X(i), Y(v))));
+      cx.strokeStyle = colors.accent; cx.lineWidth = 1.5; cx.stroke();
+      cx.lineTo(X(vals.length - 1), h); cx.lineTo(X(0), h); cx.closePath();
+      cx.globalAlpha = 0.12; cx.fillStyle = colors.accent; cx.fill(); cx.globalAlpha = 1;
+      cx.beginPath(); cx.arc(X(vals.length - 1), Y(vals[vals.length - 1]), 2.5, 0, 7); cx.fillStyle = colors.accent; cx.fill();
+    }
+  }
+
+  /* ---------- Nhật ký ---------- */
+  let shownEvents = 0;
+  function drawLog(force) {
+    const ev = world.events;
+    if (!force && ev.length === shownEvents && ev.length < 200) return;
+    shownEvents = ev.length;
+    const items = ev.slice(-40).reverse();
+    $('log').innerHTML = items.map((e) => '<li data-kind="' + e.kind + '"><time>Ngày ' + e.day + '</time><span>' + e.text + '</span></li>').join('');
+  }
+  function drawLedger() {
+    const diff = Sim.totalMoney(world) - Sim.expectedMoney(world);
+    $('ledger').textContent = Math.abs(diff) < 1e-6 * Math.max(1, Sim.expectedMoney(world))
+      ? 'Sổ cái khớp: ' + fmt(Sim.totalMoney(world)) + ' xu = ban đầu ' + fmt(world.ledger.M0) + ' + in ' + fmt(world.ledger.printed) + ' + cho vay ' + fmt(world.ledger.created) + ' − trả gốc ' + fmt(world.ledger.destroyed)
+      : 'Sổ cái lệch ' + diff.toFixed(4) + ' xu';
+  }
+
+  /* ---------- Vòng lặp ---------- */
+  function tick() {
+    Sim.step(world);
+    spawnParticles();
+  }
+  function frame(t) {
+    const dt = Math.min(250, t - last); last = t;
+    if (running) {
+      acc += dt * tps / 1000;
+      let steps = 0;
+      while (acc >= 1 && steps < 5) { tick(); acc -= 1; steps++; }
+      if (steps) { $('day').textContent = world.day; drawGauges(); drawLog(); drawLedger(); }
+      if (acc > 5) acc = 0;
+    }
+    draw(t);
+    requestAnimationFrame(frame);
+  }
+
+  function newWorld() {
+    world = Sim.create({ seed: Math.floor(Math.random() * 1e9) });
+    applySliders(true);
+    pos.clear(); vis.clear(); particles = []; shownEvents = -1;
+    $('day').textContent = '0';
+    drawGauges(); drawLog(true); drawLedger();
+  }
+
+  /* ---------- Điều khiển ---------- */
+  function applySliders(silent) {
+    const r = $('rate').value / 100, tx = $('tax').value / 100, mw = +$('minw').value;
+    $('rateOut').textContent = $('rate').value + '%';
+    $('taxOut').textContent = $('tax').value + '%';
+    $('minwOut').textContent = mw + ' xu';
+    if (silent) { world.policy.interestRate = r; world.policy.taxRate = tx; world.policy.minWage = mw; }
+  }
+  for (const [id, key, conv] of [['rate', 'interestRate', (v) => v / 100], ['tax', 'taxRate', (v) => v / 100], ['minw', 'minWage', (v) => +v]]) {
+    $(id).addEventListener('input', () => applySliders());
+    $(id).addEventListener('change', () => { Sim.setPolicy(world, key, conv($(id).value)); drawLog(true); });
+  }
+  $('play').addEventListener('click', () => {
+    running = !running;
+    $('play').textContent = running ? 'Tạm dừng' : 'Chạy tiếp';
+    $('play').setAttribute('aria-pressed', String(!running));
+  });
+  for (const b of document.querySelectorAll('.seg button')) {
+    b.addEventListener('click', () => {
+      tps = +b.dataset.speed;
+      for (const o of document.querySelectorAll('.seg button')) o.setAttribute('aria-pressed', String(o === b));
+    });
+  }
+  $('print').addEventListener('click', () => { Sim.printMoney(world, 10000); spawnParticles(); drawLog(true); drawLedger(); });
+  $('reset').addEventListener('click', newWorld);
+
+  // Khởi động: chạy trước 60 ngày để mở trang đã thấy một nền kinh tế đang vận hành
+  world = Sim.create({ seed: 42 });
+  for (let i = 0; i < 60; i++) Sim.step(world);
+  $('day').textContent = world.day;
+  drawGauges(); drawLog(true); drawLedger();
+  requestAnimationFrame((t) => { last = t; frame(t); });
+})();
+</script>
