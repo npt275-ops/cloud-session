@@ -44,6 +44,15 @@ Mỗi quyền năng tốn **thần lực** và có thời gian chờ. Thần l�
 ban phước làm dân biết ơn mà tin, và thời đại càng mới người ta càng ít tin. Ở thời Robot AI, những cỗ máy đo được
 độ cong của bầu trời, hiểu mình đang sống trong một chiếc bể, và gõ lên kính từ phía bên trong.
 
+## Một ván năm năm
+
+Ván của vị thần dài đúng năm năm (1.800 ngày): khoảng 20 phút ở tốc độ 1×, 10 phút ở 2× (có thêm 4× và 10×).
+Sáu bộ lạc đến trong nửa năm đầu. Mỗi thành phố có một lộ trình đi qua tám thời đại tính từ ngày đặt chân: đi chậm thì
+học nhanh hơn và có thêm người tìm đến, đi nhanh thì chậm lại, và không thời đại nào trôi qua quá vội. Thành đi đầu tới
+thời Robot AI vào cuối năm thứ tư, thành đến muộn nhất tới trước khi ván kết thúc. Thành bị chiếm lâu ngày có thể nổi dậy,
+nên chiến tranh kéo dài tới tận thời tên lửa và thời robot. Hết năm thứ năm, thời gian dừng lại và một màn tổng kết cho
+biết người trong bể nhớ bạn là vị thần thế nào.
+
 ## Tám thời đại
 
 Nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, **tên lửa** (bệ phóng, vệ tinh, điện hạt nhân, tàu ngầm
@@ -109,7 +118,7 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 41 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, tám thời đại và vị thần |
+| `test/sim.test.js` | 42 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, tám thời đại và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |

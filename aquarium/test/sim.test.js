@@ -871,3 +871,20 @@ test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi tr�
   assert.ok(truce, 'thần buộc được đình chiến');
   assert.ok(ledgerOk(W));
 });
+
+
+test('ván năm năm: sáu bộ lạc đến trong nửa năm đầu, đi qua đủ tám thời đại, chiến tranh kéo tới cuối, nổi dậy làm thế giới không yên', () => {
+  const W = Sim.createWorld({ seed: 2, mode: 'god', war: true });
+  const reached = W.cities.map(() => []);
+  for (let d = 0; d < 1800; d++) { Sim.stepWorld(W); for (const c of W.cities) if (c.settled && reached[c.id][c.era] == null) reached[c.id][c.era] = W.day; }
+  assert.ok(W.cities.every((c) => c.founded <= 200), 'cả sáu bộ lạc đến trong khoảng nửa năm đầu');
+  assert.ok(W.cities.every((c) => c.era === 7), 'đến cuối năm thứ năm cả sáu thành đã tới thời Robot AI (' + W.cities.map((c) => c.era).join('') + ')');
+  const lead = Math.min(...W.cities.map((c, i) => reached[i][7]));
+  assert.ok(lead > 1250 && lead < 1650, 'thành đi đầu tới thời robot vào cuối năm thứ tư (ngày ' + lead + ')');
+  for (let e = 1; e <= 7; e++) { const first = Math.min(...reached.map((r) => r[e])); assert.ok(first > (e - 1) * 120, 'thời ' + e + ' không đến quá sớm (ngày ' + first + ')'); }
+  assert.ok(W.ended && W.stories.some((s) => s.type === 'finale'), 'ván dừng ở ngày 1800');
+  assert.ok(W.stories.some((s) => s.type === 'awaken'), 'những cỗ máy kịp nhìn thấy vách kính trước khi ván kết thúc');
+  const wars = W.stories.filter((s) => s.type === 'war');
+  assert.ok(wars.some((s) => s.day > 1200), 'vẫn có chiến tranh ở thời tên lửa và thời robot');
+  assert.ok(ledgerOk(W));
+});

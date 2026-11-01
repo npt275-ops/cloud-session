@@ -1338,7 +1338,7 @@
     const seed = opts.seed == null ? 7 : opts.seed, god = opts.mode === 'god', war = opts.mode === 'war' || (god && opts.war !== false);
     const W = {
       seed, day: 0, rand: makeRng(seed * 7919 + 13), mode: god ? 'god' : war ? 'war' : 'watch',
-      cfg: Object.assign({ start: 28, growth: 2.2, inventRate: 1 / 110, settle: war && !god ? [1, 2, 3, 4, 5, 6] : null, off: {} }, opts),
+      cfg: Object.assign({ start: 28, growth: 2.2, inventRate: 1 / 110, settle: war && !god ? [1, 2, 3, 4, 5, 6] : null, off: {}, pace: god ? { end: 1800, lead: 1480, last: 1730, lastSettle: 190, settleScale: 0.45 } : null }, opts),
       cities: TERRAINS.map((t, i) => ({ id: i, terrain: t, name: t.city, era: 0, settled: false, w: null, learned: 0, founded: -1, owner: i })),
       // cầu chưa có: phải có người bỏ tiền ra bắc
       bridges: TERRAINS.map((t, i) => ({ id: i, a: i, b: (i + 1) % TERRAINS.length, level: -1, era: -1, build: null, traded: 0, firstTrade: false })),
@@ -1487,7 +1487,7 @@
   function stepWorld(W) {
     W.day++;
     W.trade = [];
-    for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : c.terrain.settle)) settle(W, c.id);
+    for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : W.cfg.pace ? Math.max(3, Math.round(c.terrain.settle * W.cfg.pace.settleScale)) : c.terrain.settle)) settle(W, c.id);
     seaDay(W);
     for (const c of W.cities) {
       if (!c.settled) continue;
@@ -1506,7 +1506,8 @@
     warDay(W);
     if (W.war.on) battleTrack(W);
     godDay(W);
-    if (!W.war.on) {
+    if (W.cfg.pace) { paceDay(W); revoltDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ năm khép lại', 'Bể kính đã đi hết tám thời đại.', null, {}); } }
+    else if (!W.war.on) {
       // Ngắm bể: thành phố tự bước sang thời mới khi đủ tri thức và dân số
       for (const c of W.cities) {
         if (!c.settled || c.era >= LAST) continue;
@@ -2023,7 +2024,7 @@
   function conquer(W, c, by) {
     const X = W.war, old = c.owner;
     if (old === by) return;
-    c.owner = by;
+    c.owner = by; c.heldSince = W.day;
     for (const u of X.units) if (u.city === c.id && !u.dead) { u.dead = true; release(W, u, false); }
     X.units = X.units.filter((u) => !u.dead);
     c.queue = []; c.stance = {};
@@ -2156,7 +2157,7 @@
     const ue = c.w.households.filter((h) => h.employer === null).length / n;
     if (ue > 0.25 && !threat && !fighting) return;
     if (X.on) {
-      const a = advanceOffer(W, c.id);
+      const a = W.cfg.pace ? { ok: false } : advanceOffer(W, c.id);
       if (a.ok && cash() - a.cost >= reserve && !threat) { advanceCity(W, c.id); return; }
       if (!c.bld.barracks && tryB('barracks')) return;
       if ((fighting || threat || W.day > 260 - P.aggr * 120) && !c.bld.tower && tryB('tower')) return;
@@ -2227,6 +2228,12 @@
   function checkVictory(W) {
     const X = W.war;
     if (!X.on || X.over) return;
+    if (W.mode === 'god') {
+      const alive = X.factions.filter((f) => f.alive);
+      if (alive.length === 1 && W.cities.every((c) => c.settled) && !X.unified) { X.unified = W.day; wstory(W, 'unify', 'epic', alive[0].name + ' thống nhất sáu miền', 'Sáu thành phố giờ chung một lá cờ. Nhưng cờ có thể đổi, khi người ở thành bị chiếm thấy thời cơ.', null, { winner: alive[0].id }); }
+      if (alive.length > 1) X.unified = 0;
+      return;
+    }
     const alive = X.factions.filter((f) => f.alive);
     let end = null;
     if (W.cities.every((c) => c.settled) && alive.length === 1) end = { winner: alive[0].id, how: 'conquest' };
@@ -2292,7 +2299,7 @@
   };
   const FAITH_BASE = [0.72, 0.64, 0.56, 0.46, 0.36, 0.27, 0.2, 0.15];
   const RESIST = [1, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3]; // nhà thời sau chịu động đất, gió bão tốt hơn
-  function godInit(W) { W.god = { power: 60, max: 100, cool: {}, fx: [], acts: 0, awakened: false }; }
+  function godInit(W) { W.god = { power: 60, max: 100, cool: {}, fx: [], acts: 0, used: {}, awakened: false }; }
   const foodMods = (c, day) => (c.mods || []).reduce((m, x) => (x.from <= day && x.until > day ? m * x.food : m), 1);
   function addMod(c, food, from, until) { (c.mods = c.mods || []).push({ food, from, until }); c.mods = c.mods.filter((x) => x.until > from - 1); }
   function godOffer(W, key, cid) {
@@ -2346,7 +2353,7 @@
     const o = godOffer(W, key, cid);
     if (!o.ok) return o;
     const P = POWERS[key], c = W.cities[cid], w = c.w, G = W.god, res = RESIST[c.era];
-    G.power -= P.cost; G.cool[key] = W.day + P.cool; G.acts++;
+    G.power -= P.cost; G.cool[key] = W.day + P.cool; G.acts++; G.used[key] = (G.used[key] || 0) + 1;
     const fx = { key, city: cid, day: W.day };
     let title = '', text = '';
     if (key === 'flood') {
@@ -2464,6 +2471,68 @@
         const where = (L.kind === 'bridge' ? 'cầu ' : 'eo biển ') + A.name + ' – ' + Z.name;
         wstory(W, 'battle-end', total >= 10 ? 'major' : 'small', 'Trận ' + where + ' khép lại', 'Kéo dài ' + (B.last - B.start + 1) + ' ngày. ' + B.sides.map((o) => X.factions[o].name + ' mất ' + (B.lost[o] || 0) + ' lính').join(', ') + '. ' + (held ? held + ' làm chủ chiến tuyến.' : 'Hai bên cùng rút.'), { kind: 'lane', lane: key }, { lane: key, lost: B.lost, sides: [s1, s2] });
       }
+    }
+  }
+
+
+  /* =============== Nhịp năm năm: tám thời đại trong một ván =============== */
+  // Ván của vị thần dài đúng năm năm. Mỗi thành phố có một lộ trình đi qua tám thời đại tính từ ngày đặt chân;
+  // tri thức và dân số được kéo dần về lộ trình (đi chậm thì học nhanh hơn, có thêm người tìm đến; đi nhanh thì chậm lại),
+  // nhưng ai dẫn trước, ai tụt lại, ai đánh ai vẫn do nền kinh tế và chiến tranh quyết định.
+  const PACE_FR = [0, 0.12, 0.25, 0.38, 0.52, 0.66, 0.8, 1];
+  function paceOf(W, c) {
+    const P = W.cfg.pace, f = Math.max(0, c.founded);
+    const end = P.lead + (f / P.lastSettle) * (P.last - P.lead), J = Math.max(200, end - f);
+    const p = clampN((W.day - f) / J, 0, 1);
+    let k = 0; while (k < LAST && p >= PACE_FR[k + 1]) k++;
+    const frac = k >= LAST ? 0 : (p - PACE_FR[k]) / (PACE_FR[k + 1] - PACE_FR[k]);
+    const nx = ERAS[Math.min(LAST, k + 1)], ek = ERAS[k];
+    return { era: k + frac, know: ek.know + (nx.know - ek.know) * frac, pop: ek.pop + (nx.pop - ek.pop) * frac, J, f };
+  }
+  const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+  function paceDay(W) {
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      const T = paceOf(W, c), w = c.w, n = w.households.length;
+      c.pace = T;
+      const dk = T.know - knowledgeOf(c);
+      w.cfg.inventRate = W.cfg.inventRate * (hasB(c, 'academy') ? 1.5 : 1) * clampN(1 + 0.45 * dk, 0.25, 3.5);
+      // tụt lại thì người qua lại, thương nhân, sách vở mang tri thức đến nhanh hơn
+      if (dk > 1.2 && W.rand() < Math.min(0.3, 0.035 * dk)) {
+        c.learned++;
+        const near = W.cities.filter((x) => x.settled && x !== c && x.era > c.era);
+        const from = near.length ? near[Math.floor(W.rand() * near.length)] : null;
+        w.cands.push({ pri: 2, type: 'learn', title: 'Người ' + c.name + ' học được ' + ERAS[Math.min(LAST, c.era + 1)].tech, text: from ? 'Khách từ ' + from.name + ' kể lại những điều họ đã biết.' : 'Một người thợ trẻ tự mày mò ra điều mới.', place: { kind: 'plaza' }, actors: [] });
+      }
+      // dân số: thời đại mới cần nhiều người hơn; có việc, có cơm thì người từ xa kéo đến
+      const dp = T.pop - n, ue = w.households.filter((h) => h.employer === null).length / n, hungry = w.stats.length ? w.stats.at(-1).hungry : 0;
+      if (dp > 2 && ue < 0.18 && hungry <= n * 0.06 && !(c.fallout > 0) && W.rand() < Math.min(0.22, 0.012 * dp)) {
+        const added = addHouseholds(w, 4, 25, true);
+        w.stories.push({ id: ++w.storySeq, day: w.day, type: 'settlers', tier: 'small', title: 'Bốn gia đình tìm đến ' + c.name, text: 'Nghe tin thành phố đang lớn, họ mang theo chút của cải và dựng nhà mới.', place: { kind: 'house', id: Math.floor(added[0].id / 4) }, actors: added.map((h) => h.id) });
+      }
+      // lên thời mới khi đủ tri thức, đủ dân, và đã sống đủ lâu ở thời hiện tại để mọi người kịp thấy nó
+      if (c.era < LAST) {
+        const next = ERAS[c.era + 1], minDay = T.f + T.J * PACE_FR[c.era + 1] * 0.9;
+        if (knowledgeOf(c) >= next.know && n >= next.pop && W.day >= minDay) advanceEra(W, c);
+      }
+    }
+  }
+  // Thành bị chiếm lâu ngày có thể nổi dậy, nhất là khi kẻ chiếm đang bận đánh nơi khác
+  function revoltDay(W) {
+    const X = W.war;
+    if (!X.on || W.day % 15) return;
+    for (const c of W.cities) {
+      if (!c.settled || c.owner === c.id) continue;
+      const held = W.day - (c.heldSince || W.day);
+      if (held < 150) continue;
+      const busy = X.factions.some((f) => f.alive && atWarF(W, c.owner, f.id));
+      if (W.rand() > 0.07 + (busy ? 0.08 : 0) + Math.min(0.1, held / 3600)) continue;
+      const old = c.owner;
+      c.owner = c.id; X.factions[c.id].alive = true;
+      for (const u of X.units) if (u.city === c.id && !u.dead) { u.owner = c.id; u.lane = null; }
+      for (const f of X.factions) { X.rel[c.id][f.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; X.rel[f.id][c.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; }
+      c.hp = Math.max(c.hp, c.hpMax * 0.6);
+      wstory(W, 'revolt', 'epic', c.name + ' nổi dậy', 'Sau ' + held + ' ngày dưới cờ ' + X.factions[old].name + ', người ' + c.name + ' hạ cờ ngoại bang. Phe ' + c.name + ' sống lại.', { kind: 'land', city: c.id }, { city: c.id, from: old });
     }
   }
 
