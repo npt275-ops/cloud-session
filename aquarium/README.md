@@ -1,13 +1,31 @@
 # Bể Kính
 
-Một thành phố nhỏ trên hòn đảo bay, đặt trong một chiếc bể kính. 140 gia đình đi làm, mua bán, vay nợ,
-ăn Tết, cưới nhau, đổ bệnh, đình công, chạy theo cơn sốt. Mọi thứ nhìn thấy trên đảo đều sinh ra từ một nền
-kinh tế mô phỏng thật bên dưới, và nền kinh tế ấy chạy bằng **câu chuyện**: tin đồn, cơn sốt, phát minh, mạch vàng,
-kẻ hứa lãi lan từ người này sang người kia, và chính sự lan truyền đó làm giá cả, việc làm, tín dụng thay đổi.
+Sáu miền đất lơ lửng trong một chiếc bể kính, nối nhau thành vòng bằng sáu cây cầu: **đồng bằng** (Lúa Vàng),
+**rừng** (Thông Xanh), **núi** (Đá Mây), **băng nguyên** (Tuyết Trắng), **biển** (Cửa Sóng), **sa mạc** (Cát Hồng).
+Lúc đầu chỉ có cây, sông, núi. Rồi những bộ lạc đầu tiên lần lượt đến, và mỗi thành phố tự đi qua lịch sử của mình:
+**nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại**. Nhà cửa, nơi làm ăn, đèn đường, quảng trường và
+những cây cầu được xây lại theo từng thời đại, từ lều lá và cầu dây leo đến tháp kính và cầu dây văng.
+Mọi thứ nhìn thấy đều sinh ra từ một nền kinh tế mô phỏng thật bên dưới, và nền kinh tế ấy chạy bằng câu chuyện.
+
+## Sáu miền đất
+
+| Miền | Thành phố | Đặc điểm | Đến lượt định cư |
+|---|---|---|---|
+| Đồng bằng | Lúa Vàng | Sông cong, thác đổ; lương thực dồi dào (×1,15) | Ngày 3 |
+| Rừng | Thông Xanh | Rừng già, suối; nhiều gỗ cho xưởng (×1,1) | Ngày 90 |
+| Sa mạc | Cát Hồng | Đồi cát, núi bàn, ốc đảo; khó trồng trọt (×0,82) | Ngày 150 |
+| Núi | Đá Mây | Đỉnh tuyết, hồ núi; đá và quặng (×1,15), ít ruộng (×0,85) | Ngày 240 |
+| Biển | Cửa Sóng | Vịnh nước xanh, bãi cát, thuyền | Ngày 330 |
+| Băng nguyên | Tuyết Trắng | Tuyết, hồ băng; lạnh nhất, sống nhờ buôn bán | Ngày 420 |
+
+Mỗi miền mới có người đều kề một miền đã có người, như một cuộc di cư qua cầu. Hàng hoá đi qua cầu từ nơi rẻ sang
+nơi đắt (cầu càng hiện đại chở càng nhiều), tri thức đi theo người qua cầu: thành phố đi sau học được của thành phố
+đi trước. Đủ **tri thức** (phát minh và điều học được) và **dân số**, thành phố sang thời đại mới; cây cầu được xây lại
+theo thời đại thấp hơn của hai đầu. Gieo phát minh giúp một thành phố tiến nhanh hơn.
 
 ## Chạy
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `story3d.js` cùng thư mục):
+Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `story3d.js` cùng thư mục):
 
 ```bash
 cd aquarium && python3 -m http.server 8000
@@ -19,11 +37,12 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 
 | File | Vai trò |
 |---|---|
-| `index.html` | Thế giới 3D, giao diện, chính sách, xây dựng, hiện tượng, màn chào, chú giải |
-| `story3d.js` | Lớp hình ảnh của câu chuyện: sợi lan truyền, đạo diễn camera, phụ đề, biên niên sử, công cụ của người giữ bể, ký ức, các biến cố lớn |
-| `sim.js` | Lõi kinh tế và bộ máy câu chuyện: tất định theo seed, không phụ thuộc trình duyệt, chạy được bằng Node |
+| `index.html` | Bể kính, bầu trời, ngày đêm, thời tiết, giao diện, thanh sáu thành phố, chính sách, màn chào, chú giải |
+| `lands3d.js` | Địa hình sáu miền, công trình theo sáu thời đại (gộp hình học để nhẹ), cầu nối, cư dân, đoàn hàng qua cầu |
+| `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
+| `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 28 bài kiểm thử cho lõi kinh tế và bộ máy câu chuyện |
+| `test/sim.test.js` | 31 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện và thế giới sáu miền |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
@@ -93,7 +112,7 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | Mạch vàng, dịch, kẻ hứa lãi | 1 / 0–2 / 0–3 lần mỗi thành phố |
 
 ```bash
-node --test            # 28 bài kiểm thử (chạy trong thư mục aquarium)
+node --test            # 31 bài kiểm thử (chạy trong thư mục aquarium)
 node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 ```
 
@@ -101,7 +120,8 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 
 - **Thanh công cụ của người giữ bể** (bên trái; trên điện thoại là cột biểu tượng bên phải): vòng sáng quanh biểu tượng
   cho biết công cụ đã sẵn sàng hay còn phải chờ.
-- **Chính sách**: rắc 10.000 xu (mưa đồng xu vàng), lãi suất, thuế, lương tối thiểu. Sau vài tuần, thành phố báo lại hệ quả thật.
-- **Xây dựng**: nhà ở, cối xay gió, xưởng thủ công.
+- **Thanh sáu thành phố** (trên cùng): tên, thời đại, bấm để bay tới. Nhịp đập, chính sách và vòng chờ của công cụ
+  là của thành phố đang xem; nhịp đập còn cho biết tri thức và dân số còn thiếu để sang thời mới.
+- **Chính sách**: rắc tiền (mưa đồng xu vàng), lãi suất, thuế, lương tối thiểu cho thành phố đang xem.
 - **Biên niên sử**, **Phim tài liệu** (đạo diễn camera), **Chú giải**, âm thanh tự sinh (mặc định tắt), tự giảm chất lượng
   khi máy chậm, phím `Esc` đóng bảng hoặc thoát công cụ đang chọn.

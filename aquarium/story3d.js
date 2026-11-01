@@ -1,7 +1,7 @@
-/* Bể Kính — lớp hình ảnh của bộ máy câu chuyện.
- * Sợi lan truyền giữa các nhà, quầng sáng trên mái, tinh thể phát minh, hạt giống rơi,
- * khí cầu và bến cảng, lửa và giàn giáo, đạo diễn camera, phụ đề, biên niên sử.
- * Nhận ngữ cảnh X từ index.html; không tự chạy vòng lặp, index gọi onDay() và update(). */
+/* Bể Kính — lớp hình ảnh của bộ máy câu chuyện, cho cả sáu miền đất.
+ * Mỗi miền có một lớp riêng (makeLayer): sợi lan truyền, quầng sáng, tinh thể phát minh, khí cầu, lửa,
+ * ký ức, đường mòn, mỏ vàng, trạm xá, lều người lạ... trong toạ độ của miền đó.
+ * Người dẫn chuyện chung (create): phụ đề, biên niên sử, đạo diễn camera, công cụ của người giữ bể, chương năm. */
 (function (root) {
   'use strict';
 
@@ -16,22 +16,27 @@
     ponzi: ['Người lạ', '#c3a6ff'], 'ponzi-grow': ['Người lạ', '#c3a6ff'], 'ponzi-flee': ['Bỏ trốn', '#a98bff'],
     strike: ['Đình công', '#ff7b6b'], 'strike-end': ['Đình công', '#e8a59d'], merger: ['Thâu tóm', '#e8c98a'], monopoly: ['Độc quyền', '#ffcf5a'], 'monopoly-end': ['Độc quyền', '#d9c58f'],
     wedding: ['Đám cưới', '#ffb3c7'], baby: ['Em bé', '#ffd1dc'], generation: ['Thế hệ mới', '#9df0c4'], immigrants: ['Người đến', '#7bdff2'],
+    settle: ['Định cư', '#9df0c4'], era: ['Thời đại mới', '#ffd27a'], bridge: ['Cây cầu', '#c8b6ff'], trade: ['Buôn bán', '#e8c98a'], learn: ['Học hỏi', '#b6d7ff'], settlers: ['Nhập cư', '#7bdff2'],
     tap: ['Tiếng gõ', '#cfe8ff'], 'rumor-food': ['Tin đồn', '#f0b85a'], 'food-rush': ['Tích trữ', '#f0b85a'], 'food-rush-end': ['Tích trữ', '#c9b48a'], chapter: ['Chương mới', '#ffd27a'],
     season: ['Mùa', '#a6d6a0'], drought: ['Hạn hán', '#e0b060'], 'drought-end': ['Hạn hán', '#a6d6a0'], festival: ['Lễ hội', '#ffb36b'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
 
-  function create(X) {
-    const { THREE, island, world, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C } = X;
+
+  function makeLayer(X, N) {
+    const { THREE, island, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C } = X;
+    const W0 = X.W, CI = X.city;
+    let world = W0.cities[CI].w; // thành phố của miền này (lớp chỉ được dựng khi miền đã có người)
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const lerp = (a, b, k) => a + (b - a) * k;
     const now = () => performance.now();
     const firmOf = (id) => world.firms.find((f) => f.id === id);
     const additive = (color, opacity) => new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: opacity || 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const bankName = () => Sim.ERAS[W0.cities[CI].era].bank;
 
     /* =============== Vị trí =============== */
-    const DOCK_ANG = 0.75, outDir = new THREE.Vector3(Math.cos(DOCK_ANG), 0, Math.sin(DOCK_ANG));
+    const DOCK_ANG = X.outAng + 1.75, outDir = new THREE.Vector3(Math.cos(DOCK_ANG), 0, Math.sin(DOCK_ANG));
     const dockHover = outDir.clone().multiplyScalar(R + 6.5).setY(7.5);
     function housePos(i) { const H = houses[i]; return H ? H.g.position : PLAZA; }
     function firmPos(id) { const o = firmObj.get(id); return o ? o.g.position : null; }
@@ -109,7 +114,7 @@
         const A = auras[i], H = houses[i];
         if (!H) continue;
         A.level += (A.target - A.level) * 0.08;
-        A.s.position.set(H.g.position.x, 7.4 + H.level * 1.45 * H.g.scale.y, H.g.position.z);
+        A.s.position.set(H.g.position.x, ((H.g.userData.top || 6) + 1.1) * H.g.scale.y, H.g.position.z);
         A.s.material.opacity = A.level * (0.5 + 0.3 * Math.sin(t * 0.004 + i));
         A.s.visible = A.level > 0.02;
       }
@@ -166,7 +171,7 @@
           const g = new THREE.Group();
           for (let k = 0; k < n; k++) { const m = new THREE.Mesh(crystalGeo, crystalMat); m.position.set((k - (n - 1) / 2) * 0.95, 0, 0); g.add(m); }
           const halo = new THREE.Sprite(additive('#ffd36b', 0.55)); halo.scale.set(3.4, 3.4, 1); g.add(halo);
-          o.g.add(g); c = { g, n, parent: o.g, base: o.kind === 'farm' ? 7.6 : 6.4 };
+          o.g.add(g); c = { g, n, parent: o.g, base: (o.g.userData.top || 5) + 1.4 };
           crystals.set(id, c);
         }
         c.g.position.y = c.base + Math.sin(t * 0.002 + id) * 0.18;
@@ -275,6 +280,7 @@
         const down = f && f.alive && f.downUntil > world.day;
         const burning = down && world.day - (f.fireDay == null ? -99 : f.fireDay) <= 3;
         let fx = fireFx.get(id);
+        if (fx && fx.group.parent !== o.g) { fireFx.delete(id); fx = null; } // công trình vừa được xây lại theo thời đại mới
         if (!down) { if (fx) { o.g.remove(fx.group); fireFx.delete(id); } continue; }
         if (!fx) {
           const group = new THREE.Group(); o.g.add(group);
@@ -297,100 +303,10 @@
       }
     }
 
-    /* =============== Phụ đề =============== */
-    let subUntil = 0;
-    function showSub(st, ms) {
-      const [label, color] = typeOf(st.type);
-      const el = $('subtitle');
-      el.innerHTML = '<span class="sk" style="color:' + color + '">Ngày ' + st.day + ' · ' + label + '</span><b>' + st.title + '</b><span class="st">' + st.text + '</span>';
-      el.hidden = false; el.classList.remove('out'); void el.offsetWidth; el.classList.add('in');
-      const hint = $('hint'); if (hint) hint.style.opacity = 0;
-      subUntil = now() + (ms || TIER_HOLD[st.tier] || 6000);
-    }
-    function updateSub() { const el = $('subtitle'); if (!el.hidden && now() > subUntil) { el.classList.remove('in'); el.classList.add('out'); if (now() > subUntil + 500) el.hidden = true; } }
-
-    /* =============== Biên niên sử =============== */
-    const chron = [];
-    let unread = 0;
-    function chronItem(st) {
-      if (st.type === 'chapter') return '<li class="t-chapter"><button data-id="' + st.id + '"><span class="cd">' + st.title.split(': ')[0] + ' khép lại · Ngày ' + st.day + '</span><b>' + (st.title.split(': ')[1] || st.title) + '</b><span class="ct">' + (st.recap || []).slice(0, 3).join(' · ') + '</span></button></li>';
-      const [label, color] = typeOf(st.type);
-      return '<li class="t-' + st.tier + '"><button data-id="' + st.id + '"><i style="background:' + color + ';color:' + color + '"></i><span class="cd">Ngày ' + st.day + ' · ' + label + '</span><b>' + st.title + '</b><span class="ct">' + st.text + '</span></button></li>';
-    }
-    function renderChron() {
-      const list = $('chronList');
-      list.innerHTML = chron.length ? chron.map(chronItem).join('') : '<li class="empty">Thành phố chưa có chuyện gì để kể. Chờ một chút.</li>';
-      unread = 0; badge();
-    }
-    function badge() { const b = $('chronBadge'); b.textContent = unread > 99 ? '99+' : unread; b.hidden = unread === 0; }
-    function addChron(st) {
-      chron.unshift(st); if (chron.length > 160) chron.pop();
-      if (!$('chron').hidden) { $('chronList').insertAdjacentHTML('afterbegin', chronItem(st)); const li = $('chronList').querySelector('.empty'); if (li) li.remove(); while ($('chronList').children.length > 160) $('chronList').lastElementChild.remove(); }
-      else if (st.tier !== 'small') { unread++; badge(); }
-    }
-    $('chronList').addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-id]'); if (!b) return;
-      const st = chron.find((s) => s.id === +b.dataset.id); if (!st) return;
-      if (st.type === 'chapter') { X.closePanels(); showChapter(st); return; }
-      goTo(st, true);
-    });
-    function goTo(st, manual) {
-      const p = placePos(st.place);
-      flyTo(p, TIER_DIST[st.tier] || 30);
-      showSub(st, manual ? 9000 : null);
-      if (manual) {
-        pausedUntil = now() + 20000;
-        if (st.place && st.place.kind === 'firm' && firmObj.has(st.place.id)) select({ type: 'firm', id: st.place.id }, true);
-        else if (st.place && st.place.kind === 'house' && houses[st.place.id]) select({ type: 'house', i: st.place.id }, true);
-        else if (st.place && st.place.kind === 'bank') select({ type: 'bank' }, true);
-      }
-    }
-
-    /* =============== Đạo diễn =============== */
-    let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
-    const queue = [];
-    function takeNext(minPri) {
-      for (let i = queue.length - 1; i >= 0; i--) if (world.day - queue[i].day > TIER_AGE[queue[i].tier]) queue.splice(i, 1);
-      let best = -1;
-      for (let i = queue.length - 1; i >= 0; i--) {
-        if (TIER_PRI[queue[i].tier] < minPri) continue;
-        if (best < 0 || TIER_PRI[queue[i].tier] > TIER_PRI[queue[best].tier]) best = i;
-      }
-      return best < 0 ? null : queue.splice(best, 1)[0];
-    }
-    function updateDirector() {
-      const n = now();
-      if (n < holdUntil) return;
-      if (!directorOn || n < pausedUntil) {
-        const st = takeNext(2);
-        if (st && n > subUntil) { showSub(st); holdUntil = n + 1500; }
-        return;
-      }
-      const st = takeNext(1);
-      if (st) { goTo(st, false); holdUntil = n + (TIER_HOLD[st.tier] || 6000); X.setAutoRotate(false); idleSince = n; overview = false; }
-      else if (!overview && n - idleSince > 7000) { flyTo(new THREE.Vector3(0, 0, 0), 128); X.setAutoRotate(true); overview = true; }
-    }
-
-    /* =============== Công cụ của người giữ bể =============== */
-    let mode = null;
-    const HINT = {
-      seed: 'Chọn một xưởng hoặc cối xay để gieo hạt phát minh.',
-      tap: 'Chạm vào một chỗ trên đảo để gõ lên vòm kính phía trên. Gõ liên tiếp nhiều ngày thì nỗi sợ lan rộng hơn.',
-      'whisper-bank': 'Chọn một ngôi nhà để thì thầm: “Kho Bạc sắp vỡ”.',
-      'whisper-food': 'Chọn một ngôi nhà để thì thầm: “Năm nay sắp mất mùa”.',
-      'whisper-fad': 'Chọn một xưởng thủ công (mái vòm) để thì thầm về một món hàng mới.',
-    };
-    const TOOL_OF = { seed: 'toolSeed', tap: 'toolTap', 'whisper-bank': 'toolWhisper', 'whisper-food': 'toolWhisper', 'whisper-fad': 'toolWhisper' };
+    /* =============== Công cụ của người giữ bể, phần xảy ra trên miền này =============== */
     const halos = new Map();
-    function setMode(m) {
-      mode = m || null;
-      for (const id of ['toolSeed', 'toolTap', 'toolWhisper']) $(id).setAttribute('aria-pressed', String(!!mode && TOOL_OF[mode] === id));
-      document.body.classList.toggle('seeding', !!mode);
-      showMenu(false);
-      if (mode) { X.closePanels(); select(null); toast(HINT[mode], 3800); pausedUntil = now() + 30000; }
-      for (const [, sp] of halos) sp.visible = false;
-    }
     function wants(sel) {
+      const mode = N.mode;
       if (!mode) return false;
       if (mode === 'tap') return true;
       if (!sel) return false;
@@ -404,67 +320,71 @@
       sp.scale.set(size, size, 1); sp.position.set(p.x, y, p.z);
       return sp;
     }
+    function hideHalos() { for (const [, sp] of halos) sp.visible = false; }
     function updateHalos(t) {
-      if (!mode || mode === 'tap') return;
+      const mode = N.mode;
+      if (!mode || mode === 'tap') { if (halos.size) hideHalos(); return; }
       const color = mode === 'seed' ? '#ffd36b' : mode === 'whisper-bank' ? '#ff6b6b' : mode === 'whisper-food' ? '#f0b85a' : '#ff6b9d';
       if (mode === 'seed' || mode === 'whisper-fad') {
+        for (const [, sp] of halos) sp.visible = false;
         for (const [id, o] of firmObj) {
           const f = firmOf(id), sp = haloAt('f' + id, o.g.position, 7, 3.5);
           sp.visible = !!(f && f.alive && !o.dying && (mode === 'seed' || f.sector === 'goods'));
           sp.material.color.set(color); sp.material.opacity = 0.35 + 0.25 * Math.sin(t * 0.005 + id);
         }
       } else {
+        for (const [, sp] of halos) sp.visible = false;
         houses.forEach((H, i) => { const sp = haloAt('h' + i, H.g.position, 4.4, 2.6); sp.visible = true; sp.material.color.set(color); sp.material.opacity = 0.2 + 0.14 * Math.sin(t * 0.005 + i); });
       }
     }
-    // xử lý những chuyện vừa sinh ra (sau mỗi ngày, hoặc ngay sau khi người giữ bể ra tay)
+    // kể ngay những chuyện vừa sinh ra sau khi người giữ bể ra tay
     function tellNow(type) {
       const fresh = ingest(), st = fresh.filter((x) => x.type === type).pop();
-      if (st) { const qi = queue.indexOf(st); if (qi >= 0) queue.splice(qi, 1); }
+      if (st) N.dequeue(st);
       return st;
     }
 
     /* ----- Gieo phát minh ----- */
     function doSeed(sel) {
       const r = Sim.seedInvention(world, sel.id);
-      if (!r.ok) { toast(r.reason === 'wait' ? 'Hạt giống đang ủ lại, còn ' + r.wait + ' ngày nữa.' : 'Nơi này đã đóng cửa.', 3000); return true; }
-      setMode(null); updateToolUi();
+      if (!r.ok) { toast(r.reason === 'wait' ? 'Hạt giống của ' + X.cityName + ' đang ủ lại, còn ' + r.wait + ' ngày nữa.' : 'Nơi này đã đóng cửa.', 3000); return true; }
+      N.setMode(null);
       const f = firmOf(sel.id), share = () => { const g = world.firms.filter((x) => x.alive && x.sector === f.sector); return f.avgSales / Math.max(1e-9, g.reduce((a, x) => a + x.avgSales, 0)); };
       const s0 = share(), p0 = f.price;
-      flyTo(firmPos(sel.id), 34); pausedUntil = now() + 15000;
+      flyTo(firmPos(sel.id), 34); N.pause(15000);
+      r.story.city = CI;
       dropSeed(sel.id, () => {
         inventFlash(sel.id, r.story.item);
-        showSub(r.story, 9000);
+        N.showSub(r.story, 9000);
         X.watch(60, () => !f.alive ? '<b>' + f.name + '</b> đã đóng cửa, dù từng được gieo hạt phát minh.' : 'Hai tháng sau hạt giống: <b>' + f.name + '</b> chiếm ' + Math.round(s0 * 100) + '% → <b>' + Math.round(share() * 100) + '%</b> lượng hàng bán ra, giá ' + p0.toFixed(1).replace('.', ',') + ' → <b>' + f.price.toFixed(1).replace('.', ',') + ' xu</b>.');
       });
       return true;
     }
 
-    /* ----- Gõ vào kính ----- */
-    const DOME = R + 6, GROUND = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    const domePoint = (p) => new THREE.Vector3(p.x, Math.sqrt(Math.max(4, DOME * DOME - p.x * p.x - p.z * p.z)), p.z);
+    /* ----- Gõ vào kính: vòm kính là chung, nhưng tiếng gõ làm giật mình người ở miền ngay bên dưới ----- */
+    const CEN = X.center, DOME = X.dome;
+    const domeWorld = (lp) => { const x = lp.x + CEN.x, z = lp.z + CEN.z; return new THREE.Vector3(x, Math.sqrt(Math.max(4, DOME * DOME - x * x - z * z)), z); };
     const ringGeo = new THREE.RingGeometry(0.9, 1, 64), glassFx = [];
     let shake = null;
-    function groundPoint(ray) { const p = new THREE.Vector3(); if (!ray || !ray.ray.intersectPlane(GROUND, p)) return null; return Math.hypot(p.x, p.z) < R + 2 ? p : null; }
     function glassRipple(p, level) {
-      const q = domePoint(p), n = q.clone().normalize();
+      const qw = domeWorld(p), n = qw.clone().normalize(), q = qw.clone().sub(CEN);
       for (let k = 0; k < 1 + level; k++) {
         const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: level >= 3 ? '#ffd2d2' : '#e8f8ff', transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-        m.position.copy(q); m.lookAt(q.clone().add(n)); island.add(m);
-        glassFx.push({ m, t0: now() + k * 170, dur: 1300 + level * 350, size: 5 + level * 3.5, kind: 'ring' });
+        m.position.copy(q); m.lookAt(qw.clone().add(n)); island.add(m);
+        glassFx.push({ m, t0: now() + k * 170, dur: 1300 + level * 350, size: 7 + level * 4.5, kind: 'ring' });
       }
       const fl = new THREE.Sprite(additive('#ffffff', 1)); fl.position.copy(q); island.add(fl);
-      glassFx.push({ m: fl, t0: now(), dur: 700, size: 8 + level * 4, kind: 'flash' });
+      glassFx.push({ m: fl, t0: now(), dur: 700, size: 10 + level * 5, kind: 'flash' });
       if (level < 3) return;
       // vết rạn toả ra trên mặt kính, mờ dần sau vài giây
       const t1 = new THREE.Vector3().crossVectors(n, new THREE.Vector3(0, 1, 0.01)).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1).normalize();
       for (let k = 0; k < 5 + level * 2; k++) {
         const a = (k / (5 + level * 2)) * Math.PI * 2 + Math.random() * 0.4, pts = [q.clone()];
-        let cur = q.clone(), dir = t1.clone().multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a));
+        let cur = qw.clone(), dir = t1.clone().multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a));
         for (let j = 0; j < 4; j++) {
           dir.applyAxisAngle(n, (Math.random() - 0.5) * 0.8);
-          cur = cur.clone().addScaledVector(dir, 1.2 + Math.random() * 1.6 * (level - 1)).setLength(DOME - 0.05);
-          pts.push(cur);
+          cur = cur.clone().addScaledVector(dir, 1.6 + Math.random() * 2.2 * (level - 1)).setLength(DOME - 0.05);
+          pts.push(cur.clone().sub(CEN));
         }
         const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.9, depthWrite: false }));
         island.add(line);
@@ -483,8 +403,8 @@
       }
       if (shake) {
         const k = (n - shake.t0) / 650;
-        if (k >= 1 || reduce) { island.position.set(0, 0, 0); shake = null; }
-        else { const a = shake.amp * (1 - k); island.position.set((Math.random() - 0.5) * a, (Math.random() - 0.5) * a * 0.5, (Math.random() - 0.5) * a); }
+        if (k >= 1 || reduce) { island.position.copy(CEN); shake = null; }
+        else { const a = shake.amp * (1 - k); island.position.set(CEN.x + (Math.random() - 0.5) * a, CEN.y + (Math.random() - 0.5) * a * 0.5, CEN.z + (Math.random() - 0.5) * a); }
       }
     }
     function doTap(p) {
@@ -495,33 +415,15 @@
       glassRipple(p, r.level);
       shake = { t0: now(), amp: 0.1 + r.level * 0.12 };
       if (audio) audio.knock(r.level);
-      const q = domePoint(p);
+      const q = domeWorld(p).sub(CEN);
       let shown = 0;
       for (let i = 0; i < world.households.length && shown < 26; i++) { const h = world.households[i]; if (h.fear > 0 && (ids.includes(i) || r.level >= 3) && Math.random() < 0.6) { spawnArc(q, housePos(Math.floor(i / 4)), '#ff5a5a'); shown++; } }
       const st = tellNow('tap');
-      if (st) showSub(st, 6500);
-      computeAuras(); updateToolUi();
+      if (st) N.showSub(st, 6500);
+      computeAuras();
     }
 
     /* ----- Thì thầm tin đồn ----- */
-    function showMenu(on) {
-      const m = $('whisperMenu'); m.hidden = !on; $('toolWhisper').setAttribute('aria-expanded', String(on));
-      if (!on) return;
-      const b = $('toolWhisper').getBoundingClientRect(), mw = Math.min(300, window.innerWidth - 24);
-      m.style.width = mw + 'px';
-      const left = b.right + 10 + mw < window.innerWidth ? b.right + 10 : Math.max(12, b.left - 10 - mw);
-      m.style.left = left + 'px'; m.style.top = Math.max(12, Math.min(window.innerHeight - m.offsetHeight - 90, b.top - 20)) + 'px';
-      m.querySelector('button').focus({ preventScroll: true });
-    }
-    $('toolWhisper').addEventListener('click', () => {
-      if (mode && mode.startsWith('whisper')) { setMode(null); return; }
-      const wait = world.keeper.whisperReady - world.day;
-      if (wait > 0) { toast('Lời thì thầm trước còn đang lan. ' + wait + ' ngày nữa mới thì thầm tiếp được.', 3000); return; }
-      if (!$('whisperMenu').hidden) { showMenu(false); return; }
-      setMode(null); showMenu(true);
-    });
-    $('whisperMenu').addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) setMode('whisper-' + b.dataset.k); });
-    $('scene').addEventListener('pointerdown', () => { if (!$('whisperMenu').hidden) showMenu(false); });
     let rumorWatch = null;
     function whisperFx(p, color, text) {
       ripple(p, color);
@@ -530,64 +432,61 @@
     }
     function doWhisper(kind, sel) {
       const r = Sim.whisper(world, kind, kind === 'fad' ? sel.id : sel.i);
-      if (!r.ok) { toast(r.reason === 'wait' ? 'Còn ' + r.wait + ' ngày nữa mới thì thầm tiếp được.' : r.reason === 'fad' ? 'Thành phố đang có một cơn sốt rồi. Chờ nó qua đã.' : 'Không thì thầm được ở đây.', 3200); return true; }
-      setMode(null);
+      if (!r.ok) { toast(r.reason === 'wait' ? 'Ở ' + X.cityName + ', còn ' + r.wait + ' ngày nữa mới thì thầm tiếp được.' : r.reason === 'fad' ? 'Thành phố đang có một cơn sốt rồi. Chờ nó qua đã.' : 'Không thì thầm được ở đây.', 3200); return true; }
+      N.setMode(null);
       const p = kind === 'fad' ? firmPos(sel.id) : housePos(sel.i);
-      flyTo(p, 30); pausedUntil = now() + 14000;
-      whisperFx(p, kind === 'bank' ? '#ff6b6b' : kind === 'food' ? '#f0b85a' : r.fad.color, kind === 'bank' ? '“Kho Bạc sắp vỡ…”' : kind === 'food' ? '“Sắp mất mùa…”' : '“' + r.item + '…”');
+      flyTo(p, 30); N.pause(14000);
+      whisperFx(p, kind === 'bank' ? '#ff6b6b' : kind === 'food' ? '#f0b85a' : r.fad.color, kind === 'bank' ? '“' + bankName() + ' sắp vỡ…”' : kind === 'food' ? '“Sắp mất mùa…”' : '“' + r.item + '…”');
       if (audio) audio.whisper();
       const st = tellNow(kind === 'fad' ? 'fad' : kind === 'food' ? 'rumor-food' : 'rumor');
-      if (st) showSub(st, 8000);
+      if (st) N.showSub(st, 8000);
       const day0 = world.day;
-      if (kind === 'bank') { rumorWatch = { kind, peak: 0 }; const W = rumorWatch; X.watch(25, () => world.stories.some((x) => x.type === 'bankrun' && x.day > day0) ? 'Lời thì thầm về Kho Bạc đã thành <b>đám đông kéo đến đòi tiền</b>.' : 'Hai mươi lăm ngày sau lời thì thầm: nỗi sợ lan tới nhiều nhất <b>' + Math.round(W.peak * 100) + '%</b> dân rồi tự tắt.'); }
-      else if (kind === 'food') { rumorWatch = { kind, peak: 0 }; const W = rumorWatch, food = () => world.firms.filter((f) => f.alive && f.sector === 'food'), price = () => food().reduce((t, f) => t + f.price, 0) / Math.max(1, food().length), p0 = price(); X.watch(20, () => 'Hai mươi ngày sau lời thì thầm: tin mất mùa lan tới <b>' + Math.round(W.peak * 100) + '%</b> dân, giá lương thực ' + p0.toFixed(1).replace('.', ',') + ' → <b>' + price().toFixed(1).replace('.', ',') + ' xu</b>.'); }
+      if (kind === 'bank') { rumorWatch = { kind, peak: 0 }; const Wt = rumorWatch; X.watch(25, () => world.stories.some((x) => x.type === 'bankrun' && x.day > day0) ? 'Lời thì thầm ở ' + X.cityName + ' đã thành <b>đám đông kéo đến đòi tiền</b>.' : 'Hai mươi lăm ngày sau lời thì thầm: nỗi sợ ở ' + X.cityName + ' lan tới nhiều nhất <b>' + Math.round(Wt.peak * 100) + '%</b> dân rồi tự tắt.'); }
+      else if (kind === 'food') { rumorWatch = { kind, peak: 0 }; const Wt = rumorWatch, food = () => world.firms.filter((f) => f.alive && f.sector === 'food'), price = () => food().reduce((t, f) => t + f.price, 0) / Math.max(1, food().length), p0 = price(); X.watch(20, () => 'Hai mươi ngày sau lời thì thầm: tin mất mùa ở ' + X.cityName + ' lan tới <b>' + Math.round(Wt.peak * 100) + '%</b> dân, giá lương thực ' + p0.toFixed(1).replace('.', ',') + ' → <b>' + price().toFixed(1).replace('.', ',') + ' xu</b>.'); }
       else X.watch(30, () => { const f = r.fad; return 'Cơn sốt ' + f.item.toLowerCase() + ' từ lời thì thầm: <b>' + Math.round(f.peakShare * 100) + '%</b> dân từng mê, giá lên gấp <b>' + f.maxRatio.toFixed(1).replace('.', ',') + '</b> lần.'; });
-      updateToolUi();
       return true;
     }
 
     /* ----- Gọi khí cầu ----- */
-    let beaconT0 = 0;
-    $('toolCall').addEventListener('click', () => {
+    function callAirship() {
+      if (W0.cities[CI].era < 3) { toast(X.cityName + ' còn ở thời ' + Sim.ERAS[W0.cities[CI].era].name.toLowerCase() + '. Khí cầu chỉ bay tới những thành phố từ thời cận đại.', 4200); return; }
       const r = Sim.callAirship(world);
-      if (!r.ok) { toast(r.reason === 'docked' ? 'Khí cầu đang neo ở bến rồi.' : 'Đèn hiệu trên bến còn nóng, ' + r.wait + ' ngày nữa mới thắp lại được.', 3000); return; }
-      setMode(null);
-      beaconT0 = now(); dock.visible = true;
-      flyTo(dock.position, 38); pausedUntil = now() + 12000;
-      toast('Đèn hiệu trên bến đã thắp. Đoàn thương nhân sẽ đến vào ngày mai.', 4200);
+      if (!r.ok) { toast(r.reason === 'docked' ? 'Khí cầu đang neo ở bến ' + X.cityName + ' rồi.' : 'Đèn hiệu trên bến còn nóng, ' + r.wait + ' ngày nữa mới thắp lại được.', 3000); return; }
+      N.setMode(null);
+      dock.visible = true;
+      flyTo(dock.position, 38); N.pause(12000);
+      toast('Đèn hiệu trên bến ' + X.cityName + ' đã thắp. Đoàn thương nhân sẽ đến vào ngày mai.', 4200);
       if (audio) audio.chime();
       const in0 = world.ledger.inflow;
-      X.watch(40, () => 'Chuyến khí cầu được gọi đã mang về <b>' + Math.round(world.ledger.inflow - in0).toLocaleString('vi-VN') + ' xu</b> từ bên ngoài đảo.');
-      updateToolUi();
-    });
-    $('toolSeed').addEventListener('click', () => setMode(mode === 'seed' ? null : 'seed'));
-    $('toolTap').addEventListener('click', () => setMode(mode === 'tap' ? null : 'tap'));
-
-    function ringUi(id, wait, total) { const b = $(id); b.style.setProperty('--p', String(clamp(1 - wait / total, 0, 1))); b.classList.toggle('ready', wait <= 0); }
-    function updateToolUi() {
-      const d = world.day, K = world.keeper, a = world.airship;
-      const sw = Math.max(0, world.seedReady - d);
-      $('seedWait').textContent = sw ? 'Ủ lại · còn ' + sw + ' ngày' : 'Sẵn sàng'; ringUi('toolSeed', sw, 40);
-      const live = K.tapLevel > 0 && d - K.lastTap <= 6;
-      $('tapWait').textContent = K.lastTap === d ? 'Kính còn rung' : live ? 'Gõ tiếp: mức ' + Math.min(4, K.tapLevel + 1) + '/4' : 'Chạm vào đảo'; ringUi('toolTap', K.lastTap === d ? 1 : 0, 1);
-      const ww = Math.max(0, K.whisperReady - d);
-      $('whisperWait').textContent = ww ? 'Còn ' + ww + ' ngày' : 'Sẵn sàng'; ringUi('toolWhisper', ww, 20);
-      const cw = Math.max(0, K.callReady - d), busy = a.state === 'docked' || a.called;
-      $('callWait').textContent = a.state === 'docked' ? 'Đang neo ở bến' : a.called ? 'Đang trên đường' : cw ? 'Còn ' + cw + ' ngày' : 'Sẵn sàng'; ringUi('toolCall', busy ? 1 : cw, busy ? 1 : 90);
+      X.watch(40, () => 'Chuyến khí cầu được gọi đã mang về cho ' + X.cityName + ' <b>' + Math.round(world.ledger.inflow - in0).toLocaleString('vi-VN') + ' xu</b> từ bên ngoài.');
     }
 
-    function handlePick(sel, ray) {
-      if (!mode) return false;
-      if (mode === 'tap') { const p = groundPoint(ray); if (p) doTap(p); return true; }
-      if (!wants(sel)) { toast(mode === 'seed' ? 'Hãy chọn một xưởng hoặc một cối xay gió.' : mode === 'whisper-fad' ? 'Hãy chọn một xưởng thủ công còn mở cửa.' : 'Hãy chọn một ngôi nhà.', 2500); return true; }
-      return mode === 'seed' ? doSeed(sel) : doWhisper(mode.slice(8), sel);
+    /* ----- Đám đông trước nơi giữ tiền khi nỗi sợ lan rộng ----- */
+    const CROWD = 40, crowdB = new THREE.InstancedMesh(X.people.bodyGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), CROWD), crowdH = new THREE.InstancedMesh(X.people.headGeo, X.people.headMat, CROWD);
+    for (let i = 0; i < CROWD; i++) crowdB.setColorAt(i, C(X.people.shirts[(i * 7) % X.people.shirts.length]));
+    for (const m of [crowdB, crowdH]) { m.castShadow = true; m.frustumCulled = false; island.add(m); }
+    let panicLv = 0;
+    const toPl = new THREE.Vector3(-bank.position.x, 0, -bank.position.z).normalize(), crowdAng = Math.atan2(toPl.z, toPl.x);
+    function updateBankCrowd(t) {
+      const target = Math.max(world.phen.panic > 0 ? 1 : 0, clamp(((world.fearShare || 0) - 0.1) / 0.2, 0, 1));
+      panicLv += (target - panicLv) * 0.03;
+      const show = panicLv > 0.02; crowdB.visible = crowdH.visible = show;
+      if (!show) return;
+      for (let i = 0; i < CROWD; i++) {
+        const row = Math.floor(i / 10), col = i % 10, a = crowdAng + (col - 4.5) * 0.17, r = 4.4 + row * 0.85;
+        if (panicLv < (i / CROWD) * 0.9 + 0.05) { qd.position.set(0, -80, 0); qd.scale.setScalar(0.001); }
+        else { const jig = reduce ? 0 : Math.sin(t * 0.008 + i * 1.7) * 0.06; qd.position.set(bank.position.x + Math.cos(a) * r + jig, 0.31 + Math.abs(Math.sin(t * 0.006 + i)) * 0.05, bank.position.z + Math.sin(a) * r); qd.scale.setScalar(1); }
+        qd.updateMatrix(); crowdB.setMatrixAt(i, qd.matrix);
+        qd.position.y += 0.47; qd.updateMatrix(); crowdH.setMatrixAt(i, qd.matrix);
+      }
+      crowdB.instanceMatrix.needsUpdate = crowdH.instanceMatrix.needsUpdate = true;
     }
 
     /* =============== Ký ức: tượng, tàn tích, Đảo Đồ Cũ =============== */
     const memo3d = new Map(); // id ký ức -> { g, kind, pos }
     const exitAng = (X.plazaExits || []).map((e) => Math.atan2(e.z - PLAZA.z, e.x - PLAZA.x));
     const statueSlots = [];
-    for (const [r, n, off] of [[4.9, 16, 0], [7.15, 22, 0.07]]) for (let k = 0; k < n; k++) {
+    for (const [r, n, off] of [[5.2, 14, 0], [6.35, 18, 0.09]]) for (let k = 0; k < n; k++) {
       const a = (k / n) * Math.PI * 2 + off;
       if (exitAng.every((e) => Math.abs(Math.atan2(Math.sin(a - e), Math.cos(a - e))) > 0.34)) statueSlots.push({ a, r, used: 0 });
     }
@@ -629,7 +528,7 @@
       return { g, kind: 'ruin', pos: seen.pos.clone() };
     }
     // Đảo Đồ Cũ: hòn đảo nhỏ lơ lửng cạnh rìa, nơi đồ của những cơn sốt đã qua bị bỏ lại
-    const JA = 2.3, junk = new THREE.Group();
+    const JA = X.outAng - 0.62, junk = new THREE.Group();
     junk.position.set(Math.cos(JA) * (R + 8), -1.6, Math.sin(JA) * (R + 8)); junk.visible = false; island.add(junk);
     (function buildJunk() {
       const rock = mesh(new THREE.DodecahedronGeometry(4.3, 0), mat('#7b6a58'), 0, -2.7, 0, junk); rock.scale.set(1.25, 0.8, 1.1);
@@ -662,7 +561,7 @@
       for (const m of world.memorials) {
         if (memo3d.has(m.id) || m.skip) continue;
         let o = null;
-        if (m.kind === 'statue') o = buildStatue(m);
+        if (m.kind === 'statue') { if (!m.seeded && m.id % 3) { m.skip = true; continue; } o = buildStatue(m); }
         else if (m.kind === 'pile') o = buildPile(m, pileCount++);
         else if (m.kind === 'ruin') {
           if (firmObj.has(m.firmId)) continue; // còn đang sập dần
@@ -702,12 +601,12 @@
     /* =============== Đường mòn: lối đi tự hình thành từ những bước chân =============== */
     const WEAR = 512, wearCv = document.createElement('canvas'); wearCv.width = wearCv.height = WEAR;
     const wctx = wearCv.getContext('2d'), wearTex = new THREE.CanvasTexture(wearCv);
-    const wearMesh = new THREE.Mesh(new THREE.PlaneGeometry(2 * R, 2 * R), new THREE.MeshStandardMaterial({ map: wearTex, transparent: true, opacity: 0.6, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const wearMesh = new THREE.Mesh(new THREE.PlaneGeometry(2 * R, 2 * R), new THREE.MeshStandardMaterial({ map: wearTex, transparent: true, opacity: 0.42, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
     wearMesh.rotation.x = -Math.PI / 2; wearMesh.position.y = 0.02; wearMesh.receiveShadow = true; wearMesh.renderOrder = -1; island.add(wearMesh);
     const px = (v) => ((v + R) / (2 * R)) * WEAR;
     let wearN = 0, wearDirty = false, lastWear = 0;
     function wearDay() {
-      wctx.strokeStyle = 'rgba(158, 126, 84, 0.0065)'; wctx.lineWidth = 2.2; wctx.lineCap = 'round'; wctx.lineJoin = 'round';
+      wctx.strokeStyle = 'rgba(120, 98, 70, 0.0045)'; wctx.lineWidth = 2.0; wctx.lineCap = 'round'; wctx.lineJoin = 'round';
       const hs = world.households;
       for (let i = 0; i < hs.length; i++) {
         const h = hs[i];
@@ -722,21 +621,6 @@
       if (++wearN % 10 === 0) { wctx.globalCompositeOperation = 'destination-out'; wctx.fillStyle = 'rgba(0,0,0,0.1)'; wctx.fillRect(0, 0, WEAR, WEAR); wctx.globalCompositeOperation = 'source-over'; }
       wearDirty = true;
     }
-
-    /* =============== Chương năm =============== */
-    let chapterUntil = 0;
-    function showChapter(st) {
-      const [yr, ...rest] = st.title.split(': ');
-      $('cpYear').textContent = yr + ' khép lại';
-      $('cpTitle').textContent = rest.join(': ');
-      $('cpList').innerHTML = (st.recap || []).map((l) => '<li>' + l + '</li>').join('');
-      const el = $('chapter'); el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-      chapterUntil = now() + 16000;
-      flyTo(new THREE.Vector3(0, 0, 0), 120); X.setAutoRotate(true); overview = true; holdUntil = now() + 9000;
-      if (audio) audio.chime();
-    }
-    function hideChapter() { $('chapter').hidden = true; chapterUntil = 0; }
-    $('cpClose').addEventListener('click', hideChapter);
 
     /* =============== Mốc 3: Đồi Mây, trạm xá, lều người lạ, đình công, độc quyền, đám cưới =============== */
     // --- Tháp giếng mỏ trên Đồi Mây
@@ -888,7 +772,8 @@
       for (const [id, o] of firmObj) {
         const f = firmOf(id), on = !!(f && f.alive && f.monopoly);
         let fl = flags.get(id);
-        if (on && !fl) { fl = new THREE.Group(); mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 5), mat('#3b3b3b'), 0, 1.2, 0, fl); const cloth = mesh(new THREE.PlaneGeometry(1.2, 0.7), flagMat, 0.62, 2.0, 0, fl); fl.userData.cloth = cloth; fl.position.set(-1.0, o.kind === 'farm' ? 4.6 : 3.6, 0.4); o.g.add(fl); flags.set(id, fl); }
+        if (on && !fl) { fl = new THREE.Group(); mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 5), mat('#3b3b3b'), 0, 1.2, 0, fl); const cloth = mesh(new THREE.PlaneGeometry(1.2, 0.7), flagMat, 0.62, 2.0, 0, fl); fl.userData.cloth = cloth; fl.position.set(-1.0, Math.min(8, o.g.userData.top || 3.6), 0.4); o.g.add(fl); flags.set(id, fl); }
+        if (fl && fl.parent !== o.g) { flags.delete(id); fl = null; if (on) { syncFlags(t); return; } }
         if (!on && fl) { fl.parent.remove(fl); flags.delete(id); }
         if (fl) fl.userData.cloth.rotation.y = Math.sin(t * 0.004 + id) * 0.35;
       }
@@ -901,7 +786,7 @@
       label3d('Đám cưới', new THREE.Vector3(b.x, 8, b.z), '#ffc2d4');
     }
 
-    function extraPos(id) { const G = world.gold; return G && G.firmId === id ? minePos : null; }
+    function extraPos(id) { const G = world.gold; return G && G.firmId === id && !G.closed ? minePos : null; }
     function customCard(sel) {
       if (sel.type === 'memo') return memoCard(sel.id);
       if (sel.type === 'mine') {
@@ -928,16 +813,18 @@
       return null;
     }
 
-    /* =============== Nhịp ngày và khung hình =============== */
+    /* =============== Nhịp ngày và khung hình của miền này =============== */
     let lastId = world.storySeq;
+    // chuyện mới của thành phố: gắn tên miền, gây hiệu ứng tại chỗ, rồi giao cho người dẫn chuyện
     function ingest() {
-      const fresh = Sim.storiesSince(world, lastId);
-      if (fresh.length) lastId = fresh[fresh.length - 1].id;
+      const fresh = Sim.storiesSince(world, lastId).filter((st) => st.type !== 'chapter'); // chương năm do cả thế giới kể
+      const all = Sim.storiesSince(world, lastId);
+      if (all.length) lastId = all[all.length - 1].id;
       for (const st of fresh) {
-        addChron(st);
+        st.city = CI;
+        N.addChron(st);
         if (st.type === 'invention' && st.seeded) continue; // đã kể khi hạt giống chạm đất
-        if (st.type === 'chapter') { showChapter(st); continue; }
-        if (st.tier !== 'small' || Math.random() < 0.3) queue.push(st);
+        if (st.tier !== 'small' || Math.random() < 0.25) N.enqueue(st);
         if (st.type === 'invention') inventFlash(st.place.id, st.item);
         else if (st.type === 'fire' && audio) audio.crackle();
         else if (st.type === 'airship' && audio) audio.horn();
@@ -953,35 +840,289 @@
       return fresh;
     }
     function onDay() {
+      world = W0.cities[CI].w;
       ingest();
-      while (queue.length > 14) queue.shift();
       if (rumorWatch) rumorWatch.peak = Math.max(rumorWatch.peak, rumorWatch.kind === 'bank' ? world.fearShare || 0 : (world.foodRumorN || 0) / world.households.length);
-      spreadArcs(); computeAuras(); sendCrates(); updateToolUi(); syncMemories(true); wearDay();
+      spreadArcs(); computeAuras(); sendCrates(); syncMemories(true); wearDay();
     }
     let lastSlow = 0;
     function update(dt, t) {
-      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateSub(); updateDirector(); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
-      updateMine(t, dt); updateTent(t); updateEpidemic(t); updatePickets(t);
+      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
+      updateMine(t, dt); updateTent(t); updateEpidemic(t); updatePickets(t); updateBankCrowd(t);
       if (t - lastSlow > 250) { lastSlow = t; syncCrystals(t); syncFires(t); syncFlags(t); }
       else for (const [, c] of crystals) { c.g.rotation.y = t * 0.0012; }
       for (const [, fx] of fireFx) if (fx.burning) for (let k = 0; k < fx.flames.length; k++) { const s = fx.flames[k], fl = 0.6 + 0.4 * Math.sin(t * 0.02 + k * 2.1) * Math.sin(t * 0.013 + k); s.scale.setScalar(2.4 + fl * 2.2); s.material.opacity = 0.55 + 0.35 * fl; }
       if (wearDirty && t - lastWear > 450) { wearTex.needsUpdate = true; wearDirty = false; lastWear = t; }
-      if (chapterUntil && now() > chapterUntil) hideChapter();
       // đèn hiệu trên bến cháy sáng cho đến khi khí cầu đến
       const calling = world.airship.called;
       dockLamp.scale.setScalar(3 + (calling ? 4 + Math.sin(t * 0.008) * 1.5 : 0));
       dockLamp.material.opacity = calling ? 1 : 0.7;
     }
-    updateToolUi(); computeAuras();
+    computeAuras();
+    return { onDay, update, ingest, placePos, wants, doSeed, doTap, doWhisper, callAirship, customCard, customPos, extraPos, hideHalos, goTo: (st) => placePos(st.place) };
+  }
+
+  /* =============== Người dẫn chuyện chung cho cả sáu miền =============== */
+  function create(G) {
+    const { THREE, W, Sim, lands3d, $, reduce, audio } = G;
+    const now = () => performance.now();
+    const layers = [];
+    const cityName = (i) => (i >= 0 && W.cities[i] ? W.cities[i].name : '');
+
+    /* ----- Phụ đề ----- */
+    let subUntil = 0;
+    function showSub(st, ms) {
+      const [label, color] = typeOf(st.type);
+      const el = $('subtitle'), where = st.city >= 0 && st.city != null ? cityName(st.city) + ' · ' : '';
+      el.innerHTML = '<span class="sk" style="color:' + color + '">Ngày ' + st.day + ' · ' + where + label + '</span><b>' + st.title + '</b><span class="st">' + st.text + '</span>';
+      el.hidden = false; el.classList.remove('out'); void el.offsetWidth; el.classList.add('in');
+      const hint = $('hint'); if (hint) hint.style.opacity = 0;
+      subUntil = now() + (ms || TIER_HOLD[st.tier] || 6000);
+    }
+    function updateSub() { const el = $('subtitle'); if (!el.hidden && now() > subUntil) { el.classList.remove('in'); el.classList.add('out'); if (now() > subUntil + 500) el.hidden = true; } }
+
+    /* ----- Vị trí của một câu chuyện trong toạ độ thế giới ----- */
+    function placeOf(st) {
+      const pl = st.place;
+      if (pl && pl.kind === 'land') return lands3d.lands[pl.city].center.clone();
+      if (pl && pl.kind === 'bridge') { const B = lands3d.bridges[pl.bridge]; return B.pa.clone().lerp(B.pb, 0.5); }
+      if (st.city >= 0 && layers[st.city]) return lands3d.lands[st.city].world(layers[st.city].placePos(pl));
+      if (st.city >= 0) return lands3d.lands[st.city].center.clone();
+      return new THREE.Vector3();
+    }
+
+    /* ----- Biên niên sử ----- */
+    const chron = [];
+    let unread = 0;
+    function chronItem(st) {
+      if (st.type === 'chapter') return '<li class="t-chapter"><button data-id="' + st.uid + '"><span class="cd">' + st.title.split(': ')[0] + ' khép lại · Ngày ' + st.day + '</span><b>' + (st.title.split(': ')[1] || st.title) + '</b><span class="ct">' + (st.recap || []).slice(0, 3).join(' · ') + '</span></button></li>';
+      const [label, color] = typeOf(st.type), where = st.city >= 0 && st.city != null ? cityName(st.city) + ' · ' : '';
+      return '<li class="t-' + st.tier + '"><button data-id="' + st.uid + '"><i style="background:' + color + ';color:' + color + '"></i><span class="cd">Ngày ' + st.day + ' · ' + where + label + '</span><b>' + st.title + '</b><span class="ct">' + st.text + '</span></button></li>';
+    }
+    function renderChron() {
+      const list = $('chronList');
+      list.innerHTML = chron.length ? chron.map(chronItem).join('') : '<li class="empty">Sáu miền đất còn hoang sơ. Chờ những người đầu tiên.</li>';
+      unread = 0; badge();
+    }
+    function badge() { const b = $('chronBadge'); b.textContent = unread > 99 ? '99+' : unread; b.hidden = unread === 0; }
+    let uidSeq = 0;
+    function addChron(st) {
+      st.uid = ++uidSeq;
+      chron.unshift(st); if (chron.length > 220) chron.pop();
+      if (!$('chron').hidden) { $('chronList').insertAdjacentHTML('afterbegin', chronItem(st)); const li = $('chronList').querySelector('.empty'); if (li) li.remove(); while ($('chronList').children.length > 220) $('chronList').lastElementChild.remove(); }
+      else if (st.tier !== 'small') { unread++; badge(); }
+    }
+    $('chronList').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-id]'); if (!b) return;
+      const st = chron.find((s) => s.uid === +b.dataset.id); if (!st) return;
+      if (st.type === 'chapter') { G.closePanels(); showChapter(st); return; }
+      goTo(st, true);
+    });
+    function goTo(st, manual) {
+      const p = placeOf(st), pl = st.place;
+      const dist = pl && pl.kind === 'land' ? 70 : pl && pl.kind === 'bridge' ? 46 : TIER_DIST[st.tier] || 30;
+      G.flyTo(p, dist);
+      showSub(st, manual ? 9000 : null);
+      if (st.city >= 0) G.setFocus(st.city);
+      if (manual) {
+        pausedUntil = now() + 20000;
+        const land = st.city;
+        if (pl && pl.kind === 'firm') G.select({ type: 'firm', id: pl.id, land }, true);
+        else if (pl && pl.kind === 'house') G.select({ type: 'house', i: pl.id, land }, true);
+        else if (pl && pl.kind === 'bank') G.select({ type: 'bank', land }, true);
+      }
+    }
+
+    /* ----- Đạo diễn ----- */
+    let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
+    const queue = [];
+    const PRI_BONUS = { settle: 2, era: 2, chapter: 2 };
+    const pri = (st) => TIER_PRI[st.tier] + (PRI_BONUS[st.type] || 0);
+    function takeNext(minPri) {
+      for (let i = queue.length - 1; i >= 0; i--) if (W.day - queue[i].day > TIER_AGE[queue[i].tier]) queue.splice(i, 1);
+      let best = -1;
+      for (let i = queue.length - 1; i >= 0; i--) {
+        if (pri(queue[i]) < minPri) continue;
+        if (best < 0 || pri(queue[i]) > pri(queue[best])) best = i;
+      }
+      return best < 0 ? null : queue.splice(best, 1)[0];
+    }
+    function enqueue(st) { queue.push(st); while (queue.length > 24) queue.shift(); }
+    function dequeue(st) { const i = queue.indexOf(st); if (i >= 0) queue.splice(i, 1); }
+    function updateDirector() {
+      const n = now();
+      if (n < holdUntil) return;
+      if (!directorOn || n < pausedUntil) {
+        const st = takeNext(2);
+        if (st && n > subUntil) { showSub(st); holdUntil = n + 1500; }
+        return;
+      }
+      const st = takeNext(1);
+      if (st) { goTo(st, false); holdUntil = n + (TIER_HOLD[st.tier] || 6000); G.setAutoRotate(false); idleSince = n; overview = false; }
+      else if (!overview && n - idleSince > 8000) { G.flyTo(new THREE.Vector3(0, 0, 0), G.overviewDist); G.setAutoRotate(true); overview = true; }
+    }
+
+    /* ----- Công cụ ----- */
+    let mode = null;
+    const HINT = {
+      seed: 'Chọn một xưởng hoặc một nơi làm ra lương thực, ở bất cứ miền nào, để gieo hạt phát minh.',
+      tap: 'Chạm vào một chỗ trên một miền đất để gõ lên vòm kính phía trên. Gõ liên tiếp nhiều ngày thì nỗi sợ lan rộng hơn.',
+      'whisper-bank': 'Chọn một ngôi nhà để thì thầm: nơi giữ tiền sắp vỡ.',
+      'whisper-food': 'Chọn một ngôi nhà để thì thầm: “Năm nay sắp mất mùa”.',
+      'whisper-fad': 'Chọn một xưởng để thì thầm về một món hàng mới.',
+    };
+    const TOOL_OF = { seed: 'toolSeed', tap: 'toolTap', 'whisper-bank': 'toolWhisper', 'whisper-food': 'toolWhisper', 'whisper-fad': 'toolWhisper' };
+    function setMode(m) {
+      mode = m || null;
+      for (const id of ['toolSeed', 'toolTap', 'toolWhisper']) $(id).setAttribute('aria-pressed', String(!!mode && TOOL_OF[mode] === id));
+      document.body.classList.toggle('seeding', !!mode);
+      showMenu(false);
+      if (mode) { G.closePanels(); G.select(null); G.toast(HINT[mode], 3800); pausedUntil = now() + 30000; }
+      for (const ly of layers) if (ly) ly.hideHalos();
+    }
+    function showMenu(on) {
+      const m = $('whisperMenu'); m.hidden = !on; $('toolWhisper').setAttribute('aria-expanded', String(on));
+      if (!on) return;
+      const b = $('toolWhisper').getBoundingClientRect(), mw = Math.min(300, window.innerWidth - 24);
+      m.style.width = mw + 'px';
+      const left = b.right + 10 + mw < window.innerWidth ? b.right + 10 : Math.max(12, b.left - 10 - mw);
+      m.style.left = left + 'px'; m.style.top = Math.max(12, Math.min(window.innerHeight - m.offsetHeight - 90, b.top - 20)) + 'px';
+      m.querySelector('button').focus({ preventScroll: true });
+    }
+    const focusW = () => { const c = W.cities[G.focus()]; return c && c.settled ? c.w : null; };
+    $('toolWhisper').addEventListener('click', () => {
+      if (mode && mode.startsWith('whisper')) { setMode(null); return; }
+      if (!$('whisperMenu').hidden) { showMenu(false); return; }
+      setMode(null); showMenu(true);
+    });
+    $('whisperMenu').addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) setMode('whisper-' + b.dataset.k); });
+    $('scene').addEventListener('pointerdown', () => { if (!$('whisperMenu').hidden) showMenu(false); });
+    $('toolSeed').addEventListener('click', () => setMode(mode === 'seed' ? null : 'seed'));
+    $('toolTap').addEventListener('click', () => setMode(mode === 'tap' ? null : 'tap'));
+    $('toolCall').addEventListener('click', () => {
+      const i = G.focus(), ly = layers[i];
+      if (!ly) { G.toast('Hãy chọn một thành phố đã có người trước (bấm vào tên thành phố ở trên).', 3500); return; }
+      ly.callAirship(); updateToolUi();
+    });
+    function ringUi(id, wait, total) { const b = $(id); b.style.setProperty('--p', String(Math.max(0, Math.min(1, 1 - wait / total)))); b.classList.toggle('ready', wait <= 0); }
+    // các vòng chờ hiển thị trạng thái của thành phố đang xem
+    function updateToolUi() {
+      const w = focusW();
+      if (!w) { for (const [id, el] of [['toolSeed', 'seedWait'], ['toolTap', 'tapWait'], ['toolWhisper', 'whisperWait'], ['toolCall', 'callWait']]) { $(el).textContent = 'Chọn một thành phố'; ringUi(id, 0, 1); } return; }
+      const d = w.day, K = w.keeper, a = w.airship, nm = cityName(G.focus());
+      const sw = Math.max(0, w.seedReady - d);
+      $('seedWait').textContent = sw ? nm + ' · còn ' + sw + ' ngày' : 'Sẵn sàng ở mọi miền'; ringUi('toolSeed', sw, 40);
+      const live = K.tapLevel > 0 && d - K.lastTap <= 6;
+      $('tapWait').textContent = K.lastTap === d ? 'Kính còn rung' : live ? 'Gõ tiếp: mức ' + Math.min(4, K.tapLevel + 1) + '/4' : 'Chạm vào một miền'; ringUi('toolTap', K.lastTap === d ? 1 : 0, 1);
+      const ww = Math.max(0, K.whisperReady - d);
+      $('whisperWait').textContent = ww ? nm + ' · còn ' + ww + ' ngày' : 'Sẵn sàng'; ringUi('toolWhisper', ww, 20);
+      const era = W.cities[G.focus()].era, cw = Math.max(0, K.callReady - d), busy = a.state === 'docked' || a.called;
+      $('callWait').textContent = era < 3 ? nm + ' chưa có bến' : a.state === 'docked' ? 'Đang neo ở bến' : a.called ? 'Đang trên đường' : cw ? 'Còn ' + cw + ' ngày' : 'Gọi tới ' + nm; ringUi('toolCall', era < 3 || busy ? 1 : cw, era < 3 || busy ? 1 : 90);
+    }
+    const GROUND = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    function landAt(wp) { for (const L of lands3d.lands) if (Math.hypot(wp.x - L.center.x, wp.z - L.center.z) < lands3d.LAND_R + 1) return L; return null; }
+    function handlePick(sel, ray) {
+      if (!mode) return false;
+      if (mode === 'tap') {
+        const wp = new THREE.Vector3();
+        if (!ray || !ray.ray.intersectPlane(GROUND, wp)) return true;
+        const L = landAt(wp);
+        if (!L) return true;
+        if (!layers[L.i]) { G.toast('Miền ' + W.cities[L.i].terrain.land.toLowerCase() + ' chưa có ai ở. Tiếng gõ chỉ làm chim bay.', 2600); return true; }
+        G.setFocus(L.i); layers[L.i].doTap(wp.clone().sub(L.center)); updateToolUi();
+        return true;
+      }
+      const ly = sel && sel.land != null ? layers[sel.land] : null;
+      if (!ly || !ly.wants(sel)) { G.toast(mode === 'seed' ? 'Hãy chọn một xưởng hoặc một nơi làm ra lương thực.' : mode === 'whisper-fad' ? 'Hãy chọn một xưởng thủ công còn mở cửa.' : 'Hãy chọn một ngôi nhà.', 2500); return true; }
+      G.setFocus(sel.land);
+      const r = mode === 'seed' ? ly.doSeed(sel) : ly.doWhisper(mode.slice(8), sel);
+      updateToolUi();
+      return r;
+    }
+    function wants(sel) { if (!mode) return false; if (mode === 'tap') return true; const ly = sel && sel.land != null ? layers[sel.land] : null; return !!(ly && ly.wants(sel)); }
+
+    /* ----- Chương năm của cả thế giới ----- */
+    let chapterUntil = 0;
+    function showChapter(st) {
+      const [yr, ...rest] = st.title.split(': ');
+      $('cpYear').textContent = yr + ' khép lại';
+      $('cpTitle').textContent = rest.join(': ');
+      $('cpList').innerHTML = (st.recap || []).map((l) => '<li>' + l + '</li>').join('');
+      const el = $('chapter'); el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+      chapterUntil = now() + 16000;
+      G.flyTo(new THREE.Vector3(0, 0, 0), G.overviewDist); G.setAutoRotate(true); overview = true; holdUntil = now() + 9000;
+      if (audio) audio.chime();
+    }
+    function hideChapter() { $('chapter').hidden = true; chapterUntil = 0; }
+    $('cpClose').addEventListener('click', hideChapter);
+
+    /* ----- Chuyện của cả thế giới: định cư, thời đại mới, cầu, buôn bán, chương năm ----- */
+    let lastWorld = 0;
+    function ingestWorld() {
+      for (const st of W.stories) {
+        if (st.id <= lastWorld) continue;
+        lastWorld = st.id;
+        if (st.city == null || st.city < 0) st.city = st.place && st.place.kind === 'bridge' ? lands3d.bridges[st.place.bridge].a : -1;
+        addChron(st);
+        if (st.type === 'chapter') { showChapter(st); continue; }
+        enqueue(st);
+        const p = placeOf(st);
+        if (st.type === 'era') { G.label3d(W.cities[st.city].name + ' · thời ' + Sim.ERAS[st.era].name, p.clone().setY(26), '#ffe08a'); G.ripple(p, '#ffd27a'); if (audio) audio.chime(); }
+        else if (st.type === 'settle') { G.label3d('Những người đầu tiên', p.clone().setY(18), '#9df0c4'); G.ripple(p, '#9df0c4'); }
+        else if (st.type === 'bridge') G.label3d('Cầu mới', p.clone().setY(12), '#d9ccff');
+      }
+    }
+
+    /* ----- Ngữ cảnh của một miền cho lớp hình ảnh ----- */
+    function contextFor(L) {
+      const c = W.cities[L.i];
+      return {
+        THREE, Sim, W, city: L.i, cityName: c.name, island: L.g, center: L.center, dome: G.dome, outAng: L.ang,
+        houses: L.houses, firmObj: L.firmObj, glowTex: G.glowTex, mat: G.mat, mesh: G.mesh, box: G.box, C: G.C, audio, $, reduce,
+        PLAZA: new THREE.Vector3(0, 0, 0), R: lands3d.LAND_R, bank: { position: L.bankPos }, school: { position: L.schoolPos }, minePos: L.minePos,
+        plazaExits: [...L.landing, L.bankPos, L.schoolPos],
+        label3d: (text, p, color) => G.label3d(text, L.world(p), color),
+        toast: G.toast,
+        puff: (p, dark, col) => G.puff(L.world(p), dark, col),
+        ripple: (p, col) => G.ripple(L.world(p), col),
+        spawnMote: (a, b, col, dur) => G.spawnMote(L.world(a), L.world(b), col, dur),
+        flyTo: (p, d) => G.flyTo(L.world(p), d),
+        select: (s, f) => G.select(s ? Object.assign({ land: L.i }, s) : null, f),
+        watch: (d, fn) => G.watch(L.i, d, fn),
+        setAutoRotate: G.setAutoRotate, closePanels: G.closePanels,
+        people: G.people, tod: G.tod,
+        clickable: (g, sel) => G.clickable(g, Object.assign({ land: L.i }, sel)), unclickable: G.unclickable,
+        walkPath: (h) => lands3d.walkPath(L, h),
+      };
+    }
+    const N = { showSub, addChron, enqueue, dequeue, setMode, pause: (ms) => { pausedUntil = now() + ms; }, get mode() { return mode; } };
+    function ensureLayers() {
+      for (const L of lands3d.lands) if (!layers[L.i] && W.cities[L.i].settled && L.shown) layers[L.i] = makeLayer(contextFor(L), N);
+    }
+    function onDay() {
+      ensureLayers();
+      for (const ly of layers) if (ly) ly.onDay();
+      ingestWorld();
+      updateToolUi();
+    }
+    function update(dt, t) {
+      for (const ly of layers) if (ly) ly.update(dt, t);
+      updateSub(); updateDirector();
+      if (chapterUntil && now() > chapterUntil) hideChapter();
+    }
+    updateToolUi();
 
     return {
-      onDay, update, handlePick, renderChron, wants, setMode, customCard, customPos, extraPos, hideChapter,
+      onDay, update, handlePick, renderChron, wants, setMode, hideChapter, showSub, chron, queue, updateToolUi,
+      customCard: (sel) => { const ly = layers[sel.land]; return ly ? ly.customCard(sel) : null; },
+      customPos: (sel) => { const ly = layers[sel.land], p = ly ? ly.customPos(sel) : null; return p ? lands3d.lands[sel.land].world(p) : null; },
+      extraPos: (i, id) => { const ly = layers[i]; return ly ? ly.extraPos(id) : null; },
       userMoved() { pausedUntil = now() + 25000; overview = false; },
       setDirector(on) { directorOn = on; if (on) { pausedUntil = 0; holdUntil = 0; } },
       get director() { return directorOn; },
       get mode() { return mode; },
       get chapterOpen() { return !$('chapter').hidden; },
-      inventFlash, showSub, queue, chron, placePos,
+      layer: (i) => layers[i],
     };
   }
 

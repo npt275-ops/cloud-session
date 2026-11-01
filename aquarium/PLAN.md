@@ -33,3 +33,12 @@ Chạy `node tools/calibrate.js` để đo lại.
 - Mỗi bước kết thúc bằng một phiên bản chạy được, publish lên cùng link.
 - Lõi mô phỏng luôn có test; bất biến quan trọng nhất là bảo toàn tiền trong sổ cái.
 - Ý tưởng mới đi vào hàng chờ, không mở rộng phạm vi giữa chừng.
+
+## Hướng mới: sáu miền đất, sáu thời đại
+
+| Phần | Kết quả | Trạng thái |
+|---|---|---|
+| Lõi thế giới | Sáu thành phố trên sáu địa hình, định cư lần lượt, buôn bán và học hỏi qua cầu, sáu thời đại, chương năm chung. Có test. | Xong |
+| Sáu miền 3D | Địa hình riêng, công trình và cầu theo thời đại, xây lại dần khi sang thời mới, cư dân, đoàn hàng qua cầu | Xong |
+| Câu chuyện nhiều miền | Mỗi miền một lớp hình ảnh, một người dẫn chuyện chung; công cụ dùng được ở mọi miền | Xong |
+| Hoàn thiện | Đoàn người di cư qua cầu, cân chỉnh kinh tế thời nguyên thủy, hiệu năng | Đang làm |
