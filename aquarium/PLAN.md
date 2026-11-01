@@ -1,6 +1,6 @@
 # Bể Kính — Kế hoạch xây dựng
 
-Giao diện đã chốt: **thành phố tưởng tượng 3D low-poly trên hòn đảo bay trong bể kính** (`glass.html`).
+Giao diện đã chốt: **thành phố tưởng tượng 3D low-poly trên hòn đảo bay trong bể kính** (`index.html`).
 Thành phố là nhân vật chính; kinh tế chạy ngầm và hiện ra bằng hình ảnh, không bằng bảng số liệu.
 
 Ngân sách là ước tính trên credit còn lại. Số thật xem ở đồng hồ "Cloud session credits";
@@ -9,23 +9,25 @@ Ngân sách là ước tính trên credit còn lại. Số thật xem ở đồn
 | # | Bước | Kết quả | Trạng thái |
 |---|---|---|---|
 | 1 | **Kinh tế sống** | Thất nghiệp tự nhiên, chu kỳ bùng nổ và suy thoái, phá sản và khởi nghiệp, giàu nghèo, lạm phát vừa phải. Có test khoá các đặc tính này. | Xong |
-| 2 | **Bàn tay chính sách trong 3D** | In tiền (vàng rơi từ trời), lãi suất, thuế, với phản hồi bằng hình ảnh. | |
-| 3 | **Xây dựng** | Bấm lô đất trống để xây nhà, xưởng, cối xay. Thành phố lớn dần. | |
-| 4 | **Hiện tượng tự nhiên** | Mưa, hạn hán, lễ hội đèn lồng, đám đông trước kho bạc. Hình ảnh, không thẻ bắt chọn. | |
-| 5 | **Hoàn thiện** | Hiệu năng điện thoại, âm thanh, trang chính, dọn bản đề xuất cũ. | |
+| 2 | **Bàn tay chính sách trong 3D** | Rắc tiền (mưa đồng xu), lãi suất, thuế, lương tối thiểu; phản hồi 3D và thông báo hệ quả. | Xong |
+| 3 | **Xây dựng** | Đảo quy hoạch lại (82 lô nhà, 11 lô trang trại, 15 lô xưởng); xây nhà, cối xay, xưởng. | Xong |
+| 4 | **Hiện tượng tự nhiên** | Bốn mùa, mưa, tuyết, hạn hán, lễ hội đèn lồng, khủng hoảng niềm tin. Có test cho từng tác động. | Xong |
+| 5 | **Hoàn thiện** | Âm thanh tự sinh, tự điều chỉnh chất lượng, màn chào, chú giải, phím Esc, dọn dẹp, README. | Xong |
 
-## Kết quả cân chỉnh kinh tế (Bước 1, 6 seed × 2.000 ngày)
+## Kết quả cân chỉnh kinh tế (6 thành phố × 2.000 ngày, sau Bước 4)
 
-| Chỉ số | Trước | Sau |
+| Chỉ số | Ban đầu | Cuối cùng |
 |---|---|---|
-| Thất nghiệp trung bình | 0,5–1,3% | 2,2–3,1%, suy thoái lên 25–30% rồi hồi phục |
-| Lạm phát | ~10%/năm | ~4–8%/năm |
-| Doanh nghiệp phá sản | 1–6 | 6–13 |
-| Gini | 0,08 | 0,33–0,42 |
+| Thất nghiệp trung bình | 0,5–1,3% (gần như luôn 0) | 3,4–4,6%, suy thoái lên 33–41% rồi hồi phục |
+| Lạm phát | ~10%/năm, có thành phố 20% | 4,4–7,8%/năm trên 8 thành phố |
+| Doanh nghiệp phá sản | 1–6 | 17–24, có khởi nghiệp thay thế |
+| Gini | 0,08 | 0,28–0,37 |
+| Hộ thiếu ăn mỗi ngày | ~5, mùa đông và hạn hán có nạn đói | 1,9–5,2; mùa thu 0,5, mùa hạ 4,8 |
 
-Cơ chế thêm vào lõi: tay nghề khác nhau, chủ sở hữu nhận cổ tức, tiết kiệm phòng thân,
-tiêu dùng bão hoà và tiêu xa xỉ theo tài sản, tuyển và sa thải theo cầu thực, lương chỉ tăng khi lao động khan hiếm,
-khởi nghiệp theo lợi nhuận. Chạy `node tools/calibrate.js` để đo lại.
+Những lỗi mô hình tìm ra và sửa trong quá trình: tiền từ khoản vay vỡ nợ ở lại lưu thông mãi mãi (gây lạm phát),
+ngành lương thực có thể chết hẳn khi lượt thay thế bị mất, tuyển dụng không tính thời tiết, người dân chịu đói
+khi 3 sạp ngẫu nhiên hết hàng dù sạp khác còn, đảo chỉ chứa được 4 xưởng nên có xưởng "vô hình".
+Chạy `node tools/calibrate.js` để đo lại.
 
 ## Nguyên tắc
 - Mỗi bước kết thúc bằng một phiên bản chạy được, publish lên cùng link.
