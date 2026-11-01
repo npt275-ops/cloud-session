@@ -105,3 +105,65 @@ test('xây dựng: dân nhập cư và doanh nghiệp do người chơi xây gi�
   const newcomers = w.households.slice(n0);
   assert.ok(newcomers.some((h) => h.employer !== null), 'người mới phải tìm được việc');
 });
+
+test('lạm phát vừa phải và không ngành nào chết hẳn trên 8 thành phố khác nhau', () => {
+  for (let seed = 1; seed <= 8; seed++) {
+    const w = Sim.create({ seed });
+    let minFood = Infinity;
+    for (let i = 0; i < 2000; i++) {
+      Sim.step(w);
+      if (i > 100) minFood = Math.min(minFood, w.firms.filter((f) => f.alive && f.sector === 'food').length);
+    }
+    const st = w.stats.slice(200), yrs = (st.length - 1) / 360;
+    const infl = (Math.pow(st.at(-1).cpi / st[0].cpi, 1 / yrs) - 1) * 100;
+    assert.ok(infl > -3 && infl < 9, `seed ${seed}: lạm phát ${infl.toFixed(1)}%/năm`);
+    assert.ok(minFood >= 2, `seed ${seed}: có lúc chỉ còn ${minFood} lò thực phẩm`);
+    assert.ok(close(Sim.totalMoney(w), Sim.expectedMoney(w)), `seed ${seed}: lệch sổ cái`);
+  }
+});
+
+test('hiện tượng: bốn mùa đổi sản lượng lương thực', () => {
+  const w = Sim.create({ seed: 2 });
+  const at = (d) => { while (w.day < d) Sim.step(w); return Sim.phenomena(w); };
+  const spring = at(30), summer = at(120), autumn = at(210), winter = at(300);
+  assert.deepStrictEqual([spring.seasonName, summer.seasonName, autumn.seasonName, winter.seasonName], ['xuân', 'hạ', 'thu', 'đông']);
+  assert.ok(autumn.foodFactor > spring.foodFactor && spring.foodFactor > winter.foodFactor);
+});
+
+test('hiện tượng: hạn hán làm thiếu lương thực, lễ hội làm người dân mua sắm nhiều hơn', () => {
+  function pair(kind, from, days) {
+    const a = Sim.create({ seed: 4 }), b = Sim.create({ seed: 4 });
+    for (let i = 0; i < from; i++) { Sim.step(a); Sim.step(b); }
+    a.phen.drought = 0; b.phen.drought = 0; a.phen.festival = 0; b.phen.festival = 0;
+    Sim.trigger(b, kind, days);
+    const sa = [], sb = [], ka = [], kb = [], wa = [], wb = [];
+    const food = (w) => w.firms.filter((x) => x.alive && x.sector === 'food');
+    for (let i = 0; i < days; i++) {
+      Sim.step(a); Sim.step(b); sa.push(a.stats.at(-1)); sb.push(b.stats.at(-1));
+      ka.push(food(a).reduce((t, x) => t + x.inv, 0)); kb.push(food(b).reduce((t, x) => t + x.inv, 0));
+      wa.push(food(a).reduce((t, x) => t + x.workers.length, 0)); wb.push(food(b).reduce((t, x) => t + x.workers.length, 0));
+    }
+    const avg = (arr, k) => arr.reduce((s, x) => s + x[k], 0) / arr.length;
+    return { a: sa, b: sb, avg, ka, kb, wa, wb };
+  }
+  // Hạn hán: rút cạn kho, đẩy giá lương thực lên, và kéo lao động sang nông nghiệp
+  const d = pair('drought', 130, 40);
+  assert.ok(d.avg(d.b, 'foodPrice') > d.avg(d.a, 'foodPrice') * 1.05, `giá lương thực khi hạn ${d.avg(d.b, 'foodPrice').toFixed(2)} so với ${d.avg(d.a, 'foodPrice').toFixed(2)}`);
+  const half = (arr) => arr.slice(5, 20).reduce((t, x) => t + x, 0) / 15;
+  assert.ok(half(d.kb) < half(d.ka) * 0.6, `kho lương thực nửa đầu đợt hạn ${half(d.kb).toFixed(0)} so với ${half(d.ka).toFixed(0)}`);
+  assert.ok(Math.max(...d.wb) > Math.max(...d.wa) * 1.3, `lao động nông nghiệp khi hạn ${Math.max(...d.wb)} so với ${Math.max(...d.wa)}`);
+  const f = pair('festival', 330, 12);
+  assert.ok(f.avg(f.b, 'gdp') > f.avg(f.a, 'gdp') * 1.05, `chi tiêu lễ hội ${f.avg(f.b, 'gdp').toFixed(0)} so với ${f.avg(f.a, 'gdp').toFixed(0)}`);
+});
+
+test('hiện tượng: khủng hoảng niềm tin làm ngân hàng siết tín dụng, chặn khởi nghiệp tự nhiên, sổ cái vẫn khớp', () => {
+  const a = Sim.create({ seed: 6 }), b = Sim.create({ seed: 6 });
+  for (let i = 0; i < 300; i++) { Sim.step(a); Sim.step(b); }
+  a.phen.panic = 0; b.phen.panic = 0;
+  Sim.trigger(b, 'panic', 30);
+  const ca = a.ledger.created, cb = b.ledger.created, firmsB = b.firms.length;
+  for (let i = 0; i < 29; i++) { Sim.step(a); Sim.step(b); assert.ok(close(Sim.totalMoney(b), Sim.expectedMoney(b))); }
+  assert.ok(b.ledger.created - cb < (a.ledger.created - ca) * 0.8, `tín dụng mới khi khủng hoảng ${(b.ledger.created - cb).toFixed(0)} so với ${(a.ledger.created - ca).toFixed(0)}`);
+  assert.strictEqual(b.firms.length, firmsB, 'không được có doanh nghiệp tự nhiên mới trong lúc khủng hoảng');
+  assert.ok(Sim.phenomena(b).panic > 0);
+});

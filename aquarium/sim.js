@@ -27,7 +27,8 @@
     wage: 10,
     minWage: 6,
     taxRate: 0.1,
-    interestRate: 0.05, // năm
+    interestRate: 0.05, // năm, lãi suất chính sách
+    riskSpread: 0.06,   // biên lãi rủi ro ngân hàng cộng thêm khi cho doanh nghiệp vay
     foodProd: 3.4,
     goodsProd: 2.3,
     maxFood: 9,
@@ -43,11 +44,12 @@
     const w = {
       cfg, rand, day: 0,
       households: [], firms: [],
-      bank: { key: 'bank', cash: 0, loansOut: 0, writtenOff: 0 },
+      bank: { key: 'bank', cash: 0, loansOut: 0, writtenOff: 0, losses: 0 },
       gov: { key: 'gov', cash: 0 },
-      ledger: { M0: 0, printed: 0, inflow: 0, created: 0, destroyed: 0 },
+      ledger: { M0: 0, printed: 0, inflow: 0, created: 0, destroyed: 0, absorbed: 0 },
       policy: { taxRate: cfg.taxRate, interestRate: cfg.interestRate, minWage: cfg.minWage },
       stats: [], events: [], flows: [], nextFirmId: 0, basePrice: null,
+      phen: { rain: 0, drought: 0, droughtYear: -1, festival: 0, panic: 0, panicCool: 0, badDebt: 0 },
     };
     for (let i = 0; i < cfg.households; i++) {
       w.households.push({ key: 'h' + i, id: i, cash: cfg.householdCash, employer: null, hungry: 0, ateToday: true, skill: 0.7 + rand() * 0.7 });
@@ -110,7 +112,7 @@
   }
   function expectedMoney(w) {
     const L = w.ledger;
-    return L.M0 + L.printed + (L.inflow || 0) + L.created - L.destroyed;
+    return L.M0 + L.printed + (L.inflow || 0) + L.created - L.destroyed - (L.absorbed || 0);
   }
 
   /* ---------- Tiện ích ---------- */
@@ -139,12 +141,59 @@
     const os = f.owners && f.owners.length ? f.owners : [Math.floor(w.rand() * w.households.length)];
     for (const hid of os) transfer(w, f, w.households[hid], amt / os.length, 'dividend');
   }
-  function creditLimit(firm) { return Math.max(150, firm.wage * Math.max(1, firm.workers.length) * 25); }
-  function canBorrow(firm, amt) { return firm.debt + amt <= creditLimit(firm); }
+  function creditLimit(firm) { return Math.max(150, firm.wage * Math.max(1, firm.workers.length) * 15); }
+  // Khi khủng hoảng niềm tin, ngân hàng chỉ còn cho doanh nghiệp lành mạnh (nợ thấp) vay
+  // Doanh nghiệp đang bán dưới giá vốn chỉ được vay hạn mức nhỏ: ngân hàng không nuôi "xác sống"
+  function canBorrow(w, firm, amt) {
+    const crunch = w.phen && w.phen.panic > 0 ? 0.35 : 1;
+    const unitCost = firm.wage / Math.max(0.1, firm.baseProd || firm.prod);
+    const losing = firm.price < unitCost * 0.97 ? 0.3 : 1;
+    return firm.debt + amt <= creditLimit(firm) * Math.min(crunch, losing);
+  }
+
+  /* =============== Hiện tượng tự nhiên và xã hội =============== */
+  const SEASONS = ['xuân', 'hạ', 'thu', 'đông'];
+  const SEASON_FOOD = [1.0, 1.05, 1.12, 0.9];
+  function seasonOf(day) { return Math.floor(((day % 360) + 360) % 360 / 90); }
+  function foodFactor(w) { return SEASON_FOOD[seasonOf(w.day)] * (w.phen.drought > 0 ? 0.65 : 1); }
+  function updatePhenomena(w) {
+    const p = w.phen, doy = w.day % 360, season = seasonOf(w.day), year = Math.floor(w.day / 360);
+    if (doy % 90 === 0) log(w, 'Mùa ' + SEASONS[season] + ' đến với thành phố.', 'season');
+    // mưa (mùa đông là tuyết), không mưa giữa hạn hán
+    if (p.rain > 0) { p.rain--; if (p.rain === 0) log(w, season === 3 ? 'Tuyết ngừng rơi.' : 'Trời tạnh mưa.', 'nature'); }
+    else if (p.drought === 0 && w.rand() < 0.035) { p.rain = 2 + Math.floor(w.rand() * 4); log(w, season === 3 ? 'Tuyết bắt đầu rơi trên thành phố.' : 'Trời đổ mưa.', 'nature'); }
+    // hạn hán: có thể xảy ra một lần mỗi mùa hạ
+    if (p.drought > 0) { p.drought--; if (p.drought === 0) log(w, 'Hạn hán chấm dứt. Ruộng đồng hồi phục.', 'nature'); }
+    else if (season === 1 && p.droughtYear !== year && w.rand() < 0.012) { p.drought = 30 + Math.floor(w.rand() * 25); p.droughtYear = year; p.rain = 0; log(w, 'Hạn hán bắt đầu: ruộng khô, sản lượng lương thực giảm mạnh.', 'nature'); }
+    // lễ hội đèn lồng cuối năm
+    if (doy === 345) { p.festival = 15; log(w, 'Lễ hội đèn lồng cuối năm bắt đầu. Người dân sắm sửa, đèn trời bay lên.', 'nature'); }
+    else if (p.festival > 0) p.festival--;
+    // khủng hoảng niềm tin: nợ xấu tăng vọt thì ngân hàng ngừng cho vay
+    p.badDebt *= 0.985;
+    if (p.panicCool > 0) p.panicCool--;
+    if (p.panic > 0) { p.panic--; if (p.panic === 0) log(w, 'Niềm tin quay lại. Kho Bạc cho vay trở lại.', 'panic'); }
+    else if (p.panicCool === 0 && p.badDebt > 0.13 * Math.max(2000, w.bank.loansOut)) {
+      p.panic = 20 + Math.floor(w.rand() * 15); p.panicCool = 330;
+      log(w, 'Nợ xấu tăng vọt, người dân xếp hàng trước Kho Bạc. Ngân hàng ngừng cho vay.', 'panic');
+    }
+  }
+  function phenomena(w) {
+    const p = w.phen, season = seasonOf(w.day);
+    return { season, seasonName: SEASONS[season], dayOfYear: w.day % 360, year: Math.floor(w.day / 360) + 1, rain: p.rain > 0 && season !== 3, snow: p.rain > 0 && season === 3, drought: p.drought, festival: p.festival > 0, panic: p.panic, foodFactor: foodFactor(w) };
+  }
+  // Kích hoạt một hiện tượng ngay (dùng cho kiểm thử và trình diễn)
+  function trigger(w, kind, days) {
+    const p = w.phen;
+    if (kind === 'rain') p.rain = days || 4;
+    else if (kind === 'drought') { p.drought = days || 40; p.rain = 0; }
+    else if (kind === 'festival') p.festival = days || 15;
+    else if (kind === 'panic') { p.panic = days || 25; p.panicCool = 240; }
+  }
 
   /* ---------- Một ngày ---------- */
   function step(w) {
     w.day++;
+    updatePhenomena(w);
     w.flows = [];
     const P = w.policy;
     const alive = w.firms.filter((f) => f.alive);
@@ -153,10 +202,12 @@
     // 1. Doanh nghiệp lập kế hoạch: giá, tuyển dụng, lương
     for (const f of alive) {
       f.avgSales = f.avgSales * 0.8 + f.sold * 0.2;
-      const target = Math.max(4, f.avgSales * 2);
+      // trang trại tích trữ nhiều ngày hàng hơn để vượt mùa đông và hạn hán
+      const target = Math.max(4, f.avgSales * (f.sector === 'food' ? 4 : 2));
       // Giá vốn tính theo năng suất bình thường, để cú sốc tạm thời (đình công, hạn hán) không làm giá vô hạn
       const unitCost = f.wage / Math.max(0.1, f.baseProd || f.prod);
-      const capacity = outputOf(w, f);
+      // công suất thật, đã tính mùa vụ và hạn hán
+      const capacity = outputOf(w, f) * (f.sector === 'food' ? foodFactor(w) : 1);
       if (f.inv > target * 1.5) {
         f.price *= 1 - 0.03 * w.rand();
         // chỉ sa thải khi sản lượng thật sự vượt sức mua
@@ -167,14 +218,14 @@
         // Mở rộng: lãi suất càng cao càng ngại tuyển thêm bằng tiền vay
         const appetite = Math.max(0, 1 - P.interestRate / 0.15);
         const affordable = f.cash > f.wage * (f.workers.length + 1) * 5;
-        f.vacancies = affordable || w.rand() < appetite ? 1 + (f.inv < target * 0.2 ? 1 : 0) : 0;
+        f.vacancies = affordable || w.rand() < appetite ? 1 + (f.inv < target * 0.2 ? 2 : 0) : 0;
       } else {
         f.vacancies = 0;
       }
       f.price = Math.max(f.price, unitCost * 0.7, 0.2);
       if (f.vacancies > 0) f.unfilled++; else f.unfilled = 0;
       // Lương chỉ tăng khi thị trường lao động thật sự căng; giảm chậm khi thất nghiệp cao
-      if (f.unfilled > 3) { if (unemployedShare < 0.04) f.wage *= 1.007; f.unfilled = 0; }
+      if (f.unfilled > 3) { if (unemployedShare < 0.03) f.wage *= 1.006; f.unfilled = 0; }
       if (unemployedShare > 0.1 && w.rand() < 0.025) f.wage *= 0.99;
       f.wage = Math.max(f.wage, P.minWage);
       f.sold = 0;
@@ -192,7 +243,7 @@
       let payroll = payrollOf(w, f);
       if (f.cash < payroll) {
         const need = payroll - f.cash + f.wage * 2;
-        if (canBorrow(f, need)) lend(w, f, need);
+        if (canBorrow(w, f, need)) lend(w, f, need);
         // không sa thải hàng loạt: tối đa 2 người mỗi ngày, phần còn thiếu thì trả lương chậm theo tỷ lệ
         for (let k = 0; k < 2 && f.cash < payroll && f.workers.length; k++) {
           fire(w, f, f.workers[f.workers.length - 1]);
@@ -209,7 +260,8 @@
     }
 
     // 4. Sản xuất
-    for (const f of alive) f.inv += outputOf(w, f);
+    const ff = foodFactor(w);
+    for (const f of alive) f.inv += outputOf(w, f) * (f.sector === 'food' ? ff : 1);
 
     // 5. Tiêu dùng
     const food = alive.filter((f) => f.sector === 'food');
@@ -217,7 +269,7 @@
     const avgFoodPrice = food.length ? food.reduce((s, f) => s + f.price, 0) / food.length : 1;
     for (const h of shuffle(w, w.households.slice())) {
       h.ateToday = false;
-      const fs = cheapestOf(w, food);
+      const fs = cheapestOf(w, food, true);
       if (fs && h.cash >= fs.price) {
         transfer(w, h, fs, fs.price, 'buy'); fs.inv -= 1; fs.sold += 1;
         h.ateToday = true; h.hungry = 0;
@@ -226,12 +278,12 @@
       }
       // Tiết kiệm phòng thân: giữ lại tiền ăn nhiều ngày, người thất nghiệp và lúc kinh tế xấu thì chi tiêu dè dặt hơn
       const jobless = h.employer === null;
-      const reserveDays = jobless ? 14 : 8 + unemployedShare * 25;
+      const reserveDays = (jobless ? 14 : 8 + unemployedShare * 25) + (w.phen.panic > 0 ? 6 : 0);
       const propensity = jobless ? 0.12 : 0.26;
       let budget = Math.max(0, h.cash - avgFoodPrice * reserveDays) * propensity;
       // Bão hoà: mỗi hộ muốn khoảng 1,5 món hàng mỗi ngày, không mua vô hạn
       // người giàu tiêu xa xỉ hơn: thêm món theo mức tài sản
-      const wants = 1 + (w.rand() < 0.55 ? 1 : 0) + (h.cash > avgFoodPrice * 90 ? 1 : 0);
+      const wants = 1 + (w.rand() < 0.55 ? 1 : 0) + (h.cash > avgFoodPrice * 90 ? 1 : 0) + (w.phen.festival > 0 ? 1 : 0);
       for (let k = 0; k < wants; k++) {
         const g = cheapestOf(w, goods);
         if (!g || budget < g.price) break;
@@ -240,10 +292,11 @@
     }
 
     // 6. Ngân hàng: lãi vay
-    const rDay = P.interestRate / 360;
+    const rDay = (P.interestRate + (w.cfg.riskSpread || 0)) / 360;
     for (const f of alive) {
       if (f.debt <= 0) continue;
       const interest = f.debt * rDay;
+      if (w.phen.panic > 0) { transfer(w, f, w.bank, Math.min(interest, Math.max(0, f.cash)), 'interest'); continue; }
       if (f.cash < interest) lend(w, f, interest - f.cash);
       transfer(w, f, w.bank, interest, 'interest');
     }
@@ -254,6 +307,11 @@
       let excess = f.cash - buffer;
       if (excess > 0 && f.debt > 0) { repay(w, f, excess * 0.6); excess = f.cash - buffer; }
       if (excess > 0) { payToOwners(w, f, excess * 0.3); payToHouseholds(w, f, excess * 0.2, 'dividend', 8); }
+    }
+    // Ngân hàng dùng lợi nhuận bù khoản nợ xấu đã xoá: số tiền này rời khỏi lưu thông
+    if (w.bank.losses > 0 && w.bank.cash > 0) {
+      const c = Math.min(w.bank.losses, w.bank.cash);
+      w.bank.cash -= c; w.bank.losses -= c; w.ledger.absorbed += c;
     }
     if (w.bank.cash > 1) payToHouseholds(w, w.bank, w.bank.cash * 0.5, 'dividend', 6);
 
@@ -268,10 +326,11 @@
 
     // 9. Phá sản và doanh nghiệp mới
     for (const f of alive) {
-      if (f.workers.length === 0 && f.cash < f.wage && !canBorrow(f, f.wage * 3)) {
+      if (f.workers.length === 0 && f.cash < f.wage && !canBorrow(w, f, f.wage * 3)) {
         f.alive = false; f.deadSince = w.day;
+        if (f.debt > 0 && f.cash > 0) repay(w, f, f.cash); // trả nợ ngân hàng trước bằng tiền còn lại
         if (f.debt > 0) {
-          w.bank.loansOut -= f.debt; w.bank.writtenOff += f.debt;
+          w.bank.loansOut -= f.debt; w.bank.writtenOff += f.debt; w.bank.losses += f.debt; w.phen.badDebt += f.debt;
           log(w, (f.sector === 'food' ? 'Lò thực phẩm' : 'Xưởng hàng') + ' #' + f.id + ' phá sản, ngân hàng xoá nợ ' + f.debt.toFixed(0) + ' xu.', 'bad');
           f.debt = 0;
         } else {
@@ -282,12 +341,12 @@
       }
     }
     const openFirm = (sector, why) => openFirmAt(w, sector, why);
-    for (const f of w.firms) {
-      if (!f.alive && f.deadSince !== null && w.day - f.deadSince >= 12) {
-        f.deadSince = null;
-        const n = w.firms.filter((x) => x.alive && x.sector === f.sector).length;
-        if (n < (f.sector === 'food' ? w.cfg.minFood : w.cfg.minGoods)) openFirm(f.sector, ' thế chỗ, bằng khoản vay 250 xu');
-      }
+    for (const f of w.firms) if (!f.alive && f.deadSince !== null && w.day - f.deadSince >= 12) f.deadSince = null;
+    // Mỗi ngành luôn có tối thiểu vài doanh nghiệp: thiếu thì có người mở mới (khi ngân hàng còn cho vay)
+    for (const sector of ['food', 'goods']) {
+      const n = w.firms.filter((x) => x.alive && x.sector === sector).length;
+      // ngành thiết yếu được ưu tiên tín dụng kể cả khi khủng hoảng niềm tin
+      if (n < (sector === 'food' ? w.cfg.minFood : w.cfg.minGoods) && w.rand() < 0.25) openFirmAt(w, sector, ' thế chỗ, bằng khoản vay 250 xu', true);
     }
     // Khởi nghiệp: khi ngành đang lãi tốt và còn người tìm việc
     if (w.day % 20 === 0) {
@@ -310,7 +369,8 @@
   }
 
   /* Mở một doanh nghiệp mới, vốn khởi nghiệp vay từ ngân hàng. Dùng cho khởi nghiệp tự nhiên và cho người chơi xây. */
-  function openFirmAt(w, sector, why) {
+  function openFirmAt(w, sector, why, force) {
+    if (!force && w.phen.panic > 0) return null; // khủng hoảng niềm tin: không ai được vay để khởi nghiệp
     const nf = newFirm(w, sector, 0);
     lend(w, nf, 250);
     w.firms.push(nf);
@@ -333,12 +393,14 @@
     return added;
   }
 
-  function cheapestOf(w, list) {
+  // Hỏi giá vài nơi rồi chọn nơi rẻ nhất; nếu cần thiết (thực phẩm) thì đi khắp chợ trước khi chịu đói
+  function cheapestOf(w, list, mustFind) {
     let best = null;
     for (let k = 0; k < 3 && list.length; k++) {
       const f = list[Math.floor(w.rand() * list.length)];
       if (f.inv >= 1 && (!best || f.price < best.price)) best = f;
     }
+    if (!best && mustFind) for (const f of list) if (f.inv >= 1 && (!best || f.price < best.price)) best = f;
     return best;
   }
 
@@ -405,5 +467,5 @@
     for (const t of targets) transfer(w, w.gov, t, each, kind || 'print');
   }
 
-  return { create, step, printMoney, setPolicy, fund, openFirm: openFirmAt, addHouseholds, totalMoney, expectedMoney, gini, DEFAULTS };
+  return { create, step, printMoney, setPolicy, fund, openFirm: (w, sector, why) => openFirmAt(w, sector, why, true), addHouseholds, phenomena, trigger, SEASONS, totalMoney, expectedMoney, gini, DEFAULTS };
 });
