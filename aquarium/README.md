@@ -23,9 +23,42 @@ nơi đắt (cầu càng hiện đại chở càng nhiều), tri thức đi theo
 đi trước. Đủ **tri thức** (phát minh và điều học được) và **dân số**, thành phố sang thời đại mới; cây cầu được xây lại
 theo thời đại thấp hơn của hai đầu. Gieo phát minh giúp một thành phố tiến nhanh hơn.
 
+## Biển trong, cảng và Tranh hùng
+
+Giữa vòng sáu miền là **biển trong**, một ngư trường chung chia bảy vùng: sáu vùng ven bờ trước bến của mỗi thành phố
+và vùng khơi ở giữa. Mười một loài sinh sôi theo đường cong logistic. Cá cơm, cá thu, tôm cua thành lương thực;
+hải cẩu, rùa biển, trai ngọc, cá mập, cá voi, mực khổng lồ bán cho thương thuyền phương xa (tiền vào sổ cái).
+Biển không của riêng ai nên dễ cạn: cá trước bến cạn thì thuyền sang vùng láng giềng, sinh ra **tranh chấp biển**.
+Mỗi thời đại có lưới tốt hơn và thuyền dám ra khơi xa hơn.
+
+**Cầu và cảng phải tự xây** bằng tiền kho bạc. Cầu do một bên bắc theo thời đại của mình (cầu dây leo, cầu gỗ,
+cầu vòm đá, cầu có mái, cầu sắt, cầu dây văng); cầu yếu thì xe nặng không qua được. Cảng cho tàu buôn đi giữa
+hai cảng bất kỳ qua biển trong.
+
+Chế độ **Tranh hùng**: người chơi giữ một miền, máy giữ năm miền còn lại (mỗi miền một tính cách và một ưu thế).
+Tiền là thuế thật của nền kinh tế; lính là người trong thành, đi lính thì thôi đi làm, chết trận thì gia đình để tang.
+Mua vũ khí và vật liệu là nhà nước mua hàng của các xưởng, nên chiến tranh cũng kéo cầu và giá cả.
+
+| Nhóm | Công trình (tên đổi theo thời đại) |
+|---|---|
+| Kinh tế | Kho lương (+15% lương thực), học viện (phát minh nhanh hơn), chợ (+50% hàng qua cầu, qua cảng), cảng |
+| Quân sự | Trại lính, trường bắn, chuồng chiến mã / xưởng xe bọc thép, xưởng công thành / căn cứ tên lửa, lò rèn (+20% sức đánh) |
+| Phòng thủ | Tháp canh ở đầu cầu và bến cảng, tường thành vòng quanh đảo |
+| Đại cuộc | Kỳ quan riêng của mỗi miền (đứng vững một năm thì thắng), hầm phóng hạt nhân |
+
+Quân theo sáu thời đại: bộ binh (rìu đá → lính đặc nhiệm), quân đánh xa (ném đá → tên lửa vác vai), kỵ binh
+(chiến xa → xe tăng), công thành (xe phá thành → xe phóng tên lửa), tàu chiến (thuyền mái chèo → khu trục hạm) và
+**tàu ngầm hạt nhân**. Quân đánh nhau trên **chiến tuyến**: mỗi cây cầu và mỗi đường biển giữa hai cảng. Phá được
+cổng thì chiếm thành; tàu chiến chỉ pháo kích và phong toả bến cá. Đời cuối dùng tên lửa và vũ khí hạt nhân:
+một quả từ hầm phóng hoặc tàu ngầm xoá sổ quân quanh cổng thành, làm ruộng đồng nhiễm độc gần một năm, và cả bể kính
+cấm vận kẻ phóng. Thắng khi sáu miền chung một lá cờ, hoặc khi kỳ quan đứng vững một năm.
+
+Kiến trúc mỗi đời của mỗi miền đều khác nhau: bảng phong cách sáu miền × sáu thời đại (tường, mái, kiểu mái,
+viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi công trình.
+
 ## Chạy
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `story3d.js` cùng thư mục):
+Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `story3d.js` cùng thư mục):
 
 ```bash
 cd aquarium && python3 -m http.server 8000
@@ -39,10 +72,11 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 |---|---|
 | `index.html` | Bể kính, bầu trời, ngày đêm, thời tiết, giao diện, thanh sáu thành phố, chính sách, màn chào, chú giải |
 | `lands3d.js` | Địa hình sáu miền, công trình theo sáu thời đại (gộp hình học để nhẹ), cầu nối, cư dân, đoàn hàng qua cầu |
+| `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 31 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện và thế giới sáu miền |
+| `test/sim.test.js` | 38 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong và Tranh hùng |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |

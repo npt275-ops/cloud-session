@@ -124,6 +124,62 @@ body.seeding #scene { cursor: crosshair; }
 .lands button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24); }
 .lands button.wild b { font-weight: 500; opacity: 0.7; }
 body.intro .lands { opacity: 0; pointer-events: none; }
+/* Tranh hùng: chọn chế độ, chọn miền, bảng chỉ huy */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 12px; }
+.mode { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.06); color: var(--ink); border-radius: 18px; padding: 14px 14px 12px; cursor: pointer; font: inherit; display: grid; gap: 5px; align-content: start; }
+.mode:hover, .mode:focus-visible { background: rgba(255, 255, 255, 0.13); }
+.mode b { font: 700 21px/1.1 var(--font-display); }
+.mode span { font-size: 13px; color: var(--ink-dim); }
+.mode.war { border-color: rgba(255, 150, 120, 0.5); background: rgba(255, 120, 90, 0.12); }
+.mode.war:hover { background: rgba(255, 120, 90, 0.22); }
+.snd { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-dim); cursor: pointer; }
+.snd input { accent-color: var(--amber); width: 16px; height: 16px; }
+.picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 14px; }
+.pick { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.05); color: var(--ink); border-radius: 14px; padding: 10px 10px 9px; cursor: pointer; font: inherit; display: grid; gap: 3px; align-content: start; }
+.pick:hover, .pick:focus-visible { background: rgba(255, 255, 255, 0.14); }
+.pick b { font-size: 15px; display: flex; align-items: center; gap: 7px; }
+.pick b i { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+.pick small { font-size: 11.5px; color: var(--ink-dim); line-height: 1.32; }
+.pick em { font-style: normal; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.intro .back { background: none; border: 0; color: var(--ink-dim); cursor: pointer; font: inherit; padding: 0; margin: 0 0 4px; }
+.intro .back:hover { color: var(--ink); }
+.cmd { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 92px); width: min(372px, calc(100vw - 32px)); max-height: calc(100vh - 262px); display: flex; flex-direction: column; border-radius: 18px; z-index: 4; animation: rise 0.3s ease-out; }
+.cmd .ch { padding: 12px 14px 8px; display: grid; gap: 6px; border-bottom: 1px solid var(--glass-line); }
+.cmd .ct { display: flex; align-items: center; gap: 8px; }
+.cmd .ct i { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+.cmd .ct h3 { margin: 0; font: 700 20px/1.1 var(--font-display); flex: 1; }
+.cmd .ct button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 15px; cursor: pointer; }
+.cmd .stats { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12.5px; color: var(--ink-dim); }
+.cmd .stats b { color: var(--ink); font-weight: 600; }
+.cmd .tabs { display: flex; gap: 4px; padding: 8px 10px 0; }
+.cmd .tabs button { flex: 1; border: 0; background: rgba(255, 255, 255, 0.06); color: var(--ink); font: 600 12.5px var(--font-body); padding: 7px 2px; border-radius: 10px; cursor: pointer; }
+.cmd .tabs button[aria-selected="true"] { background: rgba(255, 210, 122, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.5); }
+.cmd .cb { overflow-y: auto; padding: 8px 10px 12px; display: grid; gap: 6px; align-content: start; }
+.cmd h4 { margin: 6px 2px 0; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); font-weight: 600; }
+.cmd .note { font-size: 12.5px; color: var(--ink-dim); margin: 0 2px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
+.row b { font-size: 13.5px; font-weight: 600; }
+.row small { grid-column: 1; font-size: 12px; color: var(--ink-dim); line-height: 1.32; }
+.row .act { grid-row: 1 / span 3; grid-column: 2; display: flex; gap: 4px; }
+.row button, .adv button { border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.1); color: var(--ink); border-radius: 999px; padding: 6px 11px; font: 600 12px var(--font-body); cursor: pointer; white-space: nowrap; }
+.row button:hover:not(:disabled), .adv button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+.row button.go, .adv button.go { background: var(--amber); color: #2a1d05; border-color: var(--amber); }
+.row button.red { background: #ff8a7a; color: #2a0d05; border-color: #ff8a7a; }
+.row button[aria-pressed="true"] { background: rgba(255, 210, 122, 0.3); border-color: var(--amber); }
+.row button:disabled, .adv button:disabled { opacity: 0.42; cursor: default; }
+.row.done b::after { content: " ✓"; color: var(--good); }
+.row .prog, .row .pw { grid-column: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; margin-top: 3px; }
+.row .prog i, .row .pw i { display: block; height: 100%; background: var(--amber); }
+.row .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.adv { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-dim); }
+.lands button.mine b { text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
+.lands button.foe span { color: #ffb0a8; }
+.gameover { position: fixed; inset: 0; display: grid; place-items: center; z-index: 9; background: rgba(8, 14, 30, 0.45); padding: 16px; }
+.gameover .gc { width: min(480px, 100%); border-radius: 24px; padding: 24px; text-align: center; background: rgba(14, 22, 38, 0.7); }
+.gameover h2 { font: 700 44px/1 var(--font-display); margin: 6px 0 10px; }
+.gameover p { color: var(--ink-dim); margin: 0 0 16px; }
+.gameover .intro-actions { justify-content: center; }
+.gameover .eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
 .pulse .era { color: var(--amber); font-size: 12px; letter-spacing: 0.04em; }
 .wmenu { position: fixed; bottom: auto; min-width: 0; z-index: 7; }
 .wmenu button { display: grid; gap: 2px; padding: 10px 12px; }
@@ -176,6 +232,10 @@ body.intro .lands { opacity: 0; pointer-events: none; }
   .subtitle b { font-size: 17px; }
   .panel { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 58vh; }
   body.panel-open .pulse { display: none; }
+  .cmd { left: 12px; right: 12px; width: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 54vh; }
+  body.cmd-open .pulse, body.cmd-open .card { display: none; }
+  .picker { grid-template-columns: 1fr 1fr; }
+  .modes { grid-template-columns: 1fr; }
   .toast { top: calc(env(safe-area-inset-top, 0px) + 74px); }
 }
 @media (prefers-reduced-motion: reduce) { .card, .panel, .toast { animation: none; } .intro, .brand, .clock, .pulse, .bar, .hint { transition: none; } }
@@ -197,6 +257,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
   <button id="play" aria-pressed="false">Tạm dừng</button>
   <button id="speed">Tốc độ 1×</button>
   <span class="sep" aria-hidden="true"></span>
+  <button id="cmdBtn" aria-pressed="false" aria-controls="cmd" hidden>Chỉ huy</button>
   <button id="policyBtn" aria-pressed="false" aria-controls="policy">Chính sách</button>
   <button id="chronBtn" aria-pressed="false" aria-controls="chron">Biên niên sử<span class="badge" id="chronBadge" hidden>0</span></button>
   <button id="dirBtn" aria-pressed="true" title="Camera tự bay đến nơi đang có chuyện">Phim tài liệu</button>
@@ -281,6 +342,12 @@ body.intro .lands { opacity: 0; pointer-events: none; }
     <li><i style="background:#ff9db8"></i><span><b>Hồng</b>: tiền vay, trả lãi, trả nợ.</span></li>
     <li><i style="background:#c8b6ff"></i><span><b>Tím</b>: thuế, trợ cấp, tiền in.</span></li>
   </ul>
+  <p class="legend-h">Biển trong và Tranh hùng</p>
+  <ul class="legend">
+    <li><i style="background:#46b3cf"></i><span><b>Biển trong</b>: ngư trường chung. Cá cơm, cá thu, tôm cua nuôi người; hải cẩu, rùa, ngọc trai, cá voi, mực khổng lồ bán được nhiều tiền. Đánh bắt quá tay thì cá cạn, ngừng tay thì cá hồi lại.</span></li>
+    <li><i style="background:#c8b6ff"></i><span><b>Cầu và cảng</b>: phải bỏ tiền kho bạc ra xây. Có cầu, có cảng thì hàng hoá và tri thức qua lại; trong Tranh hùng đó cũng là đường cho quân lính và tàu chiến.</span></li>
+    <li><i style="background:#ff8a7a"></i><span><b>Chiến tuyến</b>: quân đánh nhau trên cầu và trên đường biển giữa hai cảng. Phá được cổng thì chiếm thành. Thanh trên mỗi thành là sức chịu của thành.</span></li>
+  </ul>
   <p class="legend-h">Sáu thời đại</p>
   <ul class="legend">
     <li><i style="background:#c9a45c"></i><span><b>Nguyên thủy</b>: lều lá, lều da, nhà tuyết, lửa trại, cầu dây leo.</span></li>
@@ -321,18 +388,48 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 <div class="toast glass" id="toast" role="status" hidden></div>
 <div class="intro" id="intro">
   <div class="intro-card glass" role="dialog" aria-modal="true" aria-labelledby="iTitle">
-    <div class="eyebrow">Sáu miền đất trong một bể kính</div>
-    <h2 id="iTitle">Bể Kính</h2>
-    <p>Đồng bằng, rừng, núi, băng nguyên, biển và sa mạc. Lúc đầu chỉ có cây, sông và núi. Rồi những bộ lạc đầu tiên đến, dựng lều, đổi chác qua những cây cầu dây leo, và mỗi thành phố tự đi qua lịch sử của mình: nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại. Nền kinh tế bên dưới là thật.</p>
-    <ul>
-      <li><b>Ngắm.</b> Kéo để xoay, cuộn để phóng to, bấm vào một ngôi nhà để xem ai sống trong đó.</li>
-      <li><b>Can thiệp.</b> Rắc tiền, đổi lãi suất, thuế, lương tối thiểu trong Chính sách.</li>
-      <li><b>Gieo phát minh.</b> Tri thức đẩy một thành phố sang thời đại mới, rồi lan qua cầu sang láng giềng.</li>
-      <li><b>Chờ đợi.</b> Bốn mùa, hạn hán, lễ hội, cơn sốt, mạch vàng, dịch bệnh, và những cuộc chuyển mình từ lều lá lên tháp kính.</li>
-    </ul>
-    <div class="intro-actions"><button class="btn primary" id="enterSound">Bước vào, có âm thanh</button><button class="btn" id="enterQuiet">Bước vào trong im lặng</button></div>
+    <div id="introMain">
+      <div class="eyebrow">Sáu miền đất quanh một biển trong</div>
+      <h2 id="iTitle">Bể Kính</h2>
+      <p>Đồng bằng, rừng, núi, băng nguyên, biển và sa mạc quây quanh một biển trong đầy cá. Lúc đầu chỉ có cây, sông và núi. Rồi những bộ lạc đầu tiên đến, đánh cá, bắc cầu, đóng tàu buôn, và đi qua sáu thời đại: nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại. Nền kinh tế bên dưới là thật.</p>
+      <div class="modes">
+        <button class="mode" id="modeWatch"><b>Ngắm bể</b><span>Sáu bộ lạc tự lớn lên trong hoà bình. Bạn là người giữ bể: ngắm, gõ kính, thì thầm, gieo phát minh.</span></button>
+        <button class="mode war" id="modeWar"><b>Tranh hùng</b><span>Chọn một miền. Dựng kinh tế, bắc cầu, xây trại lính và cảng, luyện quân theo thời đại, đánh nhau trên cầu và trên biển.</span></button>
+      </div>
+      <label class="snd"><input type="checkbox" id="sndOn" checked> Có âm thanh</label>
+    </div>
+    <div id="introWar" hidden>
+      <button class="back" id="introBack">‹ Quay lại</button>
+      <div class="eyebrow">Tranh hùng</div>
+      <h2 style="font-size:clamp(34px,5vw,48px)">Chọn miền đất</h2>
+      <p>Năm miền còn lại do máy điều khiển, mỗi miền một tính cách. Năm đầu yên bình để bạn dựng nghiệp.</p>
+      <div class="picker" id="picker"></div>
+      <ul>
+        <li><b>Thắng</b> khi sáu miền chung một lá cờ, hoặc khi kỳ quan của bạn đứng vững một năm.</li>
+        <li><b>Tiền</b> là thuế thật của nền kinh tế: dân có việc, xưởng có lãi thì kho bạc mới đầy. Lính là người trong thành, đi lính thì thôi đi làm.</li>
+        <li><b>Cầu</b> mở đường buôn bán, và cũng mở đường cho quân địch. Cầu yếu thì xe nặng không qua được.</li>
+      </ul>
+    </div>
+    <div class="intro-actions" hidden><button class="btn primary" id="enterSound">Bước vào, có âm thanh</button><button class="btn" id="enterQuiet">Bước vào trong im lặng</button></div>
   </div>
 </div>
+<section class="cmd glass" id="cmd" hidden aria-labelledby="cmdTitle">
+  <div class="ch">
+    <div class="ct"><i id="cmdDot"></i><h3 id="cmdTitle">Chỉ huy</h3><button id="cmdClose" aria-label="Thu gọn bảng chỉ huy">×</button></div>
+    <div class="stats" id="cmdStats"></div>
+    <div class="adv" id="cmdAdv"></div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Bảng chỉ huy">
+    <button role="tab" data-tab="build" aria-selected="true">Xây dựng</button>
+    <button role="tab" data-tab="army" aria-selected="false">Quân đội</button>
+    <button role="tab" data-tab="front" aria-selected="false">Chiến tuyến</button>
+    <button role="tab" data-tab="dip" aria-selected="false">Ngoại giao</button>
+  </div>
+  <div class="cb" id="cmdBody" role="tabpanel"></div>
+</section>
+<section class="gameover" id="gameover" hidden role="dialog" aria-labelledby="goTitle">
+  <div class="gc glass"><div class="eyebrow" id="goKind"></div><h2 id="goTitle"></h2><p id="goText"></p><div class="intro-actions"><button class="btn primary" id="goNew">Ván mới</button><button class="btn" id="goWatch">Xem tiếp</button></div></div>
+</section>
 <script>document.body.classList.add('intro');</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -340,11 +437,12 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 <script src="sim.js"></script>
 <script src="audio.js"></script>
 <script src="lands3d.js"></script>
+<script src="war3d.js"></script>
 <script src="story3d.js"></script>
 <script>
 (function () {
   'use strict';
-  if (!window.THREE || !THREE.OrbitControls || !window.Lands3D || !window.Sim) {
+  if (!window.THREE || !THREE.OrbitControls || !window.Lands3D || !window.Sim || !window.War3D) {
     document.body.insertAdjacentHTML('beforeend', '<div class="err">Không tải được thư viện 3D. Hãy tải lại trang.</div>');
     return;
   }
@@ -485,6 +583,13 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 
   /* =============== Sáu miền đất =============== */
   const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable });
+  const factionColor = (o) => Sim.FACTION_COLORS[o] || '#ffffff';
+  let shakeUntil = 0;
+  function shake(ms) { if (!reduce) shakeUntil = performance.now() + ms; }
+  const war3d = War3D.create({ THREE, scene, Sim, W, lands3d, hash, C, clamp, lerp, reduce, glowTex, puff, label3d, clickable, unclickable, audio, factionColor, shake });
+  const isWar = () => W.mode === 'war';
+  const PL = () => W.war.player;
+  const mine = (i) => isWar() && W.cities[i] && W.cities[i].settled && W.cities[i].owner === PL();
   const lands = lands3d.lands;
   // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
   function keyPos(L, key) {
@@ -569,13 +674,24 @@ body.intro .lands { opacity: 0; pointer-events: none; }
     const striking = w.firms.filter((f) => f.alive && f.strike > 0);
     const sl = (w.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(w.fearShare * 100) + '% dân'] : sickS > 0.04 ? ['#8fdc9a', 'Dịch sốt: ' + Math.round(sickS * 100) + '% dân đang nằm nhà'] : P && P.investors.length >= 3 ? ['#c3a6ff', P.investors.length + ' gia đình đã góp tiền cho ' + P.name] : striking.length ? ['#ff7b6b', 'Đình công ở ' + striking.map((f) => f.name).join(', ')] : G && G.workers.length ? ['#ffd36b', 'Cơn sốt vàng: ' + G.workers.length + ' người đang đào'] : foodS > 0.05 ? ['#f0b85a', 'Tin đồn mất mùa: ' + Math.round(foodS * 100) + '% dân đang tích trữ'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
     if (sl) el.insertAdjacentHTML('beforeend', '<div' + (pl ? '' : ' class="ph-line"') + '><i style="background:' + sl[0] + ';color:' + sl[0] + '"></i><span>' + sl[1] + '</span></div>');
+    if (isWar()) {
+      const X = W.war, foes = X.factions.filter((f) => f.alive && Sim.atWarF(W, c.owner, f.id)).map((f) => f.name);
+      const line = (mine(focus) ? 'Thành của bạn' : 'Cờ ' + X.factions[c.owner].name) + ' · ' + (foes.length ? 'giao chiến với ' + foes.join(', ') : 'hoà bình') + ' · sức chịu ' + Math.round((c.hp / c.hpMax) * 100) + '%';
+      const cc = foes.length ? 'var(--bad)' : 'var(--good)';
+      el.insertAdjacentHTML('beforeend', '<div class="ph-line"><i style="background:' + factionColor(c.owner) + ';color:' + cc + '"></i><span>' + line + '</span></div>');
+    }
   }
   let barSig = '';
   function landBar() {
-    const sig = focus + '|' + W.cities.map((c) => (c.settled ? c.era : 'w')).join(',');
+    const foe = (c) => isWar() && c.settled && Sim.atWarF(W, PL(), c.owner);
+    const sig = focus + '|' + W.cities.map((c) => (c.settled ? c.era + ':' + c.owner + ':' + foe(c) : 'w')).join(',');
     if (sig === barSig) return;
     barSig = sig;
-    $('landBar').innerHTML = W.cities.map((c, i) => '<button data-i="' + i + '" aria-pressed="' + (i === focus) + '"' + (c.settled ? '' : ' class="wild"') + '><i style="background:' + TER_DOT[c.terrain.key] + '"></i><b>' + c.name + '</b><span>' + (c.settled ? 'Thời ' + ERAS[c.era].name.toLowerCase() : c.terrain.land + ' hoang sơ') + '</span></button>').join('');
+    $('landBar').innerHTML = W.cities.map((c, i) => {
+      const cls = [c.settled ? '' : 'wild', mine(i) ? 'mine' : '', foe(c) ? 'foe' : ''].filter(Boolean).join(' ');
+      const sub = !c.settled ? c.terrain.land + ' hoang sơ' : 'Thời ' + ERAS[c.era].name.toLowerCase() + (isWar() && c.owner !== c.id ? ' · cờ ' + W.war.factions[c.owner].name : '') + (foe(c) ? ' · giao chiến' : '');
+      return '<button data-i="' + i + '" aria-pressed="' + (i === focus) + '"' + (cls ? ' class="' + cls + '"' : '') + '><i style="background:' + (isWar() ? factionColor(c.owner) : TER_DOT[c.terrain.key]) + '"></i><b>' + c.name + '</b><span>' + sub + '</span></button>';
+    }).join('');
   }
   $('landBar').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-i]'); if (!b) return;
@@ -583,7 +699,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
   });
   function setFocus(i) {
     if (i == null || i < 0 || i > 5 || i === focus) return;
-    focus = i; landBar(); pulse(); if (story) story.updateToolUi();
+    focus = i; landBar(); pulse(); if (story) story.updateToolUi(); if (isWar()) renderCmd(true);
     if (!$('policy').hidden) openPolicy(true);
   }
 
@@ -615,6 +731,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
     if (s.type === 'bank') return L.world(L.bankPos);
     if (s.type === 'gov') return L.center.clone();
     if (s.type === 'school') return L.world(L.schoolPos);
+    if (s.type === 'bld') return L.world(s.bld === 'port' ? L.portPos : s.bld === 'wonder' ? L.wonderPos : s.bld === 'silo' ? L.siloPos : s.bld === 'tower' ? L.towerPos[0] : s.bld === 'wall' ? L.gates[0] : L.milLot[s.bld] || L.gates[0]);
     return story ? story.customPos(s) : null;
   }
   function select(s) {
@@ -665,6 +782,16 @@ body.intro .lands { opacity: 0; pointer-events: none; }
       kind = c.name + ' · nơi giữ tri thức'; title = SCHOOL_NAMES[c.era];
       text = 'Mỗi phát minh, mỗi điều học được từ láng giềng qua cầu đều được ghi lại ở đây. Đủ tri thức, thành phố sang thời đại mới.';
       list = [['Phát minh', w.inventions.length], ['Học từ láng giềng', c.learned]];
+    } else if (sel.type === 'bld') {
+      const b = c.bld && c.bld[sel.bld], D = Sim.BUILDINGS[sel.bld];
+      if (!b) { sel = null; return card(); }
+      kind = c.name + ' · ' + (D.group === 'mil' ? 'công trình quân sự' : D.group === 'def' ? 'phòng thủ' : D.group === 'win' ? 'đại cuộc' : 'công trình kinh tế');
+      title = Sim.bName(c, sel.bld);
+      text = D.info + '.' + (b.done ? '' : ' Đang xây, còn ' + b.left + ' ngày' + (b.stalled ? ', kho bạc cạn nên công trường đang nghỉ.' : '.'));
+      list = [['Thời đại', ERAS[c.era].name], ['Hoàn thành', b.done ? 'ngày ' + b.day : Math.round((1 - b.left / b.total) * 100) + '%']];
+      if (isWar()) list.unshift(['Thuộc phe', W.war.factions[c.owner].name]);
+      const U = Object.keys(Sim.UNITS).filter((k) => Sim.UNITS[k].bld === sel.bld);
+      for (const k of U) { const n = W.war.units.filter((u) => u.city === c.id && u.cls === k).length; if (n || Sim.UNITS[k].era <= c.era) list.push([Sim.UNITS[k].names[Math.max(Sim.UNITS[k].era, c.era)], n + ' người']); }
     } else {
       const m = story && story.customCard(sel);
       if (!m) { sel = null; return card(); }
@@ -755,6 +882,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
   function openPolicy(open) {
     const w = wOf(focus);
     if (open && !w) { toast('Hãy chọn một thành phố đã có người ở thanh phía trên.', 3200); open = false; }
+    if (open && isWar() && !mine(focus)) { toast('Chỉ đặt chính sách được cho thành của bạn.', 3200); open = false; }
     $('policy').hidden = !open; $('policyBtn').setAttribute('aria-pressed', String(open));
     if (open) { openHelp(false); openChron(false); $('pTitle').textContent = 'Chính sách của ' + cityOf(focus).name; }
     document.body.classList.toggle('panel-open', open || !$('help').hidden);
@@ -895,7 +1023,24 @@ body.intro .lands { opacity: 0; pointer-events: none; }
   }
   $('enterSound').onclick = () => enter(true);
   $('enterQuiet').onclick = () => enter(false);
-  requestAnimationFrame(() => $('enterSound').focus({ preventScroll: true }));
+  $('picker').innerHTML = Sim.TERRAINS.map((t, i) => '<button class="pick" data-i="' + i + '"><b><i style="background:' + Sim.FACTION_COLORS[i] + '"></i>' + t.city + '</b><em>' + t.land + '</em><small>' + Sim.BONUS[t.key].text + '</small></button>').join('');
+  $('modeWatch').onclick = () => enter($('sndOn').checked);
+  $('modeWar').onclick = () => { $('introMain').hidden = true; $('introWar').hidden = false; $('picker').querySelector('button').focus({ preventScroll: true }); };
+  $('introBack').onclick = () => { $('introMain').hidden = false; $('introWar').hidden = true; $('modeWar').focus({ preventScroll: true }); };
+  $('picker').addEventListener('click', (e) => { const b = e.target.closest('.pick'); if (b) startWar(+b.dataset.i, $('sndOn').checked); });
+  // Tranh hùng: đổi thế giới ngay tại chỗ (lúc này chưa ai đặt chân lên đất), giữ nguyên cảnh 3D
+  function startWar(k, sound, seed) {
+    Object.assign(W, Sim.createWorld({ mode: 'war', player: k, seed: seed == null ? 1 + Math.floor(Math.random() * 99999) : seed }));
+    lands3d.bridges.forEach((B, i) => { B.sim = W.bridges[i]; });
+    document.body.classList.add('war');
+    $('cmdBtn').hidden = false;
+    focus = -1; setFocus(k);
+    barSig = '';
+    enter(sound);
+    openCmd(true);
+    setTimeout(() => flyTo(lands[k].center, 96), 250);
+  }
+  requestAnimationFrame(() => $('modeWatch').focus({ preventScroll: true }));
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (document.body.classList.contains('intro')) return enter(false);
@@ -955,19 +1100,183 @@ body.intro .lands { opacity: 0; pointer-events: none; }
     THREE, W, Sim, lands3d, $, reduce, audio, glowTex, mat, mesh, box, C, dome: DOME, overviewDist: OVERVIEW,
     label3d, toast, puff, ripple, spawnMote, flyTo, select, watch, setAutoRotate, closePanels, clickable, unclickable,
     people: lands3d.people, tod: () => tod, focus: () => focus, setFocus,
+    seaPos: (z) => war3d.zoneC(z).setY(1),
+    lanePos: (key, x) => { const p = new THREE.Vector3(), d = new THREE.Vector3(); return war3d.lanePos(key, x == null ? 0.5 : x, 0, p, d) ? p : new THREE.Vector3(); },
   });
   $('dirBtn').onclick = () => { story.setDirector(!story.director); $('dirBtn').setAttribute('aria-pressed', String(story.director)); };
+
+  /* =============== Tranh hùng: bảng chỉ huy =============== */
+  let cmdTab = 'build', cmdArmed = null, cmdLast = 0;
+  const fmtN = (v) => Math.round(v).toLocaleString('vi-VN');
+  const cmdCity = () => (mine(focus) ? W.cities[focus] : Sim.capitalOf(W, PL()));
+  function openCmd(open) {
+    $('cmd').hidden = !open; $('cmdBtn').setAttribute('aria-pressed', String(open));
+    document.body.classList.toggle('cmd-open', open);
+    if (open) { openPolicy(false); openHelp(false); openChron(false); renderCmd(true); }
+  }
+  $('cmdBtn').onclick = () => openCmd($('cmd').hidden);
+  $('cmdClose').onclick = () => openCmd(false);
+  document.querySelector('#cmd .tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tab]'); if (!b) return;
+    cmdTab = b.dataset.tab;
+    for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x === b));
+    renderCmd(true);
+  });
+  const btn = (act, arg, label, ok, cls) => '<button data-act="' + act + '" data-arg="' + arg + '"' + (cls ? ' class="' + cls + '"' : '') + (ok ? '' : ' disabled') + '>' + label + '</button>';
+  const row = (title, small, act, extra) => '<div class="row' + (extra && extra.done ? ' done' : '') + '"><b>' + title + '</b>' + (small ? '<small>' + small + '</small>' : '') + (extra && extra.prog != null ? '<div class="prog"><i style="width:' + Math.round(extra.prog * 100) + '%"></i></div>' : '') + (extra && extra.pw ? extra.pw : '') + (act ? '<div class="act">' + act + '</div>' : '') + '</div>';
+  const LOADS = ['chỉ người đi bộ', 'cả chiến xa và kỵ binh', 'cả đại bác và xe bọc thép', 'cả đại bác và xe bọc thép', 'mọi loại quân, kể cả xe tăng', 'mọi loại quân, kể cả xe tăng'];
+  function renderCmd(force) {
+    if ($('cmd').hidden || !isWar()) return;
+    const nowT = performance.now();
+    if (!force && nowT - cmdLast < 450) return;
+    cmdLast = nowT;
+    const X = W.war, c = cmdCity(), me = PL();
+    $('cmdDot').style.background = factionColor(me);
+    if (!c) { $('cmdTitle').textContent = X.factions[me].name; $('cmdStats').innerHTML = 'Phe của bạn đã mất hết thành trì.'; $('cmdAdv').innerHTML = ''; $('cmdBody').innerHTML = '<p class="note">Bể kính vẫn tiếp tục. Bạn có thể xem hoặc chơi ván mới.</p>'; return; }
+    const w = c.w, owned = W.cities.filter((x) => x.settled && x.owner === me).length;
+    $('cmdTitle').textContent = c.name + (c.id === me ? '' : ' · thành chiếm được');
+    $('cmdStats').innerHTML = '<span>Kho bạc <b>' + fmtN(Math.max(0, w.gov.cash)) + ' xu</b></span><span>Quân <b>' + Sim.armyOf(W, c) + '/' + Sim.armyCap(c) + '</b></span><span>Thành <b>' + Math.round((c.hp / c.hpMax) * 100) + '%</b></span><span>Thời <b>' + ERAS[c.era].name.toLowerCase() + '</b></span>' + (owned > 1 ? '<span>Giữ <b>' + owned + ' thành</b></span>' : '');
+    const a = Sim.advanceOffer(W, c.id);
+    $('cmdAdv').innerHTML = c.era >= 5 ? '<span>Đã ở thời cuối: tên lửa và hạt nhân.</span>' : '<span>' + (a.ok ? 'Đủ điều kiện sang thời ' + a.next.toLowerCase() : a.reason + ' để sang thời ' + a.next.toLowerCase()) + '</span>' + btn('adv', c.id, 'Lên thời ' + a.next.toLowerCase() + ' · ' + fmtN(a.cost) + ' xu', a.ok, 'go');
+    let h = '';
+    if (!mine(focus) && W.cities[focus] && W.cities[focus].settled) h += '<p class="note">Đang xem ' + W.cities[focus].name + ' của phe ' + X.factions[W.cities[focus].owner].name + '. Lệnh dưới đây dành cho ' + c.name + '.</p>';
+    if (cmdTab === 'build') {
+      const groups = [['Kinh tế', ['granary', 'academy', 'market', 'port']], ['Quân sự', ['barracks', 'range', 'stable', 'siege', 'forge']], ['Phòng thủ', ['tower', 'wall']], ['Đại cuộc', ['wonder', 'silo']]];
+      for (const [gname, types] of groups) {
+        h += '<h4>' + gname + '</h4>';
+        for (const t of types) {
+          const o = Sim.buildOffer(W, c.id, t), b = c.bld[t], D = Sim.BUILDINGS[t], name = t === 'wonder' ? Sim.WONDERS[c.terrain.key] : o.name;
+          if (b && b.done) h += row(name, D.info, '', { done: true });
+          else if (b) h += row(name, 'Đang xây · còn ' + b.left + ' ngày' + (t === 'wonder' ? (b.stalled ? ' · kho bạc cạn, công trường nghỉ' : ' · trả dần ' + fmtN(b.cost / b.total) + ' xu mỗi ngày') : ''), '', { prog: 1 - b.left / b.total });
+          else if (o.locked) h += row(name || D.names.find((x) => x), o.reason + ' · ' + D.info, btn('build', t, 'Khoá', false));
+          else h += row(name, D.info + ' · ' + o.days + ' ngày', btn('build', t, (t === 'wonder' ? 'Khởi công · ' + fmtN(o.cost) : 'Xây · ' + fmtN(o.cost)) + ' xu', o.ok, 'go'));
+        }
+      }
+      h += '<h4>Cầu</h4>';
+      for (const B of W.bridges) {
+        if (B.a !== c.id && B.b !== c.id) continue;
+        const other = W.cities[B.a === c.id ? B.b : B.a], o = Sim.bridgeOffer(W, c.id, B.id);
+        const name = 'Cầu sang ' + other.name;
+        if (B.build) h += row(name, 'Đang bắc ' + Sim.BRIDGE_TEXT[B.build.level] + ' · còn ' + B.build.left + ' ngày', '', { prog: 1 - B.build.left / B.build.total });
+        else if (B.level >= 0) h += row(name, Sim.BRIDGE_TEXT[B.level].charAt(0).toUpperCase() + Sim.BRIDGE_TEXT[B.level].slice(1) + ' · chở ' + LOADS[B.level] + (o.ok || o.cost ? '' : ''), o.cost ? btn('bridge', B.id, 'Xây lại · ' + fmtN(o.cost) + ' xu', o.ok, 'go') : '', { done: !o.cost });
+        else h += row(name, o.cost ? 'Bắc ' + o.text + ' trong ' + o.days + ' ngày · có cầu thì có hàng và tri thức qua lại, nhưng quân địch cũng qua được' : o.reason, o.cost ? btn('bridge', B.id, 'Bắc cầu · ' + fmtN(o.cost) + ' xu', o.ok, 'go') : '');
+      }
+    } else if (cmdTab === 'army') {
+      const units = W.war.units.filter((u) => u.city === c.id);
+      const onLane = units.filter((u) => u.lane).length;
+      h += '<p class="note">' + units.length + ' người lính (' + onLane + ' ngoài chiến tuyến, ' + (units.length - onLane) + ' trong doanh trại). Tối đa ' + Sim.armyCap(c) + ': một phần năm số hộ. Lính ăn lương từ kho bạc.</p>';
+      if (c.queue.length) { h += '<h4>Đang luyện</h4>'; for (const q of c.queue) { const U = Sim.UNITS[q.cls]; h += row(U.names[Math.max(U.era, c.era)], 'Còn ' + q.left + ' ngày', '', { prog: 1 - q.left / q.total }); } }
+      h += '<h4>Luyện quân</h4>';
+      for (const k of ['melee', 'ranged', 'mounted', 'siege', 'ship', 'sub']) {
+        const o = Sim.unitOffer(W, c.id, k), U = Sim.UNITS[k];
+        if (k === 'sub' && c.era < 5) continue;
+        const name = o.name || U.names.find((x) => x), have = units.filter((u) => u.cls === k).length;
+        const st = o.stats ? 'Máu ' + fmtN(o.stats.hp) + ' · đánh ' + fmtN(o.stats.atk) + ' · tầm ' + o.stats.range + (k === 'sub' ? '' : ' · ' + o.days + ' ngày') : '';
+        const extra = k === 'sub' ? 'Mang một tên lửa hạt nhân, phóng từ dưới biển. ' : k === 'ship' ? 'Đánh trên đường biển, phong toả bến cá và tàu buôn của địch. ' : '';
+        h += row(name + (have ? ' · ' + have : ''), extra + (o.locked || !o.cost ? o.reason : st + (o.ok ? '' : ' · ' + o.reason)), btn('train', k, o.cost ? 'Luyện · ' + fmtN(o.cost) + ' xu' : 'Khoá', o.ok, o.ok ? 'go' : ''));
+      }
+    } else if (cmdTab === 'front') {
+      const lanes = Sim.lanesOf(W, c);
+      const wars = lanes.filter((o) => o.war);
+      h += '<p class="note">' + (wars.length ? 'Giữ cầu: quân đứng ở đầu cầu nhà, có tháp canh yểm trợ. Tiến công: quân vượt cầu, đánh tới cổng thành địch. Tàu chiến chỉ pháo kích và phong toả, muốn chiếm thành phải có quân bộ.' : 'Chưa có chiến tuyến nào. Tuyên chiến ở thẻ Ngoại giao; chỉ đánh được nơi có cầu, hoặc đi đường biển khi đã có cảng.') + '</p>';
+      for (const o of lanes) {
+        const other = W.cities[o.other], us = Sim.laneUnits(W, o.key), my = us.filter((u) => u.owner === c.owner).length, en = us.length - my;
+        const st = c.stance[o.key] || 'hold';
+        const title = (o.kind === 'bridge' ? 'Cầu sang ' : 'Đường biển tới ') + other.name;
+        if (!o.war) { if (o.kind === 'bridge') h += row(title, 'Hoà bình · cờ ' + W.war.factions[other.owner].name, ''); continue; }
+        h += row('<span class="dot" style="background:' + factionColor(other.owner) + '"></span>' + title, 'Quân ta ' + my + ' · quân địch ' + en + ' · thành địch còn ' + Math.round((other.hp / other.hpMax) * 100) + '%', btn('stance', o.key + '|hold', 'Giữ', true, st === 'hold' ? '' : '').replace('<button', '<button aria-pressed="' + (st === 'hold') + '"') + btn('stance', o.key + '|attack', 'Tiến công', true, st === 'attack' ? 'red' : '').replace('<button', '<button aria-pressed="' + (st === 'attack') + '"'));
+      }
+      const targets = W.cities.filter((t) => t.settled && Sim.atWarF(W, me, t.owner));
+      const anyNuke = c.era >= 5 || Sim.hasB(c, 'silo');
+      if (anyNuke) {
+        h += '<h4>Hạt nhân</h4>';
+        if (!targets.length) h += row('Tên lửa hạt nhân', 'Chỉ phóng được vào thành đang giao chiến. Cả bể kính sẽ cấm vận kẻ phóng một năm.', '');
+        for (const t of targets) { const o = Sim.nukeOffer(W, c.id, t.id); h += row('Phóng vào ' + t.name, o.ok ? (o.via === 'sub' ? 'Từ tàu ngầm dưới biển. ' : 'Từ hầm phóng. ') + 'Quân quanh cổng thành bị xoá sổ, ruộng đồng nhiễm độc, cả bể kính cấm vận bạn một năm.' : o.reason, btn('nuke', t.id, cmdArmed === String(t.id) ? 'Bấm lần nữa để phóng' : 'Phóng', o.ok, 'red')); }
+      }
+    } else {
+      const offers = W.war.offers.filter((o) => o.to === me);
+      for (const o of offers) h += row('<span class="dot" style="background:' + factionColor(o.from) + '"></span>' + W.war.factions[o.from].name + ' xin giảng hoà', 'Hoà ước giữ tám tháng: lính về nhà, buôn bán trở lại.', btn('accept', o.from, 'Chấp nhận', true, 'go'));
+      const mp = Sim.powerOf(W, me);
+      for (const f of W.war.factions) {
+        if (f.id === me) continue;
+        const R = W.war.rel[me][f.id], cities = W.cities.filter((x) => x.settled && x.owner === f.id).length;
+        if (!f.alive) { h += row('<span class="dot" style="background:' + f.color + '"></span>' + f.name, 'Đã mất hết thành trì', ''); continue; }
+        const p = Sim.powerOf(W, f.id), ratio = p / Math.max(1, p + mp);
+        const pw = '<div class="pw"><i style="width:' + Math.round(ratio * 100) + '%;background:' + f.color + '"></i></div>';
+        const rel = R.state === 'war' ? 'Đang giao chiến từ ngày ' + R.since : R.truce > W.day ? 'Hoà ước còn ' + (R.truce - W.day) + ' ngày' : 'Hoà bình';
+        const conn = Sim.connected(W, me, f.id);
+        const act = R.state === 'war' ? btn('peace', f.id, 'Cầu hoà', true) : btn('war', f.id, 'Tuyên chiến', conn && !(R.truce > W.day), 'red');
+        h += row('<span class="dot" style="background:' + f.color + '"></span>' + f.name + ' · ' + cities + ' thành', rel + ' · sức mạnh ' + (p > mp * 1.2 ? 'hơn ta' : p < mp * 0.8 ? 'kém ta' : 'ngang ta') + (conn ? '' : ' · chưa có cầu hay cảng dẫn tới'), act, { pw });
+      }
+      if ((W.war.embargo[me] || 0) > W.day) h += '<p class="note">Cả bể kính đang cấm vận bạn thêm ' + (W.war.embargo[me] - W.day) + ' ngày: không cầu, không tàu nào buôn bán với bạn.</p>';
+      h += '<p class="note">' + Sim.BONUS[W.cities[me].terrain.key].text + '.</p>';
+    }
+    $('cmdBody').innerHTML = h;
+  }
+  function onCmd(e) {
+    const b = e.target.closest('button[data-act]');
+    if (!b || b.disabled) return;
+    const c = cmdCity(); if (!c) return;
+    const act = b.dataset.act, v = b.dataset.arg;
+    let r = null, msg = '';
+    if (act === 'build') { r = Sim.build(W, c.id, v); msg = 'Khởi công ' + (v === 'wonder' ? Sim.WONDERS[c.terrain.key] : Sim.bName(c, v)) + ': ' + (r.days || 0) + ' ngày.'; }
+    else if (act === 'bridge') { r = Sim.buildBridge(W, c.id, +v); msg = 'Thợ bắt đầu bắc cầu: ' + (r.days || 0) + ' ngày.'; }
+    else if (act === 'train') { r = Sim.train(W, c.id, v); msg = Sim.UNITS[v].names[c.era] + ' đang luyện, ' + (r.days || 0) + ' ngày nữa ra trận.'; }
+    else if (act === 'stance') { const [key, st] = v.split('|'); r = Sim.setStance(W, c.id, key, st); msg = st === 'attack' ? 'Toàn quân tiến công.' : 'Quân lui về giữ đầu cầu.'; }
+    else if (act === 'war') { r = Sim.declareWar(W, PL(), +v); msg = 'Bạn đã tuyên chiến với ' + W.war.factions[+v].name + '.'; }
+    else if (act === 'peace') { r = Sim.offerPeace(W, PL(), +v); msg = r.ok ? W.war.factions[+v].name + ' đồng ý giảng hoà.' : ''; }
+    else if (act === 'accept') { r = Sim.acceptPeace(W, +v); msg = 'Hai bên đã giảng hoà.'; }
+    else if (act === 'adv') { r = Sim.advanceCity(W, c.id); msg = ''; }
+    else if (act === 'nuke') {
+      if (cmdArmed !== v) { cmdArmed = v; setTimeout(() => { if (cmdArmed === v) { cmdArmed = null; renderCmd(true); } }, 3500); renderCmd(true); return; }
+      cmdArmed = null; r = Sim.launchNuke(W, c.id, +v); msg = '';
+    }
+    if (r && !r.ok && r.reason) toast(r.reason, 3400);
+    else if (r && r.ok && msg) toast(msg, 3000);
+    lands3d.syncDay(false); war3d.syncDay(false, 0);
+    if (act === 'adv' || act === 'war' || act === 'nuke') story.onDay();
+    renderCmd(true); landBar(); pulse();
+  }
+  $('cmdBody').addEventListener('click', onCmd);
+  $('cmdAdv').addEventListener('click', onCmd);
+  // tin chiến sự cho người chơi: bị tuyên chiến, được xin hoà, kết cục
+  let warSeen = 0, goShown = false;
+  function warDay() {
+    const X = W.war, me = PL();
+    for (const st of W.stories) {
+      if (st.id <= warSeen) continue;
+      warSeen = st.id;
+      if (st.type === 'war' && st.to === me) toast('<b>' + X.factions[st.from].name + ' tuyên chiến với bạn!</b> Mở Chỉ huy để dàn quân.', 6000);
+      if (st.type === 'conquer' && st.from === me) toast('<b>Mất thành ' + W.cities[st.city].name + '.</b>', 5000);
+      if (st.type === 'conquer' && st.by === me) toast('<b>Bạn đã chiếm ' + W.cities[st.city].name + '!</b>', 5000);
+    }
+    for (const o of X.offers) if (o.to === me && !o.seen) { o.seen = true; toast('<b>' + X.factions[o.from].name + ' xin giảng hoà.</b> Xem thẻ Ngoại giao.', 5200); }
+    renderCmd(false);
+    if (X.over && !goShown) {
+      goShown = true;
+      const o = X.over, win = o.winner === me;
+      $('goKind').textContent = 'Năm ' + (Math.floor(W.day / 360) + 1) + ' · Ngày ' + W.day;
+      $('goTitle').textContent = win ? 'Chiến thắng' : 'Thất bại';
+      $('goText').textContent = win ? (o.how === 'wonder' ? 'Kỳ quan của bạn đã đứng vững tròn một năm. Cả bể kính nhắc tên ' + X.factions[me].name + '.' : 'Sáu miền đã chung một lá cờ của bạn.') : o.how === 'defeat' ? 'Phe của bạn đã mất hết thành trì.' : X.factions[o.winner].name + (o.how === 'wonder' ? ' thắng nhờ kỳ quan.' : ' đã thống nhất sáu miền.');
+      $('gameover').hidden = false;
+      if (audio && audio.on && audio.chime) audio.chime();
+    }
+  }
+  $('goNew').onclick = () => location.reload();
+  $('goWatch').onclick = () => { $('gameover').hidden = true; };
 
   /* =============== Một ngày trôi qua =============== */
   function dayTick(animate) {
     Sim.stepWorld(W);
     lands3d.syncDay(animate);
+    war3d.syncDay(animate, 1000 / tps);
     story.onDay();
+    if (isWar()) warDay();
     checkWatches();
     if (animate) spawnMotes();
   }
   window.__glass = {
-    W, lands3d, camera, controls, select, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain,
+    W, lands3d, war3d, camera, controls, select, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startWar, openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderCmd(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
     lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality,
@@ -975,12 +1284,13 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 
   /* =============== Vòng lặp =============== */
   lands3d.syncDay(false);
+  war3d.syncDay(false, 0);
   pulse(); landBar(); updateSeasons(true);
   let last = performance.now(), lastSlow = 0;
   function frame(t) {
     const dt = Math.min(100, t - last); last = t;
     governQuality(dt);
-    if (running) {
+    if (running && !document.body.classList.contains('intro')) {
       if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1;
       acc += (dt * tps) / 1000;
       let steps = 0;
@@ -990,6 +1300,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
     const { night } = applyTime();
     if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; });
+    war3d.animate(dt, t, acc, night);
     story.update(dt, t);
     const now = performance.now();
     updateFxGlobal(now, dt);
@@ -1007,7 +1318,10 @@ body.intro .lands { opacity: 0; pointer-events: none; }
       if (k >= 1) focusTween = null;
     }
     controls.update();
+    const sk = shakeUntil > now ? (shakeUntil - now) / 1400 : 0, saved = sk > 0 ? camera.position.clone() : null;
+    if (saved) { camera.position.x += (Math.random() - 0.5) * sk * 1.8; camera.position.y += (Math.random() - 0.5) * sk * 1.8; }
     renderer.render(scene, camera);
+    if (saved) camera.position.copy(saved);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

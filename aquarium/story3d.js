@@ -19,6 +19,9 @@
     settle: ['Định cư', '#9df0c4'], era: ['Thời đại mới', '#ffd27a'], bridge: ['Cây cầu', '#c8b6ff'], trade: ['Buôn bán', '#e8c98a'], learn: ['Học hỏi', '#b6d7ff'], settlers: ['Nhập cư', '#7bdff2'],
     tap: ['Tiếng gõ', '#cfe8ff'], 'rumor-food': ['Tin đồn', '#f0b85a'], 'food-rush': ['Tích trữ', '#f0b85a'], 'food-rush-end': ['Tích trữ', '#c9b48a'], chapter: ['Chương mới', '#ffd27a'],
     season: ['Mùa', '#a6d6a0'], drought: ['Hạn hán', '#e0b060'], 'drought-end': ['Hạn hán', '#a6d6a0'], festival: ['Lễ hội', '#ffb36b'],
+    catch: ['Biển', '#7fd6ff'], 'sea-low': ['Biển cạn', '#e8a59d'], 'sea-back': ['Biển hồi sinh', '#9df0c4'], dispute: ['Tranh chấp biển', '#ffb36b'], build: ['Công trình', '#c8d3e0'],
+    war: ['Chiến tranh', '#ff6b6b'], peace: ['Hoà bình', '#9df0c4'], battle: ['Giao tranh', '#ff8a6b'], siege: ['Vây thành', '#ff7b6b'], conquer: ['Đổi chủ', '#ffd27a'], fall: ['Diệt vong', '#c9a3a3'],
+    'wonder-start': ['Kỳ quan', '#ffe08a'], wonder: ['Kỳ quan', '#ffe08a'], nuke: ['Hạt nhân', '#ff4d4d'], 'nuke-stopped': ['Đánh chặn', '#9cc3ff'], victory: ['Kết cục', '#ffd27a'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
@@ -887,6 +890,8 @@
       const pl = st.place;
       if (pl && pl.kind === 'land') return lands3d.lands[pl.city].center.clone();
       if (pl && pl.kind === 'bridge') { const B = lands3d.bridges[pl.bridge]; return B.pa.clone().lerp(B.pb, 0.5); }
+      if (pl && pl.kind === 'sea' && G.seaPos) return G.seaPos(pl.zone);
+      if (pl && pl.kind === 'lane' && G.lanePos) return G.lanePos(pl.lane, st.city != null && W.war && W.war.lanes[pl.lane] ? (W.war.lanes[pl.lane].a === st.city ? 0.25 : 0.75) : 0.5);
       if (st.city >= 0 && layers[st.city]) return lands3d.lands[st.city].world(layers[st.city].placePos(pl));
       if (st.city >= 0) return lands3d.lands[st.city].center.clone();
       return new THREE.Vector3();
@@ -921,7 +926,7 @@
     });
     function goTo(st, manual) {
       const p = placeOf(st), pl = st.place;
-      const dist = pl && pl.kind === 'land' ? 70 : pl && pl.kind === 'bridge' ? 46 : TIER_DIST[st.tier] || 30;
+      const dist = pl && pl.kind === 'land' ? (st.type === 'nuke' ? 150 : 70) : pl && pl.kind === 'bridge' ? 46 : pl && pl.kind === 'sea' ? 64 : pl && pl.kind === 'lane' ? 44 : TIER_DIST[st.tier] || 30;
       G.flyTo(p, dist);
       showSub(st, manual ? 9000 : null);
       if (st.city >= 0) G.setFocus(st.city);
@@ -937,7 +942,7 @@
     /* ----- Đạo diễn ----- */
     let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
     const queue = [];
-    const PRI_BONUS = { settle: 2, era: 2, chapter: 2 };
+    const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1 };
     const pri = (st) => TIER_PRI[st.tier] + (PRI_BONUS[st.type] || 0);
     function takeNext(minPri) {
       for (let i = queue.length - 1; i >= 0; i--) if (W.day - queue[i].day > TIER_AGE[queue[i].tier]) queue.splice(i, 1);
@@ -1063,7 +1068,7 @@
       for (const st of W.stories) {
         if (st.id <= lastWorld) continue;
         lastWorld = st.id;
-        if (st.city == null || st.city < 0) st.city = st.place && st.place.kind === 'bridge' ? lands3d.bridges[st.place.bridge].a : -1;
+        if (st.city == null || st.city < 0) st.city = st.place && st.place.kind === 'bridge' ? lands3d.bridges[st.place.bridge].a : st.place && st.place.kind === 'sea' && st.place.zone < 6 ? st.place.zone : -1;
         addChron(st);
         if (st.type === 'chapter') { showChapter(st); continue; }
         enqueue(st);
@@ -1075,7 +1080,13 @@
           lands3d.procession(st.city, 10, nb.length ? nb[Math.floor(Math.random() * nb.length)] : -1);
         }
         else if (st.type === 'settle') { G.label3d('Những người đầu tiên', p.clone().setY(18), '#9df0c4'); G.ripple(p, '#9df0c4'); lands3d.procession(st.city, 18, st.from); }
-        else if (st.type === 'bridge') G.label3d('Cầu mới', p.clone().setY(12), '#d9ccff');
+        else if (st.type === 'bridge') G.label3d(st.upgrade ? 'Cầu mới' : 'Cây cầu đầu tiên', p.clone().setY(12), '#d9ccff');
+        else if (st.type === 'war') { G.label3d('Chiến tranh', p.clone().setY(24), '#ff8a80'); G.ripple(p, '#ff6b6b'); if (audio && audio.horn) audio.horn(); }
+        else if (st.type === 'peace') { G.label3d('Giảng hoà', p.clone().setY(22), '#9df0c4'); G.ripple(p, '#9df0c4'); }
+        else if (st.type === 'conquer') { G.label3d('Cờ ' + (W.war ? W.war.factions[st.by].name : ''), p.clone().setY(26), '#ffe08a'); G.ripple(p, '#ffd27a'); if (audio) audio.chime(); }
+        else if (st.type === 'wonder') { G.label3d(st.title, p.clone().setY(30), '#ffe08a'); G.ripple(p, '#ffe08a'); if (audio) audio.chime(); }
+        else if (st.type === 'siege') G.label3d('Vây thành', p.clone().setY(10), '#ff9b8f');
+        else if (st.type === 'sea-low') G.label3d('Biển cạn', p.clone().setY(8), '#ffb3a8');
       }
     }
 

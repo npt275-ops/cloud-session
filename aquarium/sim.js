@@ -2091,9 +2091,10 @@
     const X = W.war, c = W.cities[cid], t = W.cities[tid], by = c.owner;
     if (o.via === 'silo') c.nuke.ready = W.day + 360;
     else { const s = X.units.find((u) => u.id === o.sub); s.ready = W.day + 360; }
-    fxPush(W, { kind: 'nuke', from: o.via === 'silo' ? cid : -1, sub: o.sub, to: tid });
     // lá chắn tên lửa: tháp canh thời hiện đại có thể bắn hạ
-    if (hasB(t, 'tower') && t.era >= 5 && W.rand() < 0.4) {
+    const stopped = hasB(t, 'tower') && t.era >= 5 && W.rand() < 0.4;
+    fxPush(W, { kind: 'nuke', from: cid, via: o.via, to: tid, intercepted: stopped });
+    if (stopped) {
       wstory(W, 'nuke-stopped', 'epic', 'Tên lửa hạt nhân bị bắn hạ trên trời ' + t.name, 'Trận địa tên lửa của ' + t.name + ' đánh chặn thành công. Cả bể kính nín thở.', { kind: 'land', city: t.id }, { city: t.id, from: cid, by });
       for (const f of X.factions) if (f.alive && f.id !== by && f.id !== t.owner) X.grudge[f.id][by] += 3;
       X.embargo[by] = W.day + 360;
@@ -2216,7 +2217,7 @@
     let end = null;
     if (W.cities.every((c) => c.settled) && alive.length === 1) end = { winner: alive[0].id, how: 'conquest' };
     else if (X.wonder && W.day - X.wonder.day >= 360 && W.cities[X.wonder.city].owner === X.wonder.owner) end = { winner: X.wonder.owner, how: 'wonder' };
-    else if (X.player >= 0 && !X.factions[X.player].alive) end = { winner: -1, how: 'defeat' };
+    else if (X.player >= 0 && X.factions[X.player] && !X.factions[X.player].alive) end = { winner: -1, how: 'defeat' };
     if (!end) return;
     X.over = Object.assign(end, { day: W.day });
     const name = end.winner >= 0 ? X.factions[end.winner].name : '';
@@ -2246,14 +2247,14 @@
       if (c.fallout > 0) c.fallout--;
       buildDay(W, c);
       if (X.on) { trainDay(W, c); upkeepDay(W, c); }
-      if (c.owner !== X.player && (W.day + c.id) % 4 === 0 && !X.over) aiCity(W, c);
+      if (c.owner !== X.player && (W.day + c.id) % 4 === 0 && !X.over && !W.cfg.noAI) aiCity(W, c);
       if (W.day - c.lastHit > 5) c.hp = Math.min(c.hpMax, c.hp + c.hpMax * 0.004);
       for (const h of w.households) if (h.grief > 0) h.grief--;
     }
     if (!X.on) return;
     deployDay(W);
     battleDay(W);
-    if (W.day % 15 === 0 && !X.over) for (const f of X.factions) if (f.alive && f.id !== X.player) aiFaction(W, f);
+    if (W.day % 15 === 0 && !X.over && !W.cfg.noAI) for (const f of X.factions) if (f.alive && f.id !== X.player) aiFaction(W, f);
     checkVictory(W);
   }
   // Chương năm của cả thế giới: lấy câu chuyện lớn nhất trong sáu thành phố, mỗi thành phố một dòng

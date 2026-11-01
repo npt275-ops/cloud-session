@@ -138,6 +138,7 @@
         if (ter === 'tundra') k.gable('#f4f8fb', 0, y + 1.35, 0, 2.82, 0.42, 0.72);
         return;
       }
+      if (e >= 3 && ter !== 'plains') return houseStyled(k, e, ter, v, lv);
       if (e === 3) {
         const wall = pick(PAL.e3walls, v), roof = pick(PAL.e3roofs, v2);
         k.box('#a99c88', 0, 0, 0, 2.9, 0.35, 2.9);
@@ -181,6 +182,68 @@
       if (v3 < 0.35) { k.box('#5e8d4e', 0, H, 0, 1.9, 0.25, 1.9); k.blob(ICO(), '#6aa85a', 0.4, H + 0.5, 0.3, 0.45); }
       else if (v3 < 0.7) { for (const sx of [-0.5, 0.5]) k.add(UBOX(), '#2c3e66', sx, H + 0.1, 0, 0.8, 0.05, 1.6, 0, 0, 0.3); }
       else { k.cyl('#9aa3ad', 0.4, H, 0.3, 0.38, 0.9, 8); k.cone('#7d8792', 0.4, H + 0.9, 0.3, 0.42, 0.35, 8); }
+    }
+
+    const tint = (hex, a) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); c.setHSL(h.h, h.s, clamp(h.l + a, 0, 1)); return '#' + c.getHexString(); };
+    // Nhà từ thời cận đại theo phong cách từng miền: rừng nhà khung gỗ, núi nhà đá chân gỗ trên, băng nguyên mái củ hành,
+    // biển nhà trắng cửa xanh, sa mạc nhà mái bằng có tháp đón gió; rồi gạch, sắt, kính theo cách riêng của mỗi nơi
+    function houseStyled(k, e, ter, v, lv) {
+      const S = STY[ter][e], v2 = (v * 7.31) % 1, wall = tint(S.wall, (v - 0.5) * 0.14);
+      const win = (x, y, z, w2, h2, side) => side ? k.box(PAL.win, x, y, z, 0.06, h2, w2, 0, true) : k.box(PAL.win, x, y, z, w2, h2, 0.06, 0, true);
+      if (e === 3) {
+        k.box(S.base, 0, 0, 0, 2.9, 0.3, 2.9);
+        let y = 0.3;
+        const floors = 1 + lv;
+        for (let f = 0; f < floors; f++) {
+          const w = 2.3 - f * 0.1, fw = ter === 'mountain' && f > 0 ? tint('#7a5a3a', (v - 0.5) * 0.1) : ter === 'forest' ? '#efe6d2' : ter === 'coast' ? '#fbfaf6' : wall;
+          k.box(fw, 0, y, 0, w, 1.45, w);
+          if (ter === 'forest') { for (const sx of [-w / 2 + 0.06, -0.38, 0.38, w / 2 - 0.06]) k.box(S.wall2, sx, y, w / 2 + 0.01, 0.1, 1.45, 0.04); k.box(S.wall2, 0, y + 0.7, w / 2 + 0.01, w, 0.08, 0.04); k.add(UBOX(), S.wall2, -0.75, y + 0.05, w / 2 + 0.02, 0.07, 1.5, 0.03, 0, 0, 0.55); }
+          if (ter === 'coast') for (const sx of [-0.5, 0.5]) for (const d of [-0.27, 0.27]) k.box(S.trim, sx + d, y + 0.5, w / 2 + 0.03, 0.1, 0.56, 0.03);
+          if (ter === 'mountain' && f > 0) { k.box('#5f4630', 0, y - 0.04, w / 2 + 0.32, w * 0.8, 0.08, 0.6); for (let r = 0; r < 5; r++) k.box('#5f4630', -w * 0.38 + r * w * 0.19, y, w / 2 + 0.6, 0.05, 0.4, 0.05); }
+          if (ter === 'tundra') k.box(S.trim, 0, y + 1.3, w / 2 + 0.02, w, 0.1, 0.04);
+          win(-0.5, y + 0.5, w / 2 + 0.03, 0.4, 0.55); win(0.5, y + 0.5, w / 2 + 0.03, 0.4, 0.55); win(w / 2 + 0.03, y + 0.5, 0, 0.4, 0.55, true);
+          y += 1.45;
+        }
+        k.box(ter === 'coast' ? S.trim : '#5a4030', 0, 0.3, 1.16, 0.5, 0.95, 0.06);
+        if (ter === 'forest') k.gable(S.roof, 0, y, 0, 2.6, 2.1, 2.7);
+        else if (ter === 'mountain') { k.gable(S.roof, 0, y, 0, 3.1, 1.25, 3.2); k.box('#efe6d2', 0, y + 0.3, 1.2, 0.5, 0.4, 0.05); }
+        else if (ter === 'tundra') { k.gable(S.roof, 0, y, 0, 2.5, 1.5, 2.6); if (v2 > 0.45) { k.cyl(S.wall2, 0, y + 0.9, 0, 0.42, 0.6, 8); k.add(SPHG(), S.roof, 0, y + 1.5, 0, 0.5, 0.65, 0.5); k.add(DOME(8), S.roof, 0, y + 1.5, 0, 0.5, -0.18, 0.5); k.cone(S.trim, 0, y + 2.1, 0, 0.12, 0.5, 6); } k.gable('#f4f8fb', 0, y + 1.1, 0, 2.52, 0.4, 0.7); }
+        else if (ter === 'coast') { k.box('#ffffff', 0, y, 0, 2.3, 0.18, 2.3); if (v2 > 0.55) k.dome(S.roof, 0.4, y + 0.15, -0.3, 0.65, 1, 10); else k.box('#e8e4da', -0.5, y + 0.18, -0.5, 1.0, 0.9, 1.0); }
+        else { k.box(S.trim, 0, y, 0, 2.35, 0.16, 2.35); for (const sx of [-1, 1]) k.box(wall, sx * 1.12, y + 0.16, 0, 0.12, 0.3, 2.3); k.box(wall, 0.6, y, -0.6, 0.6, 1.5, 0.6); for (const sx of [-1, 1]) k.box('#3a2a1e', 0.6 + sx * 0.31, y + 1.0, -0.6, 0.04, 0.4, 0.34); k.add(VAULT(), '#3a2a1e', 0, 0.3, 1.16, 0.28, 0.3, 0.06, 0, Math.PI / 2, 0); }
+        if (ter === 'forest' || ter === 'mountain') k.box('#7a6a5a', 0.7, y + 0.2, -0.5, 0.34, 1.4, 0.34);
+        return;
+      }
+      if (e === 4) {
+        const floors = 2 + lv, top = 0.2 + 1.3 * floors;
+        k.box(S.base, 0, 0, 0, 2.7, 0.2, 2.7);
+        k.box(wall, 0, 0.2, 0, 2.4, 1.3 * floors, 2.4);
+        for (let f = 0; f < floors; f++) { const y = 0.6 + f * 1.3; for (const sx of [-0.6, 0.6]) { k.box(S.trim, sx, y - 0.06, 1.21, 0.5, 0.66, 0.03); win(sx, y, 1.23, 0.36, 0.52); } win(1.23, y, 0, 0.5, 0.52, true); }
+        if (ter === 'tundra') { for (let r = 0; r < 9; r++) k.box(S.wall2, -1.1 + r * 0.275, 0.2, 1.21, 0.05, 1.3 * floors, 0.03); k.add(VAULT(), S.roof, 0, top, 0, 1.25, 1.2, 1.25); k.cyl('#c8ced4', 1.0, 0, -1.3, 0.16, top + 0.6, 8); }
+        else if (ter === 'forest') { k.gable(S.roof, 0, top, 0, 2.6, 1.3, 2.6); k.cyl('#3f4650', 0.7, top, -0.5, 0.1, 1.6, 6); k.box('#5f4630', 0, 0.2, 1.5, 2.2, 0.12, 0.7); for (const sx of [-1, 1]) k.cyl('#5f4630', sx, 0.2, 1.8, 0.06, 1.1, 5); }
+        else if (ter === 'coast') { k.gable(S.roof, 0, top, 0, 2.6, 1.4, 2.6); k.box(wall, 0, top + 0.1, 0.9, 0.8, 0.8, 0.6); k.gable(S.roof, 0, top + 0.9, 0.9, 1.0, 0.45, 0.7); win(0, top + 0.4, 1.21, 0.36, 0.4); }
+        else if (ter === 'mountain') { k.box(S.wall2, 0, top, 0, 2.5, 0.16, 2.5); k.cyl('#6d695f', 0.6, top + 0.16, -0.5, 0.45, 0.9, 10); k.box(S.trim, 0, 0.2 + 1.3 * floors - 0.12, 0, 2.44, 0.12, 2.44); }
+        else { k.box(S.trim, 0, top, 0, 2.5, 0.14, 2.5); for (let f = 1; f < floors; f++) { k.box('#2f3540', 0, 0.2 + f * 1.3, 1.45, 1.6, 0.06, 0.5); k.box('#2f3540', 0, 0.2 + f * 1.3 + 0.3, 1.68, 1.6, 0.04, 0.04); } k.add(UBOX(), pick(['#c0392b', '#3f7fd6', '#e0b23a'], v2), 0, 1.05, 1.4, 1.4, 0.05, 0.6, 0, -0.3, 0); }
+        return;
+      }
+      const floors = 3 + lv * 2 + Math.floor(v * 3), H = floors * 1.05;
+      if (ter === 'tundra' || ter === 'coast') {
+        const sx = ter === 'coast' ? 1.25 : 1.1, sz = ter === 'coast' ? 0.9 : 1.1;
+        k.add(UCYL(14), wall, 0, 0, 0, sx, H, sz);
+        for (let f = 0; f < floors; f++) k.add(UCYL(14), pick(PAL.glass, v2), 0, 0.3 + f * 1.05, 0, sx + 0.02, 0.55, sz + 0.02, 0, 0, 0, true);
+        if (ter === 'tundra') k.add(ICO(), S.roof, 0, H, 0, 1.15, 0.85, 1.15);
+        else k.add(VAULT(), '#ffffff', 0, H, 0, 0.9, 1.6, 0.35, 0, 0.5, 0);
+        return;
+      }
+      if (ter === 'mountain') {
+        let y = 0;
+        for (let f = 0; f < floors; f += 2) { const off = ((f / 2) % 2 ? 0.35 : -0.35); k.box(tint(S.wall, ((f / 2) % 2) * 0.05), off, y, 0, 2.4, 2.1, 2.3); for (const sx of [-0.7, 0, 0.7]) win(off + sx, y + 0.8, 1.17, 0.18, 1.0); y += 2.1; }
+        k.box(S.roof, 0, y, 0, 2.9, 0.4, 2.8); k.box(S.trim, 0.9, y + 0.4, 0.8, 0.3, 0.5, 0.3);
+        return;
+      }
+      k.box(wall, 0, 0, 0, 2.3, H, 2.3);
+      for (let f = 0; f < floors; f++) { const y = 0.3 + f * 1.05; k.box(pick(PAL.glass, v2), 0, y, 1.16, 2.0, 0.6, 0.04, 0, true); k.box(pick(PAL.glass, v2), 1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(pick(PAL.glass, v2), -1.16, y, 0, 0.04, 0.6, 2.0, 0, true); }
+      if (ter === 'forest') { for (let f = 1; f < floors; f += 2) { k.box('#5f9f4a', 0, f * 1.05, 1.35, 2.3, 0.18, 0.5); k.blob(ICO(), '#6aa85a', -0.7 + (f % 3) * 0.6, f * 1.05 + 0.4, 1.4, 0.32); } k.box('#5f9f4a', 0, H, 0, 2.1, 0.22, 2.1); k.cone('#4f8f45', 0.5, H + 0.2, 0.3, 0.45, 1.1, 6); }
+      else { for (let r = 0; r < 7; r++) k.box(S.wall2, -1.0 + r * 0.333, 0, 1.2, 0.07, H, 0.07); for (let i = 0; i < 2; i++) k.add(UBOX(), '#24345a', -0.5 + i, H + 0.15, 0, 0.9, 0.05, 1.8, 0, 0.35, 0); }
     }
 
     // Ruộng, nơi làm ra lương thực. Lô rộng; phần quay (cối xay, tuabin) trả về riêng để quay theo độ bận rộn.
@@ -251,6 +314,18 @@
         k.tcyl('#6d6359', 1.0, 0, -0.9, 0.42, 0.3, 4.4, 8);
         k.box('#2a1d17', -0.5, 0.2, 1.02, 1.0, 1.0, 0.05); k.box('#3a3a3d', 0.9, 0, 1.6, 0.6, 0.55, 0.35);
         return { fire: [-0.5, 0.7, 1.15] };
+      }
+      if (e >= 3 && ter !== 'plains') {
+        const S = STY[ter][e];
+        k.box(S.base, 0, 0, 0, 3.9, 0.2, 2.9);
+        k.box(tint(S.wall, (v - 0.5) * 0.12), 0, 0.2, 0, 3.6, e === 5 ? 2.6 : 2.3, 2.6);
+        k.box(S.glass ? pick(PAL.glass, v) : PAL.win, 0, 0.8, 1.31, 3.2, 0.8, 0.04, 0, true);
+        k.box(S.trim, 0, 1.75, 1.33, 3.4, 0.35, 0.06);
+        roofOn(k, S, 0, e === 5 ? 2.8 : 2.5, 0, 3.6, 2.6);
+        if (e === 4) { k.tcyl('#7a3a2e', 1.3, 0, -1.0, 0.36, 0.26, 6.0, 10); return { smoke: [[1.3, 6.2, -1.0]], fire: [0, 0.6, 1.5] }; }
+        if (e === 3) { k.cyl(S.wall2, 1.1, 2.0, -0.7, 0.3, 2.4, 8); for (let j = 0; j < 4; j++) k.box('#c49a62', 0.3 + (j % 2) * 0.54, Math.floor(j / 2) * 0.48, 1.85, 0.48, 0.48, 0.48); return { fire: [-0.7, 0.75, 1.7], gear: [1.86, 1.4, 0.2] }; }
+        k.cyl('#9aa3ad', 1.4, 2.6, 1.0, 0.06, 1.4, 6); k.box(S.trim, 1.4, 3.9, 1.0, 0.7, 0.45, 0.12, 0, true);
+        return null;
       }
       if (e === 3) {
         k.box(pick(['#cdb99a', '#d6c3a5', '#c9b08f'], v), 0, 0, 0, 3.6, 2.3, 2.6);
@@ -420,6 +495,63 @@
     }
 
     /* =============== Địa hình sáu miền =============== */
+    /* =============== Phong cách kiến trúc: sáu miền × sáu thời đại =============== */
+    // [tường, tường phụ, mái, kiểu mái, viền, nền, kính]
+    const STY_RAW = {
+      plains: [['#a07850', '#8a6a46', '#c9a94e', 'thatch', '#6d5139', '#7d6a55'], ['#c9a46e', '#b48a58', '#a8603e', 'flat', '#e6dcc6', '#9b8466'], ['#d8cbb0', '#8a6a46', '#9b4a35', 'gable', '#5a4030', '#a39b8e'], ['#c8734f', '#efe6d2', '#5b4a44', 'hip', '#f4efe2', '#9a8f80'], ['#9b3f2e', '#6b6560', '#4a4d52', 'saw', '#d9c9a8', '#5d5f63'], ['#dfe7ee', '#7fb0d6', '#eef1f4', 'flat', '#3fa7d6', '#c9ced4', 1]],
+      forest: [['#7a5a3a', '#5f4630', '#6b7f3a', 'tent', '#4a3826', '#5b4a3a'], ['#8a6440', '#6d5139', '#5f6e3b', 'gable', '#3d2f22', '#6d6359'], ['#6d5139', '#4a3826', '#3f3a35', 'steep', '#c9a14e', '#6d6359'], ['#efe6d2', '#5f4630', '#7a3a2e', 'steep', '#5f4630', '#8a8174'], ['#6d5139', '#4f5a46', '#4f6b4a', 'saw', '#2f3540', '#5d5f63'], ['#c9a87c', '#5f9f4a', '#6aa85a', 'garden', '#f4f4f4', '#9fa69a', 1]],
+      mountain: [['#8b8577', '#7c776b', '#5f6b62', 'slate', '#6d695f', '#6d695f'], ['#b8b2a4', '#a9a294', '#8a5a3a', 'flat', '#d9d2c2', '#948d7e'], ['#9d9589', '#7f7a6e', '#4a4d52', 'cone', '#c9bda4', '#7f7a6e'], ['#c9bda4', '#7a5a3a', '#7a4e3e', 'gable', '#efe6d2', '#9d9589'], ['#8f8a80', '#5d5f63', '#3f4650', 'flat', '#c46a2e', '#6d695f'], ['#b9b5ad', '#8f8a80', '#9aa0a6', 'brutal', '#e05a6a', '#8f8a80', 1]],
+      tundra: [['#eef3f6', '#c8b49a', '#eef3f6', 'igloo', '#9aa4ad', '#d6e4ec'], ['#8a6a46', '#6d5139', '#6f8a4a', 'turf', '#c8b49a', '#9aa4ad'], ['#7d5a3a', '#9aa4ad', '#4a4d52', 'steep', '#e8eef2', '#8a949d'], ['#d96b4f', '#f2e2c8', '#3f8f5a', 'onion', '#f4d35e', '#9aa4ad'], ['#9aa4ad', '#6c757e', '#c46a2e', 'vault', '#e8eef2', '#6c757e'], ['#f4f7f9', '#bfe3f2', '#dff2fa', 'geo', '#5fc6e6', '#c8d3da', 1]],
+      coast: [['#c8a36a', '#8f6a46', '#d8c27a', 'thatch', '#6d5139', '#8f6a46'], ['#f2ede2', '#d9cbb0', '#e8dcc6', 'flat', '#3f7fd6', '#c9bda4'], ['#e3d6bd', '#b9a07a', '#c4603e', 'hip', '#5a4030', '#b1a99c'], ['#fbfaf6', '#e8e4da', '#3f7fd6', 'dome', '#3f7fd6', '#d9d2c2'], ['#a14a3a', '#5d5f63', '#3f4650', 'gable', '#f2ede2', '#6d695f'], ['#ffffff', '#cfe8f5', '#ffffff', 'sail', '#3f9cc6', '#d9dfe4', 1]],
+      desert: [['#c98a5a', '#b87b4f', '#d9a46e', 'mud', '#8f5f3e', '#b87b4f'], ['#d9a46e', '#c98a5a', '#d9a46e', 'flat', '#8f5f3e', '#c98a5a'], ['#e2bd85', '#c98a5a', '#3fb0b8', 'dome', '#8f5f3e', '#c9a06e'], ['#e8c08e', '#c98a5a', '#e8c08e', 'wind', '#5f8fb0', '#c9a06e'], ['#c98a5a', '#5d5f63', '#8f5f3e', 'flat', '#2f3540', '#8f5f3e'], ['#e8d2b0', '#c98a5a', '#f2e6d0', 'lattice', '#e05a6a', '#c9a06e', 1]],
+    };
+    const STY = {};
+    for (const ter in STY_RAW) STY[ter] = STY_RAW[ter].map(([wall, wall2, roof, roofT, trim, base, glass], e) => ({ wall, wall2, roof, roofT, trim, base, glass: !!glass, e, ter }));
+    // mái theo kiểu của miền và thời đại, đặt trên một khối thân rộng w (trục x), sâu d (trục z), cao tới y
+    function roofOn(k, S, x, y, z, w, d) {
+      const m = Math.min(w, d), R = S.roof;
+      switch (S.roofT) {
+        case 'thatch': if (w / d > 1.3) k.gable(R, x, y, z, w + 0.4, d * 0.6, d + 0.4); else k.add(UCONE(4), R, x, y, z, Math.max(w, d) * 0.78, m * 0.75, Math.max(w, d) * 0.78, Math.PI / 4); break;
+        case 'tent': k.cone(R, x, y, z, Math.max(w, d) * 0.62, m * 0.9, 8); break;
+        case 'slate': case 'steep': k.gable(R, x, y, z, w + 0.3, d * (S.roofT === 'steep' ? 0.95 : 0.7), d + 0.35); break;
+        case 'turf': k.gable(R, x, y, z, w + 0.3, d * 0.5, d + 0.35); k.gable('#83a35a', x, y + 0.08, z, w + 0.1, d * 0.42, d + 0.1); break;
+        case 'gable': k.gable(R, x, y, z, w + 0.3, d * 0.55, d + 0.3); break;
+        case 'hip': k.add(UCONE(4), R, x, y, z, Math.max(w, d) * 0.74, m * 0.5, Math.max(w, d) * 0.74, Math.PI / 4); break;
+        case 'cone': k.add(UCONE(4), R, x, y, z, Math.max(w, d) * 0.74, m * 0.95, Math.max(w, d) * 0.74, Math.PI / 4); break;
+        case 'dome': k.box(S.trim, x, y, z, w + 0.15, 0.18, d + 0.15); k.dome(R, x, y + 0.15, z, m * 0.36, 1, 10); break;
+        case 'onion': k.box(S.trim, x, y, z, w + 0.15, 0.18, d + 0.15); k.add(SPHG(), R, x, y + 0.2, z, m * 0.3, m * 0.42, m * 0.3); k.add(DOME(10), R, x, y + 0.2, z, m * 0.3, -m * 0.12, m * 0.3); k.cone(S.trim, x, y + 0.2 + m * 0.4, z, m * 0.12, m * 0.4, 6); break;
+        case 'saw': for (let i = 0; i < 3; i++) { k.add(GABLE(), R, x - w / 2 + (w / 3) * (i + 0.5), y, z, d + 0.2, m * 0.32, w / 3, Math.PI / 2, 0, 0); } break;
+        case 'vault': k.add(VAULT(), R, x, y, z, w * 0.52, d * 0.5 + 0.1, d * 0.5 + 0.1); break;
+        case 'geo': k.box(S.trim, x, y, z, w + 0.1, 0.12, d + 0.1); k.add(ICO(), R, x, y, z, m * 0.48, m * 0.38, m * 0.48); break;
+        case 'garden': k.box(S.trim, x, y, z, w + 0.2, 0.2, d + 0.2); k.box('#5f9f4a', x, y + 0.2, z, w - 0.2, 0.18, d - 0.2); for (let i = 0; i < 3; i++) k.cone('#4f8f45', x - w / 3 + (w / 3) * i, y + 0.38, z + (i % 2 ? 0.3 : -0.3), 0.35, 0.8, 6); break;
+        case 'brutal': k.box(R, x, y, z, w + 0.9, 0.5, d + 0.9); for (let i = -1; i <= 1; i++) k.box(S.wall2, x + i * w * 0.32, y - 1.4, z + d / 2 + 0.25, 0.25, 1.4, 0.5); break;
+        case 'sail': k.box(S.trim, x, y, z, w + 0.1, 0.12, d + 0.1); k.add(VAULT(), R, x, y, z - d * 0.15, w * 0.5, m * 0.9, d * 0.35, 0, 0.35, 0); break;
+        case 'wind': k.box(S.trim, x, y, z, w + 0.15, 0.16, d + 0.15); k.box(S.wall, x + w * 0.28, y, z - d * 0.2, 0.6, 1.5, 0.6); for (const s2 of [-1, 1]) k.box('#3a2a1e', x + w * 0.28 + s2 * 0.31, y + 1.0, z - d * 0.2, 0.04, 0.4, 0.3); break;
+        case 'lattice': k.box(S.trim, x, y, z, w + 0.15, 0.16, d + 0.15); for (let i = 0; i < 3; i++) k.add(UBOX(), '#24345a', x - w / 3 + (w / 3) * i, y + 0.2, z, w / 3.6, 0.06, d * 0.6, 0, 0.35, 0); break;
+        case 'igloo': case 'mud': break;
+        default: k.box(S.trim, x, y, z, w + 0.2, 0.2, d + 0.2); k.box(R, x, y + 0.2, z, w, 0.12, d);
+      }
+    }
+    // thân nhà: nền, tường, cửa, cửa sổ sáng về đêm, mái
+    function styHall(k, S, x, z, w, h, d, opt) {
+      opt = opt || {};
+      if (S.roofT === 'igloo' || S.roofT === 'mud') {
+        const r = Math.max(w, d) * 0.55;
+        k.dome(S.wall, x, 0, z, r, h / r * 0.9, 12);
+        k.add(VAULT(), S.wall2, x, 0, z + r * 0.85, 0.45, 0.55, 0.6, Math.PI / 2, 0, 0);
+        k.box('#3a2a1e', x, 0, z + r * 1.12, 0.5, 0.6, 0.06);
+        return h * 0.9;
+      }
+      k.box(S.base, x, 0, z, w + 0.35, 0.22, d + 0.35);
+      k.box(opt.wall || S.wall, x, 0.2, z, w, h, d);
+      if (S.e >= 3 && !S.glass) k.box(S.trim, x, 0.2 + h - 0.16, z, w + 0.08, 0.16, d + 0.08);
+      k.box(S.e >= 4 ? '#3f4650' : '#3a2a1e', x, 0.2, z + d / 2 + 0.01, Math.min(0.9, w * 0.25), Math.min(1.5, h * 0.55), 0.06);
+      const rows = Math.max(1, Math.floor(h / 1.6)), cols = Math.max(1, Math.floor(w / 1.3));
+      if (S.glass) for (let r = 0; r < rows; r++) k.box('#9fd3f0', x, 0.55 + r * 1.5, z + d / 2 + 0.02, w * 0.86, 0.75, 0.05, 0, true);
+      else if (S.e >= 1) for (let r = 0; r < rows; r++) for (let c2 = 0; c2 < cols; c2++) { if (r === 0 && c2 === Math.floor(cols / 2)) continue; k.box('#ffe2a8', x - w / 2 + (w / cols) * (c2 + 0.5), 0.75 + r * 1.5, z + d / 2 + 0.02, 0.36, 0.42, 0.05, 0, true); }
+      if (!opt.noRoof) roofOn(k, S, x, 0.2 + h, z, w, d);
+      return 0.2 + h;
+    }
     const TSTYLE = {
       plains: { ground: '#86bb63', rock: ['#8a6a4c', '#7b5d45', '#6d6359', '#5b5248', '#4b4741'], season: true },
       forest: { ground: '#5f9a4f', rock: ['#6e5a44', '#5f4e3d', '#585048', '#4a443e', '#3f3b37'], season: true },
@@ -598,6 +730,7 @@
     function layout(L) {
       const taken = [];
       const roadsSeg = L.landing.map((p) => [new THREE.Vector2(0, 0), new THREE.Vector2(p.x, p.z)]);
+      roadsSeg.push([new THREE.Vector2(L.bankPos.x * 1.3, L.bankPos.z * 1.3), new THREE.Vector2(L.harbor.x, L.harbor.z)]);
       const segDist = (x, z, a, b) => { const abx = b.x - a.x, abz = b.y - a.y, t = clamp(((x - a.x) * abx + (z - a.y) * abz) / (abx * abx + abz * abz), 0, 1); return Math.hypot(x - (a.x + abx * t), z - (a.y + abz * t)); };
       const oa = Math.atan2(L.out.z, L.out.x);
       const wildAt = (x, z) => { const r = Math.hypot(x, z), a = Math.atan2(z, x), rel = Math.abs(Math.atan2(Math.sin(a - oa), Math.cos(a - oa))); return r > (L.ter === 'coast' ? 16.6 : 17.5) && rel < (L.ter === 'coast' ? 1.78 : 1.32); };
@@ -605,6 +738,8 @@
       L.wildAt = wildAt;
       // chỗ dành sẵn: quảng trường, ngân hàng, trường, mỏ
       taken.push({ x: 0, z: 0, r: 7.4 }, { x: L.bankPos.x, z: L.bankPos.z, r: 4.2 }, { x: L.schoolPos.x, z: L.schoolPos.z, r: 4.2 }, { x: L.minePos.x, z: L.minePos.z, r: 4.4 });
+      taken.push({ x: L.dockPos.x, z: L.dockPos.z, r: 3.6 }, { x: L.portPos.x, z: L.portPos.z, r: 4.4 });
+      for (const t of L.towerPos) taken.push({ x: t.x, z: t.z, r: 1.7 });
       L.blocked = (x, z, r) => {
         if (Math.hypot(x, z) < 6.6 + r) return true;
         if (L.roadDist(x, z) < 1.6 + r) return true;
@@ -612,6 +747,7 @@
         if (L.river) for (const [px, pz] of L.river) if ((px - x) ** 2 + (pz - z) ** 2 < (3.4 + r) ** 2) return true;
         if (L.lake && Math.hypot(x - L.lake[0], z - L.lake[1]) < 4.6 + r) return true;
         if (L.oasis && Math.hypot(x - L.oasis[0], z - L.oasis[1]) < 3.6 + r) return true;
+        if (Math.hypot(x - L.dockPos.x, z - L.dockPos.z) < 3.4 + r || Math.hypot(x - L.portPos.x, z - L.portPos.z) < 4.2 + r) return true;
         return false;
       };
       const free = (x, z, r) => Math.hypot(x, z) < LAND_R - 1.6 - r * 0.4 && !wildAt(x, z) && !L.blocked(x, z, r) && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2);
@@ -628,6 +764,14 @@
         return out;
       }
       const near = (pts, cap, key) => { pts.sort((a, b) => key(a) - key(b)); const res = []; for (const p of pts) { if (res.length >= cap) break; if (taken.every((t) => (t.x - p.x) ** 2 + (t.z - p.z) ** 2 > (t.r + p.r) ** 2)) { taken.push({ x: p.x, z: p.z, r: p.r }); res.push(p); } } return res; };
+      // tám lô cho công trình quân sự và kinh tế, rải đều trên vành ngoài khu dân cư
+      const ml = hexLots(3.0, 0.6, 0, (x, z) => { const r = Math.hypot(x, z); return r > 14.5 && r < 25.4; }).map((p) => Object.assign(p, { r: 3.0 }));
+      ml.sort((a, b) => Math.abs(a.length() - 20.5) - Math.abs(b.length() - 20.5));
+      L.milLots = [];
+      for (const gap of [7.4, 6.4, 5.6]) for (const p of ml) { if (L.milLots.length >= 8) break; if (!L.milLots.includes(p) && L.milLots.every((q) => q.distanceTo(p) > gap)) L.milLots.push(p); }
+      for (const p of L.milLots) taken.push({ x: p.x, z: p.z, r: 3.2 });
+      L.milLot = {};
+      ['barracks', 'range', 'stable', 'siege', 'forge', 'granary', 'academy', 'market'].forEach((key, i) => { L.milLot[key] = L.milLots[i % Math.max(1, L.milLots.length)]; });
       const sh = hexLots(2.8, 0.4, 0, (x, z) => L.roadDist(x, z) < 6.5 && Math.hypot(x, z) > 8).map((p) => Object.assign(p, { r: 2.8 }));
       L.shopLots = near(sh, 14, (p) => Math.hypot(p.x, p.z));
       const fm = hexLots(3.4, 0.3, 0, (x, z) => Math.hypot(x, z) > 12).map((p) => Object.assign(p, { r: 3.4 }));
@@ -651,6 +795,12 @@
       L.bankPos = inw.clone().multiplyScalar(10.5); L.schoolPos = out.clone().multiplyScalar(10.5);
       const ma = ang + (T.key === 'coast' ? 2.65 : 0.95), mr = T.key === 'coast' ? 14 : 19.5;
       L.minePos = new THREE.Vector3(Math.cos(ma) * mr, 0, Math.sin(ma) * mr); // nơi mạch vàng có thể lộ ra
+      // bờ trong nhìn ra biển: bến cá, cảng buôn và tháp canh bến; phía ngoài hoang dã: kỳ quan và hầm phóng
+      const ia = Math.atan2(inw.z, inw.x), oa2 = Math.atan2(out.z, out.x), at2 = (a, r) => new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
+      L.dockPos = at2(ia - 0.24, 26.4); L.portPos = at2(ia + 0.27, 25.4); L.harbor = at2(ia, 22.8);
+      L.wonderPos = at2(oa2, 20.5); L.siloPos = at2(oa2 + 0.8, 21.5);
+      L.gates = L.landing.map((p) => p.clone().multiplyScalar(0.86));
+      L.towerPos = [...L.gates.map((g2) => g2.clone().add(new THREE.Vector3(-g2.z, 0, g2.x).normalize().multiplyScalar(2.8))), at2(ia + 0.02, 27.4)];
       terrain(L);
       layout(L);
       plantTrees(L);
@@ -691,6 +841,7 @@
       for (const p of L.landing) { const len = p.length() - 6.2, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.2 + len / 2); k.box(ROAD[e], m.x, 0.02, m.z, e >= 4 ? 2.8 : 1.8, 0.08, len, a); if (e === 5) k.box('#f4f4f4', m.x, 0.1, m.z, 0.12, 0.02, len - 1, a); }
       // lối nhỏ tới ngân hàng và trường
       for (const p of [L.bankPos, L.schoolPos]) { const len = p.length() - 6.0, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.0 + len / 2 - 1.3); k.box(ROAD[e], m.x, 0.025, m.z, 1.5, 0.08, len - 2.6, a); }
+      { const a = L.bankPos.clone().multiplyScalar(1.3), b = L.harbor, len = a.distanceTo(b), m = a.clone().lerp(b, 0.5); k.box(ROAD[e], m.x, 0.025, m.z, 1.6, 0.08, len, Math.atan2(b.x - a.x, b.z - a.z)); }
       if (e === 4) for (let s = 0; s < 8; s++) { const a = (s / 8) * TAU; k.box('#8f8f8f', Math.cos(a) * 3.2, 0.06, Math.sin(a) * 3.2, 0.4, 0.4, 0.4); }
       L.civic.plaza = meshOf(k, L.litMat, L.g, 0, 0, 0);
       // nơi của chính quyền ở giữa, ngân hàng phía trong, trường phía ngoài
@@ -773,7 +924,28 @@
       H.g = makeHouse(L, H.idx, e, lv); H.era = e; H.lv = lv; H.grow = 0.25; H.g.scale.y = 0.25;
       if (e === 0) addFire(L, H.g, [0.9, 0.35, 1.6], 'house' + H.idx, 1.6);
     }
+    const lotOf = (L, o) => (o.kind === 'dock' ? L.dockPos : o.kind === 'farm' ? L.farmLots[o.lot] : L.shopLots[o.lot]);
+    // bến cá: cầu tàu vươn ra biển trong, lều phơi cá, rồi kho lạnh và cảng cá
+    function buildDock(k, e, S) {
+      const pier = ['#8f6a46', '#8a6a46', '#a39b8e', '#9a8f80', '#9a948a', '#c9ced4'][e], wid = [1.2, 1.8, 2.4, 2.4, 2.8, 3.2][e];
+      for (let z = 0.6; z < 8.4; z += 0.9) k.box(pier, 0, -0.1, z, wid, 0.16, 0.86);
+      for (let z = 1.2; z < 8.4; z += 2.2) for (const sx of [-1, 1]) k.cyl(e >= 4 ? '#7d7a74' : '#5b4630', sx * wid * 0.45, -2.2, z, 0.12, 2.2, 6);
+      if (e <= 1) { for (let i = 0; i < 2; i++) { const x = -2.6 + i * 1.4; k.cyl('#6d5139', x, 0, -1.6, 0.06, 1.6, 5); k.cyl('#6d5139', x + 1.0, 0, -1.6, 0.06, 1.6, 5); k.add(UBOX(), '#6d5139', x + 0.5, 1.5, -1.6, 1.1, 0.06, 0.06); for (let f2 = 0; f2 < 3; f2++) k.box('#b9c4c9', x + 0.2 + f2 * 0.3, 1.0, -1.6, 0.1, 0.45, 0.05); } }
+      const h = styHall(k, S, 1.6, -2.6, e >= 3 ? 3.6 : 2.6, e >= 4 ? 2.6 : 1.7, 2.6);
+      if (e === 2 || e === 3) { k.cyl('#6d5139', -1.2, 0, 4.0, 0.12, 3.2, 6); k.add(UBOX(), '#6d5139', -0.4, 3.0, 4.0, 1.9, 0.12, 0.12); k.box('#c8b07a', 0.4, 2.2, 4.0, 0.06, 0.8, 0.06); }
+      if (e === 3) { k.cyl('#efe6d2', -1.0, 0, 8.0, 0.34, 3.2, 8); k.cyl('#ffe08a', -1.0, 3.2, 8.0, 0.36, 0.5, 8, true); k.cone('#9b4a35', -1.0, 3.7, 8.0, 0.42, 0.5, 8); }
+      if (e === 4) { k.cyl('#7a3a2e', 3.0, h - 0.4, -3.4, 0.28, 2.6, 8); for (let i = 0; i < 4; i++) k.box(pick(['#3f7fd6', '#c46a2e', '#7a8a5a'], i * 0.27), -1.6 + (i % 2) * 0.9, 0, -0.6 - Math.floor(i / 2) * 0.9, 0.8, 0.6, 0.8); }
+      if (e === 5) { k.box('#eef1f4', -1.4, 0, 7.4, 0.3, 4.2, 0.3); k.box('#e05a6a', -0.6, 4.0, 7.4, 2.0, 0.25, 0.3); k.box('#9fd3f0', 1.6, 0.4, -2.6 + 1.31, 3.2, 0.9, 0.05, 0, true); }
+      return e === 4 ? { smoke: [3.0, h + 2.4, -3.4] } : null;
+    }
     function makeFirm(L, f, slot, e) {
+      if (f.sea) {
+        const k = new Kit(), extra = buildDock(k, e, STY[L.ter][e]), p = L.dockPos;
+        const g = meshOf(k, L.litMat, L.g, p.x, p.z, Math.atan2(p.x, p.z));
+        clickable(g, { type: 'firm', id: f.id, land: L.i });
+        clearTrees(L, p.x, p.z, 3.6);
+        return { g, kind: 'dock', lot: -1, era: e, grow: 1, dying: 0, busy: 0, spin: null, smoke: extra && extra.smoke ? extra.smoke : null, fire: null };
+      }
       const food = f.sector === 'food', lot = food ? L.farmLots[slot] : L.shopLots[slot], v = hash(L.i * 500 + slot * 11 + (food ? 1 : 7));
       const k = new Kit(), extra = (food ? buildFarm : buildShop)(k, e, L.ter, v);
       const ry = food ? Math.atan2(-lot.x, -lot.z) + Math.PI : Math.atan2(-lot.x, -lot.z);
@@ -806,6 +978,7 @@
       const ids = new Set(vis.map((f) => f.id));
       for (const f of vis) {
         if (L.firmObj.has(f.id)) continue;
+        if (f.sea) { const o = makeFirm(L, f, -1, L.era); o.grow = animate ? 0.001 : 1; o.g.scale.y = o.grow; L.firmObj.set(f.id, o); continue; }
         const food = f.sector === 'food', owners = food ? L.farmOwner : L.shopOwner;
         let s = L.slotOf.has(f.id) ? L.slotOf.get(f.id) : -1;
         if (s < 0 || (owners[s] !== null && owners[s] !== f.id)) s = owners.indexOf(null);
@@ -844,7 +1017,7 @@
         return;
       }
       // làn sóng xây dựng: nhà gần quảng trường xây lại trước
-      L.queue = [...L.houses.map((H) => ({ kind: 'house', H, d: L.houseLots[H.idx].p.length() })), ...[...L.firmObj.entries()].map(([id, o]) => ({ kind: 'firm', id, d: (o.kind === 'farm' ? L.farmLots[o.lot] : L.shopLots[o.lot]).length() }))].sort((a, b) => a.d - b.d);
+      L.queue = [...L.houses.map((H) => ({ kind: 'house', H, d: L.houseLots[H.idx].p.length() })), ...[...L.firmObj.entries()].map(([id, o]) => ({ kind: 'firm', id, d: lotOf(L, o).length() }))].sort((a, b) => a.d - b.d);
       L.queueT = 0;
     }
     function runQueue(L, dt) {
@@ -854,7 +1027,7 @@
         L.queueT -= 70;
         const q = L.queue.shift();
         if (q.kind === 'house') { if (q.H.era !== L.era) { rebuildHouse(L, q.H, L.era, q.H.lv); dust(L, L.houseLots[q.H.idx].p); } }
-        else { const o = L.firmObj.get(q.id); if (o && !o.dying && o.era !== L.era) { rebuildFirm(L, q.id, o, L.era); dust(L, o.kind === 'farm' ? L.farmLots[o.lot] : L.shopLots[o.lot]); } }
+        else { const o = L.firmObj.get(q.id); if (o && !o.dying && o.era !== L.era) { rebuildFirm(L, q.id, o, L.era); dust(L, lotOf(L, o)); } }
       }
     }
 
@@ -868,7 +1041,9 @@
     // độ cao mặt cầu dọc theo chiều dài (0..1)
     const deckY = (e, u) => e === 0 ? -1.6 * Math.sin(Math.PI * u) : e === 2 || e === 3 ? 1.0 * Math.sin(Math.PI * u) : 0;
     function buildBridge(B, e) {
-      if (B.g) { scene.remove(B.g); disposeGroup(B.g); }
+      if (B.g) { scene.remove(B.g); disposeGroup(B.g); B.g = null; }
+      { const [pa0, pb0] = bridgeEnds(B.sim); B.pa = pa0; B.pb = pb0; B.len = pa0.distanceTo(pb0) + 1.2; }
+      if (e < 0) { B.era = -1; return; }
       const [pa, pb] = bridgeEnds(B.sim), len = pa.distanceTo(pb) + 1.2, k = new Kit(), N = Math.round(len / 0.9);
       const y = (u) => deckY(e, u);
       if (e === 0) {
@@ -898,7 +1073,25 @@
       g.position.copy(pa).addScaledVector(d.clone().normalize(), -0.6); g.rotation.y = -Math.atan2(d.z, d.x);
       B.g = g; B.era = e; B.len = len; B.pa = pa; B.pb = pb;
     }
-    function bridgePoint(B, u, out) { return out.copy(B.pa).lerp(B.pb, u).setY(deckY(B.era, u) + 0.12); }
+    function bridgePoint(B, u, out) { return out.copy(B.pa).lerp(B.pb, u).setY(deckY(Math.max(0, B.era), u) + 0.12); }
+    // giàn giáo: cột và ván mọc dần từ phía người bắc cầu
+    function syncScaffold(B) {
+      const b = B.sim.build, step = b ? Math.floor((1 - b.left / b.total) * 10) : -1;
+      if (step === B.scStep) return;
+      B.scStep = step;
+      if (B.sg) { scene.remove(B.sg); disposeGroup(B.sg); B.sg = null; }
+      if (!b) return;
+      const fromA = b.by === B.a, p = (step + 1) / 10, k = new Kit(), len = B.len, N = Math.max(1, Math.round(len * p / 1.1));
+      for (let s = 0; s < N; s++) {
+        const u = (s + 0.5) / Math.round(len / 1.1), x = (fromA ? u : 1 - u) * len;
+        k.box('#9b7653', x, -0.1, 0, 1.0, 0.1, 1.9);
+        if (s % 2 === 0) for (const sz of [-0.9, 0.9]) { k.cyl('#c8b07a', x, -6, sz, 0.07, 8.2, 5); k.add(UBOX(), '#c8b07a', x, 1.6, sz, 0.06, 0.06, 1.0); }
+      }
+      k.cyl('#c8b07a', (fromA ? 0.02 : 0.98) * len, 0, 0, 0.12, 3.4, 5);
+      const g = meshOf(k, B.litMat, scene, 0, 0, 0), d = B.pb.clone().sub(B.pa);
+      g.position.copy(B.pa).addScaledVector(d.clone().normalize(), -0.6); g.rotation.y = -Math.atan2(d.z, d.x);
+      B.sg = g;
+    }
 
     // Đoàn hàng qua cầu
     const CART_N = 90, carts = [];
@@ -991,9 +1184,9 @@
         syncHouses(L, c.w, animate);
         syncFirms(L, c.w, animate);
       }
-      for (const B of bridges) if (B.sim.era !== B.era) { buildBridge(B, B.sim.era); }
-      // đoàn hàng: mỗi chuyến buôn trong ngày là một xe qua cầu
-      if (animate) for (const t of W.trade) { const B = bridges[t.bridge]; sendCart(B, t.from === B.a, t.sector); if (t.q > 6) sendCart(B, t.from === B.a, t.sector); }
+      for (const B of bridges) { if (B.sim.era !== B.era) buildBridge(B, B.sim.era); syncScaffold(B); }
+      // đoàn hàng: mỗi chuyến buôn qua cầu trong ngày là một xe (tàu buôn trên biển do lớp biển vẽ)
+      if (animate) for (const t of W.trade) { if (t.bridge == null) continue; const B = bridges[t.bridge]; sendCart(B, t.from === B.a, t.sector); if (t.q > 6) sendCart(B, t.from === B.a, t.sector); }
     }
 
     /* =============== Mỗi khung hình =============== */
@@ -1004,7 +1197,8 @@
       if (!H) return null;
       const o = h.employer !== null ? L.firmObj.get(h.employer) : null;
       const home = L.houseLots[H.idx].p;
-      if (o) { const lp = o.kind === 'farm' ? L.farmLots[o.lot] : L.shopLots[o.lot]; return [home, lp]; }
+      if (o) return [home, lotOf(L, o)];
+      if (h.employer === -1 && L.milLot.barracks) return [home, L.milLot.barracks]; // người đi lính ra trại
       const w = W.cities[L.i].w, G = w && w.gold;
       if (G && !G.closed && h.employer === G.firmId) return [home, L.minePos]; // thợ mỏ lên Đồi Mây
       return null;
@@ -1062,7 +1256,7 @@
           if (o.grow < 1 && !o.dying) { o.grow = Math.min(1, o.grow + dt / 1800); o.g.scale.y = 1 - Math.pow(1 - o.grow, 3); }
           if (o.dying) {
             o.dying += dt / 1800; o.g.scale.setScalar(Math.max(0.001, 1.3 - o.dying * 0.3)); o.g.position.y = -(o.dying - 1) * 0.6;
-            if (o.dying > 4.3) { L.g.remove(o.g); unclickable(o.g); disposeGroup(o.g); (o.kind === 'farm' ? L.farmOwner : L.shopOwner)[o.lot] = null; L.firmObj.delete(id); L.slotOf.delete(id); L.fires = L.fires.filter((x) => x.owner !== 'firm' + id); }
+            if (o.dying > 4.3) { L.g.remove(o.g); unclickable(o.g); disposeGroup(o.g); if (o.kind !== 'dock') (o.kind === 'farm' ? L.farmOwner : L.shopOwner)[o.lot] = null; L.firmObj.delete(id); L.slotOf.delete(id); L.fires = L.fires.filter((x) => x.owner !== 'firm' + id); }
             continue;
           }
           if (o.spin) o.spin.obj.rotation[o.spin.axis] -= spin * o.spin.speed * (0.4 + o.busy * 2.2);
@@ -1098,7 +1292,8 @@
 
     const peopleKit = { bodyGeo, headGeo, headMat: new THREE.MeshStandardMaterial({ color: '#f1d3b3', flatShading: true, roughness: 0.8 }), shirts: SHIRTS[3] };
     return {
-      lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING,
+      lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING, bridgePoint, deckY,
+      kit: { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng },
       landOf: (i) => lands[i],
       firmPos: (i, id) => { const L = lands[i], o = L.firmObj.get(id); return o ? o.g.position : null; },
       housePos: (i, idx) => { const L = lands[i], H = L.houses[idx]; return H ? L.houseLots[H.idx].p : null; },
