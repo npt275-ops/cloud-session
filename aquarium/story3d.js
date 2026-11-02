@@ -391,7 +391,7 @@
       N.setMode(null);
       const f = firmOf(sel.id), share = () => { const g = world.firms.filter((x) => x.alive && x.sector === f.sector); return f.avgSales / Math.max(1e-9, g.reduce((a, x) => a + x.avgSales, 0)); };
       const s0 = share(), p0 = f.price;
-      flyTo(firmPos(sel.id), 34); N.pause(15000);
+      N.pause(15000);
       r.story.city = CI;
       dropSeed(sel.id, () => {
         inventFlash(sel.id, r.story.item);
@@ -476,7 +476,7 @@
       if (!r.ok) { toast(r.reason === 'wait' ? 'Ở ' + X.cityName + ', còn ' + r.wait + ' ngày nữa mới thì thầm tiếp được.' : r.reason === 'fad' ? 'Thành phố đang có một cơn sốt rồi. Chờ nó qua đã.' : 'Không thì thầm được ở đây.', 3200); return true; }
       N.setMode(null);
       const p = kind === 'fad' ? firmPos(sel.id) : housePos(sel.i);
-      flyTo(p, 30); N.pause(14000);
+      N.pause(14000);
       whisperFx(p, kind === 'bank' ? '#ff6b6b' : kind === 'food' ? '#f0b85a' : r.fad.color, kind === 'bank' ? '“' + bankName() + ' sắp vỡ…”' : kind === 'food' ? '“Sắp mất mùa…”' : '“' + r.item + '…”');
       if (audio) audio.whisper();
       const st = tellNow(kind === 'fad' ? 'fad' : kind === 'food' ? 'rumor-food' : 'rumor');
@@ -495,7 +495,7 @@
       if (!r.ok) { toast(r.reason === 'docked' ? 'Khí cầu đang neo ở bến ' + X.cityName + ' rồi.' : 'Đèn hiệu trên bến còn nóng, ' + r.wait + ' ngày nữa mới thắp lại được.', 3000); return; }
       N.setMode(null);
       dock.visible = true;
-      flyTo(dock.position, 38); N.pause(12000);
+      N.pause(12000);
       toast('Đèn hiệu trên bến ' + X.cityName + ' đã thắp. Đoàn thương nhân sẽ đến vào ngày mai.', 4200);
       if (audio) audio.chime();
       const in0 = world.ledger.inflow;
@@ -982,7 +982,7 @@
     }
 
     /* ----- Đạo diễn ----- */
-    let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
+    let directorOn = false, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
     const queue = [];
     const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1, 'battle-end': 1, awaken: 5, 'plague-spread': 1, chaos: 2, 'air-battle': 2, 'portal-assault': 3, seize: 1, uprising: 3, resist: 1, refugee: 1, retake: 1 };
     const pri = (st) => TIER_PRI[st.tier] + (PRI_BONUS[st.type] || 0);
@@ -1098,7 +1098,7 @@
       $('cpList').innerHTML = (st.recap || []).map((l) => '<li>' + l + '</li>').join('');
       const el = $('chapter'); el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
       chapterUntil = now() + 16000;
-      G.flyTo(new THREE.Vector3(0, 0, 0), G.overviewDist); G.setAutoRotate(true); overview = true; holdUntil = now() + 9000;
+      holdUntil = now() + 9000;
       if (audio) audio.chime();
     }
     function hideChapter() { $('chapter').hidden = true; chapterUntil = 0; }
@@ -1195,7 +1195,7 @@
       customPos: (sel) => { const ly = layers[sel.land], p = ly ? ly.customPos(sel) : null; return p ? lands3d.lands[sel.land].world(p) : null; },
       extraPos: (i, id) => { const ly = layers[i]; return ly ? ly.extraPos(id) : null; },
       userMoved() { pausedUntil = now() + 25000; overview = false; },
-      setDirector(on) { directorOn = on; if (on) { pausedUntil = 0; holdUntil = 0; } },
+      setDirector() { directorOn = false; }, // camera chỉ đi theo tay người chơi: không còn chế độ tự bay tới sự kiện
       get director() { return directorOn; },
       get mode() { return mode; },
       get chapterOpen() { return !$('chapter').hidden; },
