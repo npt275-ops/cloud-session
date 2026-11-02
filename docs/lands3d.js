@@ -1063,7 +1063,7 @@
         for (const t of list) if ((t.x - x) ** 2 + (t.z - z) ** 2 < (t.r + r) ** 2) return false;
         return true;
       };
-      const dens = { plains: 320, forest: 820, mountain: 360, tundra: 240, coast: 240, desert: 100 }[L.ter];
+      const dens = { plains: 210, forest: 520, mountain: 240, tundra: 160, coast: 160, desert: 70 }[L.ter]; // bớt cây để nhẹ máy
       for (let n = 0; n < dens * 8 && list.length < dens; n++) {
         const a = rng() * TAU, r = Math.sqrt(rng()) * LAND_R * 1.12, x = Math.cos(a) * r, z = Math.sin(a) * r;
         const s = 0.75 + rng() * 0.75;
@@ -1616,7 +1616,7 @@
     const SHIRTS_X = [['#e8ecef', '#f2a541', '#3fa7d6', '#e05a6a', '#c8d0d8'], ['#f4f7f9', '#2b2f36', '#dfe7ee', '#3a3f48']];
     const SHIRTS = [['#8a6a4a', '#a0785a', '#6b5a45', '#9c8466'], ['#c9a46e', '#a8603e', '#e6dcc6', '#7a5a3a'], ['#7a4e3a', '#3d6b8b', '#9b4a35', '#5f6b4a'], ['#d9733f', '#4d7cc9', '#3f8f5a', '#a14a7e', '#e0b23a', '#5b6f8a'], ['#3f4650', '#6b5a4a', '#2f3e58', '#7a3a2e', '#556b4f'], ['#3fa7d6', '#f2a541', '#59c3a4', '#e05a6a', '#8e7cc3', '#f4f4f4'], ...SHIRTS_X];
     function people(L) {
-      const N = L.houseLots.length * 4;
+      const N = Math.min(L.houseLots.length * 4, 96); // tối đa 96 người đi lại mỗi đảo: đủ đông mà nhẹ máy
       L.hats = new THREE.InstancedMesh(new THREE.ConeGeometry(0.42, 0.22, 8), new THREE.MeshStandardMaterial({ color: '#ff6b9d', flatShading: true, roughness: 0.7 }), N);
       L.hats.castShadow = true; L.hats.count = 0; L.g.add(L.hats);
       L.peopleN = N; L.shirtEra = -1; L.crowd = null;
@@ -1767,7 +1767,7 @@
         L.front.byKind.push(list);
       }
     }
-    function frontTarget(c) { const w = c.w; return w ? Math.round(14 + w.households.length * 0.8 + c.era * 6) : 0; }
+    function frontTarget(c) { const w = c.w; return w ? Math.min(70, Math.round(10 + w.households.length * 0.45 + c.era * 4)) : 0; } // ít nhà phố hơn để nhẹ máy
     function syncFront(L, c, animate) {
       if (!c.settled || L.era < 0) return;
       if (!L.front || L.front.e !== L.era) buildFrontKinds(L, L.era);

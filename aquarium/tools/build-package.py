@@ -180,7 +180,7 @@ CHƠI TRÊN ĐIỆN THOẠI
  - Kéo chuột (hay một ngón tay) để xoay, cuộn (hay hai ngón) để phóng to, bấm tên đảo để bay tới.
  - Phím mũi tên hay W A S D: lướt tới, lùi, sang trái, sang phải. Page Up / Page Down (E / Q, Space / Shift): lên cao,
    sà xuống. Trên điện thoại có sáu nút bay ở góc phải.
- - Nút tốc độ: 1×, 2×, 4×, 16×. 1× chậm để nhìn rõ từng người; ván chín năm ở 2× hết khoảng 36 phút.
+ - Nút tốc độ: 1×, 2×, 4×. 1× chậm để nhìn rõ từng người; ván chín năm ở 2× hết khoảng 36 phút.
  - Quyền năng: mười lăm phép của thần. Việc cho cả bể làm ngay; việc cho một đảo thì chạm đúng chỗ trên đảo.
  - Nút ⋯: biên niên sử, âm thanh, chú giải, ngày và đêm, số khung hình, nút bay, cài lên điện thoại.
 

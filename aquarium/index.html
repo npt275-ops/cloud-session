@@ -324,7 +324,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="powBtn" aria-pressed="false" aria-controls="powers" hidden><span class="mbar"><i id="manaFill"></i></span><span id="manaTxt">Quyền năng</span></button>
   <button id="cmdBtn" aria-pressed="false" aria-controls="cmd" hidden>Thế giới</button>
-  <button id="speed" title="Chạm để đổi tốc độ: 1×, 2×, 4×, 16×">1× ▸</button>
+  <button id="speed" title="Chạm để đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
   <button id="moreBtn" aria-expanded="false" aria-controls="more" aria-label="Thêm">⋯<span class="badge" id="chronBadge" hidden>0</span></button>
   <button id="policyBtn" aria-pressed="false" aria-controls="policy" hidden>Chính sách</button>
   <button id="dirBtn" aria-pressed="true" hidden>Phim tài liệu</button>
@@ -1343,7 +1343,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   // Bóng đổ không vẽ lại mỗi khung: hai khung một lần, hoặc ngay khi camera dời chỗ; vùng bóng co lại khi nhìn gần cho sắc nét.
   const lowEnd = window.innerWidth < 720 || (navigator.hardwareConcurrency || 8) <= 4;
   const PERF = { prMax: Math.min(2, window.devicePixelRatio || 1), prMin: 0.75, pr: 1, shadow: lowEnd ? 1024 : 2048, shadowEvery: 2, frame: 0, ema: 16.7, slow: 0, good: 0, ceiling: 9, cool: 0, half: 70, force: true, lastT: new THREE.Vector3(1e9, 0, 0), fps: 60, fpsN: 0, fpsT: 0 };
-  PERF.pr = lowEnd ? Math.min(1.5, PERF.prMax) : PERF.prMax;
+  PERF.pr = PERF.prMax; // cảnh đã nhẹ: máy nào cũng bắt đầu ở độ nét cao nhất, chậm thì bộ điều tốc tự hạ
   const PRESETS = [{ pr: 2, shadow: 2048 }, { pr: 1.5, shadow: 1024 }, { pr: 1, shadow: 0 }, { pr: 0.75, shadow: 0 }];
   let quality = 0, qLocked = false;
   function applyQuality() {
@@ -1407,15 +1407,15 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   let fpsOn = false;
 
   /* =============== Điều khiển =============== */
-  // Bốn tốc độ, không có tạm dừng. 1× chậm để nhìn rõ từng người, từng giai đoạn (ván chín năm hết trong khoảng 73 phút,
-  // một vòng ngày đêm 3 phút); 2× nhanh như 1× trước đây (36 phút); 4× (18 phút); 16× (gần 5 phút).
+  // Ba tốc độ, không có tạm dừng. 1× chậm để nhìn rõ từng người (ván chín năm khoảng 73 phút, một vòng ngày đêm 3 phút);
+  // 2× (36 phút); 4× (18 phút). Bỏ 16× vì quá nặng.
   let running = true, tps = 0.75, acc = 0;
-  const speeds = [[0.75, '1×'], [1.5, '2×'], [3, '4×'], [12, '16×']];
+  const speeds = [[0.75, '1×'], [1.5, '2×'], [3, '4×']];
   function stopOrbit() { if (controls.autoRotate) { controls.autoRotate = false; $('orbit').setAttribute('aria-pressed', 'false'); } $('hint').style.opacity = 0; }
-  // một nút tốc độ: chạm để đi 1×, 2×, 4×, 16× rồi quay lại 1×
+  // một nút tốc độ: chạm để đi 1×, 2×, 4× rồi quay lại 1×
   $('speed').onclick = () => {
     running = true;
-    const i = (speeds.findIndex((x) => x[0] === tps) + 1) % speeds.length; // 1× → 2× → 4× → 16× → 1×
+    const i = (speeds.findIndex((x) => x[0] === tps) + 1) % speeds.length; // 1× → 2× → 4× → 1×
     tps = speeds[i][0]; $('speed').textContent = speeds[i][1] + ' ▸';
   };
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };

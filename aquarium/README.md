@@ -200,9 +200,9 @@ nền nhà cháy đen; bộ lạc mới đến thì đảo dựng lại từ đ�
 
 ## Tốc độ
 
-Nút tốc độ đi vòng 1× → 2× → 4× → 16× → 1×, không có tạm dừng. 1× chậm để nhìn rõ từng người và từng giai đoạn: một vòng
+Nút tốc độ đi vòng 1× → 2× → 4× → 1×, không có tạm dừng. 1× chậm để nhìn rõ từng người và từng giai đoạn: một vòng
 ngày đêm kéo dài 3 phút, người đi bộ thong thả, ván chín năm hết trong khoảng 73 phút. 2× nhanh như 1× của bản trước
-(36 phút), 4× hết ván trong 18 phút, 16× trong chưa tới 5 phút.
+(36 phút), 4× hết ván trong 18 phút.
 
 ## Bay quanh bể
 
@@ -469,7 +469,7 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 ## Giao diện
 
 Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có thanh thần lực), **Thế giới** (sáu nền văn minh, sáu trụ cột,
-chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, 16×; không có tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
+chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×; không có tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
 đêm, số khung hình, nút bay trên màn hình). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
 là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.
 Đồng hồ góc phải ghi **cấp của bể kính** (thời đại cao nhất mà một thành đã tới, từ 1/12 đến 12/12), mùa và ngày, thay cho số năm.
