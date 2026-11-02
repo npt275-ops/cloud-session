@@ -1,9 +1,0 @@
-{
-  "exchanges": ["binance", "okx", "bybit", "kraken"],
-  "symbols": ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT"],
-  "taker_fee": {"binance": 0.001, "okx": 0.001, "bybit": 0.001, "kraken": 0.004},
-  "transfer_cost_pct": 0.0,
-  "alert_net_pct": 0.2,
-  "interval_sec": 10,
-  "log_csv": "opportunities.csv"
-}
