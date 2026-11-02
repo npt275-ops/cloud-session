@@ -1415,7 +1415,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const title = lit === 6 ? 'Sáu thành phố ánh sáng' : lit ? lit + ' thành phố đã hoá ánh sáng' : G.awakened ? 'Những cỗ máy đã nhìn thấy bạn' : 'Chín năm trong bể kính';
     const godName = !bad && !good ? 'vị thần im lặng' : good > bad * 2 ? 'vị thần nhân từ' : bad > good * 2 ? 'vị thần thịnh nộ' : 'vị thần công bằng';
     const fallen = W.cities.reduce((t, c) => t + (c.casualties || 0), 0), battles = W.stories.filter((s) => s.type === 'battle-end').length;
-    const conquests = W.stories.filter((s) => s.type === 'conquer').length, revolts = W.stories.filter((s) => s.type === 'revolt').length;
+    const conquests = W.stories.filter((s) => s.type === 'conquer').length, revolts = W.stories.filter((s) => (s.type === 'uprising' && !s.failed) || s.type === 'revolt').length;
     const pop = W.cities.reduce((t, c) => t + (c.settled ? c.w.households.length : 0), 0);
     $('goKind').textContent = 'Năm thứ chín khép lại · Ngày ' + W.day;
     $('goTitle').textContent = title;

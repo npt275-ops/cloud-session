@@ -886,9 +886,12 @@ test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi tr�
 
 test('ván chín năm: sáu bộ lạc đến trong nửa năm đầu, năm năm đầu tới robot AI, bốn năm sau đi hết bốn thời vượt người; lên đời cần đủ sáu trụ cột', () => {
   const W = Sim.createWorld({ seed: 2, mode: 'god', war: true });
-  const reached = W.cities.map(() => []), weakest = new Set();
+  const reached = W.cities.map(() => []), weakest = new Set(), seen = {};
+  let lastSt = 0, maxOcc = 0;
   for (let d = 0; d < 3240; d++) {
     Sim.stepWorld(W);
+    for (const st of W.stories) if (st.id > lastSt) { lastSt = st.id; seen[st.type] = (seen[st.type] || 0) + 1; }
+    for (const c of W.cities) if (c.occ) maxOcc = Math.max(maxOcc, c.occ.n);
     for (const c of W.cities) {
       if (!c.settled) continue;
       if (reached[c.id][c.era] == null) { reached[c.id][c.era] = W.day; for (const P of Sim.PILLARS) assert.ok(c.pil[P.key] >= c.era * Sim.PILLAR_NEED[c.terrain.key][P.key] - 1e-9, c.name + ' lên thời ' + c.era + ' khi trụ cột ' + P.name + ' đã vững'); }
@@ -916,6 +919,14 @@ test('ván chín năm: sáu bộ lạc đến trong nửa năm đầu, năm năm
   assert.ok(yearN(7) + yearN(8) > yearN(1) + yearN(2), 'càng về sau càng hỗn loạn');
   assert.ok(W.stories.some((s) => s.type === 'air-battle'), 'có không chiến từ thời hiện đại');
   assert.ok(W.stories.some((s) => s.type === 'portal-assault'), 'có đổ quân qua cổng không gian');
+  // trong thành: giặc chiếm nhà, dân chạy, chống trả, khởi nghĩa; năm nào cũng mới, không lặp trong năm
+  assert.ok(seen.seize > 0 && maxOcc > 0, 'có nhà bị giặc chiếm');
+  assert.ok(seen.resist > 20 && seen.civ > 20 && seen.army > 20, JSON.stringify(seen));
+  assert.ok(seen.uprising > 0 && (seen.retake > 0 || seen.return > 0), 'có khởi nghĩa, có người về nhà');
+  const sl = W.street.log, sy = {};
+  for (const e of sl) { const k = e.city + ':' + Math.floor((e.day - 1) / 360); (sy[k] = sy[k] || []).push(e.key); }
+  for (const k in sy) assert.equal(new Set(sy[k]).size, sy[k].length, 'không lặp trong năm: ' + k);
+  assert.ok(new Set(sl.map((e) => e.key)).size >= 30, 'nhiều kịch bản trong thành khác nhau');
   assert.ok(ledgerOk(W));
 });
 
@@ -1012,4 +1023,96 @@ test('săn bắt: thời nguyên thủy săn khủng long, săn quá tay thì th
   Sim.stepWorld(W);
   assert.equal(c.game.tier, -1); assert.equal(c.hunters, 0, 'thời tên lửa không còn ai đi săn');
   assert.ok(s0 > 0 && ledgerOk(W));
+});
+
+/* ===================== Trong thành: nhà bị chiếm, dân, quân, chống trả ===================== */
+test('nhà bị chiếm: giặc chiếm nhà từ rìa thành, dân ra trại tạm, của cải mang đi vẫn khớp sổ; giặc rút thì dân quân lấy lại nhà', () => {
+  const W = Sim.createWorld({ seed: 6, mode: 'god', war: false });
+  for (let d = 0; d < 400; d++) Sim.stepWorld(W);
+  const c = W.cities[0], cap = W.cities[1], nh = Math.ceil(c.w.households.length / 4);
+  const g0 = cap.w.gov.cash, cash0 = c.w.households.reduce((s, h) => s + h.cash, 0);
+  const got = Sim.seize(W, 0, 1, 8, 'edge');
+  assert.equal(got.length, 8); assert.equal(c.occ.n, 8);
+  assert.ok(got.reduce((s, i) => s + i, 0) / got.length > nh * 0.5, 'nhà ở rìa thành (số lớn, xa quảng trường) bị chiếm trước');
+  for (const i of got) for (let j = 0; j < 4; j++) { const h = c.w.households[i * 4 + j]; if (h) assert.equal(h.away, 1, 'người trong nhà bị chiếm ra trại tạm'); }
+  assert.ok(cap.w.gov.cash > g0 && c.w.households.reduce((s, h) => s + h.cash, 0) < cash0, 'của cải bị mang về thành của phe chiếm');
+  assert.ok(ledgerOk(W), 'tiền rời sổ thành này, vào sổ thành kia');
+  // người ở trại làm được ít hơn
+  Sim.stepWorld(W);
+  assert.ok(c.occ.camp >= 8 * 3, 'trại tạm có người (' + c.occ.camp + ')');
+  // không còn giặc ở cổng: dân quân lấy lại từng nhà
+  assert.ok(untilDone(W, () => c.occ.n === 0, 60), 'lấy lại hết nhà');
+  assert.ok(!c.w.households.some((h) => h.away === 1), 'các gia đình dọn về nhà cũ');
+  assert.ok(W.stories.some((s) => s.type === 'retake' && s.city === 0));
+  assert.ok(ledgerOk(W));
+});
+
+test('thành bị chiếm: giặc đóng quân trong một phần ba số nhà, thu thuế, lòng dân lớn dần rồi khởi nghĩa giành lại thành', () => {
+  const W = Sim.createWorld({ seed: 8, mode: 'god', war: true, noAI: true });
+  W.cfg.noAI = true;
+  for (let d = 0; d < 300; d++) Sim.stepWorld(W);
+  const c = W.cities[2], nh = Math.ceil(c.w.households.length / 4);
+  Sim.conquer(W, c, 4);
+  assert.equal(c.owner, 4);
+  assert.ok(c.occ.n >= Math.floor(nh * 0.28) - 1 && c.occ.n <= Math.ceil(nh * 0.42) + 1, 'giặc đóng quân trong khoảng một phần ba số nhà (' + c.occ.n + '/' + nh + ')');
+  assert.ok(Object.values(c.occ.h).every((o) => o.by === 4), 'cờ phe chiếm trên mái');
+  const st = W.stories.filter((s) => s.type === 'conquer').pop();
+  assert.ok(st.text.includes('ngôi nhà'), st.text);
+  // một tháng sau: thuế về thủ phủ phe chiếm, lòng dân lớn dần
+  const r0 = c.occ.resist;
+  for (let d = 0; d < 35; d++) Sim.stepWorld(W);
+  assert.ok(c.owner !== 4 || c.occ.tribute > 0, 'giặc thu thuế mỗi tháng');
+  assert.ok(c.owner !== 4 || c.occ.resist > r0, 'lòng dân lớn dần');
+  assert.ok(ledgerOk(W));
+  // lòng dân đủ mạnh: khởi nghĩa (có lần thất bại thì chờ lần sau)
+  assert.ok(untilDone(W, () => { if (c.owner === 4) c.occ.resist = Math.max(c.occ.resist, 1); return c.owner === c.id; }, 900), 'khởi nghĩa giành lại thành');
+  assert.ok(W.stories.some((s) => s.type === 'uprising' && s.city === 2 && !s.failed));
+  assert.equal(c.occ.n, 0, 'nhà được trả lại'); assert.ok(!c.w.households.some((h) => h.away === 1));
+  assert.ok(ledgerOk(W));
+});
+
+test('năm mươi tám kịch bản trong thành: chống trả, người dân, quân lính, chiếm nhà; kịch bản nào cũng chạy được và giữ sổ cái', () => {
+  assert.ok(Sim.STREET.length >= 50);
+  assert.equal(new Set(Sim.STREET.map((x) => x.key)).size, Sim.STREET.length);
+  for (const cat of ['resist', 'civ', 'army', 'seize']) assert.ok(Sim.STREET.some((x) => x.cat === cat), cat);
+  for (const ter of Object.keys(Sim.PILLAR_KEY)) assert.ok(Sim.STREET.filter((x) => x.ter && x.ter.includes(ter)).length >= 3, ter + ' có cách chống trả riêng');
+  const W = Sim.createWorld({ seed: 5, mode: 'god', war: true });
+  W.cfg.noAI = true;
+  for (let d = 0; d < 260; d++) Sim.stepWorld(W);
+  // mỗi thành bị phe kế bên chiếm, có nhà cháy, có người bị thương, có lính tử trận, vừa gặp quái vật
+  for (const c of W.cities) {
+    if (!c.settled) continue;
+    Sim.conquer(W, c, (c.id + 1) % 6);
+    Sim.ignite(W, c, 'house', 1, 'test'); const d = Sim.ignite(W, c, 'house', 2, 'test'); if (d) d.state = 'ruin';
+    for (let k = 0; k < 6; k++) c.w.households[k].sick = 5;
+    c.casualties += 10; Sim.markHit(W, c.id, 'kraken', 'Quái vật biển');
+  }
+  let ran = 0;
+  for (const S of Sim.STREET) {
+    const c = W.cities.find((x) => x.settled && (!S.ter || S.ter.includes(x.terrain.key)));
+    if (!c) continue;
+    while (c.era < S.era[0]) Sim.advanceEra(W, c.id);
+    if (c.era > S.era[1]) continue;
+    if (S.can && !S.can(W, c)) continue;
+    const ctx = S.when.includes('held') ? 'held' : S.when[0];
+    const text = Sim.streetRun(W, S.key, c.id, ctx);
+    assert.ok(text && text.length > 20, S.key);
+    assert.ok(!/undefined|NaN/.test(text), S.key + ': ' + text);
+    assert.ok(W.stories.some((st) => st.street === S.key), S.key + ' có câu chuyện');
+    ran++;
+    Sim.stepWorld(W);
+    assert.ok(ledgerOk(W), S.key + ' giữ sổ cái');
+  }
+  assert.ok(ran >= Sim.STREET.length * 0.85, 'chạy được ' + ran + '/' + Sim.STREET.length);
+});
+
+test('thế giới không chiến tranh: vẫn có thao luyện, cứu dân, chữa cháy, dựng lại nhà, nhưng không ai chiếm nhà ai', () => {
+  const W = Sim.createWorld({ seed: 4, mode: 'god', war: false });
+  for (let d = 0; d < 1080; d++) Sim.stepWorld(W);
+  const log = W.street.log;
+  assert.ok(log.length >= 10, 'có ' + log.length + ' kịch bản trong thành');
+  assert.ok(log.every((e) => e.ctx === 'peace' || e.ctx === 'after'));
+  assert.ok(!log.some((e) => e.cat === 'seize'));
+  assert.ok(W.cities.every((c) => !c.settled || c.occ.n === 0));
+  assert.ok(ledgerOk(W));
 });

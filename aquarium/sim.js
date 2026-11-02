@@ -182,7 +182,7 @@
     if (f.strike > 0) return 0;
     if (f.sea) return f.seaFood || 0; // thuyền đánh cá: sản lượng là mẻ lưới hôm nay, tính ở tầng thế giới
     let s = 0;
-    for (const hid of f.workers) { const h = w.households[hid]; if (!(h.sick > 0)) s += f.prod * h.skill; }
+    for (const hid of f.workers) { const h = w.households[hid]; if (!(h.sick > 0)) s += f.prod * h.skill * (h.away ? (h.away > 1 ? 0 : 0.6) : 1); }
     return w.boost ? s * (w.boost[f.sector] || 1) : s;
   }
   function payToOwners(w, f, amt) {
@@ -1358,6 +1358,7 @@
     warInit(W, war, god ? -1 : opts.player == null ? (war ? 0 : -1) : opts.player);
     godInit(W);
     chaosInit(W);
+    W.street = { log: [] };
     return W;
   }
   function wstory(W, type, tier, title, text, place, extra) {
@@ -1522,8 +1523,8 @@
     godDay(W);
     if (W.war.on) skyWarDay(W);
     chaosDay(W);
-    pillarsDay(W); damageDay(W); huntDay(W);
-    if (W.cfg.pace) { paceDay(W); revoltDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ chín khép lại', 'Bể kính đã đi hết mười hai thời đại.', null, {}); } }
+    pillarsDay(W); streetDay(W); damageDay(W); huntDay(W);
+    if (W.cfg.pace) { paceDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ chín khép lại', 'Bể kính đã đi hết mười hai thời đại.', null, {}); } }
     else if (!W.war.on) {
       // Ngắm bể: thành phố tự bước sang thời mới khi đủ tri thức và dân số
       for (const c of W.cities) {
@@ -1579,7 +1580,7 @@
       if (!f && (W.day + c.id * 7) % 45 === 0 && S.stock[c.id][0] > SPECIES[0].K * 0.5 && !(c.w.phen.panic > 0)) f = openFishery(W, c);
       if (!f) continue;
       let crew = 0;
-      if (!(f.strike > 0) && !(f.downUntil > W.day)) for (const hid of f.workers) { const h = c.w.households[hid]; if (!(h.sick > 0)) crew += h.skill; }
+      if (!(f.strike > 0) && !(f.downUntil > W.day)) for (const hid of f.workers) { const h = c.w.households[hid]; if (!(h.sick > 0)) crew += h.skill * (h.away ? (h.away > 1 ? 0 : 0.6) : 1); }
       const gear = GEAR[c.era] * (f.prod / (f.prod0 || f.prod)) * (c.w.boost ? c.w.boost.food : 1);
       const E = crew * gear * (1 - 0.7 * blockadeOf(W, c));
       f.seaFood = 0; f.seaCoin = 0; f.crew = crew; fs.push({ c, f });
@@ -1871,7 +1872,7 @@
   function draft(c) {
     const hs = c.w.households;
     let h = null;
-    for (let k = 0, n = hs.length, s = (c.w.day * 7) % n; k < n; k++) { const x = hs[(s + k) % n]; if (x.employer === null && !(x.sick > 0) && !(x.grief > 0)) { h = x; break; } }
+    for (let k = 0, n = hs.length, s = (c.w.day * 7) % n; k < n; k++) { const x = hs[(s + k) % n]; if (x.employer === null && !(x.sick > 0) && !(x.grief > 0) && x.away !== 2) { h = x; break; } }
     if (h) return h;
     const list = c.w.firms.filter((f) => f.alive && f.workers.length > 1).sort((a, b) => (a.sector === 'goods' ? 0 : 1) - (b.sector === 'goods' ? 0 : 1) || b.workers.length - a.workers.length);
     const f = list[0];
@@ -2033,6 +2034,7 @@
     u.fight = W.day;
     foe.hp = Math.max(Math.min(foe.hp, floor), foe.hp - dmg);
     foe.lastHit = W.day; foe.siegeHits = (foe.siegeHits || 0) + 1;
+    if (!u.naval) { foe.landHit = W.day; foe.landBy = u.owner; }
     fxPush(W, { lane: L.key, kind: u.cls, era: u.era, x0: u.x, x1: u.side === 0 ? 1 : 0, side: u.side, owner: u.owner, gate: foe.id });
     if (!foe.sieged || W.day - foe.sieged > 120) { foe.sieged = W.day; wstory(W, 'siege', 'major', 'Quân ' + W.war.factions[u.owner].name + ' đánh tới cổng ' + foe.name, 'Thành ' + foe.name + ' đang bị vây. Nếu sức chịu của thành cạn, thành phố sẽ đổi chủ.', { kind: 'lane', lane: L.key }, { city: foe.id, lane: L.key }); }
     if (foe.hp <= 0 && !u.naval) conquer(W, foe, u.owner);
@@ -2061,9 +2063,10 @@
     if (c.bld.wonder) { delete c.bld.wonder; if (X.wonder && X.wonder.city === c.id) X.wonder = null; }
     c.hpMax = hpMaxOf(c); c.hp = c.hpMax * 0.4; c.lastHit = W.day;
     sack(W, c);
+    const quartered = by === c.id ? liberate(W, c) : occupy(W, c, by);
     for (const h of c.w.households) if (W.rand() < 0.5) scare(c.w, h, 15);
-    if (by === c.id) wstory(W, 'conquer', 'epic', c.name + ' giành lại thành của mình', 'Quân ' + c.name + ' quay về, cờ của ' + X.factions[old].name + ' bị hạ xuống. Người dân đổ ra đường.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
-    else wstory(W, 'conquer', 'epic', X.factions[by].name + ' chiếm ' + c.name, 'Cổng thành đã vỡ. Từ nay ' + c.name + ' nộp thuế cho ' + X.factions[by].name + '. Người dân đóng cửa ở trong nhà.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
+    if (by === c.id) wstory(W, 'conquer', 'epic', c.name + ' giành lại thành của mình', 'Quân ' + c.name + ' quay về, cờ của ' + X.factions[old].name + ' bị hạ xuống. Người dân đổ ra đường' + (quartered ? ', gỡ cờ giặc trên ' + quartered + ' mái nhà' : '') + '.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
+    else wstory(W, 'conquer', 'epic', X.factions[by].name + ' chiếm ' + c.name, 'Cổng thành đã vỡ. Lính ' + X.factions[by].name + ' chiếm ' + quartered + ' ngôi nhà làm trại, cắm cờ lên mái. Từ nay ' + c.name + ' nộp thuế cho ' + X.factions[by].name + ', dân bị đuổi ra dựng lều trên quảng trường.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
     if (!W.cities.some((x) => x.settled && x.owner === old)) {
       X.factions[old].alive = false;
       for (const f of X.factions) { X.rel[old][f.id].state = 'peace'; X.rel[f.id][old].state = 'peace'; }
@@ -2090,6 +2093,7 @@
     X.rel[i][j] = { state: 'war', since: W.day, truce: 0, by: i };
     X.rel[j][i] = { state: 'war', since: W.day, truce: 0, by: i };
     X.offers = X.offers.filter((o) => !((o.from === i && o.to === j) || (o.from === j && o.to === i)));
+    for (const c of W.cities) if (c.settled && (c.owner === i || c.owner === j)) occScene(W, c, 'mobilize', 4);
     wstory(W, 'war', 'epic', X.factions[i].name + ' tuyên chiến với ' + X.factions[j].name, (why ? 'Họ nói là ' + why + '. ' : '') + 'Buôn bán giữa hai bên dừng lại. Những cây cầu và đường biển nối hai phe giờ là chiến tuyến.', { kind: 'land', city: capitalOf(W, j) ? capitalOf(W, j).id : j }, { from: i, to: j });
     return { ok: true };
   }
@@ -2446,6 +2450,7 @@
       fx.days = 6; title = 'Thần buộc ' + W.war.factions[c.owner].name + ' ngưng chiến'; text = 'Một vòng sáng bao quanh ' + c.name + '. Gươm súng hạ xuống, quân lính quay về. Không ai dám động binh trong một năm.';
     }
     pillarTouch(W, c, key, fx);
+    if (P.kind === 'bad') markHit(c, key, P.name, W.day);
     faithShift(W, c, P.kind === 'bad' ? 0.25 : 0.15);
     for (const j of [(cid + 5) % 6, (cid + 1) % 6]) if (W.cities[j].settled) faithShift(W, W.cities[j], P.kind === 'bad' ? 0.06 : 0.03);
     G.fx.push(fx);
@@ -2636,7 +2641,7 @@
       for (const d of c.dmg) {
         if (W.day < d.until) continue;
         if (d.state === 'fire') {
-          if (W.rand() < (d.kind === 'land' ? 0.4 : 0.55)) {
+          if (W.rand() < (d.kind === 'land' ? 0.4 : 0.55) * (d.saved ? 0.4 : 1)) {
             d.state = 'ruin'; d.until = W.day + 20 + Math.floor(W.rand() * 20);
             if (d.kind === 'firm') { const f = c.w.firms.find((x) => x.id === d.ref); if (f) f.downUntil = Math.max(f.downUntil || 0, d.until); }
             if (d.kind === 'land') { pillarNudge(c, d.ref, -0.3); wstory(W, 'ruin', 'major', landmarkName(c.terrain.key, d.ref, c.era) + ' của ' + c.name + ' sụp đổ', 'Lửa tắt, chỉ còn tường đổ và tro. ' + PILLARS.find((P) => P.key === d.ref).name + ' của ' + c.name + ' tụt lại, phải mất nhiều tháng mới gượng dậy.', { kind: 'land', city: c.id }, { city: c.id, pillar: d.ref }); }
@@ -2805,6 +2810,7 @@
         const S = CHAOS_BY[it.key];
         // thời đại đã đổi kể từ đầu năm: nếu kịch bản không còn hợp thì vẫn diễn ra (tai hoạ không chờ ai)
         const text = S.act(W, c);
+        markHit(c, it.key, S.name, W.day);
         H.fx.push({ key: it.key, city: c.id, day: W.day });
         H.log.push({ key: it.key, city: c.id, day: W.day, year });
         if (H.log.length > 600) H.log.shift();
@@ -2822,8 +2828,8 @@
       if (!A || !B) continue;
       const ea = facEra(W, i), eb = facEra(W, j);
       if (ea >= 5 && eb >= 5 && W.rand() < 1 / 75) airBattle(W, A, B, ea, eb);
-      if (ea >= 10 && W.rand() < 1 / 120) portalAssault(W, A, B);
-      else if (eb >= 10 && W.rand() < 1 / 120) portalAssault(W, B, A);
+      if (ea >= 10 && W.rand() < 1 / 80) portalAssault(W, A, B);
+      else if (eb >= 10 && W.rand() < 1 / 80) portalAssault(W, B, A);
     }
   }
   function airBattle(W, A, B, ea, eb) {
@@ -2845,6 +2851,343 @@
     W.chaos.fx.push({ key: 'portalwar', city: def.id, from: att.id, by: att.owner, day: W.day });
     wstory(W, 'portal-assault', 'epic', 'Quân ' + X.factions[att.owner].name + ' đổ vào giữa ' + def.name, 'Một cánh cổng không gian mở ngay trong thành, không cần qua cầu. Lính bước ra trong chớp tím, ' + fires + ' nơi bốc cháy.', { kind: 'land', city: def.id }, { city: def.id, from: att.id });
     if (def.hp <= 0) { def.hp = 0; conquer(W, def, att.owner); }
+  }
+
+  /* =============== Trong thành: nhà bị chiếm, người dân, quân lính và những cuộc chống trả =============== */
+  // Quân địch phá được cổng thì chiếm từng ngôi nhà ở rìa thành, cắm cờ lên mái; người trong nhà dồn về trại tạm trên quảng trường,
+  // có nhà chạy theo cầu hay theo thuyền sang thành láng giềng. Thành mất hẳn thì giặc đóng quân trong một phần ba số nhà, thu thuế,
+  // tuần tra, giới nghiêm. Người mỗi miền chống trả theo cách của miền mình; lòng dân đủ mạnh thì khởi nghĩa. Ngày nào, nhà nào,
+  // kịch bản nào đều bốc ngẫu nhiên theo hạt giống của ván, và trong một năm một đảo không gặp lại kịch bản trong thành đã gặp.
+  const houseN = (c) => Math.ceil(c.w.households.length / 4);
+  const EB = (e) => (e <= 1 ? 0 : e <= 3 ? 1 : e <= 5 ? 2 : e <= 7 ? 3 : 4); // năm chặng: cổ xưa, trung đại, máy hơi nước, hiện đại, vượt người
+  const pickE = (c, arr) => arr[EB(c.era)];
+  const facName = (W, f) => (W.war.factions[f] ? W.war.factions[f].name : 'giặc');
+  const W_ARMS = ['gậy gộc, đá và giáo tre', 'liềm, cuốc và giáo mác', 'súng săn và chai lửa', 'súng trường và bộ đàm', 'găng tay ánh sáng và bầy nano'];
+  const W_BARR = ['cọc gỗ và đá tảng', 'xe bò, thùng gỗ và bao cát', 'bao cát và dây thép gai', 'xe hơi lật ngang và công-te-nơ', 'những bức tường lực trong suốt'];
+  const W_ALARM = ['tiếng tù và', 'tiếng chuông đền', 'tiếng còi hơi nhà máy', 'tiếng còi báo động', 'tín hiệu báo động truyền thẳng vào đầu'];
+  const W_FIRE = ['Những dây người chuyền gáo nước', 'Những dây người chuyền xô nước', 'Xe bơm tay và vòi da', 'Xe cứu hoả và vòi rồng', 'Bầy máy bay phun sương nano'];
+  const W_MSG = ['khói hiệu', 'bồ câu đưa thư', 'điện tín bí mật', 'đài phát thanh bí mật', 'mạng thần kinh ngầm'];
+  const W_LIGHT = ['bó đuốc', 'bó đuốc', 'đèn bão', 'đèn pha', 'quả cầu sáng'];
+  const R_PATH = { plains: 'những xe lương giấu dưới rơm', forest: 'lối mòn dưới tán rừng', mountain: 'đường hầm trong lòng núi', tundra: 'xe trượt chó kéo trên mặt băng', coast: 'những chiếc thuyền đánh cá đi đêm', desert: 'đoàn lạc đà đi trong đêm' };
+  const R_HIDE = { plains: 'ruộng ngô', forest: 'tán rừng', mountain: 'hang đá', tundra: 'hang tuyết', coast: 'hang đá ven biển', desert: 'những cồn cát' };
+  const R_GRAIN = { plains: 'thóc', forest: 'hạt dẻ và thịt khô', mountain: 'lúa mạch', tundra: 'cá khô', coast: 'cá khô và muối', desert: 'chà là' };
+  const GRIT = { plains: 0.0006, forest: 0.0016, mountain: 0.0013, tundra: 0.001, coast: 0.0008, desert: 0.0011 }; // miền dễ nấp thì du kích mạnh hơn
+  function occInit(c) { c.occ = { h: {}, n: 0, resist: 0, camp: 0, abroad: 0, by: -1, since: 0, scenes: [], used: [], year: -1, seq: 0, block: 0, told: {}, hit: null, answered: -1, mourned: 0, loot: 0, tribute: 0 }; }
+  // cảnh kéo dài vài ngày trong thành (dân chạy, trại tạm, biểu tình, tuần tra...) cho lớp hình ảnh vẽ theo
+  function occScene(W, c, kind, days, extra) {
+    if (!c.occ) occInit(c);
+    const O = c.occ;
+    O.scenes = O.scenes.filter((s) => s.until > W.day && s.kind !== kind);
+    const s = Object.assign({ id: ++O.seq, kind, day: W.day, until: W.day + days }, extra || {});
+    O.scenes.push(s);
+    if (O.scenes.length > 14) O.scenes.shift();
+    return s;
+  }
+  const sceneOn = (c, kind, day) => !!(c.occ && c.occ.scenes.some((s) => s.kind === kind && s.until > day));
+  function markHit(c, key, name, day) { if (!c.occ) occInit(c); c.occ.hit = { key, name, day }; }
+  // của cải bị mang về thủ phủ của phe chiếm: tiền rời sổ thành này, vào sổ thành kia
+  function carryOff(W, c, from, amt, by) {
+    const cap = capitalOf(W, by);
+    amt = Math.min(amt, Math.max(0, from.cash));
+    if (!cap || cap === c || !(amt > 0)) return 0;
+    from.cash -= amt; c.w.ledger.outflow += amt;
+    cap.w.gov.cash += amt; cap.w.ledger.inflow += amt;
+    return amt;
+  }
+  // chiếm nhà: 'edge' từ rìa thành vào trong (nhà số lớn nằm xa quảng trường), 'any' rải khắp thành
+  function seize(W, c, by, n, mode) {
+    if (!c.occ) occInit(c);
+    const O = c.occ, nh = houseN(c), got = [];
+    for (let k = 0; k < n; k++) {
+      let pick = -1;
+      for (let t = 0; t < 14 && pick < 0; t++) { const i = mode === 'any' ? Math.floor(W.rand() * nh) : nh - 1 - Math.floor(Math.pow(W.rand(), 2.4) * nh); if (i >= 0 && !O.h[i]) pick = i; }
+      if (pick < 0) break;
+      O.h[pick] = { by, day: W.day };
+      got.push(pick);
+      for (let j = 0; j < 4; j++) {
+        const h = c.w.households[pick * 4 + j];
+        if (!h) continue;
+        if (!h.away) h.away = 1; // ra trại tạm trên quảng trường
+        scare(c.w, h, 20);
+        O.loot += carryOff(W, c, h, h.cash * 0.25, by);
+      }
+    }
+    O.n = Object.keys(O.h).length;
+    return got;
+  }
+  function freeHouses(W, c, pred, max) {
+    const O = c.occ, freed = [];
+    if (!O) return freed;
+    const keys = Object.keys(O.h);
+    for (let t = keys.length - 1; t > 0; t--) { const j = Math.floor(W.rand() * (t + 1)); [keys[t], keys[j]] = [keys[j], keys[t]]; }
+    for (const k of keys) {
+      if (max != null && freed.length >= max) break;
+      if (pred && !pred(O.h[k], +k)) continue;
+      delete O.h[k]; freed.push(+k);
+      for (let j = 0; j < 4; j++) { const h = c.w.households[+k * 4 + j]; if (h && h.away === 1) h.away = 0; }
+    }
+    O.n = Object.keys(O.h).length;
+    return freed;
+  }
+  // người tản cư: theo cầu sang thành láng giềng không đánh nhau với mình, hoặc theo thuyền nếu có bến
+  function hostFor(W, c, bySea) {
+    const ok = (x) => x && x.settled && x !== c && !atWarF(W, x.owner, c.id) && !atWarF(W, x.owner, c.owner) && !(x.occ && x.occ.n > houseN(x) * 0.2);
+    const near = W.bridges.filter((B) => B.level >= 0 && (B.a === c.id || B.b === c.id)).map((B) => ({ x: W.cities[B.a === c.id ? B.b : B.a], bridge: B.id })).filter((o) => ok(o.x));
+    if (near.length && !bySea) return near[Math.floor(W.rand() * near.length)];
+    const far = c.era >= 1 ? W.cities.filter(ok) : [];
+    return far.length ? { x: far[Math.floor(W.rand() * far.length)], bridge: null } : near.length ? near[0] : null;
+  }
+  function flee(W, c, n, bySea) {
+    const host = hostFor(W, c, bySea);
+    if (!host) return null;
+    let k = 0;
+    for (const h of c.w.households) { if (k >= n) break; if (h.away === 1) { h.away = 2; h.host = host.x.id; k++; } }
+    if (!k) return null;
+    c.occ.abroad += k;
+    addMod(host.x, 0.97, W.day, W.day + 30); // thêm miệng ăn ở thành nhận người
+    occScene(W, c, 'refugee', 6, { to: host.x.id, bridge: host.bridge, n: k });
+    occScene(W, host.x, 'welcome', 6, { from: c.id, bridge: host.bridge, n: k });
+    return { host: host.x, n: k, bridge: host.bridge };
+  }
+  function homecoming(W, c) {
+    const O = c.occ;
+    let n = 0, from = -1;
+    for (const h of c.w.households) if (h.away === 2) { from = h.host; h.away = 0; h.host = null; n++; }
+    if (!n) return;
+    O.abroad = 0;
+    occScene(W, c, 'return', 5, { from, n });
+    wstory(W, 'return', 'small', n + ' gia đình trở về ' + c.name, 'Họ đi theo con đường lúc chạy loạn, lần này không vội. Nhiều nhà thấy cửa còn nguyên.', { kind: 'land', city: c.id }, { city: c.id, from });
+  }
+  // thành bị chiếm: giặc đóng quân trong một phần ba số nhà
+  function occupy(W, c, by) {
+    if (!c.occ) occInit(c);
+    const O = c.occ, nh = houseN(c);
+    for (const k in O.h) O.h[k].by = by;
+    const want = Math.round(nh * (0.28 + W.rand() * 0.14)) - O.n;
+    if (want > 0) seize(W, c, by, want, 'any');
+    O.by = by; O.since = W.day; O.resist = Math.max(0.05, O.resist * 0.5);
+    occScene(W, c, 'curfew', 30); occScene(W, c, 'flee', 4);
+    return O.n;
+  }
+  function liberate(W, c) {
+    if (!c.occ) occInit(c);
+    const O = c.occ, n = freeHouses(W, c).length;
+    O.by = -1; O.resist = 0; O.since = 0;
+    O.scenes = O.scenes.filter((s) => s.kind !== 'curfew' && s.kind !== 'patrolx');
+    occScene(W, c, 'cheer', 5); occScene(W, c, 'parade', 4);
+    return n;
+  }
+  // khởi nghĩa: quân đồn trú càng đông càng khó thắng; thua thì bị đàn áp, chờ lần sau
+  function uprising(W, c) {
+    const X = W.war, O = c.occ, by = c.owner, garrison = X.units.filter((u) => u.city === c.id && !u.dead && !u.naval).length;
+    const win = W.rand() < clampN(0.74 - garrison * 0.04 + (c.faith || 0.35) * 0.2, 0.2, 0.92), held = W.day - O.since;
+    W.chaos.fx.push({ key: 'st-uprising', city: c.id, by, win, day: W.day, street: true });
+    if (win) {
+      c.owner = c.id; c.heldSince = W.day; X.factions[c.id].alive = true;
+      for (const u of X.units) if (u.city === c.id && !u.dead) { u.owner = c.id; u.lane = null; }
+      for (const f of X.factions) { X.rel[c.id][f.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; X.rel[f.id][c.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; }
+      c.hp = Math.max(c.hp, c.hpMax * 0.6);
+      const n = liberate(W, c);
+      wstory(W, 'uprising', 'epic', c.name + ' khởi nghĩa', 'Sau ' + held + ' ngày dưới cờ ' + facName(W, by) + ', người ' + c.name + ' cùng nổi dậy. Cờ giặc trên ' + n + ' mái nhà bị giật xuống, quân đồn trú hạ vũ khí. Phe ' + c.name + ' sống lại.', { kind: 'land', city: c.id }, { city: c.id, from: by });
+      checkVictory(W);
+    } else {
+      O.resist = 0.35;
+      CX.hurt(W, c, 0.04, 10); CX.fear(W, c, 0.5, 15);
+      const more = seize(W, c, by, 2 + Math.floor(W.rand() * 3), 'any');
+      wstory(W, 'uprising', 'major', 'Cuộc khởi nghĩa ở ' + c.name + ' bị dập tắt', 'Quân đồn trú ' + facName(W, by) + ' đông hơn người ta tưởng. Những người cầm đầu phải trốn vào ' + R_HIDE[c.terrain.key] + ', ' + more.length + ' nhà nữa bị chiếm để răn đe.', { kind: 'land', city: c.id }, { city: c.id, from: by, failed: true });
+    }
+  }
+  // đánh vào quân địch đang áp sát thành (trên cầu, trên biển gần bờ)
+  function hitFoes(W, c, frac, naval) {
+    let n = 0;
+    for (const u of W.war.units) {
+      if (u.dead || !u.lane || u.owner === c.owner || !atWarF(W, u.owner, c.owner)) continue;
+      const L = W.war.lanes[u.lane];
+      if (!L || !((L.a === c.id && u.x < 0.45) || (L.b === c.id && u.x > 0.55))) continue;
+      if (naval != null && !!u.naval !== naval) continue;
+      u.hp -= u.hpMax * frac * (0.6 + W.rand() * 0.8); u.lastBy = c.owner; n++;
+    }
+    for (const u of W.war.units) if (u.hp <= 0 && !u.dead) die(W, u);
+    W.war.units = W.war.units.filter((u) => !u.dead);
+    return n;
+  }
+  // quân của phe chiếm đóng đang đóng trong thành
+  function hitGarrison(W, c, frac) {
+    let n = 0;
+    for (const u of W.war.units) if (!u.dead && u.city === c.id && u.owner !== c.id) { u.hp -= u.hpMax * frac * (0.6 + W.rand() * 0.8); u.lastBy = c.id; n++; }
+    for (const u of W.war.units) if (u.hp <= 0 && !u.dead) die(W, u);
+    W.war.units = W.war.units.filter((u) => !u.dead);
+    return n;
+  }
+  const hpUp = (c, frac) => { if (c.hpMax) c.hp = Math.min(c.hpMax, c.hp + c.hpMax * frac); };
+  const addResist = (c, k) => { if (c.occ) c.occ.resist = clampN(c.occ.resist + k, 0, 1.2); };
+  const injured = (c) => c.w.households.filter((h) => h.sick > 0).length;
+  function heal(W, c, share) { let n = 0; for (const h of c.w.households) if (h.sick > 0 && W.rand() < share) { h.sick = 0; n++; } return n; }
+  function saveFires(c) { let n = 0; for (const d of c.dmg || []) if (d.state === 'fire' && !d.saved) { d.saved = true; n++; } return n; }
+  function rebuildFast(W, c, max) {
+    let n = 0;
+    for (const d of c.dmg || []) {
+      if (n >= max || d.state !== 'ruin') continue;
+      d.state = 'rebuild'; d.until = W.day + 4; n++;
+      if (d.kind === 'firm') { const f = c.w.firms.find((x) => x.id === d.ref); if (f) f.downUntil = Math.min(f.downUntil || 0, d.until); }
+    }
+    return n;
+  }
+  const relief = (W, c, frac) => { const w = c.w, amt = Math.max(0, w.gov.cash) * frac; payToHouseholds(w, w.gov, amt, 'relief', Math.min(40, w.households.length)); return Math.round(amt); };
+  const fires = (c) => (c.dmg || []).filter((d) => d.state === 'fire');
+  const ruins = (c) => (c.dmg || []).filter((d) => d.state === 'ruin');
+  const foeOf = (W, c) => { const f = W.war.factions.find((x) => x.alive && x.id !== c.owner && atWarF(W, c.owner, x.id)); return f ? f.name : 'giặc'; };
+  const enemyBy = (W, c) => (c.owner !== c.id ? c.owner : c.landBy != null ? c.landBy : -1);
+  const MONSTER = { kraken: 'quái vật biển', predators: 'bầy thú dữ', pteros: 'bầy thằn lằn bay', stampede: 'đàn khủng long', pirates: 'bọn cướp biển', ghostship: 'thuyền ma', robots: 'đám robot nổi loạn', drones: 'bầy máy bay không người lái', locusts: 'đàn châu chấu', rift: 'những bóng ma từ khe nứt thời gian', portal: 'bầy khủng long qua cổng không gian' };
+  const R_WEAPON = { plains: ['đòn gánh và cuốc đá', 'chĩa ba và liềm', 'súng kíp', 'súng trường', 'máy gặt nano'], forest: ['giáo và cung gỗ', 'cung dài', 'súng săn', 'súng bắn tỉa', 'cung ánh sáng'], mountain: ['búa đá', 'búa chiến', 'mìn phá đá', 'súng máy', 'búa trọng lực'], tundra: ['lao móc xương', 'lao móc sắt', 'súng săn hải cẩu', 'súng trường', 'lao băng plasma'], coast: ['lao xiên cá', 'chĩa ba đồng', 'súng phóng lao', 'súng phóng lưới', 'lưới ánh sáng'], desert: ['dao đá và ná', 'mã tấu', 'súng dài', 'súng trường', 'kiếm ánh sáng'] };
+  const ALL = ['siege', 'held', 'war', 'peace', 'after'];
+  // mỗi kịch bản: khoá, tên, nhóm (chống trả / dân / quân / chiếm nhà), hoàn cảnh, thời đại, miền, điều kiện, hậu quả và lời kể
+  const STREET = [
+    /* ----- chống trả, chung cho mọi miền ----- */
+    { key: 'barricade', name: 'Dựng chiến luỹ', cat: 'resist', when: ['siege'], era: [0, 11], act: (W, c) => { hpUp(c, 0.06); c.occ.block = W.day + 6; occScene(W, c, 'barricade', 8); return 'Người ' + c.name + ' kéo ' + pickE(c, W_BARR) + ' ra chắn mọi ngả đường vào quảng trường. Quân ' + foeOf(W, c) + ' phải dừng lại ở rìa thành.'; } },
+    { key: 'militia', name: 'Dân quân tự vệ', cat: 'resist', when: ['siege', 'held', 'war'], era: [0, 11], act: (W, c, ctx) => { let tail; if (ctx === 'siege') { const n = hitFoes(W, c, 0.1); tail = n ? ' Họ đẩy lùi ' + n + ' toán giặc ngay trước cổng.' : ' Họ chia nhau canh từng đoạn tường.'; } else if (ctx === 'held') { addResist(c, 0.1); hitGarrison(W, c, 0.05); tail = ' Lính giặc không còn dám đi lẻ.'; } else { CX.pil(c, 'mil', 0.06); hpUp(c, 0.03); tail = ' Họ thề giữ thành nếu giặc tới.'; } occScene(W, c, 'militia', 6); return 'Thợ thủ công, nông dân và cả học trò ' + c.name + ' cầm ' + pickE(c, W_ARMS) + ' tập hợp ở quảng trường.' + tail; } },
+    { key: 'retake', name: 'Giành lại từng nhà', cat: 'resist', when: ['siege', 'held'], era: [0, 11], can: (W, c) => c.occ.n > 0, place: (W, c, r) => (r && r.house != null ? { kind: 'house', id: r.house } : null), act: (W, c, ctx, r) => { const by = enemyBy(W, c), got = freeHouses(W, c, null, 1 + Math.floor(W.rand() * 3)); if (!got.length) return null; r.house = got[0]; if (ctx === 'held') { addResist(c, 0.05); hitGarrison(W, c, 0.04); } else hitFoes(W, c, 0.04); occScene(W, c, 'streetfight', 2, { by, house: got[0] }); occScene(W, c, 'cheer', 3, { house: got[0] }); return 'Đêm qua, dân quân ' + c.name + ' đánh vào ' + got.length + ' ngôi nhà giặc đang chiếm, hạ cờ ' + facName(W, by) + ' trên mái xuống. ' + got.length * 4 + ' gia đình được về nhà.'; } },
+    { key: 'sabotage', name: 'Phá kho vũ khí của giặc', cat: 'resist', when: ['held'], era: [1, 11], act: (W, c) => { const n = hitGarrison(W, c, 0.14); addResist(c, 0.06); return 'Người ' + c.name + ' lẻn vào trại lính ' + facName(W, c.owner) + ' và ' + pickE(c, ['đốt kho giáo mác', 'đốt kho tên và giáo', 'cho nổ kho thuốc súng', 'đặt mìn trong kho đạn', 'gieo virus vào lưới vũ khí nano']) + '. ' + (n ? n + ' toán lính đồn trú bị thương.' : 'Tiếng nổ làm rung cả thành.'); } },
+    { key: 'occstrike', name: 'Bãi công dưới ách chiếm đóng', cat: 'resist', when: ['held'], era: [2, 11], act: (W, c) => { CX.goods(W, c, 0.7, 10); addResist(c, 0.08); occScene(W, c, 'protest', 4); return 'Các xưởng ở ' + c.name + ' cùng nghỉ việc. Không ai làm hàng nộp cho ' + facName(W, c.owner) + ', lò nguội suốt mười ngày.'; } },
+    { key: 'bridgeblow', name: 'Phá cầu chặn viện binh', cat: 'resist', when: ['siege'], era: [1, 11], can: (W, c) => W.bridges.some((B) => B.level >= 0 && (B.a === c.id || B.b === c.id)), act: (W, c) => { CX.close(W, c, 14); const n = hitFoes(W, c, 0.08, false); return 'Người ' + c.name + ' ' + pickE(c, ['chặt dây cầu', 'chặt cột cầu', 'đặt thuốc nổ dưới chân cầu', 'cho nổ một nhịp cầu', 'tắt trường lực của cầu']) + '. Viện binh ' + foeOf(W, c) + ' kẹt lại bên kia' + (n ? ', ' + n + ' toán rơi xuống nước' : '') + '. Cầu đóng mười bốn ngày.'; } },
+    { key: 'smuggle', name: 'Tiếp tế qua đường bí mật', cat: 'resist', when: ['siege', 'held'], era: [0, 11], act: (W, c) => { CX.food(W, c, 1.15, 15); return 'Đêm đêm, lương thực vào ' + c.name + ' theo ' + R_PATH[c.terrain.key] + '. Giặc không hiểu vì sao trong thành vẫn chưa đói.'; } },
+    { key: 'capture', name: 'Bắt sống chỉ huy giặc', cat: 'resist', when: ['held'], era: [0, 11], can: (W, c) => c.occ.resist > 0.35, act: (W, c) => { addResist(c, 0.18); hitGarrison(W, c, 0.08); return 'Du kích ' + c.name + ' phục trong ' + R_HIDE[c.terrain.key] + ' và bắt sống một viên chỉ huy của ' + facName(W, c.owner) + '. Quân đồn trú hoang mang, đêm đêm không ai dám ngủ.'; } },
+    { key: 'spies', name: 'Mật thư báo tin', cat: 'resist', when: ['siege', 'war'], era: [0, 11], act: (W, c, ctx) => { if (ctx === 'siege') { hpUp(c, 0.04); hitFoes(W, c, 0.05); } else CX.pil(c, 'mil', 0.05); return 'Nhờ ' + pickE(c, W_MSG) + ' của người trong vùng giặc, ' + c.name + ' biết trước ' + foeOf(W, c) + ' sẽ đánh vào cổng nào, vào lúc nào.'; } },
+    /* ----- chống trả theo từng miền ----- */
+    { key: 'pitchfork', name: 'Nông dân cầm liềm', cat: 'resist', when: ['siege', 'held'], era: [0, 11], ter: ['plains'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.12); else { addResist(c, 0.1); hitGarrison(W, c, 0.05); } occScene(W, c, 'militia', 5, { farm: true }); return 'Từ khắp các cánh đồng, nông dân ' + c.name + ' vác ' + R_WEAPON.plains[EB(c.era)] + ' kéo về đánh giặc. Ruộng bỏ không mấy ngày cũng được.'; } },
+    { key: 'floodfields', name: 'Tháo nước ngập đồng', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['plains'], act: (W, c) => { hitFoes(W, c, 0.12); CX.food(W, c, 0.9, 25); c.occ.block = W.day + 5; return 'Người ' + c.name + ' phá bờ ruộng cho nước tràn ra. Quân ' + foeOf(W, c) + ' sa lầy giữa bùn, nhưng mùa này mất trắng.'; } },
+    { key: 'grainburn', name: 'Đốt kho lương của giặc', cat: 'resist', when: ['held'], era: [0, 11], ter: ['plains'], act: (W, c) => { hitGarrison(W, c, 0.06); addResist(c, 0.08); CX.food(W, c, 0.95, 10); return 'Kho ' + R_GRAIN.plains + ' giặc thu của dân ' + c.name + ' bốc cháy giữa đêm. Lính đồn trú phải ăn cháo loãng cả tháng.'; } },
+    { key: 'ambush', name: 'Du kích rừng già', cat: 'resist', when: ['siege', 'held'], era: [0, 11], ter: ['forest'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.15); else { hitGarrison(W, c, 0.12); addResist(c, 0.1); } return 'Những người ' + c.name + ' quen từng gốc cây nấp trên tán lá, ' + pickE(c, ['ném đá và giáo xuống', 'bắn tên tẩm độc xuống', 'bắn súng săn xuống', 'bắn tỉa xuống', 'phóng tia sáng xuống']) + ' đoàn quân ' + (ctx === 'held' ? facName(W, c.owner) : foeOf(W, c)) + '.'; } },
+    { key: 'traps', name: 'Bẫy chông dưới lá', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['forest'], act: (W, c) => { hitFoes(W, c, 0.1); c.occ.block = W.day + 6; return 'Quân ' + foeOf(W, c) + ' giẫm vào ' + pickE(c, ['hố chông tre', 'hố chông và bẫy dây', 'bẫy kẹp sắt', 'bãi mìn tự chế', 'lưới dây nano']) + ' giấu dưới lớp lá mục. Cả đoàn phải lùi lại.'; } },
+    { key: 'hornets', name: 'Ném tổ ong vò vẽ', cat: 'resist', when: ['siege', 'held'], era: [0, 7], ter: ['forest'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.06); else { hitGarrison(W, c, 0.05); addResist(c, 0.05); } return 'Trẻ con ' + c.name + ' ném những tổ ong vò vẽ vào giữa hàng lính giặc. Lính vứt cả vũ khí mà chạy, cả rừng cười vang.'; } },
+    { key: 'fireflies', name: 'Đom đóm nano dẫn đường', cat: 'resist', when: ['siege', 'held'], era: [8, 11], ter: ['forest'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.1); else { hitGarrison(W, c, 0.1); addResist(c, 0.08); } return 'Hàng vạn đom đóm nano bay ra từ Cây Mẹ, soi đường cho du kích ' + c.name + ' và làm mù mắt máy ngắm của giặc.'; } },
+    { key: 'boulders', name: 'Lăn đá từ vách núi', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['mountain'], act: (W, c) => { const n = hitFoes(W, c, 0.18); return 'Từ trên vách, người ' + c.name + ' bẩy những tảng đá lớn lăn xuống con đường hẹp.' + (n ? ' ' + n + ' toán quân ' + foeOf(W, c) + ' tan tác.' : ' Đường lên thành bị lấp kín.'); } },
+    { key: 'tunnels', name: 'Đường hầm bí mật', cat: 'resist', when: ['held', 'siege'], era: [0, 11], ter: ['mountain'], place: (W, c, r) => (r && r.house != null ? { kind: 'house', id: r.house } : null), act: (W, c, ctx, r) => { const got = freeHouses(W, c, null, 2); if (got.length) r.house = got[0]; CX.food(W, c, 1.1, 10); addResist(c, 0.06); return 'Thợ mỏ ' + c.name + ' đào thông những đường hầm cũ dưới thành' + (got.length ? ', chui lên ngay trong ' + got.length + ' ngôi nhà giặc chiếm và lấy lại nhà.' : ', chuyển lương thực vào tận từng nhà.'); } },
+    { key: 'beacons', name: 'Lửa hiệu trên đỉnh núi', cat: 'resist', when: ['siege', 'war'], era: [0, 11], ter: ['mountain'], act: (W, c, ctx) => { hpUp(c, 0.05); if (ctx === 'siege') hitFoes(W, c, 0.04); else CX.pil(c, 'mil', 0.04); return 'Lửa hiệu bùng lên từ đỉnh này sang đỉnh khác. Cả thung lũng ' + c.name + ' biết giặc tới và đã sẵn sàng.'; } },
+    { key: 'icebreak', name: 'Phá băng dưới chân giặc', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['tundra'], act: (W, c) => { const n = hitFoes(W, c, 0.16); return 'Người ' + c.name + ' đục mỏng lớp băng trên đường giặc đi. Băng vỡ' + (n ? ', ' + n + ' toán lính ' + foeOf(W, c) + ' rơi xuống làn nước lạnh.' : ', đường vào thành chỉ còn lại nước đen.'); } },
+    { key: 'blizzardraid', name: 'Đánh úp trong bão tuyết', cat: 'resist', when: ['held', 'siege'], era: [0, 11], ter: ['tundra'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.12); else { hitGarrison(W, c, 0.12); addResist(c, 0.1); } return 'Chờ bão tuyết nổi lên, người ' + c.name + ' khoác ' + pickE(c, ['da gấu trắng', 'lông tuần lộc', 'áo choàng trắng', 'áo nguỵ trang tuyết', 'áo tàng hình nhiệt']) + ' lặng lẽ đánh vào ' + (ctx === 'held' ? 'trại giặc' : 'quân vây thành') + '.'; } },
+    { key: 'sleds', name: 'Xe trượt chở vũ khí', cat: 'resist', when: ['held', 'siege'], era: [0, 11], ter: ['tundra'], act: (W, c, ctx) => { if (ctx === 'siege') hpUp(c, 0.04); else addResist(c, 0.08); return 'Những đoàn ' + pickE(c, ['chó kéo', 'chó kéo', 'xe trượt chó kéo', 'xe trượt tuyết máy', 'xe trượt bay']) + ' chở vũ khí vào ' + c.name + ' qua những lối chỉ người băng giá mới biết.'; } },
+    { key: 'fireships', name: 'Thuyền lửa', cat: 'resist', when: ['siege'], era: [1, 11], ter: ['coast'], act: (W, c) => { const n = hitFoes(W, c, 0.22, true) + hitFoes(W, c, 0.05, false); return 'Ngư dân ' + c.name + ' chất ' + pickE(c, ['rơm và dầu cá', 'rơm và dầu cá', 'thuốc súng', 'xăng', 'plasma']) + ' lên những chiếc thuyền cũ rồi thả trôi vào hàng tàu giặc.' + (n ? ' ' + n + ' tàu và toán quân trúng lửa.' : ''); } },
+    { key: 'nets', name: 'Lưới cá bủa giặc', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['coast'], act: (W, c) => { hitFoes(W, c, 0.08); c.occ.block = W.day + 5; return 'Những tấm lưới lớn nhất của ' + c.name + ' được giăng ngang bến và đường vào thành. Giặc vướng lưới, ngã dúi dụi.'; } },
+    { key: 'boatlift', name: 'Thuyền đưa dân đi lánh nạn', cat: 'civ', when: ['siege', 'held'], era: [1, 11], ter: ['coast'], can: (W, c) => c.occ.camp > 0, act: (W, c) => { const r = flee(W, c, 8 + Math.floor(W.rand() * 8), true); if (!r) return null; addResist(c, 0.04); return 'Đêm không trăng, ' + r.n + ' gia đình ở trại tạm lên thuyền đánh cá rời ' + c.name + ' sang ' + r.host.name + '.'; } },
+    { key: 'sandraid', name: 'Kỵ binh cát đánh úp', cat: 'resist', when: ['siege', 'held'], era: [0, 11], ter: ['desert'], act: (W, c, ctx) => { if (ctx === 'siege') hitFoes(W, c, 0.14); else { hitGarrison(W, c, 0.1); addResist(c, 0.08); } return 'Từ sau cồn cát, ' + pickE(c, ['những người chạy chân trần', 'kỵ sĩ lạc đà', 'kỵ binh lạc đà', 'xe địa hình', 'xe bay sát cát']) + ' của ' + c.name + ' lao ra đánh vào sườn quân giặc rồi biến mất trong gió.'; } },
+    { key: 'wells', name: 'Lấp giếng ngoài thành', cat: 'resist', when: ['siege'], era: [0, 11], ter: ['desert'], act: (W, c) => { hitFoes(W, c, 0.1); CX.food(W, c, 0.93, 15); return 'Người ' + c.name + ' lấp hết giếng ngoài thành. Quân ' + foeOf(W, c) + ' khát nước giữa sa mạc, phải lùi ra xa.'; } },
+    { key: 'mirage', name: 'Ảo ảnh đánh lừa', cat: 'resist', when: ['siege', 'held'], era: [0, 11], ter: ['desert'], act: (W, c, ctx) => { if (ctx === 'siege') { hpUp(c, 0.06); c.occ.block = W.day + 4; } else addResist(c, 0.06); return 'Trong cái nóng, giặc thấy cả một đạo quân ' + c.name + ' trên đường chân trời. ' + (c.era >= 8 ? 'Đó là ảo ảnh do máy chiếu ánh sáng dựng lên.' : 'Đó chỉ là ảo ảnh, và mấy chục người giương cờ.'); } },
+    /* ----- chống trả thiên tai và quái vật ----- */
+    { key: 'fightback', name: 'Đánh trả quái vật', cat: 'resist', when: ['after'], era: [0, 11], can: (W, c) => !!(c.occ.hit && MONSTER[c.occ.hit.key]), act: (W, c, ctx, r) => { const m = MONSTER[c.occ.hit.key], win = W.rand() < 0.6; r.title = 'Người ' + c.name + ' đánh trả ' + m; if (win) { heal(W, c, 0.3); CX.food(W, c, 1.05, 10); CX.pil(c, 'mil', 0.03); if (c.occ.hit.key === 'kraken') { const f = fisheryOf(c); if (f) f.downUntil = Math.min(f.downUntil || 0, W.day + 3); } } else CX.hurt(W, c, 0.02, 8); occScene(W, c, 'militia', 3, { fight: c.occ.hit.key }); return 'Người ' + c.name + ' cầm ' + R_WEAPON[c.terrain.key][EB(c.era)] + ' đánh trả ' + m + '. ' + (win ? 'Chúng bỏ chạy, thành phố lại sống như cũ.' : 'Nhiều người bị thương, nhưng không ai bỏ chạy.'); } },
+    { key: 'bucket', name: 'Cả phố chữa cháy', cat: 'civ', when: ALL, era: [0, 11], can: (W, c) => fires(c).length > 0, act: (W, c) => { const f = fires(c)[0], n = saveFires(c); occScene(W, c, 'bucket', 3, { dmg: f.id, kind: f.kind, ref: f.ref }); return pickE(c, W_FIRE) + ' kéo từ giếng tới đám cháy ở ' + c.name + '. ' + n + ' đám lửa được dập trước khi kịp làm sập nhà.'; } },
+    /* ----- người dân ----- */
+    { key: 'flee', name: 'Dân chạy loạn', cat: 'civ', when: ['siege'], era: [0, 11], act: (W, c) => { occScene(W, c, 'flee', 4); CX.fear(W, c, 0.4, 10); return 'Nghe ' + pickE(c, W_ALARM) + ', dân ở rìa ' + c.name + ' ôm con, gánh đồ chạy về quảng trường. Ngõ nào cũng chật người.'; } },
+    { key: 'breadline', name: 'Xếp hàng nhận cứu tế', cat: 'civ', when: ['siege', 'held', 'after'], era: [0, 11], act: (W, c) => { relief(W, c, 0.05); CX.pil(c, 'hea', 0.02); occScene(W, c, 'breadline', 4); return 'Kho bạc ' + c.name + ' mở kho phát ' + pickE(c, ['thịt khô và củ', 'gạo và muối', 'bánh mì và súp', 'những gói cứu trợ', 'viên dinh dưỡng']) + '. Hàng người dài từ quảng trường tới tận chợ.'; } },
+    { key: 'rebuild', name: 'Cả xóm dựng lại nhà', cat: 'civ', when: ['peace', 'war', 'held', 'after'], era: [0, 11], can: (W, c) => ruins(c).length > 0, act: (W, c) => { const n = rebuildFast(W, c, 3); CX.pil(c, 'eco', 0.02); occScene(W, c, 'rebuild', 6); return 'Hàng xóm ' + c.name + ' góp ' + pickE(c, ['gỗ và lá', 'gỗ, đá và ngói', 'gạch và vôi', 'xi măng và thép', 'máy in nhà']) + ', dựng lại ' + n + ' nơi đổ nát chỉ trong vài ngày.'; } },
+    { key: 'mourn', name: 'Đưa tang người đã khuất', cat: 'civ', when: ['war', 'siege', 'held', 'after'], era: [0, 11], can: (W, c) => (c.casualties || 0) >= c.occ.mourned + 3, act: (W, c) => { c.occ.mourned = c.casualties || 0; CX.faith(W, c, 0.08); CX.pil(c, 'rel', 0.05); occScene(W, c, 'mourn', 3); return 'Cả ' + c.name + ' đi sau những ' + pickE(c, ['bó đuốc', 'cỗ quan tài gỗ', 'cỗ quan tài phủ cờ', 'cỗ quan tài phủ cờ', 'quả cầu sáng']) + '. Không ai nói gì, chỉ có tiếng ' + pickE(c, ['trống da', 'chiêng', 'kèn đồng', 'kèn đồng', 'chuông pha lê']) + '.'; } },
+    { key: 'shelter', name: 'Xuống hầm trú ẩn', cat: 'civ', when: ['siege', 'war'], era: [5, 11], act: (W, c) => { let n = 0; for (const h of c.w.households) if (h.sick > 0 && W.rand() < 0.3) { h.sick = Math.max(0, h.sick - 3); n++; } occScene(W, c, 'shelter', 2); return pickE(c, W_ALARM).charAt(0).toUpperCase() + pickE(c, W_ALARM).slice(1) + ' vang lên. Dân ' + c.name + ' xuống hầm, phố xá vắng tanh, chỉ còn mèo đi dạo.'; } },
+    { key: 'rumor', name: 'Tin đồn giặc sắp tới', cat: 'civ', when: ['war'], era: [0, 11], act: (W, c) => { CX.fear(W, c, 0.35, 8); CX.goods(W, c, 0.9, 6); return 'Có người thề đã thấy quân ' + foeOf(W, c) + ' bên kia cầu. Chợ ' + c.name + ' vắng hẳn, nhà nhà đóng cửa tích gạo.'; } },
+    { key: 'volunteers', name: 'Thanh niên xung phong', cat: 'civ', when: ['war', 'siege'], era: [0, 11], act: (W, c) => { CX.pil(c, 'mil', 0.06); hpUp(c, 0.03); occScene(W, c, 'militia', 4); return 'Thanh niên ' + c.name + ' xếp hàng dài trước ' + pickE(c, ['lều thủ lĩnh', 'doanh trại', 'doanh trại', 'văn phòng tuyển quân', 'trung tâm huấn luyện']) + ' xin được ra trận.'; } },
+    { key: 'nightmarket', name: 'Chợ đêm lén lút', cat: 'civ', when: ['held'], era: [0, 11], act: (W, c) => { if (W.rand() < 0.55) { CX.goods(W, c, 1.12, 10); CX.pil(c, 'eco', 0.03); return 'Giữa giờ giới nghiêm, ' + c.name + ' họp chợ trong ' + R_HIDE[c.terrain.key] + ' dưới ánh ' + pickE(c, W_LIGHT) + '. Hàng hoá lại chạy.'; } CX.fear(W, c, 0.2, 8); return 'Lính ' + facName(W, c.owner) + ' ập vào phiên chợ đêm của ' + c.name + ', tịch thu hàng. Người bán chạy tán loạn.'; } },
+    { key: 'hidefood', name: 'Giấu lương trong vách', cat: 'civ', when: ['held', 'siege'], era: [0, 11], act: (W, c) => { CX.food(W, c, 1.08, 20); c.occ.hid = W.day + 30; return 'Nhà nhà ở ' + c.name + ' giấu ' + R_GRAIN[c.terrain.key] + ' trong vách, dưới sàn, trong ' + R_HIDE[c.terrain.key] + '. Giặc lục mãi không ra.'; } },
+    { key: 'song', name: 'Khúc hát giữ thành', cat: 'civ', when: ['held', 'siege'], era: [0, 11], act: (W, c, ctx) => { CX.faith(W, c, 0.06); if (ctx === 'held') addResist(c, 0.05); for (const h of c.w.households) if (h.fear > 0 && W.rand() < 0.3) h.fear = 0; occScene(W, c, 'protest', 2, { song: true }); return 'Từ những căn nhà bị chiếm, người ta vẫn nghe khúc hát cũ của ' + c.name + '. Dân bớt sợ, lính giặc nghe mà chột dạ.'; } },
+    { key: 'school', name: 'Lớp học trong hầm', cat: 'civ', when: ['held'], era: [1, 11], act: (W, c) => { CX.pil(c, 'edu', 0.05); addResist(c, 0.04); return 'Giặc đóng cửa trường. Thầy giáo ' + c.name + ' dạy chữ cho trẻ con trong ' + R_HIDE[c.terrain.key] + ', nhắc chúng tên của thành mình.'; } },
+    { key: 'healers', name: 'Trạm cứu thương dã chiến', cat: 'civ', when: ['siege', 'held', 'after'], era: [0, 11], can: (W, c) => injured(c) > 0, act: (W, c) => { const n = heal(W, c, 0.5); CX.pil(c, 'hea', 0.03); occScene(W, c, 'rescue', 3); return pickE(c, ['Thầy lang', 'Thầy thuốc', 'Bác sĩ và y tá', 'Bác sĩ và y tá', 'Robot y tế']) + ' dựng trạm cứu thương ngay trên quảng trường ' + c.name + ', chữa lành cho ' + n + ' người.'; } },
+    /* ----- quân đội trong thành ----- */
+    { key: 'patrol', name: 'Giặc tuần tra từng ngõ', cat: 'army', when: ['held'], era: [0, 11], act: (W, c) => { addResist(c, -0.08); CX.fear(W, c, 0.25, 8); occScene(W, c, 'patrolx', 6); return 'Từng toán lính ' + facName(W, c.owner) + ' đi dọc các ngõ ' + c.name + ', gõ cửa từng nhà, khám xét từng người.'; } },
+    { key: 'curfew', name: 'Lệnh giới nghiêm', cat: 'army', when: ['held'], era: [0, 11], act: (W, c) => { occScene(W, c, 'curfew', 20); CX.goods(W, c, 0.88, 20); addResist(c, -0.05); return 'Từ chập tối, ai ra đường sẽ bị bắt. ' + c.name + ' tắt đèn, chỉ còn tiếng giày lính và ' + pickE(c, W_LIGHT) + ' của lính tuần.'; } },
+    { key: 'requisition', name: 'Trưng dụng lương thực', cat: 'army', when: ['held'], era: [0, 11], can: (W, c) => !(c.occ.hid > W.day), act: (W, c) => { CX.loot(W, c, 0.3); CX.food(W, c, 0.85, 15); const t = carryOff(W, c, c.w.gov, c.w.gov.cash * 0.1, c.owner); addResist(c, 0.07); const cap = capitalOf(W, c.owner); return 'Lính ' + facName(W, c.owner) + ' đi từng nhà lấy ' + R_GRAIN[c.terrain.key] + ' và hàng hoá, chất đầy xe chở về ' + (cap ? cap.name : 'nước họ') + (t > 1 ? ', cùng ' + Math.round(t) + ' xu trong kho bạc.' : '.'); } },
+    { key: 'quarter', name: 'Giặc chiếm thêm nhà làm trại', cat: 'seize', when: ['held'], era: [0, 11], place: (W, c, r) => (r && r.house != null ? { kind: 'house', id: r.house } : null), act: (W, c, ctx, r) => { const got = seize(W, c, c.owner, 2 + Math.floor(W.rand() * 3), 'any'); if (!got.length) return null; r.house = got[0]; addResist(c, 0.05); occScene(W, c, 'flee', 3, { house: got[0] }); return 'Quân đồn trú đông thêm. Lính ' + facName(W, c.owner) + ' đuổi ' + got.length * 4 + ' gia đình ra khỏi nhà, cắm cờ lên ' + got.length + ' mái nhà nữa.'; } },
+    { key: 'loot', name: 'Cướp phá từng nhà', cat: 'seize', when: ['held'], era: [0, 11], act: (W, c) => { let t = 0; const nh = houseN(c); for (let k = 0; k < 6; k++) { const i = Math.floor(W.rand() * nh); for (let j = 0; j < 4; j++) { const h = c.w.households[i * 4 + j]; if (h) { t += carryOff(W, c, h, h.cash * 0.15, c.owner); scare(c.w, h, 12); } } } addResist(c, 0.06); return 'Lính ' + facName(W, c.owner) + ' phá cửa sáu dãy nhà ở ' + c.name + (t > 1 ? ', lấy đi ' + Math.round(t) + ' xu' : '') + '. Ai giữ lại của thì bị đánh.'; } },
+    { key: 'flagswap', name: 'Thay cờ trên mái nhà', cat: 'resist', when: ['held'], era: [0, 11], can: (W, c) => c.occ.n > 0, act: (W, c) => { addResist(c, 0.06); occScene(W, c, 'flagswap', 2); return 'Sáng ra, cờ ' + facName(W, c.owner) + ' trên mấy mái nhà ' + c.name + ' bị ai đó thay bằng cờ của thành. Lính giặc lùng sục cả ngày mà không bắt được ai.'; } },
+    { key: 'evacdrill', name: 'Diễn tập sơ tán', cat: 'civ', when: ['peace', 'war'], era: [3, 11], act: (W, c) => { CX.pil(c, 'hea', 0.03); occScene(W, c, 'flee', 2, { drill: true }); const a = pickE(c, W_ALARM); return a.charAt(0).toUpperCase() + a.slice(1) + ' vang lên giữa trưa. Dân ' + c.name + ' tập chạy về ' + pickE(c, ['hang đá', 'sân đền', 'hầm trú ẩn', 'hầm trú ẩn', 'vòm lực']) + ', lần này chỉ là diễn tập.'; } },
+    { key: 'watch', name: 'Đội tuần đêm', cat: 'army', when: ['peace', 'war'], era: [0, 11], act: (W, c) => { for (const h of c.w.households) if (h.fear > 0 && W.rand() < 0.3) h.fear = 0; CX.pil(c, 'mil', 0.02); occScene(W, c, 'patrolx', 5, { own: true }); return 'Đêm đêm, đội tuần của ' + c.name + ' cầm ' + pickE(c, W_LIGHT) + ' đi khắp các ngõ. Trộm cắp biến mất, người già ngủ ngon.'; } },
+    { key: 'drill', name: 'Thao luyện trên bãi tập', cat: 'army', when: ['war', 'peace'], era: [0, 11], act: (W, c) => { CX.pil(c, 'mil', 0.05); occScene(W, c, 'drill', 5); return 'Quân ' + c.name + ' tập ' + pickE(c, ['ném lao và đấu vật', 'đánh giáo và bắn cung', 'bắn súng và xếp hàng', 'bắn đạn thật và chạy hào', 'đánh với bóng ảnh ánh sáng']) + ' trên bãi tập. Trẻ con đứng ngoài hàng rào xem.'; } },
+    { key: 'mobilize', name: 'Tổng động viên', cat: 'army', when: ['war'], era: [0, 11], act: (W, c) => { CX.pil(c, 'mil', 0.06); CX.pil(c, 'eco', -0.03); occScene(W, c, 'mobilize', 4); return pickE(c, ['Tù và', 'Trống trận', 'Kèn hiệu', 'Loa phóng thanh', 'Tín hiệu ánh sáng']) + ' vang khắp ' + c.name + '. Lính hành quân từ bãi tập ra cổng thành, người nhà đứng hai bên đường vẫy theo.'; } },
+    { key: 'parade', name: 'Duyệt binh', cat: 'army', when: ['peace', 'war'], era: [1, 11], act: (W, c) => { CX.pil(c, 'mil', 0.03); CX.pil(c, 'rel', 0.02); occScene(W, c, 'parade', 3); return 'Quân ' + c.name + ' diễu hành quanh quảng trường, ' + pickE(c, ['giáo dựng thẳng', 'giáo dựng thẳng', 'súng vác vai', 'xe bọc thép nối đuôi', 'giáp sáng như gương']) + '. Dân ném hoa từ hai bên đường.'; } },
+    { key: 'rescue', name: 'Quân đội cứu dân', cat: 'army', when: ['after'], era: [0, 11], act: (W, c) => { const n = heal(W, c, 0.4), r = rebuildFast(W, c, 2); saveFires(c); occScene(W, c, 'rescue', 4); return 'Lính ' + c.name + ' bỏ vũ khí xuống, ' + pickE(c, ['bới đất đá', 'khiêng người bị thương', 'khiêng người bị thương', 'lái xe ủi dọn đổ nát', 'điều khiển robot cứu hộ']) + ' sau ' + c.occ.hit.name.toLowerCase() + '.' + (n ? ' ' + n + ' người được cứu chữa.' : '') + (r ? ' ' + r + ' nơi đổ nát được dọn sạch.' : ''); } },
+    { key: 'deserters', name: 'Lính đào ngũ', cat: 'army', when: ['siege', 'held'], era: [0, 11], can: (W, c) => W.war.units.some((u) => !u.dead && u.city === c.id && !u.lane && !u.naval), act: (W, c, ctx) => { const us = W.war.units.filter((u) => !u.dead && u.city === c.id && !u.lane && !u.naval).slice(0, 1 + Math.floor(W.rand() * 2)); for (const u of us) { u.dead = true; release(W, u, false); } W.war.units = W.war.units.filter((u) => !u.dead); if (ctx === 'held') addResist(c, 0.05); return ctx === 'held' ? us.length + ' toán lính ' + facName(W, c.owner) + ' bỏ trại trốn về quê. Người ' + c.name + ' thấy giặc không còn mạnh như trước.' : us.length + ' toán lính ' + c.name + ' đói và mệt, lặng lẽ rời bỏ tường thành trong đêm.'; } },
+    { key: 'streetfight', name: 'Đánh nhau giữa phố', cat: 'army', when: ['siege'], era: [0, 11], can: (W, c) => c.occ.n > 0, act: (W, c) => { const by = enemyBy(W, c), k = Object.keys(c.occ.h), house = +k[Math.floor(W.rand() * k.length)]; hitFoes(W, c, 0.06); ignite(W, c, 'house', house, 'street'); occScene(W, c, 'streetfight', 3, { by, house }); return 'Quân giữ thành và lính ' + facName(W, by) + ' giáp mặt nhau giữa những dãy nhà ở rìa ' + c.name + '. Một mái nhà bốc cháy.'; } },
+    { key: 'wallrepair', name: 'Vá tường thành trong đêm', cat: 'army', when: ['siege'], era: [0, 11], act: (W, c) => { hpUp(c, 0.08); occScene(W, c, 'repair', 3); return 'Suốt đêm, lính và dân ' + c.name + ' khuân ' + pickE(c, ['đá và gỗ', 'đá và vữa', 'gạch và bao cát', 'bê tông', 'tấm vật chất sống']) + ' vá chỗ tường bị phá.'; } },
+    { key: 'sortie', name: 'Mở cổng xuất kích', cat: 'army', when: ['siege'], era: [0, 11], act: (W, c) => { const n = hitFoes(W, c, 0.12); for (const u of W.war.units) if (!u.dead && u.city === c.id && !u.lane) u.hp -= u.hpMax * 0.05; occScene(W, c, 'mobilize', 2, { sortie: true }); return 'Cổng ' + c.name + ' bật mở. Quân giữ thành xông ra đánh thẳng vào ' + (n ? n + ' toán giặc' : 'trại giặc') + ' rồi rút vào trước khi cổng đóng.'; } },
+  ];
+  const STREET_BY = Object.fromEntries(STREET.map((x) => [x.key, x]));
+  // giặc tràn vào rìa thành: chiếm nhà, dân chạy, có nhà chạy sang thành láng giềng
+  function breakIn(W, c, by) {
+    const O = c.occ, got = seize(W, c, by, 1 + Math.floor(W.rand() * 2), 'edge');
+    if (!got.length) return;
+    occScene(W, c, 'streetfight', 3, { by, house: got[0] });
+    occScene(W, c, 'flee', 4, { house: got[0] });
+    if (W.rand() < 0.35) ignite(W, c, 'house', got[0], 'street');
+    W.chaos.fx.push({ key: 'st-seize', city: c.id, by, house: got[0], day: W.day, street: true });
+    if (!O.told.seize || W.day - O.told.seize > 45) {
+      O.told.seize = W.day;
+      wstory(W, 'seize', 'major', 'Quân ' + facName(W, by) + ' chiếm nhà ở rìa ' + c.name, 'Lính ' + facName(W, by) + ' trèo qua tường, chiếm ' + (got.length > 1 ? got.length + ' ngôi nhà' : 'một ngôi nhà') + ' ở rìa thành và cắm cờ lên mái. Người trong nhà ôm con chạy về trại tạm trên quảng trường.', { kind: 'house', id: got[0] }, { city: c.id, by, houses: got });
+    }
+    if (O.camp + got.length * 4 >= 8 && W.rand() < 0.3) {
+      const r = flee(W, c, 4 + Math.floor(W.rand() * 8));
+      if (r && (!O.told.flee || W.day - O.told.flee > 60)) { O.told.flee = W.day; wstory(W, 'refugee', 'major', r.n + ' gia đình ' + c.name + ' chạy sang ' + r.host.name, 'Họ gánh nồi niêu, dắt trẻ con đi ' + (r.bridge != null ? 'qua cầu' : 'bằng thuyền') + ' trong đêm. Người ' + r.host.name + ' mở cửa cho họ ở nhờ.', r.bridge != null ? { kind: 'bridge', bridge: r.bridge } : { kind: 'land', city: r.host.id }, { city: c.id, to: r.host.id }); }
+    }
+  }
+  // chọn một kịch bản ngẫu nhiên hợp với hoàn cảnh của thành hôm nay
+  function streetPick(W, c, ctx, p) {
+    const O = c.occ;
+    if (W.rand() >= p) return null;
+    const ter = c.terrain.key, pool = STREET.filter((S) => S.when.includes(ctx) && c.era >= S.era[0] && c.era <= S.era[1] && (!S.ter || S.ter.includes(ter)) && !O.used.includes(S.key) && (!S.can || S.can(W, c)));
+    if (!pool.length) return null;
+    const S = pool[Math.floor(W.rand() * pool.length)], r = {};
+    const text = S.act(W, c, ctx, r);
+    if (text == null) return null;
+    O.used.push(S.key);
+    W.chaos.fx.push({ key: 'st-' + S.key, city: c.id, day: W.day, street: true, cat: S.cat, by: enemyBy(W, c), house: r.house });
+    W.street.log.push({ key: S.key, city: c.id, day: W.day, cat: S.cat, ctx });
+    if (W.street.log.length > 800) W.street.log.shift();
+    const place = (S.place && S.place(W, c, r)) || { kind: 'land', city: c.id };
+    wstory(W, S.cat, S.cat === 'army' || S.cat === 'civ' ? 'small' : 'major', r.title || S.name + ' ở ' + c.name, text, place, { city: c.id, street: S.key });
+    return S.key;
+  }
+  function streetDay(W) {
+    if (!W.street) W.street = { log: [] };
+    if (!W.cfg.pace && !W.cfg.street) return;
+    const X = W.war, year = Math.floor((W.day - 1) / 360);
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (!c.occ) occInit(c);
+      const O = c.occ;
+      O.scenes = O.scenes.filter((s) => s.until > W.day);
+      if (O.year !== year) { O.year = year; O.used = []; }
+      let camp = 0, abroad = 0;
+      for (const h of c.w.households) { if (h.away === 1) camp++; else if (h.away === 2) abroad++; }
+      O.camp = camp; O.abroad = abroad;
+      const sieged = X.on && c.landHit === W.day && atWarF(W, c.landBy, c.owner), held = X.on && c.owner !== c.id;
+      // 1. giặc tràn vào rìa thành
+      if (sieged && W.day >= O.block && W.rand() < Math.min(0.4, 0.07 + 0.012 * (c.siegeHits || 0))) breakIn(W, c, c.landBy);
+      // 2. giặc rút: người giữ thành lấy lại những ngôi nhà quân vây thành bỏ lại
+      if (!sieged && O.n > 0 && W.day - (c.landHit == null ? -99 : c.landHit) > 6 && W.rand() < 0.5) {
+        const got = freeHouses(W, c, (o) => o.by !== c.owner, 1 + Math.floor(W.rand() * 2));
+        if (got.length) {
+          occScene(W, c, 'cheer', 3, { house: got[0] });
+          if (!Object.values(O.h).some((o) => o.by !== c.owner) && (!O.told.retake || W.day - O.told.retake > 45)) { O.told.retake = W.day; wstory(W, 'retake', 'major', c.name + ' lấy lại những ngôi nhà cuối cùng', (c.owner === c.id ? 'Dân quân ' : 'Quân giữ thành ') + c.name + ' đi từng nhà, gỡ cờ giặc trên mái xuống. Các gia đình ở trại tạm dọn về nhà cũ.', { kind: 'house', id: got[0] }, { city: c.id }); }
+        }
+      }
+      // 3. dưới ách chiếm đóng: lòng dân lớn dần, giặc thu thuế mỗi tháng
+      if (held) {
+        const by = c.owner, nh = houseN(c), busy = X.factions.some((f) => f.alive && f.id !== c.id && f.id !== by && atWarF(W, by, f.id));
+        if (O.by !== by) { O.by = by; O.since = c.heldSince || W.day; }
+        O.resist = clampN(O.resist + 0.0012 + 0.002 * (c.faith || 0.35) + 0.005 * (O.n / Math.max(1, nh)) + GRIT[c.terrain.key] + (busy ? 0.0015 : 0) - (sceneOn(c, 'curfew', W.day) ? 0.0012 : 0), 0, 1.2);
+        if ((W.day - O.since) % 30 === 29) {
+          let t = carryOff(W, c, c.w.gov, c.w.gov.cash * 0.06, by);
+          for (const k in O.h) for (let j = 0; j < 4; j++) { const h = c.w.households[+k * 4 + j]; if (h) t += carryOff(W, c, h, h.cash * 0.04, by); }
+          O.tribute += t;
+          pillarNudge(c, 'mil', -0.03);
+        }
+        if (O.resist >= 1 && W.day - O.since >= 90) { uprising(W, c); continue; }
+      }
+      // 4. người tản cư trở về khi thành yên
+      if (!held && abroad > 0 && W.day - (c.landHit == null ? -99 : c.landHit) > 12 && W.rand() < 0.2) homecoming(W, c);
+      // 5. kịch bản ngẫu nhiên trong thành: sau thiên tai, khi bị vây, khi bị chiếm, thời chiến, thời bình
+      const war = X.on && X.factions.some((f) => f.alive && f.id !== c.owner && atWarF(W, c.owner, f.id));
+      if (O.hit && W.day - O.hit.day === 1 && O.answered !== O.hit.day) { O.answered = O.hit.day; if (streetPick(W, c, 'after', 0.6)) continue; }
+      if (sieged) streetPick(W, c, 'siege', 0.14);
+      else if (held) streetPick(W, c, 'held', 0.03 + 0.05 * O.resist);
+      else streetPick(W, c, war ? 'war' : 'peace', war ? 0.012 : 0.006);
+    }
   }
 
   /* =============== Nhịp chín năm: mười hai thời đại trong một ván =============== */
@@ -2890,25 +3233,6 @@
       }
     }
   }
-  // Thành bị chiếm lâu ngày có thể nổi dậy, nhất là khi kẻ chiếm đang bận đánh nơi khác
-  function revoltDay(W) {
-    const X = W.war;
-    if (!X.on || W.day % 15) return;
-    for (const c of W.cities) {
-      if (!c.settled || c.owner === c.id) continue;
-      const held = W.day - (c.heldSince || W.day);
-      if (held < 150) continue;
-      const busy = X.factions.some((f) => f.alive && atWarF(W, c.owner, f.id));
-      if (W.rand() > 0.07 + (busy ? 0.08 : 0) + Math.min(0.1, held / 3600)) continue;
-      const old = c.owner;
-      c.owner = c.id; X.factions[c.id].alive = true;
-      for (const u of X.units) if (u.city === c.id && !u.dead) { u.owner = c.id; u.lane = null; }
-      for (const f of X.factions) { X.rel[c.id][f.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; X.rel[f.id][c.id] = { state: 'peace', since: W.day, truce: W.day + 200 }; }
-      c.hp = Math.max(c.hp, c.hpMax * 0.6);
-      wstory(W, 'revolt', 'epic', c.name + ' nổi dậy', 'Sau ' + held + ' ngày dưới cờ ' + X.factions[old].name + ', người ' + c.name + ' hạ cờ ngoại bang. Phe ' + c.name + ' sống lại.', { kind: 'land', city: c.id }, { city: c.id, from: old });
-    }
-  }
-
   // Chương năm của cả thế giới: lấy câu chuyện lớn nhất trong sáu thành phố, mỗi thành phố một dòng
   function worldChapter(W) {
     const year = Math.round(W.day / 360), from = W.day - 360, lines = [];
@@ -2947,7 +3271,8 @@
     // sáu trụ cột, công trình riêng của miền, dấu vết chiến tranh, săn bắt
     PILLARS, PILLAR_NEED, PILLAR_KEY, PILLAR_WHY, LANDMARKS, BEYOND_TAG, landmarkName, pillarProgress, pillarsReady, weakestPillar, ignite, GAME, gameTier,
     // kịch bản hỗn loạn mỗi năm, chiến tranh trên trời và qua cổng
-    CHAOS, chaosRun: (W, key, cid) => { const S = CHAOS_BY[key], c = W.cities[cid]; if (!S || !c || !c.settled) return null; const text = S.act(W, c); W.chaos.fx.push({ key, city: cid, day: W.day }); W.chaos.log.push({ key, city: cid, day: W.day, year: Math.floor((W.day - 1) / 360) }); wstory(W, 'chaos', 'major', S.name + ' ở ' + c.name, text, chaosPlace(key, c), { city: cid, chaos: key }); return text; }, airBattle: (W, a, b) => airBattle(W, W.cities[a], W.cities[b], facEra(W, W.cities[a].owner), facEra(W, W.cities[b].owner)), portalAssault: (W, a, b) => portalAssault(W, W.cities[a], W.cities[b]),
+    STREET, streetRun: (W, key, cid, ctx) => { const S = STREET_BY[key], c = W.cities[cid]; if (!S || !c || !c.settled) return null; if (!c.occ) occInit(c); const r = {}, text = S.act(W, c, ctx || S.when[0], r); if (text == null) return null; W.chaos.fx.push({ key: 'st-' + key, city: cid, day: W.day, street: true, cat: S.cat, by: enemyBy(W, c), house: r.house }); wstory(W, S.cat, 'major', r.title || S.name + ' ở ' + c.name, text, (S.place && S.place(W, c, r)) || { kind: 'land', city: cid }, { city: cid, street: key }); return text; }, seize: (W, cid, by, n, mode) => seize(W, W.cities[cid], by, n, mode || 'edge'), occupy: (W, cid, by) => occupy(W, W.cities[cid], by), liberate: (W, cid) => liberate(W, W.cities[cid]), uprising: (W, cid) => uprising(W, W.cities[cid]), breakIn: (W, cid, by) => { const c = W.cities[cid]; if (!c.occ) occInit(c); breakIn(W, c, by); }, flee: (W, cid, n, bySea) => { const c = W.cities[cid]; if (!c.occ) occInit(c); return flee(W, c, n, bySea); }, markHit: (W, cid, key, name) => markHit(W.cities[cid], key, name, W.day),
+    CHAOS, chaosRun: (W, key, cid) => { const S = CHAOS_BY[key], c = W.cities[cid]; if (!S || !c || !c.settled) return null; const text = S.act(W, c); markHit(c, key, S.name, W.day); W.chaos.fx.push({ key, city: cid, day: W.day }); W.chaos.log.push({ key, city: cid, day: W.day, year: Math.floor((W.day - 1) / 360) }); wstory(W, 'chaos', 'major', S.name + ' ở ' + c.name, text, chaosPlace(key, c), { city: cid, chaos: key }); return text; }, airBattle: (W, a, b) => airBattle(W, W.cities[a], W.cities[b], facEra(W, W.cities[a].owner), facEra(W, W.cities[b].owner)), portalAssault: (W, a, b) => portalAssault(W, W.cities[a], W.cities[b]),
     buildOffer, build, bridgeOffer, buildBridge, advanceOffer, advanceCity, unitOffer, train, unitStats, armyOf, armyCap, hasB, bName,
     lanesOf, laneOf, laneUnits, setStance, declareWar, offerPeace, acceptPeace, makePeace, powerOf, connected, nukeOffer, launchNuke, conquer, atWar, atWarF, capitalOf, blockadeOf,
     create, step, printMoney, grantTreasury, setPolicy, fund, openFirm: (w, sector, why) => openFirmAt(w, sector, why, true), addHouseholds, phenomena, trigger, SEASONS, totalMoney, expectedMoney, gini, DEFAULTS,
