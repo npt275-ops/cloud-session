@@ -141,10 +141,22 @@
         for (const c of echo) k.gh.push(c);
         k.add(TORUS(), '#b48cff', 0, Math.max(1.4, H * 0.45), rx + 0.8, 1.1, 1.1, 3.2, 0, 0, 0, 'glow');
       } else {
-        for (const g of k.b) { recolorG(g, '#fff6dc', 0.62); k.gh.push(g); }
-        k.b = [];
-        for (const g of k.l) recolorG(g, '#fff3c4', 0.6);
-        for (let i = 0; i < 5; i++) k.add(ICO(), '#fff3c4', (rnd() - 0.5) * rx * 2.2, rnd() * (H + 2.5), (rnd() - 0.5) * rx * 2.2, 0.12, 0.12, 0.12, 0, 0, 0, 'glow');
+        // thời thứ mười hai: thành phố cyberpunk. Khối nhà sẫm màu xanh đen, tím than; viền neon xanh lơ, hồng, vàng chạy quanh
+        // các tầng và dọc bốn cạnh; biển hiệu phát sáng trên mặt tiền; ăng-ten đèn đỏ trên mái; cửa sổ ánh neon
+        const NEONS = ['#2ef2ff', '#ff3ec8', '#ffe14a', '#8a5bff'], i1 = Math.floor(rnd() * 4), c1 = NEONS[i1], c2 = NEONS[(i1 + 1 + Math.floor(rnd() * 3)) % 4];
+        const dark = ['#1b1f33', '#241a3a', '#14202e', '#2a2438'][Math.floor(rnd() * 4)];
+        for (const g of k.b) recolorG(g, dark, 0.74);
+        for (const g of k.l) recolorG(g, c1, 0.7);
+        const r = rx * 0.96, glow = (c, x, y, z, sx, sy, sz) => k.add(UBOX(), c, x, y, z, sx, sy, sz, 0, 0, 0, 'glow');
+        const levels = Math.max(1, Math.min(4, Math.floor(H / 1.5)));
+        for (let i = 0; i < levels; i++) {
+          const y = H * (0.18 + (0.78 * i) / levels), c = i % 2 ? c2 : c1;
+          glow(c, 0, y, r, r * 2, 0.07, 0.07); glow(c, 0, y, -r, r * 2, 0.07, 0.07); glow(c, r, y, 0, 0.07, 0.07, r * 2); glow(c, -r, y, 0, 0.07, 0.07, r * 2);
+        }
+        for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) glow(c2, sx * r, 0, sz * r, 0.08, H, 0.08);
+        if (H > 1.2) { const side = rnd() < 0.5 ? 1 : -1; glow(rnd() < 0.5 ? c1 : '#ff5a7a', side * (r + 0.04), H * 0.45, 0, 0.05, Math.min(1.8, H * 0.32), r * 1.1); } // biển hiệu
+        k.add(UCYL(5), '#3a3f4a', rx * 0.3, H, -rx * 0.2, 0.05, 1.3, 0.05);
+        k.add(ICO(), '#ff3a3a', rx * 0.3, H + 1.35, -rx * 0.2, 0.13, 0.13, 0.13, 0, 0, 0, 'glow');
       }
     }
     function disposeGroup(g) { g.traverse((o) => { if (o.isMesh && o.geometry && !Object.values(BASE).includes(o.geometry)) o.geometry.dispose(); }); }
@@ -163,10 +175,10 @@
       win: '#41506a',
     };
     const pick = (arr, v) => arr[Math.floor(Math.abs(v) * arr.length) % arr.length];
-    const ROAD = ['#b0916a', '#c4a87c', '#b8ad99', '#d3c6ad', '#9a948a', '#55585e', '#3a3d42', '#23262b', '#dfe7ee', '#e8d8c0', '#b9a8e8', '#fff3d6'];
-    const PLAZA_C = ['#b08f66', '#d9c9a3', '#bcb3a3', '#cbbd9f', '#b9b2a6', '#e4e6e8', '#eef1f4', '#f4f6f8', '#eef3f7', '#f6ead8', '#d9cff2', '#fff6e0'];
+    const ROAD = ['#b0916a', '#c4a87c', '#b8ad99', '#d3c6ad', '#9a948a', '#55585e', '#3a3d42', '#23262b', '#dfe7ee', '#e8d8c0', '#b9a8e8', '#1c1a2a'];
+    const PLAZA_C = ['#b08f66', '#d9c9a3', '#bcb3a3', '#cbbd9f', '#b9b2a6', '#e4e6e8', '#eef1f4', '#f4f6f8', '#eef3f7', '#f6ead8', '#d9cff2', '#2a2440'];
     // màu đèn đường mỗi thời vượt người: lam ngọc, hổ phách, tím, trắng ấm
-    const BEY_LAMP = ['#7ff0ff', '#7ff0ff', '#ffb347', '#b48cff', '#fff3c4'];
+    const BEY_LAMP = ['#7ff0ff', '#7ff0ff', '#ffb347', '#b48cff', '#ff3ec8'];
 
     /* =============== Công trình theo thời đại =============== */
     // Nhà ở: mỗi lô bốn gia đình. lv 1..3 là mức giàu, thêm tầng.
@@ -1306,6 +1318,25 @@
       // nhà ở: lõi thành, gần quảng trường trước
       const hs = hexLots(1.8, 0.15, 0, (x, z) => Math.hypot(x, z) > 7.4).map((p) => Object.assign(p, { r: 1.8 }));
       L.houseLots = near(hs, 96, (p) => Math.hypot(p.x, p.z)).map((p) => ({ p, used: false }));
+      // nhà phố dọc hai bên đường lớn, phố, lối gỗ, đường lạc đà: những chỗ còn trống sát mép đường
+      const FR = 1.55;
+      L.frontLots = [];
+      for (const S of L.roadNet) {
+        if (S.kind === 'track' || S.kind === 'field' || S.kind === 'trail' || S.kind === 'switch' || (S.w === 2 && S.kind !== 'boardwalk')) continue;
+        const dx = S.b.x - S.a.x, dz = S.b.y - S.a.y, len = Math.hypot(dx, dz);
+        if (len < 2.6) continue;
+        const ux = dx / len, uz = dz / len, nx = -uz, nz = ux, off = HW[S.w] + 0.35 + FR;
+        for (let d = 1.5; d < len - 1.0; d += 3.2) for (const side of [-1, 1]) {
+          const x = S.a.x + ux * d + nx * off * side, z = S.a.y + uz * d + nz * off * side;
+          if (Math.hypot(x, z) < 8.4 || !L.inside(x, z, 1.4) || (wildAt(x, z) && S.kind !== 'caravan')) continue;
+          if (L.blocked(x, z, FR) || taken.some((t) => (t.x - x) ** 2 + (t.z - z) ** 2 < (t.r + FR - 0.15) ** 2)) continue;
+          if (L.frontLots.some((f) => (f.p.x - x) ** 2 + (f.p.z - z) ** 2 < (2 * FR - 0.05) ** 2)) continue;
+          L.frontLots.push({ p: new THREE.Vector3(x, 0, z), ry: Math.atan2(-nx * side, -nz * side), r: FR, d: Math.hypot(x, z), kind: S.kind });
+        }
+      }
+      // cây, công trình kỳ lạ không mọc đè lên nhà phố
+      const blocked0 = L.blocked;
+      L.blocked = (x, z, r) => blocked0(x, z, r) || L.frontLots.some((f) => (f.p.x - x) ** 2 + (f.p.z - z) ** 2 < (f.r + r) ** 2);
       L.farmOwner = L.farmLots.map(() => null); L.shopOwner = L.shopLots.map(() => null);
     }
 
@@ -1606,7 +1637,8 @@
       L.glows = []; L.lamps = []; L.fires = L.fires.filter((f) => f.owner !== 'civic');
       // quảng trường và đường đến hai cây cầu
       const k = new Kit(), pc = PLAZA_C[eb];
-      k.cyl(pc, 0, 0.03, 0, 6.9, 0.1, 28); k.cyl(e >= 3 ? '#c0b292' : pc, 0, 0.05, 0, 5.4, 0.1, 28);
+      k.cyl(pc, 0, 0.03, 0, 6.9, 0.1, 28); k.cyl(eb === 11 ? '#3a2f5a' : e >= 3 ? '#c0b292' : pc, 0, 0.05, 0, 5.4, 0.1, 28);
+      if (eb === 11) for (let s = 0; s < 3; s++) k.add(TORUS(), ['#2ef2ff', '#ff3ec8', '#ffe14a'][s], 0, 0.14, 0, 6.9 - s * 0.75, 6.9 - s * 0.75, 6.9 - s * 0.75, 0, Math.PI / 2, 0, 'glow'); // quảng trường neon
       drawRoads(L, k, eb, e);
       // lối nhỏ tới ngân hàng và trường
       for (const p of [L.bankPos, L.schoolPos]) { const len = p.length() - 6.0, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.0 + len / 2 - 1.3); k.box(ROAD[eb], m.x, 0.025, m.z, 1.5, 0.08, len - 2.6, a); }
@@ -1692,6 +1724,92 @@
       s.scale.set(size || 2.2, size || 2.2, 1); s.position.set(pos[0], pos[1], pos[2]); parent.add(s);
       L.fires.push({ s, owner, base: size || 2.2, ph: Math.random() * 6 });
       return s;
+    }
+
+    /* =============== Nhà phố: dãy nhà, cửa hàng dọc hai bên đường =============== */
+    // Thành phố không chỉ có nhà của các gia đình trong sổ kinh tế: dọc hai bên đường lớn, đường phố là dãy nhà phố,
+    // cửa hàng, quán, theo đúng kiến trúc riêng của đảo và thời đại. Dãy nhà mọc dần từ quảng trường ra theo dân số
+    // và thời đại; lô nào có gia đình dọn đến thì nhà của gia đình đó dựng lên thay chỗ. Mỗi kiểu nhà vẽ một lượt (instancing).
+    const FRONT_KINDS = 7; // ba kiểu nhà, hai kiểu cửa hàng, hội quán thương nhân, nhà hội đồng
+    const _fm = new THREE.Matrix4(), _fq = new THREE.Quaternion(), _fs = new THREE.Vector3(), _fp = new THREE.Vector3(), _fy = new THREE.Vector3(0, 1, 0);
+    function frontSlots(L) {
+      // mọi chỗ có thể dựng nhà phố: lô nhà (chưa có gia đình) gần đường trước, rồi những chỗ sát mép đường
+      if (L.fSlots) return L.fSlots;
+      const out = [];
+      const civic = (i, base) => (i % 9 === 4 ? 5 : i % 9 === 8 ? 6 : base);
+      L.houseLots.forEach((lot, i) => { const rd = L.roadDist(lot.p.x, lot.p.z), kd = rd < 2.6 && i > 6 ? civic(i, i % 3) : i % 3; out.push({ p: lot.p, ry: Math.atan2(-lot.p.x, -lot.p.z) + (kd < 5 ? (hash(i * 7 + L.i) - 0.5) * 0.5 : 0), house: i, pri: Math.hypot(lot.p.x, lot.p.z) * 0.6 + rd * 2.2, kind: kd, sc: kd >= 5 ? 0.5 : 0.82 + hash(i * 3) * 0.12 }); });
+      L.frontLots.forEach((f, i) => { const kd = civic(i + L.i, (i * 7 + L.i) % 5 < 2 ? 3 + (i % 2) : i % 3); out.push({ p: f.p, ry: f.ry, house: -1, pri: f.d * 0.6 + 1.5, kind: kd, sc: kd >= 5 ? 0.5 : 0.8 + hash(i * 5 + 1) * 0.1 }); });
+      out.sort((a, b) => a.pri - b.pri);
+      out.forEach((q, i) => { q.idx = i; q.on = false; q.born = 0; });
+      return (L.fSlots = out);
+    }
+    function buildFrontKinds(L, e) {
+      if (L.front) for (const m of L.front.meshes) { L.g.remove(m); m.geometry.dispose(); }
+      const cap = new Array(FRONT_KINDS).fill(0);
+      for (const q of frontSlots(L)) cap[q.kind]++;
+      L.front = { e, meshes: [], byKind: [], dirty: true };
+      for (let kd = 0; kd < FRONT_KINDS; kd++) {
+        const k = new Kit(), v = [0.13, 0.52, 0.86, 0.3, 0.72, 0.4, 0.6][kd], e7 = Math.min(7, e);
+        if (kd < 3) buildHouse(k, e7, L.ter, v, kd + 1);
+        else if (kd < 5) { buildShop(k, e7, L.ter, v); motif(k, L.ter, e); }
+        else if (kd === 5) { buildBank(k, e7, L.ter); motif(k, L.ter, e); }
+        else { buildSchool(k, e7, L.ter); motif(k, L.ter, e); }
+        if (e >= 8) beyondKit(k, e, 900 + L.i * 10 + kd);
+        let { body, lit, glow } = k.bake();
+        if (lit) { body = joinLit(body, lit); lit = null; }
+        const list = [];
+        const n = Math.max(1, cap[kd]);
+        if (body) { const m = new THREE.InstancedMesh(body, body.attributes.aLit ? mergedMat(L.litMat, false) : bodyMat, n); m.castShadow = true; m.receiveShadow = true; m.count = 0; m.raycast = () => {}; L.g.add(m); list.push(m); L.front.meshes.push(m); }
+        if (glow) { const m = new THREE.InstancedMesh(glow, glowMat, n); m.count = 0; m.raycast = () => {}; L.g.add(m); list.push(m); L.front.meshes.push(m); }
+        L.front.byKind.push(list);
+      }
+    }
+    function frontTarget(c) { const w = c.w; return w ? Math.round(14 + w.households.length * 0.8 + c.era * 6) : 0; }
+    function syncFront(L, c, animate) {
+      if (!c.settled || L.era < 0) return;
+      if (!L.front || L.front.e !== L.era) buildFrontKinds(L, L.era);
+      const slots = frontSlots(L), used = L.houses.length, want = frontTarget(c), now = performance.now();
+      let n = 0, changed = L.front.dirty;
+      for (const q of slots) {
+        const on = n < want && !(q.house >= 0 && q.house < used); // lô đã có nhà của một gia đình thì nhường
+        if (on) n++;
+        if (on !== q.on) {
+          changed = true; q.on = on;
+          if (on) { q.born = animate ? now : 0; clearTrees(L, q.p.x, q.p.z, 2.1); if (animate && !reduce && hash(q.idx) < 0.5) dust(L, q.p); }
+        }
+      }
+      if (!changed) return;
+      L.front.dirty = false;
+      // xếp lại các bản sao theo kiểu nhà
+      const counts = new Array(FRONT_KINDS).fill(0);
+      for (const q of slots) {
+        if (!q.on) continue;
+        const i = counts[q.kind]++; q.ii = i;
+        frontMatrix(q, q.born ? Math.min(1, (now - q.born) / 1600) : 1);
+        for (const m of L.front.byKind[q.kind]) m.setMatrixAt(i, _fm);
+      }
+      L.front.byKind.forEach((list, kd) => { for (const m of list) { m.count = counts[kd]; m.instanceMatrix.needsUpdate = true; } });
+      L.front.growing = slots.filter((q) => q.on && q.born && now - q.born < 1600);
+    }
+    function frontMatrix(q, g) {
+      const e = 1 - Math.pow(1 - g, 3);
+      _fq.setFromAxisAngle(_fy, q.ry); _fs.set(q.sc, q.sc * Math.max(0.02, e), q.sc); _fp.copy(q.p);
+      _fm.compose(_fp, _fq, _fs);
+    }
+    function animateFront(L, now) {
+      const G = L.front && L.front.growing; if (!G || !G.length) return;
+      for (let i = G.length - 1; i >= 0; i--) {
+        const q = G[i]; if (!q.on) { G.splice(i, 1); continue; }
+        const g = Math.min(1, (now - q.born) / 1600); frontMatrix(q, g);
+        for (const m of L.front.byKind[q.kind]) { m.setMatrixAt(q.ii, _fm); m.instanceMatrix.needsUpdate = true; }
+        if (g >= 1) G.splice(i, 1);
+      }
+    }
+    function clearFront(L) {
+      if (!L.front) return;
+      for (const m of L.front.meshes) { L.g.remove(m); m.geometry.dispose(); }
+      L.front = null;
+      if (L.fSlots) for (const q of L.fSlots) q.on = false;
     }
 
     /* =============== Nhà, ruộng, xưởng =============== */
@@ -2025,6 +2143,7 @@
       for (const key of Object.keys(L.civic)) { const o = L.civic[key]; if (o) { L.g.remove(o); unclickable(o); disposeGroup(o); } delete L.civic[key]; }
       for (const s of L.glows) L.g.remove(s);
       L.glows = []; L.lamps = []; L.fires = []; L.queue = [];
+      clearFront(L);
       for (const key of ['lampPts', 'lampPool']) if (L[key]) { L.g.remove(L[key]); L[key].geometry.dispose(); L[key].material.dispose(); L[key] = null; }
       L.era = -1; L.shown = false; L.shirtEra = -2; L.lastTod = null; // lịch đi lại lập lại khi có người mới
       if (L.crowd) { crowdBegin(L.crowd); crowdEnd(L.crowd); }
@@ -2058,6 +2177,7 @@
         else if (c.era !== L.era) setEra(L, c.era, animate);
         syncHouses(L, c.w, animate);
         syncFirms(L, c.w, animate);
+        syncFront(L, c, animate);
       }
       for (const B of bridges) { if (B.sim.era !== B.era) buildBridge(B, B.sim.era); syncScaffold(B); }
       // đoàn hàng: mỗi chuyến buôn qua cầu trong ngày là một xe (tàu buôn trên biển do lớp biển vẽ)
@@ -2235,6 +2355,7 @@
       const now = performance.now(), spin = reduce ? 0 : dt * 0.001;
       for (const L of lands) {
         runQueue(L, dt);
+        animateFront(L, now);
         for (const H of L.houses) if (H.grow < 1) { H.grow = Math.min(1, H.grow + dt / 1600); H.g.scale.y = 1 - Math.pow(1 - H.grow, 3); }
         for (const [id, o] of L.firmObj) {
           if (o.grow < 1 && !o.dying) { o.grow = Math.min(1, o.grow + dt / 1800); o.g.scale.y = 1 - Math.pow(1 - o.grow, 3); }
