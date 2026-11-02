@@ -67,7 +67,8 @@ def build_index(ver):
         html = html.replace(a, b)
     html, n = FONT_LINKS.subn('', html)
     assert n == 1, 'không thấy liên kết phông chữ'
-    assert 'https://' not in re.sub(r'<!--.*?-->', '', re.sub(r'(?s)<style>.*?</style>', '', html)).split('<script>')[0].replace('https://openfontlicense.org', ''), 'còn tài nguyên từ mạng'
+    remote = re.findall(r'<(?:script[^>]*\ssrc|link[^>]*\shref|img[^>]*\ssrc)="(https?://[^"]+)"', html)
+    assert not remote, 'còn tài nguyên tải từ mạng: %s' % remote
     scripts = re.findall(r'<script src="([^":]+\.js)"></script>', html)
     return head(ver) + html + '\n</html>\n', scripts
 
