@@ -907,7 +907,36 @@ test('ván chín năm: sáu bộ lạc đến trong nửa năm đầu, năm năm
   const regions = new Set([...weakest].map((x) => x.split(':')[1]));
   assert.ok(regions.size >= 4, 'mỗi lúc một trụ cột khác níu chân các thành (' + [...regions].join(', ') + ')');
   assert.ok(W.stories.some((s) => s.type === 'war' && s.day > 1800), 'vẫn có chiến tranh ở các thời vượt người');
+  // kịch bản hỗn loạn: năm nào đảo nào cũng có tai hoạ, không lặp trong cùng một năm, càng về sau càng nhiều
+  const log = W.chaos.log, per = {};
+  for (const x of log) (per[x.city + ':' + x.year] = per[x.city + ':' + x.year] || []).push(x.key);
+  for (let y = 1; y < 9; y++) for (const c of W.cities) { const ks = per[c.id + ':' + y] || []; assert.ok(ks.length >= 1, c.name + ' năm ' + (y + 1) + ' có tai hoạ'); assert.equal(new Set(ks).size, ks.length, c.name + ' năm ' + (y + 1) + ' không gặp lại kịch bản đã gặp'); }
+  assert.ok(new Set(log.map((x) => x.key)).size >= 30, 'nhiều kịch bản khác nhau trong một ván');
+  const yearN = (y) => log.filter((x) => x.year === y).length;
+  assert.ok(yearN(7) + yearN(8) > yearN(1) + yearN(2), 'càng về sau càng hỗn loạn');
+  assert.ok(W.stories.some((s) => s.type === 'air-battle'), 'có không chiến từ thời hiện đại');
+  assert.ok(W.stories.some((s) => s.type === 'portal-assault'), 'có đổ quân qua cổng không gian');
   assert.ok(ledgerOk(W));
+});
+
+test('bốn mươi bốn kịch bản hỗn loạn: kịch bản nào cũng gây hại, chạy được ở đúng thời của nó, sổ cái vẫn khớp', () => {
+  assert.ok(Sim.CHAOS.length >= 36);
+  assert.equal(new Set(Sim.CHAOS.map((x) => x.key)).size, Sim.CHAOS.length);
+  const W = Sim.createWorld({ seed: 5, mode: 'god', war: true });
+  for (let d = 0; d < 260; d++) Sim.stepWorld(W);
+  for (const S of Sim.CHAOS) {
+    const i = Sim.CHAOS.indexOf(S) % 6, c = W.cities[i];
+    if (!c.settled) continue;
+    while (c.era < S.era[0]) Sim.advanceEra(W, i);
+    const cash0 = c.w.gov.cash, dmg0 = (c.dmg || []).length, sick0 = c.w.households.filter((h) => h.sick > 0).length, hp0 = c.hp, day = W.day, fear0 = c.w.households.filter((h) => h.fear > 0).length;
+    const text = Sim.chaosRun(W, S.key, i);
+    assert.ok(text && text.length > 10, S.key);
+    const harm = c.w.gov.cash < cash0 || (c.dmg || []).length > dmg0 || c.w.households.filter((h) => h.sick > 0).length > sick0 || c.hp < hp0 || (c.mods || []).some((m) => m.from === day && m.food < 1) || (c.gmods || []).some((m) => m.from === day && m.m < 1) || c.w.households.filter((h) => h.fear > 0).length > fear0 || c.w.epi.state !== 'none' || c.w.firms.some((f) => f.downUntil > W.day);
+    assert.ok(harm, S.key + ' có gây hại');
+    assert.ok(W.stories.some((st) => st.type === 'chaos' && st.chaos === S.key), S.key + ' có câu chuyện');
+    Sim.stepWorld(W);
+    assert.ok(ledgerOk(W), S.key + ' giữ sổ cái');
+  }
 });
 
 /* ===================== Sáu trụ cột, dấu vết chiến tranh, săn bắt ===================== */

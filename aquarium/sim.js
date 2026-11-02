@@ -1357,6 +1357,7 @@
     seaInit(W);
     warInit(W, war, god ? -1 : opts.player == null ? (war ? 0 : -1) : opts.player);
     godInit(W);
+    chaosInit(W);
     return W;
   }
   function wstory(W, type, tier, title, text, place, extra) {
@@ -1498,6 +1499,8 @@
   function stepWorld(W) {
     W.day++;
     W.trade = []; W.hunts = [];
+    if (!W.chaos) chaosInit(W);
+    W.chaos.fx = [];
     for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : W.cfg.pace ? Math.max(3, Math.round(c.terrain.settle * W.cfg.pace.settleScale)) : c.terrain.settle)) settle(W, c.id);
     seaDay(W);
     for (const c of W.cities) {
@@ -1517,6 +1520,8 @@
     warDay(W);
     if (W.war.on) battleTrack(W);
     godDay(W);
+    if (W.war.on) skyWarDay(W);
+    chaosDay(W);
     pillarsDay(W); damageDay(W); huntDay(W);
     if (W.cfg.pace) { paceDay(W); revoltDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ chín khép lại', 'Bể kính đã đi hết mười hai thời đại.', null, {}); } }
     else if (!W.war.on) {
@@ -2287,7 +2292,7 @@
       w.cfg.govKeep = X.on ? 320 * COST_E[c.era] + 12 * n : 300 + 10 * n;
       w.cfg.inventRate = W.cfg.inventRate * (hasB(c, 'academy') ? 1.6 : 1);
       w.boost.food = (hasB(c, 'granary') ? 1.15 : 1) * (c.fallout > 0 ? 0.4 : 1) * foodMods(c, W.day);
-      w.boost.goods = hasB(c, 'forge') ? 1.06 : 1;
+      w.boost.goods = (hasB(c, 'forge') ? 1.06 : 1) * goodsMods(c, W.day);
       if (c.fallout > 0) c.fallout--;
       buildDay(W, c);
       if (X.on) { trainDay(W, c); upkeepDay(W, c); }
@@ -2676,6 +2681,169 @@
     }
   }
 
+
+  /* =============== Kịch bản hỗn loạn: mỗi năm, mỗi đảo những tai hoạ ngẫu nhiên =============== */
+  // Bốn mươi hai kịch bản, kịch bản nào cũng có nguy hiểm. Đầu mỗi năm, mỗi đảo có người được bốc ngẫu nhiên một số kịch bản
+  // hợp với miền và thời đại của nó (thời càng về sau càng nhiều), rải vào những ngày ngẫu nhiên trong năm. Trong cùng một năm,
+  // một đảo không bao giờ gặp lại kịch bản nó đã gặp. Mọi thứ theo hạt giống ngẫu nhiên của ván, mỗi ván một khác.
+  const goodsMods = (c, day) => (c.gmods || []).reduce((m, x) => (x.from <= day && x.until > day ? m * x.m : m), 1);
+  const CX = {
+    fire(W, c, n, ruin) {
+      let k = 0;
+      for (let i = 0; i < 16 && k < n; i++) {
+        const [kind, ref] = siegeTarget(W, c), d = ignite(W, c, kind, ref, 'chaos');
+        if (!d) continue;
+        k++;
+        if (W.rand() < (ruin || 0)) {
+          d.state = 'ruin'; d.until = W.day + 18 + Math.floor(W.rand() * 18);
+          if (kind === 'firm') { const f = c.w.firms.find((x) => x.id === ref); if (f) f.downUntil = Math.max(f.downUntil || 0, d.until); }
+          if (kind === 'land') pillarNudge(c, ref, -0.25);
+        }
+      }
+      return k;
+    },
+    hurt: (W, c, share, days) => injure(W, c, share, days),
+    fear(W, c, share, days) { let n = 0; for (const h of c.w.households) if (W.rand() < share && scare(c.w, h, days)) n++; return n; },
+    food(W, c, m, days) { addMod(c, m, W.day, W.day + days); },
+    goods(W, c, m, days) { c.gmods = (c.gmods || []).filter((x) => x.until > W.day); c.gmods.push({ m, from: W.day, until: W.day + days }); },
+    down: (W, c, share, days, loss) => hitFirms(W, c, share, days, loss == null ? 0.3 : loss).length,
+    farms(W, c, share, days, loss) { let n = 0; for (const f of c.w.firms) if (f.alive && f.sector === 'food' && !f.sea && W.rand() < share) { f.downUntil = Math.max(f.downUntil || 0, W.day + days); f.inv *= 1 - (loss || 0.4); n++; } return n; },
+    port(W, c, days) { const f = fisheryOf(c); if (f) { f.downUntil = Math.max(f.downUntil || 0, W.day + days); f.inv *= 0.5; } },
+    cash(W, c, frac) { const w = c.w, amt = Math.max(0, w.gov.cash) * frac; w.gov.cash -= amt; w.ledger.destroyed += amt; return Math.round(amt); },
+    loot(W, c, frac) { let n = 0; for (const f of c.w.firms) if (f.alive && f.sector === 'goods') { n += f.inv * frac; f.inv *= 1 - frac; } return Math.round(n); },
+    pil: (c, k, amt) => pillarNudge(c, k, amt),
+    sea(W, c, frac) { const z = W.sea.stock[c.id]; if (z) for (let s = 0; s < z.length; s++) z[s] *= 1 - frac; },
+    hp(W, c, frac) { if (c.hpMax) { c.hp = Math.max(1, c.hp - c.hpMax * frac); c.lastHit = W.day; } },
+    units: (W, c, frac) => hitUnits(W, c.id, frac),
+    epi: (W, c, n, why) => startEpidemic(c.w, n, why),
+    close(W, c, days) { hitBridges(W, c.id, -1, days); },
+    faith: (W, c, k) => faithShift(W, c, k),
+    game(c, frac) { if (c.game) c.game.stock *= 1 - frac; },
+  };
+  const ANY = null;
+  // mỗi kịch bản: khoá, tên, khoảng thời đại, miền (null là mọi miền), hình ảnh, và hậu quả trong nền kinh tế
+  const CHAOS = [
+    { key: 'meteor', name: 'Mưa sao băng', era: [0, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.35); CX.hurt(W, c, 0.04, 6); CX.fear(W, c, 0.3, 8); return 'Đá trời rơi như mưa xuống ' + c.name + ', ' + n + ' nơi bốc cháy.'; } },
+    { key: 'impact', name: 'Thiên thạch lớn', era: [1, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 3, 0.7); CX.pil(c, 'eco', -0.15); CX.hp(W, c, 0.08); CX.fear(W, c, 0.5, 15); return 'Một khối đá trời lao xuống, để lại hố sâu giữa đồng. ' + n + ' nơi cháy sập, kinh tế chững lại.'; } },
+    { key: 'kraken', name: 'Quái vật biển', era: [0, 11], ter: ANY, act: (W, c) => { CX.port(W, c, 20); CX.sea(W, c, 0.2); CX.units(W, c, 0.12); CX.fear(W, c, 0.3, 10); return 'Xúc tu khổng lồ trồi lên trước bến ' + c.name + ', kéo thuyền xuống đáy. Bến cá đóng cửa hai mươi ngày.'; } },
+    { key: 'eclipse', name: 'Nhật thực giữa trưa', era: [0, 11], ter: ANY, act: (W, c) => { CX.fear(W, c, 0.6, 10); CX.goods(W, c, 0.7, 6); CX.faith(W, c, 0.2); return 'Trời tối sầm giữa trưa. Người ' + c.name + ' bỏ việc, đóng cửa cầu khấn.'; } },
+    { key: 'stampede', name: 'Đàn khủng long chạy loạn', era: [0, 1], ter: ANY, act: (W, c) => { const n = CX.farms(W, c, 0.6, 10, 0.4); CX.fire(W, c, 1, 1); CX.hurt(W, c, 0.05, 8); return 'Một đàn ' + GAME[c.terrain.key][0] + ' hoảng loạn băng qua ' + c.name + ', giẫm nát ' + n + ' ruộng và một dãy lều.'; } },
+    { key: 'pteros', name: 'Thằn lằn bay tấn công', era: [0, 1], ter: ['mountain', 'coast', 'desert', 'plains'], act: (W, c) => { CX.hurt(W, c, 0.06, 8); CX.fear(W, c, 0.4, 8); CX.game(c, 0.2); return 'Bầy thằn lằn bay sà xuống ' + c.name + ', cắp đi gia súc, người bị thương.'; } },
+    { key: 'predators', name: 'Bầy thú dữ tràn vào làng', era: [0, 3], ter: ANY, act: (W, c) => { CX.hurt(W, c, 0.05, 10); CX.fear(W, c, 0.4, 10); CX.food(W, c, 0.85, 20); return 'Một bầy thú dữ từ bãi săn tràn vào ' + c.name + ' lúc nửa đêm, cắn chết gia súc.'; } },
+    { key: 'wildfire', name: 'Cháy rừng', era: [0, 7], ter: ['forest', 'plains', 'mountain', 'coast'], act: (W, c) => { const n = CX.fire(W, c, 2, 0.5); CX.pil(c, 'hea', -0.08); CX.game(c, 0.3); return 'Lửa bén từ bãi săn, cháy lan qua rừng vào tới rìa ' + c.name + '. ' + n + ' nơi bốc cháy.'; } },
+    { key: 'sandstorm', name: 'Bão cát', era: [0, 11], ter: ['desert', 'plains'], act: (W, c) => { CX.goods(W, c, 0.6, 10); CX.food(W, c, 0.75, 10); CX.hurt(W, c, 0.05, 6); CX.close(W, c, 8); return 'Bão cát vùi ' + c.name + ' trong mười ngày, đường qua cầu bị lấp, xưởng phải đóng cửa.'; } },
+    { key: 'avalanche', name: 'Tuyết lở', era: [0, 11], ter: ['mountain', 'tundra'], act: (W, c) => { const n = CX.fire(W, c, 2, 1); CX.hurt(W, c, 0.05, 10); return 'Tuyết từ đỉnh núi đổ ập xuống ' + c.name + ', vùi sập ' + n + ' nơi.'; } },
+    { key: 'sinkhole', name: 'Hố tử thần', era: [1, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 1, 1); CX.fear(W, c, 0.4, 10); CX.pil(c, 'tra', -0.08); return 'Mặt đất ' + c.name + ' sụt xuống thành một hố đen, nuốt ' + (n ? 'trọn một công trình' : 'một khúc đường') + '.'; } },
+    { key: 'locusts', name: 'Châu chấu', era: [0, 6], ter: ['plains', 'desert', 'forest'], act: (W, c) => { CX.food(W, c, 0.55, 45); return 'Mây châu chấu đen kịt kéo qua ruộng ' + c.name + '. Lúa chỉ còn non nửa trong một mùa.'; } },
+    { key: 'flashflood', name: 'Lũ quét', era: [0, 11], ter: ['plains', 'forest', 'mountain'], act: (W, c) => { const n = CX.farms(W, c, 0.5, 14, 0.45); CX.close(W, c, 6); CX.hurt(W, c, 0.03, 6); return 'Sông ở ' + c.name + ' dâng lên trong một đêm, cuốn trôi ' + n + ' ruộng, cầu phải đóng.'; } },
+    { key: 'frost', name: 'Rét đậm rét hại', era: [0, 11], ter: ['tundra', 'mountain', 'forest'], act: (W, c) => { CX.food(W, c, 0.7, 30); CX.hurt(W, c, 0.08, 10); CX.sea(W, c, 0.1); return 'Một đợt rét chưa từng có phủ trắng ' + c.name + ', biển trước bến đóng băng, người già đổ bệnh.'; } },
+    { key: 'miasma', name: 'Sương độc', era: [0, 5], ter: ANY, act: (W, c) => { CX.epi(W, c, 3, 'Một màn sương xanh từ đầm lầy trôi vào thành.'); CX.pil(c, 'hea', -0.1); return 'Sương xanh từ đầm lầy trôi vào ' + c.name + ', ai hít phải đều lên cơn sốt.'; } },
+    { key: 'heat', name: 'Nắng nóng kỷ lục', era: [0, 11], ter: ANY, act: (W, c) => { CX.food(W, c, 0.75, 30); CX.hurt(W, c, 0.04, 6); const n = CX.fire(W, c, 1, 0.3); return 'Mặt trời thiêu đốt ' + c.name + ' một tháng liền, ruộng nứt nẻ' + (n ? ', một kho khô tự bốc cháy.' : '.'); } },
+    { key: 'plague', name: 'Dịch bệnh lạ', era: [0, 11], ter: ANY, act: (W, c) => { CX.epi(W, c, 4, 'Không ai biết cơn sốt này từ đâu tới.'); CX.pil(c, 'hea', -0.08); return 'Một cơn sốt lạ bùng lên ở ' + c.name + '.'; } },
+    { key: 'riot', name: 'Bạo loạn', era: [1, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.3); const m = CX.cash(W, c, 0.15); CX.fear(W, c, 0.4, 12); CX.pil(c, 'rel', -0.1); return 'Dân ' + c.name + ' xuống đường cầm đuốc, ' + n + ' nơi bốc cháy, kho bạc mất ' + m + ' xu.'; } },
+    { key: 'pirates', name: 'Cướp biển', era: [1, 5], ter: ANY, act: (W, c) => { CX.port(W, c, 15); const g = CX.loot(W, c, 0.3); CX.fire(W, c, 1, 0.5); const m = CX.cash(W, c, 0.1); return 'Thuyền buồm đen ập vào bến ' + c.name + ', cướp ' + g + ' món hàng và ' + m + ' xu rồi châm lửa.'; } },
+    { key: 'ghostship', name: 'Thuyền ma', era: [1, 11], ter: ANY, act: (W, c) => { CX.epi(W, c, 2, 'Con thuyền không người trôi vào bến mang theo một cơn sốt.'); CX.fear(W, c, 0.5, 15); return 'Một con thuyền không người trôi vào bến ' + c.name + ' lúc rạng sáng, chở hàng của một thời đã qua.'; } },
+    { key: 'greatfire', name: 'Đại hoả hoạn', era: [2, 5], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 4, 0.5); return 'Một ngọn lửa từ lò bánh mì lan khắp phố ' + c.name + ', ' + n + ' nơi chìm trong lửa.'; } },
+    { key: 'assassin', name: 'Ám sát', era: [1, 11], ter: ANY, act: (W, c) => { CX.pil(c, 'mil', -0.15); CX.pil(c, 'rel', -0.1); const m = CX.cash(W, c, 0.2); CX.fear(W, c, 0.3, 10); return 'Người đứng đầu ' + c.name + ' bị ám sát giữa quảng trường. Kho bạc hỗn loạn, mất ' + m + ' xu.'; } },
+    { key: 'mold', name: 'Nấm mốc kho lương', era: [0, 11], ter: ANY, act: (W, c) => { for (const f of c.w.firms) if (f.alive && f.sector === 'food') f.inv *= 0.3; CX.food(W, c, 0.85, 20); return 'Nấm mốc lan trong mọi kho lương của ' + c.name + ', bảy phần mười lúa phải đổ đi.'; } },
+    { key: 'redtide', name: 'Thủy triều đỏ', era: [2, 11], ter: ANY, act: (W, c) => { CX.sea(W, c, 0.35); CX.hurt(W, c, 0.03, 5); CX.port(W, c, 10); return 'Nước trước bến ' + c.name + ' đỏ như máu, cá chết trắng bờ.'; } },
+    { key: 'mine', name: 'Sập mỏ', era: [1, 7], ter: ['mountain', 'desert', 'tundra'], act: (W, c) => { CX.hurt(W, c, 0.06, 15); CX.pil(c, 'eco', -0.12); const n = CX.down(W, c, 0.2, 10); return 'Hầm mỏ ở ' + c.name + ' sập, thợ mỏ bị vùi, ' + n + ' xưởng thiếu quặng phải nghỉ.'; } },
+    { key: 'dam', name: 'Vỡ đập', era: [4, 8], ter: ['mountain', 'plains', 'forest'], act: (W, c) => { const n = CX.farms(W, c, 0.6, 15, 0.5); CX.fire(W, c, 2, 1); CX.close(W, c, 10); return 'Đập nước trên ' + c.name + ' vỡ, nước cuốn trôi ' + n + ' ruộng và hai dãy nhà.'; } },
+    { key: 'blast', name: 'Nổ nhà máy', era: [4, 8], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.8); CX.hurt(W, c, 0.06, 12); CX.pil(c, 'hea', -0.08); return 'Một tiếng nổ làm rung cả ' + c.name + ', ' + n + ' nơi đổ sập trong lửa.'; } },
+    { key: 'smog', name: 'Khói độc công nghiệp', era: [4, 7], ter: ANY, act: (W, c) => { CX.hurt(W, c, 0.08, 12); CX.pil(c, 'hea', -0.12); return 'Một màn khói nâu đặc quánh trùm lên ' + c.name + ' suốt nửa tháng, bệnh viện quá tải.'; } },
+    { key: 'crash', name: 'Sụp đổ ngân hàng', era: [3, 9], ter: ANY, act: (W, c) => { const m = CX.cash(W, c, 0.3); CX.fear(W, c, 0.5, 20); CX.goods(W, c, 0.8, 20); return 'Ngân hàng lớn nhất ' + c.name + ' sụp đổ trong một đêm, kho bạc mất ' + m + ' xu.'; } },
+    { key: 'blackout', name: 'Cúp điện toàn thành', era: [5, 9], ter: ANY, act: (W, c) => { CX.goods(W, c, 0.55, 6); CX.fear(W, c, 0.3, 6); return 'Cả ' + c.name + ' chìm trong bóng tối sáu ngày, nhà máy đứng im.'; } },
+    { key: 'airraid', name: 'Phi đội lạ ném bom', era: [5, 9], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 3, 0.5); CX.hp(W, c, 0.06); CX.hurt(W, c, 0.04, 8); return 'Một phi đội không mang cờ bay qua ' + c.name + ' và trút bom, ' + n + ' nơi bốc cháy.'; } },
+    { key: 'meltdown', name: 'Rò rỉ phóng xạ', era: [6, 9], ter: ANY, act: (W, c) => { c.fallout = Math.max(c.fallout || 0, 40); CX.hurt(W, c, 0.08, 20); CX.pil(c, 'hea', -0.2); return 'Lò điện hạt nhân của ' + c.name + ' rò rỉ. Ruộng nhiễm xạ bốn mươi ngày.'; } },
+    { key: 'rocketcrash', name: 'Tên lửa rơi', era: [6, 9], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.7); CX.fear(W, c, 0.4, 10); return 'Một tên lửa vừa rời bệ phóng chao đảo rồi rơi xuống giữa ' + c.name + ', ' + n + ' nơi tan hoang.'; } },
+    { key: 'cyber', name: 'Tấn công mạng', era: [7, 11], ter: ANY, act: (W, c) => { CX.goods(W, c, 0.6, 8); const m = CX.cash(W, c, 0.12); CX.close(W, c, 5); CX.pil(c, 'tra', -0.12); return 'Mạng của ' + c.name + ' bị chiếm quyền, chợ đóng băng, ' + m + ' xu bốc hơi.'; } },
+    { key: 'robots', name: 'Robot nổi loạn', era: [7, 9], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.4); CX.units(W, c, 0.15); CX.hurt(W, c, 0.05, 10); CX.pil(c, 'mil', -0.1); return 'Robot của ' + c.name + ' quay lại đánh chủ, ' + n + ' nơi bốc cháy trước khi chúng bị tắt.'; } },
+    { key: 'drones', name: 'Bầy máy bay mất kiểm soát', era: [7, 10], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 0.4); CX.hurt(W, c, 0.03, 6); return 'Bầy máy bay chở hàng của ' + c.name + ' mất sóng, lao vào nhà như mưa đá. ' + n + ' nơi cháy.'; } },
+    { key: 'aurora', name: 'Bão từ', era: [5, 10], ter: ANY, act: (W, c) => { CX.goods(W, c, 0.7, 8); CX.pil(c, 'tra', -0.06); CX.fear(W, c, 0.2, 6); return 'Cực quang đỏ rực phủ trời ' + c.name + ', máy móc cháy mạch, đèn chập chờn.'; } },
+    { key: 'nano', name: 'Bầy nano mất kiểm soát', era: [8, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 1); CX.down(W, c, 0.2, 12); CX.game(c, 0.5); return 'Một đám mây hạt nano ăn trụi bãi săn rồi gặm vào ' + c.name + ', ' + n + ' công trình tan thành bụi.'; } },
+    { key: 'overgrowth', name: 'Vật chất sống mọc tràn', era: [8, 9], ter: ANY, act: (W, c) => { const n = CX.down(W, c, 0.3, 10); CX.goods(W, c, 0.75, 15); return 'Nhà ở ' + c.name + ' mọc mãi không ngừng, san hô trắng bịt kín đường phố, ' + n + ' xưởng bị vùi.'; } },
+    { key: 'flare', name: 'Mặt trời nhân tạo phun lửa', era: [9, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 3, 0.5); CX.hurt(W, c, 0.06, 10); CX.food(W, c, 0.8, 15); return 'Mặt trời trong vòm kính phun một dải lửa xuống ' + c.name + ', ' + n + ' nơi bốc cháy.'; } },
+    { key: 'rift', name: 'Vết nứt thời gian', era: [8, 11], ter: ANY, act: (W, c) => { const n = CX.down(W, c, 0.3, 15); CX.fear(W, c, 0.5, 15); CX.pil(c, PILLARS[Math.floor(W.rand() * 6)].key, -0.1); return 'Một khe nứt tím mở giữa ' + c.name + ', thành phố của ngày xưa hiện về. ' + n + ' xưởng lạc vào quá khứ.'; } },
+    { key: 'portal', name: 'Cổng không gian mất kiểm soát', era: [10, 11], ter: ANY, act: (W, c) => { const n = CX.fire(W, c, 2, 1); CX.hurt(W, c, 0.06, 10); CX.fear(W, c, 0.5, 10); return 'Một cánh cổng tự mở ở ' + c.name + ', hút mất ' + n + ' công trình, và những con khủng long từ thời xưa bước ra.'; } },
+    { key: 'gravity', name: 'Trọng lực đảo chiều', era: [10, 11], ter: ANY, act: (W, c) => { const n = CX.down(W, c, 0.3, 8); CX.hurt(W, c, 0.05, 8); return 'Trong một phút, mọi thứ ở ' + c.name + ' rơi lên trời rồi rơi xuống. ' + n + ' xưởng đổ vỡ.'; } },
+    { key: 'ascend', name: 'Thăng thiên sai', era: [11, 11], ter: ANY, act: (W, c) => { const m = CX.cash(W, c, 0.15); for (const P of PILLARS) CX.pil(c, P.key, -0.05); CX.hurt(W, c, 0.04, 10); return 'Một góc ' + c.name + ' hoá ánh sáng quá sớm, để lại những ngôi nhà trống và ' + m + ' xu tan biến.'; } },
+  ];
+  const CHAOS_BY = Object.fromEntries(CHAOS.map((x) => [x.key, x]));
+  function chaosInit(W) { W.chaos = { year: 0, plan: {}, used: {}, fx: [], log: [] }; }
+  // số kịch bản mỗi năm của một đảo: thời càng về sau càng nhiều
+  const chaosCount = (W, c) => 1 + Math.floor(W.rand() * 2) + (c.era >= 4 ? 1 : 0) + (c.era >= 8 ? 1 : 0);
+  function chaosPlan(W, c, from, to) {
+    const H = W.chaos, used = H.used[c.id] || (H.used[c.id] = []);
+    const pool = CHAOS.filter((x) => c.era >= x.era[0] && c.era <= x.era[1] && (!x.ter || x.ter.includes(c.terrain.key)) && !used.includes(x.key));
+    const want = Math.min(chaosCount(W, c), pool.length), span = to - from;
+    if (span < 12 || want < 1) return;
+    const days = [];
+    for (let t = 0; t < 60 && days.length < want; t++) { const d = from + Math.floor(W.rand() * span); if (days.every((x) => Math.abs(x - d) >= Math.min(20, span / (want + 1)))) days.push(d); }
+    days.sort((a, b) => a - b);
+    const plan = H.plan[c.id] || (H.plan[c.id] = []);
+    for (const d of days) { const pick = pool.splice(Math.floor(W.rand() * pool.length), 1)[0]; if (!pick) break; plan.push({ key: pick.key, day: d }); used.push(pick.key); }
+  }
+  function chaosDay(W) {
+    const H = W.chaos;
+    if (!H || !W.cfg.pace && !W.cfg.chaos) return;
+    const year = Math.floor((W.day - 1) / 360);
+    if (year !== H.year || !H.started) {
+      H.year = year; H.started = true; H.plan = {}; H.used = {};
+      for (const c of W.cities) if (c.settled) chaosPlan(W, c, W.day + 8, year * 360 + 357);
+    }
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (!H.plan[c.id] && c.founded >= 0 && W.day - c.founded >= 30) { H.plan[c.id] = []; chaosPlan(W, c, W.day + 5, year * 360 + 357); }
+      const plan = H.plan[c.id];
+      if (!plan) continue;
+      for (const it of plan) {
+        if (it.done || it.day !== W.day) continue;
+        it.done = true;
+        const S = CHAOS_BY[it.key];
+        // thời đại đã đổi kể từ đầu năm: nếu kịch bản không còn hợp thì vẫn diễn ra (tai hoạ không chờ ai)
+        const text = S.act(W, c);
+        H.fx.push({ key: it.key, city: c.id, day: W.day });
+        H.log.push({ key: it.key, city: c.id, day: W.day, year });
+        if (H.log.length > 600) H.log.shift();
+        wstory(W, 'chaos', 'major', S.name + ' ở ' + c.name, text, { kind: 'land', city: c.id }, { city: c.id, chaos: it.key });
+      }
+    }
+  }
+  /* ----- Chiến tranh trên trời và qua cổng không gian ----- */
+  const facEra = (W, f) => { let e = -1; for (const c of W.cities) if (c.settled && c.owner === f) e = Math.max(e, c.era); return e; };
+  function skyWarDay(W) {
+    const X = W.war;
+    for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
+      if (!X.factions[i].alive || !X.factions[j].alive || !atWarF(W, i, j)) continue;
+      const A = capitalOf(W, i), B = capitalOf(W, j);
+      if (!A || !B) continue;
+      const ea = facEra(W, i), eb = facEra(W, j);
+      if (ea >= 5 && eb >= 5 && W.rand() < 1 / 75) airBattle(W, A, B, ea, eb);
+      if (ea >= 10 && W.rand() < 1 / 120) portalAssault(W, A, B);
+      else if (eb >= 10 && W.rand() < 1 / 120) portalAssault(W, B, A);
+    }
+  }
+  function airBattle(W, A, B, ea, eb) {
+    const X = W.war, pa = STAT_E[ea] * (0.6 + W.rand() * 0.8) * (1 + 0.05 * armyOf(W, A)), pb = STAT_E[eb] * (0.6 + W.rand() * 0.8) * (1 + 0.05 * armyOf(W, B));
+    const [win, lose] = pa >= pb ? [A, B] : [B, A], lostL = 2 + Math.floor(W.rand() * 4), lostW = Math.floor(W.rand() * 3);
+    lose.casualties += lostL; win.casualties += lostW; win.kills += lostL; lose.kills += lostW;
+    let fires = 0;
+    for (let k = 0, n = 1 + Math.floor(W.rand() * 3); k < n; k++) { const [kind, ref] = siegeTarget(W, lose); if (ignite(W, lose, kind, ref, 'air')) fires++; }
+    CX.hp(W, lose, 0.05);
+    W.chaos.fx.push({ key: 'airwar', city: lose.id, from: win.id, win: win.owner, lose: lose.owner, day: W.day });
+    wstory(W, 'air-battle', 'major', 'Không chiến trên biển trong', 'Phi đội ' + X.factions[win.owner].name + ' thắng, ' + lostL + ' máy bay của ' + X.factions[lose.owner].name + ' rơi xuống biển.' + (fires ? ' Bom rơi xuống ' + lose.name + ', ' + fires + ' nơi bốc cháy.' : ''), { kind: 'land', city: lose.id }, { city: lose.id, from: win.id });
+  }
+  function portalAssault(W, att, def) {
+    const X = W.war;
+    def.hp -= def.hpMax * (0.12 + W.rand() * 0.08); def.lastHit = W.day; def.siegeHits = (def.siegeHits || 0) + 20;
+    hitUnits(W, def.id, 0.12, false);
+    let fires = 0;
+    for (let k = 0; k < 3; k++) { const [kind, ref] = siegeTarget(W, def); if (ignite(W, def, kind, ref, 'portal')) fires++; }
+    W.chaos.fx.push({ key: 'portalwar', city: def.id, from: att.id, by: att.owner, day: W.day });
+    wstory(W, 'portal-assault', 'epic', 'Quân ' + X.factions[att.owner].name + ' đổ vào giữa ' + def.name, 'Một cánh cổng không gian mở ngay trong thành, không cần qua cầu. Lính bước ra trong chớp tím, ' + fires + ' nơi bốc cháy.', { kind: 'land', city: def.id }, { city: def.id, from: att.id });
+    if (def.hp <= 0) { def.hp = 0; conquer(W, def, att.owner); }
+  }
+
   /* =============== Nhịp chín năm: mười hai thời đại trong một ván =============== */
   // Ván của vị thần dài đúng chín năm. Mỗi thành phố có một lộ trình đi qua mười hai thời đại tính từ ngày đặt chân;
   // tri thức và dân số được kéo dần về lộ trình (đi chậm thì học nhanh hơn, có thêm người tìm đến; đi nhanh thì chậm lại),
@@ -2775,6 +2943,8 @@
     POWERS, godOffer, godAct, FAITH_BASE, LAST,
     // sáu trụ cột, công trình riêng của miền, dấu vết chiến tranh, săn bắt
     PILLARS, PILLAR_NEED, PILLAR_KEY, PILLAR_WHY, LANDMARKS, BEYOND_TAG, landmarkName, pillarProgress, pillarsReady, weakestPillar, ignite, GAME, gameTier,
+    // kịch bản hỗn loạn mỗi năm, chiến tranh trên trời và qua cổng
+    CHAOS, chaosRun: (W, key, cid) => { const S = CHAOS_BY[key], c = W.cities[cid]; if (!S || !c || !c.settled) return null; const text = S.act(W, c); W.chaos.fx.push({ key, city: cid, day: W.day }); W.chaos.log.push({ key, city: cid, day: W.day, year: Math.floor((W.day - 1) / 360) }); wstory(W, 'chaos', 'major', S.name + ' ở ' + c.name, text, { kind: 'land', city: cid }, { city: cid, chaos: key }); return text; }, airBattle: (W, a, b) => airBattle(W, W.cities[a], W.cities[b], facEra(W, W.cities[a].owner), facEra(W, W.cities[b].owner)), portalAssault: (W, a, b) => portalAssault(W, W.cities[a], W.cities[b]),
     buildOffer, build, bridgeOffer, buildBridge, advanceOffer, advanceCity, unitOffer, train, unitStats, armyOf, armyCap, hasB, bName,
     lanesOf, laneOf, laneUnits, setStance, declareWar, offerPeace, acceptPeace, makePeace, powerOf, connected, nukeOffer, launchNuke, conquer, atWar, atWarF, capitalOf, blockadeOf,
     create, step, printMoney, grantTreasury, setPolicy, fund, openFirm: (w, sector, why) => openFirmAt(w, sector, why, true), addHouseholds, phenomena, trigger, SEASONS, totalMoney, expectedMoney, gini, DEFAULTS,
