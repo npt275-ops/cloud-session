@@ -179,6 +179,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 .row .pills span.low i em { background: #ffb36b; }
 .row .pills span.key b::after { content: ' ★'; color: var(--amber); }
 .row .pills span.low { opacity: 1; }
+.row small.chaos { grid-column: 1 / -1; color: #ffb3a8; margin-top: 4px; }
 .row .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
 .adv { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-dim); }
 .lands button.mine b { text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
@@ -490,6 +491,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="war3d.js"></script>
 <script src="landmarks3d.js"></script>
 <script src="fauna3d.js"></script>
+<script src="chaos3d.js"></script>
 <script src="god3d.js"></script>
 <script src="story3d.js"></script>
 <script>
@@ -692,6 +694,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W.cities.forEach((c, i) => { const p = pillars[i], on = c.settled && c.era >= 11; p.userData.flash = Math.max(0, (p.userData.flash || 0) - 0.004); p.visible = on || p.userData.flash > 0; p.material.opacity = (on ? 0.07 + 0.02 * Math.sin(now * 0.001 + i) : 0) + p.userData.flash * 0.45; });
   }
   const god3d = God3D.create({ THREE, scene, Sim, W, lands3d, war3d, glowTex, puff, label3d, reduce, audio, shake, dome: DOME, doRain, dayMs: () => 1000 / tps, shot: war3d.shotRaw });
+  // bốn mươi bốn kịch bản hỗn loạn mỗi năm, không chiến, đổ quân qua cổng
+  const chaos3d = Chaos3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, fauna, puff, reduce, glowTex, shake, audio, ripple, camera, setDim, factionColor });
   const lands = lands3d.lands;
   // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
   function keyPos(L, key) {
@@ -739,13 +743,15 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
     if (wx.drought > 0.001) { top.lerp(C('#c9b98f'), wx.drought * 0.3 * day); bot.lerp(C('#f2d39a'), wx.drought * 0.6 * day); }
     const M = moodNow();
+    // nhật thực và những cơn tối sầm của kịch bản hỗn loạn
+    if (chaosDim > 0.001) { top.multiplyScalar(1 - 0.8 * chaosDim); bot.multiplyScalar(1 - 0.8 * chaosDim); }
     if (M.k > 0.001) { top.lerp(M.top, M.k * (0.55 + 0.45 * day)); bot.lerp(M.bot, M.k * (0.55 + 0.45 * day)); sun.color.lerp(M.sunCol, M.k * 0.5); }
-    sun.intensity *= M.sun; hemi.intensity *= M.hemi;
+    sun.intensity *= M.sun * (1 - 0.9 * chaosDim); hemi.intensity *= M.hemi * (1 - 0.7 * chaosDim);
     cloudMat.color.copy(C('#ffffff').lerp(C('#8e98a2'), overcast * 0.8));
     skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
     skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);
     scene.fog.color.copy(bot);
-    starMat.opacity = Math.max(night * 0.9, M.stars);
+    starMat.opacity = Math.max(night * 0.9, M.stars, chaosDim * 0.8);
     const hours = tod * 24, hh = Math.floor(hours), mm = Math.floor((hours - hh) * 60 / 10) * 10;
     $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
     return { day, night };
@@ -761,7 +767,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   MOODS[9] = Object.assign({}, MOOD_N, { top: C('#2b3a78'), bot: C('#ffcf8a'), k: 0.6, sun: 0.78, hemi: 0.95, sunCol: C('#ffb36b'), stars: 0.1 });
   MOODS[10] = Object.assign({}, MOOD_N, { top: C('#140c34'), bot: C('#a87ac8'), k: 0.72, sun: 0.62, hemi: 0.88, sunCol: C('#d9c4ff'), stars: 0.45 });
   MOODS[11] = Object.assign({}, MOOD_N, { top: C('#03040d'), bot: C('#2a2350'), k: 0.86, sun: 0.38, hemi: 0.7, sunCol: C('#cfd8ff'), stars: 0.95 });
-  let moodEra = -1;
+  let moodEra = -1, chaosDim = 0;
+  function setDim(v) { chaosDim = Math.max(0, Math.min(1, v)); }
   const moodOut = { top: new THREE.Color(), bot: new THREE.Color(), sunCol: new THREE.Color(), k: 0, sun: 1, hemi: 1, stars: 0 };
   function moodNow() {
     const live = W.cities.filter((c) => c.settled), avg = live.length ? live.reduce((t, c) => t + c.era, 0) / live.length : 0;
@@ -1316,6 +1323,12 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const pr = Sim.pillarProgress(c), wk = Sim.weakestPillar(c), key = Sim.PILLAR_KEY[c.terrain.key];
     return '<div class="pills" title="Sáu trụ cột tới thời ' + ERAS[c.era + 1].name.toLowerCase() + ' · đang chờ ' + wk.name.toLowerCase() + '">' + Sim.PILLARS.map((P) => '<span class="' + (P.key === wk.key && wk.pct < 1 ? 'low ' : '') + (P.key === key ? 'key' : '') + '"><b>' + PILL_SHORT[P.key] + '</b><i><em style="width:' + Math.round(pr[P.key] * 100) + '%"></em></i></span>').join('') + '</div>';
   }
+  // những tai hoạ đã giáng xuống thành này trong năm nay
+  function chaosLine(c) {
+    if (!W.chaos) return '';
+    const y = Math.floor((W.day - 1) / 360), seen = W.chaos.log.filter((x) => x.city === c.id && x.year === y).map((x) => (Sim.CHAOS.find((k) => k.key === x.key) || {}).name).filter(Boolean);
+    return seen.length ? '<small class="chaos">Năm nay: ' + seen.join(', ') + '</small>' : '';
+  }
   const row = (title, small, act, extra) => '<div class="row"><b>' + title + '</b>' + (small ? '<small>' + small + '</small>' : '') + (extra || '') + (act ? '<div class="act">' + act + '</div>' : '') + '</div>';
   const laneName = (L) => (L.kind === 'bridge' ? 'cầu ' : 'eo biển ') + W.cities[L.a].name + ' – ' + W.cities[L.b].name;
   const UNIT_ORDER = ['melee', 'ranged', 'mounted', 'siege', 'ship', 'sub'];
@@ -1340,7 +1353,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
         const hp = warOn() ? '<div class="prog"><i style="width:' + Math.round((c.hp / c.hpMax) * 100) + '%;background:' + (c.hp / c.hpMax > 0.5 ? '#7bd389' : '#ef6f6c') + '"></i></div>' : '';
         h += row('<span class="dot" style="background:' + (warOn() ? factionColor(c.owner) : TER_DOT[c.terrain.key]) + '"></span>' + c.name + (warOn() && c.owner !== c.id ? ' · cờ ' + X.factions[c.owner].name : ''),
           'Thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ' + (c.era < Sim.LAST && c.pil ? ' · chờ ' + Sim.weakestPillar(c).name.toLowerCase() : '') + (warOn() ? ' · ' + army + ' quân' : '') + (foes.length ? ' · đánh ' + foes.join(', ') : ''),
-          '<button data-act="fly" data-arg="' + c.id + '">Bay tới</button>', hp + pillarBars(c));
+          '<button data-act="fly" data-arg="' + c.id + '">Bay tới</button>', hp + pillarBars(c) + chaosLine(c));
       }
     } else {
       if (!warOn()) h += '<p class="note">Bạn đã chọn một thế giới không có chiến tranh. Loài người chỉ đối mặt với trời đất, và với bạn.</p>';
@@ -1426,6 +1439,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     marks.syncDay(animate); fauna.syncDay(animate);
     story.onDay();
     if (animate) for (const fx of W.god.fx) god3d.play(fx);
+    if (animate && W.chaos) for (const fx of W.chaos.fx) chaos3d.play(fx);
     godTick();
     if (W.ended && !finaleShown) setTimeout(finale, 1200);
     checkWatches();
@@ -1435,7 +1449,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; },
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d,
     lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality,
   };
 
@@ -1457,6 +1471,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     }
     const { night } = applyTime();
     updateMoments(performance.now(), night);
+    chaos3d.update();
     if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; });
     war3d.animate(dt, t, acc, night);

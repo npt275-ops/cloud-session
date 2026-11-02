@@ -96,6 +96,30 @@ Bầu trời đổi theo thời đại chung của bể kính: bình minh ngọc
 rồi đêm của những thành phố ánh sáng với cột sáng chạm vòm kính. Mỗi lần lên đời có một khoảnh khắc riêng (tên lửa chạm
 vòm kính, mặt trời thứ hai bừng sáng, cổng không gian mở, cột sáng).
 
+## Kịch bản hỗn loạn: mỗi năm, mỗi đảo một số phận khác
+
+Bốn mươi bốn kịch bản, kịch bản nào cũng có nguy hiểm. Đầu mỗi năm, mỗi đảo có người được bốc ngẫu nhiên vài kịch bản
+hợp với miền và thời đại của nó, rải vào những ngày ngẫu nhiên trong năm: thời nguyên thủy đến cận đại một đến hai kịch
+bản mỗi năm, thời máy móc hai đến ba, thời vượt người ba đến bốn, nên thế giới càng về sau càng hỗn loạn. Trong cùng một
+năm, một đảo không bao giờ gặp lại kịch bản nó đã gặp. Hạt giống ngẫu nhiên đổi theo từng ván, nên không ván nào giống ván nào.
+
+| Nhóm | Kịch bản |
+|---|---|
+| Trời đất | Mưa sao băng, thiên thạch lớn, nhật thực giữa trưa, nắng nóng kỷ lục, rét đậm rét hại, lũ quét, bão cát, tuyết lở, hố tử thần, cháy rừng, bão từ |
+| Thú và quái vật | Đàn khủng long chạy loạn, thằn lằn bay tấn công, bầy thú dữ tràn vào làng, châu chấu, quái vật biển, thuỷ triều đỏ |
+| Dịch bệnh | Sương độc, dịch bệnh lạ, thuyền ma, nấm mốc kho lương, khói độc công nghiệp, rò rỉ phóng xạ |
+| Loài người | Bạo loạn, cướp biển, đại hoả hoạn, ám sát, sập mỏ, vỡ đập, nổ nhà máy, sụp đổ ngân hàng |
+| Máy móc | Cúp điện toàn thành, phi đội lạ ném bom, tên lửa rơi, tấn công mạng, robot nổi loạn, bầy máy bay mất kiểm soát |
+| Vượt người | Bầy nano mất kiểm soát, vật chất sống mọc tràn, mặt trời nhân tạo phun lửa, vết nứt thời gian, cổng không gian mất kiểm soát (khủng long từ thời xưa bước ra), trọng lực đảo chiều, thăng thiên sai |
+
+Mỗi kịch bản có hậu quả thật trong nền kinh tế (nhà xưởng cháy và sập, người ốm, người sợ, mất mùa, xưởng ngừng, kho bạc
+mất tiền, biển cạn cá, cầu đóng, trụ cột tụt) và một cảnh riêng trên đảo. Bảng **Thế giới** ghi những tai hoạ đã giáng
+xuống mỗi thành trong năm nay.
+
+Chiến tranh cũng lan lên trời và xuyên không gian: từ thời hiện đại, hai phe đang đánh nhau có những trận **không chiến**
+trên biển trong, phe thắng ném bom thành phe thua; từ thời bẻ cong không gian, quân có thể **đổ qua cổng** thẳng vào giữa
+thành địch mà không cần qua cầu.
+
 ## Tám thời của loài người
 
 Nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, **tên lửa** (bệ phóng, vệ tinh, điện hạt nhân, tàu ngầm
@@ -159,12 +183,13 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | `lands3d.js` | Dáng đất sáu miền, công trình theo mười hai thời đại (gộp hình học để nhẹ, bốn thời vượt người biến hình), cầu nối, nhân vật tròn có khớp, cư dân, đoàn hàng qua cầu |
 | `landmarks3d.js` | Ba mươi sáu công trình trụ cột của sáu miền qua mười hai thời; lửa, đổ nát và giàn giáo khi chiến tranh |
 | `fauna3d.js` | Thú hoang trên bãi săn (khủng long thời đầu, thú lớn rồi thú nhỏ), thợ săn, thằn lằn cổ dài dưới biển trong |
+| `chaos3d.js` | Cảnh của bốn mươi bốn kịch bản hỗn loạn, không chiến và đổ quân qua cổng không gian |
 | `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 45 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn và vị thần |
+| `test/sim.test.js` | 46 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |

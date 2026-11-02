@@ -258,7 +258,7 @@
       if (Math.random() < 0.02) restoreFallen();
       awakeKnock(n);
     }
-    return { play, update, get active() { return active.length; } };
+    return { play, update, get active() { return active.length; }, fxs: { flood, drought, quake, tornado, plague, volcano, tsunami, lightning } };
   }
   root.God3D = { create };
 })(typeof self !== 'undefined' ? self : this);

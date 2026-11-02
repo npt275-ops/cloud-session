@@ -1743,7 +1743,8 @@
         if (o.fire) o.fire.userData.level = f.alive ? 0.3 + o.busy : 0;
       }
       const hungry = w.households.filter((h) => !h.ateToday).length / w.households.length;
-      L.litMat.emissiveIntensity = night * (1.25 - hungry * 0.8);
+      const dark = L.dark && L.dark > performance.now(); // cúp điện: cửa sổ tắt hết
+      L.litMat.emissiveIntensity = (dark ? 0.03 : 1) * night * (1.25 - hungry * 0.8);
     }
     function animate(dt, t, night, tod, fadOf) {
       FIG_UNI.uTime.value = reduce ? 0 : t * 0.001;
@@ -1762,7 +1763,8 @@
           if (o.smoke && o.busy > 0 && !reduce && Math.random() < 0.05 * o.busy) for (const s of o.smoke) puff(L.world(new THREE.Vector3(s[0], s[1], s[2]).applyAxisAngle(new THREE.Vector3(0, 1, 0), o.g.rotation.y).add(o.g.position)), true);
         }
         for (const F of L.fires) { const fl = 0.7 + 0.3 * Math.sin(t * 0.017 + F.ph) * Math.sin(t * 0.011 + F.ph * 2); F.s.scale.setScalar(F.base * fl); F.s.material.opacity = (0.25 + night * 0.7) * fl * (F.s.userData.level == null ? 1 : F.s.userData.level); }
-        for (const s of L.glows) s.material.opacity = s.userData.nightOnly ? night * 0.85 * s.userData.level : (0.35 + night * 0.5) * s.userData.level;
+        const dk = L.dark && L.dark > performance.now() ? 0.06 : 1;
+        for (const s of L.glows) s.material.opacity = dk * (s.userData.nightOnly ? night * 0.85 * s.userData.level : (0.35 + night * 0.5) * s.userData.level);
         // khói bếp lúc sáng và chiều tối
         if (!reduce && L.era >= 1 && L.era <= 4 && ((tod > 0.7 && tod < 0.85) || (tod > 0.22 && tod < 0.28))) for (const H of L.houses) { H.smokeT -= dt / 1000; if (H.smokeT <= 0) { H.smokeT = 1.4 + Math.random() * 1.5; puff(L.world(new THREE.Vector3(L.houseLots[H.idx].p.x + 0.6, 4.6 + (H.lv - 1) * 1.3, L.houseLots[H.idx].p.z - 0.4)), false); } }
         for (const m of L.waterMats) m.emissiveIntensity = 0.25 + Math.sin(t * 0.002 + L.i) * 0.05 + night * 0.15;

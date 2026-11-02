@@ -40,6 +40,7 @@
       oryx: { c: '#e2c79a', b: [0.5, 0.55, 1.05], leg: 0.9, head: 0.3, horn: 'long' },
       camel: { c: '#c9a06e', b: [0.6, 0.65, 1.3], leg: 1.2, head: 0.3, hump: true, neckLong: true },
       turtle: { c: '#5b6b3a', b: [0.9, 0.45, 1.1], leg: 0.12, head: 0.22, shell: true },
+      wolf: { c: '#6f6f78', b: [0.42, 0.44, 1.0], leg: 0.55, head: 0.3, tail: true },
     };
     function quad(kind) {
       const o = Q[kind] || Q.deer, g = new THREE.Group(), legs = [], M = o.c, [w, h, l] = o.b, y0 = o.leg + h / 2;
@@ -200,7 +201,7 @@
         P.B.legs.forEach((l, i) => { l.rotation.z = Math.sin(ts * 2 + i) * 0.4; });
       }
     }
-    return { syncDay, animate };
+    return { syncDay, animate, beast };
   }
   root.Fauna3D = { create };
 })(typeof window !== 'undefined' ? window : globalThis);
