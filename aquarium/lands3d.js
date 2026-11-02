@@ -1216,7 +1216,7 @@
       for (let j = 0; j < 4; j++) { _c.set(colors[j]); const a = g.attributes[['cA', 'cB', 'cC', 'cD'][j]].array; a[i * 3] = _c.r; a[i * 3 + 1] = _c.g; a[i * 3 + 2] = _c.b; }
     }
     function crowdEnd(set) {
-      set.meshes.forEach((m, v) => { m.count = set.n[v]; m.instanceMatrix.needsUpdate = true; const g = m.geometry; for (const a of ['anim', 'cA', 'cB', 'cC', 'cD']) g.attributes[a].needsUpdate = true; });
+      set.meshes.forEach((m, v) => { m.count = set.n[v]; m.visible = m.count > 0; m.instanceMatrix.needsUpdate = true; const g = m.geometry; for (const a of ['anim', 'cA', 'cB', 'cC', 'cD']) g.attributes[a].needsUpdate = true; });
     }
     /* ----- Lính tròn: giáp, mũ, vũ khí và khiên riêng của mỗi miền; bốn thời vượt người cầm vũ khí ánh sáng ----- */
     const WEAPON_R = { plains: 'spear', forest: 'axe', mountain: 'hammer', tundra: 'harpoon', coast: 'trident', desert: 'scimitar' };
@@ -1703,6 +1703,7 @@
     function updatePeople(L, tod, t, fadNow) {
       const w = W.cities[L.i].w, S = L.crowd;
       if (!w || !S) { L.hats.count = 0; return; }
+      if (L.hush && L.hush > performance.now()) { crowdBegin(S); crowdEnd(S); L.hats.count = 0; return; } // giới nghiêm, xuống hầm: phố vắng
       const N = Math.min(L.peopleN, w.households.length);
       crowdBegin(S);
       let nh = 0;

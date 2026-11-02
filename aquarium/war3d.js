@@ -76,7 +76,7 @@
       if (color) S.t.setColorAt(S.n, tmpC.set(color));
       S.n++;
     }
-    function flush(S) { S.b.count = S.t.count = S.n; S.b.instanceMatrix.needsUpdate = S.t.instanceMatrix.needsUpdate = true; if (S.t.instanceColor) S.t.instanceColor.needsUpdate = true; S.n = 0; }
+    function flush(S) { S.b.count = S.t.count = S.n; S.b.visible = S.t.visible = S.n > 0; S.b.instanceMatrix.needsUpdate = S.t.instanceMatrix.needsUpdate = true; if (S.t.instanceColor) S.t.instanceColor.needsUpdate = true; S.n = 0; }
 
     // thân thuyền: mũi nhọn, đuôi vuông, dọc theo trục z
     function hull(k, col, len, wid, h, y) {
@@ -204,7 +204,8 @@
     }
     // Lính bộ là người tròn có khớp (dựng trong lands3d): tay phải cầm vũ khí của miền, khiên ở tay trái, cờ phe sau lưng
     function soldierShape(k, cls, e, ter) { F.soldierShape(k, cls, e, ter); }
-    const SOLDIER_SETS = {};
+    const SOLDIER_SETS = {}, extraSoldiers = [];
+    const putSoldier = (cls, e, ter, p, ry, walk, atk, seed, scale, colors, tilt) => F.crowdPut(soldierSet(cls, e, ter), 0, p, ry, walk, atk, seed, scale || (e >= 7 ? 1.35 : 1.15), colors, tilt);
     const terOf = (u) => { const c = W.cities[u.city]; return c ? c.terrain.key : 'plains'; };
     function soldierSet(cls, e, ter) {
       const key = cls + ':' + e + ':' + (ter || 'plains');
@@ -740,6 +741,7 @@
       }
       // xác lính nằm lại trên chiến trường một lúc
       for (let i = corpses.length - 1; i >= 0; i--) { const c = corpses[i]; if (now - c.t0 > 24000) { corpses.splice(i, 1); continue; } F.crowdPut(soldierSet(c.cls, c.era, c.ter), 0, c.p, c.ry, 0, 0, c.seed, c.sc, c.colors, -Math.PI / 2); }
+      for (const fn of extraSoldiers) { try { fn(putSoldier, now); } catch (err) { /* một lớp hỏng không làm hỏng quân */ } }
       for (const key in SOLDIER_SETS) F.crowdEnd(SOLDIER_SETS[key]);
       // thành đang bị vây: khói lửa ở cổng
       if (!reduce && W.war.on && Math.random() < 0.25) for (const c of W.cities) {
@@ -798,7 +800,7 @@
       }
     }
 
-    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, SEA_R, SEA_Y, buildings: BLD_OF };
+    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, SEA_R, SEA_Y, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };
   }
 
   root.War3D = { create, SEA_R, SEA_Y };

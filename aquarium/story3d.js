@@ -25,7 +25,7 @@
     'god-flood': ['Thần giáng lũ', '#7fb8d9'], 'god-drought': ['Thần giáng hạn', '#e0b060'], 'god-quake': ['Thần làm rung đất', '#c9a37a'], 'god-tornado': ['Thần gọi lốc', '#a6b0bb'],
     'god-plague': ['Thần gieo dịch', '#9fe07a'], 'god-volcano': ['Núi lửa', '#ff7a2a'], 'god-tsunami': ['Sóng thần', '#5fb0d9'], 'god-fire': ['Sét lửa', '#ffd36b'],
     'god-rain': ['Mưa lành', '#9fd3f0'], 'god-harvest': ['Bội thu', '#ffd36b'], 'god-enlighten': ['Khai sáng', '#fff3c4'], 'god-heal': ['Chữa lành', '#bff5c8'], 'god-truce': ['Đình chiến', '#f4fbff'],
-    'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'], burn: ['Lửa chiến tranh', '#ff8a5a'], ruin: ['Đổ nát', '#c9a37a'], 'last-dino': ['Khủng long cuối cùng', '#b5c46a'], 'hunt-low': ['Thú cạn', '#c9b48a'], chaos: ['Tai hoạ', '#ff8a80'], 'air-battle': ['Không chiến', '#9fd3f0'], 'portal-assault': ['Đổ quân qua cổng', '#c9a6ff'],
+    'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'], burn: ['Lửa chiến tranh', '#ff8a5a'], ruin: ['Đổ nát', '#c9a37a'], 'last-dino': ['Khủng long cuối cùng', '#b5c46a'], 'hunt-low': ['Thú cạn', '#c9b48a'], chaos: ['Tai hoạ', '#ff8a80'], 'air-battle': ['Không chiến', '#9fd3f0'], 'portal-assault': ['Đổ quân qua cổng', '#c9a6ff'], seize: ['Nhà bị chiếm', '#ff8a5a'], refugee: ['Tản cư', '#ffd59a'], retake: ['Giành lại nhà', '#9df0c4'], return: ['Trở về', '#9df0c4'], uprising: ['Khởi nghĩa', '#ffe08a'], resist: ['Chống trả', '#9df0c4'], civ: ['Người dân', '#ffe08a'], army: ['Quân đội', '#9fd3f0'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
@@ -946,7 +946,7 @@
     /* ----- Đạo diễn ----- */
     let directorOn = true, holdUntil = 0, pausedUntil = 0, idleSince = now(), overview = false;
     const queue = [];
-    const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1, 'battle-end': 1, awaken: 5, 'plague-spread': 1, chaos: 2, 'air-battle': 2, 'portal-assault': 3 };
+    const PRI_BONUS = { settle: 2, era: 2, chapter: 2, war: 2, conquer: 3, nuke: 4, 'nuke-stopped': 3, victory: 4, wonder: 2, fall: 2, battle: 1, siege: 1, 'battle-end': 1, awaken: 5, 'plague-spread': 1, chaos: 2, 'air-battle': 2, 'portal-assault': 3, seize: 1, uprising: 3, resist: 1, refugee: 1, retake: 1 };
     const pri = (st) => TIER_PRI[st.tier] + (PRI_BONUS[st.type] || 0);
     function takeNext(minPri) {
       for (let i = queue.length - 1; i >= 0; i--) if (W.day - queue[i].day > TIER_AGE[queue[i].tier]) queue.splice(i, 1);
@@ -1094,6 +1094,9 @@
         else if (st.type === 'sea-low') G.label3d('Biển cạn', p.clone().setY(8), '#ffb3a8');
         else if (st.type === 'chaos') { const S = Sim.CHAOS.find((x) => x.key === st.chaos); G.label3d(S ? S.name : 'Tai hoạ', p.clone().setY(26), '#ffb3a8'); }
         else if (st.type === 'air-battle') G.label3d('Không chiến', p.clone().setY(30), '#9fd3f0');
+        else if (st.type === 'seize') G.label3d('Nhà bị chiếm', p.clone().setY(12), '#ff9b8f');
+        else if (st.type === 'uprising') { G.label3d(st.failed ? 'Khởi nghĩa thất bại' : 'Khởi nghĩa', p.clone().setY(24), st.failed ? '#ff9b8f' : '#ffe08a'); if (!st.failed) G.ripple(p, '#ffe08a'); }
+        else if (st.street && st.tier !== 'small') { const S = Sim.STREET && Sim.STREET.find((x) => x.key === st.street); if (S) G.label3d(S.name, p.clone().setY(12), S.cat === 'resist' ? '#9df0c4' : '#ffe08a'); }
         else if (st.type === 'portal-assault') { G.label3d('Đổ quân qua cổng', p.clone().setY(28), '#c9a6ff'); G.ripple(p, '#b48cff'); }
         else if (st.type === 'awaken') { G.label3d('Những cỗ máy đã thấy bạn', p.clone().setY(30), '#7ff0ff'); G.ripple(p, '#7ff0ff'); if (audio) audio.chime(); }
         else if (st.type && st.type.startsWith('god-') && st.type !== 'god-aftershock') G.label3d(typeOf(st.type)[0], p.clone().setY(28), typeOf(st.type)[1]);

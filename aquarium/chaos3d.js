@@ -434,7 +434,8 @@
         if (u >= 1) { active.splice(i, 1); try { e.end(); } catch (err) { /* bỏ */ } }
       }
     }
-    return { play, update, scenes: Object.keys(SCENE), get active() { return active.length; } };
+    const prims = { run, later, kill, spr, basic, lam, ring, flash, crater, smoke, cityPt, wildPt, dmgPt, particles, haze, explosion, torches, papers, beam: (a, b, c, d, e) => beam(a, b, c, d, e) };
+    return { play, update, prims, scenes: Object.keys(SCENE), get active() { return active.length; } };
   }
   root.Chaos3D = { create };
 })(typeof window !== 'undefined' ? window : globalThis);

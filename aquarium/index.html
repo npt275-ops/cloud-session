@@ -492,6 +492,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="landmarks3d.js"></script>
 <script src="fauna3d.js"></script>
 <script src="chaos3d.js"></script>
+<script src="streets3d.js"></script>
 <script src="god3d.js"></script>
 <script src="story3d.js"></script>
 <script>
@@ -696,6 +697,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const god3d = God3D.create({ THREE, scene, Sim, W, lands3d, war3d, glowTex, puff, label3d, reduce, audio, shake, dome: DOME, doRain, dayMs: () => 1000 / tps, shot: war3d.shotRaw });
   // bốn mươi bốn kịch bản hỗn loạn mỗi năm, không chiến, đổ quân qua cổng
   const chaos3d = Chaos3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, fauna, puff, reduce, glowTex, shake, audio, ripple, camera, setDim, factionColor });
+  const streets3d = Streets3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, factionColor, audio, shake });
   const lands = lands3d.lands;
   // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
   function keyPos(L, key) {
@@ -1439,7 +1441,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     marks.syncDay(animate); fauna.syncDay(animate);
     story.onDay();
     if (animate) for (const fx of W.god.fx) god3d.play(fx);
-    if (animate && W.chaos) for (const fx of W.chaos.fx) chaos3d.play(fx);
+    if (animate && W.chaos) for (const fx of W.chaos.fx) (fx.street ? streets3d.play(fx) : chaos3d.play(fx));
     godTick();
     if (W.ended && !finaleShown) setTimeout(finale, 1200);
     checkWatches();
@@ -1449,7 +1451,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d,
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d,
     lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality,
   };
 
@@ -1473,6 +1475,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     updateMoments(performance.now(), night);
     chaos3d.update();
     if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
+    streets3d.animate(dt, t, night);
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; });
     war3d.animate(dt, t, acc, night);
     marks.animate(dt); fauna.animate(dt, t);
