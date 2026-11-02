@@ -1,0 +1,9 @@
+#!/bin/sh
+# Bể Kính: mở game trong một cửa sổ riêng (Chrome, Chromium, Edge, Brave), không có thì mở bằng trình duyệt mặc định.
+DIR=$(cd "$(dirname "$0")" && pwd)
+PAGE="$DIR/index.html"
+URL="file://$(printf '%s' "$PAGE" | sed 's/ /%20/g')"
+for B in google-chrome google-chrome-stable chromium chromium-browser microsoft-edge brave-browser; do
+  if command -v "$B" >/dev/null 2>&1; then exec "$B" --app="$URL"; fi
+done
+exec xdg-open "$PAGE"

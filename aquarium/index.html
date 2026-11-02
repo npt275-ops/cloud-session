@@ -1453,16 +1453,47 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     toggleMore(false);
     if (!dlWay) return;
     if (dlWay.kind === 'link') { const a = document.createElement('a'); a.href = ZIP; a.download = ZIP; document.body.appendChild(a); a.click(); a.remove(); return; }
-    toast('Đang chuẩn bị gói Bể Kính…', 2400);
+    toast('Đang đóng gói Bể Kính…', 3000);
     try {
-      const res = await fetch(ZIP); if (!res.ok) throw new Error('không tìm thấy gói');
-      await dlWay.dl.save({ filename: ZIP, data: await res.blob() });
+      // trang trên claude.ai tự nén gói từ các tệp của bản không cần mạng (đăng kèm trong thư mục goi/)
+      const list = await (await fetch('goi/goi-files.json')).json(), entries = [];
+      for (const f of list) { const r = await fetch('goi/' + f.src); if (!r.ok) throw new Error('thiếu ' + f.src); entries.push({ name: f.path, data: new Uint8Array(await r.arrayBuffer()), mode: f.mode }); }
+      await dlWay.dl.save({ filename: ZIP, data: await makeZip(entries) });
       toast('Đã lưu <b>' + ZIP + '</b>. Giải nén rồi mở <b>Choi Be Kinh</b> hoặc <b>index.html</b> để chơi không cần mạng.', 7000);
     } catch (err) {
       if (err && err.code === 'declined') return;
       toast('Chưa tải được gói Bể Kính' + (err && err.message ? ': ' + err.message : '') + '.', 4200);
     }
   };
+  // tệp zip dựng ngay trong trình duyệt: nén deflate bằng CompressionStream nếu có, không thì lưu nguyên
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = (u8) => { let c = 0xffffffff; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  async function deflateRaw(u8) {
+    if (typeof CompressionStream === 'undefined') return null;
+    try { return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); } catch (err) { return null; }
+  }
+  async function makeZip(entries) {
+    const enc = new TextEncoder(), parts = [], central = [], d = new Date();
+    const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let off = 0;
+    for (const e of entries) {
+      const name = enc.encode(e.name), crc = crc32(e.data), packed = await deflateRaw(e.data), method = packed && packed.length < e.data.length ? 8 : 0, body = method ? packed : e.data;
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, method, true); h.setUint16(10, time, true); h.setUint16(12, date, true);
+      h.setUint32(14, crc, true); h.setUint32(18, body.length, true); h.setUint32(22, e.data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, body);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, (3 << 8) | 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, method, true); c.setUint16(12, time, true); c.setUint16(14, date, true);
+      c.setUint32(16, crc, true); c.setUint32(20, body.length, true); c.setUint32(24, e.data.length, true); c.setUint16(28, name.length, true);
+      c.setUint32(38, ((0o100000 | (e.mode || 0o644)) * 65536) >>> 0, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + body.length;
+    }
+    const size = central.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/zip' });
+  }
+  window.__bekinhZip = makeZip; // để kiểm thử gói tự nén
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('appInstall').hidden = false; });
   $('appInstall').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (err) { /* bỏ qua */ } installEvt = null; $('appInstall').hidden = true; };
   // bản web đặt trên máy chủ: lưu cả game vào máy để chơi không cần mạng (không chạy trong khung của claude.ai hay khi mở từ ổ đĩa)

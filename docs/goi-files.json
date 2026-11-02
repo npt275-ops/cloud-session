@@ -1,0 +1,177 @@
+[
+ {
+  "path": "BeKinh/HUONG-DAN.txt",
+  "src": "HUONG-DAN.txt",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/audio.js",
+  "src": "audio.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/chaos3d.js",
+  "src": "chaos3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/fauna3d.js",
+  "src": "fauna3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/god3d.js",
+  "src": "god3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/icons/apple-touch-icon.png",
+  "src": "icons/apple-touch-icon.png",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/icons/favicon-32.png",
+  "src": "icons/favicon-32.png",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/icons/favicon-64.png",
+  "src": "icons/favicon-64.png",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/icons/icon-192.png",
+  "src": "icons/icon-192.png",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/icons/icon-512.png",
+  "src": "icons/icon-512.png",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/index.html",
+  "src": "index.html",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/landmarks3d.js",
+  "src": "landmarks3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/lands3d.js",
+  "src": "lands3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/manifest.webmanifest",
+  "src": "manifest.webmanifest",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/powers3d.js",
+  "src": "powers3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/sights3d.js",
+  "src": "sights3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/sim.js",
+  "src": "sim.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/sky3d.js",
+  "src": "sky3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/story3d.js",
+  "src": "story3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/streets3d.js",
+  "src": "streets3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/LICENSE-fonts.txt",
+  "src": "vendor/LICENSE-fonts.txt",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/LICENSE-three.txt",
+  "src": "vendor/LICENSE-three.txt",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/OrbitControls.js",
+  "src": "vendor/OrbitControls.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts.css",
+  "src": "vendor/fonts.css",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts/fraunces-0511eb67.woff2",
+  "src": "vendor/fonts/fraunces-0511eb67.woff2",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts/fraunces-39ce2001.woff2",
+  "src": "vendor/fonts/fraunces-39ce2001.woff2",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts/fraunces-79671606.woff2",
+  "src": "vendor/fonts/fraunces-79671606.woff2",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts/outfit-35708376.woff2",
+  "src": "vendor/fonts/outfit-35708376.woff2",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/fonts/outfit-35e12df6.woff2",
+  "src": "vendor/fonts/outfit-35e12df6.woff2",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/vendor/three.min.js",
+  "src": "vendor/three.min.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/war3d.js",
+  "src": "war3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/sw.js",
+  "src": "sw.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/Choi Be Kinh (Windows).bat",
+  "src": "launch/windows.txt",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/Choi Be Kinh (Mac).command",
+  "src": "launch/mac.txt",
+  "mode": 493
+ },
+ {
+  "path": "BeKinh/choi-be-kinh-linux.sh",
+  "src": "launch/linux.txt",
+  "mode": 493
+ }
+]

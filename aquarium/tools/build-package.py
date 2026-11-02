@@ -142,6 +142,9 @@ done
 exec xdg-open "$PAGE"
 """
 
+LAUNCHERS = [('windows', LAUNCH_WIN, True), ('mac', LAUNCH_MAC, False), ('linux', LAUNCH_LINUX, False)]
+LAUNCH_NAMES = [('windows', 'Choi Be Kinh (Windows).bat', 0o644), ('mac', 'Choi Be Kinh (Mac).command', 0o755), ('linux', 'choi-be-kinh-linux.sh', 0o755)]
+
 GUIDE = """BỂ KÍNH
 Vị thần ngoài bể kính: sáu đảo, mười hai thời đại, chín năm.
 Phiên bản %(ver)s
@@ -195,12 +198,16 @@ def main():
     json.dump(MANIFEST, open(os.path.join(OUT, 'manifest.webmanifest'), 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
     open(os.path.join(OUT, 'HUONG-DAN.txt'), 'w', encoding='utf-8-sig').write(GUIDE % {'ver': ver})
     open(os.path.join(OUT, '.nojekyll'), 'w').write('')
+    # tệp mở nhanh, để cả gói zip dựng sẵn lẫn gói trang tự nén (trên claude.ai) dùng chung một nguồn
+    os.makedirs(os.path.join(OUT, 'launch'))
+    for key, text, crlf in LAUNCHERS:
+        open(os.path.join(OUT, 'launch', key + '.txt'), 'w', encoding='utf-8', newline='').write(text.replace('\n', '\r\n') if crlf else text)
     # bộ nhớ đệm chơi không cần mạng: mọi tệp của bản web (trừ gói zip)
     files = ['./']
     for dp, _, fs in os.walk(OUT):
         for f in sorted(fs):
             rel = os.path.relpath(os.path.join(dp, f), OUT).replace(os.sep, '/')
-            if rel in ('.nojekyll', 'sw.js', ZIP_NAME):
+            if rel in ('.nojekyll', 'sw.js', ZIP_NAME, 'goi-files.json') or rel.startswith('launch/'):
                 continue
             files.append(rel)
     files.sort()
@@ -208,16 +215,18 @@ def main():
     for rel in files[1:]:
         digest.update(rel.encode()); digest.update(open(os.path.join(OUT, rel), 'rb').read())
     open(os.path.join(OUT, 'sw.js'), 'w', encoding='utf-8').write(SW % {'hash': digest.hexdigest()[:10], 'files': json.dumps(files, ensure_ascii=False)})
+    # danh sách tệp của gói máy tính: tên trong zip, tệp nguồn trong docs/, quyền (tệp mở nhanh trên macOS, Linux được chạy)
+    entries = [{'path': 'BeKinh/' + rel, 'src': rel, 'mode': 0o644} for rel in files[1:] + ['sw.js']]
+    entries += [{'path': 'BeKinh/' + name, 'src': 'launch/' + key + '.txt', 'mode': mode} for key, name, mode in LAUNCH_NAMES]
+    json.dump(entries, open(os.path.join(OUT, 'goi-files.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     # gói cho máy tính: thư mục BeKinh với tệp mở nhanh cho Windows, macOS, Linux
     zpath = os.path.join(OUT, ZIP_NAME)
     with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for rel in files[1:] + ['sw.js']:
-            z.write(os.path.join(OUT, rel), 'BeKinh/' + rel)
-        for name, text, mode, crlf in [('Choi Be Kinh (Windows).bat', LAUNCH_WIN, 0o644, True), ('Choi Be Kinh (Mac).command', LAUNCH_MAC, 0o755, False), ('choi-be-kinh-linux.sh', LAUNCH_LINUX, 0o755, False)]:
-            info = zipfile.ZipInfo('BeKinh/' + name, date_time=datetime.datetime.now().timetuple()[:6])
+        for e in entries:
+            info = zipfile.ZipInfo(e['path'], date_time=datetime.datetime.now().timetuple()[:6])
             info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = (0o100000 | mode) << 16
-            z.writestr(info, text.replace('\n', '\r\n') if crlf else text)
+            info.external_attr = (0o100000 | e['mode']) << 16
+            z.writestr(info, open(os.path.join(OUT, e['src']), 'rb').read())
     size = os.path.getsize(zpath)
     print('Bể Kính %s: %d tệp trong docs/, gói %s %.1f MB' % (ver, len(files), ZIP_NAME, size / 1e6))
 

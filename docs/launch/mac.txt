@@ -1,0 +1,9 @@
+#!/bin/bash
+# Bể Kính: mở game trong một cửa sổ riêng như ứng dụng (Chrome, Edge, Brave), không có thì mở bằng Safari.
+DIR="$(cd "$(dirname "$0")" && pwd)"
+PAGE="$DIR/index.html"
+URL="file://${PAGE// /%20}"
+for APP in "Google Chrome" "Microsoft Edge" "Brave Browser" "Chromium"; do
+  if open -Ra "$APP" 2>/dev/null; then open -na "$APP" --args --app="$URL"; exit 0; fi
+done
+open "$PAGE"
