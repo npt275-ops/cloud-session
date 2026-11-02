@@ -1,0 +1,34 @@
+﻿BỂ KÍNH
+Vị thần ngoài bể kính: sáu đảo, mười hai thời đại, chín năm.
+Phiên bản 2026.11.02-1205ef1
+
+CHƠI TRÊN MÁY TÍNH (không cần mạng)
+ 1. Giải nén BeKinh-ban-may-tinh.zip (chuột phải, chọn Extract All / Giải nén tất cả).
+ 2. Mở thư mục BeKinh vừa giải nén:
+    - Windows: bấm đúp "Choi Be Kinh (Windows).bat". Game mở trong một cửa sổ riêng như ứng dụng
+      (Microsoft Edge hoặc Google Chrome). Cũng có thể bấm đúp index.html.
+    - macOS: bấm đúp "Choi Be Kinh (Mac).command". Lần đầu macOS có thể chặn: chuột phải, chọn Open.
+      Cũng có thể mở index.html bằng Chrome hoặc Safari.
+    - Linux: chạy ./choi-be-kinh-linux.sh, hoặc mở index.html bằng trình duyệt.
+ 3. Cần trình duyệt có WebGL (Chrome, Edge, Firefox, Safari từ năm 2022 trở đi).
+ Cả bể kính nằm trong thư mục này: three.js, phông chữ, mọi tệp của game. Không tải gì từ mạng.
+
+CHƠI TRÊN ĐIỆN THOẠI
+ - Mở trang Bể Kính trên điện thoại rồi thêm vào màn hình chính:
+    - Android (Chrome): bấm ⋮, chọn "Cài đặt ứng dụng" hoặc "Thêm vào màn hình chính".
+    - iPhone, iPad (Safari): bấm nút Chia sẻ, chọn "Thêm vào MH chính".
+ - Biểu tượng Bể Kính nằm trên màn hình chính, mở ra là chơi toàn màn hình.
+ - Muốn chơi không cần mạng trên điện thoại: đặt thư mục BeKinh này lên một máy chủ web HTTPS (ví dụ GitHub
+   Pages) rồi mở địa chỉ đó trên điện thoại một lần. Game tự lưu vào máy; những lần sau chơi được khi không có mạng.
+
+ĐIỀU KHIỂN
+ - Kéo chuột (hay một ngón tay) để xoay, cuộn (hay hai ngón) để phóng to, bấm tên đảo để bay tới.
+ - Phím mũi tên hay W A S D: lướt tới, lùi, sang trái, sang phải. Page Up / Page Down (E / Q, Space / Shift): lên cao,
+   sà xuống. Trên điện thoại có sáu nút bay ở góc phải.
+ - Nút tốc độ: 1×, 2×, 4×, 16×. 1× chậm để nhìn rõ từng người; ván chín năm ở 2× hết khoảng 36 phút.
+ - Quyền năng: mười lăm phép của thần. Việc cho cả bể làm ngay; việc cho một đảo thì chạm đúng chỗ trên đảo.
+ - Nút ⋯: biên niên sử, âm thanh, chú giải, ngày và đêm, số khung hình, nút bay, cài lên điện thoại.
+
+GIẤY PHÉP
+ - three.js r128: giấy phép MIT (vendor/LICENSE-three.txt).
+ - Phông chữ Fraunces và Outfit: SIL Open Font License 1.1 (vendor/LICENSE-fonts.txt).
