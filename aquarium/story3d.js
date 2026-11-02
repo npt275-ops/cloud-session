@@ -31,8 +31,10 @@
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
 
 
+  let BAKED_MAT = null;
   function makeLayer(X, N) {
     const { THREE, island, Sim, houses, firmObj, glowTex, mat, mesh, box, label3d, toast, puff, ripple, spawnMote, flyTo, select, audio, $, reduce, PLAZA, R, bank, C } = X;
+    if (!BAKED_MAT) BAKED_MAT = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.82, metalness: 0.08 });
     const W0 = X.W, CI = X.city;
     let world = W0.cities[CI].w; // thành phố của miền này (lớp chỉ được dựng khi miền đã có người)
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -41,6 +43,29 @@
     const firmOf = (id) => world.firms.find((f) => f.id === id);
     const additive = (color, opacity) => new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: opacity || 0, depthWrite: false, blending: THREE.AdditiveBlending });
     const bankName = () => Sim.ERAS[W0.cities[CI].era].bank;
+    // gộp những khối tĩnh, đục, không phát sáng trong một nhóm thành một khối tô màu theo đỉnh: tượng, bến khí cầu, phế tích
+    // trước đây mỗi mảnh là một lượt vẽ riêng
+    function bakeGroup(g) {
+      const parts = g.children.filter((o) => o.isMesh && !o.isInstancedMesh && !o.children.length && o.material && o.material.isMeshStandardMaterial && !o.material.transparent && !o.material.vertexColors && !(o.material.emissive && o.material.emissive.getHex() && o.material.emissiveIntensity > 0));
+      if (parts.length < 2) return g;
+      let n = 0;
+      const geos = parts.map((o) => { o.updateMatrix(); const ge = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); ge.applyMatrix4(o.matrix); n += ge.attributes.position.count; return [ge, o.material.color]; });
+      const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3);
+      let k = 0;
+      for (const [ge, c] of geos) {
+        const m = ge.attributes.position.count;
+        pos.set(ge.attributes.position.array, k * 3); if (ge.attributes.normal) nor.set(ge.attributes.normal.array, k * 3);
+        for (let i = 0; i < m; i++) { col[(k + i) * 3] = c.r; col[(k + i) * 3 + 1] = c.g; col[(k + i) * 3 + 2] = c.b; }
+        k += m; ge.dispose();
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      geo.computeBoundingSphere();
+      const shadow = parts.some((o) => o.castShadow);
+      for (const o of parts) g.remove(o);
+      const m = new THREE.Mesh(geo, BAKED_MAT); m.castShadow = shadow; m.receiveShadow = true; g.add(m);
+      return g;
+    }
 
     /* =============== Vị trí =============== */
     const DOCK_ANG = X.outAng + 1.75, outDir = new THREE.Vector3(Math.cos(DOCK_ANG), 0, Math.sin(DOCK_ANG));
@@ -229,6 +254,7 @@
     for (const sx of [-1.25, 1.25]) for (let k = 0; k < 5; k++) mesh(box(0.2, 1.5, 0.2), mat('#6d5139'), sx, -0.8, k * 2.2, dock);
     const dockLamp = new THREE.Sprite(additive('#ffc970', 0.7)); dockLamp.scale.set(3, 3, 1); dockLamp.position.set(0, 2.6, 9); dock.add(dockLamp);
     mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.4, 6), mat('#2f3540'), 0, 1.2, 9, dock);
+    bakeGroup(dock);
     const ship = new THREE.Group(); ship.visible = false; island.add(ship);
     (function buildShip() {
       const env = mesh(new THREE.SphereGeometry(2.6, 18, 12), mat('#c9584f'), 0, 0, 0, ship); env.scale.set(1, 1, 1.75);
@@ -247,6 +273,7 @@
     const crates = [];
     const crateGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55), crateMat = mat('#c49a62');
     function sendCrates() {
+      if (shipVis.mode !== 'docked') return; // khí cầu không ở bến thì không có thùng hàng nào bay lên
       const ex = (world.flows || []).filter((f) => f.kind === 'export').slice(0, 5);
       for (const f of ex) {
         const p = firmPos(+String(f.to).slice(1)); if (!p) continue;
@@ -268,12 +295,14 @@
       if (target && ship.position.distanceTo(target) > 0.5) ship.lookAt(island.localToWorld(target.clone()));
       else ship.rotation.set(0, Math.atan2(-outDir.z, outDir.x) + Math.PI / 2, 0);
       ship.userData.prop.rotation.z += dt * (shipVis.mode === 'docked' ? 0.002 : 0.02);
-      const n = now();
+    }
+    function updateCrates() {
+      const n = now(), away = shipVis.mode === 'hidden' || shipVis.mode === 'leaving';
       for (let i = crates.length - 1; i >= 0; i--) {
         const C = crates[i], kk = (n - C.t0) / C.dur;
+        if (away || kk >= 1) { island.remove(C.m); crates.splice(i, 1); continue; }
         if (kk < 0) { C.m.visible = false; continue; }
         C.m.visible = true;
-        if (kk >= 1) { island.remove(C.m); crates.splice(i, 1); continue; }
         C.m.position.lerpVectors(C.a, C.b, kk); C.m.position.y += Math.sin(kk * Math.PI) * 9; C.m.rotation.y = kk * 4;
       }
     }
@@ -513,7 +542,7 @@
       const arm = mesh(box(0.1, 0.56, 0.1), bronzeMat, 0.17, 1.42, 0, g); arm.rotation.z = -0.45;
       mesh(new THREE.OctahedronGeometry(0.17, 0), new THREE.MeshStandardMaterial({ color: '#fff3c4', emissive: m.sector === 'food' ? '#8fdc5c' : '#ffc94d', emissiveIntensity: 1.2, flatShading: true }), 0.42, 2.08, 0, g);
       mesh(box(0.52, 0.26, 0.04), plaqueMat, 0, 0.2, 0.46, g).castShadow = false;
-      island.add(g); X.clickable(g, { type: 'memo', id: m.id });
+      bakeGroup(g); island.add(g); X.clickable(g, { type: 'memo', id: m.id });
       return { g, kind: 'statue', slot, rise: 0 };
     }
     const ruinStone = mat('#8f8373'), ruinDark = mat('#51473f'), charMat = mat('#3a3330'), deadPlot = mat('#8a7a5a');
@@ -530,7 +559,7 @@
         for (const cx of [-1.15, 1.15]) mesh(box(2.0, 0.12, 3.0), deadPlot, cx, 0, 1.5, g).castShadow = false;
       }
       for (let k = 0; k < 8; k++) mesh(new THREE.DodecahedronGeometry(0.16 + Math.random() * 0.22, 0), k % 2 ? ruinStone : ruinDark, (Math.random() - 0.5) * 3.2, 0.1, (Math.random() - 0.5) * 2.6, g);
-      island.add(g); X.clickable(g, { type: 'memo', id: m.id });
+      bakeGroup(g); island.add(g); X.clickable(g, { type: 'memo', id: m.id });
       for (let k = 0; k < 6; k++) puff(new THREE.Vector3(seen.pos.x + (Math.random() - 0.5) * 3, 1 + Math.random(), seen.pos.z + (Math.random() - 0.5) * 3), true, '#9a8f84');
       return { g, kind: 'ruin', pos: seen.pos.clone() };
     }
@@ -855,7 +884,7 @@
     }
     let lastSlow = 0;
     function update(dt, t) {
-      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
+      updateArcs(); updateAuras(t); updateFx(dt); updateShip(t, dt); updateCrates(); updateHalos(t); updateQueue(t); updateGlass(); updateMemories(dt, t);
       updateMine(t, dt); updateTent(t); updateEpidemic(t); updatePickets(t); updateBankCrowd(t);
       if (t - lastSlow > 250) { lastSlow = t; syncCrystals(t); syncFires(t); syncFlags(t); }
       else for (const [, c] of crystals) { c.g.rotation.y = t * 0.0012; }

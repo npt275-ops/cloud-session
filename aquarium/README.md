@@ -120,6 +120,62 @@ Chiến tranh cũng lan lên trời và xuyên không gian: từ thời hiện �
 trên biển trong, phe thắng ném bom thành phe thua; từ thời bẻ cong không gian, quân có thể **đổ qua cổng** thẳng vào giữa
 thành địch mà không cần qua cầu.
 
+## Trong thành: nhà bị chiếm, người dân, quân lính và những cuộc chống trả
+
+Quân địch đánh tới cổng mà phá được vào thì **chiếm từng ngôi nhà ở rìa thành**, cắm cờ phe mình lên mái, đặt lính gác
+trước cửa và mang một phần của cải trong nhà về thủ phủ (tiền rời sổ thành này, vào sổ thành kia, sổ cái vẫn khớp). Người
+trong nhà bị chiếm ra **trại tạm trên quảng trường** (làm được ít hơn); có nhà chạy qua cầu hay theo thuyền sang thành láng
+giềng không đánh nhau với mình. Giặc rút đi thì dân quân **giành lại từng nhà**, người tản cư dần trở về.
+
+Thành mất hẳn thì giặc đóng quân trong khoảng một phần ba số nhà, thu thuế mỗi tháng, tuần tra từng ngõ, giới nghiêm ban đêm
+(phố vắng, chỉ còn lính tuần cầm đuốc). **Lòng dân** lớn dần mỗi ngày (nhanh hơn ở miền dễ nấp như rừng, núi, sa mạc); đủ
+mạnh thì **khởi nghĩa**: quân đồn trú càng đông càng khó thắng, thua thì bị đàn áp, thêm nhà bị chiếm, chờ lần sau.
+
+Năm mươi tám kịch bản trong thành, bốc ngẫu nhiên theo hoàn cảnh của thành hôm đó (đang bị vây, đang bị chiếm, thời chiến,
+thời bình, ngay sau một tai hoạ), và trong một năm một đảo không gặp lại kịch bản đã gặp:
+
+| Nhóm | Kịch bản |
+|---|---|
+| Chống trả, mọi miền | Dựng chiến luỹ, dân quân tự vệ, giành lại từng nhà, phá kho vũ khí của giặc, bãi công dưới ách chiếm đóng, phá cầu chặn viện binh, tiếp tế qua đường bí mật, bắt sống chỉ huy giặc, mật thư báo tin, thay cờ trên mái nhà, đánh trả quái vật |
+| Chống trả riêng của miền | Đồng bằng: nông dân cầm liềm, tháo nước ngập đồng, đốt kho lương giặc · Rừng: du kích rừng già, bẫy chông dưới lá, ném tổ ong vò vẽ, đom đóm nano · Núi: lăn đá từ vách, đường hầm bí mật, lửa hiệu trên đỉnh · Băng giá: phá băng dưới chân giặc, đánh úp trong bão tuyết, xe trượt chở vũ khí · Biển: thuyền lửa, lưới cá bủa giặc, thuyền đưa dân lánh nạn · Sa mạc: kỵ binh cát đánh úp, lấp giếng ngoài thành, ảo ảnh đánh lừa |
+| Người dân | Dân chạy loạn, xếp hàng nhận cứu tế, cả phố chữa cháy, cả xóm dựng lại nhà, đưa tang, xuống hầm trú ẩn, tin đồn giặc sắp tới, thanh niên xung phong, chợ đêm lén lút, giấu lương trong vách, khúc hát giữ thành, lớp học trong hầm, trạm cứu thương dã chiến, diễn tập sơ tán |
+| Quân đội | Giặc tuần tra từng ngõ, lệnh giới nghiêm, trưng dụng lương thực, thao luyện, tổng động viên, duyệt binh, quân đội cứu dân, lính đào ngũ, đánh nhau giữa phố, vá tường thành trong đêm, mở cổng xuất kích, đội tuần đêm |
+| Nhà bị chiếm | Giặc phá vào rìa thành, giặc chiếm thêm nhà làm trại, cướp phá từng nhà |
+
+Trên đảo thấy được hết: cờ giặc trên mái, lều trại trên quảng trường, dòng người chạy về quảng trường, đoàn người tản cư qua
+cầu, đám biểu tình cầm đuốc, hàng người xếp trước chợ, dây người chuyền nước tới đám cháy, đoàn đưa tang quanh đền, lính tuần
+theo vòng quanh các dãy nhà (mặc áo, cầm vũ khí của miền phe chiếm), hai bên giáp mặt nhau trước ngôi nhà vừa bị chiếm,
+chiến luỹ chắn các ngả đường, đá lăn từ vách núi, băng vỡ, thuyền lửa, tên bắn ra từ rừng, lửa hiệu trên các đỉnh núi.
+Thế giới chọn không chiến tranh thì không ai chiếm nhà ai, nhưng vẫn có thao luyện, duyệt binh, cứu dân sau thiên tai,
+chữa cháy, dựng lại nhà.
+
+## Hoá thân: thành chim hay thành mèo
+
+Bấm **⋯ → Hoá thành chim** (phím **C**) hay **Hoá thành mèo** (phím **M**) để tự đi xem bể kính, camera bám sau lưng con vật:
+
+| | Chim | Mèo |
+|---|---|---|
+| ↑ / W | bay tới (giữ để bay nhanh) | đi tới |
+| ↓ / S | bay chậm lại | lùi |
+| ← → / A D | rẽ | rẽ |
+| Space / E | bay lên cao | nhảy (lên bậc, lên bờ tường thấp) |
+| Shift / Q | sà xuống (không chui xuống đất) | |
+| Esc | trở lại làm thần | trở lại làm thần |
+
+Chim bay trong vòm kính, sà sát mái nhà mà không đâm xuống đất; mèo đi trên mặt đảo, bước lên bậc thềm, đi qua cầu sang
+đảo bên, gặp tường cao hay mép nước thì dừng. Camera không chui vào vách núi hay vào nhà. Trên điện thoại có sáu nút bấm
+giữ (⤒ ▲ ⤓ / ◀ ▼ ▶). Lúc hoá thân, phim tài liệu tạm dừng để không giành camera.
+
+## Mượt và nét
+
+Trang bắt đầu ở độ nét cao nhất màn hình cho phép (tối đa 2 điểm ảnh thật cho mỗi điểm ảnh) và tự giữ khoảng 60 khung
+hình mỗi giây: khung hình chậm hơn 19 ms quá một giây thì hạ độ phân giải từng bậc nhỏ rồi mới tới bóng đổ, máy dư sức thì
+nâng dần lên lại. Bóng đổ vẽ lại hai khung một lần (hoặc ngay khi chỗ nhìn đổi) và vùng bóng co lại khi nhìn gần nên sắc hơn.
+Số lượt vẽ mỗi khung giảm khoảng 40% ở góc nhìn toàn cảnh và một nửa khi nhìn một thành: thân nhà và cửa sổ chung một khối,
+tượng đồng và bến khí cầu gộp lại, mây gộp lại, đèn và sương đã tắt hẳn thì khỏi vẽ, những bộ hình trống thì bỏ qua, người
+đi lại chỉ tính lại ở những đảo đang trong khung nhìn (và sửa một lỗi để thùng hàng xuất khẩu chất đống mãi khi khí cầu
+không ở bến). **⋯ → Số khung hình** hiện số khung hình mỗi giây và độ nét đang dùng.
+
 ## Tám thời của loài người
 
 Nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, **tên lửa** (bệ phóng, vệ tinh, điện hạt nhân, tàu ngầm
@@ -166,7 +222,7 @@ viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi c
 
 ## Chạy
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
+Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `landmarks3d.js`, `fauna3d.js`, `chaos3d.js`, `streets3d.js`, `avatar3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
 
 ```bash
 cd aquarium && python3 -m http.server 8000
@@ -184,12 +240,14 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | `landmarks3d.js` | Ba mươi sáu công trình trụ cột của sáu miền qua mười hai thời; lửa, đổ nát và giàn giáo khi chiến tranh |
 | `fauna3d.js` | Thú hoang trên bãi săn (khủng long thời đầu, thú lớn rồi thú nhỏ), thợ săn, thằn lằn cổ dài dưới biển trong |
 | `chaos3d.js` | Cảnh của bốn mươi bốn kịch bản hỗn loạn, không chiến và đổ quân qua cổng không gian |
+| `streets3d.js` | Đời sống trong thành: cờ giặc trên mái nhà bị chiếm, lính gác, trại tạm, dân chạy loạn, tản cư, biểu tình, cứu tế, chữa cháy, đưa tang, tuần tra, giới nghiêm, thao luyện, duyệt binh, đánh nhau giữa phố, và cảnh chống trả của từng miền |
+| `avatar3d.js` | Hoá thân thành chim hay mèo, đi bằng phím mũi tên, camera bám sau lưng |
 | `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 46 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn và vị thần |
+| `test/sim.test.js` | 50 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn, nhà bị chiếm, chống trả, khởi nghĩa, kịch bản trong thành và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
@@ -259,7 +317,7 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | Mạch vàng, dịch, kẻ hứa lãi | 1 / 0–2 / 0–3 lần mỗi thành phố |
 
 ```bash
-node --test            # 31 bài kiểm thử (chạy trong thư mục aquarium)
+node --test            # 50 bài kiểm thử (chạy trong thư mục aquarium)
 node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 ```
 
@@ -267,5 +325,5 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 
 Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có thanh thần lực), **Thế giới** (sáu nền văn minh, sáu trụ cột,
 chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
-đêm). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
+đêm, số khung hình, hoá thành chim, hoá thành mèo). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
 là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.

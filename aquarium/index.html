@@ -103,6 +103,20 @@ body.intro .brand, body.intro .clock, body.intro .pulse, body.intro .bar, body.i
 .more { position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); display: grid; gap: 2px; padding: 6px; border-radius: 16px; min-width: 190px; z-index: 6; }
 .more button { border: 0; background: transparent; color: var(--ink); font: 500 13.5px var(--font-body); text-align: left; padding: 9px 12px; border-radius: 10px; cursor: pointer; }
 .more button:hover { background: rgba(255, 255, 255, 0.08); }
+.more kbd { float: right; margin-left: 10px; padding: 0 5px; border: 1px solid var(--glass-line); border-radius: 5px; font: 600 11px/16px var(--font-body); color: var(--ink-dim); }
+.avatar { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 78px); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 12px; border-radius: 16px; z-index: 6; max-width: calc(100vw - 32px); }
+.avatar .av-ic { font-size: 22px; line-height: 1; }
+.avatar .av-txt { display: grid; min-width: 0; }
+.avatar .av-txt b { font: 600 14px/1.25 var(--font-body); color: var(--ink); }
+.avatar .av-txt span { font-size: 12px; line-height: 1.35; color: var(--ink-dim); max-width: 46ch; }
+.avatar button { border: 0; border-radius: 10px; padding: 8px 11px; background: rgba(255, 255, 255, 0.1); color: var(--ink); font: 500 13px var(--font-body); cursor: pointer; white-space: nowrap; }
+.avatar button:hover { background: rgba(255, 255, 255, 0.18); }
+.pad { position: fixed; right: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 6px; z-index: 6; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pad button { border: 1px solid var(--glass-line); border-radius: 14px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--ink); font-size: 20px; touch-action: none; }
+.pad button.on { background: rgba(255, 210, 122, 0.3); }
+.pad .p-up { grid-area: 1 / 1; } .pad .p-fwd { grid-area: 1 / 2; } .pad .p-down { grid-area: 1 / 3; } .pad .p-left { grid-area: 2 / 1; } .pad .p-back { grid-area: 2 / 2; } .pad .p-right { grid-area: 2 / 3; }
+@media (max-width: 560px) { .avatar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 212px); left: 12px; right: 12px; transform: none; max-width: none; } .avatar .av-txt { flex: 1; } .avatar #avSwap { display: none; } }
+.fps { position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); z-index: 6; padding: 5px 9px; border-radius: 9px; background: rgba(8, 18, 28, 0.62); color: #e8f4ff; font: 600 12px/1.2 var(--font-body); font-variant-numeric: tabular-nums; pointer-events: none; }
 .more button[aria-pressed="true"]::after { content: "Bật"; float: right; color: var(--amber); font-size: 12px; }
 .rail { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; z-index: 3; }
 .tool { --p: 1; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass); color: var(--ink); cursor: pointer; font: inherit; text-align: left; backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
@@ -307,11 +321,29 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   <button id="policyBtn" aria-pressed="false" aria-controls="policy" hidden>Chính sách</button>
   <button id="dirBtn" aria-pressed="true" hidden>Phim tài liệu</button>
 </div>
+<div class="fps" id="fps" hidden aria-live="off"></div>
+<div class="avatar glass" id="avatarHud" hidden>
+  <span class="av-ic" id="avIc" aria-hidden="true"></span>
+  <span class="av-txt"><b id="avWhere"></b><span id="avHelp"></span></span>
+  <button id="avSwap">Đổi</button>
+  <button id="avExit">Trở lại làm thần</button>
+</div>
+<div class="pad" id="avPad" hidden aria-label="Điều khiển con vật">
+  <button data-k="up" class="p-up" id="avUp" aria-label="Lên">⤒</button>
+  <button data-k="fwd" class="p-fwd" aria-label="Tới">▲</button>
+  <button data-k="down" class="p-down" id="avDown" aria-label="Xuống">⤓</button>
+  <button data-k="left" class="p-left" aria-label="Rẽ trái">◀</button>
+  <button data-k="back" class="p-back" aria-label="Lùi">▼</button>
+  <button data-k="right" class="p-right" aria-label="Rẽ phải">▶</button>
+</div>
 <div class="more glass" id="more" hidden>
   <button id="chronBtn" aria-pressed="false" aria-controls="chron">Biên niên sử</button>
   <button id="soundBtn" aria-pressed="false">Âm thanh</button>
   <button id="helpBtn" aria-pressed="false" aria-controls="help">Chú giải</button>
   <button id="cycle" aria-pressed="true">Ngày và đêm</button>
+  <button id="fpsBtn" aria-pressed="false">Số khung hình</button>
+  <button id="birdBtn" aria-pressed="false">Hoá thành chim <kbd>C</kbd></button>
+  <button id="catBtn" aria-pressed="false">Hoá thành mèo <kbd>M</kbd></button>
   <button id="money" aria-pressed="true" hidden>Dòng tiền</button>
   <button id="orbit" aria-pressed="true" hidden>Tự xoay</button>
 </div>
@@ -379,6 +411,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     <li><i style="background:#ff8a3d"></i><span><b>Lò rực lửa, bánh răng quay nhanh</b>: xưởng đông thợ.</span></li>
     <li><i style="background:#ffd36b"></i><span><b>Quả cầu Kho Bạc</b> vàng ấm khi lãi suất thấp, xanh lạnh khi lãi cao, sáng hơn khi cho vay nhiều.</span></li>
     <li><i style="background:#9aa3ad"></i><span><b>Người ở quảng trường giữa ngày</b>: đang tìm việc.</span></li>
+    <li><i style="background:#ff8a80"></i><span><b>Cờ phe khác trên mái nhà, lính gác trước cửa</b>: nhà đã bị giặc chiếm. Lều trên quảng trường là trại của những gia đình mất nhà.</span></li>
+    <li><i style="background:#9df0c4"></i><span><b>Phím C, phím M</b>: hoá thành chim, thành mèo; đi bằng phím mũi tên, Space để bay lên hay nhảy, Esc để trở lại.</span></li>
   </ul>
   <p class="legend-h">Đốm sáng là dòng tiền</p>
   <ul class="legend">
@@ -493,6 +527,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="fauna3d.js"></script>
 <script src="chaos3d.js"></script>
 <script src="streets3d.js"></script>
+<script src="avatar3d.js"></script>
 <script src="god3d.js"></script>
 <script src="story3d.js"></script>
 <script>
@@ -521,10 +556,11 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 
   /* =============== Renderer, camera =============== */
   const canvas = $('scene');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false; // bóng đổ được vẽ lại theo nhịp riêng (xem phần Mượt và nét)
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 4200);
   const OVERVIEW = 340;
@@ -610,11 +646,19 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     mesh(new THREE.CylinderGeometry(s * 0.9, s * 0.7, 0.8, 7), mat('#86b86a'), 0, s * 0.75, 0, rock);
     floaters.push({ m: rock, y: rock.position.y, ph: hash(i) * 6 });
   }
+  // gộp vài khối cùng vật liệu thành một khối (một lượt vẽ)
+  function mergePlain(list) {
+    let n = 0; const gs = list.map((g) => (g.index ? g.toNonIndexed() : g)); for (const g of gs) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3); let o = 0;
+    for (const g of gs) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
+    const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); m.computeBoundingSphere(); return m;
+  }
   const clouds = [];
   const cloudMat = mat('#ffffff', { roughness: 1, emissive: '#ffffff', emissiveIntensity: 0.18 });
   for (let i = 0; i < 22; i++) {
     const g = new THREE.Group();
-    for (let k = 0; k < 4; k++) mesh(new THREE.IcosahedronGeometry(5 + hash(i * 9 + k) * 6, 1), cloudMat, k * 7 - 11, hash(i + k) * 3, hash(i * 3 + k) * 4, g).castShadow = false;
+    const puffs = []; for (let k = 0; k < 4; k++) { const ge = new THREE.IcosahedronGeometry(5 + hash(i * 9 + k) * 6, 1); ge.translate(k * 7 - 11, hash(i + k) * 3, hash(i * 3 + k) * 4); puffs.push(ge); }
+    mesh(mergePlain(puffs), cloudMat, 0, 0, 0, g).castShadow = false;
     const a = hash(i) * Math.PI * 2, r = 180 + hash(i + 1) * 380;
     g.position.set(Math.cos(a) * r, -50 + hash(i + 2) * 90, Math.sin(a) * r);
     scene.add(g); clouds.push({ g, a, r, v: 0.00025 + hash(i + 5) * 0.0004 });
@@ -698,6 +742,33 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   // bốn mươi bốn kịch bản hỗn loạn mỗi năm, không chiến, đổ quân qua cổng
   const chaos3d = Chaos3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, fauna, puff, reduce, glowTex, shake, audio, ripple, camera, setDim, factionColor });
   const streets3d = Streets3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, factionColor, audio, shake });
+  /* ----- Hoá thân: chim hay mèo, đi bằng phím mũi tên ----- */
+  const AV_TXT = { bird: ['🐦', '↑ bay tới · ← → rẽ · Space lên cao · Shift sà xuống · Esc trở lại'], cat: ['🐈', '↑ đi tới · ↓ lùi · ← → rẽ · Space nhảy · Esc trở lại'] };
+  const touchUi = () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
+  function avatarUi(kind) {
+    $('avatarHud').hidden = !kind; $('avPad').hidden = !kind || !touchUi();
+    $('birdBtn').setAttribute('aria-pressed', String(kind === 'bird')); $('catBtn').setAttribute('aria-pressed', String(kind === 'cat'));
+    if (!kind) return;
+    $('avIc').textContent = AV_TXT[kind][0]; $('avHelp').textContent = touchUi() ? (kind === 'bird' ? 'Giữ nút để bay · ⤒ lên · ⤓ xuống' : 'Giữ nút để đi · ⤒ nhảy') : AV_TXT[kind][1];
+    $('avSwap').textContent = kind === 'bird' ? 'Thành mèo' : 'Thành chim'; $('avDown').hidden = kind === 'cat'; $('avUp').textContent = '⤒';
+    focusTween = null; if (sel) select(null);
+    const d = $('dirBtn'); if (d && d.getAttribute('aria-pressed') === 'true') d.click(); // phim tài liệu không giành camera của con vật
+  }
+  const avatar = Avatar3D.create({ THREE, scene, camera, controls, lands3d, W, DOME, reduce, onChange: avatarUi });
+  const becomeAvatar = (kind) => { toggleMore(false); if (avatar.kind === kind) return avatar.stop(); avatar.start(kind, focus); };
+  $('birdBtn').onclick = () => becomeAvatar('bird'); $('catBtn').onclick = () => becomeAvatar('cat');
+  $('avExit').onclick = () => avatar.stop(); $('avSwap').onclick = () => avatar.start(avatar.kind === 'bird' ? 'cat' : 'bird', avatar.pos ? nearestCity(avatar.pos) : focus);
+  function nearestCity(p) { let best = focus, bd = 1e9; for (const L of lands3d.lands) { const d = Math.hypot(p.x - L.center.x, p.z - L.center.z); if (d < bd && W.cities[L.i].settled) { bd = d; best = L.i; } } return best; }
+  for (const b of document.querySelectorAll('#avPad button')) {
+    const k = b.dataset.k, on = (v) => (e) => { e.preventDefault(); avatar.press(k, v); b.classList.toggle('on', v); };
+    b.addEventListener('pointerdown', on(true)); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, on(false));
+  }
+  document.addEventListener('keydown', (e) => {
+    if (document.body.classList.contains('intro') || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.key === 'c' || e.key === 'C') becomeAvatar('bird');
+    else if (e.key === 'm' || e.key === 'M') becomeAvatar('cat');
+  });
   const lands = lands3d.lands;
   // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
   function keyPos(L, key) {
@@ -1152,6 +1223,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     document.body.classList.toggle('panel-open', open || !$('policy').hidden);
   }
   $('helpBtn').onclick = () => openHelp($('help').hidden);
+  $('fpsBtn').onclick = () => { fpsOn = !fpsOn; $('fps').hidden = !fpsOn; $('fpsBtn').setAttribute('aria-pressed', String(fpsOn)); };
   $('hClose').onclick = () => openHelp(false);
   function setSound(on) {
     if (!audio) return;
@@ -1185,6 +1257,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (document.body.classList.contains('intro')) return startGod($('warOn').checked, false);
+    if (avatar && avatar.kind) return avatar.stop();
     if (aiming) return setAiming(null);
     if (!$('more').hidden) return toggleMore(false);
     if (story && story.chapterOpen) return story.hideChapter();
@@ -1195,23 +1268,74 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   });
   document.addEventListener('visibilitychange', () => { if (audio) (document.hidden ? audio.suspend() : audio.resume()); });
 
-  /* =============== Chất lượng hình ảnh tự điều chỉnh =============== */
-  const QUALITY = [{ pr: 2, shadow: 2048 }, { pr: 1.5, shadow: 1024 }, { pr: 1, shadow: 0 }, { pr: 0.75, shadow: 0 }];
-  let quality = window.innerWidth < 720 || (navigator.hardwareConcurrency || 8) <= 4 ? 1 : 0, qLocked = false, slowFor = 0, frameEMA = 16;
+  /* =============== Mượt và nét: độ phân giải động nhắm 60 khung hình mỗi giây =============== */
+  // Bắt đầu ở độ nét cao nhất màn hình cho phép (tối đa 2 điểm ảnh thật mỗi điểm ảnh CSS). Khung hình chậm quá 19 ms
+  // trong hơn một giây thì hạ độ phân giải từng bậc nhỏ, rồi mới tới bóng đổ; máy dư sức thì nâng dần lên lại.
+  // Bóng đổ không vẽ lại mỗi khung: hai khung một lần, hoặc ngay khi camera dời chỗ; vùng bóng co lại khi nhìn gần cho sắc nét.
+  const lowEnd = window.innerWidth < 720 || (navigator.hardwareConcurrency || 8) <= 4;
+  const PERF = { prMax: Math.min(2, window.devicePixelRatio || 1), prMin: 0.75, pr: 1, shadow: lowEnd ? 1024 : 2048, shadowEvery: 2, frame: 0, ema: 16.7, slow: 0, good: 0, ceiling: 9, cool: 0, half: 70, force: true, lastT: new THREE.Vector3(1e9, 0, 0), fps: 60, fpsN: 0, fpsT: 0 };
+  PERF.pr = lowEnd ? Math.min(1.5, PERF.prMax) : PERF.prMax;
+  const PRESETS = [{ pr: 2, shadow: 2048 }, { pr: 1.5, shadow: 1024 }, { pr: 1, shadow: 0 }, { pr: 0.75, shadow: 0 }];
+  let quality = 0, qLocked = false;
   function applyQuality() {
-    const q = QUALITY[quality], shadows = q.shadow > 0;
-    renderer.setPixelRatio(Math.min(q.pr, window.devicePixelRatio || 1));
-    if (shadows) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+    renderer.setPixelRatio(Math.min(PERF.pr, window.devicePixelRatio || 1));
+    const shadows = PERF.shadow > 0;
+    if (shadows && sun.shadow.mapSize.x !== PERF.shadow) { sun.shadow.mapSize.set(PERF.shadow, PERF.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     if (renderer.shadowMap.enabled !== shadows) { renderer.shadowMap.enabled = shadows; scene.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true)); }); }
+    PERF.force = true;
     resize();
   }
   applyQuality();
   function governQuality(dt) {
-    if (qLocked || document.hidden) return;
-    frameEMA = frameEMA * 0.95 + dt * 0.05;
-    if (frameEMA > 38) { slowFor += dt; if (slowFor > 3000 && quality < QUALITY.length - 1) { quality++; applyQuality(); slowFor = 0; frameEMA = 22; } }
-    else slowFor = Math.max(0, slowFor - dt * 0.5);
+    if (qLocked || document.hidden || dt > 250) return;
+    const t = performance.now();
+    PERF.fpsN++; if (t - PERF.fpsT > 500) { PERF.fps = (PERF.fpsN * 1000) / (t - PERF.fpsT); PERF.fpsN = 0; PERF.fpsT = t; if (fpsOn) $('fps').textContent = Math.round(PERF.fps) + ' khung/giây · nét ' + renderer.getPixelRatio().toFixed(2) + '×' + (PERF.shadow ? '' : ' · tắt bóng'); }
+    PERF.ema = PERF.ema * 0.92 + dt * 0.08;
+    if (PERF.ema > 19.5) { PERF.slow += dt; PERF.good = 0; }
+    else { PERF.slow = Math.max(0, PERF.slow - dt * 0.5); PERF.good = PERF.ema < 17.8 ? PERF.good + dt : 0; }
+    if (PERF.slow > 1200) {
+      PERF.slow = 0; PERF.ceiling = Math.min(PERF.ceiling, PERF.pr); PERF.cool = t + 45000;
+      if (PERF.pr > PERF.prMin + 0.01) PERF.pr = Math.max(PERF.prMin, +(PERF.pr - 0.15).toFixed(2));
+      else if (PERF.shadowEvery < 3) PERF.shadowEvery = 3;
+      else if (PERF.shadow > 1024) PERF.shadow = 1024;
+      else if (PERF.shadow > 0) PERF.shadow = 0;
+      else return;
+      applyQuality(); PERF.ema = 16.7;
+    } else if (PERF.good > 4000) {
+      PERF.good = 0;
+      if (PERF.shadow === 0) PERF.shadow = 1024;
+      else if (PERF.shadow < (lowEnd ? 1024 : 2048)) PERF.shadow = 2048;
+      else if (PERF.shadowEvery > 2) PERF.shadowEvery = 2;
+      else if (PERF.pr < PERF.prMax - 0.01 && (t > PERF.cool || PERF.pr + 0.1 < PERF.ceiling - 0.01)) { PERF.pr = Math.min(PERF.prMax, +(PERF.pr + 0.1).toFixed(2)); if (t > PERF.cool) PERF.ceiling = 9; }
+      else return;
+      applyQuality();
+    }
   }
+  // bóng đổ: vùng bóng theo khoảng cách camera, vẽ lại hai khung một lần hoặc khi chỗ nhìn đổi
+  function shadowTick() {
+    PERF.frame++;
+    if (!renderer.shadowMap.enabled) return;
+    const moved = controls.target.distanceToSquared(PERF.lastT) > 0.0004;
+    if (moved) PERF.lastT.copy(controls.target);
+    const half = clamp(camera.position.distanceTo(controls.target) * 0.62, 26, 80);
+    if (Math.abs(half - PERF.half) > 3) { PERF.half = half; const sc = sun.shadow.camera; sc.left = -half; sc.right = half; sc.top = half; sc.bottom = -half; sc.updateProjectionMatrix(); PERF.force = true; }
+    renderer.shadowMap.needsUpdate = PERF.force || moved || PERF.frame % PERF.shadowEvery === 0;
+    PERF.force = false;
+  }
+  // những ánh sáng, sương khói đã mờ hẳn thì khỏi vẽ (trước đây vẫn tốn một lượt vẽ mỗi cái)
+  const faded = []; let fadedScan = 0;
+  function hideFaded(t) {
+    if (t > fadedScan) { fadedScan = t + 1500; faded.length = 0; scene.traverse((o) => { if (o.userData.noFade) return; if (o.isSprite || (o.isMesh && !o.isInstancedMesh && o.material && !Array.isArray(o.material) && o.material.transparent)) faded.push(o); }); }
+    for (const o of faded) {
+      if (o.material.opacity < 0.012) { if (o.visible) { o.visible = false; o.userData.fadeHid = true; } }
+      else if (o.userData.fadeHid) { o.userData.fadeHid = false; o.visible = true; }
+    }
+  }
+  // đảo nào nằm ngoài khung nhìn thì khỏi tính lại người đi lại trên đảo đó
+  const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
+  function viewTick() { _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm); }
+  const inView = (i) => { const L = lands3d.lands[i]; if (!L) return true; _sph.center.copy(L.center); _sph.radius = lands3d.LAND_R + 10; return _fr.intersectsSphere(_sph); };
+  let fpsOn = false;
 
   /* =============== Điều khiển =============== */
   let running = true, tps = 1.5, acc = 0;
@@ -1451,8 +1575,9 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d,
-    lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality,
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, avatar,
+    lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, quality: () => quality, perf: PERF,
+    renderer, scene,
   };
 
   /* =============== Vòng lặp =============== */
@@ -1460,7 +1585,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   war3d.syncDay(false, 0);
   marks.syncDay(false); fauna.syncDay(false);
   pulse(); landBar(); updateSeasons(true);
-  let last = performance.now(), lastSlow = 0;
+  let last = performance.now(), lastSlow = 0, lastWhere = 0;
   function frame(t) {
     const dt = Math.min(100, t - last); last = t;
     governQuality(dt);
@@ -1475,8 +1600,9 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     updateMoments(performance.now(), night);
     chaos3d.update();
     if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
-    streets3d.animate(dt, t, night);
-    lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; });
+    viewTick();
+    streets3d.animate(dt, t, night, inView);
+    lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);
     war3d.animate(dt, t, acc, night);
     marks.animate(dt); fauna.animate(dt, t);
     god3d.update(dt, t);
@@ -1488,7 +1614,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     updateFestival(dt, t, night);
     for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
     for (const c of clouds) { if (!reduce) c.a += c.v * dt * 0.06; c.g.position.x = Math.cos(c.a) * c.r; c.g.position.z = Math.sin(c.a) * c.r; }
-    if (focusTween) {
+    if (avatar.update(dt)) { focusTween = null; if (t - lastWhere > 400) { lastWhere = t; $('avWhere').textContent = avatar.where(); } }
+    else if (focusTween) {
       const k = clamp((now - focusTween.t0) / 1200, 0, 1), e = 1 - Math.pow(1 - k, 3);
       const off = camera.position.clone().sub(controls.target);
       controls.target.lerpVectors(focusTween.from, focusTween.target, e);
@@ -1496,9 +1623,10 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
       camera.position.copy(controls.target).add(off);
       if (k >= 1) focusTween = null;
     }
-    controls.update();
+    if (!avatar.kind) controls.update();
     const sk = shakeUntil > now ? (shakeUntil - now) / 1400 : 0, saved = sk > 0 ? camera.position.clone() : null;
     if (saved) { camera.position.x += (Math.random() - 0.5) * sk * 1.8; camera.position.y += (Math.random() - 0.5) * sk * 1.8; }
+    hideFaded(now); shadowTick();
     renderer.render(scene, camera);
     if (saved) camera.position.copy(saved);
     requestAnimationFrame(frame);

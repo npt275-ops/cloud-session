@@ -66,13 +66,40 @@
     const ghostMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false });
     // BEY: thời đại thật của công trình đang dựng; từ thời 9 trở đi công trình robot được biến hình theo bốn thời vượt người
     let BEY = 0, BEYSEED = 1;
+    // thân nhà và cửa sổ chung một khối: cửa sổ đánh dấu bằng thuộc tính aLit, sáng lên theo đèn của đảo (hay của cầu),
+    // nên mỗi công trình chỉ tốn một lượt vẽ thay vì hai
+    const litMerged = new Map();
+    function mergedMat(litMat, metal) {
+      const key = litMat.uuid + (metal ? 'm' : 'b');
+      let m = litMerged.get(key);
+      if (m) return m;
+      m = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: metal ? 0.35 : 0.8, metalness: metal ? 0.55 : 0.03 });
+      const uLitC = { get value() { return litMat.emissive; } }, uLitI = { get value() { return litMat.emissiveIntensity; } };
+      m.onBeforeCompile = (sh) => {
+        sh.uniforms.uLitC = uLitC; sh.uniforms.uLitI = uLitI;
+        sh.vertexShader = 'attribute float aLit;\nvarying float vLit;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvLit = aLit;');
+        sh.fragmentShader = 'uniform vec3 uLitC;\nuniform float uLitI;\nvarying float vLit;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uLitC * uLitI * vLit;');
+      };
+      m.customProgramCacheKey = () => 'bodyLit' + (metal ? 'm' : 'b');
+      litMerged.set(key, m);
+      return m;
+    }
+    function joinLit(body, lit) {
+      const nb = body ? body.attributes.position.count : 0, flag = new Float32Array(nb + lit.attributes.position.count);
+      flag.fill(1, nb);
+      const g = body ? mergeG([body, lit]) : lit;
+      g.setAttribute('aLit', new THREE.BufferAttribute(flag, 1));
+      return g;
+    }
     function meshOf(kit, litMat, parent, x, z, ry, metal) {
       if (BEY >= 8) beyondKit(kit, BEY, BEYSEED++);
-      const { body, lit, glow, ghost } = kit.bake();
+      let { body, lit, glow, ghost } = kit.bake();
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry || 0;
       let top = 0.5;
-      if (body) { const m = new THREE.Mesh(body, metal ? metalMat : bodyMat); m.castShadow = true; m.receiveShadow = true; g.add(m); body.computeBoundingBox(); top = body.boundingBox.max.y; }
-      if (lit) { const l = new THREE.Mesh(lit, litMat); l.castShadow = false; g.add(l); }
+      if (body) { body.computeBoundingBox(); top = body.boundingBox.max.y; }
+      if (lit && litMat) { body = joinLit(body, lit); lit = null; }
+      if (body) { const m = new THREE.Mesh(body, body.attributes.aLit ? mergedMat(litMat, metal) : metal ? metalMat : bodyMat); m.castShadow = true; m.receiveShadow = true; g.add(m); }
+      if (lit) { const l = new THREE.Mesh(lit, bodyMat); l.castShadow = false; g.add(l); }
       if (glow) { const l = new THREE.Mesh(glow, glowMat); g.add(l); glow.computeBoundingBox(); top = Math.max(top, glow.boundingBox.max.y); }
       if (ghost) { const l = new THREE.Mesh(ghost, ghostMat); l.renderOrder = 3; g.add(l); ghost.computeBoundingBox(); top = Math.max(top, ghost.boundingBox.max.y); }
       g.userData.top = top;
@@ -1747,7 +1774,7 @@
       const dark = L.dark && L.dark > performance.now(); // cúp điện: cửa sổ tắt hết
       L.litMat.emissiveIntensity = (dark ? 0.03 : 1) * night * (1.25 - hungry * 0.8);
     }
-    function animate(dt, t, night, tod, fadOf) {
+    function animate(dt, t, night, tod, fadOf, inView) {
       FIG_UNI.uTime.value = reduce ? 0 : t * 0.001;
       const now = performance.now(), spin = reduce ? 0 : dt * 0.001;
       for (const L of lands) {
@@ -1772,10 +1799,10 @@
       }
       for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2;
       updateCarts(); updateWalkers(t);
-      if (t - lastSlow > 250) {
-        lastSlow = t;
-        for (const L of lands) { economyVisuals(L, night); updatePeople(L, tod, t, fadOf ? fadOf(L.i) : null); }
-      } else for (const L of lands) updatePeople(L, tod, t, fadOf ? fadOf(L.i) : null);
+      // người đi lại chỉ tính lại ở những đảo đang nằm trong khung nhìn
+      const slow = t - lastSlow > 250;
+      if (slow) lastSlow = t;
+      for (const L of lands) { if (slow) economyVisuals(L, night); if (!inView || inView(L.i)) updatePeople(L, tod, t, fadOf ? fadOf(L.i) : null); }
     }
     // màu theo mùa cho mặt đất và cây
     function seasons(sw, drought) {

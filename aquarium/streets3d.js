@@ -240,7 +240,7 @@
     function soldiers(put, tn) {
       for (const St of ST) {
         const L = St.L, c = W.cities[L.i];
-        if (!c.settled || !c.occ) continue;
+        if (!c.settled || !c.occ || (view && !view(L.i))) continue;
         try { citySoldiers(St, c, put, tn); } catch (err) { /* một cảnh hỏng không làm hỏng cả bể */ }
       }
     }
@@ -334,12 +334,14 @@
       for (const s of O.scenes) if (s.until > W.day) sc[s.kind] = s;
       return sc;
     }
-    function animate(dt, t, nv) {
-      night = nv || 0;
+    let view = null;
+    function animate(dt, t, nv, inView) {
+      night = nv || 0; view = inView || null;
       const tn = now();
       for (const St of ST) {
         const L = St.L, c = W.cities[L.i];
         St.nt = 0;
+        if (view && !view(L.i)) continue; // đảo ngoài khung nhìn: giữ nguyên hình cũ
         if (!c.settled || !c.occ) { St.flags.visible = St.tents.visible = St.barr.visible = false; if (St.crowd) { F.crowdBegin(St.crowd); F.crowdEnd(St.crowd); } continue; }
         try {
           const sc = scenesOf(c);
