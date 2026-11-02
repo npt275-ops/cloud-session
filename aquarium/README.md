@@ -24,26 +24,34 @@ nơi đắt (cầu càng hiện đại chở càng nhiều), tri thức đi theo
 đi trước. Đủ **tri thức** (phát minh và điều học được) và **dân số**, thành phố sang thời đại mới; cây cầu được xây lại
 theo thời đại thấp hơn của hai đầu. Gieo phát minh giúp một thành phố tiến nhanh hơn.
 
-## Vai của người chơi: vị thần của bể kính
+## Vai của người chơi: bàn tay ngoài bể kính
 
-Người chơi đứng ngoài vách kính, trên cả sáu nền văn minh. Sáu bộ lạc tự sống, tự buôn bán, tự đánh nhau (có thể tắt
-chiến tranh ở màn chào). Thần không ra lệnh cho ai, thần chỉ quyết định trời đất:
+Người chơi là vị thần duy nhất, một bàn tay khổng lồ bên ngoài chiếc bể. Sáu bộ lạc tự sống, tự buôn bán, tự đánh nhau
+(có thể tắt chiến tranh ở màn chào). Thần không ra lệnh cho ai: thần chỉ làm những việc một bàn tay thật làm được với
+một chiếc bể. Bảng **Quyền năng** chia năm nhóm, mười lăm việc:
 
-| Thiên tai | Hậu quả trong nền kinh tế |
-|---|---|
-| Lũ lụt | Ruộng ngập, kho ướt, cầu yếu bị cuốn trôi, lính trên cầu bị cuốn; nước rút để lại phù sa (+20% lương thực bốn tháng) |
-| Hạn hán | Mất mùa hơn hai tháng, giá gạo leo thang |
-| Động đất | Nhà xưởng sập, tường thành nứt, cầu gãy, người bị thương, dư chấn sau năm ngày; nhà thời mới chịu được tốt hơn |
-| Lốc xoáy | Cột gió đi qua đúng những xưởng bị cuốn, hàng hoá bay mất |
-| Dịch bệnh | Người ốm không đi làm được, quân lính yếu đi, dịch theo người buôn lan sang láng giềng |
-| Núi lửa | Thành tan hoang, tro phủ ruộng ba tháng, rồi đất tro màu mỡ hơn một năm |
-| Sóng thần | Bến cá và cảng tan tác, tàu neo bến bị nhấn chìm, cá trước bến giảm |
-| Sét lửa | Cháy lan sang những xưởng nằm sát nhau |
+| Nhóm | Việc của bàn tay | Hậu quả trong bể |
+|---|---|---|
+| Vách kính | **Gõ kính** | Ngón tay gõ ba lần: cả đảo bỏ việc một ngày, quân quanh đảo đứng khựng ba ngày, dân tin thần hơn |
+| | **Khoan lỗ thở** | Khí trời vào hai tháng: người khoẻ, ruộng tốt; có khi châu chấu hay gió lạnh lọt vào theo |
+| | **Làm nứt kính** | Khí ấm rò ra hai tháng: lạnh, mất mùa, người ốm, xưởng chậm, cho tới khi vá |
+| | **Đập vỡ kính** | Bầu khí quyển trên đảo sụp, trời tím, dân chạy nạn; hai mươi ngày nữa nếu không vá thì cả thành chết, đảo hoang, rồi một bộ lạc mới đến chơi lại từ thời nguyên thuỷ (phải bấm xác nhận) |
+| | **Vá kính** | Dán kín chỗ nứt, chỗ vỡ; dừng đếm ngược nếu còn kịp |
+| Nước trong bể | **Đổ thêm nước** | Biển dâng bốn mươi ngày: bến cá ngập, ruộng ven bờ nhiễm mặn, cảng có thể sập; cá về nhiều |
+| | **Rút bớt nước** | Biển cạn bốn mươi ngày: thuyền mắc cạn, tàu buôn, tàu chiến nằm im; nước về thì cá dồn lại |
+| | **Nghiêng bể** | Sóng lớn đánh vào đảo được chạm và hai đảo hai bên, cầu yếu gãy; đảo phía cao bến cạn |
+| Đèn và nắp bể | **Lấy tay che đèn** | Mười ngày tối như đêm trên một đảo: ruộng ngừng lớn, chợ đóng, giặc không dám tiến |
+| | **Kéo đèn lại gần** | Nóng như lò: hạn bốn mươi ngày, nhà quanh chỗ chạm bén lửa, băng tan thành lũ, sa mạc lan ra |
+| | **Mở nắp bể** | Gió và mưa thật rơi vào cả sáu đảo; có khi lá khô và châu chấu rơi xuống một đảo |
+| Thả vào bể | **Thả đồng xu** | Đồng xu khổng lồ cắm xuống đất, lộ mạch vàng: tiền đổ vào, giá leo thang |
+| | **Thả hạt giống** | Mọc thành cây khổng lồ đúng chỗ chạm: đất màu mỡ, người khoẻ, mùa tốt nhiều năm |
+| | **Thả viên sỏi** | Rơi như thiên thạch đúng chỗ chạm: nhà, xưởng quanh đó cháy sập, người bị thương |
+| Cả chiếc bể | **Lắc bể** | Động đất cùng lúc trên sáu đảo; mọi cuộc chiến buộc dừng một mùa |
 
-Ban phước: mưa lành, mùa bội thu, khai sáng (một phát minh), chữa lành, đình chiến (buộc một phe ngưng chiến một năm).
-Mỗi quyền năng tốn **thần lực** và có thời gian chờ. Thần lực hồi lại nhờ **đức tin**: thiên tai làm dân sợ mà tin,
-ban phước làm dân biết ơn mà tin, và thời đại càng mới người ta càng ít tin. Ở thời Robot AI, những cỗ máy đo được
-độ cong của bầu trời, hiểu mình đang sống trong một chiếc bể, và gõ lên kính từ phía bên trong.
+Việc cho cả bể làm ngay khi bấm; việc cho một đảo thì chạm đúng chỗ trên đảo (hay bấm tên đảo ở thanh trên). Mỗi việc
+tốn **thần lực** và có thời gian chờ. Thần lực hồi lại nhờ **đức tin**: tai hoạ làm dân sợ mà tin, ơn lành làm dân biết
+ơn mà tin, và thời đại càng mới người ta càng ít tin. Dưới bảng là tình trạng chiếc bể: đảo nào kính nứt, kính vỡ còn
+mấy ngày, lỗ thở, mực nước, đảo nào đang hoang chờ bộ lạc mới.
 
 ## Một ván chín năm
 
@@ -173,46 +181,80 @@ chiến luỹ chắn các ngả đường, đá lăn từ vách núi, băng vỡ
 Thế giới chọn không chiến tranh thì không ai chiếm nhà ai, nhưng vẫn có thao luyện, duyệt binh, cứu dân sau thiên tai,
 chữa cháy, dựng lại nhà.
 
-## Hoá thân: thành chim hay thành mèo
+## Bàn tay hiện ra ngoài vòm kính
 
-Bấm **⋯ → Hoá thành chim** (phím **C**) hay **Hoá thành mèo** (phím **M**) để tự đi xem bể kính. Con vật nhỏ hơn người trong
-bể (mèo cao chừng một phần tư người), đi và bay chậm theo cỡ của nó, camera thấp và gần sau lưng với ống kính góc rộng, nên nhà
-cửa, cây cầu, công trình hiện ra to và xa như thật:
+Mỗi lần ra tay, camera lùi ra cho thấy cả hòn đảo lẫn bàn tay bên ngoài vòm, thời gian trong bể đứng lại một nhịp, bàn
+tay làm việc của nó, tới lúc chạm thì hậu quả mới hiện, rồi camera bay lại gần đảo. Ngón trỏ gõ làm vòm gợn sóng; mũi
+khoan toé lửa; nắm tay đấm làm kính nứt hình sao, đấm xuyên thì mảnh kính rơi như mưa xuống đảo; lòng bàn tay áp miếng
+kính mới có dán băng keo; bình nước rót một dòng xuống giữa biển; ống hút nước vắt qua đỉnh vòm; hai bàn tay nâng vành
+làm cả bể nghiêng, nước sóng sánh rồi sóng thần đánh vào bờ; bàn tay xoè che trên đảo; ngọn đèn bàn hạ sát vòm; nắp
+tròn trên đỉnh vòm bật lên; đồng xu, hạt giống, viên sỏi rơi xuyên vòm; hai bàn tay nắm vành đồng lắc cả bể.
 
-| | Chim | Mèo |
-|---|---|---|
-| ↑ / W | bay nhanh | đi tới |
-| ↓ / S | bay chậm | lùi |
-| ← → / A D | rẽ | rẽ |
-| Space / E | bay lên cao | nhảy (lên bậc, bờ tường thấp) |
-| Shift / Q | sà xuống (không chui xuống đất) | chạy |
-| 1 – 6 | sáu phép của trời | sáu phép của đất |
-| Esc | trở lại làm thần | trở lại làm thần |
+Dấu vết ở lại bao lâu còn hậu quả: vết nứt trên vòm và hơi lạnh lùa vào đảo; lỗ vỡ có viền mảnh kính, trời tím đầy sao
+giữa ban ngày, khí bị hút về lỗ thủng và nhãn **Kính vỡ · còn N ngày**; lỗ thở có vòng kim loại và khí trong lành bay vào;
+mặt biển dâng lên, hạ xuống; bóng bàn tay che tối cả đảo; đèn đỏ rực và đất nóng hầm hập; cây khổng lồ toả bóng; đồng xu
+cắm đứng; viên sỏi nằm trong hố. Thành chết thì nhà, xưởng, quảng trường, công trình quân sự đổ hết, chỉ còn nền nhà cháy
+đen; bộ lạc mới đến thì đảo dựng lại từ đầu.
 
-Chim bay trong vòm kính, sà sát mái nhà; mèo đi trên mặt đảo, bước lên bậc thềm, qua cầu sang đảo bên, gặp tường cao hay mép
-nước thì dừng. Đi tới gần một công trình kỳ lạ hay một công trình trụ cột thì nó được ghi vào **sổ khám phá** (96 nơi). Trên
-điện thoại có thanh phép sáu ô và sáu nút bấm giữ (⤒ ▲ ⤓ / ◀ ▼ ▶).
+## Bay quanh bể
 
-## Quyền năng: thần mượn thân
+Không còn hoá thân: chỉ có một vai là vị thần, và một cách nhìn như mắt chim mà không có con chim nào.
 
-Bảng **Quyền năng** có ba thẻ: **Thần**, **Chim**, **Mèo**.
+| Phím | Việc |
+|---|---|
+| ↑ / W | lướt tới |
+| ↓ / S | lùi lại |
+| ← → / A D | sang trái, sang phải |
+| Page Up / E / Space | lên cao |
+| Page Down / Q / Shift | sà xuống thấp |
 
-- **Thần**: thiên tai và ban phước lớn, chọn rồi chạm thẳng vào một chỗ trên đảo: thiên tai lấy chỗ đó làm tâm, xưởng và nhà
-  gần chỗ chạm chịu trước (cháy, sập), camera bay tới đúng chỗ.
-- **Chim** (dùng khi đang là chim, phím 1–6, tác dụng trong vòng dưới cánh chim): **Mưa lành** (mưa rơi thật, lửa quanh đó tắt
-  kèm hơi nước, hết hạn, ruộng được tưới), **Sét trời** (sét giáng đúng toán giặc gần nhất, lính ngã, xác nằm lại), **Gió ngược**
-  (gió quét quân giặc lùi trên cầu và trên biển, mấy ngày không vào được thành), **Gọi đàn chim** (đàn chim xoáy rồi bổ nhào
-  vào lính giặc), **Thư bay** (lá thư sáng bay về quảng trường: tường được vá, dân hết sợ, lòng dân kháng chiến lên), **Nắng
-  vàng** (tia nắng rọi xuống ruộng: mùa tốt hơn, vết cháy xanh lại, thú về bãi săn).
-- **Mèo** (dùng khi đang là mèo, tác dụng quanh chân mèo): **Cào cửa báo động** (cửa các nhà quanh đó loé sáng, người chạy ra
-  kịp, giặc không lẻn vào được), **Gặm dây cửa** (cờ giặc rơi khỏi mái ngôi nhà bị chiếm gần nhất, gia đình từ trại tạm về
-  nhà, hàng xóm reo mừng), **Mèo đen qua đường** (lính giặc bỏ chạy ra mép đảo, bỏ lệnh giới nghiêm), **Bắt chuột** (chuột
-  chạy tán loạn khỏi kho, lương hết mốc, dịch không lan), **Rù rì chữa lành** (tim hồng bay lên, người ốm quanh mèo khỏi),
-  **Dẫn lối bí mật** (dấu chân sáng dẫn người ở trại tạm ra cầu hay ra bến lánh nạn, hay đưa đoàn tiếp tế vào thành bị vây).
+Kéo chuột vẫn xoay được, cuộn vẫn phóng to. Bay tới trên đảo nào thì đảo đó thành đảo đang xem. Trên điện thoại, sáu nút
+bấm giữ (⤒ ▲ ⤓ / ◀ ▼ ▶) hiện sẵn; trên máy tính bật bằng **⋯ → Nút bay trên màn hình**.
 
-Phép của chim và mèo rẻ (5–14 thần lực), hồi nhanh; ô nào sáng viền vàng là quanh đó đang có việc cho phép ấy. Mỗi lần giúp
-thành một truyền thuyết trong biên niên sử, dân tin hơn nên thần lực hồi nhanh hơn; một đảo được chim (hay mèo) giúp đủ năm lần
-thì dân dựng **tượng chim xanh** (hay **tượng mèo cam**) bằng đồng trên quảng trường.
+## Đường sá và người có việc để làm
+
+Mỗi đảo một mạng đường: đường lớn từ quảng trường ra hai cổng cầu và ra bến, một vành đai, sáu phố toả ra, lối nhỏ ra mép
+đảo, cộng một kiểu đường riêng: bờ ruộng ô bàn cờ ở đồng bằng, đường mòn săn bắn ngoằn ngoèo trong rừng, đường dốc chữ chi
+lên mỏ trên núi, vệt xe trượt tuyết ra bờ băng, lối gỗ và cầu tàu ven biển, đường đoàn lạc đà qua ốc đảo ở sa mạc. Đường
+không xuyên công trình; mỗi ngã tư là một nút của đồ thị đường, người đi theo đường ngắn nhất trên đồ thị đó. Đường đổi
+theo thời đại: đất, đá, nhựa có vạch kẻ, viền sáng ở bốn thời cuối.
+
+Mỗi gia đình hiện thành một người có lịch một ngày: sáng bước ra từ cửa nhà, theo đường tới ruộng, quầy chợ, xưởng, bến
+cá, mỏ hay trại lính; trẻ tới trường; người chưa có việc ra chợ tìm việc, tới đứng quanh căn nhà đang dựng, hay theo nghề
+riêng của đảo (ra đồng, săn trong rừng, đào quặng, câu cá trên băng, kéo lưới ven biển, theo đoàn lạc đà). Tới nơi thì làm
+việc ở đó: người bán xếp hàng trước quầy, nông dân cuốc ruộng, thợ xây gõ búa, lính tập hàng; chỉ vài người đứng ngoài, số
+còn lại làm bên trong. Ngày lễ chiều tối nhiều người ghé đền. Tối theo đường cũ về nhà và khuất sau cánh cửa. Lịch lập lúc
+nửa đêm, nên không ai hiện ra hay biến mất giữa đường. Quân lính được giao chiến tuyến thì rời bãi tập, hành quân theo đường
+phố ra cổng cầu rồi mới lên cầu; rút về cũng đi bộ theo đường cũ.
+
+## Nhà phố hai bên đường
+
+Ngoài nhà của các gia đình trong sổ kinh tế, dọc hai bên đường lớn, đường phố là dãy nhà phố, cửa hàng, hội quán thương
+nhân, nhà hội đồng, theo đúng kiến trúc riêng của đảo và thời đại. Dãy nhà mọc dần từ quảng trường ra theo dân số và thời
+đại; lô nào có gia đình dọn đến thì nhà của gia đình đó dựng lên thay chỗ. Đầu ván mỗi đảo đã có bảy, tám chục công trình
+thay vì mươi lăm căn nhà; giữa ván nhà phố và nhà ở lấp kín các phố.
+
+## Đêm
+
+Đêm không tối mịt: trăng sáng hơn và có vầng trăng bạc trên trời; đèn đứng dọc mạng đường (đuốc dọc đường lớn thời xưa,
+rồi đèn lồng, đèn khí, đèn điện trên mọi phố, đèn neon ở thời cuối) cùng vũng sáng dưới chân đèn, mỗi đảo gộp thành một lớp
+sáng một lượt vẽ; quảng trường thời xưa có bốn lò lửa; cửa sổ sáng khi có người ở nhà.
+
+## Mưa tên lửa, thành trì sập, đảo tụt lùi
+
+Hai phe đang đánh nhau thì thành bị trút đạn: thời đại bác thì đạn tròn bay vòng qua biển từ cổng thành bên kia, thời máy
+bay thì ba máy bay ném bom bay thành hàng thả bom khi ngang qua thành, thời tên lửa thì tên lửa rời hầm phóng kéo vệt khói
+vòng lên rồi lao xuống, bốn thời cuối là tia năng lượng giáng thẳng từ trời. Quả cầu lửa, hố bom, khói; tường thành, tháp
+canh, trại lính, lò rèn, chợ hay học viện trúng đạn thì sập trong bụi gạch, để lại đống đổ nát. Giữa ván, một hai đảo (không
+phải đảo dẫn đầu) bị đẩy lùi một hay hai thời đại vì đại hoả hoạn, mưa tên lửa hay nội chiến: cả thành chìm trong lửa khói,
+đất cháy đen. Bầu trời ngày thường có khinh khí cầu và phi thuyền, rồi máy bay cánh quạt, phản lực, máy bay không người lái,
+tàu bay ánh sáng theo thời đại cao nhất trong bể.
+
+## Thời thứ mười hai: thành phố neon
+
+Cấp 12/12 là một thành phố cyberpunk: khối nhà sẫm màu xanh đen, tím than; viền neon xanh lơ, hồng, vàng chạy quanh từng
+tầng và dọc bốn cạnh; biển hiệu phát sáng trên mặt tiền; ăng-ten đèn đỏ trên mái; đường tối có viền neon hai màu, quảng
+trường ba vòng neon, đèn đường hồng; tàu bay viền neon lượn trên trời.
 
 ## Mượt và nét
 
@@ -284,20 +326,20 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 |---|---|
 | `index.html` | Bể kính, bầu trời theo thời đại, ngày đêm, thời tiết, mặt trời nhân tạo, giao diện, thanh sáu thành phố, màn chào, chú giải |
 | `demo.html` | Bản demo một trang để chốt kế hoạch mười hai thời đại |
-| `lands3d.js` | Dáng đất sáu miền, công trình theo mười hai thời đại (gộp hình học để nhẹ, bốn thời vượt người biến hình), cầu nối, nhân vật tròn có khớp, cư dân, đoàn hàng qua cầu |
+| `lands3d.js` | Dáng đất sáu miền, công trình theo mười hai thời đại (gộp hình học để nhẹ, bốn thời vượt người biến hình, thời thứ mười hai neon), mạng đường riêng từng đảo và đồ thị tìm đường, nhà phố hai bên đường, đèn đường, cầu nối, nhân vật tròn có khớp, lịch một ngày của cư dân, đoàn hàng qua cầu, đảo hoang khi thành chết |
 | `landmarks3d.js` | Ba mươi sáu công trình trụ cột của sáu miền qua mười hai thời; lửa, đổ nát và giàn giáo khi chiến tranh |
 | `fauna3d.js` | Thú hoang trên bãi săn (khủng long thời đầu, thú lớn rồi thú nhỏ), thợ săn, thằn lằn cổ dài dưới biển trong |
 | `chaos3d.js` | Cảnh của bốn mươi bốn kịch bản hỗn loạn, không chiến và đổ quân qua cổng không gian |
 | `streets3d.js` | Đời sống trong thành: cờ giặc trên mái nhà bị chiếm, lính gác, trại tạm, dân chạy loạn, tản cư, biểu tình, cứu tế, chữa cháy, đưa tang, tuần tra, giới nghiêm, thao luyện, duyệt binh, đánh nhau giữa phố, và cảnh chống trả của từng miền |
-| `avatar3d.js` | Hoá thân thành chim hay mèo: con vật nhỏ, ống kính góc rộng, đi bằng phím mũi tên, camera bám sau lưng không chui vào núi hay vào nhà |
-| `powers3d.js` | Hậu quả nhìn thấy được của mười hai phép chim và mèo (mưa, sét, gió, đàn chim, thư bay, nắng, cửa loé sáng, cờ giặc rơi, lính bỏ chạy, chuột chạy, tim hồng, dấu chân sáng) và tượng chim, tượng mèo trên quảng trường |
+| `hand3d.js` | Bàn tay ngoài bể kính: mười lăm việc của bàn tay và dấu vết bền trên bể (vết nứt, lỗ vỡ, trời tím, lỗ thở, mặt biển, bóng tay, đèn, cây khổng lồ, đồng xu, viên sỏi) |
+| `sky3d.js` | Bầu trời chiến tranh (đại bác, máy bay ném bom, tên lửa, tia năng lượng, thành trì sập, đảo cháy rụi) và máy bay ngày thường theo thời đại |
 | `sights3d.js` | Sáu mươi công trình kỳ lạ của sáu đảo, mỗi đảo mười, đổi theo thời đại |
-| `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
+| `god3d.js` | Hình ảnh thiên tai dùng chung (lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét) cho bàn tay và các kịch bản hỗn loạn |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 52 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn, nhà bị chiếm, chống trả, khởi nghĩa, kịch bản trong thành, phép của chim và mèo, phép thần chạm đúng chỗ và vị thần |
+| `test/sim.test.js` | 53 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn, nhà bị chiếm, chống trả, khởi nghĩa, kịch bản trong thành, mười lăm việc của bàn tay, kính vỡ làm thành chết rồi bộ lạc mới đến, mưa tên lửa, đảo tụt lùi |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
@@ -375,6 +417,6 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 
 Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có thanh thần lực), **Thế giới** (sáu nền văn minh, sáu trụ cột,
 chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
-đêm, số khung hình, hoá thành chim, hoá thành mèo). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
+đêm, số khung hình, nút bay trên màn hình). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
 là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.
 Đồng hồ góc phải ghi **cấp của bể kính** (thời đại cao nhất mà một thành đã tới, từ 1/12 đến 12/12), mùa và ngày, thay cho số năm.

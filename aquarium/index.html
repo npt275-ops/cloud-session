@@ -536,6 +536,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="sights3d.js"></script>
 <script src="god3d.js"></script>
 <script src="hand3d.js"></script>
+<script src="sky3d.js"></script>
 <script src="story3d.js"></script>
 <script>
 (function () {
@@ -758,6 +759,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const streets3d = Streets3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, factionColor, audio, shake });
   /* ----- Bàn tay ngoài bể kính: hình ảnh của mười lăm quyền năng ----- */
   const hand3d = Hand3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
+  // bầu trời chiến tranh: đại bác, máy bay ném bom, tên lửa, tia năng lượng; đảo bị đẩy lùi; máy bay theo thời đại
+  const sky3d = Sky3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, shake, audio, factionColor });
   /* ----- Bay tự do: phím mũi tên để lướt qua lại, Page Up / Page Down để lên xuống ----- */
   // Như mắt chim mà không có con chim nào: vị thần lướt tới, lùi, sang trái, sang phải, lên cao, sà thấp để ngắm thành phố.
   const FLY = { keys: new Set(), pad: new Set(), v: new THREE.Vector3(), on: false, padOn: false, near: 0 };
@@ -1698,7 +1701,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     marks.syncDay(animate); fauna.syncDay(animate); sights3d.syncDay(); hand3d.syncDay();
     story.onDay();
     if (animate) for (const fx of W.god.fx) hand3d.play(fx);
-    if (animate && W.chaos) for (const fx of W.chaos.fx) (fx.street ? streets3d.play(fx) : chaos3d.play(fx));
+    if (animate && W.chaos) for (const fx of W.chaos.fx) (fx.street ? streets3d.play(fx) : fx.key === 'strike' || fx.key === 'setback' ? sky3d.play(fx) : chaos3d.play(fx));
+    sky3d.syncDay();
     godTick();
     if (W.ended && !finaleShown) setTimeout(finale, 1200);
     checkWatches();
@@ -1708,7 +1712,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, hand3d, fly: FLY, flyStep, aimAt,
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, hand3d, sky3d, fly: FLY, flyStep, aimAt,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, quality: () => quality, perf: PERF,
     renderer, scene,
   };
@@ -1738,7 +1742,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);
     war3d.animate(dt, t, acc, night);
     marks.animate(dt); fauna.animate(dt, t);
-    god3d.update(dt, t); hand3d.update(dt, t);
+    god3d.update(dt, t); hand3d.update(dt, t); sky3d.update(dt, t);
     story.update(dt, t);
     const now = performance.now();
     updateFxGlobal(now, dt);
