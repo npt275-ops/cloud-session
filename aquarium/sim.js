@@ -1291,7 +1291,7 @@
     if (w.stats.length > 2000) w.stats.shift();
   }
 
-  /* ---------- Bàn tay người chơi ---------- */
+  /* ---------- Tác động của người chơi lên tiền ---------- */
   function printMoney(w, amount) {
     w.ledger.printed += amount;
     w.gov.cash += amount;
@@ -2316,13 +2316,13 @@
   }
 
   /* =============== Thần của bể kính: thiên tai, ban phước, đức tin =============== */
-  // Bàn tay ngoài bể kính: vị thần là một bàn tay khổng lồ bên ngoài chiếc bể. Mỗi quyền năng là một việc bàn tay thật làm được
-  // với một chiếc bể: gõ, khoan, làm nứt, đập vỡ, vá kính; đổ thêm nước, rút bớt nước, nghiêng bể; che đèn, kéo đèn lại gần, mở nắp;
+  // Quyền năng của vị thần ngoài bể kính. Mỗi quyền năng là một việc thần làm với chiếc bể:
+  // gõ, khoan lỗ thở, làm nứt, đập vỡ, vá kính; đổ thêm nước, rút bớt nước, nghiêng bể; che đèn, kéo đèn lại gần, mở nắp;
   // thả đồng xu, hạt giống, viên sỏi vào bể; lắc cả bể. Hậu quả đi thẳng vào kinh tế, dân số, chiến tranh của các đảo.
   // Đập vỡ kính là phép duy nhất xoá được cả một đảo: bầu khí quyển trên đảo sụp, sau hai mươi ngày (nếu không vá) thành chết,
   // đảo trống, rồi một bộ lạc mới đến và đảo chơi lại từ thời nguyên thuỷ.
   const POWERS = {
-    tap: { group: 'glass', kind: 'mixed', target: 'island', name: 'Gõ kính', cost: 6, cool: 4, info: 'Ngón tay gõ lên vách kính: cả đảo giật mình bỏ việc một ngày, quân đang đánh nhau quanh đảo đứng khựng ba ngày. Dân tin thần hơn.' },
+    tap: { group: 'glass', kind: 'mixed', target: 'island', name: 'Gõ kính', cost: 6, cool: 4, info: 'Thần gõ lên vách kính: cả đảo giật mình bỏ việc một ngày, quân đang đánh nhau quanh đảo đứng khựng ba ngày. Dân tin thần hơn.' },
     vent: { group: 'glass', kind: 'good', target: 'island', name: 'Khoan lỗ thở', cost: 20, cool: 40, info: 'Khí trời tràn vào một đảo hai tháng: người khoẻ, ruộng tốt. Nhưng côn trùng hay gió lạnh bên ngoài có thể lọt vào theo.' },
     crack: { group: 'glass', kind: 'bad', target: 'island', name: 'Làm nứt kính', cost: 35, cool: 60, info: 'Khí trên đảo rò ra qua vết nứt hai tháng: lạnh, mất mùa, người ốm, xưởng chậm, cho tới khi vá.' },
     shatter: { group: 'glass', kind: 'bad', target: 'island', name: 'Đập vỡ kính', cost: 90, cool: 360, info: 'Bầu khí quyển trên đảo sụp. Hai mươi ngày nữa, nếu không vá, cả thành chết, đảo trống trơn, rồi một bộ lạc mới đến chơi lại từ thời nguyên thuỷ.' },
@@ -2330,7 +2330,7 @@
     pour: { group: 'water', kind: 'mixed', target: 'tank', name: 'Đổ thêm nước', cost: 30, cool: 60, info: 'Mực biển dâng bốn mươi ngày: bến cá và ruộng ven bờ ngập mặn, cảng có thể sập; cá về nhiều hơn.' },
     drain: { group: 'water', kind: 'bad', target: 'tank', name: 'Rút bớt nước', cost: 30, cool: 60, info: 'Biển cạn bốn mươi ngày: thuyền mắc cạn, không ai đánh cá, tàu buôn và tàu chiến nằm im. Khi nước về, cá dồn lại.' },
     tilt: { group: 'water', kind: 'bad', target: 'island', name: 'Nghiêng bể', cost: 50, cool: 120, info: 'Nước dồn về phía đảo được chạm: sóng lớn đánh vào đảo đó và hai đảo hai bên, tàu lật, cầu yếu gãy; đảo phía cao bến cạn.' },
-    shade: { group: 'light', kind: 'bad', target: 'island', name: 'Lấy tay che đèn', cost: 25, cool: 45, info: 'Mười ngày tối như đêm trên một đảo: ruộng ngừng lớn, dân hoảng, chợ đóng; quân giặc quanh đảo cũng dừng lại.' },
+    shade: { group: 'light', kind: 'bad', target: 'island', name: 'Che đèn', cost: 25, cool: 45, info: 'Mười ngày tối như đêm trên một đảo: ruộng ngừng lớn, dân hoảng, chợ đóng; quân giặc quanh đảo cũng dừng lại.' },
     lamp: { group: 'light', kind: 'bad', target: 'island', name: 'Kéo đèn lại gần', cost: 35, cool: 60, info: 'Nóng như lò: hạn hán bốn mươi ngày, nhà quanh chỗ chạm bén lửa, đảo băng tan thành lũ, sa mạc lan ra.' },
     lid: { group: 'light', kind: 'good', target: 'tank', name: 'Mở nắp bể', cost: 30, cool: 90, info: 'Gió và mưa thật từ ngoài rơi vào cả bể: mùa tốt, người khoẻ trên cả sáu đảo. Nhưng lá khô và châu chấu có thể rơi xuống một đảo.' },
     coin: { group: 'drop', kind: 'good', target: 'island', name: 'Thả đồng xu', cost: 40, cool: 120, info: 'Một đồng xu khổng lồ rơi xuống đảo: người ta đào quanh nó và gặp mạch vàng; tiền từ ngoài đổ vào, giá cả leo thang.' },
@@ -2408,7 +2408,7 @@
     let title = '', text = '';
     if (key === 'tap') {
       CX.fear(W, c, 0.5, 3); hitFirms(W, c, 1, 1, 0); calm(cid, 3);
-      title = 'Một ngón tay gõ lên vách kính trên ' + c.name;
+      title = 'Thần gõ lên vách kính trên ' + c.name;
       text = 'Tiếng cộc vang khắp đảo. Người ta bỏ việc, ngước nhìn trời một ngày; quân đang đánh nhau quanh đảo đứng khựng lại.';
     } else if (key === 'vent') {
       const gl = c.glass || (c.glass = {});
@@ -2442,13 +2442,13 @@
       T.level = 1; T.until = W.day + 40; T.kind = 'pour';
       for (const x of live) { const f = fisheryOf(x); if (f) { f.downUntil = Math.max(f.downUntil || 0, W.day + 12); f.inv *= 0.6; } addMod(x, 0.93, W.day, W.day + 40); if (hasB(x, 'port') && W.rand() < 0.3) wreck(W, x, 1, Object.keys(x.bld).filter((k) => k !== 'port')); }
       for (let z = 0; z < W.sea.stock.length; z++) W.sea.stock[z] = W.sea.stock[z].map((v, s) => Math.min(SPECIES[s].K, v * 1.25));
-      title = 'Bàn tay đổ thêm nước vào bể';
+      title = 'Thần đổ thêm nước vào bể';
       text = 'Mực biển dâng lên bốn mươi ngày. Bến cá ngập, ruộng ven bờ nhiễm mặn, nhưng cá về nhiều hơn bao giờ hết.';
     } else if (key === 'drain') {
       T.level = -1; T.until = W.day + 40; T.kind = 'drain';
       for (const x of live) { const f = fisheryOf(x); if (f) f.downUntil = Math.max(f.downUntil || 0, W.day + 40); }
       for (const u of X.units) if (!u.dead && u.naval) u.hp -= u.hpMax * 0.1;
-      title = 'Bàn tay rút bớt nước khỏi bể';
+      title = 'Thần rút bớt nước khỏi bể';
       text = 'Biển cạn trơ đáy. Thuyền nằm nghiêng trên bùn, tàu buôn, tàu chiến nằm im bốn mươi ngày.';
     } else if (key === 'tilt') {
       const sides = [cid, (cid + 5) % 6, (cid + 1) % 6], high = (cid + 3) % 6, hit = [];
@@ -2460,11 +2460,11 @@
       }
       fx.bridges = hitBridges(W, cid, 1, 30); fx.sides = sides; fx.high = high;
       const hx = W.cities[high]; if (hx.settled) { const f = fisheryOf(hx); if (f) f.downUntil = Math.max(f.downUntil || 0, W.day + 10); }
-      title = 'Bàn tay nghiêng bể về phía ' + c.name;
+      title = 'Thần nghiêng bể về phía ' + c.name;
       text = 'Nước dồn cả về một phía. Sóng lớn đánh vào ' + hit.join(', ') + ': tàu lật, bến tan.' + (fx.bridges.length ? ' Cây cầu yếu bị cuốn trôi.' : '') + ' Ở ' + hx.name + ' biển rút trơ đáy.';
     } else if (key === 'shade') {
       c.dark = W.day + 10; addMod(c, 0.55, W.day, W.day + 10); CX.fear(W, c, 0.5, 10); CX.goods(W, c, 0.8, 10); calm(cid, 10);
-      title = 'Bàn tay che đèn trên ' + c.name;
+      title = 'Thần che đèn trên ' + c.name;
       text = 'Mười ngày tối như đêm. Ruộng ngừng lớn, chợ đóng, người ta thắp đuốc giữa trưa. Quân giặc quanh đảo cũng không dám tiến.';
     } else if (key === 'lamp') {
       trigger(w, 'drought', 40); c.heat = W.day + 30;
@@ -2475,12 +2475,12 @@
       if (c.terrain.key === 'tundra') { hitFirms(W, c, 0.4, 20, 0.4); addMod(c, 0.7, W.day, W.day + 30); fx.melt = true; }
       if (c.terrain.key === 'desert') addMod(c, 0.8, W.day, W.day + 60);
       pillarNudge(c, 'eco', -0.12);
-      title = 'Bàn tay kéo đèn lại gần ' + c.name;
+      title = 'Thần kéo đèn lại gần ' + c.name;
       text = 'Nóng như lò. Giếng cạn, mái nhà bén lửa' + (fx.melt ? ', băng tan thành lũ tràn qua làng' : '') + '. Hạn hán kéo dài bốn mươi ngày.';
     } else if (key === 'lid') {
       for (const x of live) { addMod(x, 1.1, W.day, W.day + 30); heal(W, x, 0.2); faithShift(W, x, 0.04); }
       if (live.length && W.rand() < 0.35) { const x = live[Math.floor(W.rand() * live.length)]; addMod(x, 0.8, W.day + 3, W.day + 18); fx.bugs = x.id; }
-      title = 'Bàn tay mở nắp bể';
+      title = 'Thần mở nắp bể';
       text = 'Gió và mưa thật từ ngoài bể rơi xuống cả sáu đảo: ruộng xanh, người khoẻ.' + (fx.bugs != null ? ' Nhưng một đàn châu chấu cũng theo lá khô rơi xuống ' + W.cities[fx.bugs].name + '.' : '');
     } else if (key === 'coin') {
       fx.gold = !!discoverGold(w);
@@ -2504,10 +2504,10 @@
       let down = 0, hurt = 0;
       for (const x of live) { const res = RESIST[x.era]; down += hitFirms(W, x, 0.3 * res, 10, 0.2).length; hurt += injure(W, x, 0.06 * res, 14); CX.fire(W, x, 2, 0.7); markHit(x, key, P.name, W.day); }
       for (const f of X.factions) for (const g of X.factions) if (f.id < g.id && atWarF(W, f.id, g.id)) { makePeace(W, f.id, g.id); X.rel[f.id][g.id].truce = W.day + 90; X.rel[g.id][f.id].truce = W.day + 90; }
-      title = 'Bàn tay lắc cả bể';
+      title = 'Thần lắc cả bể';
       text = 'Sáu đảo cùng rung chuyển. ' + down + ' nơi làm ăn đổ sập, ' + hurt + ' người bị thương. Mọi cuộc chiến buộc phải dừng một mùa.';
     }
-    // dân thấy bàn tay: sợ mà tin, hay biết ơn mà tin
+    // dân thấy thần ra tay: sợ mà tin, hay biết ơn mà tin
     const shift = P.kind === 'bad' ? 0.2 : P.kind === 'good' ? 0.12 : 0.15;
     if (c) {
       faithShift(W, c, shift);

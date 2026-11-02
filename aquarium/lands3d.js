@@ -2204,7 +2204,7 @@
     // (ra đồng, săn trong rừng, đào quặng, câu cá trên băng, kéo lưới ven biển, theo đoàn lạc đà) hay tới đứng quanh căn nhà
     // đang dựng; ngày lễ chiều tối ghé đền rồi mới về. Tới nơi thì làm việc ở đó; chiều tối theo đường cũ về nhà, khuất sau
     // cánh cửa. Lịch lập cho mỗi vòng ngày đêm (lúc mọi người đang ngủ), nên không ai hiện ra hay biến mất giữa đường.
-    const TRIP_W = 0.00105; // thời gian đi bộ (phần của một ngày) cho mỗi đơn vị đường
+    const TRIP_W = 0.0019; // thời gian đi bộ (phần của một ngày) cho mỗi đơn vị đường: ở 1× người đi bộ chậm rãi, nhìn rõ
     const REGION = { plains: ['field', 'farm'], forest: ['trail', 'hunt'], mountain: ['switch', 'mine'], tundra: ['track', 'icefish'], coast: ['boardwalk', 'fish'], desert: ['caravan', 'trade'] };
     const SPREAD = { farm: 2.4, shop: 1.4, fish: 1.2, mine: 2.2, drill: 2.6, school: 2.2, market: 3.2, build: 0.6, pray: 1.3, hunt: 3.4, icefish: 1.4, trade: 1.6, idle: 1.8 };
     const ATK = { farm: 0.8, mine: 1, build: 1, fish: 0.45, icefish: 0.2, drill: 0.3 };
@@ -2260,7 +2260,7 @@
       for (let k = 0; k + 1 < plan.stops.length; k++) {
         const A = plan.stops[k], B = plan.stops[k + 1], pts = L.route(A.p.x, A.p.z, B.p.x, B.p.z), cum = [0];
         for (let q = 1; q < pts.length; q++) cum.push(cum[q - 1] + pts[q].distanceTo(pts[q - 1]));
-        const len = cum[cum.length - 1], dur = clamp(len * TRIP_W, 0.006, 0.075), start = Math.max(tt, A.t);
+        const len = cum[cum.length - 1], dur = clamp(len * TRIP_W, 0.008, 0.13), start = Math.max(tt, A.t);
         plan.legs.push({ pts, cum, len, start, end: start + dur });
         tt = start + dur + 0.004;
       }

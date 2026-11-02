@@ -829,7 +829,7 @@ test('mười hai thời đại: tám thời của loài người tới robot AI
   assert.equal(Sim.unitName('forest', 'melee', 9), 'Hiệp Sĩ Plasma');
 });
 
-test('bàn tay ngoài bể kính: gõ, nứt, vá kính, đổ và rút nước, thả đồ, lắc bể đều tốn thần lực, có hồi chiêu và hậu quả thật', () => {
+test('quyền năng của thần: gõ, nứt, vá kính, đổ và rút nước, thả đồ, lắc bể đều tốn thần lực, có hồi chiêu và hậu quả thật', () => {
   const W = Sim.createWorld({ seed: 7, mode: 'god' });
   assert.equal(W.mode, 'god'); assert.equal(W.war.player, -1, 'không phe nào là của người chơi');
   assert.equal(Object.keys(Sim.POWERS).length, 15);

@@ -416,7 +416,7 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 ## Giao diện
 
 Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có thanh thần lực), **Thế giới** (sáu nền văn minh, sáu trụ cột,
-chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
+chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, 16×; không có tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
 đêm, số khung hình, nút bay trên màn hình). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
 là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.
 Đồng hồ góc phải ghi **cấp của bể kính** (thời đại cao nhất mà một thành đã tới, từ 1/12 đến 12/12), mùa và ngày, thay cho số năm.

@@ -28,7 +28,7 @@
     }
     waterGeo.setAttribute('color', new THREE.Float32BufferAttribute(wcol, 3));
     const waterMat = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.84, roughness: 0.2, metalness: 0.15, flatShading: true, emissive: '#0b3550', emissiveIntensity: 0.28, depthWrite: false });
-    let seaDy = 0; // bàn tay đổ thêm nước hay rút bớt nước: mặt biển dâng, hạ
+    let seaDy = 0; // thần đổ thêm nước hay rút bớt nước: mặt biển dâng, hạ
     const water = new THREE.Mesh(waterGeo, waterMat); water.position.y = SEA_Y; water.receiveShadow = true; water.renderOrder = 2; sea.add(water);
     water.raycast = () => {};
     // đáy biển: cát vàng ven bờ, xanh thẫm ngoài khơi; bên dưới là bồn đá

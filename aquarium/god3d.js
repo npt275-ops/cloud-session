@@ -1,4 +1,4 @@
-/* Bể Kính — bàn tay của vị thần: hình ảnh thiên tai và ban phước trên sáu miền đất.
+/* Bể Kính — quyền năng của vị thần: hình ảnh thiên tai và ban phước trên sáu miền đất.
  * Mỗi lần thần ra tay bắt đầu bằng một chạm sáng trên vách kính phía trên miền đất, rồi đến tai hoạ hay phép lành. */
 (function (root) {
   'use strict';

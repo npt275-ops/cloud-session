@@ -323,9 +323,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="powBtn" aria-pressed="false" aria-controls="powers" hidden><span class="mbar"><i id="manaFill"></i></span><span id="manaTxt">Quyền năng</span></button>
   <button id="cmdBtn" aria-pressed="false" aria-controls="cmd" hidden>Thế giới</button>
-  <button id="speed" title="Chạm để đổi tốc độ hoặc tạm dừng">1× ▸</button>
+  <button id="speed" title="Chạm để đổi tốc độ: 1×, 2×, 4×, 16×">1× ▸</button>
   <button id="moreBtn" aria-expanded="false" aria-controls="more" aria-label="Thêm">⋯<span class="badge" id="chronBadge" hidden>0</span></button>
-  <button id="play" aria-pressed="false" hidden>Tạm dừng</button>
   <button id="policyBtn" aria-pressed="false" aria-controls="policy" hidden>Chính sách</button>
   <button id="dirBtn" aria-pressed="true" hidden>Phim tài liệu</button>
 </div>
@@ -348,7 +347,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   <button id="money" aria-pressed="true" hidden>Dòng tiền</button>
   <button id="orbit" aria-pressed="true" hidden>Tự xoay</button>
 </div>
-<nav class="rail" aria-label="Bàn tay người giữ bể" hidden>
+<nav class="rail" aria-label="Công cụ người giữ bể" hidden>
   <button class="tool ready" id="toolSeed" aria-pressed="false">
     <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5l2.1 7.4L21.5 11l-7.4 2.1L12 20.5l-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span>
     <span class="tl"><b>Gieo phát minh</b><em id="seedWait">Sẵn sàng</em></span>
@@ -388,7 +387,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 </div>
 
 <section class="panel glass" id="policy" hidden aria-labelledby="pTitle">
-  <div class="ph"><h3 id="pTitle">Bàn tay chính sách</h3><button class="x" id="pClose" aria-label="Đóng bảng chính sách">×</button></div>
+  <div class="ph"><h3 id="pTitle">Chính sách</h3><button class="x" id="pClose" aria-label="Đóng bảng chính sách">×</button></div>
   <p class="sub">Mỗi quyết định thay đổi nền kinh tế thật. Thành phố sẽ báo lại hệ quả sau vài tuần.</p>
   <button class="big" id="pRain"><b>Rắc 10.000 xu xuống thành phố</b><span>Vàng rơi xuống mọi nhà. Dân có thêm tiền tiêu, nhưng giá cả có thể tăng theo.</span></button>
   <label class="sl" for="rRate"><span>Lãi suất ngân hàng</span><output id="oRate">5%</output></label>
@@ -497,7 +496,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 </section>
 <section class="cmd glass" id="powers" hidden aria-labelledby="pwTitle">
   <div class="ch">
-    <div class="ct"><i style="background:#fff3c4"></i><h3 id="pwTitle">Bàn tay ngoài bể kính</h3><button id="pwClose" aria-label="Đóng bảng quyền năng">×</button></div>
+    <div class="ct"><i style="background:#fff3c4"></i><h3 id="pwTitle">Quyền năng của thần</h3><button id="pwClose" aria-label="Đóng bảng quyền năng">×</button></div>
     <div class="mana"><span class="mbar"><i id="pwFill"></i></span><b id="pwVal">60</b></div>
     <p class="note" id="pwInfo">Chọn một quyền năng.</p>
   </div>
@@ -535,7 +534,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="streets3d.js"></script>
 <script src="sights3d.js"></script>
 <script src="god3d.js"></script>
-<script src="hand3d.js"></script>
+<script src="powers3d.js"></script>
 <script src="sky3d.js"></script>
 <script src="story3d.js"></script>
 <script>
@@ -757,8 +756,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   // bốn mươi bốn kịch bản hỗn loạn mỗi năm, không chiến, đổ quân qua cổng
   const chaos3d = Chaos3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, fauna, puff, reduce, glowTex, shake, audio, ripple, camera, setDim, factionColor });
   const streets3d = Streets3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, factionColor, audio, shake });
-  /* ----- Bàn tay ngoài bể kính: hình ảnh của mười lăm quyền năng ----- */
-  const hand3d = Hand3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
+  /* ----- Quyền năng của thần: hình ảnh của mười lăm phép ----- */
+  const powers3d = Powers3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
   // bầu trời chiến tranh: đại bác, máy bay ném bom, tên lửa, tia năng lượng; đảo bị đẩy lùi; máy bay theo thời đại
   const sky3d = Sky3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, shake, audio, factionColor });
   /* ----- Bay tự do: phím mũi tên để lướt qua lại, Page Up / Page Down để lên xuống ----- */
@@ -1135,7 +1134,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   function watch(i, days, fn) { if (wOf(i)) watches.push({ city: i, at: W.day + days, before: snap(i), fn }); }
   function checkWatches() { for (let k = watches.length - 1; k >= 0; k--) { if (W.day < watches[k].at) continue; const w = watches.splice(k, 1)[0], msg = w.fn(w.before, snap(w.city)); if (msg) toast(msg, 6500); } }
 
-  /* =============== Bàn tay chính sách: tác động lên thành phố đang xem =============== */
+  /* =============== Chính sách: tác động lên thành phố đang xem =============== */
   const NOTES = {
     rRate: (v) => v <= 2 ? 'Rất thấp: vay gần như miễn phí. Kinh tế dễ nóng lên và nợ phình to.' : v <= 7 ? 'Vừa phải: doanh nghiệp vay để mở rộng khi cần.' : v <= 13 ? 'Cao: vay đắt, doanh nghiệp ngại mở rộng và có thể sa thải.' : 'Rất cao: tín dụng gần như đóng băng. Coi chừng suy thoái.',
     rTax: (v) => v <= 4 ? 'Gần như không thu thuế: quỹ cạn, người mất việc không có trợ cấp.' : v <= 20 ? 'Vừa phải: đủ trợ cấp cho người chưa có việc.' : v <= 35 ? 'Cao: trợ cấp hào phóng, người đi làm giữ lại ít hơn.' : 'Rất cao: tiền chảy mạnh từ người đi làm sang quỹ thành phố.',
@@ -1387,15 +1386,15 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   let fpsOn = false;
 
   /* =============== Điều khiển =============== */
-  let running = true, tps = 1.5, acc = 0;
-  const speeds = [[1.5, '1×'], [3, '2×'], [6, '4×'], [15, '10×']]; // 1× hết ván chín năm trong 36 phút, 2× trong 18 phút, 4× trong 9 phút
+  // Bốn tốc độ, không có tạm dừng. 1× chậm để nhìn rõ từng người, từng giai đoạn (ván chín năm hết trong khoảng 73 phút,
+  // một vòng ngày đêm 3 phút); 2× nhanh như 1× trước đây (36 phút); 4× (18 phút); 16× (gần 5 phút).
+  let running = true, tps = 0.75, acc = 0;
+  const speeds = [[0.75, '1×'], [1.5, '2×'], [3, '4×'], [12, '16×']];
   function stopOrbit() { if (controls.autoRotate) { controls.autoRotate = false; $('orbit').setAttribute('aria-pressed', 'false'); } $('hint').style.opacity = 0; }
-  $('play').onclick = () => { running = !running; $('play').textContent = running ? 'Tạm dừng' : 'Chạy tiếp'; $('play').setAttribute('aria-pressed', String(!running)); };
-  // một nút tốc độ: chạm để đi 1×, 2×, 4×, rồi tạm dừng
+  // một nút tốc độ: chạm để đi 1×, 2×, 4×, 16× rồi quay lại 1×
   $('speed').onclick = () => {
-    if (!running) { running = true; tps = speeds[0][0]; $('speed').textContent = speeds[0][1] + ' ▸'; return; }
-    const i = speeds.findIndex((x) => x[0] === tps) + 1;
-    if (i >= 3) { running = false; $('speed').textContent = 'Tạm dừng'; return; }
+    running = true;
+    const i = (speeds.findIndex((x) => x[0] === tps) + 1) % speeds.length; // 1× → 2× → 4× → 16× → 1×
     tps = speeds[i][0]; $('speed').textContent = speeds[i][1] + ' ▸';
   };
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
@@ -1429,7 +1428,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   /* =============== Vị thần: quyền năng, thần lực, sáu nền văn minh, chiến sự =============== */
   let aiming = null, cmdTab = 'civ', cmdLast = 0, watchLane = null, watchEnd = 0;
   const fmtN = (v) => Math.round(v).toLocaleString('vi-VN');
-  // năm nhóm việc của bàn tay: vách kính, nước, đèn và nắp, thả đồ vào bể, cả chiếc bể
+  // năm nhóm quyền năng: vách kính, nước, đèn và nắp, thả đồ vào bể, cả chiếc bể
   const PW_GROUPS = [
     { name: 'Vách kính', note: 'chạm vào một đảo', keys: ['tap', 'vent', 'crack', 'shatter', 'patch'] },
     { name: 'Nước trong bể', note: 'cả bể · nghiêng thì chạm đảo', keys: ['pour', 'drain', 'tilt'] },
@@ -1472,17 +1471,17 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (k) toast('<b>' + Sim.POWERS[k].name + '</b>: chạm đúng chỗ trên một hòn đảo, hoặc bấm tên đảo ở thanh trên. Esc để thôi.', 3600);
     renderPowers();
   }
-  // bàn tay ra tay: camera lùi ra thấy cả bàn tay lẫn hòn đảo; tới lúc chạm mới hiện hậu quả rồi bay lại gần
+  // thần ra tay: camera lùi ra thấy cả hòn đảo lẫn vách kính phía sau; tới lúc phép chạm mới hiện hậu quả rồi bay lại gần
   const HIGH_SHOT = { shade: 1, lamp: 1, coin: 1, seed: 1, pebble: 1 };
-  function handShot(i, k) {
+  function powerShot(i, k) {
     if (i == null || k === 'tilt') {
-      // việc cho cả bể: nhìn gần ngang từ xa, thấy cả đỉnh vòm, bàn tay lẫn mặt biển
+      // việc cho cả bể: nhìn gần ngang từ xa, thấy cả đỉnh vòm lẫn mặt biển
       const L = i == null ? null : lands[i], a = L ? Math.atan2(L.center.z, L.center.x) + Math.PI / 2 : Math.atan2(camera.position.z - controls.target.z, camera.position.x - controls.target.x);
-      const top = k === 'pour' || k === 'drain' || k === 'lid';
+      const top = k === 'pour' || k === 'lid'; // thác nước và nắp vòm ở trên cao; xoáy nước nhìn từ thấp
       flyTo(new THREE.Vector3(0, 0, 0), OVERVIEW * (k === 'shake' ? 1.15 : 1.05), new THREE.Vector3(Math.cos(a), top ? 0.2 : 0.34, Math.sin(a)), top ? 135 : 40);
       return a;
     }
-    // việc cho một đảo: camera ở phía giữa bể nhìn ra, thấp, thấy đảo phía trước, bàn tay ngoài vách kính ngay sau mép đảo
+    // việc cho một đảo: camera ở phía giữa bể nhìn ra, thấp, thấy đảo phía trước và vách kính ngay sau mép đảo
     const L = lands[i], a = Math.atan2(L.center.z, L.center.x), hi = HIGH_SHOT[k], R = Math.hypot(L.center.x, L.center.z) + 18;
     flyTo(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R), hi ? 290 : 260, new THREE.Vector3(-Math.cos(a) * 0.95, 0.31, -Math.sin(a) * 0.95), hi ? 62 : 45);
     return a + Math.PI;
@@ -1493,9 +1492,9 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const tank = Sim.POWERS[k].target === 'tank';
     setAiming(null); stopOrbit(); if (story) story.userMoved();
     if (!tank) setFocus(i);
-    r.fx.view = handShot(tank ? null : i, k);
-    hand3d.play(r.fx, () => {
-      lands3d.syncDay(false); marks.syncDay(false); war3d.syncDay(false, 0); hand3d.syncDay();
+    r.fx.view = powerShot(tank ? null : i, k);
+    powers3d.play(r.fx, () => {
+      lands3d.syncDay(false); marks.syncDay(false); war3d.syncDay(false, 0); powers3d.syncDay();
       story.onDay(); pulse(); landBar(); manaUi(); renderPowers(); renderWorld(true);
       if (!tank && k !== 'tilt') { const L = lands[i], at = r.fx.at ? L.center.clone().add(new THREE.Vector3(r.fx.at.x, 0, r.fx.at.z)) : L.center; setTimeout(() => { if (!FLY.on) flyTo(at, k === 'shatter' || k === 'shade' ? 120 : 84); }, 1300); }
     });
@@ -1508,7 +1507,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const L = lands[i], k = aiming; if (!L || !k) return;
     const o = Sim.godOffer(W, k, i);
     if (!o.ok) { toast(o.reason, 3000); return; }
-    const spot = hand3d.spotAt(L, x, z, 10);
+    const spot = powers3d.spotAt(L, x, z, 10);
     if (k !== 'shatter') { castPower(k, i, spot); return; }
     const c = W.cities[i];
     $('pcTitle').textContent = 'Đập vỡ kính trên ' + c.name + '?';
@@ -1525,7 +1524,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
       if (gl.broken) out.push('<div class="warn">Kính vỡ trên <b>' + c.name + '</b>: còn ' + Math.max(0, gl.broken.collapse - d) + ' ngày để vá, không thì cả thành chết.</div>');
       else if ((gl.crack || 0) > d) out.push('<div class="warn">Kính nứt trên <b>' + c.name + '</b>: rò khí thêm ' + (gl.crack - d) + ' ngày nếu không vá.</div>');
       if ((gl.vent || 0) > d) out.push('<div>Lỗ thở trên <b>' + c.name + '</b>: còn ' + (gl.vent - d) + ' ngày khí trời.</div>');
-      if (c.settled && (c.dark || 0) > d) out.push('<div>Bàn tay đang che đèn trên <b>' + c.name + '</b>: ' + (c.dark - d) + ' ngày nữa.</div>');
+      if (c.settled && (c.dark || 0) > d) out.push('<div>Thần đang che đèn trên <b>' + c.name + '</b>: ' + (c.dark - d) + ' ngày nữa.</div>');
       if (c.settled && (c.heat || 0) > d) out.push('<div>Đèn kéo sát <b>' + c.name + '</b>: nóng thêm ' + (c.heat - d) + ' ngày.</div>');
       if (c.settled && c.tree) out.push('<div>Cây khổng lồ đang toả bóng trên <b>' + c.name + '</b>.</div>');
       if (!c.settled && c.resets) out.push('<div class="warn"><b>' + c.name + '</b> là đảo hoang' + (c.resettle != null ? ': bộ lạc mới đến sau ' + Math.max(0, c.resettle - d) + ' ngày' : '') + '.</div>');
@@ -1548,7 +1547,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     };
     $('pwGroups').innerHTML = PW_GROUPS.map((g) => '<div class="pwg"><h4>' + g.name + (g.note ? '<small>' + g.note + '</small>' : '') + '</h4><div class="pwgrid">' + g.keys.map(cell).join('') + '</div></div>').join('');
     $('pwState').innerHTML = tankState();
-    $('pwInfo').textContent = aiming ? Sim.POWERS[aiming].info + ' Chạm đúng chỗ trên một hòn đảo.' : 'Bạn là bàn tay bên ngoài chiếc bể. Chọn một việc: việc cho cả bể làm ngay, việc cho một đảo thì chạm vào đảo đó.';
+    $('pwInfo').textContent = aiming ? Sim.POWERS[aiming].info + ' Chạm đúng chỗ trên một hòn đảo.' : 'Bạn là vị thần bên ngoài chiếc bể. Chọn một việc: việc cho cả bể làm ngay, việc cho một đảo thì chạm vào đảo đó.';
     $('pwFaith').innerHTML = live.length ? 'Đức tin: ' + live.map((c) => c.name + ' ' + Math.round((c.faith || 0) * 100) + '%').join(' · ') : 'Chưa có ai để tin vào bạn.';
     manaUi();
   }
@@ -1698,9 +1697,9 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     Sim.stepWorld(W);
     lands3d.syncDay(animate);
     war3d.syncDay(animate, 1000 / tps);
-    marks.syncDay(animate); fauna.syncDay(animate); sights3d.syncDay(); hand3d.syncDay();
+    marks.syncDay(animate); fauna.syncDay(animate); sights3d.syncDay(); powers3d.syncDay();
     story.onDay();
-    if (animate) for (const fx of W.god.fx) hand3d.play(fx);
+    if (animate) for (const fx of W.god.fx) powers3d.play(fx);
     if (animate && W.chaos) for (const fx of W.chaos.fx) (fx.street ? streets3d.play(fx) : fx.key === 'strike' || fx.key === 'setback' ? sky3d.play(fx) : chaos3d.play(fx));
     sky3d.syncDay();
     godTick();
@@ -1712,7 +1711,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, hand3d, sky3d, fly: FLY, flyStep, aimAt,
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, powers3d, sky3d, fly: FLY, flyStep, aimAt,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, quality: () => quality, perf: PERF,
     renderer, scene,
   };
@@ -1726,8 +1725,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   function frame(t) {
     const dt = Math.min(100, t - last); last = t;
     governQuality(dt);
-    if (running && !document.body.classList.contains('intro') && !W.ended && performance.now() > hand3d.holdUntil) { // bàn tay đang ra tay thì thời gian đứng lại
-      if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1;
+    if (running && !document.body.classList.contains('intro') && !W.ended && performance.now() > powers3d.holdUntil) { // phép đang chạm tới bể thì thời gian đứng lại một nhịp
+      if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút; 2×: 90 giây
       acc += (dt * tps) / 1000;
       let steps = 0;
       while (acc >= 1 && steps < 4) { dayTick(true); acc -= 1; steps++; }
@@ -1742,7 +1741,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);
     war3d.animate(dt, t, acc, night);
     marks.animate(dt); fauna.animate(dt, t);
-    god3d.update(dt, t); hand3d.update(dt, t); sky3d.update(dt, t);
+    god3d.update(dt, t); powers3d.update(dt, t); sky3d.update(dt, t);
     story.update(dt, t);
     const now = performance.now();
     updateFxGlobal(now, dt);
