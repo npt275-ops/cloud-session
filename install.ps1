@@ -36,7 +36,7 @@ try {
   }
   $Parent = Split-Path $Dest -Parent
   if (-not (Test-Path $Parent)) { New-Item -ItemType Directory -Path $Parent | Out-Null }
-  Move-Item -Path $Src.FullName -Destination $Dest
+  Copy-Item -Path $Src.FullName -Destination $Dest -Recurse  # chep (khong chuyen) de cai duoc sang o dia khac
   Set-Content -Path (Join-Path $Dest '.bekinh-install') -Value $Ref -Encoding ASCII
 } finally {
   Remove-Item -Path $Tmp -Recurse -Force -ErrorAction SilentlyContinue
@@ -45,13 +45,11 @@ try {
 $Game = Join-Path $Dest 'docs\index.html'
 $Url = ([Uri]$Game).AbsoluteUri
 $Icon = Join-Path $Dest 'docs\icons\bekinh.ico'
-$Candidates = @(
-  (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
-  (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe'),
-  (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'),
-  (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'),
-  (Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe')
-)
+# Edge co san tren Windows 10, 11; khong co thi Chrome. May 32-bit khong co bien ProgramFiles(x86) nen bo qua bien rong.
+$Candidates = @()
+foreach ($Rel in @('Microsoft\Edge\Application\msedge.exe', 'Google\Chrome\Application\chrome.exe')) {
+  foreach ($Base in @(${env:ProgramFiles(x86)}, $env:ProgramFiles, $env:LOCALAPPDATA)) { if ($Base) { $Candidates += (Join-Path $Base $Rel) } }
+}
 $Browser = $Candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 
 # loi tat co bieu tuong: Desktop va Start menu
