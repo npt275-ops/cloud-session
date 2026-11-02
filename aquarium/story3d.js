@@ -25,7 +25,7 @@
     'god-flood': ['Thần giáng lũ', '#7fb8d9'], 'god-drought': ['Thần giáng hạn', '#e0b060'], 'god-quake': ['Thần làm rung đất', '#c9a37a'], 'god-tornado': ['Thần gọi lốc', '#a6b0bb'],
     'god-plague': ['Thần gieo dịch', '#9fe07a'], 'god-volcano': ['Núi lửa', '#ff7a2a'], 'god-tsunami': ['Sóng thần', '#5fb0d9'], 'god-fire': ['Sét lửa', '#ffd36b'],
     'god-rain': ['Mưa lành', '#9fd3f0'], 'god-harvest': ['Bội thu', '#ffd36b'], 'god-enlighten': ['Khai sáng', '#fff3c4'], 'god-heal': ['Chữa lành', '#bff5c8'], 'god-truce': ['Đình chiến', '#f4fbff'],
-    'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'],
+    'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'], burn: ['Lửa chiến tranh', '#ff8a5a'], ruin: ['Đổ nát', '#c9a37a'], 'last-dino': ['Khủng long cuối cùng', '#b5c46a'], 'hunt-low': ['Thú cạn', '#c9b48a'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
   const typeOf = (t) => TYPE[t] || ['Chuyện', '#d9d4c7'];
@@ -1082,6 +1082,7 @@
           // người từ thành phố láng giềng kéo đến thành phố vừa sang thời mới
           const nb = lands3d.lands[st.city].neighbors.filter((j) => W.cities[j].settled);
           lands3d.procession(st.city, 10, nb.length ? nb[Math.floor(Math.random() * nb.length)] : -1);
+          if (G.eraMoment) G.eraMoment(st.city, st.era);
         }
         else if (st.type === 'settle') { G.label3d('Những người đầu tiên', p.clone().setY(18), '#9df0c4'); G.ripple(p, '#9df0c4'); lands3d.procession(st.city, 18, st.from); }
         else if (st.type === 'bridge') G.label3d(st.upgrade ? 'Cầu mới' : 'Cây cầu đầu tiên', p.clone().setY(12), '#d9ccff');

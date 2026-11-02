@@ -2,11 +2,14 @@
  * công trình kinh tế và quân sự theo từng miền và từng thời đại, quân lính trên chiến tuyến, đạn, khói và hạt nhân. */
 (function (root) {
   'use strict';
-  const SEA_R = 57, SEA_Y = -0.55, TAU = Math.PI * 2;
+  const SEA_R = 67, SEA_Y = -0.55, TAU = Math.PI * 2; // biển trong rộng theo đảo mới (RING 100, đảo bán kính 38)
 
   function create(K) {
     const { THREE, scene, Sim, W, lands3d, hash, C, clamp, lerp, reduce, glowTex, puff, label3d } = K;
-    const { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, clearTrees, dust } = lands3d.kit;
+    const { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, clearTrees, dust, setBeyond, recolorG } = lands3d.kit;
+    const E7 = (e) => Math.min(7, e);
+    // màu chung của mỗi thời vượt người cho tàu, xe và công trình chiến tranh
+    const BEY_TINT = [null, null, null, null, null, null, null, null, ['#eef3f7', 0.6], ['#fff1dc', 0.45], ['#c9b6ff', 0.45], ['#fff6dc', 0.7]];
     const F = lands3d.fig;
     const lands = lands3d.lands;
     const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -44,7 +47,7 @@
       const f = new THREE.Mesh(new THREE.BoxGeometry(0.5, 26, 7), new THREE.MeshStandardMaterial({ color: '#8fd3ee', transparent: true, opacity: 0.7, emissive: '#2a6f8f', emissiveIntensity: 0.3 }));
       f.position.set(Math.cos(a) * (SEA_R + 0.2), -13.5, Math.sin(a) * (SEA_R + 0.2)); f.rotation.y = -a; sea.add(f); f.raycast = () => {};
     }
-    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(40));
+    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(47));
     const inwW = (L) => L.inw.clone();
     const dockEnd = (L) => L.world(L.dockPos).addScaledVector(inwW(L), 8.4).setY(SEA_Y);
     const portWater = (L) => L.world(L.portPos).addScaledVector(inwW(L), 7.5).setY(SEA_Y);
@@ -145,7 +148,25 @@
       k.add(UBOX(), col, 0, 0.75, 0.62, 0.2, 0.55, 0.22, 0, -0.6, 0); k.box(col, 0, 1.08, 0.86, 0.18, 0.2, 0.36);
       if (cloth) cloth.box('#ffffff', 0, 0.38, 0, 0.48, 0.42, 1.0);
     }
-    function mounted(k, kt, e) {
+    // thú cưỡi riêng của mỗi miền: ngựa ở đồng bằng và bờ biển, hươu sừng ở rừng, dê núi, voi ma mút ở băng nguyên, lạc đà ở sa mạc
+    function mountBeast(k, ter, col, cloth) {
+      if (ter === 'tundra') { for (const [x, z] of [[-0.3, 0.55], [0.3, 0.55], [-0.3, -0.55], [0.3, -0.55]]) k.cyl('#5b3a22', x, 0, z, 0.15, 0.75, 6); k.add(SPHG(), '#6b4a32', 0, 0.55, 0, 0.62, 0.75, 0.95); k.add(ICO(), '#6b4a32', 0, 1.0, 0.85, 0.36, 0.36, 0.36); for (const sx of [-0.18, 0.18]) k.add(UCONE(5), '#efe6d2', sx, 0.75, 1.05, 0.06, 0.6, 0.06, 0, -1.2, 0); k.add(UCYL(5), '#6b4a32', 0, 0.3, 1.1, 0.09, 0.6, 0.09); if (cloth) cloth.box('#ffffff', 0, 1.05, 0, 0.9, 0.08, 1.0); return 0.75; }
+      if (ter === 'desert') { for (const [x, z] of [[-0.16, 0.42], [0.16, 0.42], [-0.16, -0.42], [0.16, -0.42]]) k.box('#b8925f', x, 0, z, 0.09, 0.8, 0.09); k.box(col === '#7a5a3a' ? '#c9a06e' : col, 0, 0.75, 0, 0.42, 0.42, 1.1); k.add(SPHG(), '#c9a06e', 0, 1.15, -0.1, 0.25, 0.3, 0.3); k.add(UBOX(), '#c9a06e', 0, 1.0, 0.6, 0.16, 0.6, 0.18, 0, -0.5, 0); k.box('#c9a06e', 0, 1.42, 0.86, 0.16, 0.18, 0.32); if (cloth) cloth.box('#ffffff', 0, 0.7, 0, 0.46, 0.3, 0.8); return 0.4; }
+      if (ter === 'mountain') { for (const [x, z] of [[-0.14, 0.32], [0.14, 0.32], [-0.14, -0.32], [0.14, -0.32]]) k.box('#3a2a1e', x, 0, z, 0.08, 0.42, 0.08); k.box('#d9d2c2', 0, 0.4, 0, 0.34, 0.34, 0.85); k.box('#d9d2c2', 0, 0.72, 0.48, 0.18, 0.2, 0.28); for (const sx of [-0.08, 0.08]) k.add(TORUS(), '#8a8174', sx, 0.86, 0.42, 0.08, 0.08, 0.2, Math.PI / 2, 0, 0); if (cloth) cloth.box('#ffffff', 0, 0.3, 0, 0.4, 0.34, 0.7); return -0.15; }
+      horse(k, col, cloth);
+      if (ter === 'forest') for (const sx of [-1, 1]) { k.add(UBOX(), '#c8b07a', sx * 0.12, 1.2, 0.86, 0.04, 0.4, 0.04, 0, 0, sx * 0.5); k.add(UBOX(), '#c8b07a', sx * 0.2, 1.36, 0.86, 0.03, 0.2, 0.03, 0, 0.5, sx * 0.9); }
+      return 0;
+    }
+    function mounted(k, kt, e, ter) {
+      ter = ter || 'plains';
+      if (e >= 1 && e <= 3 && ter !== 'plains' && ter !== 'coast') { // kỵ sĩ trên thú của miền
+        const lift = mountBeast(k, ter, e === 2 ? '#d9d2c2' : '#7a5a3a', kt), y0 = 0.95 + lift;
+        k.box(e >= 2 ? '#9aa0a6' : '#c9a46e', 0, y0, -0.1, 0.36, 0.45, 0.26); kt.box('#ffffff', 0, y0, -0.1, 0.38, 0.46, 0.27);
+        k.add(ICO(), SKIN, 0, y0 + 0.55, -0.1, 0.15, 0.16, 0.15); k.add(SPHG(), ter === 'desert' ? '#ffffff' : ter === 'tundra' ? '#e8e0d0' : '#4a3426', 0, y0 + 0.56, -0.1, 0.18, 0.13, 0.18);
+        if (ter === 'desert' || e === 1) { for (let i = -1; i <= 1; i++) k.add(UBOX(), '#6d5139', -0.25, y0 + 0.2 + i * 0.2, 0.05, 0.025, 0.24, 0.025, 0, i * 0.5, 0); }
+        else k.add(UCYL(5), '#d9c9a8', 0.3, y0 + 0.05, 0.2, 0.03, 1.8, 0.03, 0, Math.PI / 2 - 0.2, 0);
+        return;
+      }
       if (e === 1) {
         horse(k, '#7a5a3a'); for (const sx of [-0.5, 0.5]) k.add(UCYL(10), '#5b4630', sx, 0.45, -1.1, 0.42, 0.06, 0.42, 0, 0, Math.PI / 2);
         k.box('#8f6a46', 0, 0.4, -1.1, 0.9, 0.2, 0.7); k.box('#8f6a46', 0, 0.6, -0.8, 0.9, 0.4, 0.06);
@@ -181,78 +202,41 @@
       else if (e >= 7) { k.box('#2b313a', 0, 0.2, 0, 1.4, 0.4, 2.4); for (const sx of [-0.3, 0.3]) { k.box('#9aa3ad', sx, 0.6, 0.6, 0.16, 0.2, 3.4); k.box('#7ff0ff', sx, 0.72, 0.6, 0.06, 0.04, 3.4); } k.box('#5d6670', 0, 0.6, -0.8, 1.0, 0.6, 0.8); for (let i = 0; i < 3; i++) k.cyl('#7ff0ff', -0.35 + i * 0.35, 0.9, -0.8, 0.12, 0.3, 8); kt.box('#ffffff', 0, 0.42, -1.21, 1.0, 0.2, 0.02); }
       else { k.box('#5f6b4a', 0, 0.45, 0.9, 1.2, 0.9, 0.9); k.box('#4f5a3f', 0, 0.35, -0.4, 1.2, 0.3, 1.9); k.add(UBOX(), '#6b7a55', 0, 0.6, -0.6, 1.0, 0.6, 1.8, 0, 0.45, 0); for (let i = 0; i < 4; i++) k.box('#e8e8e8', -0.32 + (i % 2) * 0.64, 1.25, -0.5 - Math.floor(i / 2) * 0.35, 0.3, 0.3, 0.3); for (const z of [0.9, 0.0, -0.9]) for (const sx of [-0.6, 0.6]) k.add(UCYL(8), '#1a1a1a', sx, 0.28, z, 0.28, 0.14, 0.28, 0, 0, Math.PI / 2); kt.box('#ffffff', 0, 0.92, 1.36, 0.5, 0.2, 0.02); }
     }
-    // Lính bộ là người có khớp: tay phải cầm vũ khí nên vung theo nhịp đánh, khiên ở tay trái, cờ nhỏ màu phe sau lưng
-    function soldierShape(k, cls, e) {
-      if (e >= 7) {
-        for (const [lb, sx] of [[1, -0.09], [2, 0.09]]) { k.box('#5d6670', 0, lb, sx, 0.02, 0, 0.13, 0.44, 0.14); k.box('#3a3f48', 0, lb, sx, 0, 0.03, 0.15, 0.06, 0.2); }
-        k.box('#8f99a3', 0, 0, 0, 0.44, 0, 0.38, 0.44, 0.24); k.box('#fff', 1, 0, 0, 0.56, 0.121, 0.3, 0.22, 0.02);
-        for (const [lb, sx] of [[3, -0.25], [4, 0.25]]) { k.box('#fff', 1, lb, sx, 0.78, 0, 0.16, 0.1, 0.16); k.box('#8f99a3', 0, lb, sx, 0.46, 0, 0.1, 0.36, 0.1); }
-        k.add(UCYL(8), '#2b313a', 0, 4, 0.25, 0.44, 0.14, 0.06, 0.42, 0.06, 0, Math.PI / 2, 0);
-        k.box('#c8d0d8', 0, 0, 0, 0.9, 0, 0.24, 0.22, 0.22); k.box('#fff', 3, 0, 0, 0.98, 0.111, 0.18, 0.05, 0.01);
-        return;
-      }
-      for (const [lb, sx] of [[1, -0.075], [2, 0.075]]) { k.box('#fff', 2, lb, sx, 0.05, 0, 0.12, 0.42, 0.13); k.box(e >= 4 ? '#2b2b2b' : '#4a3426', 0, lb, sx, 0, 0.03, 0.13, 0.08, 0.18); }
-      const wide = e === 6 ? 0.4 : 0.32;
-      k.box('#fff', 1, 0, 0, 0.45, 0, wide, 0.42, 0.21);
-      if (e >= 5) k.box(e === 6 ? '#dfe3e8' : '#3f4a35', 0, 0, 0, 0.52, 0, wide + 0.03, 0.3, 0.24);
-      if (e === 6) for (const sx of [-0.25, 0.25]) k.box('#dfe3e8', 0, 0, sx, 0.8, 0, 0.14, 0.1, 0.24);
-      for (const [lb, sx] of [[3, -0.205 - (e === 6 ? 0.04 : 0)], [4, 0.205 + (e === 6 ? 0.04 : 0)]]) { k.box('#fff', 1, lb, sx, 0.5, 0, 0.09, 0.36, 0.1); k.box('#fff', e === 6 ? 0 : 4, lb, sx, 0.44, 0.01, 0.08, 0.07, 0.08); }
-      k.box('#fff', 4, 0, 0, 0.84, 0, 0.09, 0.06, 0.09);
-      k.add(ICO(), '#fff', 4, 0, 0, 0.98, 0, 0.13, 0.14, 0.13);
-      if (e === 0) k.add(SPHG(), '#fff', 3, 0, 0, 1.0, -0.01, 0.142, 0.13, 0.142);
-      else if (e === 1) { k.add(SPHG(), '#fff', 3, 0, 0, 1.0, 0, 0.155, 0.15, 0.155); k.box('#c0392b', 0, 0, 0, 1.08, 0, 0.03, 0.12, 0.24); }
-      else if (e === 2) k.add(UCYL(8), '#fff', 3, 0, 0, 0.9, 0, 0.15, 0.24, 0.15);
-      else if (e === 3) k.add(UCYL(8), '#fff', 3, 0, 0, 1.0, 0, 0.13, 0.22, 0.13);
-      else if (e === 4) k.add(SPHG(), '#fff', 3, 0, 0, 1.02, 0, 0.21, 0.07, 0.21);
-      else if (e === 5) k.add(SPHG(), '#fff', 3, 0, 0, 1.0, -0.01, 0.16, 0.14, 0.17);
-      else { k.add(SPHG(), '#fff', 3, 0, 0, 0.94, 0, 0.17, 0.22, 0.18); k.box('#5fe0ff', 0, 0, 0, 0.97, 0.13, 0.2, 0.06, 0.04); }
-      k.add(UCYL(4), '#5b4630', 0, 0, 0, 0.5, -0.16, 0.012, 0.95, 0.012); k.box('#fff', 1, 0, 0.11, 1.32, -0.16, 0.22, 0.14, 0.015);
-      const hand = (c, x, y, z, w, h, d, rx) => k.add(UBOX(), c, 0, 4, 0.205 + x, y, z, w, h, d, 0, rx || 0, 0);
-      if (cls === 'melee') {
-        if (e === 0) { hand('#6d5139', 0, 0.44, 0.08, 0.05, 0.05, 0.5); k.add(DOD(), '#7d7a74', 0, 4, 0.205, 0.44, 0.34, 0.08, 0.08, 0.08); }
-        else if (e === 1) { k.add(UCYL(5), '#6d5139', 0, 4, 0.205, 0.08, 0.1, 0.022, 1.5, 0.022); k.add(UCONE(4), '#b08d57', 0, 4, 0.205, 1.58, 0.1, 0.045, 0.16, 0.045); k.add(UCYL(10), '#fff', 1, 3, -0.27, 0.6, 0.06, 0.19, 0.04, 0.19, 0, Math.PI / 2, 0); }
-        else if (e === 2) { hand('#dfe6ea', 0, 0.44, 0.24, 0.035, 0.05, 0.6, -0.2); k.box('#fff', 1, 3, -0.27, 0.42, 0.04, 0.04, 0.4, 0.26); }
-        else if (e <= 4) { hand(e === 3 ? '#5b4630' : '#3a3a3a', 0, 0.46, 0.2, 0.05, 0.06, 0.9, -0.35); if (e === 3) hand('#dfe6ea', 0, 0.62, 0.62, 0.02, 0.02, 0.24, -0.35); }
-        else hand('#2b2b2b', 0, 0.5, 0.18, 0.06, 0.09, 0.62, -0.1);
-      } else {
-        if (e === 0) k.add(DOD(), '#8b8577', 0, 4, 0.205, 0.44, 0.06, 0.06, 0.06, 0.06);
-        else if (e === 1) { for (let i = -1; i <= 1; i++) k.add(UBOX(), '#6d5139', 0, 3, -0.27, 0.6 + i * 0.2, 0.12 - Math.abs(i) * 0.06, 0.025, 0.24, 0.025, 0, i * 0.5, 0); k.add(UCYL(5), '#8f6a46', 0, 0, 0.1, 0.5, -0.14, 0.05, 0.36, 0.05); }
-        else if (e === 2) { hand('#6d5139', 0, 0.5, 0.22, 0.06, 0.06, 0.42); hand('#5b4630', 0, 0.5, 0.42, 0.36, 0.03, 0.03); }
-        else if (e === 3) hand('#5b4630', 0, 0.46, 0.22, 0.05, 0.05, 1.0, -0.2);
-        else if (e === 4) { hand('#2b2b2b', 0, 0.46, 0.18, 0.09, 0.11, 0.66); hand('#2b2b2b', 0, 0.4, 0.4, 0.02, 0.16, 0.02); }
-        else k.add(UCYL(8), e === 6 ? '#dfe3e8' : '#4f5a3f', 0, 0, 0.18, 0.86, -0.32, e === 6 ? 0.1 : 0.08, 1.1, e === 6 ? 0.1 : 0.08, 0, Math.PI / 2, 0);
-      }
-    }
+    // Lính bộ là người tròn có khớp (dựng trong lands3d): tay phải cầm vũ khí của miền, khiên ở tay trái, cờ phe sau lưng
+    function soldierShape(k, cls, e, ter) { F.soldierShape(k, cls, e, ter); }
     const SOLDIER_SETS = {};
-    function soldierSet(cls, e) {
-      const key = cls + ':' + e;
+    const terOf = (u) => { const c = W.cities[u.city]; return c ? c.terrain.key : 'plains'; };
+    function soldierSet(cls, e, ter) {
+      const key = cls + ':' + e + ':' + (ter || 'plains');
       if (SOLDIER_SETS[key]) return SOLDIER_SETS[key];
-      const cap = 300, mat = F.figMaterial(), k = new F.FigKit(); soldierShape(k, cls, e);
+      const cap = 300, mat = F.figMaterial(), k = new F.FigKit(); soldierShape(k, cls, e, ter || 'plains');
       const geo = k.bake(), m = new THREE.InstancedMesh(geo, mat, cap);
       geo.setAttribute('anim', new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4));
       for (const a of ['cA', 'cB', 'cC', 'cD']) geo.setAttribute(a, new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3));
       m.count = 0; m.castShadow = true; m.frustumCulled = false; m.raycast = () => {}; scene.add(m);
       return (SOLDIER_SETS[key] = { meshes: [m], cap, e, n: [0] });
     }
-    const PANTS = ['#7a5a3a', '#c9a46e', '#5b4630', '#efe6d2', '#6b6b45', '#4f5a3f', '#5d6670', '#2b313a'];
-    const HELMS = ['#2b1d14', '#b08d57', '#9aa0a6', '#1a1a1a', '#6b6b45', '#4f5a3f', '#e8ecef', '#ff4d4d'];
+    const PANTS = ['#7a5a3a', '#c9a46e', '#5b4630', '#efe6d2', '#6b6b45', '#4f5a3f', '#5d6670', '#2b313a', '#eef3f7', '#fff3e0', '#c9b6ff', '#fff6dc'];
+    const HELMS = ['#2b1d14', '#b08d57', '#9aa0a6', '#1a1a1a', '#6b6b45', '#4f5a3f', '#e8ecef', '#ff4d4d', '#bff6ff', '#ffb347', '#b48cff', '#fff3c4'];
     const squadSize = (u) => (u.cls === 'melee' ? (u.era >= 7 ? 3 : 5) : 4);
     const FORM = [[0, 0.35], [-0.6, 0], [0.6, 0], [-0.3, -0.65], [0.3, -0.65], [0, -1.2]];
     const corpses = [];
-    const isFig = (u) => (u.cls === 'melee' || u.cls === 'ranged') && !(u.cls === 'ranged' && u.era >= 7);
+    const isFig = (u) => (u.cls === 'melee' || u.cls === 'ranged') && !(u.cls === 'ranged' && (u.era === 7 || u.era === 8));
     const MODELS = {};
+    const keyOf = (u) => u.cls + ':' + u.era + (u.cls === 'mounted' && u.era >= 1 && u.era <= 3 ? ':' + terOf(u) : '');
     function modelOf(key) {
       if (MODELS[key]) return MODELS[key];
-      const [cls, es] = key.split(':'), e = +es;
+      const [cls, es, tk] = key.split(':'), eReal = +es, e = E7(eReal);
       let geos, cap = 48;
       if (cls === 'ranged' && e >= 7) { geos = bake2(DRONES); cap = 40; }
       else if (cls === 'melee' || cls === 'ranged') geos = bake2((k, kt) => trooper(k, kt, cls, Math.min(5, e)));
-      else if (cls === 'mounted') geos = bake2((k, kt) => mounted(k, kt, e));
+      else if (cls === 'mounted') geos = bake2((k, kt) => mounted(k, kt, e, tk));
       else if (cls === 'siege') geos = bake2((k, kt) => siegeM(k, kt, e));
       else if (cls === 'ship') { geos = bake2(WARSHIP[e]); cap = 24; }
       else if (cls === 'sub') { geos = bake2(e >= 7 ? SUB7 : SUB); cap = 8; }
       else if (cls === 'fish') { geos = bake2(FISHBOAT[e]); cap = 40; }
       else if (cls === 'trade') { geos = bake2(MERCHANT[Math.max(1, e)]); cap = 20; }
+      if (BEY_TINT[eReal]) recolorG(geos.body, BEY_TINT[eReal][0], BEY_TINT[eReal][1]);
       MODELS[key] = instSet(geos, cap);
       return MODELS[key];
     }
@@ -402,13 +386,20 @@
       else { k.add(UCONE(4), '#e8a0a8', 0, 0, 0, 6.6, 8.4, 6.6, Math.PI / 4); k.add(UCONE(4), '#ffd36b', 0, 7.2, 0, 1.0, 1.4, 1.0, Math.PI / 4); for (const sx of [-1, 1]) { k.box('#e2bd85', sx * 6.0, 0, 5.0, 0.6, 5.0, 0.6); k.add(UCONE(4), '#ffd36b', sx * 6.0, 5.0, 5.0, 0.45, 0.8, 0.45, Math.PI / 4); } }
     }
     // tường thành vòng quanh, chừa cổng ở hai đầu cầu và lối ra bến
-    function wallModel(k, L, e) {
-      const S = STY[L.ter][e], R = 28.6, gaps = [...L.landing.map((p) => Math.atan2(p.z, p.x)), Math.atan2(L.inw.z, L.inw.x)];
+    function wallModel(k, L, eReal) {
+      const e = E7(eReal), S = STY[L.ter][e], RA = (a) => Math.min(28.6 * lands3d.SC, L.rOf(a) - 1.8), gaps = [...L.landing.map((p) => Math.atan2(p.z, p.x)), Math.atan2(L.inw.z, L.inw.x)];
       const N = 96;
       for (let i = 0; i < N; i++) {
         const a = (i / N) * TAU, a2 = ((i + 1) / N) * TAU, mid = (a + a2) / 2;
         if (gaps.some((g, gi) => Math.abs(Math.atan2(Math.sin(mid - g), Math.cos(mid - g))) < (gi === 2 ? 0.42 : 0.12))) continue;
-        const x = Math.cos(mid) * R, z = Math.sin(mid) * R, len = R * (a2 - a) + 0.05, ry = -mid + Math.PI / 2;
+        const R = RA(mid), x = Math.cos(mid) * R, z = Math.sin(mid) * R, len = R * (a2 - a) + 0.05, ry = -mid + Math.PI / 2;
+        if (eReal >= 8) { // tường tự lành, khiên plasma, tường gấp khúc, màn ánh sáng
+          if (eReal === 8) { if (i % 2 === 0) k.add(SPHG(), '#e2ebf0', x, 0, z, len * 0.8, 2.4, 0.9, ry); k.box('#7ff0ff', x, 1.2, z, len, 0.08, 1.0, ry, 'glow'); }
+          else if (eReal === 9) { k.box('#3a3d42', x, 0, z, 0.2, 2.8, 0.2, ry); k.box('#ffb347', x, 0.5, z, len, 2.0, 0.05, ry, 'ghost'); }
+          else if (eReal === 10) { k.box('#b48cff', x, 0, z, len, 2.4, 0.1, ry + (i % 2 ? 0.35 : -0.35), 'glow'); }
+          else k.box('#fff6dc', x, 0, z, len, 3.4, 0.06, ry, 'ghost');
+          continue;
+        }
         if (e === 0) for (let s = 0; s < 3; s++) { const t = mid - (a2 - a) / 2 + ((s + 0.5) / 3) * (a2 - a); k.cone('#7a5a3a', Math.cos(t) * R, 0, Math.sin(t) * R, 0.12, 1.7, 5); }
         else if (e === 1) k.box(S.wall2, x, 0, z, len, 1.1, 1.0, ry);
         else if (e === 2) { k.box(S.wall, x, 0, z, len, 2.2, 0.8, ry); if (i % 2 === 0) k.box(S.wall2, x, 2.2, z, len * 0.45, 0.45, 0.85, ry); if (i % 12 === 0) { k.cyl(S.wall, x, 0, z, 1.0, 3.2, 8); roofOn(k, Object.assign({}, S, { roofT: 'cone' }), x, 3.2, z, 1.6, 1.6); } }
@@ -420,7 +411,7 @@
       }
       // cổng thành ở hai đầu cầu: hai tháp, xà ngang, cánh cổng; thành sắp vỡ thì cổng gãy
       if (e >= 1) for (const g of L.landing) {
-        const a = Math.atan2(g.z, g.x), ry = -a + Math.PI / 2, tx = -Math.sin(a), tz = Math.cos(a), cx = Math.cos(a) * R, cz = Math.sin(a) * R;
+        const a = Math.atan2(g.z, g.x), R = RA(a), ry = -a + Math.PI / 2, tx = -Math.sin(a), tz = Math.cos(a), cx = Math.cos(a) * R, cz = Math.sin(a) * R;
         for (const sd of [-1, 1]) { const x = cx + tx * sd * 2.4, z = cz + tz * sd * 2.4; if (e <= 4) { k.box(e <= 1 ? S.wall2 : S.wall, x, 0, z, 1.4, e === 1 ? 2.0 : 3.4, 1.4, ry); if (e >= 2) k.box(S.wall2, x, e === 1 ? 2.0 : 3.4, z, 1.6, 0.4, 1.6, ry); } else k.box(e >= 7 ? '#2b313a' : '#9aa0a6', x, 0, z, 0.9, 3.2, 0.9, ry); }
         if (e <= 4) k.box(S.wall2, cx, e === 1 ? 1.6 : 2.8, cz, 4.2, 0.6, 1.0, ry);
         if (!L._broken) for (const sd of [-1, 1]) k.box(e >= 5 ? '#5d6670' : '#5b4630', cx + tx * sd * 0.85, 0, cz + tz * sd * 0.85, 1.6, e === 1 ? 1.6 : 2.6, 0.18, ry);
@@ -446,14 +437,16 @@
           const key = L.i + ':' + k2, sig = d.e + ':' + d.step, cur = BLD_OF[key];
           if (cur && cur.sig === sig) continue;
           if (cur) { L.g.remove(cur.g); disposeGroup(cur.g); K.unclickable(cur.g); L.fires = L.fires.filter((f) => f.owner !== 'bld' + key); }
-          const k = new Kit(), S = STY[L.ter][d.e];
+          const k = new Kit(), S = STY[L.ter][E7(d.e)];
           let out = {};
           if (d.type === 'wall') { L._broken = !!d.broken; wallModel(k, L, d.e); }
-          else out = buildModel(d.type, k, S, d.e, L.ter) || {};
+          else out = buildModel(d.type, k, S, E7(d.e), L.ter) || {};
+          if (d.type !== 'wall') setBeyond(d.e);
           const building = d.step < 10 && d.type !== 'wall' ? true : d.type === 'wall' && d.step % 100 < 10;
           if (building && d.type !== 'wall') scaffold(k, d.type === 'wonder' ? 8 : 5, d.type === 'wonder' ? 8 : 4.6, d.type === 'wonder' ? 6 + d.step * 2 : 3.2);
           const ry = d.type === 'port' ? Math.atan2(d.p.x, d.p.z) : d.type === 'wall' ? 0 : Math.atan2(-d.p.x, -d.p.z);
           const g = meshOf(k, L.litMat, L.g, d.p.x, d.p.z, ry, false);
+          setBeyond(0);
           if (building && d.type !== 'wall') g.scale.y = 0.25 + d.step * 0.15;
           if (d.type !== 'wall') { clearTrees(L, d.p.x, d.p.z, d.type === 'wonder' ? 6.2 : d.type === 'silo' ? 4 : 3.2); K.clickable(g, { type: 'bld', bld: d.type, land: L.i }); }
           if (out.fire && !building) lands3d.kit.addFire(L, g, out.fire, 'bld' + key, 1.4);
@@ -533,11 +526,11 @@
     function flash(p, color, size, dur) { const s = flashPool[flashIdx++ % flashPool.length]; s.position.copy(p); s.material.color.set(color); s.visible = true; flashes.push({ s, t0: performance.now(), dur: dur || 380, size: size || 2 }); }
     // kiểu đạn theo binh chủng và thời đại: [dạng, màu, cỡ, độ cong, tốc độ, nổ khi trúng]
     function shotStyle(kind, e) {
-      if (kind === 'tower') kind = ['ranged', 'ranged', 'ranged', 'siege', 'ranged', 'siege', 'siege', 'ranged'][e];
-      if (kind === 'ranged') return [['ball', '#8b8577', 0.12, 1.4, 600], ['bolt', '#6d5139', 0.7, 1.1, 520], ['bolt', '#3a2a1e', 0.6, 0.5, 420], ['ball', '#2b2b2b', 0.06, 0.05, 180, 'smoke'], ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#f4f4f4', 0.14, 0.3, 380, 'boom'], ['bolt', '#f4f4f4', 1.0, 1.2, 420, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110]][e];
-      if (kind === 'siege') return [['ball', '#8b8577', 0.3, 2, 900], ['ball', '#8b8577', 0.1, 0, 300, 'dust'], ['ball', '#8b8577', 0.35, 4.5, 1300, 'dust'], ['ball', '#2b2b2b', 0.2, 2.2, 900, 'smoke'], ['ball', '#3a3a3a', 0.2, 4, 1100, 'boom'], ['ball', '#3a3a3a', 0.22, 3, 900, 'boom'], ['bolt', '#f4f4f4', 1.4, 7, 1500, 'boom'], ['bolt', '#7ff0ff', 2.6, 0, 150, 'boom']][e];
-      if (kind === 'ship') return [null, ['bolt', '#6d5139', 0.7, 1.2, 600], ['ball', '#ff8a3d', 0.18, 1.6, 800, 'fire'], ['ball', '#2b2b2b', 0.2, 1.2, 700, 'smoke'], ['ball', '#3a3a3a', 0.22, 3, 1000, 'boom'], ['bolt', '#f4f4f4', 1.0, 4, 1100, 'boom'], ['bolt', '#f4f4f4', 1.2, 5, 1200, 'boom'], ['bolt', '#7ff0ff', 2.2, 0, 150, 'boom']][e];
-      if (kind === 'mounted' && e >= 4) return [null, null, null, null, ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#ffcf7a', 0.12, 0.2, 260, 'boom'], ['bolt', '#f4f4f4', 1.0, 1, 500, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110]][e];
+      if (kind === 'tower') kind = ['ranged', 'ranged', 'ranged', 'siege', 'ranged', 'siege', 'siege', 'ranged', 'ranged', 'siege', 'ranged', 'ranged'][e];
+      if (kind === 'ranged') return [['ball', '#8b8577', 0.12, 1.4, 600], ['bolt', '#6d5139', 0.7, 1.1, 520], ['bolt', '#3a2a1e', 0.6, 0.5, 420], ['ball', '#2b2b2b', 0.06, 0.05, 180, 'smoke'], ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#f4f4f4', 0.14, 0.3, 380, 'boom'], ['bolt', '#f4f4f4', 1.0, 1.2, 420, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110], ['ball', '#bff6ff', 0.12, 0.4, 260, 'boom'], ['bolt', '#ffb347', 1.4, 0, 120, 'boom'], ['bolt', '#b48cff', 1.4, 0, 90, 'boom'], ['bolt', '#fff6dc', 2.0, 0, 70]][e];
+      if (kind === 'siege') return [['ball', '#8b8577', 0.3, 2, 900], ['ball', '#8b8577', 0.1, 0, 300, 'dust'], ['ball', '#8b8577', 0.35, 4.5, 1300, 'dust'], ['ball', '#2b2b2b', 0.2, 2.2, 900, 'smoke'], ['ball', '#3a3a3a', 0.2, 4, 1100, 'boom'], ['ball', '#3a3a3a', 0.22, 3, 900, 'boom'], ['bolt', '#f4f4f4', 1.4, 7, 1500, 'boom'], ['bolt', '#7ff0ff', 2.6, 0, 150, 'boom'], ['ball', '#bff6ff', 0.3, 3, 900, 'boom'], ['ball', '#ffb347', 0.4, 2, 700, 'boom'], ['bolt', '#b48cff', 2.4, 0, 130, 'boom'], ['bolt', '#fff6dc', 3.0, 0, 110, 'boom']][e];
+      if (kind === 'ship') return [null, ['bolt', '#6d5139', 0.7, 1.2, 600], ['ball', '#ff8a3d', 0.18, 1.6, 800, 'fire'], ['ball', '#2b2b2b', 0.2, 1.2, 700, 'smoke'], ['ball', '#3a3a3a', 0.22, 3, 1000, 'boom'], ['bolt', '#f4f4f4', 1.0, 4, 1100, 'boom'], ['bolt', '#f4f4f4', 1.2, 5, 1200, 'boom'], ['bolt', '#7ff0ff', 2.2, 0, 150, 'boom'], ['ball', '#bff6ff', 0.3, 3, 900, 'boom'], ['ball', '#ffb347', 0.4, 2, 700, 'boom'], ['bolt', '#b48cff', 2.4, 0, 130, 'boom'], ['bolt', '#fff6dc', 3.0, 0, 110, 'boom']][e];
+      if (kind === 'mounted' && e >= 4) return [null, null, null, null, ['bolt', '#ffd36b', 0.9, 0, 140], ['ball', '#ffcf7a', 0.12, 0.2, 260, 'boom'], ['bolt', '#f4f4f4', 1.0, 1, 500, 'boom'], ['bolt', '#ff4d4d', 1.6, 0, 110], ['bolt', '#bff6ff', 1.2, 0, 140], ['bolt', '#ffb347', 1.4, 0, 120, 'boom'], ['bolt', '#b48cff', 1.4, 0, 100], ['bolt', '#fff6dc', 1.8, 0, 90]][e];
       return null;
     }
     const _p = v3(0, 0, 0), _d = v3(0, 0, 0), _q = v3(0, 0, 0);
@@ -576,7 +569,7 @@
     const _sq = v3(0, 0, 0);
     // một đơn vị là một tiểu đội; máu vơi thì người ngã xuống, xác nằm lại
     function drawSquad(u, base, ry, moving, fighting, col, now) {
-      const S = soldierSet(u.cls, u.era), size = squadSize(u), n = Math.max(1, Math.ceil(size * clamp(u.hp / u.hpMax, 0, 1)));
+      const ter = terOf(u), S = soldierSet(u.cls, u.era, ter), size = squadSize(u), n = Math.max(1, Math.ceil(size * clamp(u.hp / u.hpMax, 0, 1)));
       const fx = Math.sin(ry), fz = Math.cos(ry), rx = fz, rz = -fx, sc = u.era >= 7 ? 1.4 : 1.2, sp = 0.85 * sc;
       const at = (i, lunge) => _sq.set(base.x + rx * FORM[i][0] * sp + fx * (FORM[i][1] * sp + lunge), base.y, base.z + rz * FORM[i][0] * sp + fz * (FORM[i][1] * sp + lunge));
       if (u.shown != null && n < u.shown) for (let i = n; i < Math.min(u.shown, FORM.length); i++) addCorpse(u, at(i, 0).clone(), ry, i, col, sc, now);
@@ -589,14 +582,14 @@
     function addCorpse(u, p, ry, i, col, sc, now) {
       if (corpses.length > 220) corpses.shift();
       p.y += 0.12 * sc;
-      corpses.push({ cls: u.cls, era: u.era, p, ry: ry + (Math.random() - 0.5) * 1.6, seed: u.id * 7 + i, sc, colors: [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[(u.id + i) % 6]], t0: now });
+      corpses.push({ cls: u.cls, era: u.era, ter: u.ter || (u.city != null ? terOf(u) : 'plains'), p, ry: ry + (Math.random() - 0.5) * 1.6, seed: u.id * 7 + i, sc, colors: [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[(u.id + i) % 6]], t0: now });
       if (!reduce) puff(p.clone().setY(p.y + 0.4), false, '#b9ab98');
     }
     function onDeath(d) {
       if (!d.lane || !W.war.lanes[d.lane]) return;
       const p = v3(0, 0, 0);
       if (!lanePos(d.lane, d.x, d.lat, p, _d)) return;
-      if ((d.cls === 'melee' || d.cls === 'ranged') && !(d.cls === 'ranged' && d.era >= 7)) { addCorpse({ cls: d.cls, era: d.era, id: Math.floor(Math.random() * 1e4) }, p.clone(), Math.random() * TAU, 0, K.factionColor(d.owner), d.era >= 7 ? 1.4 : 1.2, performance.now()); return; }
+      if ((d.cls === 'melee' || d.cls === 'ranged') && !(d.cls === 'ranged' && (d.era === 7 || d.era === 8))) { addCorpse({ cls: d.cls, era: d.era, ter: W.cities[d.owner] ? W.cities[d.owner].terrain.key : 'plains', id: Math.floor(Math.random() * 1e4) }, p.clone(), Math.random() * TAU, 0, K.factionColor(d.owner), d.era >= 7 ? 1.4 : 1.2, performance.now()); return; }
       const big = d.cls === 'ship' || (d.cls === 'mounted' && d.era >= 4) || (d.cls === 'siege' && d.era >= 3);
       wrecks.push({ p, t0: performance.now(), dur: big ? 3200 : 1600, big, sea: W.war.lanes[d.lane].kind === 'sea', color: K.factionColor(d.owner) });
       if (!reduce) puff(p.clone().setY(p.y + 0.6), big, big ? '#5d5d5d' : '#b9ab98');
@@ -691,7 +684,7 @@
         const blocked = W.war.on && Sim.blockadeOf(W, c);
         if (now > b.t0 + b.dur) {
           b.t0 = now;
-          if (b.state === 'dock' && !blocked && !b.retire) { const deep = Math.random() < [0, 0.2, 0.35, 0.45, 0.5, 0.55, 0.6, 0.62][e], zc = zoneC(deep ? 6 : b.city), a = Math.random() * TAU, r = Math.random() * (deep ? 16 : 8); b.spot = v3(zc.x + Math.cos(a) * r, SEA_Y, zc.z + Math.sin(a) * r); b.state = 'out'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
+          if (b.state === 'dock' && !blocked && !b.retire) { const deep = Math.random() < [0, 0.2, 0.35, 0.45, 0.5, 0.55, 0.6, 0.62][E7(e)], zc = zoneC(deep ? 6 : b.city), a = Math.random() * TAU, r = Math.random() * (deep ? 16 : 8); b.spot = v3(zc.x + Math.cos(a) * r, SEA_Y, zc.z + Math.sin(a) * r); b.state = 'out'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
           else if (b.state === 'out') { b.state = 'fish'; b.dur = 5000 + Math.random() * 6000; }
           else if (b.state === 'fish') { b.state = 'back'; b.dur = (dock.distanceTo(b.spot) / 4) * 1000; }
           else { b.state = 'dock'; b.dur = 3000 + Math.random() * 5000; }
@@ -722,7 +715,7 @@
             if (!lanePos(u.lane, x, u.lat, _pos, _dir)) continue;
             const moving = Math.abs(u.x - u.px) > 1e-4, fwd = u.side === 0 ? 1 : -1, ry = Math.atan2(_dir.x * fwd, _dir.z * fwd);
             if (fig) { drawSquad(u, _pos, ry, moving, fighting, col, now); continue; }
-            const S = modelOf(u.cls + ':' + u.era), naval = u.naval;
+            const S = modelOf(keyOf(u)), naval = u.naval;
             if (!naval && moving) _pos.y += Math.abs(Math.sin(ts * 9 + u.id)) * 0.06;
             if (naval) _pos.y = SEA_Y + Math.sin(ts * 1.4 + u.id) * 0.07;
             if (u.cls === 'ranged') _pos.y += 2.2 + Math.sin(ts * 3 + u.id) * 0.2; // bầy máy bay không người lái
@@ -736,17 +729,17 @@
               p.y = u.cls === 'sub' ? SEA_Y - 0.55 : SEA_Y + Math.sin(ts + g) * 0.06;
               put(modelOf(u.cls + ':' + u.era), p, Math.atan2(L.inw.x, L.inw.z), 1, col);
             } else {
-              if (g > 10) continue;
-              const lot = L.milLot.barracks || L.gates[0], face = Math.atan2(-lot.x, -lot.z);
-              const p = L.world(lot).add(v3(((g - 1) % 5) * 0.8 - 1.6, 0, Math.floor((g - 1) / 5) * 0.9 + 1.4).applyAxisAngle(v3(0, 1, 0), face));
-              if (fig) F.crowdPut(soldierSet(u.cls, u.era), 0, p, face, 0, Math.sin(ts * 0.8 + u.id) > 0.7 ? 0.5 : 0, u.id * 7, u.era >= 7 ? 1.35 : 1.15, [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[u.id % 6]]);
-              else { if (u.cls === 'ranged') p.y += 2; put(modelOf(u.cls + ':' + u.era), p, face, 1.1, col); }
+              if (g > 24) continue;
+              const lot = L.musterPos || L.milLot.barracks || L.gates[0], face = L.musterRy != null ? L.musterRy : Math.atan2(-lot.x, -lot.z);
+              const p = L.world(lot).add(v3(((g - 1) % 6) * 1.25 - 3.1, 0, Math.floor((g - 1) / 6) * 1.35 - 2.0).applyAxisAngle(v3(0, 1, 0), face));
+              if (fig) F.crowdPut(soldierSet(u.cls, u.era, terOf(u)), 0, p, face, 0, Math.sin(ts * 0.8 + u.id) > 0.7 ? 0.5 : 0, u.id * 7, u.era >= 7 ? 1.35 : 1.15, [col, PANTS[u.era], HELMS[u.era], F.SKIN_T[u.id % 6]]);
+              else { if (u.cls === 'ranged') p.y += 2; put(modelOf(keyOf(u)), p, face, 1.1, col); }
             }
           }
         }
       }
       // xác lính nằm lại trên chiến trường một lúc
-      for (let i = corpses.length - 1; i >= 0; i--) { const c = corpses[i]; if (now - c.t0 > 24000) { corpses.splice(i, 1); continue; } F.crowdPut(soldierSet(c.cls, c.era), 0, c.p, c.ry, 0, 0, c.seed, c.sc, c.colors, -Math.PI / 2); }
+      for (let i = corpses.length - 1; i >= 0; i--) { const c = corpses[i]; if (now - c.t0 > 24000) { corpses.splice(i, 1); continue; } F.crowdPut(soldierSet(c.cls, c.era, c.ter), 0, c.p, c.ry, 0, 0, c.seed, c.sc, c.colors, -Math.PI / 2); }
       for (const key in SOLDIER_SETS) F.crowdEnd(SOLDIER_SETS[key]);
       // thành đang bị vây: khói lửa ở cổng
       if (!reduce && W.war.on && Math.random() < 0.25) for (const c of W.cities) {

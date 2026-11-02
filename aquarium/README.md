@@ -2,9 +2,10 @@
 
 Sáu miền đất lơ lửng trong một chiếc bể kính, nối nhau thành vòng bằng sáu cây cầu: **đồng bằng** (Lúa Vàng),
 **rừng** (Thông Xanh), **núi** (Đá Mây), **băng nguyên** (Tuyết Trắng), **biển** (Cửa Sóng), **sa mạc** (Cát Hồng).
-Lúc đầu chỉ có cây, sông, núi. Rồi những bộ lạc đầu tiên lần lượt đến, và mỗi thành phố tự đi qua lịch sử của mình:
-**nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại**. Nhà cửa, nơi làm ăn, đèn đường, quảng trường và
-những cây cầu được xây lại theo từng thời đại, từ lều lá và cầu dây leo đến tháp kính và cầu dây văng.
+Lúc đầu chỉ có cây, sông, núi và khủng long. Rồi những bộ lạc đầu tiên lần lượt đến, và mỗi thành phố tự đi qua lịch sử
+của mình qua **mười hai thời đại**: tám thời của loài người (nguyên thủy tới robot AI) rồi bốn thời vượt tầm hiểu biết
+(vật chất sống, mặt trời nhân tạo, bẻ cong không gian, siêu việt). Nhà cửa, nơi làm ăn, sáu công trình riêng của miền,
+quân lính và những cây cầu được xây lại theo từng thời đại, từ lều lá và cầu dây leo đến cổng không gian và cầu ánh sáng.
 Mọi thứ nhìn thấy đều sinh ra từ một nền kinh tế mô phỏng thật bên dưới, và nền kinh tế ấy chạy bằng câu chuyện.
 
 ## Sáu miền đất
@@ -44,16 +45,58 @@ Mỗi quyền năng tốn **thần lực** và có thời gian chờ. Thần l�
 ban phước làm dân biết ơn mà tin, và thời đại càng mới người ta càng ít tin. Ở thời Robot AI, những cỗ máy đo được
 độ cong của bầu trời, hiểu mình đang sống trong một chiếc bể, và gõ lên kính từ phía bên trong.
 
-## Một ván năm năm
+## Một ván chín năm
 
-Ván của vị thần dài đúng năm năm (1.800 ngày): khoảng 20 phút ở tốc độ 1×, 10 phút ở 2× (có thêm 4× và 10×).
-Sáu bộ lạc đến trong nửa năm đầu. Mỗi thành phố có một lộ trình đi qua tám thời đại tính từ ngày đặt chân: đi chậm thì
-học nhanh hơn và có thêm người tìm đến, đi nhanh thì chậm lại, và không thời đại nào trôi qua quá vội. Thành đi đầu tới
-thời Robot AI vào cuối năm thứ tư, thành đến muộn nhất tới trước khi ván kết thúc. Thành bị chiếm lâu ngày có thể nổi dậy,
-nên chiến tranh kéo dài tới tận thời tên lửa và thời robot. Hết năm thứ năm, thời gian dừng lại và một màn tổng kết cho
-biết người trong bể nhớ bạn là vị thần thế nào.
+Ván của vị thần dài đúng chín năm (3.240 ngày): khoảng 36 phút ở tốc độ 1×, 18 phút ở 2×, 9 phút ở 4×. Năm năm đầu
+đi hết tám thời của loài người (Robot AI ở năm thứ năm), bốn năm sau là bốn thời vượt người, mỗi năm một thời. Sáu bộ lạc
+đến trong nửa năm đầu. Mỗi thành phố có một lộ trình tính từ ngày đặt chân: đi chậm thì học nhanh hơn, có thêm người tìm
+đến, sáu trụ cột lớn nhanh hơn; đi nhanh thì chậm lại. Thành bị chiếm lâu ngày có thể nổi dậy, nên chiến tranh kéo dài
+tới tận các thời vượt người. Hết năm thứ chín, thời gian dừng lại và một màn tổng kết cho biết người trong bể nhớ bạn là
+vị thần thế nào.
 
-## Tám thời đại
+## Sáu trụ cột: mỗi miền lên đời theo cách riêng
+
+Muốn sang thời mới, ngoài tri thức và dân số, thành phố cần đủ cả sáu trụ cột: **kinh tế** (có việc làm, có cơm),
+**quân sự** (có quân, có trại lính), **giáo dục** (tri thức, học viện), **y tế** (ít người ốm, không đói, không dịch),
+**tôn giáo** (đức tin so với thời đại), **giao thương** (cầu, cảng, chợ, hàng qua lại). Mỗi trụ cột lớn dần theo chính
+đời sống của thành. Mỗi miền coi trọng một trụ cột và đòi trụ cột đó cao hơn: Lúa Vàng cần kinh tế, Thông Xanh cần y tế,
+Đá Mây cần quân sự, Tuyết Trắng cần giáo dục, Cửa Sóng cần giao thương, Cát Hồng cần tôn giáo. Bảng **Thế giới** vẽ sáu
+vạch của từng thành và tô cam trụ cột đang níu chân. Phép của thần chạm tới trụ cột: chữa lành nâng y tế, khai sáng nâng
+giáo dục, bội thu nâng kinh tế; dịch bệnh, động đất, núi lửa làm trụ cột tụt xuống. Công trình trụ cột bị chiến tranh
+phá thì trụ cột đó tụt, nên chiến tranh làm chậm cả việc lên đời.
+
+## Sáu miền, sáu dáng đất, ba mươi sáu công trình
+
+Đảo rộng hơn (bán kính 38): nửa nhìn ra biển trong là thành phố, nửa ngoài là bãi săn hoang. Mỗi miền một dáng đất:
+đồng bằng có ruộng ô vuông và sông uốn khúc, rừng có mép đảo hình cánh hoa, đồi phủ cây và cây mẹ ngàn năm, núi có mép
+lởm chởm, dãy đỉnh tuyết và cao nguyên có bậc đá, băng nguyên có hồ đóng băng, sống băng, khe nứt và mảng băng trôi,
+biển có đầm phá xanh ngọc với san hô và đảo dừa, sa mạc có đồi cát gợn sóng, mỏm đá đỏ và hẻm núi. Phần đá dưới đảo
+cũng khác nhau: rễ cây rủ, băng nhũ, san hô, vân đá đỏ.
+
+Mỗi miền có sáu công trình riêng cho sáu trụ cột (tổng cộng ba mươi sáu), mỗi công trình đổi dáng qua bốn dải thời đại
+của loài người, có nét riêng ở thời thứ hai của mỗi dải, rồi biến hình ở bốn thời vượt người (trắng ngọc và tinh thể,
+các tầng lơ lửng giữa vòng năng lượng, xoắn theo chiều cao kèm bóng vọng, hoá ánh sáng). Bấm vào một công trình để xem
+trụ cột của nó đã đi được bao xa. Mỗi thành có thêm một bãi tập kết quân, nơi quân đóng thành hàng lối.
+
+## Nhân vật, chiến tranh và săn bắn
+
+Người và lính là nhân vật tròn kiểu hoạt hình (đầu to, mắt tròn, thân tròn, tay đeo găng, giày tròn), chân tay cử động
+khi đi và khi đánh. Bốn thời đầu mỗi miền có trang phục, mũ, vũ khí và thú cưỡi riêng: nón lá và giáo ở đồng bằng, mũ lá
+và rìu ở rừng, mũ len và búa ở núi, áo lông, lao móc và voi ma mút ở băng nguyên, mũ thuỷ thủ và chĩa ba ở biển, khăn
+xếp, mã tấu và lạc đà ở sa mạc. Bốn thời vượt người có vầng sáng trên đầu và vũ khí ánh sáng.
+
+Mỗi lần công thành, nhà xưởng trong thành bốc cháy, cháy xong có nơi sập thành đống đổ nát (xưởng sập thì ngừng làm ra
+hàng), rồi được dựng lại có giàn giáo; thành bị chiếm thì bị cướp phá, nhiều nơi cháy cùng lúc. Trên bãi săn, thú hoang
+đi lại theo trữ lượng thú của thành: thời nguyên thủy là khủng long cổ dài, khủng long ba sừng, khủng long bạo chúa,
+khủng long săn mồi, voi ma mút, cá sấu khổng lồ, thằn lằn bay, chuồn chuồn khổng lồ, và thằn lằn cổ dài bơi trong biển
+trong; sau đó là bò rừng, hươu sừng, dê núi, tuần lộc, linh dương, lạc đà. Thợ săn chạy theo, mỗi con bị hạ ngã xuống
+trước mắt; sang thời mới đàn khủng long bỏ đi, từ thời tên lửa không còn ai đi săn.
+
+Bầu trời đổi theo thời đại chung của bể kính: bình minh ngọc trai, hoàng hôn vàng có mặt trời nhân tạo, chạng vạng tím,
+rồi đêm của những thành phố ánh sáng với cột sáng chạm vòm kính. Mỗi lần lên đời có một khoảnh khắc riêng (tên lửa chạm
+vòm kính, mặt trời thứ hai bừng sáng, cổng không gian mở, cột sáng).
+
+## Tám thời của loài người
 
 Nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, **tên lửa** (bệ phóng, vệ tinh, điện hạt nhân, tàu ngầm
 hạt nhân) và **robot AI** (robot chiến đấu, bầy máy bay không người lái, cỗ máy bọc thép, pháo điện từ, chiến hạm tự hành).
@@ -111,14 +154,17 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 
 | File | Vai trò |
 |---|---|
-| `index.html` | Bể kính, bầu trời, ngày đêm, thời tiết, giao diện, thanh sáu thành phố, chính sách, màn chào, chú giải |
-| `lands3d.js` | Địa hình sáu miền, công trình theo sáu thời đại (gộp hình học để nhẹ), cầu nối, cư dân, đoàn hàng qua cầu |
+| `index.html` | Bể kính, bầu trời theo thời đại, ngày đêm, thời tiết, mặt trời nhân tạo, giao diện, thanh sáu thành phố, màn chào, chú giải |
+| `demo.html` | Bản demo một trang để chốt kế hoạch mười hai thời đại |
+| `lands3d.js` | Dáng đất sáu miền, công trình theo mười hai thời đại (gộp hình học để nhẹ, bốn thời vượt người biến hình), cầu nối, nhân vật tròn có khớp, cư dân, đoàn hàng qua cầu |
+| `landmarks3d.js` | Ba mươi sáu công trình trụ cột của sáu miền qua mười hai thời; lửa, đổ nát và giàn giáo khi chiến tranh |
+| `fauna3d.js` | Thú hoang trên bãi săn (khủng long thời đầu, thú lớn rồi thú nhỏ), thợ săn, thằn lằn cổ dài dưới biển trong |
 | `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 42 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, tám thời đại và vị thần |
+| `test/sim.test.js` | 45 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
@@ -194,10 +240,7 @@ node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 
 ## Giao diện
 
-- **Thanh công cụ của người giữ bể** (bên trái; trên điện thoại là cột biểu tượng bên phải): vòng sáng quanh biểu tượng
-  cho biết công cụ đã sẵn sàng hay còn phải chờ.
-- **Thanh sáu thành phố** (trên cùng): tên, thời đại, bấm để bay tới. Nhịp đập, chính sách và vòng chờ của công cụ
-  là của thành phố đang xem; nhịp đập còn cho biết tri thức và dân số còn thiếu để sang thời mới.
-- **Chính sách**: rắc tiền (mưa đồng xu vàng), lãi suất, thuế, lương tối thiểu cho thành phố đang xem.
-- **Biên niên sử**, **Phim tài liệu** (đạo diễn camera), **Chú giải**, âm thanh tự sinh (mặc định tắt), tự giảm chất lượng
-  khi máy chậm, phím `Esc` đóng bảng hoặc thoát công cụ đang chọn.
+Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có thanh thần lực), **Thế giới** (sáu nền văn minh, sáu trụ cột,
+chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
+đêm). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
+là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.

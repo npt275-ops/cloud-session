@@ -170,6 +170,15 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 .row.done b::after { content: " ✓"; color: var(--good); }
 .row .prog, .row .pw { grid-column: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; margin-top: 3px; }
 .row .prog i, .row .pw i { display: block; height: 100%; background: var(--amber); }
+/* sáu trụ cột: sáu vạch nhỏ, vạch đang níu chân thành phố có viền */
+.row .pills { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; }
+.row .pills span { display: grid; gap: 2px; font-size: 10.5px; line-height: 1.1; opacity: 0.85; }
+.row .pills span b { font-weight: 600; font-size: 10.5px; }
+.row .pills span i { display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.row .pills span i em { display: block; height: 100%; background: #9df0c4; }
+.row .pills span.low i em { background: #ffb36b; }
+.row .pills span.key b::after { content: ' ★'; color: var(--amber); }
+.row .pills span.low { opacity: 1; }
 .row .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
 .adv { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-dim); }
 .lands button.mine b { text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
@@ -280,33 +289,32 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 
 <div class="brand">
   <h1>Bể Kính</h1>
-  <p>Sáu miền đất trong một bể kính, nối nhau bằng sáu cây cầu. <span id="pop">0</span> gia đình đang sống, từ những túp lều đầu tiên đến những toà tháp kính.</p>
+  <p hidden>Sáu miền đất trong một bể kính, nối nhau bằng sáu cây cầu. <span id="pop">0</span> gia đình đang sống.</p>
 </div>
 <div class="clock"><b id="time">06:00</b><span id="day">Ngày 1</span></div>
 
-<div class="pulse glass" id="pulse" aria-live="polite"></div>
+<div class="pulse glass" id="pulse" aria-live="polite" hidden></div>
 <div class="hint" id="hint">Kéo để xoay · cuộn để phóng to · bấm tên một thành phố để bay tới</div>
 <nav class="lands glass" id="landBar" aria-label="Sáu thành phố"></nav>
 
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
-  <button id="play" aria-pressed="false">Tạm dừng</button>
-  <button id="speed">Tốc độ 1×</button>
-  <span class="sep" aria-hidden="true"></span>
   <button id="powBtn" aria-pressed="false" aria-controls="powers" hidden><span class="mbar"><i id="manaFill"></i></span><span id="manaTxt">Quyền năng</span></button>
   <button id="cmdBtn" aria-pressed="false" aria-controls="cmd" hidden>Thế giới</button>
-  <button id="policyBtn" aria-pressed="false" aria-controls="policy">Chính sách</button>
-  <button id="chronBtn" aria-pressed="false" aria-controls="chron">Biên niên sử<span class="badge" id="chronBadge" hidden>0</span></button>
-  <button id="dirBtn" aria-pressed="true" title="Camera tự bay đến nơi đang có chuyện">Phim tài liệu</button>
-  <button id="moreBtn" aria-expanded="false" aria-controls="more">Thêm</button>
+  <button id="speed" title="Chạm để đổi tốc độ hoặc tạm dừng">1× ▸</button>
+  <button id="moreBtn" aria-expanded="false" aria-controls="more" aria-label="Thêm">⋯<span class="badge" id="chronBadge" hidden>0</span></button>
+  <button id="play" aria-pressed="false" hidden>Tạm dừng</button>
+  <button id="policyBtn" aria-pressed="false" aria-controls="policy" hidden>Chính sách</button>
+  <button id="dirBtn" aria-pressed="true" hidden>Phim tài liệu</button>
 </div>
 <div class="more glass" id="more" hidden>
-  <button id="cycle" aria-pressed="true">Ngày và đêm</button>
-  <button id="money" aria-pressed="true">Dòng tiền</button>
-  <button id="orbit" aria-pressed="true">Tự xoay</button>
+  <button id="chronBtn" aria-pressed="false" aria-controls="chron">Biên niên sử</button>
   <button id="soundBtn" aria-pressed="false">Âm thanh</button>
   <button id="helpBtn" aria-pressed="false" aria-controls="help">Chú giải</button>
+  <button id="cycle" aria-pressed="true">Ngày và đêm</button>
+  <button id="money" aria-pressed="true" hidden>Dòng tiền</button>
+  <button id="orbit" aria-pressed="true" hidden>Tự xoay</button>
 </div>
-<nav class="rail" aria-label="Bàn tay người giữ bể">
+<nav class="rail" aria-label="Bàn tay người giữ bể" hidden>
   <button class="tool ready" id="toolSeed" aria-pressed="false">
     <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5l2.1 7.4L21.5 11l-7.4 2.1L12 20.5l-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span>
     <span class="tl"><b>Gieo phát minh</b><em id="seedWait">Sẵn sàng</em></span>
@@ -427,8 +435,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     <div id="introMain">
       <div class="eyebrow">Sáu miền đất quanh một biển trong</div>
       <h2 id="iTitle">Bể Kính</h2>
-      <p>Bạn là vị thần đứng ngoài vách kính. Bên trong, sáu bộ lạc đến trên đất hoang, đánh cá, bắc cầu, buôn bán, đánh nhau, và trong năm năm đi qua tám thời đại: nguyên thủy, cổ đại, trung đại, cận đại, công nghiệp, hiện đại, tên lửa, robot AI. Nền kinh tế bên dưới là thật. Họ tự sống. Bạn quyết định khi nào trời mưa, khi nào đất rung.</p>
-      <p class="note-i">Một ván dài năm năm: khoảng 20 phút ở tốc độ 1×, 10 phút ở 2×.</p>
+      <p>Bạn là vị thần đứng ngoài vách kính. Bên trong, sáu bộ lạc đến trên đất hoang, đánh cá, bắc cầu, buôn bán, đánh nhau, và trong chín năm đi qua mười hai thời đại: năm năm đầu từ nguyên thủy tới robot AI, bốn năm sau là những thời vượt tầm hiểu biết của con người: vật chất sống, mặt trời nhân tạo, bẻ cong không gian, siêu việt. Mỗi miền lên đời theo cách riêng, cần đủ kinh tế, quân sự, giáo dục, y tế, tôn giáo và giao thương. Nền kinh tế bên dưới là thật. Họ tự sống. Bạn quyết định khi nào trời mưa, khi nào đất rung.</p>
+      <p class="note-i">Một ván dài chín năm: khoảng 36 phút ở tốc độ 1×, 18 phút ở 2×, 9 phút ở 4×.</p>
       <ul>
         <li><b>Thiên tai:</b> lũ lụt, hạn hán, động đất, lốc xoáy, dịch bệnh, núi lửa, sóng thần, sét lửa.</li>
         <li><b>Ban phước:</b> mưa lành, mùa bội thu, khai sáng, chữa lành, buộc đình chiến.</li>
@@ -480,6 +488,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="audio.js"></script>
 <script src="lands3d.js"></script>
 <script src="war3d.js"></script>
+<script src="landmarks3d.js"></script>
+<script src="fauna3d.js"></script>
 <script src="god3d.js"></script>
 <script src="story3d.js"></script>
 <script>
@@ -635,6 +645,52 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const mine = (i) => isWar() && W.cities[i] && W.cities[i].settled && W.cities[i].owner === PL();
   const warOn = () => W.war && W.war.on;
   const fighting = (c) => warOn() && c.settled && W.war.factions.some((f) => f.alive && Sim.atWarF(W, c.owner, f.id));
+  const marks = Landmarks3D.create({ THREE, Sim, W, lands3d, hash, puff, clickable, unclickable, reduce });
+  const fauna = Fauna3D.create({ THREE, scene, Sim, W, lands3d, war3d, hash, puff, reduce });
+  /* =============== Mặt trời nhân tạo, cột sáng và khoảnh khắc lên đời =============== */
+  const artSun = new THREE.Mesh(new THREE.SphereGeometry(5, 20, 14), new THREE.MeshBasicMaterial({ color: '#fff1c4' }));
+  artSun.position.set(0, 74, 0); artSun.visible = false; scene.add(artSun);
+  const glowSprite = (color, size) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending })); sp.scale.setScalar(size); scene.add(sp); return sp; };
+  const artGlow = glowSprite('#ffd27a', 64); artGlow.position.copy(artSun.position); artGlow.visible = false;
+  const artLight = new THREE.PointLight('#ffd9a0', 0, 440); artLight.position.copy(artSun.position); scene.add(artLight);
+  const pillars = lands3d.lands.map((L) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 3.2, 140, 16, 1, true), new THREE.MeshBasicMaterial({ color: '#fff6dc', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.copy(L.center).setY(100); m.visible = false; m.userData.flash = 0; scene.add(m); return m; });
+  const moments = [];
+  const later = (dur, update, end) => moments.push({ t0: performance.now(), dur, update, end });
+  // mỗi thời một khoảnh khắc: tên lửa chạm vòm kính, mặt trời thứ hai bừng sáng, cổng không gian mở, cột sáng chạm trời
+  function eraMoment(city, era) {
+    const L = lands3d.lands[city]; if (!L || reduce) return;
+    const C0 = L.center.clone().setY(2);
+    if (era === 6) {
+      const g = new THREE.Group(), bodyM = new THREE.MeshStandardMaterial({ color: '#f4f6f8', flatShading: true });
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 6, 10), bodyM); b.position.y = 3; g.add(b);
+      const n = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2, 10), new THREE.MeshStandardMaterial({ color: '#e05a6a', flatShading: true })); n.position.y = 7; g.add(n);
+      const fl = glowSprite('#ffb347', 6), start = L.world(L.siloPos || new THREE.Vector3()).setY(1), end = start.clone().multiplyScalar(0.55); end.y = Math.sqrt(Math.max(1, DOME * DOME - end.x * end.x - end.z * end.z)) - 6;
+      scene.add(g); g.position.copy(start);
+      later(4800, (u) => { g.position.copy(start).lerp(end, u * u); fl.position.copy(g.position).setY(g.position.y - 0.8); if (Math.random() < 0.6) puff(g.position.clone(), false, '#e8e8e8'); }, () => { scene.remove(g); scene.remove(fl); const f = glowSprite('#ffffff', 10); f.position.copy(end); shake(400); if (audio && audio.on && audio.boom) audio.boom(); later(2400, (u) => { f.scale.setScalar(10 + u * 90); f.material.opacity = 0.9 * (1 - u); }, () => scene.remove(f)); });
+    } else if (era === 7) {
+      for (let i = 0; i < 24; i++) setTimeout(() => puff(C0.clone().add(new THREE.Vector3((Math.random() - 0.5) * 24, 2 + Math.random() * 8, (Math.random() - 0.5) * 24)), false, '#7ff0ff'), i * 90);
+    } else if (era === 8) {
+      for (let i = 0; i < 3; i++) setTimeout(() => ripple(C0, '#eef3f7'), i * 450);
+    } else if (era === 9) {
+      if (!artSun.visible || W.cities.filter((c) => c.settled && c.era >= 9).length <= 1) { artGlow.visible = true; shake(500); later(2800, (u) => { artGlow.scale.setScalar(420 - u * 356); artGlow.material.opacity = 1 - u * 0.4; }, () => { artGlow.scale.setScalar(64); }); }
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const a = C0.clone(), d = artSun.position.clone().sub(a); beam.scale.y = d.length(); beam.position.copy(a).addScaledVector(d, 0.5); beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); scene.add(beam);
+      later(3500, (u) => { beam.material.opacity = 0.7 * Math.sin(u * Math.PI); }, () => scene.remove(beam));
+    } else if (era === 10) {
+      for (const gt of L.gates) for (let i = 0; i < 2; i++) setTimeout(() => ripple(L.world(gt).setY(3), '#b48cff'), i * 400);
+    } else if (era === 11) {
+      pillars[city].userData.flash = 1;
+    }
+  }
+  function updateMoments(now, night) {
+    for (let i = moments.length - 1; i >= 0; i--) { const m = moments[i], u = Math.min(1, (now - m.t0) / m.dur); try { m.update(u); } catch (err) { /* hiệu ứng lỗi thì bỏ */ } if (u >= 1) { moments.splice(i, 1); try { m.end(); } catch (err) { /* bỏ */ } } }
+    let maxEra = 0; for (const c of W.cities) if (c.settled) maxEra = Math.max(maxEra, c.era);
+    const sunOn = maxEra >= 9;
+    artSun.visible = sunOn; if (sunOn) artGlow.visible = true; else if (!moments.length) artGlow.visible = false;
+    artLight.intensity = sunOn ? 0.45 + 0.9 * night : 0;
+    if (sunOn) { artSun.scale.setScalar(1 + Math.sin(now * 0.0014) * 0.05); if (artGlow.scale.x <= 65) artGlow.material.opacity = 0.45 + 0.15 * Math.sin(now * 0.002); }
+    W.cities.forEach((c, i) => { const p = pillars[i], on = c.settled && c.era >= 11; p.userData.flash = Math.max(0, (p.userData.flash || 0) - 0.004); p.visible = on || p.userData.flash > 0; p.material.opacity = (on ? 0.07 + 0.02 * Math.sin(now * 0.001 + i) : 0) + p.userData.flash * 0.45; });
+  }
   const god3d = God3D.create({ THREE, scene, Sim, W, lands3d, war3d, glowTex, puff, label3d, reduce, audio, shake, dome: DOME, doRain, dayMs: () => 1000 / tps, shot: war3d.shotRaw });
   const lands = lands3d.lands;
   // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
@@ -682,21 +738,45 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const overcast = Math.max(wx.rain, wx.snow) * 0.6;
     if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
     if (wx.drought > 0.001) { top.lerp(C('#c9b98f'), wx.drought * 0.3 * day); bot.lerp(C('#f2d39a'), wx.drought * 0.6 * day); }
+    const M = moodNow();
+    if (M.k > 0.001) { top.lerp(M.top, M.k * (0.55 + 0.45 * day)); bot.lerp(M.bot, M.k * (0.55 + 0.45 * day)); sun.color.lerp(M.sunCol, M.k * 0.5); }
+    sun.intensity *= M.sun; hemi.intensity *= M.hemi;
     cloudMat.color.copy(C('#ffffff').lerp(C('#8e98a2'), overcast * 0.8));
     skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
     skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);
     scene.fog.color.copy(bot);
-    starMat.opacity = night * 0.9;
+    starMat.opacity = Math.max(night * 0.9, M.stars);
     const hours = tod * 24, hh = Math.floor(hours), mm = Math.floor((hours - hh) * 60 / 10) * 10;
     $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
     return { day, night };
   }
 
+  /* =============== Không khí của mười hai thời đại =============== */
+  // Bầu trời theo thời đại trung bình của cả bể kính: bốn thời vượt người đi từ bình minh ngọc trai, hoàng hôn vàng,
+  // chạng vạng tím tới đêm của những thành phố ánh sáng. Ngày đêm vẫn trôi, chỉ có màu trời và nắng đổi theo thời.
+  const MOOD_N = { top: C('#4c9fe0'), bot: C('#d4ecf7'), k: 0, sun: 1, hemi: 1, stars: 0, sunCol: C('#fff1d6') };
+  const MOODS = Array.from({ length: 12 }, () => MOOD_N);
+  MOODS[4] = Object.assign({}, MOOD_N, { top: C('#8a96a6'), bot: C('#d8d0c0'), k: 0.22 });
+  MOODS[8] = Object.assign({}, MOOD_N, { top: C('#6a86b0'), bot: C('#f6e9ea'), k: 0.5, sun: 0.95, hemi: 1.05, sunCol: C('#fff0f0') });
+  MOODS[9] = Object.assign({}, MOOD_N, { top: C('#2b3a78'), bot: C('#ffcf8a'), k: 0.6, sun: 0.78, hemi: 0.95, sunCol: C('#ffb36b'), stars: 0.1 });
+  MOODS[10] = Object.assign({}, MOOD_N, { top: C('#140c34'), bot: C('#a87ac8'), k: 0.72, sun: 0.62, hemi: 0.88, sunCol: C('#d9c4ff'), stars: 0.45 });
+  MOODS[11] = Object.assign({}, MOOD_N, { top: C('#03040d'), bot: C('#2a2350'), k: 0.86, sun: 0.38, hemi: 0.7, sunCol: C('#cfd8ff'), stars: 0.95 });
+  let moodEra = -1;
+  const moodOut = { top: new THREE.Color(), bot: new THREE.Color(), sunCol: new THREE.Color(), k: 0, sun: 1, hemi: 1, stars: 0 };
+  function moodNow() {
+    const live = W.cities.filter((c) => c.settled), avg = live.length ? live.reduce((t, c) => t + c.era, 0) / live.length : 0;
+    moodEra = moodEra < 0 ? avg : moodEra + (avg - moodEra) * 0.01;
+    const lo = Math.max(0, Math.min(11, Math.floor(moodEra))), hi = Math.min(11, lo + 1), f = moodEra - lo, A = MOODS[lo], B = MOODS[hi];
+    moodOut.top.copy(A.top).lerp(B.top, f); moodOut.bot.copy(A.bot).lerp(B.bot, f); moodOut.sunCol.copy(A.sunCol).lerp(B.sunCol, f);
+    for (const k of ['k', 'sun', 'hemi', 'stars']) moodOut[k] = A[k] + (B[k] - A[k]) * f;
+    return moodOut;
+  }
+
   /* =============== Nhịp đập và thanh sáu thành phố =============== */
   function pulse() {
     const c = cityOf(focus), w = wOf(focus), el = $('pulse');
-    const d0 = Math.max(0, W.day - 1); // ngày 360 là ngày cuối của năm 1, ngày 1800 là ngày cuối của năm 5
-    const dayLine = 'Năm ' + Math.min(5, Math.floor(d0 / 360) + 1) + (W.cfg.pace ? '/5' : '') + ' · Mùa ' + Sim.SEASONS[Math.floor((d0 % 360) / 90)] + ' · Ngày ' + W.day;
+    const d0 = Math.max(0, W.day - 1); // ngày 360 là ngày cuối của năm 1, ngày 3240 là ngày cuối của năm 9
+    const dayLine = 'Năm ' + Math.min(9, Math.floor(d0 / 360) + 1) + (W.cfg.pace ? '/9' : '') + ' · Mùa ' + Sim.SEASONS[Math.floor((d0 % 360) / 90)] + ' · Ngày ' + W.day;
     $('day').textContent = dayLine;
     $('pop').textContent = W.cities.reduce((t, x) => t + (x.settled ? x.w.households.length : 0), 0);
     if (!w) {
@@ -780,6 +860,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (s.type === 'bank') return L.world(L.bankPos);
     if (s.type === 'gov') return L.center.clone();
     if (s.type === 'school') return L.world(L.schoolPos);
+    if (s.type === 'landmark') return L.world(L.slots[s.pillar]);
     if (s.type === 'bld') return L.world(s.bld === 'port' ? L.portPos : s.bld === 'wonder' ? L.wonderPos : s.bld === 'silo' ? L.siloPos : s.bld === 'tower' ? L.towerPos[0] : s.bld === 'wall' ? L.gates[0] : L.milLot[s.bld] || L.gates[0]);
     return story ? story.customPos(s) : null;
   }
@@ -827,6 +908,12 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
       text = 'Nơi thu thuế và trả trợ cấp cho người chưa có việc. ' + c.terrain.land + ', ' + w.households.length + ' gia đình.';
       const next = ERAS[c.era + 1];
       list = [['Tri thức', Sim.knowledgeOf(c) + (next ? ' / ' + next.know + ' để sang thời ' + next.name.toLowerCase() : '')], ['Dân số', w.households.length + (next ? ' / ' + next.pop : '')], ['Thuế thu nhập', Math.round(w.policy.taxRate * 100) + '%'], ['Quỹ thành phố', fmt(w.gov.cash) + ' xu']];
+    } else if (sel.type === 'landmark') {
+      const P = Sim.PILLARS.find((x) => x.key === sel.pillar), pr = Sim.pillarProgress(c), need = Sim.PILLAR_NEED[c.terrain.key], key = Sim.PILLAR_KEY[c.terrain.key];
+      kind = c.name + ' · trụ cột ' + P.name.toLowerCase(); title = Sim.landmarkName(c.terrain.key, sel.pillar, c.era);
+      const dmg = (c.dmg || []).find((d) => d.kind === 'land' && d.ref === sel.pillar);
+      text = (dmg ? (dmg.state === 'fire' ? 'Đang bốc cháy. ' : dmg.state === 'ruin' ? 'Chỉ còn đống đổ nát. ' : dmg.state === 'rebuild' ? 'Đang dựng lại. ' : '') : '') + (sel.pillar === key ? Sim.PILLAR_WHY[c.terrain.key] : P.name + ' của ' + c.name + ' cần đạt ' + Math.round(need[sel.pillar] * 100) + '% mức chung để lên đời.');
+      list = [['Tới thời sau', c.era >= Sim.LAST ? 'đã ở thời cuối' : Math.round(pr[sel.pillar] * 100) + '%'], ['Đang lớn', c.pilDrv && c.pilDrv[sel.pillar] ? (c.pilDrv[sel.pillar] >= 1 ? 'nhanh' : c.pilDrv[sel.pillar] >= 0.8 ? 'vừa' : 'chậm') : '—'], ['Miền coi trọng', sel.pillar === key ? 'nhất' : need[sel.pillar] >= 1 ? 'nhiều' : 'vừa']];
     } else if (sel.type === 'school') {
       kind = c.name + ' · nơi giữ tri thức'; title = SCHOOL_NAMES[c.era];
       text = 'Mỗi phát minh, mỗi điều học được từ láng giềng qua cầu đều được ghi lại ở đây. Đủ tri thức, thành phố sang thời đại mới.';
@@ -870,6 +957,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, depthWrite: false, opacity: 0 }));
     // nhãn to theo khoảng cách nhìn, để ở toàn cảnh vẫn đọc được
     sp.renderOrder = 20; sp.position.copy(pos); scene.add(sp);
+    // không để nhãn nổi chồng chất: tối đa năm nhãn, nhãn cũ nhất nhường chỗ
+    while (floatLabels.length >= 5) { const o = floatLabels.shift(); scene.remove(o.sp); if (o.sp.material.map) o.sp.material.map.dispose(); o.sp.material.dispose(); }
     floatLabels.push({ sp, t0: performance.now(), y: pos.y });
   }
   const COINS = 260;
@@ -1117,10 +1206,16 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 
   /* =============== Điều khiển =============== */
   let running = true, tps = 1.5, acc = 0;
-  const speeds = [[1.5, '1×'], [3, '2×'], [6, '4×'], [15, '10×']]; // 1× hết ván năm năm trong 20 phút, 2× trong 10 phút
+  const speeds = [[1.5, '1×'], [3, '2×'], [6, '4×'], [15, '10×']]; // 1× hết ván chín năm trong 36 phút, 2× trong 18 phút, 4× trong 9 phút
   function stopOrbit() { if (controls.autoRotate) { controls.autoRotate = false; $('orbit').setAttribute('aria-pressed', 'false'); } $('hint').style.opacity = 0; }
   $('play').onclick = () => { running = !running; $('play').textContent = running ? 'Tạm dừng' : 'Chạy tiếp'; $('play').setAttribute('aria-pressed', String(!running)); };
-  $('speed').onclick = () => { const i = (speeds.findIndex((s) => s[0] === tps) + 1) % speeds.length; tps = speeds[i][0]; $('speed').textContent = 'Tốc độ ' + speeds[i][1]; };
+  // một nút tốc độ: chạm để đi 1×, 2×, 4×, rồi tạm dừng
+  $('speed').onclick = () => {
+    if (!running) { running = true; tps = speeds[0][0]; $('speed').textContent = speeds[0][1] + ' ▸'; return; }
+    const i = speeds.findIndex((x) => x[0] === tps) + 1;
+    if (i >= 3) { running = false; $('speed').textContent = 'Tạm dừng'; return; }
+    tps = speeds[i][0]; $('speed').textContent = speeds[i][1] + ' ▸';
+  };
   $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
   $('money').onclick = () => { showMoney = !showMoney; $('money').setAttribute('aria-pressed', String(showMoney)); };
   $('orbit').onclick = () => { controls.autoRotate = !controls.autoRotate; $('orbit').setAttribute('aria-pressed', String(controls.autoRotate)); };
@@ -1142,7 +1237,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   document.addEventListener('click', (e) => { if (!$('more').hidden && !e.target.closest('#more') && e.target !== $('moreBtn')) toggleMore(false); });
   const story = Story3D.create({
     THREE, W, Sim, lands3d, $, reduce, audio, glowTex, mat, mesh, box, C, dome: DOME, overviewDist: OVERVIEW,
-    label3d, toast, puff, ripple, spawnMote, flyTo, select, watch, setAutoRotate, closePanels, clickable, unclickable,
+    label3d, toast, puff, ripple, spawnMote, flyTo, select, watch, setAutoRotate, closePanels, clickable, unclickable, eraMoment,
     people: lands3d.people, tod: () => tod, focus: () => focus, setFocus,
     seaPos: (z) => war3d.zoneC(z).setY(1),
     lanePos: (key, x) => { const p = new THREE.Vector3(), d = new THREE.Vector3(); return war3d.lanePos(key, x == null ? 0.5 : x, 0, p, d) ? p : new THREE.Vector3(); },
@@ -1214,6 +1309,13 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x === b));
     renderWorld(true);
   });
+  // sáu trụ cột của một thành: phần đã đi tới thời sau, trụ cột yếu nhất được tô cam, trụ cột chính của miền có sao
+  const PILL_SHORT = { eco: 'Kinh tế', mil: 'Quân sự', edu: 'Học', hea: 'Y tế', rel: 'Tôn giáo', tra: 'Buôn' };
+  function pillarBars(c) {
+    if (!c.pil || c.era >= Sim.LAST) return '';
+    const pr = Sim.pillarProgress(c), wk = Sim.weakestPillar(c), key = Sim.PILLAR_KEY[c.terrain.key];
+    return '<div class="pills" title="Sáu trụ cột tới thời ' + ERAS[c.era + 1].name.toLowerCase() + ' · đang chờ ' + wk.name.toLowerCase() + '">' + Sim.PILLARS.map((P) => '<span class="' + (P.key === wk.key && wk.pct < 1 ? 'low ' : '') + (P.key === key ? 'key' : '') + '"><b>' + PILL_SHORT[P.key] + '</b><i><em style="width:' + Math.round(pr[P.key] * 100) + '%"></em></i></span>').join('') + '</div>';
+  }
   const row = (title, small, act, extra) => '<div class="row"><b>' + title + '</b>' + (small ? '<small>' + small + '</small>' : '') + (extra || '') + (act ? '<div class="act">' + act + '</div>' : '') + '</div>';
   const laneName = (L) => (L.kind === 'bridge' ? 'cầu ' : 'eo biển ') + W.cities[L.a].name + ' – ' + W.cities[L.b].name;
   const UNIT_ORDER = ['melee', 'ranged', 'mounted', 'siege', 'ship', 'sub'];
@@ -1237,8 +1339,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
         const army = warOn() ? X.units.filter((u) => u.city === c.id).length : 0, foes = warOn() ? X.factions.filter((f) => f.alive && Sim.atWarF(W, c.owner, f.id)).map((f) => f.name) : [];
         const hp = warOn() ? '<div class="prog"><i style="width:' + Math.round((c.hp / c.hpMax) * 100) + '%;background:' + (c.hp / c.hpMax > 0.5 ? '#7bd389' : '#ef6f6c') + '"></i></div>' : '';
         h += row('<span class="dot" style="background:' + (warOn() ? factionColor(c.owner) : TER_DOT[c.terrain.key]) + '"></span>' + c.name + (warOn() && c.owner !== c.id ? ' · cờ ' + X.factions[c.owner].name : ''),
-          'Thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ · đức tin ' + Math.round((c.faith || 0) * 100) + '%' + (warOn() ? ' · ' + army + ' quân' : '') + (foes.length ? ' · đánh ' + foes.join(', ') : ''),
-          '<button data-act="fly" data-arg="' + c.id + '">Bay tới</button>', hp);
+          'Thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ' + (c.era < Sim.LAST && c.pil ? ' · chờ ' + Sim.weakestPillar(c).name.toLowerCase() : '') + (warOn() ? ' · ' + army + ' quân' : '') + (foes.length ? ' · đánh ' + foes.join(', ') : ''),
+          '<button data-act="fly" data-arg="' + c.id + '">Bay tới</button>', hp + pillarBars(c));
       }
     } else {
       if (!warOn()) h += '<p class="note">Bạn đã chọn một thế giới không có chiến tranh. Loài người chỉ đối mặt với trời đất, và với bạn.</p>';
@@ -1290,21 +1392,22 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   }
   $('bhClose').onclick = () => { watchLane = null; $('bhud').hidden = true; };
   function godTick() { manaUi(); renderPowers(); renderWorld(false); renderBattle(); }
-  // Năm thứ năm khép lại: thế giới dừng, vị thần nhìn lại những gì mình đã làm
+  // Năm thứ chín khép lại: thế giới dừng, vị thần nhìn lại những gì mình đã làm
   let finaleShown = false;
   function finale() {
     if (finaleShown) return;
     finaleShown = true;
     const G = W.god, X = W.war, used = G.used || {}, bad = Object.keys(used).filter((k) => Sim.POWERS[k].kind === 'bad').reduce((t, k) => t + used[k], 0), good = Object.keys(used).filter((k) => Sim.POWERS[k].kind === 'good').reduce((t, k) => t + used[k], 0);
-    const title = G.awakened ? 'Những cỗ máy đã nhìn thấy bạn' : 'Năm năm trong bể kính';
+    const lit = W.cities.filter((c) => c.settled && c.era >= Sim.LAST).length;
+    const title = lit === 6 ? 'Sáu thành phố ánh sáng' : lit ? lit + ' thành phố đã hoá ánh sáng' : G.awakened ? 'Những cỗ máy đã nhìn thấy bạn' : 'Chín năm trong bể kính';
     const godName = !bad && !good ? 'vị thần im lặng' : good > bad * 2 ? 'vị thần nhân từ' : bad > good * 2 ? 'vị thần thịnh nộ' : 'vị thần công bằng';
     const fallen = W.cities.reduce((t, c) => t + (c.casualties || 0), 0), battles = W.stories.filter((s) => s.type === 'battle-end').length;
     const conquests = W.stories.filter((s) => s.type === 'conquer').length, revolts = W.stories.filter((s) => s.type === 'revolt').length;
     const pop = W.cities.reduce((t, c) => t + (c.settled ? c.w.households.length : 0), 0);
-    $('goKind').textContent = 'Năm thứ năm khép lại · Ngày ' + W.day;
+    $('goKind').textContent = 'Năm thứ chín khép lại · Ngày ' + W.day;
     $('goTitle').textContent = title;
     $('goText').textContent = 'Người trong bể sẽ nhớ bạn là ' + godName + ': ' + bad + ' lần giáng thiên tai, ' + good + ' lần ban phước.' + (G.awakened ? ' Ở ' + W.cities[G.awakeCity].name + ', những cỗ máy vẫn đang gõ lên kính từ bên trong.' : '');
-    const items = W.cities.map((c) => '<li><i style="background:' + factionColor(c.owner) + '"></i><b>' + c.name + '</b> · thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ · đức tin ' + Math.round((c.faith || 0) * 100) + '%' + (c.owner !== c.id ? ' · dưới cờ ' + X.factions[c.owner].name : '') + '</li>');
+    const items = W.cities.filter((c) => c.settled).map((c) => '<li><i style="background:' + factionColor(c.owner) + '"></i><b>' + c.name + '</b> · thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ · đức tin ' + Math.round((c.faith || 0) * 100) + '%' + (c.owner !== c.id ? ' · dưới cờ ' + X.factions[c.owner].name : '') + '</li>');
     if (X.on) items.push('<li><b>Chiến tranh</b>: ' + battles + ' trận, ' + fallen + ' người lính tử trận, ' + conquests + ' lần chiếm thành, ' + revolts + ' cuộc nổi dậy.</li>');
     items.push('<li><b>Cả bể kính</b>: ' + pop + ' gia đình, ' + Math.round(W.tradeTotal).toLocaleString('vi-VN') + ' món hàng đã qua cầu và qua biển.</li>');
     $('goList').innerHTML = items.join('');
@@ -1316,10 +1419,11 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 
   /* =============== Một ngày trôi qua =============== */
   function dayTick(animate) {
-    if (W.ended) return; // ván đã khép lại ở cuối năm thứ năm
+    if (W.ended) return; // ván đã khép lại ở cuối năm thứ chín
     Sim.stepWorld(W);
     lands3d.syncDay(animate);
     war3d.syncDay(animate, 1000 / tps);
+    marks.syncDay(animate); fauna.syncDay(animate);
     story.onDay();
     if (animate) for (const fx of W.god.fx) god3d.play(fx);
     godTick();
@@ -1331,12 +1435,14 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; },
     lockQuality: (q) => { quality = q; qLocked = true; applyQuality(); }, quality: () => quality,
   };
 
   /* =============== Vòng lặp =============== */
   lands3d.syncDay(false);
   war3d.syncDay(false, 0);
+  marks.syncDay(false); fauna.syncDay(false);
   pulse(); landBar(); updateSeasons(true);
   let last = performance.now(), lastSlow = 0;
   function frame(t) {
@@ -1350,9 +1456,11 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
       if (steps) { pulse(); landBar(); if (sel) card(); }
     }
     const { night } = applyTime();
+    updateMoments(performance.now(), night);
     if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; });
     war3d.animate(dt, t, acc, night);
+    marks.animate(dt); fauna.animate(dt, t);
     god3d.update(dt, t);
     story.update(dt, t);
     const now = performance.now();
