@@ -65,6 +65,30 @@ vạch của từng thành và tô cam trụ cột đang níu chân. Phép của
 giáo dục, bội thu nâng kinh tế; dịch bệnh, động đất, núi lửa làm trụ cột tụt xuống. Công trình trụ cột bị chiến tranh
 phá thì trụ cột đó tụt, nên chiến tranh làm chậm cả việc lên đời.
 
+## Sáu đảo, sáu kiến trúc, sáu mươi công trình kỳ lạ
+
+Đảo rộng hơn trước (bán kính 50 thay vì 38, vòng đảo 132 thay vì 100), bể kính rộng theo. Mỗi đảo một kiến trúc riêng qua mọi
+thời đại, không đảo nào dùng lại dáng nhà của đảo khác:
+
+| Đảo | Nhà ở | Tháp giữa thành (từ thời cận đại) | Hoạ tiết trên xưởng, bến, công trình |
+|---|---|---|---|
+| Đồng bằng · Lúa Vàng | nhà tròn đội mũ rơm như cây nấm, cối xay gió trên nóc; về sau tháp silo tròn quấn dải vàng xoắn | tháp vàng quấn bậc thang xoắn, mũ rơm khổng lồ | mũ rơm và cánh quạt |
+| Rừng · Thông Xanh | nhà sàn trên thân cây, mái lá tròn, buồng gỗ nối cầu dây; về sau tháp thân cây mọc quả kính | cây nghị hội mang những gian điện tròn | tán lá và dây leo |
+| Núi · Đá Mây | khối đá chồng lệch nhau, mỗi tầng một mái xoè như chùa; về sau khối đá lơ lửng nối bằng trụ | tháp đá chồng bảy tầng mái xoè | mái xoè và đá chồng |
+| Băng giá · Tuyết Trắng | vòm tuyết, cổng sườn cá voi, nhũ băng; về sau cụm vòm kính giữa gai pha lê | ngọn tháp pha lê giữa vòng gai băng | vòm tuyết và nhũ băng |
+| Biển · Cửa Sóng | nhà sàn mái thuyền úp, vỏ ốc trên nóc; về sau tháp ốc xoắn | tháp ốc biển khổng lồ | vỏ ốc và sọc xanh |
+| Sa mạc · Cát Hồng | nhà bậc thang như kim tự tháp nhỏ, tháp đón gió, mái vòm ngọc; về sau tháp bậc thang cao | kim tự tháp bậc với bốn tháp gió | tháp đón gió và vòm ngọc |
+
+Trên vành đất mới, mỗi đảo có mười công trình kỳ lạ mang tên riêng (bấm vào để đọc chuyện của nó), đổi vật liệu và có đèn theo
+thời đại, biến hình ở bốn thời vượt người:
+
+- **Lúa Vàng**: Tháp Lúa Xoắn, Cối Xay Ba Tầng, Bù Nhìn Khổng Lồ, Vựa Lúa Treo, Cổng Bó Lúa, Đồng Hồ Mặt Trời, Nhà Nấm Khổng Lồ, Đài Hạt Giống, Ruộng Bậc Xoắn, Cầu Vồng Rơm.
+- **Thông Xanh**: Cung Điện Trên Cây, Cầu Dây Treo, Rừng Nấm Khổng Lồ, Cổng Rễ Cây, Tháp Đom Đóm, Tổ Chim Khổng Lồ, Đền Gốc Cổ, Vòng Đá Rêu, Cây Đèn Lồng, Thác Bậc Gỗ.
+- **Đá Mây**: Tu Viện Treo, Đá Chồng Cân Bằng, Cầu Xích, Tháp Chuông Mây, Bậc Thang Trời, Cổng Đá Thủng, Tượng Đầu Đá, Đá Bay, Lò Rèn Núi, Chòi Canh Vách.
+- **Tuyết Trắng**: Thánh Đường Băng, Bộ Xương Cá Voi, Cánh Đồng Gai Pha Lê, Tháp Cực Quang, Làng Lều Tuần Lộc, Cột Totem Băng, Tàu Mắc Băng, Cổng Răng Băng, Hang Tuyết, Vòng Phiến Băng.
+- **Cửa Sóng**: Hải Đăng Vỏ Ốc, Nhà Thuyền Úp, Vỏ Trai Khổng Lồ, Neo Khổng Lồ, Cổng Xương Cá, Ba Cột Buồm, Đền San Hô, Tượng Cá Voi Nhảy, Cầu Tàu Xoắn, Chuông Gió Vỏ Sò.
+- **Cát Hồng**: Kim Tự Tháp Gió, Rừng Tháp Đón Gió, Cổng Trăng Liềm, Chợ Vòm, Giếng Bậc Thang, Đồng Hồ Cát Khổng Lồ, Tượng Lạc Đà, Mái Vòm Gương, Lều Du Mục Sọc, Cột Muối Trắng.
+
 ## Sáu miền, sáu dáng đất, ba mươi sáu công trình
 
 Đảo rộng hơn (bán kính 38): nửa nhìn ra biển trong là thành phố, nửa ngoài là bãi săn hoang. Mỗi miền một dáng đất:
@@ -151,20 +175,44 @@ chữa cháy, dựng lại nhà.
 
 ## Hoá thân: thành chim hay thành mèo
 
-Bấm **⋯ → Hoá thành chim** (phím **C**) hay **Hoá thành mèo** (phím **M**) để tự đi xem bể kính, camera bám sau lưng con vật:
+Bấm **⋯ → Hoá thành chim** (phím **C**) hay **Hoá thành mèo** (phím **M**) để tự đi xem bể kính. Con vật nhỏ hơn người trong
+bể (mèo cao chừng một phần tư người), đi và bay chậm theo cỡ của nó, camera thấp và gần sau lưng với ống kính góc rộng, nên nhà
+cửa, cây cầu, công trình hiện ra to và xa như thật:
 
 | | Chim | Mèo |
 |---|---|---|
-| ↑ / W | bay tới (giữ để bay nhanh) | đi tới |
-| ↓ / S | bay chậm lại | lùi |
+| ↑ / W | bay nhanh | đi tới |
+| ↓ / S | bay chậm | lùi |
 | ← → / A D | rẽ | rẽ |
-| Space / E | bay lên cao | nhảy (lên bậc, lên bờ tường thấp) |
-| Shift / Q | sà xuống (không chui xuống đất) | |
+| Space / E | bay lên cao | nhảy (lên bậc, bờ tường thấp) |
+| Shift / Q | sà xuống (không chui xuống đất) | chạy |
+| 1 – 6 | sáu phép của trời | sáu phép của đất |
 | Esc | trở lại làm thần | trở lại làm thần |
 
-Chim bay trong vòm kính, sà sát mái nhà mà không đâm xuống đất; mèo đi trên mặt đảo, bước lên bậc thềm, đi qua cầu sang
-đảo bên, gặp tường cao hay mép nước thì dừng. Camera không chui vào vách núi hay vào nhà. Trên điện thoại có sáu nút bấm
-giữ (⤒ ▲ ⤓ / ◀ ▼ ▶). Lúc hoá thân, phim tài liệu tạm dừng để không giành camera.
+Chim bay trong vòm kính, sà sát mái nhà; mèo đi trên mặt đảo, bước lên bậc thềm, qua cầu sang đảo bên, gặp tường cao hay mép
+nước thì dừng. Đi tới gần một công trình kỳ lạ hay một công trình trụ cột thì nó được ghi vào **sổ khám phá** (96 nơi). Trên
+điện thoại có thanh phép sáu ô và sáu nút bấm giữ (⤒ ▲ ⤓ / ◀ ▼ ▶).
+
+## Quyền năng: thần mượn thân
+
+Bảng **Quyền năng** có ba thẻ: **Thần**, **Chim**, **Mèo**.
+
+- **Thần**: thiên tai và ban phước lớn, chọn rồi chạm thẳng vào một chỗ trên đảo: thiên tai lấy chỗ đó làm tâm, xưởng và nhà
+  gần chỗ chạm chịu trước (cháy, sập), camera bay tới đúng chỗ.
+- **Chim** (dùng khi đang là chim, phím 1–6, tác dụng trong vòng dưới cánh chim): **Mưa lành** (mưa rơi thật, lửa quanh đó tắt
+  kèm hơi nước, hết hạn, ruộng được tưới), **Sét trời** (sét giáng đúng toán giặc gần nhất, lính ngã, xác nằm lại), **Gió ngược**
+  (gió quét quân giặc lùi trên cầu và trên biển, mấy ngày không vào được thành), **Gọi đàn chim** (đàn chim xoáy rồi bổ nhào
+  vào lính giặc), **Thư bay** (lá thư sáng bay về quảng trường: tường được vá, dân hết sợ, lòng dân kháng chiến lên), **Nắng
+  vàng** (tia nắng rọi xuống ruộng: mùa tốt hơn, vết cháy xanh lại, thú về bãi săn).
+- **Mèo** (dùng khi đang là mèo, tác dụng quanh chân mèo): **Cào cửa báo động** (cửa các nhà quanh đó loé sáng, người chạy ra
+  kịp, giặc không lẻn vào được), **Gặm dây cửa** (cờ giặc rơi khỏi mái ngôi nhà bị chiếm gần nhất, gia đình từ trại tạm về
+  nhà, hàng xóm reo mừng), **Mèo đen qua đường** (lính giặc bỏ chạy ra mép đảo, bỏ lệnh giới nghiêm), **Bắt chuột** (chuột
+  chạy tán loạn khỏi kho, lương hết mốc, dịch không lan), **Rù rì chữa lành** (tim hồng bay lên, người ốm quanh mèo khỏi),
+  **Dẫn lối bí mật** (dấu chân sáng dẫn người ở trại tạm ra cầu hay ra bến lánh nạn, hay đưa đoàn tiếp tế vào thành bị vây).
+
+Phép của chim và mèo rẻ (5–14 thần lực), hồi nhanh; ô nào sáng viền vàng là quanh đó đang có việc cho phép ấy. Mỗi lần giúp
+thành một truyền thuyết trong biên niên sử, dân tin hơn nên thần lực hồi nhanh hơn; một đảo được chim (hay mèo) giúp đủ năm lần
+thì dân dựng **tượng chim xanh** (hay **tượng mèo cam**) bằng đồng trên quảng trường.
 
 ## Mượt và nét
 
@@ -222,7 +270,7 @@ viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi c
 
 ## Chạy
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `landmarks3d.js`, `fauna3d.js`, `chaos3d.js`, `streets3d.js`, `avatar3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
+Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `landmarks3d.js`, `fauna3d.js`, `chaos3d.js`, `streets3d.js`, `sights3d.js`, `avatar3d.js`, `powers3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
 
 ```bash
 cd aquarium && python3 -m http.server 8000
@@ -241,13 +289,15 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | `fauna3d.js` | Thú hoang trên bãi săn (khủng long thời đầu, thú lớn rồi thú nhỏ), thợ săn, thằn lằn cổ dài dưới biển trong |
 | `chaos3d.js` | Cảnh của bốn mươi bốn kịch bản hỗn loạn, không chiến và đổ quân qua cổng không gian |
 | `streets3d.js` | Đời sống trong thành: cờ giặc trên mái nhà bị chiếm, lính gác, trại tạm, dân chạy loạn, tản cư, biểu tình, cứu tế, chữa cháy, đưa tang, tuần tra, giới nghiêm, thao luyện, duyệt binh, đánh nhau giữa phố, và cảnh chống trả của từng miền |
-| `avatar3d.js` | Hoá thân thành chim hay mèo, đi bằng phím mũi tên, camera bám sau lưng |
+| `avatar3d.js` | Hoá thân thành chim hay mèo: con vật nhỏ, ống kính góc rộng, đi bằng phím mũi tên, camera bám sau lưng không chui vào núi hay vào nhà |
+| `powers3d.js` | Hậu quả nhìn thấy được của mười hai phép chim và mèo (mưa, sét, gió, đàn chim, thư bay, nắng, cửa loé sáng, cờ giặc rơi, lính bỏ chạy, chuột chạy, tim hồng, dấu chân sáng) và tượng chim, tượng mèo trên quảng trường |
+| `sights3d.js` | Sáu mươi công trình kỳ lạ của sáu đảo, mỗi đảo mười, đổi theo thời đại |
 | `god3d.js` | Bàn tay của vị thần: lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét, mưa lành, bội thu, khai sáng, chữa lành, đình chiến |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |
-| `test/sim.test.js` | 50 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn, nhà bị chiếm, chống trả, khởi nghĩa, kịch bản trong thành và vị thần |
+| `test/sim.test.js` | 52 bài kiểm thử cho lõi kinh tế, bộ máy câu chuyện, thế giới sáu miền, biển trong, chiến tranh, mười hai thời đại, ván chín năm, sáu trụ cột, dấu vết chiến tranh, săn bắn, kịch bản hỗn loạn, nhà bị chiếm, chống trả, khởi nghĩa, kịch bản trong thành, phép của chim và mèo, phép thần chạm đúng chỗ và vị thần |
 | `tools/metrics.js` | Bảng chỉ số vĩ mô trên 8 thành phố (`OFF=gold,ponzi node tools/metrics.js` để tắt cơ chế mà so sánh) |
 | `tools/calibrate.js`, `tools/diagnose.js` | Đo "độ sống" và chẩn đoán từng cơ chế |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
@@ -317,7 +367,7 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | Mạch vàng, dịch, kẻ hứa lãi | 1 / 0–2 / 0–3 lần mỗi thành phố |
 
 ```bash
-node --test            # 50 bài kiểm thử (chạy trong thư mục aquarium)
+node --test            # 52 bài kiểm thử (chạy trong thư mục aquarium)
 node tools/metrics.js  # bảng chỉ số trên 8 thành phố
 ```
 
@@ -327,3 +377,4 @@ Màn hình chỉ giữ những gì vị thần cần: **Quyền năng** (có tha
 chiến sự), một nút **tốc độ** (chạm để đổi 1×, 2×, 4×, tạm dừng) và nút **⋯** (biên niên sử, âm thanh, chú giải, ngày và
 đêm, số khung hình, hoá thành chim, hoá thành mèo). Thanh sáu thành phố ở trên cùng để bay tới từng miền. Camera tự bay tới nơi đang có chuyện; kéo hay chạm màn hình
 là tự điều khiển. Bốn công cụ cũ của người giữ bể, bảng chính sách, nút phim tài liệu và ô số liệu đã bỏ khỏi màn hình.
+Đồng hồ góc phải ghi **cấp của bể kính** (thời đại cao nhất mà một thành đã tới, từ 1/12 đến 12/12), mùa và ngày, thay cho số năm.

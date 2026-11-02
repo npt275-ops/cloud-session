@@ -8,6 +8,12 @@
     const TAU = Math.PI * 2, v3 = (x, y, z) => new THREE.Vector3(x, y, z), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const lands = lands3d.lands, bridges = lands3d.bridges;
     const lam = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.02 }, o || {}));
+    // con vật nhỏ hơn người trong bể (người cao khoảng 1,3): chim dài chừng nửa đơn vị, mèo cao chừng một phần tư người;
+    // đi, bay chậm theo cỡ con vật, camera thấp và gần, góc nhìn rộng, nên nhà cửa, cây cầu, đảo hiện ra to và xa
+    const SPEC = {
+      bird: { scale: 0.32, cruise: 3.2, fast: 7.5, slow: 1.1, turn: 1.7, climb: 3.4, floor: 0.45, ceil: 70, camBack: 2.3, camUp: 0.7, ahead: 2.6, eye: 0.15 },
+      cat: { scale: 0.34, walk: 1.9, run: 3.9, back: 0.9, turn: 2.7, jump: 5.2, step: 0.3, climb: 0.6, probe: 0.16, camBack: 1.45, camUp: 0.68, ahead: 1.6, lookUp: 0.36, eye: 0.3 },
+    };
     const ball = (r, c, x, y, z, sx, sy, sz, parent) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 12), lam(c)); m.position.set(x, y, z); m.scale.set(sx || 1, sy || 1, sz || 1); m.castShadow = true; (parent || null) && parent.add(m); return m; };
 
     /* ----- Chim xanh tròn ----- */
@@ -27,7 +33,7 @@
       }
       const tail = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.6, 6), lam('#2f66b3')); tail.rotation.x = -Math.PI / 2 - 0.25; tail.scale.set(1, 1, 0.3); tail.position.set(0, 0.08, -0.72); body.add(tail);
       for (const sx of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 5), lam('#ffb347')); l.position.set(sx * 0.15, -0.5, 0.05); body.add(l); }
-      g.scale.setScalar(1.5);
+      g.scale.setScalar(SPEC.bird.scale);
       return { g, body, head, wings, tail };
     }
     /* ----- Mèo cam tròn ----- */
@@ -51,8 +57,8 @@
       const tail = [];
       let parent = body, px = 0, py = 0.5, pz = -0.44;
       for (let i = 0; i < 6; i++) { const s = new THREE.Group(); s.position.set(px, py, pz); parent.add(s); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.2, 6), lam(i === 5 ? '#d9822b' : '#f2a541')); m.position.y = 0.1; m.castShadow = true; s.add(m); tail.push(s); parent = s; px = 0; py = 0.2; pz = 0; }
-      tail[0].rotation.x = -0.9;
-      g.scale.setScalar(1.25);
+      tail[0].rotation.x = -2.05; // đuôi chĩa ra sau rồi cong dần lên, không che camera sau lưng
+      g.scale.setScalar(SPEC.cat.scale);
       return { g, body, head, legs, tail };
     }
 
@@ -81,7 +87,7 @@
     const hray = new THREE.Raycaster(); hray.camera = camera;
     function wallAhead(p, dir, dist) {
       const i = landAt(p); if (i < 0) return false;
-      hray.set(_o.set(p.x, p.y + 0.42, p.z), dir); hray.far = dist + 0.3;
+      hray.set(_o.set(p.x, p.y + SPEC.cat.probe, p.z), dir); hray.far = dist + 0.1;
       return hray.intersectObject(lands[i].g, true).some(solid);
     }
     // độ cao mặt đất (hay mái nhà) ngay dưới một điểm; null nếu dưới đó là biển. lift: dò từ độ cao nào trở xuống
@@ -105,10 +111,12 @@
       const L = lands[c.id];
       S.kind = kind; S.m = kind === 'bird' ? makeBird() : makeCat(); scene.add(S.m.g);
       const a = Math.atan2(L.inw.z, L.inw.x);
-      if (kind === 'bird') { S.pos.copy(L.center).add(v3(L.inw.x * 30, 26, L.inw.z * 30)); S.yaw = Math.atan2(-L.inw.x, -L.inw.z); S.speed = 6; }
+      if (kind === 'bird') { S.pos.copy(L.center).add(v3(L.inw.x * 16, 7, L.inw.z * 16)); S.yaw = Math.atan2(-L.inw.x, -L.inw.z); S.speed = SPEC.bird.cruise; }
       else catStart(L, a);
       S.vy = 0; S.t = 0; S.started = false;
       S.camPos.copy(camera.position);
+      if (!S.lens) S.lens = { near: camera.near, far: camera.far };
+      camera.userData.avatarLens = true; lens();
       controls.enabled = false; controls.autoRotate = false;
       if (onChange) onChange(kind);
     }
@@ -118,10 +126,16 @@
       for (const g of L.landing || []) for (const f of [0.45, 0.58, 0.32, 0.7]) tries.push([g.x * f, g.z * f, Math.atan2(g.x, g.z)]);
       tries.push([Math.cos(a) * 7.6, Math.sin(a) * 7.6, Math.atan2(L.inw.x, L.inw.z)]);
       for (const [x, z, yaw] of tries) {
-        S.pos.set(L.center.x + x, 0, L.center.z + z); S.y = S.ground = S.pos.y = groundAt(S.pos.x, S.pos.z, 0, 1.3) || 0; S.yaw = yaw; S.speed = 0;
+        S.pos.set(L.center.x + x, 0, L.center.z + z); S.y = S.ground = S.pos.y = groundAt(S.pos.x, S.pos.z, 0, SPEC.cat.climb) || 0; S.yaw = yaw; S.speed = 0;
         fwd.set(Math.sin(yaw), 0, Math.cos(yaw));
         if (!wallAhead(S.pos, fwd, 2.5)) return;
       }
+    }
+    // ống kính khi hoá thân: góc rộng (dọc 62°, màn hình đứng 78°), mặt phẳng gần sát để không cắt mất con vật nhỏ
+    function lens() {
+      camera.near = 0.08; camera.far = Math.max(camera.far, S.lens ? S.lens.far : 4200); // giữ xa như cũ để bầu trời không bị cắt
+      camera.fov = camera.aspect < 1 ? 78 : 62;
+      camera.updateProjectionMatrix();
     }
     function stop(silent) {
       if (!S.kind) return;
@@ -130,6 +144,8 @@
       S.kind = null; S.m = null;
       for (const k in keys) keys[k] = false;
       controls.enabled = true;
+      if (S.lens) { camera.near = S.lens.near; camera.far = S.lens.far; S.lens = null; }
+      camera.userData.avatarLens = false; if (K.onLens) K.onLens();
       // làm thần trở lại: camera lùi lên cao nhìn chỗ con vật vừa đứng
       controls.target.copy(at).setY(Math.max(0, Math.min(at.y, 8)));
       const back = camera.position.clone().sub(controls.target); back.y = Math.max(back.y, 14); back.setLength(Math.max(36, back.length())); camera.position.copy(controls.target).add(back);
@@ -153,6 +169,7 @@
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
     // nút bấm trên màn hình cảm ứng
     function press(k, down) { if (S.kind) keys[k] = down; }
+    const sprint = () => !!keys.down; // mèo: giữ Shift để chạy
 
     /* ----- Mỗi khung hình ----- */
     const fwd = v3(0, 0, 0), want = v3(0, 0, 0), look = v3(0, 0, 0), head = v3(0, 0, 0), cdir = v3(0, 0, 0), cray = new THREE.Raycaster();
@@ -163,33 +180,35 @@
       S.t += s;
       const turn = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
       if (S.kind === 'bird') {
-        S.yaw += turn * s * 1.9;
-        const target = keys.fwd ? 22 : keys.back ? 2 : 9;
-        S.speed += (target - S.speed) * Math.min(1, s * 1.6);
+        const B = SPEC.bird;
+        S.yaw += turn * s * B.turn;
+        const target = keys.fwd ? B.fast : keys.back ? B.slow : B.cruise;
+        S.speed += (target - S.speed) * Math.min(1, s * 1.4);
         const climb = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
-        S.vy += (climb * 9 - S.vy) * Math.min(1, s * 3);
+        S.vy += (climb * B.climb - S.vy) * Math.min(1, s * 3);
         fwd.set(Math.sin(S.yaw), 0, Math.cos(S.yaw));
         S.pos.addScaledVector(fwd, S.speed * s); S.pos.y += S.vy * s;
         // trong vòm kính, không chui xuống đất hay xuống biển
         const r = Math.hypot(S.pos.x, S.pos.z), maxR = DOME - 8;
         if (r > maxR) { S.pos.x *= maxR / r; S.pos.z *= maxR / r; S.yaw += s * 2.2; }
         if ((Math.floor(S.t * 30) & 1) === 0) S.ground = groundAt(S.pos.x, S.pos.z, S.pos.y);
-        const floor = (S.ground == null ? -0.2 : S.ground) + 1.4;
+        const floor = (S.ground == null ? -0.2 : S.ground) + B.floor;
         if (S.pos.y < floor) { S.pos.y += (floor - S.pos.y) * Math.min(1, s * 10); S.vy = Math.max(0, S.vy); }
-        S.pos.y = Math.min(S.pos.y, 150);
+        S.pos.y = Math.min(S.pos.y, B.ceil);
         // vỗ cánh: bay nhanh, bay lên thì vỗ mạnh; hạ xuống thì lượn
-        const M = S.m, flap = reduce ? 0 : (S.vy < -2 ? 0.15 : 1) * Math.sin(S.t * (10 + S.speed * 0.5));
+        const M = S.m, flap = reduce ? 0 : (S.vy < -1 ? 0.15 : 1) * Math.sin(S.t * (13 + S.speed * 1.5));
         for (const w of M.wings) w.pv.rotation.z = w.sx * (0.25 + flap * 0.75);
         M.body.rotation.z = -turn * 0.45; M.body.rotation.x = clamp(-S.vy * 0.05, -0.5, 0.5);
         M.g.position.copy(S.pos); M.g.rotation.y = S.yaw;
         // camera bám sau lưng, cao hơn một chút
-        want.copy(S.pos).addScaledVector(fwd, -9).add(v3(0, 3.6, 0));
+        want.copy(S.pos).addScaledVector(fwd, -B.camBack).add(v3(0, B.camUp, 0));
         // bay càng cao càng nhìn chếch xuống để thấy đảo bên dưới
         const alt = S.pos.y - (S.ground == null ? 0 : S.ground);
-        look.copy(S.pos).addScaledVector(fwd, 6).add(v3(0, -0.6 - Math.min(7, Math.max(0, alt) * 0.2), 0));
+        look.copy(S.pos).addScaledVector(fwd, B.ahead).add(v3(0, -0.25 - Math.min(3.2, Math.max(0, alt) * 0.11), 0));
       } else {
-        S.yaw += turn * s * 2.6;
-        const target = keys.fwd ? 6.5 : keys.back ? -2.5 : 0;
+        const Ct = SPEC.cat;
+        S.yaw += turn * s * Ct.turn;
+        const target = keys.fwd ? (sprint() ? Ct.run : Ct.walk) : keys.back ? -Ct.back : 0;
         S.speed += (target - S.speed) * Math.min(1, s * 6);
         fwd.set(Math.sin(S.yaw), 0, Math.cos(S.yaw));
         const step = S.speed * s;
@@ -197,32 +216,32 @@
           // tường hay gốc cây trước mặt thì đứng lại (nhảy lên thì qua được bậc thấp); mép nước thì không đi tiếp
           _b.copy(fwd).multiplyScalar(Math.sign(step));
           const nx = S.pos.x + fwd.x * step, nz = S.pos.z + fwd.z * step;
-          const wall = wallAhead(S.pos, _b, Math.abs(step) + 0.35), gy = groundAt(nx, nz, S.y, 1.3);
+          const wall = wallAhead(S.pos, _b, Math.abs(step) + 0.12), gy = groundAt(nx, nz, S.y, Ct.climb);
           // bậc thềm, bờ đường thấp thì bước lên luôn; vật cao hơn thì phải nhảy
-          if (gy != null && (wall ? gy - S.y <= 0.65 : gy - S.y < 1.3)) { S.pos.x = nx; S.pos.z = nz; S.ground = gy; }
+          if (gy != null && (wall ? gy - S.y <= Ct.step : gy - S.y < Ct.climb)) { S.pos.x = nx; S.pos.z = nz; S.ground = gy; }
           else S.speed *= 0.3;
-        } else if (S.ground == null) S.ground = groundAt(S.pos.x, S.pos.z, S.y, 1.3) || 0;
-        if (keys.up && S.y <= S.ground + 0.02) S.vy = 5.2; // nhảy
+        } else if (S.ground == null) S.ground = groundAt(S.pos.x, S.pos.z, S.y, Ct.climb) || 0;
+        if (keys.up && S.y <= S.ground + 0.02) S.vy = Ct.jump; // nhảy cao gấp mấy lần thân mình
         S.vy -= 16 * s; S.y += S.vy * s;
         if (S.y < S.ground) { S.y = S.ground; S.vy = 0; }
         S.pos.y = S.y;
-        const M = S.m, walk = reduce ? 0 : clamp(Math.abs(S.speed) / 6.5, 0, 1), ph = S.t * 13;
+        const M = S.m, walk = reduce ? 0 : clamp(Math.abs(S.speed) / Ct.walk, 0, 1.4), ph = S.t * (11 + Math.abs(S.speed) * 3);
         M.legs.forEach((l, i) => { l.rotation.x = Math.sin(ph + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.7 * walk; });
-        M.tail.forEach((t, i) => { if (i) t.rotation.x = 0.28 + Math.sin(S.t * 3 + i * 0.6) * 0.12; t.rotation.z = Math.sin(S.t * 2.2 + i * 0.5) * 0.18; });
+        M.tail.forEach((t, i) => { if (i) t.rotation.x = 0.24 + Math.sin(S.t * 3 + i * 0.6) * 0.1; t.rotation.z = Math.sin(S.t * 2.2 + i * 0.5) * 0.18; });
         M.body.position.y = Math.abs(Math.sin(ph)) * 0.05 * walk;
         M.head.rotation.y = -turn * 0.3;
         M.g.position.copy(S.pos); M.g.rotation.y = S.yaw;
-        want.copy(S.pos).addScaledVector(fwd, -5.2).add(v3(0, 2.5, 0));
-        look.copy(S.pos).addScaledVector(fwd, 3).add(v3(0, 0.7, 0));
+        want.copy(S.pos).addScaledVector(fwd, -Ct.camBack).add(v3(0, Ct.camUp, 0));
+        look.copy(S.pos).addScaledVector(fwd, Ct.ahead).add(v3(0, Ct.lookUp, 0));
       }
       // camera không chui vào vách núi hay vào nhà: dò từ đầu con vật về phía camera, vướng thì kéo camera lại gần
-      head.set(S.pos.x, S.pos.y + (S.kind === 'bird' ? 0.9 : 0.8), S.pos.z);
+      head.set(S.pos.x, S.pos.y + SPEC[S.kind].eye, S.pos.z);
       cdir.copy(want).sub(head); const cd = cdir.length(); cdir.normalize();
       const li = landAt(want) >= 0 ? landAt(want) : landAt(S.pos);
-      if (li >= 0 && cd > 0.5) { cray.set(head, cdir); cray.far = cd; const hit = cray.intersectObject(lands[li].g, true).find(solid); if (hit) want.copy(head).addScaledVector(cdir, Math.max(0.9, hit.distance - 0.6)); }
+      if (li >= 0 && cd > 0.2) { cray.set(head, cdir); cray.far = cd; const hit = cray.intersectObject(lands[li].g, true).find(solid); if (hit) want.copy(head).addScaledVector(cdir, Math.max(0.35, hit.distance - 0.15)); }
       const wr = Math.hypot(want.x, want.z); if (wr > DOME - 3) { want.x *= (DOME - 3) / wr; want.z *= (DOME - 3) / wr; }
       // camera theo sau, mượt (không giật khi rẽ gắt)
-      const k = S.started ? 1 - Math.exp(-s * 5) : 1; S.started = true;
+      const k = S.started ? 1 - Math.exp(-s * 6) : 1; S.started = true;
       camera.position.lerp(want, k);
       camera.lookAt(look);
       controls.target.copy(look);

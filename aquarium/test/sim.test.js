@@ -1116,3 +1116,80 @@ test('thế giới không chiến tranh: vẫn có thao luyện, cứu dân, ch�
   assert.ok(W.cities.every((c) => !c.settled || c.occ.n === 0));
   assert.ok(ledgerOk(W));
 });
+
+/* ===================== Thần mượn thân: phép của chim và mèo ===================== */
+test('thần mượn thân: mười hai phép của chim và mèo có hậu quả thật ở đúng chỗ, tốn thần lực, có hồi chiêu, giúp đủ năm lần thì dân dựng tượng', () => {
+  assert.equal(Object.keys(Sim.CREATURE).length, 12);
+  assert.equal(Object.values(Sim.CREATURE).filter((P) => P.body === 'bird').length, 6);
+  const W = Sim.createWorld({ seed: 12, mode: 'god', war: true });
+  W.cfg.noAI = true;
+  for (let d = 0; d < 320; d++) Sim.stepWorld(W);
+  const c = W.cities[0], nh = Math.ceil(c.w.households.length / 4);
+  W.god.power = W.god.max = 1000;
+  const fresh = () => { W.god.cool = {}; };
+  // không có việc thì không tốn thần lực
+  let p0 = W.god.power, r = Sim.creatureAct(W, 'gnaw', 0, { x: 3, z: 3, houses: [1, 2] });
+  assert.ok(!r.ok && r.idle, 'không có nhà bị chiếm quanh mèo thì không gặm được'); assert.equal(W.god.power, p0);
+  // mưa lành dập đúng đám cháy quanh chim
+  const d1 = Sim.ignite(W, c, 'house', 2, 'test'), d2 = Sim.ignite(W, c, 'house', 3, 'test');
+  c.w.phen.drought = 30;
+  r = Sim.creatureAct(W, 'rain', 0, { x: 5, z: 2, houses: [2], dmg: [d1.id] });
+  assert.ok(r.ok, r.reason); assert.equal(d1.state, 'scorch', 'đám cháy dưới cánh chim tắt'); assert.equal(c.w.phen.drought, 0, 'hết hạn');
+  assert.ok(W.god.power < p0, 'tốn thần lực'); assert.ok(r.fx.out.includes(d1.id));
+  assert.ok(!Sim.creatureAct(W, 'rain', 0, {}).ok, 'phép vừa dùng phải chờ hồi');
+  void d2;
+  // gặm dây cửa: ngôi nhà bị chiếm gần mèo nhất được trả lại
+  fresh();
+  const got = Sim.seize(W, 0, 1, 3, 'edge');
+  r = Sim.creatureAct(W, 'gnaw', 0, { x: 1, z: 1, houses: [got[1], 0] });
+  assert.ok(r.ok, r.reason); assert.equal(r.fx.house, got[1]);
+  assert.ok(!c.occ.h[got[1]], 'nhà được trả lại'); assert.ok(c.occ.h[got[0]], 'nhà khác vẫn bị chiếm');
+  for (let j = 0; j < 4; j++) { const h = c.w.households[got[1] * 4 + j]; if (h) assert.ok(h.away !== 1, 'gia đình về nhà'); }
+  // rù rì chữa lành: người ốm trong những nhà quanh mèo khỏi
+  fresh();
+  for (let j = 0; j < 4; j++) c.w.households[5 * 4 + j].sick = 9;
+  r = Sim.creatureAct(W, 'purr', 0, { houses: [5] });
+  assert.ok(r.ok, r.reason); for (let j = 0; j < 4; j++) assert.equal(c.w.households[5 * 4 + j].sick, 0);
+  // cào cửa: nhà quanh mèo hết sợ, giặc không phá vào được mấy ngày
+  fresh();
+  for (let j = 0; j < 4; j++) c.w.households[6 * 4 + j].fear = 9;
+  r = Sim.creatureAct(W, 'alarm', 0, { houses: [6] });
+  assert.ok(r.ok); for (let j = 0; j < 4; j++) assert.equal(c.w.households[6 * 4 + j].fear, 0); assert.ok(c.occ.block > W.day);
+  // dẫn lối bí mật: người ở trại tạm đi lánh nạn (hoặc đoàn tiếp tế vào thành)
+  fresh();
+  const camp0 = c.w.households.filter((h) => h.away === 1).length;
+  Sim.stepWorld(W);
+  r = Sim.creatureAct(W, 'path', 0, {});
+  assert.ok(r.ok, r.reason);
+  assert.ok(r.fx.supply || c.w.households.filter((h) => h.away === 1).length < camp0, 'người rời trại tạm hoặc có đoàn tiếp tế');
+  // nắng vàng xoá vết cháy, mùa tốt hơn
+  fresh();
+  const d3 = Sim.ignite(W, c, 'house', 7, 'test'); d3.state = 'scorch';
+  r = Sim.creatureAct(W, 'sun', 0, {});
+  assert.ok(r.ok); assert.ok((c.mods || []).some((m) => m.food > 1.2 && m.from === W.day));
+  // giúp đủ năm lần một loài thì dân dựng tượng
+  const n0 = W.stories.filter((s) => s.type === 'statue' && s.city === 0).length;
+  for (const k of ['letter', 'flock', 'gust', 'bolt']) { fresh(); const x = Sim.creatureAct(W, k, 0, {}); assert.ok(x.ok, k + ': ' + x.reason); assert.ok(x.text && x.text.length > 20, k); }
+  assert.ok(c.legend.bird >= 5, 'chim đã giúp ' + c.legend.bird + ' lần');
+  assert.ok(W.stories.filter((s) => s.type === 'statue' && s.city === 0).length > n0, 'dân dựng tượng chim');
+  for (const k of ['omen', 'rats']) { fresh(); assert.ok(Sim.creatureAct(W, k, 0, {}).ok, k); }
+  assert.ok(W.stories.filter((s) => s.type === 'miracle').length >= 12, 'mỗi phép thành một truyền thuyết');
+  Sim.stepWorld(W);
+  assert.ok(ledgerOk(W));
+});
+
+test('thần chạm vào một chỗ: thiên tai lấy chỗ đó làm tâm, xưởng và nhà gần đó chịu trước', () => {
+  const W = Sim.createWorld({ seed: 13, mode: 'god', war: false });
+  for (let d = 0; d < 360; d++) Sim.stepWorld(W);
+  const c = W.cities[0], alive = c.w.firms.filter((f) => f.alive && f.sector !== 'gold' && !f.sea);
+  W.god.power = 100; W.god.cool = {};
+  const target = alive[alive.length - 1];
+  const r = Sim.godAct(W, 'quake', 0, { x: 12, z: -4, firms: [target.id], houses: [4, 5] });
+  assert.ok(r.ok, r.reason);
+  assert.deepEqual(r.fx.at, { x: 12, z: -4 });
+  assert.equal(r.fx.firms[0], target.id, 'xưởng ở chỗ chạm sập trước');
+  assert.ok(target.downUntil > W.day);
+  assert.ok((c.dmg || []).some((d) => d.kind === 'house' && (d.ref === 4 || d.ref === 5)), 'nhà gần chỗ chạm hư hại');
+  Sim.stepWorld(W);
+  assert.ok(ledgerOk(W));
+});

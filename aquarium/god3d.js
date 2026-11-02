@@ -242,7 +242,9 @@
     }
 
     function play(fx) {
-      const L = lands[fx.city]; if (!L) return;
+      let L = lands[fx.city]; if (!L) return;
+      // thần chạm vào một chỗ trên đảo: thiên tai lấy chỗ đó làm tâm (một bản sao của miền đất với tâm dời tới chỗ chạm)
+      if (fx.at && (fx.at.x || fx.at.z)) { const P = Object.create(L); P.center = L.center.clone().add(v3(fx.at.x, 0, fx.at.z)); L = P; }
       const bad = Sim.POWERS[fx.key] ? Sim.POWERS[fx.key].kind === 'bad' : true;
       if (!fx.after) touch(L, bad ? '#ff9a7a' : '#fff3c4');
       ({ flood, drought, quake, tornado, plague, volcano, tsunami, fire: lightning, rain: rainbow,

@@ -2,7 +2,7 @@
  * công trình kinh tế và quân sự theo từng miền và từng thời đại, quân lính trên chiến tuyến, đạn, khói và hạt nhân. */
 (function (root) {
   'use strict';
-  const SEA_R = 67, SEA_Y = -0.55, TAU = Math.PI * 2; // biển trong rộng theo đảo mới (RING 100, đảo bán kính 38)
+  const SEA_R = 89, SEA_Y = -0.55, TAU = Math.PI * 2; // biển trong rộng theo đảo mới (RING 132, đảo bán kính 50)
 
   function create(K) {
     const { THREE, scene, Sim, W, lands3d, hash, C, clamp, lerp, reduce, glowTex, puff, label3d } = K;
@@ -47,7 +47,7 @@
       const f = new THREE.Mesh(new THREE.BoxGeometry(0.5, 26, 7), new THREE.MeshStandardMaterial({ color: '#8fd3ee', transparent: true, opacity: 0.7, emissive: '#2a6f8f', emissiveIntensity: 0.3 }));
       f.position.set(Math.cos(a) * (SEA_R + 0.2), -13.5, Math.sin(a) * (SEA_R + 0.2)); f.rotation.y = -a; sea.add(f); f.raycast = () => {};
     }
-    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(47));
+    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(62));
     const inwW = (L) => L.inw.clone();
     const dockEnd = (L) => L.world(L.dockPos).addScaledVector(inwW(L), 8.4).setY(SEA_Y);
     const portWater = (L) => L.world(L.portPos).addScaledVector(inwW(L), 7.5).setY(SEA_Y);
@@ -442,6 +442,7 @@
           let out = {};
           if (d.type === 'wall') { L._broken = !!d.broken; wallModel(k, L, d.e); }
           else out = buildModel(d.type, k, S, E7(d.e), L.ter) || {};
+          if (lands3d.kit.motif && d.type !== 'wall') lands3d.kit.motif(k, L.ter, d.e); // hoạ tiết riêng của đảo
           if (d.type !== 'wall') setBeyond(d.e);
           const building = d.step < 10 && d.type !== 'wall' ? true : d.type === 'wall' && d.step % 100 < 10;
           if (building && d.type !== 'wall') scaffold(k, d.type === 'wonder' ? 8 : 5, d.type === 'wonder' ? 8 : 4.6, d.type === 'wonder' ? 6 + d.step * 2 : 3.2);
@@ -638,7 +639,7 @@
       }
       // số cá và thú biển nhìn thấy theo trữ lượng thật
       for (let z = 0; z < 7; z++) { want.anchovy[z] = Math.round(14 * stockFrac(z, 'anchovy')); want.mackerel[z] = Math.round(6 * stockFrac(z, 'mackerel')); want.tuna[z] = z === 6 ? Math.round(14 * stockFrac(6, 'tuna')) : 0; }
-      if (animate && W.war.on && W.day !== lastFxDay) { lastFxDay = W.day; for (const fx of W.war.fx) onFx(fx, dayMs); for (const d of W.war.deaths) onDeath(d); }
+      if (animate && W.war.on && W.day !== lastFxDay) { lastFxDay = W.day; for (const fx of W.war.fx) onFx(fx, dayMs); deathsNow(); }
       // chỉ những mẻ hiếm mới hiện chữ: cá voi, mực khổng lồ
       for (const c2 of W.sea.catches) { const k = Sim.SPECIES[c2.species].key; if (animate && (k === 'whale' || k === 'squid')) label3d('+ ' + Sim.SPECIES[c2.species].name, zoneC(c2.zone).setY(5), '#bfefff'); }
     }
@@ -800,7 +801,9 @@
       }
     }
 
-    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, SEA_R, SEA_Y, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };
+    // những người lính vừa ngã (kể cả giữa ngày, vì phép của chim, mèo): xác nằm lại ngay chỗ ngã
+    function deathsNow() { for (const d of W.war.deaths) if (!d.shown) { d.shown = true; onDeath(d); } }
+    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, deathsNow, SEA_R, SEA_Y, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };
   }
 
   root.War3D = { create, SEA_R, SEA_Y };

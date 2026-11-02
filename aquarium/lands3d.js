@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
   // đảo rộng hơn để có chỗ cho bãi săn và bãi tập kết quân; SC đổi các khoảng cách cũ (đảo bán kính 30) sang đảo mới
-  const LAND_R = 38, RING = 100, SC = LAND_R / 30;
+  const LAND_R = 50, RING = 132, SC = LAND_R / 30;
 
   function create(K) {
     const { THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable } = K;
@@ -170,165 +170,260 @@
 
     /* =============== Công trình theo thời đại =============== */
     // Nhà ở: mỗi lô bốn gia đình. lv 1..3 là mức giàu, thêm tầng.
-    function buildHouse(k, e, ter, v, lv) {
-      const v2 = (v * 7.31) % 1, v3 = (v * 13.7) % 1;
-      if (e === 0) {
-        if (ter === 'tundra' && v < 0.6) { k.dome('#eef4f8', 0, 0, 0, 1.3, 0.85, 10); k.add(UCYL(8), '#e3ebf0', 0, 0, 1.0, 0.42, 0.7, 0.5, 0, Math.PI / 2); k.box('#2b3340', 0, 0, 1.68, 0.4, 0.42, 0.04); return; }
-        if (ter === 'coast') {
-          for (const [x, z] of [[-0.8, -0.8], [0.8, -0.8], [-0.8, 0.8], [0.8, 0.8]]) k.cyl('#7a5a3a', x, 0, z, 0.08, 1.0, 5);
-          k.box('#8f6a46', 0, 0.95, 0, 2.0, 0.12, 2.0); k.box(pick(PAL.mud, v), 0, 1.07, 0, 1.7, 0.95, 1.6);
-          k.gable(pick(PAL.thatch, v2), 0, 2.0, 0, 2.2, 1.1, 2.1); k.box('#3b2a1d', 0, 1.07, 0.81, 0.45, 0.65, 0.04); return;
-        }
-        if (ter === 'desert') { k.cyl(pick(PAL.mud, v), 0, 0, 0, 1.1, 0.95, 10); k.dome(pick(PAL.mud, v2), 0, 0.95, 0, 1.1, 0.7, 10); k.box('#3b2a1d', 0, 0, 1.05, 0.42, 0.7, 0.08); return; }
-        if (ter === 'forest' || ter === 'tundra' || v < 0.35) { // lều da có cọc chống
-          const c = ter === 'tundra' ? '#cdb592' : pick(['#c9b08c', '#b99a74', '#d2bb94'], v2);
-          k.cone(c, 0, 0, 0, 1.25, 2.5, 9); k.cone('#6d5139', 0, 2.2, 0, 0.32, 0.65, 5);
-          k.add(UCYL(9), '#8a5a3a', 0, 0.55, 0, 1.05, 0.12, 1.05);
-          k.box('#3b2a1d', 0, 0, 1.06, 0.4, 0.62, 0.05, 0); return;
-        }
-        k.cyl(pick(['#9c7a52', '#8f6f4a'], v), 0, 0, 0, 1.0, 0.85, 9); k.cone(pick(PAL.thatch, v2), 0, 0.85, 0, 1.45, 1.6, 9);
-        k.box('#3b2a1d', 0, 0, 0.98, 0.42, 0.62, 0.06); return;
-      }
-      if (e === 1) {
-        const wall = ter === 'mountain' || ter === 'tundra' ? pick(['#b8b2a4', '#a9a294', '#c2baa8'], v) : ter === 'forest' ? pick(['#8a6440', '#7d5a3a'], v) : ter === 'coast' ? pick(['#efe9dc', '#e8e0cc'], v) : pick(PAL.mud, v);
-        k.box(wall, 0, 0, 0, 2.2, 1.5, 2.2); k.box('#a07d55', 0, 1.5, 0, 2.38, 0.14, 2.38);
-        for (const sx of [-1, 1]) k.box(wall, sx * 1.12, 1.64, 0, 0.14, 0.25, 2.3);
-        k.box(PAL.win, -0.5, 0.75, 1.11, 0.36, 0.42, 0.04, 0, true); k.box(PAL.win, 0.55, 0.75, 1.11, 0.36, 0.42, 0.04, 0, true);
-        k.box('#4a3426', 0, 0, 1.12, 0.48, 0.92, 0.05);
-        if (lv >= 2) { k.box(wall, -0.35, 1.64, -0.3, 1.4, 1.05, 1.4); k.box('#a07d55', -0.35, 2.69, -0.3, 1.52, 0.12, 1.52); k.box(PAL.win, -0.35, 2.05, 0.41, 0.34, 0.38, 0.04, 0, true); }
-        if (ter === 'tundra') k.box('#f4f8fb', 0, 1.64, 0, 2.3, 0.08, 2.3);
-        if (lv >= 3) k.box(pick(['#c85a3a', '#3d7a8b', '#d4a537'], v3), 0.6, 1.64, 0.6, 0.9, 0.06, 0.9); // tấm vải che nắng trên sân thượng
-        return;
-      }
-      if (e === 2) {
-        const roof = ter === 'forest' || ter === 'coast' ? pick(PAL.thatch, v) : ter === 'tundra' ? '#5f6b62' : pick(PAL.tiles, v);
-        k.box(pick(['#cfc5b3', '#c4baa6', '#d6cdbb'], v2), 0, 0, 0, 2.3, 1.3, 2.3);
-        k.box(PAL.win, -0.55, 0.55, 1.16, 0.36, 0.44, 0.04, 0, true); k.box('#4a3426', 0.45, 0, 1.16, 0.46, 0.9, 0.04);
-        let y = 1.3;
-        for (let f = 1; f < Math.min(3, lv + 1); f++) {
-          const plaster = pick(PAL.plaster, v3 + f * 0.3);
-          k.box(plaster, 0, y, 0, 2.5, 1.2, 2.5);
-          for (const sx of [-1.18, -0.4, 0.4, 1.18]) k.box('#5a4030', sx, y, 1.26, 0.1, 1.2, 0.04);
-          k.box('#5a4030', 0, y + 1.1, 1.26, 2.5, 0.1, 0.04); k.box('#5a4030', 0, y, 1.26, 2.5, 0.08, 0.04);
-          k.box(PAL.win, -0.8, y + 0.4, 1.27, 0.34, 0.42, 0.04, 0, true); k.box(PAL.win, 0.8, y + 0.4, 1.27, 0.34, 0.42, 0.04, 0, true);
-          y += 1.2;
-        }
-        k.gable(roof, 0, y, 0, 2.8, 1.75, 2.9);
-        k.box('#7a6a5a', 0.75, y + 0.4, -0.5, 0.34, 1.4, 0.34);
-        if (ter === 'tundra') k.gable('#f4f8fb', 0, y + 1.35, 0, 2.82, 0.42, 0.72);
-        return;
-      }
-      if (e >= 3 && (ter !== 'plains' || e >= 6)) return houseStyled(k, e, ter, v, lv);
-      if (e === 3) {
-        const wall = pick(PAL.e3walls, v), roof = pick(PAL.e3roofs, v2);
-        k.box('#a99c88', 0, 0, 0, 2.9, 0.35, 2.9);
-        let y = 0.35;
-        for (let f = 0; f < 1 + lv; f++) {
-          const w = 2.3 - f * 0.12;
-          k.box(wall, 0, y, 0, w, 1.45, w);
-          k.box(PAL.win, -0.5, y + 0.5, w / 2 + 0.02, 0.42, 0.55, 0.06, 0, true); k.box(PAL.win, 0.5, y + 0.5, w / 2 + 0.02, 0.42, 0.55, 0.06, 0, true);
-          k.box(PAL.win, w / 2 + 0.02, y + 0.5, 0, 0.06, 0.55, 0.42, 0, true);
-          if (f) k.box('#c9b99c', 0, y - 0.05, 0, w + 0.2, 0.1, w + 0.2);
-          y += 1.45;
-        }
-        k.box('#6d4c35', 0, 0.35, 1.17, 0.55, 0.95, 0.06);
-        if (v3 > 0.6) { k.cone(roof, 0, y, 0, 1.75, 3.0, 8); k.cone(roof, 0, y + 2.9, 0, 0.2, 0.6, 6); }
-        else k.add(UCONE(4), roof, 0, y, 0, 2.05, 1.9, 2.05, Math.PI / 4);
-        k.box('#8a6f5c', 0.7, y + 0.1, -0.5, 0.38, 1.3, 0.38);
-        if (ter === 'tundra') k.add(UCONE(4), '#f4f8fb', 0, y + 1.05, 0, 1.0, 0.85, 1.0, Math.PI / 4);
-        return;
-      }
-      if (e === 4) {
-        const brick = pick(PAL.bricks, v), floors = 2 + lv;
-        k.box(brick, 0, 0, 0, 2.5, 1.35 * floors, 2.5);
-        for (let f = 0; f < floors; f++) {
-          const y = 0.35 + f * 1.35;
-          for (const sx of [-0.62, 0, 0.62]) { k.box('#e9e2d4', sx, y - 0.06, 1.26, 0.42, 0.68, 0.04); k.box(PAL.win, sx, y, 1.28, 0.32, 0.56, 0.04, 0, true); }
-          k.box('#e9e2d4', 0, y + 0.82, 1.27, 2.5, 0.08, 0.04);
-        }
-        const top = 1.35 * floors;
-        k.gable('#4b4f57', 0, top, 0, 2.6, 1.1, 2.6);
-        k.box('#7a3a2e', -0.8, top, -0.4, 0.34, 1.6, 0.34); k.box('#7a3a2e', 0.8, top, -0.4, 0.34, 1.6, 0.34);
-        k.box('#5a5048', 0, 0, 1.3, 0.9, 0.18, 0.5);
-        return;
-      }
-      // Hiện đại: chung cư và tháp kính
-      const floors = 3 + lv * 2 + Math.floor(v * 3), c = pick(PAL.concrete, v), gl = pick(PAL.glass, v2), H = floors * 1.05;
-      k.box(c, 0, 0, 0, 2.3, H, 2.3);
-      for (let f = 0; f < floors; f++) {
-        const y = 0.3 + f * 1.05;
-        k.box(gl, 0, y, 1.16, 2.0, 0.6, 0.04, 0, true); k.box(gl, 1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(gl, -1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(gl, 0, y, -1.16, 2.0, 0.6, 0.04, 0, true);
-      }
-      if (v3 < 0.35) { k.box('#5e8d4e', 0, H, 0, 1.9, 0.25, 1.9); k.blob(ICO(), '#6aa85a', 0.4, H + 0.5, 0.3, 0.45); }
-      else if (v3 < 0.7) { for (const sx of [-0.5, 0.5]) k.add(UBOX(), '#2c3e66', sx, H + 0.1, 0, 0.8, 0.05, 1.6, 0, 0, 0.3); }
-      else { k.cyl('#9aa3ad', 0.4, H, 0.3, 0.38, 0.9, 8); k.cone('#7d8792', 0.4, H + 0.9, 0.3, 0.42, 0.35, 8); }
+    const tint = (hex, a) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); c.setHSL(h.h, h.s, clamp(h.l + a, 0, 1)); return '#' + c.getHexString(); };
+    // cửa sổ (sáng về đêm) quay theo góc ry, dùng cho tường tròn và khối xoay
+    const winB = (k, x, y, z, w, h, ry) => k.box(PAL.win, x, y, z, w, h, 0.06, ry || 0, true);
+    const ringWin = (k, x0, z0, R, y, n, w, h, a0) => { for (let i = 0; i < n; i++) { const a = (i / n) * TAU + (a0 || 0.3); winB(k, x0 + Math.sin(a) * (R + 0.01), y, z0 + Math.cos(a) * (R + 0.01), w, h, a); } };
+    // vỏ ốc xoắn: những vòng thon dần, lệch dần quanh trục, chóp nhọn
+    function conch(k, x, y, z, r, n, c, c2) {
+      for (let i = 0; i < n; i++) { const s = 1 - i / (n + 1), a = i * 1.1; k.tcyl(i % 2 ? c2 : c, x + Math.cos(a) * r * 0.14 * s, y + i * r * 0.42, z + Math.sin(a) * r * 0.14 * s, r * s, r * s * 0.82, r * 0.44, 10); }
+      k.cone(c2, x, y + n * r * 0.42, z, r * 0.22, r * 0.75, 8);
+    }
+    // tháp đón gió của sa mạc: cột vuông, khe gió bốn phía, nắp dày
+    function windTower(k, x, z, h, w, c) {
+      k.box(c, x, 0, z, w, h, w);
+      for (const [dx, dz, ry] of [[0, 1, 0], [0, -1, 0], [1, 0, Math.PI / 2], [-1, 0, Math.PI / 2]]) for (const o of [-0.22, 0.22]) k.box('#3a2a1e', x + dx * (w / 2 + 0.01) + (ry ? 0 : o * w), h - 0.75, z + dz * (w / 2 + 0.01) + (ry ? o * w : 0), 0.13, 0.5, 0.05, ry);
+      k.box(tint(c, 0.06), x, h, z, w + 0.16, 0.13, w + 0.16);
+    }
+    // sườn cá voi: những vòm xương cong trước cửa
+    const ribs = (k, x, z, r, h, n, ry) => { for (let i = 0; i < n; i++) { const t = (n > 1 ? i / (n - 1) - 0.5 : 0) * 1.2; k.add(TORUS(), '#efe6d2', x + Math.sin(ry) * t, 0, z + Math.cos(ry) * t, r, h, r * 1.6, ry + Math.PI / 2, 0, 0); } };
+    // mái thuyền úp: vòm dài, sống thuyền trên đỉnh, mũi và lái nhọn
+    function hull(k, y, len, wid, c) {
+      k.add(VAULT(), c, 0, y, 0, len * 0.5, wid * 0.62, wid * 0.5 + 0.05);
+      k.box('#5a4030', 0, y + wid * 0.6, 0, len * 1.02, 0.08, 0.1);
+      for (const s of [-1, 1]) k.add(UCONE(8), c, s * len * 0.5, y, 0, wid * 0.42, len * 0.2, wid * 0.42, 0, 0, -s * Math.PI / 2);
     }
 
-    const tint = (hex, a) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); c.setHSL(h.h, h.s, clamp(h.l + a, 0, 1)); return '#' + c.getHexString(); };
-    // Nhà từ thời cận đại theo phong cách từng miền: rừng nhà khung gỗ, núi nhà đá chân gỗ trên, băng nguyên mái củ hành,
-    // biển nhà trắng cửa xanh, sa mạc nhà mái bằng có tháp đón gió; rồi gạch, sắt, kính theo cách riêng của mỗi nơi
-    function houseStyled(k, e, ter, v, lv) {
-      const S = STY[ter][e], v2 = (v * 7.31) % 1, wall = tint(S.wall, (v - 0.5) * 0.14);
-      const win = (x, y, z, w2, h2, side) => side ? k.box(PAL.win, x, y, z, 0.06, h2, w2, 0, true) : k.box(PAL.win, x, y, z, w2, h2, 0.06, 0, true);
-      if (e === 3) {
-        k.box(S.base, 0, 0, 0, 2.9, 0.3, 2.9);
-        let y = 0.3;
-        const floors = 1 + lv;
-        for (let f = 0; f < floors; f++) {
-          const w = 2.3 - f * 0.1, fw = ter === 'mountain' && f > 0 ? tint('#7a5a3a', (v - 0.5) * 0.1) : ter === 'forest' ? '#efe6d2' : ter === 'coast' ? '#fbfaf6' : wall;
-          k.box(fw, 0, y, 0, w, 1.45, w);
-          if (ter === 'forest') { for (const sx of [-w / 2 + 0.06, -0.38, 0.38, w / 2 - 0.06]) k.box(S.wall2, sx, y, w / 2 + 0.01, 0.1, 1.45, 0.04); k.box(S.wall2, 0, y + 0.7, w / 2 + 0.01, w, 0.08, 0.04); k.add(UBOX(), S.wall2, -0.75, y + 0.05, w / 2 + 0.02, 0.07, 1.5, 0.03, 0, 0, 0.55); }
-          if (ter === 'coast') for (const sx of [-0.5, 0.5]) for (const d of [-0.27, 0.27]) k.box(S.trim, sx + d, y + 0.5, w / 2 + 0.03, 0.1, 0.56, 0.03);
-          if (ter === 'mountain' && f > 0) { k.box('#5f4630', 0, y - 0.04, w / 2 + 0.32, w * 0.8, 0.08, 0.6); for (let r = 0; r < 5; r++) k.box('#5f4630', -w * 0.38 + r * w * 0.19, y, w / 2 + 0.6, 0.05, 0.4, 0.05); }
-          if (ter === 'tundra') k.box(S.trim, 0, y + 1.3, w / 2 + 0.02, w, 0.1, 0.04);
-          win(-0.5, y + 0.5, w / 2 + 0.03, 0.4, 0.55); win(0.5, y + 0.5, w / 2 + 0.03, 0.4, 0.55); win(w / 2 + 0.03, y + 0.5, 0, 0.4, 0.55, true);
-          y += 1.45;
-        }
-        k.box(ter === 'coast' ? S.trim : '#5a4030', 0, 0.3, 1.16, 0.5, 0.95, 0.06);
-        if (ter === 'forest') k.gable(S.roof, 0, y, 0, 2.6, 2.1, 2.7);
-        else if (ter === 'mountain') { k.gable(S.roof, 0, y, 0, 3.1, 1.25, 3.2); k.box('#efe6d2', 0, y + 0.3, 1.2, 0.5, 0.4, 0.05); }
-        else if (ter === 'tundra') { k.gable(S.roof, 0, y, 0, 2.5, 1.5, 2.6); if (v2 > 0.45) { k.cyl(S.wall2, 0, y + 0.9, 0, 0.42, 0.6, 8); k.add(SPHG(), S.roof, 0, y + 1.5, 0, 0.5, 0.65, 0.5); k.add(DOME(8), S.roof, 0, y + 1.5, 0, 0.5, -0.18, 0.5); k.cone(S.trim, 0, y + 2.1, 0, 0.12, 0.5, 6); } k.gable('#f4f8fb', 0, y + 1.1, 0, 2.52, 0.4, 0.7); }
-        else if (ter === 'coast') { k.box('#ffffff', 0, y, 0, 2.3, 0.18, 2.3); if (v2 > 0.55) k.dome(S.roof, 0.4, y + 0.15, -0.3, 0.65, 1, 10); else k.box('#e8e4da', -0.5, y + 0.18, -0.5, 1.0, 0.9, 1.0); }
-        else { k.box(S.trim, 0, y, 0, 2.35, 0.16, 2.35); for (const sx of [-1, 1]) k.box(wall, sx * 1.12, y + 0.16, 0, 0.12, 0.3, 2.3); k.box(wall, 0.6, y, -0.6, 0.6, 1.5, 0.6); for (const sx of [-1, 1]) k.box('#3a2a1e', 0.6 + sx * 0.31, y + 1.0, -0.6, 0.04, 0.4, 0.34); k.add(VAULT(), '#3a2a1e', 0, 0.3, 1.16, 0.28, 0.3, 0.06, 0, Math.PI / 2, 0); }
-        if (ter === 'forest' || ter === 'mountain') k.box('#7a6a5a', 0.7, y + 0.2, -0.5, 0.34, 1.4, 0.34);
+    /* =============== Nhà ở: mỗi đảo một kiến trúc riêng qua mọi thời đại =============== */
+    // Đồng bằng: nhà tròn đội mũ rơm như cây nấm, cối xay gió trên nóc, về sau là tháp silo xoắn dải vàng.
+    // Rừng: nhà trên thân cây, mái lá tròn, buồng gỗ nối cầu dây, về sau là tháp thân cây mọc quả kính.
+    // Núi: khối đá chồng lệch nhau, mỗi tầng một mái xoè như chùa, về sau là những khối đá lơ lửng nối bằng trụ.
+    // Băng giá: vòm tuyết, cổng sườn cá voi, nhũ băng, về sau là cụm vòm kính đa giác giữa gai pha lê.
+    // Biển: nhà sàn mái thuyền úp, vỏ ốc xoắn trên nóc, về sau là tháp ốc xoắn.
+    // Sa mạc: nhà bậc thang như kim tự tháp nhỏ, tháp đón gió, mái vòm ngọc, về sau là tháp bậc thang cao.
+    // Không đảo nào dùng lại dáng nhà của đảo khác; lv 1..3 là mức giàu (thêm tầng, thêm buồng).
+    function housePlains(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, straw = pick(PAL.thatch, v), gold = '#e3c25a';
+      if (e === 0) { k.cyl(pick(PAL.mud, v), 0, 0, 0, 0.95, 0.9, 10); k.cone(straw, 0, 0.85, 0, 1.7, 1.0, 12); k.cone(tint(straw, -0.08), 0, 1.6, 0, 0.5, 0.5, 8); k.box('#3b2a1d', 0, 0, 0.93, 0.4, 0.62, 0.06); return; }
+      if (e <= 2) {
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.cyl('#6d5139', Math.cos(a) * 0.95, 0, Math.sin(a) * 0.95, 0.09, 0.45, 5); }
+        k.cyl(e === 1 ? pick(PAL.mud, v2) : '#efe2c4', 0, 0.45, 0, 1.15, 1.25, 12);
+        ringWin(k, 0, 0, 1.15, 0.85, 3, 0.32, 0.45, 1.0);
+        k.box('#4a3426', 0, 0.45, 1.13, 0.46, 0.85, 0.06);
+        k.cone(straw, 0, 1.6, 0, 1.95, 0.75, 14);
+        let top = 2.35;
+        if (lv >= 2) { k.cyl('#efe2c4', 0, 2.15, 0, 0.75, 0.75, 10); ringWin(k, 0, 0, 0.75, 2.35, 2, 0.28, 0.36); k.cone(straw, 0, 2.85, 0, 1.3, 0.6, 12); top = 3.4; }
+        k.cone(tint(straw, 0.06), 0, top - 0.05, 0, 0.42, 0.75, 8);
+        k.cyl('#6d5139', 0, top + 0.45, 0.32, 0.06, 0.12, 6);
+        for (let b = 0; b < 4; b++) { const a = (b * Math.PI) / 2 + v; k.add(UBOX(), '#f4ead2', Math.sin(a) * 0.42, top + 0.52 + Math.cos(a) * 0.42, 0.4, 0.12, 0.8, 0.03, 0, 0, -a); }
         return;
       }
-      if (e === 4) {
-        const floors = 2 + lv, top = 0.2 + 1.3 * floors;
-        k.box(S.base, 0, 0, 0, 2.7, 0.2, 2.7);
-        k.box(wall, 0, 0.2, 0, 2.4, 1.3 * floors, 2.4);
-        for (let f = 0; f < floors; f++) { const y = 0.6 + f * 1.3; for (const sx of [-0.6, 0.6]) { k.box(S.trim, sx, y - 0.06, 1.21, 0.5, 0.66, 0.03); win(sx, y, 1.23, 0.36, 0.52); } win(1.23, y, 0, 0.5, 0.52, true); }
-        if (ter === 'tundra') { for (let r = 0; r < 9; r++) k.box(S.wall2, -1.1 + r * 0.275, 0.2, 1.21, 0.05, 1.3 * floors, 0.03); k.add(VAULT(), S.roof, 0, top, 0, 1.25, 1.2, 1.25); k.cyl('#c8ced4', 1.0, 0, -1.3, 0.16, top + 0.6, 8); }
-        else if (ter === 'forest') { k.gable(S.roof, 0, top, 0, 2.6, 1.3, 2.6); k.cyl('#3f4650', 0.7, top, -0.5, 0.1, 1.6, 6); k.box('#5f4630', 0, 0.2, 1.5, 2.2, 0.12, 0.7); for (const sx of [-1, 1]) k.cyl('#5f4630', sx, 0.2, 1.8, 0.06, 1.1, 5); }
-        else if (ter === 'coast') { k.gable(S.roof, 0, top, 0, 2.6, 1.4, 2.6); k.box(wall, 0, top + 0.1, 0.9, 0.8, 0.8, 0.6); k.gable(S.roof, 0, top + 0.9, 0.9, 1.0, 0.45, 0.7); win(0, top + 0.4, 1.21, 0.36, 0.4); }
-        else if (ter === 'mountain') { k.box(S.wall2, 0, top, 0, 2.5, 0.16, 2.5); k.cyl('#6d695f', 0.6, top + 0.16, -0.5, 0.45, 0.9, 10); k.box(S.trim, 0, 0.2 + 1.3 * floors - 0.12, 0, 2.44, 0.12, 2.44); }
-        else { k.box(S.trim, 0, top, 0, 2.5, 0.14, 2.5); for (let f = 1; f < floors; f++) { k.box('#2f3540', 0, 0.2 + f * 1.3, 1.45, 1.6, 0.06, 0.5); k.box('#2f3540', 0, 0.2 + f * 1.3 + 0.3, 1.68, 1.6, 0.04, 0.04); } k.add(UBOX(), pick(['#c0392b', '#3f7fd6', '#e0b23a'], v2), 0, 1.05, 1.4, 1.4, 0.05, 0.6, 0, -0.3, 0); }
+      if (e <= 4) {
+        const wall = e === 3 ? '#e6cf9a' : pick(['#c98a5a', '#b9774a'], v);
+        k.cyl('#a99c88', 0, 0, 0, 1.45, 0.3, 14);
+        let y = 0.3;
+        for (let f = 0; f < 1 + lv; f++) { const R = 1.25 - f * 0.08; k.cyl(wall, 0, y, 0, R, 1.4, 14); ringWin(k, 0, 0, R, y + 0.45, 4, 0.36, 0.55); if (f) k.add(TORUS(), '#8a6a46', 0, y, 0, R + 0.05, R + 0.05, R + 0.05, 0, Math.PI / 2, 0); y += 1.4; }
+        k.box('#5a4030', 0, 0.3, 1.24, 0.5, 0.95, 0.06);
+        k.dome(straw, 0, y, 0, 1.55, 0.7, 14); k.cone(gold, 0, y + 0.95, 0, 0.18, 0.6, 6);
+        k.tcyl('#f1e6cc', 1.25, 0, -0.85, 0.5, 0.36, y + 1.1, 10); k.cone('#9b4a35', 1.25, y + 1.1, -0.85, 0.45, 0.6, 10);
+        for (let b = 0; b < 4; b++) { const a = (b * Math.PI) / 2 + 0.4 + v; k.add(UBOX(), '#f7f2e6', 1.25 + Math.sin(a) * 0.8, y + 0.65 + Math.cos(a) * 0.8, -0.38, 0.2, 1.5, 0.04, 0, 0, -a); }
+        if (e === 4) k.cyl('#7a3a2e', -0.8, y - 0.2, -0.6, 0.16, 1.1, 8);
+        return;
+      }
+      const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2, H = floors * 1.05, R = 1.2;
+      k.cyl(e === 7 ? '#eef1f4' : '#f2e8d2', 0, 0, 0, R, H, 16);
+      for (let f = 0; f < floors; f++) ringWin(k, 0, 0, R, 0.35 + f * 1.05, 5, 0.42, 0.55, f * 0.63);
+      for (let s = 0; s < floors * 4; s++) { const a = s * 0.55; k.box(gold, Math.sin(a) * (R + 0.05), s * (H / (floors * 4)), Math.cos(a) * (R + 0.05), 0.5, 0.12, 0.08, a); }
+      k.cone('#d4a537', 0, H, 0, 2.0, 0.9, 16); k.cyl('#f2e8d2', 0, H + 0.6, 0, 0.35, 0.8, 10);
+      if (e >= 6) { k.cyl('#c9d1d9', 0, H + 1.4, 0, 0.05, 1.6, 5); for (let b = 0; b < 3; b++) { const a = (b * TAU) / 3; k.add(UBOX(), '#f4f6f8', Math.sin(a) * 0.55, H + 3.0 + Math.cos(a) * 0.55, 0.12, 0.12, 1.1, 0.03, 0, 0, -a); } }
+      if (e === 7) k.add(TORUS(), '#ffe08a', 0, H * 0.5, 0, R + 0.35, R + 0.35, R + 0.35, 0, Math.PI / 2, 0, true);
+    }
+    function houseForest(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, bark = '#5b4630', leaf = pick(['#4f7f3f', '#5a8a45', '#46733a'], v2);
+      const trunk = (x, z, r, h) => { k.tcyl(bark, x, 0, z, r * 1.35, r, h, 8); for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2 + v; k.add(UCYL(5), bark, x + Math.cos(a) * r * 1.1, 0, z + Math.sin(a) * r * 1.1, r * 0.32, 0.55, r * 0.32, 0, Math.sin(a) * 0.7, -Math.cos(a) * 0.7); } };
+      const crown = (x, y, z, r) => { k.blob(ICO(), leaf, x, y, z, r, 0.85); k.blob(ICO(), tint(leaf, 0.06), x + r * 0.5, y + r * 0.35, z - r * 0.3, r * 0.7, 0.85); };
+      const ladder = (H) => { for (let r2 = 0; r2 < 5; r2++) k.box('#c9a46e', 0.02, r2 * (H / 5), 1.5, 0.5, 0.05, 0.05); k.box('#8a6a46', -0.24, 0, 1.5, 0.04, H, 0.04); k.box('#8a6a46', 0.26, 0, 1.5, 0.04, H, 0.04); };
+      if (e === 0) { trunk(0, 0, 0.32, 3.4); k.dome(leaf, 0, 0, 0, 1.35, 0.85, 10); k.box('#3b2a1d', 0, 0, 1.25, 0.4, 0.6, 0.06); crown(0, 3.6, 0, 1.3); return; }
+      if (e <= 2) {
+        const H = 1.7 + (lv - 1) * 0.4;
+        trunk(0, 0, 0.42, H + 2.6);
+        k.cyl('#6d5139', 0, H, 0, 1.45, 0.16, 12);
+        k.cyl(e === 1 ? '#8a6440' : '#9c7a52', 0, H + 0.16, 0, 1.1, 1.15, 10);
+        ringWin(k, 0, 0, 1.1, H + 0.5, 3, 0.32, 0.4, 0.5);
+        k.box('#3d2f22', 0, H + 0.16, 1.1, 0.42, 0.75, 0.06);
+        k.dome(leaf, 0, H + 1.25, 0, 1.55, 0.75, 12); crown(0.2, H + 2.9, -0.1, 1.0); ladder(H);
+        if (lv >= 3) { k.cyl('#9c7a52', 1.35, H + 1.2, -0.8, 0.6, 0.8, 8); k.dome(leaf, 1.35, H + 2.0, -0.8, 0.8, 0.7, 10); }
+        return;
+      }
+      if (e <= 4) {
+        const H = 1.6;
+        trunk(0, 0, 0.5, H + 4.8);
+        const pod = (x, y, z, r, h) => { k.cyl('#6d5139', x, y, z, r + 0.25, 0.14, 10); k.cyl(e === 3 ? '#b88a5a' : '#8a5a3a', x, y + 0.14, z, r, h, 10); ringWin(k, x, z, r, y + 0.5, 4, 0.3, 0.45, 0.4); k.cone(e === 3 ? '#5f6e3b' : '#3f4a35', x, y + 0.14 + h, z, r + 0.5, 1.0, 10); };
+        pod(0, H, 0, 1.15, 1.3);
+        if (lv >= 2) { pod(1.3, H + 2.0, -0.6, 0.75, 1.0); k.box('#c9a46e', 0.7, H + 2.0, -0.3, 1.1, 0.06, 0.45, -0.4); }
+        if (lv >= 3) pod(-1.15, H + 2.8, 0.5, 0.65, 0.9);
+        crown(0, H + 5.0, 0, 1.4);
+        k.box('#3d2f22', 0, H + 0.14, 1.15, 0.42, 0.8, 0.06); ladder(H);
+        if (e === 4) k.cyl('#3f4650', 0.6, H + 1.4, -0.4, 0.08, 1.2, 6);
         return;
       }
       const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2, H = floors * 1.05;
-      if (ter === 'tundra' || ter === 'coast') {
-        const sx = ter === 'coast' ? 1.25 : 1.1, sz = ter === 'coast' ? 0.9 : 1.1;
-        k.add(UCYL(14), wall, 0, 0, 0, sx, H, sz);
-        for (let f = 0; f < floors; f++) k.add(UCYL(14), pick(PAL.glass, v2), 0, 0.3 + f * 1.05, 0, sx + 0.02, 0.55, sz + 0.02, 0, 0, 0, true);
-        if (ter === 'tundra') k.add(ICO(), S.roof, 0, H, 0, 1.15, 0.85, 1.15);
-        else k.add(VAULT(), '#ffffff', 0, H, 0, 0.9, 1.6, 0.35, 0, 0.5, 0);
-      } else if (ter === 'mountain') {
-        let y = 0;
-        for (let f = 0; f < floors; f += 2) { const off = ((f / 2) % 2 ? 0.35 : -0.35); k.box(tint(S.wall, ((f / 2) % 2) * 0.05), off, y, 0, 2.4, 2.1, 2.3); for (const sx of [-0.7, 0, 0.7]) win(off + sx, y + 0.8, 1.17, 0.18, 1.0); y += 2.1; }
-        k.box(S.roof, 0, y, 0, 2.9, 0.4, 2.8); k.box(S.trim, 0.9, y + 0.4, 0.8, 0.3, 0.5, 0.3);
-      } else {
-        k.box(wall, 0, 0, 0, 2.3, H, 2.3);
-        for (let f = 0; f < floors; f++) { const y = 0.3 + f * 1.05; k.box(pick(PAL.glass, v2), 0, y, 1.16, 2.0, 0.6, 0.04, 0, true); k.box(pick(PAL.glass, v2), 1.16, y, 0, 0.04, 0.6, 2.0, 0, true); k.box(pick(PAL.glass, v2), -1.16, y, 0, 0.04, 0.6, 2.0, 0, true); }
-        if (ter === 'forest') { for (let f = 1; f < floors; f += 2) { k.box('#5f9f4a', 0, f * 1.05, 1.35, 2.3, 0.18, 0.5); k.blob(ICO(), '#6aa85a', -0.7 + (f % 3) * 0.6, f * 1.05 + 0.4, 1.4, 0.32); } k.box('#5f9f4a', 0, H, 0, 2.1, 0.22, 2.1); k.cone('#4f8f45', 0.5, H + 0.2, 0.3, 0.45, 1.1, 6); }
-        else if (ter === 'plains') { for (let f = 2; f < floors; f += 3) k.box(S.wall2, 0, f * 1.05, 1.28, 2.5, 0.12, 0.3); k.box(S.roof, 0, H, 0, 2.2, 0.2, 2.2); }
-        else { for (let r = 0; r < 7; r++) k.box(S.wall2, -1.0 + r * 0.333, 0, 1.2, 0.07, H, 0.07); for (let i = 0; i < 2; i++) k.add(UBOX(), '#24345a', -0.5 + i, H + 0.15, 0, 0.9, 0.05, 1.8, 0, 0.35, 0); }
+      k.tcyl(e === 7 ? '#6b5a48' : '#5b4630', 0, 0, 0, 1.0, 0.55, H + 1.5, 10);
+      for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2 + v; k.add(UCYL(6), bark, Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9, 0.3, 0.9, 0.3, 0, Math.sin(a) * 0.8, -Math.cos(a) * 0.8); }
+      for (let f = 0; f < floors; f += 2) { const a = f * 1.3 + v * 6, x = Math.cos(a) * 1.15, z = Math.sin(a) * 1.15, y = 0.8 + f * 1.05; k.cyl('#e8efe4', x, y - 0.55, z, 0.8, 0.12, 12); k.add(UCYL(12), pick(PAL.glass, v2), x, y - 0.43, z, 0.74, 0.43, 0.74, 0, 0, 0, true); k.add(SPHG(), '#e8efe4', x, y, z, 0.78, 0.85, 0.78); k.blob(ICO(), leaf, x * 0.9, y + 1.0, z * 0.9, 0.55, 0.6); }
+      crown(0, H + 1.6, 0, 1.6);
+      if (e === 7) for (let f = 1; f < floors; f += 3) k.add(TORUS(), '#9df0c4', 0, f * 1.05, 0, 1.2, 1.2, 1.2, 0, Math.PI / 2, 0, true);
+    }
+    function houseMountain(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, stone = pick(['#9d9589', '#8b8577', '#a8a194'], v), slate = pick(['#4a4d52', '#5f6b62', '#3f4650'], v2);
+      if (e === 0) { k.add(DOD(), stone, 0, 0.7, 0, 1.25, 0.9, 1.15); k.add(DOD(), tint(stone, -0.06), 0.3, 1.7, -0.2, 0.85, 0.65, 0.8); k.add(DOD(), tint(stone, 0.05), -0.2, 2.35, 0.1, 0.5, 0.4, 0.5); k.box('#6d5139', 0, 0, 1.0, 0.5, 0.75, 0.08); return; }
+      if (e <= 4) {
+        const floors = (e <= 2 ? 1 : 2) + lv;
+        k.box(tint(stone, -0.1), 0, 0, 0, 2.6, 0.35, 2.6, 0.2);
+        let y = 0.35;
+        for (let f = 0; f < floors; f++) {
+          const w = 2.1 - f * 0.2, off = (f % 2 ? 0.26 : -0.2) * (v > 0.5 ? 1 : -1), rot = f * 0.32 + v;
+          k.box(f % 2 ? tint(stone, 0.06) : stone, off, y, 0, w, 1.25, w, rot);
+          winB(k, off + Math.sin(rot) * (w / 2 + 0.02), y + 0.45, Math.cos(rot) * (w / 2 + 0.02), 0.36, 0.5, rot);
+          y += 1.25;
+          k.add(UCONE(4), slate, off, y, 0, w * 0.88, 0.45, w * 0.88, Math.PI / 4 + rot);
+          y += 0.22;
+        }
+        k.box('#5a4030', 0, 0.35, 1.06, 0.48, 0.9, 0.06);
+        k.cone(slate, 0, y, 0, 0.6, 1.0, 4); k.cyl('#c9bda4', 0, y + 1.0, 0, 0.05, 0.6, 5);
+        if (e >= 3) { k.box('#5f4630', 1.1, 1.6, 0.2, 0.6, 0.08, 1.2); for (let r = 0; r < 4; r++) k.box('#5f4630', 1.37, 1.68, -0.3 + r * 0.33, 0.04, 0.35, 0.04); }
+        if (e === 4) k.cyl('#5f5a52', -0.7, y - 0.8, -0.5, 0.18, 1.4, 8);
+        return;
       }
-      // thời tên lửa: cột ăng-ten, chảo vệ tinh, đèn báo máy bay; thời robot: viền sáng, vòng lơ lửng, bãi đỗ máy bay không người lái
-      if (e === 6) { k.cyl('#c9d1d9', 0.6, H, -0.6, 0.05, 2.4, 5); k.add(SPHG(), '#f4f4f4', -0.5, H + 0.35, 0.4, 0.45, 0.18, 0.45, 0, -0.6, 0); k.box('#ff5a4f', 0.6, H + 2.4, -0.6, 0.14, 0.14, 0.14, 0, true); }
-      if (e === 7) {
-        for (const [x, z] of [[-1.17, 1.17], [1.17, 1.17], [-1.17, -1.17], [1.17, -1.17]]) k.box('#7ff0ff', x, 0.3, z, 0.06, H - 0.3, 0.06, 0, true);
-        k.add(TORUS(), S.wall2, 0, H + 0.9, 0, 1.5, 1.5, 1.5, 0, Math.PI / 2, 0, true);
-        k.cyl('#3a3f48', 0, H, 0, 0.7, 0.12, 12); k.box('#7ff0ff', 0, H + 0.13, 0, 0.5, 0.02, 0.08, 0, true);
+      const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2;
+      let y = 0;
+      for (let f = 0; f < floors; f += 2) {
+        const rot = f * 0.4 + v * 3, off = Math.sin(f * 1.7 + v * 5) * 0.35, w = 2.2 - (f % 4) * 0.12;
+        k.box(f % 4 ? tint(stone, 0.05) : stone, off, y, 0, w, 1.75, w * 0.95, rot);
+        for (const sx of [-0.55, 0.05, 0.6]) winB(k, off + Math.cos(rot) * sx + Math.sin(rot) * (w * 0.475 + 0.02), y + 0.7, -Math.sin(rot) * sx + Math.cos(rot) * (w * 0.475 + 0.02), 0.3, 0.8, rot);
+        y += 1.75;
+        k.add(UCYL(8), e === 7 ? '#7ff0ff' : '#c9d1d9', off, y, 0, 0.2, 0.35, 0.2, 0, 0, 0, e === 7);
+        y += 0.35;
+      }
+      k.add(UCONE(4), slate, 0, y, 0, 1.9, 0.7, 1.9, Math.PI / 4); k.cone('#c9bda4', 0, y + 0.6, 0, 0.3, 1.2, 6);
+    }
+    function houseTundra(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, snow = '#eef4f8';
+      if (e === 0) { k.dome(snow, 0, 0, 0, 1.3, 0.85, 12); k.add(UCYL(8), '#e3ebf0', 0, 0, 1.0, 0.42, 0.7, 0.5, 0, Math.PI / 2); k.box('#2b3340', 0, 0, 1.68, 0.4, 0.42, 0.04); ribs(k, 0, 1.75, 0.55, 0.85, 2, 0); return; }
+      if (e <= 2) {
+        k.dome(e === 1 ? snow : '#d6e4ec', 0, 0, 0, 1.45, 0.9, 14);
+        k.dome(snow, 1.3, 0, -0.6, 0.8, 0.85, 12);
+        ringWin(k, 0, 0, 1.18, 0.7, 3, 0.3, 0.3, 0.6);
+        ribs(k, 0, 1.55, 0.7, 1.3, 3, 0);
+        k.box('#2b3340', 0, 0, 1.42, 0.45, 0.7, 0.05);
+        if (e === 2) k.add(UCONE(8), '#8a6a46', 0, 1.25, 0, 0.32, 0.8, 0.32);
+        if (lv >= 3) k.dome(snow, -1.25, 0, -0.5, 0.75, 0.8, 10);
+        return;
+      }
+      if (e <= 4) {
+        const R = 1.3, h = 1.3 + (lv - 1) * 0.6, top = h + (R + 0.15) * 0.8;
+        k.cyl(e === 3 ? '#d96b4f' : '#4f6d8a', 0, 0, 0, R, h, 14);
+        ringWin(k, 0, 0, R, 0.55, 5, 0.32, 0.5, 0.2);
+        if (lv >= 2) ringWin(k, 0, 0, R, 1.35, 5, 0.3, 0.42, 0.8);
+        k.dome(snow, 0, h, 0, R + 0.15, 0.8, 14);
+        for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; k.add(UCONE(5), '#dff6ff', Math.sin(a) * (R + 0.08), h + 0.02, Math.cos(a) * (R + 0.08), 0.06, 0.45, 0.06, 0, Math.PI, 0); }
+        k.add(SPHG(), e === 3 ? '#3f8f7a' : '#c9d1d9', 0, top + 0.1, 0, 0.42, 0.62, 0.42); k.add(DOME(8), e === 3 ? '#3f8f7a' : '#c9d1d9', 0, top + 0.1, 0, 0.42, -0.2, 0.42);
+        k.cone(e === 3 ? '#e0b23a' : '#9aa4ad', 0, top + 0.68, 0, 0.12, 0.55, 6);
+        ribs(k, 0, R + 0.3, 0.75, 1.35, 3, 0); k.box('#3a2a1e', 0, 0, R + 0.02, 0.45, 0.85, 0.05);
+        if (e === 4) k.cyl('#c8ced4', 0.8, h, -0.7, 0.14, 1.2, 8);
+        return;
+      }
+      const floors = 2 + lv + Math.floor(v * 2) + (e - 5);
+      const pods = [[0, 0, 1.45], [1.35, -0.6, 0.85], [-1.25, -0.45, 0.8]].slice(0, 1 + Math.min(2, lv));
+      let top = 0;
+      pods.forEach(([x, z, r], j) => { const h = r * (0.6 + floors * 0.2); k.cyl('#e8eef2', x, 0, z, r, h, 12); ringWin(k, x, z, r, h * 0.3, 6, 0.32, Math.max(0.4, h * 0.45)); k.add(ICO(), pick(PAL.glass, v2 + j * 0.3), x, h, z, r * 1.02, r * 0.9, r * 1.02, 0, 0, 0, true); top = Math.max(top, h + r * 0.9); });
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + v; k.add(OCT(), '#bff6ff', Math.cos(a) * 2.05, 0.6, Math.sin(a) * 2.05, 0.2, 0.9 + (i % 3) * 0.45, 0.2, a, 0, 0, e === 7 ? 'glow' : false); }
+      if (e >= 6) k.cyl('#c9d1d9', 0, top, 0, 0.05, 1.8, 5);
+    }
+    function houseCoast(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, wood = '#8f6a46';
+      const stilts = (w, d, h) => { for (const [x, z] of [[-w / 2, -d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [w / 2, d / 2]]) k.cyl('#6d5139', x, 0, z, 0.08, h, 5); k.box(wood, 0, h, 0, w + 0.3, 0.12, d + 0.3); };
+      if (e === 0) { stilts(2.0, 2.0, 1.0); k.box(pick(PAL.mud, v), 0, 1.07, 0, 1.7, 0.95, 1.6); hull(k, 2.02, 2.4, 2.0, '#6d5139'); k.box('#3b2a1d', 0, 1.07, 0.81, 0.45, 0.65, 0.04); return; }
+      if (e <= 2) {
+        const h = 1.2; stilts(2.3, 2.1, h);
+        k.box(e === 1 ? '#efe9dc' : '#e8e0cc', 0, h + 0.12, 0, 2.0, 1.2, 1.8);
+        winB(k, -0.5, h + 0.55, 0.91, 0.36, 0.4); winB(k, 0.55, h + 0.55, 0.91, 0.36, 0.4);
+        k.box('#3f7fd6', 0, h + 0.12, 0.92, 0.45, 0.8, 0.04);
+        hull(k, h + 1.32, 2.6, 2.0, e === 1 ? '#8f6a46' : '#5a4030');
+        if (lv >= 2) conch(k, 0.55, h + 2.3, -0.2, 0.4, 4, '#f4d9b8', '#e8b48a');
+        for (let i = 0; i < 4; i++) k.box('#c9a46e', 0, i * 0.3, 1.25 + i * 0.22, 0.5, 0.06, 0.28);
+        return;
+      }
+      if (e <= 4) {
+        const h = 0.9; stilts(2.5, 2.3, h);
+        let y = h + 0.12;
+        for (let f = 0; f < lv; f++) { k.box('#fbfaf6', 0, y, 0, 2.2, 1.35, 2.0); for (const sx of [-0.55, 0.55]) { winB(k, sx, y + 0.45, 1.01, 0.38, 0.5); k.box('#3f7fd6', sx - 0.27, y + 0.4, 1.02, 0.1, 0.6, 0.03); k.box('#3f7fd6', sx + 0.27, y + 0.4, 1.02, 0.1, 0.6, 0.03); } y += 1.35; }
+        hull(k, y, 2.8, 2.2, e === 3 ? '#3f7fd6' : '#2f4a6b');
+        conch(k, 1.25, 0, -1.0, 0.62, 6 + lv, '#f4e2c8', '#e8b48a');
+        k.box('#3f7fd6', 0, h + 0.12, 1.01, 0.5, 0.95, 0.04);
+        return;
+      }
+      const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2, R = 1.35;
+      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.cyl('#c9ced4', x, 0, z, 0.12, 0.8, 6);
+      for (let f = 0; f < floors; f++) {
+        const s = 1 - (f / floors) * 0.45, a = f * 0.5, y = 0.8 + f * 1.05;
+        k.add(UCYL(14), f % 2 ? '#fbfaf6' : '#f4e2c8', Math.cos(a) * 0.15, y, Math.sin(a) * 0.15, R * s, 1.05, R * s * 0.92);
+        k.add(UCYL(14), pick(PAL.glass, v2), Math.cos(a) * 0.15, y + 0.3, Math.sin(a) * 0.15, R * s + 0.02, 0.5, R * s * 0.92 + 0.02, 0, 0, 0, true);
+      }
+      const H = 0.8 + floors * 1.05; k.cone('#e8b48a', 0, H, 0, R * 0.55, 1.8, 10);
+      if (e === 7) k.add(TORUS(), '#7ff0ff', 0, H * 0.6, 0, R + 0.3, R + 0.3, R + 0.3, 0, Math.PI / 2, 0, true);
+    }
+    function houseDesert(k, e, v, lv) {
+      const v2 = (v * 7.31) % 1, mud = pick(PAL.mud, v), sand = pick(['#e2bd85', '#d9a46e', '#e8c08e'], v2);
+      if (e === 0) { k.cyl(mud, 0, 0, 0, 1.1, 0.95, 10); k.dome(pick(PAL.mud, v2), 0, 0.95, 0, 1.1, 0.7, 10); k.box('#3b2a1d', 0, 0, 1.05, 0.42, 0.7, 0.08); return; }
+      if (e <= 4) {
+        const steps = 1 + Math.min(2, lv) + (e >= 3 ? 1 : 0);
+        let y = 0, w = 2.7;
+        for (let s = 0; s < steps; s++) {
+          k.box(s % 2 ? sand : mud, 0, y, 0, w, 1.1, w);
+          winB(k, -w * 0.25, y + 0.35, w / 2 + 0.02, 0.3, 0.42); winB(k, w * 0.25, y + 0.35, w / 2 + 0.02, 0.3, 0.42);
+          for (let c2 = 0; c2 < 4; c2++) k.box(tint(mud, -0.06), -w / 2 + 0.2 + (c2 * (w - 0.4)) / 3, y + 1.1, w / 2 - 0.1, 0.22, 0.18, 0.2);
+          y += 1.1; w -= 0.6;
+        }
+        k.box('#5a3a22', 0, 0, 1.36, 0.5, 0.9, 0.06);
+        windTower(k, -0.55, -0.55, y + 1.3, 0.6, sand);
+        k.dome(e >= 3 ? '#3fb0b8' : mud, 0.35, y, 0.35, Math.max(0.5, w * 0.45), 1, 10);
+        if (e === 4) k.cyl('#7d6a55', 0.9, y - 0.4, -0.8, 0.12, 1.0, 6);
+        return;
+      }
+      const floors = 3 + lv * 2 + Math.floor(v * 3) + (e - 5) * 2;
+      let y = 0, w = 2.6;
+      for (let f = 0; f < floors; f += 2) { k.box(f % 4 ? sand : '#f1d9b0', 0, y, 0, w, 2.1, w); for (const sx of [-0.6, 0, 0.6]) winB(k, (sx * w) / 2.6, y + 0.8, w / 2 + 0.02, 0.32, 0.9); y += 2.1; w = Math.max(1.2, w - 0.22); }
+      windTower(k, -w * 0.3, -w * 0.3, y + 1.6, 0.5, sand); windTower(k, w * 0.3, w * 0.3, y + 1.1, 0.45, sand);
+      k.add(SPHG(), '#3fb0b8', 0, y, 0, w * 0.32, w * 0.5, w * 0.32);
+      for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + 0.4; k.add(UBOX(), '#24345a', Math.cos(a) * (w / 2 + 0.3), y * 0.4, Math.sin(a) * (w / 2 + 0.3), 0.06, y * 0.35, 0.7, -a); }
+      if (e === 7) for (let f = 2; f < floors; f += 4) k.add(TORUS(), '#ff7aa8', 0, f * 1.05, 0, w * 0.8, w * 0.8, w * 0.8, 0, Math.PI / 2, 0, true);
+    }
+    const HOUSE = { plains: housePlains, forest: houseForest, mountain: houseMountain, tundra: houseTundra, coast: houseCoast, desert: houseDesert };
+    function buildHouse(k, e, ter, v, lv) { (HOUSE[ter] || housePlains)(k, Math.max(0, Math.min(7, e)), v, lv); }
+
+    /* =============== Hoạ tiết riêng của mỗi đảo trên xưởng, bến, toà thị chính, ngân hàng, trường, công trình quân sự =============== */
+    function kitBox(k) { const b = new THREE.Box3(); for (const g of k.b) { g.computeBoundingBox(); b.union(g.boundingBox); } return b; }
+    function motif(k, ter, e) {
+      if (!k.b.length) return;
+      const B = kitBox(k), top = B.max.y, cx = (B.min.x + B.max.x) / 2, cz = (B.min.z + B.max.z) / 2, w = B.max.x - B.min.x, d = B.max.z - B.min.z, m = Math.max(1, Math.min(w, d)), late = e >= 4;
+      if (ter === 'plains') {
+        k.cone(late ? '#d4a537' : '#c9a45c', cx, top - 0.05, cz, Math.min(1.7, m * 0.45), 0.6, 12); k.cyl('#6d5139', cx, top + 0.5, cz, 0.06, 0.65, 5);
+        for (let b = 0; b < 4; b++) { const a = (b * Math.PI) / 2 + 0.3; k.add(UBOX(), '#f4ead2', cx + Math.sin(a) * 0.5, top + 1.12 + Math.cos(a) * 0.5, cz + 0.08, 0.1, 0.95, 0.03, 0, 0, -a); }
+      } else if (ter === 'forest') {
+        k.blob(ICO(), '#4f7f3f', cx, top + 0.25, cz, Math.min(1.4, m * 0.36), 0.7); k.blob(ICO(), '#5a8a45', cx + m * 0.22, top + 0.05, cz - d * 0.2, Math.min(0.95, m * 0.26), 0.7);
+        for (let i = 0; i < 3; i++) k.box('#3f6b43', B.min.x + 0.25 + (i * (w - 0.5)) / 2, Math.max(0.2, top - 1.3), B.max.z + 0.02, 0.08, Math.min(1.3, top - 0.2), 0.05);
+      } else if (ter === 'mountain') {
+        k.add(UCONE(4), '#4a4d52', cx, top, cz, Math.min(2.3, m * 0.62), 0.6, Math.min(2.3, m * 0.62), Math.PI / 4); k.cone('#c9bda4', cx, top + 0.55, cz, 0.12, 0.9, 6);
+        k.add(DOD(), '#8b8577', B.max.x - 0.25, 0.35, B.max.z - 0.25, 0.45, 0.35, 0.45); k.add(DOD(), '#9d9589', B.max.x - 0.25, 0.9, B.max.z - 0.25, 0.3, 0.25, 0.3);
+      } else if (ter === 'tundra') {
+        k.dome(late ? '#c9d1d9' : '#eef4f8', cx, top - 0.05, cz, Math.min(1.5, m * 0.38), 0.75, 12);
+        for (let i = 0; i < 6; i++) k.add(UCONE(5), '#dff6ff', B.min.x + 0.15 + (i * (w - 0.3)) / 5, top, B.max.z + 0.02, 0.06, 0.5, 0.06, 0, Math.PI, 0);
+      } else if (ter === 'coast') {
+        conch(k, cx, top - 0.05, cz, Math.min(0.6, m * 0.18), 4, '#f4e2c8', '#e8b48a');
+        k.box(late ? '#2f4a6b' : '#3f7fd6', cx, Math.max(0.3, top - 0.4), B.max.z + 0.02, w * 0.9, 0.14, 0.04);
+      } else {
+        windTower(k, B.max.x - 0.35, B.min.z + 0.35, top + 0.9, 0.5, '#e2bd85'); k.dome('#3fb0b8', cx, top - 0.05, cz, Math.min(0.95, m * 0.26), 1, 10);
       }
     }
 
@@ -452,7 +547,59 @@
     }
 
     // Nơi của chính quyền, đứng giữa quảng trường
+    // Toà nhà giữa thành từ thời cận đại: mỗi đảo một ngọn tháp riêng, không đảo nào giống đảo nào
+    const HALL = {
+      plains: (k, e) => {
+        if (e <= 4) { k.cyl('#a99c88', 0, 0, 0, 3.2, 0.4, 18); k.cyl(e === 3 ? '#e6cf9a' : '#c98a5a', 0, 0.4, 0, 2.4, 9, 18); ringWin(k, 0, 0, 2.4, 1.6, 8, 0.5, 0.8); ringWin(k, 0, 0, 2.4, 4.4, 8, 0.5, 0.8); k.cone('#c9a45c', 0, 9.4, 0, 4.2, 2.2, 18); k.cone('#d4a537', 0, 11.4, 0, 0.9, 2.2, 8); k.cyl('#6d5139', 0, 7.6, 2.5, 0.12, 0.4, 6); for (let b = 0; b < 4; b++) { const a = (b * Math.PI) / 2 + 0.3; k.add(UBOX(), '#f7f2e6', Math.sin(a) * 1.8, 7.8 + Math.cos(a) * 1.8, 2.75, 0.45, 3.4, 0.05, 0, 0, -a); } k.box('#5a4030', 0, 0.4, 2.42, 1.2, 1.8, 0.06); return { clock: [0, 6.0, 2.46] }; }
+        const H = 22; k.cyl('#f2e8d2', 0, 0, 0, 2.6, H, 20); for (let f = 0; f < 10; f++) ringWin(k, 0, 0, 2.6, 1.2 + f * 2.1, 8, 0.6, 1.0, f * 0.4);
+        for (let s = 0; s < 70; s++) { const a = s * 0.36; k.box('#e3c25a', Math.sin(a) * 3.0, s * (H / 70), Math.cos(a) * 3.0, 1.4, 0.18, 0.8, a); }
+        k.cone('#d4a537', 0, H, 0, 5.0, 2.4, 20); k.cyl('#f2e8d2', 0, H + 2.2, 0, 0.6, 1.6, 10);
+        if (e === 7) k.add(TORUS(), '#ffe08a', 0, H * 0.55, 0, 3.4, 3.4, 3.4, 0, Math.PI / 2, 0, true);
+        return { beacon: [0, H + 4, 0] };
+      },
+      forest: (k, e) => {
+        const H = e <= 4 ? 12 : 22;
+        k.tcyl('#5b4630', 0, 0, 0, e <= 4 ? 2.4 : 2.8, e <= 4 ? 1.6 : 1.6, H + 2, 12);
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.add(UCYL(6), '#5b4630', Math.cos(a) * 2.3, 0, Math.sin(a) * 2.3, 0.7, 2.4, 0.7, 0, Math.sin(a) * 0.9, -Math.cos(a) * 0.9); }
+        const pods = e <= 4 ? [[4, 3.2, 0], [8.5, 2.4, 2.2]] : [[4, 3.4, 0], [8, 2.8, 2.1], [12, 2.6, 4.2], [16, 2.2, 1.0]];
+        for (const [y, r, a] of pods) { const x = Math.cos(a) * 1.3, z = Math.sin(a) * 1.3; k.cyl('#6d5139', x, y, z, r + 0.4, 0.25, 14); k.cyl(e <= 4 ? '#b88a5a' : '#e8efe4', x, y + 0.25, z, r, 1.8, 14); ringWin(k, x, z, r, y + 0.9, 7, 0.45, 0.6); k.cone(e <= 4 ? '#3f6b3a' : '#5f9f4a', x, y + 2.05, z, r + 0.8, 1.6, 14); }
+        k.blob(ICO(), '#46733a', 0, H + 2.4, 0, 4.4, 0.7); k.blob(ICO(), '#5a8a45', 2.4, H + 1.6, -1.2, 3.0, 0.7); k.blob(ICO(), '#4f7f3f', -2.2, H + 1.2, 1.4, 2.6, 0.7);
+        if (e === 7) for (let f = 1; f < 5; f++) k.add(TORUS(), '#9df0c4', 0, f * 4.4, 0, 2.6, 2.6, 2.6, 0, Math.PI / 2, 0, true);
+        return e <= 4 ? { clock: [Math.cos(0) * 1.3, 5.2, 3.6] } : { beacon: [0, H + 5.6, 0] };
+      },
+      mountain: (k, e) => {
+        let y = 0; const n = e <= 4 ? 4 : 7, stone = ['#9d9589', '#8b8577', '#a8a194'];
+        for (let i = 0; i < n; i++) { const w = 6 - i * (e <= 4 ? 0.9 : 0.55), rot = i * 0.35, off = Math.sin(i * 1.9) * 0.6; k.box(stone[i % 3], off, y, 0, w, 2.6, w, rot); for (const sx of [-0.3, 0.3]) k.box(PAL.win, off + Math.cos(rot) * sx * w + Math.sin(rot) * (w / 2 + 0.02), y + 0.9, -Math.sin(rot) * sx * w + Math.cos(rot) * (w / 2 + 0.02), 0.5, 0.8, 0.06, rot, true); y += 2.6; k.add(UCONE(4), '#4a4d52', off, y, 0, w * 0.82, 0.7, w * 0.82, Math.PI / 4 + rot); y += 0.4; if (e >= 5) { k.add(UCYL(8), e === 7 ? '#7ff0ff' : '#c9d1d9', off, y, 0, 0.4, 0.6, 0.4, 0, 0, 0, e === 7); y += 0.6; } }
+        k.cone('#4a4d52', 0, y, 0, 1.2, 2.4, 4); k.cyl('#c9bda4', 0, y + 2.4, 0, 0.08, 1.4, 5);
+        return e <= 4 ? { clock: [0, 4.0, 3.0] } : { beacon: [0, y + 3.9, 0] };
+      },
+      tundra: (k, e) => {
+        if (e <= 4) { const R = 2.6; k.cyl(e === 3 ? '#d96b4f' : '#4f6d8a', 0, 0, 0, R, 8, 16); ringWin(k, 0, 0, R, 1.4, 8, 0.5, 0.9); ringWin(k, 0, 0, R, 4.6, 8, 0.5, 0.9); k.dome('#eef4f8', 0, 8, 0, R + 0.2, 0.8, 16); for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; k.add(UCONE(5), '#dff6ff', Math.sin(a) * (R + 0.12), 8.02, Math.cos(a) * (R + 0.12), 0.1, 0.8, 0.1, 0, Math.PI, 0); } k.add(SPHG(), '#3f8f7a', 0, 10.4, 0, 1.2, 1.7, 1.2); k.add(DOME(10), '#3f8f7a', 0, 10.4, 0, 1.2, -0.6, 1.2); k.cone('#e0b23a', 0, 12.0, 0, 0.3, 1.4, 6); for (const [x, z] of [[-3.2, -1.5], [3.2, -1.5]]) { k.cyl('#d96b4f', x, 0, z, 1.0, 5, 10); k.add(SPHG(), '#3f8f7a', x, 5.4, z, 0.7, 1.0, 0.7); k.add(DOME(8), '#3f8f7a', x, 5.4, z, 0.7, -0.35, 0.7); } return { clock: [0, 6.2, 2.62] }; }
+        k.cyl('#e8eef2', 0, 0, 0, 4.0, 3, 16); ringWin(k, 0, 0, 4.0, 1.2, 10, 0.6, 1.0);
+        k.add(OCT(), '#bfe6f6', 0, 13, 0, 2.4, 13, 2.4, 0.4, 0, 0, e === 7 ? 'glow' : true);
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.add(OCT(), '#dff6ff', Math.cos(a) * 3.0, 5.5, Math.sin(a) * 3.0, 0.8, 4 + (i % 3) * 1.2, 0.8, a); }
+        k.add(TORUS(), '#9fd3f0', 0, 14, 0, 3.0, 3.0, 3.0, 0, Math.PI / 2, 0, true);
+        return { beacon: [0, 26.4, 0] };
+      },
+      coast: (k, e) => {
+        if (e <= 4) { conch(k, 0, 0, 0, 3.0, 10, '#fbfaf6', e === 3 ? '#3f7fd6' : '#2f4a6b'); for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; k.box(PAL.win, Math.sin(a) * 2.5, 2 + (i % 3) * 3, Math.cos(a) * 2.5, 0.5, 0.8, 0.06, a, true); } k.box('#3f7fd6', 0, 0, 3.05, 1.2, 1.8, 0.06); return { clock: [0, 7.0, 2.2] }; }
+        const R = 3.6, n = 14;
+        for (let f = 0; f < n; f++) { const sc = 1 - (f / n) * 0.6, a = f * 0.5; k.add(UCYL(18), f % 2 ? '#fbfaf6' : '#f4e2c8', Math.cos(a) * 0.3, f * 1.6, Math.sin(a) * 0.3, R * sc, 1.6, R * sc); k.add(UCYL(18), '#9fd3f0', Math.cos(a) * 0.3, f * 1.6 + 0.5, Math.sin(a) * 0.3, R * sc + 0.03, 0.6, R * sc + 0.03, 0, 0, 0, true); }
+        k.cone('#e8b48a', 0, n * 1.6, 0, R * 0.42, 3.4, 12);
+        if (e === 7) k.add(TORUS(), '#7ff0ff', 0, n * 0.9, 0, R + 0.4, R + 0.4, R + 0.4, 0, Math.PI / 2, 0, true);
+        return { beacon: [0, n * 1.6 + 3.6, 0] };
+      },
+      desert: (k, e) => {
+        let y = 0, w = 7.6; const steps = e <= 4 ? 4 : 9;
+        for (let s = 0; s < steps; s++) { const h = e <= 4 ? 1.9 : 2.5; k.box(s % 2 ? '#e2bd85' : '#d9a46e', 0, y, 0, w, h, w); for (const sx of [-0.25, 0.25]) k.box(PAL.win, sx * w, y + h * 0.35, w / 2 + 0.02, 0.5, h * 0.4, 0.06, 0, true); y += h; w = Math.max(1.8, w - (e <= 4 ? 1.4 : 0.62)); }
+        for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) windTower(k, x * w * 0.45, z * w * 0.45, y + 2.6, 0.7, '#e8c08e');
+        k.add(SPHG(), e >= 5 ? '#3fb0b8' : '#2f8f96', 0, y, 0, w * 0.42, w * 0.6, w * 0.42); k.cone('#c9a56b', 0, y + w * 0.6, 0, 0.2, 1.2, 6);
+        if (e === 7) for (let f = 1; f < 4; f++) k.add(TORUS(), '#ff7aa8', 0, f * 6, 0, 4 - f * 0.6, 4 - f * 0.6, 4 - f * 0.6, 0, Math.PI / 2, 0, true);
+        return e <= 4 ? { clock: [0, 5.0, 3.8] } : { beacon: [0, y + w * 0.6 + 1.4, 0] };
+      },
+    };
     function buildHall(k, e, ter) {
+      if (e >= 3 && HALL[ter]) return HALL[ter](k, e);
       if (e === 6) {
         k.box('#eef1f4', 0, 0, 0, 7.0, 1.2, 7.0); k.box('#9fd3f0', 0, 0.2, 3.51, 6.6, 0.8, 0.04, 0, true);
         k.add(UCYL(16), '#f4f6f8', 0, 1.2, 0, 1.7, 20, 1.7);
@@ -905,7 +1052,7 @@
         for (const t of list) if ((t.x - x) ** 2 + (t.z - z) ** 2 < (t.r + r) ** 2) return false;
         return true;
       };
-      const dens = { plains: 200, forest: 520, mountain: 230, tundra: 150, coast: 150, desert: 60 }[L.ter];
+      const dens = { plains: 320, forest: 820, mountain: 360, tundra: 240, coast: 240, desert: 100 }[L.ter];
       for (let n = 0; n < dens * 8 && list.length < dens; n++) {
         const a = rng() * TAU, r = Math.sqrt(rng()) * LAND_R * 1.12, x = Math.cos(a) * r, z = Math.sin(a) * r;
         const s = 0.75 + rng() * 0.75;
@@ -1329,17 +1476,17 @@
       L.civic.plaza = meshOf(k, L.litMat, L.g, 0, 0, 0);
       // nơi của chính quyền ở giữa, ngân hàng phía trong, trường phía ngoài
       BEY = eb;
-      const kh = new Kit(), hx = buildHall(kh, e, L.ter);
+      const kh = new Kit(), hx = buildHall(kh, e, L.ter); motif(kh, L.ter, e);
       L.civic.hall = meshOf(kh, L.litMat, L.g, 0, 0, Math.atan2(L.inw.x, L.inw.z));
       clickable(L.civic.hall, { type: 'gov', land: L.i });
       if (hx && hx.fire) addFire(L, L.civic.hall, hx.fire, 'civic', 3.2);
       if (hx && hx.beacon) addGlow(L, L.civic.hall, '#ff5a5a', 2.2, hx.beacon, false);
       L.clockPos = hx && hx.clock ? hx.clock : null;
-      const kb = new Kit(), bx = buildBank(kb, e, L.ter);
+      const kb = new Kit(), bx = buildBank(kb, e, L.ter); motif(kb, L.ter, e);
       L.civic.bank = meshOf(kb, L.litMat, L.g, L.bankPos.x, L.bankPos.z, Math.atan2(-L.bankPos.x, -L.bankPos.z));
       clickable(L.civic.bank, { type: 'bank', land: L.i });
       L.orb = bx && bx.orb ? addGlow(L, L.civic.bank, e === 7 ? '#ffe9a8' : '#ffd36b', e >= 5 ? 5 : 4, bx.orb, false) : null;
-      if (!L.noSchool) { const ks = new Kit(); buildSchool(ks, e, L.ter); L.civic.school = meshOf(ks, L.litMat, L.g, L.schoolPos.x, L.schoolPos.z, Math.atan2(-L.schoolPos.x, -L.schoolPos.z)); clickable(L.civic.school, { type: 'school', land: L.i }); }
+      if (!L.noSchool) { const ks = new Kit(); buildSchool(ks, e, L.ter); motif(ks, L.ter, e); L.civic.school = meshOf(ks, L.litMat, L.g, L.schoolPos.x, L.schoolPos.z, Math.atan2(-L.schoolPos.x, -L.schoolPos.z)); clickable(L.civic.school, { type: 'school', land: L.i }); }
       BEY = 0;
       // đèn quanh quảng trường và dọc đường
       const kl = new Kit(), lampSpots = [];
@@ -1374,14 +1521,6 @@
 
     /* =============== Nhà, ruộng, xưởng =============== */
     // thời Vật Chất Sống: nhà tự mọc thành những búp san hô ngọc chồng lên nhau, đường ráp phát sáng
-    function podHouse(k, v, lv) {
-      const n = 2 + Math.floor(v * 2) + (lv >= 2 ? 1 : 0);
-      let y = 0;
-      for (let i = 0; i < n; i++) { const r = 1.3 - i * 0.2; k.add(SPHG(), i % 2 ? '#f3f6f8' : '#e2ebf0', 0, y, 0, r, r * 1.2, r); k.add(TORUS(), '#7ff0ff', 0, y + 0.06, 0, r * 0.97, r * 0.97, r * 0.97, 0, Math.PI / 2, 0, 'glow'); y += r * 1.05; }
-      for (let j = 0; j < 3; j++) { const a = j * 2.1 + v * 4; k.add(UCONE(5), '#d5f3fb', Math.cos(a) * 1.15, 0, Math.sin(a) * 1.15, 0.2, y * 0.5, 0.2, 0, Math.sin(a) * 0.4, -Math.cos(a) * 0.4); }
-      k.add(ICO(), '#bff6ff', 0, y + 0.3, 0, 0.28, 0.28, 0.28, 0, 0, 0, 'glow');
-      k.box('#9fd3f0', 0, 0.05, 1.15, 0.5, 0.75, 0.06, 0, true);
-    }
     function houseLevel(L, i) {
       const w = W.cities[L.i].w; if (!w) return 1;
       const ms = [0, 1, 2, 3].map((k) => w.households[i * 4 + k]).filter(Boolean);
@@ -1392,7 +1531,7 @@
       const lot = L.houseLots[idx], v = hash(L.i * 300 + idx * 7 + 3);
       const k = new Kit();
       BEY = e;
-      if (e === 8) podHouse(k, v, lv); else buildHouse(k, Math.min(7, e), L.ter, v, lv);
+      buildHouse(k, Math.min(7, e), L.ter, v, lv);
       const ry = Math.atan2(-lot.p.x, -lot.p.z) + (v - 0.5) * 0.5;
       const g = meshOf(k, L.litMat, L.g, lot.p.x, lot.p.z, ry);
       BEY = 0;
@@ -1437,6 +1576,7 @@
     function makeFirm(L, f, slot, e) {
       if (f.sea) {
         BEY = e; const k = new Kit(), extra = buildDock(k, Math.min(7, e), STY[L.ter][Math.min(7, e)]), p = L.dockPos;
+        motif(k, L.ter, e);
         const g = meshOf(k, L.litMat, L.g, p.x, p.z, Math.atan2(p.x, p.z)); BEY = 0;
         clickable(g, { type: 'firm', id: f.id, land: L.i });
         clearTrees(L, p.x, p.z, 3.6);
@@ -1444,6 +1584,7 @@
       }
       const food = f.sector === 'food', lot = food ? L.farmLots[slot] : L.shopLots[slot], v = hash(L.i * 500 + slot * 11 + (food ? 1 : 7));
       BEY = e; const k = new Kit(), extra = (food ? buildFarm : buildShop)(k, Math.min(7, e), L.ter, v);
+      motif(k, L.ter, e);
       const ry = food ? Math.atan2(-lot.x, -lot.z) + Math.PI : Math.atan2(-lot.x, -lot.z);
       const g = meshOf(k, L.litMat, L.g, lot.x, lot.z, ry); BEY = 0;
       clickable(g, { type: 'firm', id: f.id, land: L.i });
@@ -1823,7 +1964,7 @@
     return {
       lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING, SC, bridgePoint, deckY,
       fig: { FigKit, figMaterial, crowdSet, crowdBegin, crowdPut, crowdEnd, crowdDispose, DRESS, dressOf, SKIN_T, FIG_UNI, personShape, soldierShape },
-      kit: { Kit, meshOf, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng, setBeyond: (e) => { BEY = e; }, glowMat, ghostMat, recolorG },
+      kit: { Kit, meshOf, motif, conch, windTower, ribs, hull, tint, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng, setBeyond: (e) => { BEY = e; }, glowMat, ghostMat, recolorG },
       landOf: (i) => lands[i],
       firmPos: (i, id) => { const L = lands[i], o = L.firmObj.get(id); return o ? o.g.position : null; },
       housePos: (i, idx) => { const L = lands[i], H = L.houses[idx]; return H ? L.houseLots[H.idx].p : null; },

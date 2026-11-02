@@ -111,7 +111,7 @@
     function torch(St, p, y) { if (St.nt >= St.torches.length) return; const s = St.torches[St.nt++]; s.position.set(p.x, (p.y || 0) + (y || 2.1), p.z); s.material.opacity = 0.55 + 0.35 * Math.sin(now() * 0.02 + St.nt * 1.7); s.visible = true; }
     function civilians(St, c, sc, tn, t) {
       const L = St.L, O = c.occ;
-      const need = O.camp > 0 || sc.flee || sc.refugee || sc.welcome || sc.protest || sc.breadline || sc.bucket || sc.rebuild || sc.mourn || sc.cheer || sc.parade || sc.mobilize || (sc.return && !sc.return.bridge);
+      const need = O.camp > 0 || sc.flee || sc.rout || sc.refugee || sc.welcome || sc.protest || sc.breadline || sc.bucket || sc.rebuild || sc.mourn || sc.cheer || sc.parade || sc.mobilize || (sc.return && !sc.return.bridge);
       if (!need) { if (St.crowd) { F.crowdBegin(St.crowd); F.crowdEnd(St.crowd); } return; }
       const S = crowdOf(St), robots = S.e >= 7 ? 3 : 0;
       F.crowdBegin(S);
@@ -119,7 +119,7 @@
       // trại tạm: người đứng quanh lều
       if (O.camp > 0) {
         const n = Math.min(12, Math.ceil(O.camp / 4));
-        for (let i = 0; i < n; i++) { const a = (i / n) * TAU * 0.92 + 0.4, r = 4.1 + (i % 2) * 1.7 + 0.9; _q.set(Math.cos(a) * r, 0, Math.sin(a) * r); put(100 + i, _q, -a + Math.sin(tn * 0.0004 + i) * 0.8, 0, 0); }
+        for (let i = 0; i < n; i++) { const a = (i / n) * TAU * 0.92 + 0.4, r = 6.0 + (i % 2) * 0.9; _q.set(Math.cos(a) * r, 0, Math.sin(a) * r); put(100 + i, _q, -a + Math.sin(tn * 0.0004 + i) * 0.8, 0, 0); }
       }
       // dân chạy loạn: từ nhà ở rìa thành về quảng trường, dòng người không dứt
       if (sc.flee) {
@@ -127,14 +127,14 @@
         for (let i = 0; i < 14; i++) {
           const idx = s.house != null && i < 6 ? s.house : Math.max(0, nh - 1 - Math.floor(hash(i * 7 + s.id) * Math.max(1, nh * 0.45)));
           const from = homeOf(L, idx); if (!from) continue;
-          const u = ((tn / (s.drill ? 3400 : 2300)) + hash(i * 3 + s.id)) % 1, a = hash(i + 5) * TAU, to = _r.set(Math.cos(a) * 4.5, 0, Math.sin(a) * 4.5);
+          const u = ((tn / (s.drill ? 3400 : 2300)) + hash(i * 3 + s.id)) % 1, a = hash(i + 5) * TAU, to = _r.set(Math.cos(a) * 6.2, 0, Math.sin(a) * 6.2);
           _q.copy(from).lerp(to, u); const ry = Math.atan2(to.x - from.x, to.z - from.z);
           put(i, _q, ry, 1, s.drill ? 0 : 0.3);
         }
       }
       // tản cư bằng thuyền: ra bến
       if (sc.refugee && sc.refugee.bridge == null && L.dockPos) {
-        for (let i = 0; i < 10; i++) { const u = ((tn / 3000) + hash(i * 5 + 1)) % 1, a = hash(i) * TAU, from = _r.set(Math.cos(a) * 4.5, 0, Math.sin(a) * 4.5); _q.copy(from).lerp(L.dockPos, u); put(20 + i, _q, Math.atan2(L.dockPos.x - from.x, L.dockPos.z - from.z), 1, 0); }
+        for (let i = 0; i < 10; i++) { const u = ((tn / 3000) + hash(i * 5 + 1)) % 1, a = hash(i) * TAU, from = _r.set(Math.cos(a) * 6.2, 0, Math.sin(a) * 6.2); _q.copy(from).lerp(L.dockPos, u); put(20 + i, _q, Math.atan2(L.dockPos.x - from.x, L.dockPos.z - from.z), 1, 0); }
       }
       // đón người tản cư ở đầu cầu
       if (sc.welcome) {
@@ -156,7 +156,7 @@
       // xếp hàng nhận cứu tế: hàng dài từ quảng trường tới chợ
       if (sc.breadline) {
         const to = L.slots.eco || v3(8, 0, 0), dir = to.clone().normalize();
-        for (let i = 0; i < 11; i++) { const sh = ((tn / 9000) % 1) * 0.8; _q.copy(dir).multiplyScalar(2.2 + i * 0.85 - sh); put(60 + i, _q, Math.atan2(dir.x, dir.z), 0, 0); }
+        for (let i = 0; i < 11; i++) { const sh = ((tn / 9000) % 1) * 0.8; _q.copy(dir).multiplyScalar(5.2 + i * 0.85 - sh); put(60 + i, _q, Math.atan2(dir.x, dir.z), 0, 0); }
       }
       // chuyền nước chữa cháy: một hàng người từ giếng ở quảng trường tới đám cháy
       if (sc.bucket) {
@@ -165,7 +165,7 @@
         if (fp) {
           const dir = fp.clone().setY(0), len = dir.length(); dir.normalize();
           const n = Math.min(9, Math.max(4, Math.floor(len / 1.6)));
-          for (let i = 0; i < n; i++) { _q.copy(dir).multiplyScalar(2 + (i / Math.max(1, n - 1)) * (len - 3.2)).add(_r.set(-dir.z, 0, dir.x).multiplyScalar(i % 2 ? 0.35 : -0.35)); put(72 + i, _q, Math.atan2(dir.x, dir.z) + (i % 2 ? Math.PI / 2 : -Math.PI / 2), 0, 1); }
+          for (let i = 0; i < n; i++) { _q.copy(dir).multiplyScalar(5.2 + (i / Math.max(1, n - 1)) * Math.max(0.5, len - 6.4)).add(_r.set(-dir.z, 0, dir.x).multiplyScalar(i % 2 ? 0.35 : -0.35)); put(72 + i, _q, Math.atan2(dir.x, dir.z) + (i % 2 ? Math.PI / 2 : -Math.PI / 2), 0, 1); }
           if (!reduce && tn - St.puffT > 500) { St.puffT = tn; puff(W2(L, fp, v3(0, 0, 0)).setY(1.6 + rnd()), false, '#e8f6ff'); }
         }
       }
@@ -183,9 +183,10 @@
       if (sc.cheer || sc.parade || sc.mobilize) {
         const n = sc.cheer ? 16 : 10;
         for (let i = 0; i < n; i++) {
-          let a = (i / n) * TAU, r = sc.parade ? 9.6 : 3.4 + (i % 3) * 1.1;
+          let a = (i / n) * TAU, r = sc.parade ? 9.6 : 5.4 + (i % 3) * 0.7;
           if (sc.mobilize && !sc.parade && !sc.cheer) { const g = gateToward(L, -1), m = L.musterPos || v3(0, 0, 0), k = (i >> 1) / (n / 2); _q.copy(m).lerp(g, 0.15 + k * 0.7).add(_r.set(-(g.z - m.z), 0, g.x - m.x).normalize().multiplyScalar(i % 2 ? 1.8 : -1.8)); put(110 + i, _q, Math.atan2(-(_r.x), -(_r.z)), 0, 0.6); continue; }
           _q.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+          if (sc.cheer && sc.cheer.house != null && !sc.parade) { const hp = homeOf(L, sc.cheer.house); if (hp) { const rr = Math.hypot(hp.x, hp.z) || 1; _q.set(hp.x - (hp.x / rr) * 2.6 + Math.cos(a) * 1.6, 0, hp.z - (hp.z / rr) * 2.6 + Math.sin(a) * 1.6); } }
           if (sc.cheer && !reduce) _q.y = Math.abs(Math.sin(tn * 0.011 + i * 1.3)) * 0.35;
           put(110 + i, _q, -a - Math.PI / 2 + (sc.parade ? Math.PI : 0) + Math.PI / 2, 0, sc.cheer ? 1 : 0.4);
         }
@@ -214,7 +215,7 @@
       // lều trại tạm trên quảng trường
       const nt = O.camp > 0 ? Math.min(18, Math.ceil(O.camp / 4)) : sc.rescue ? 2 : 0;
       for (let i = 0; i < nt; i++) {
-        const a = (i / nt) * TAU * 0.92 + 0.15, r = 4.1 + (i % 2) * 1.7;
+        const a = (i / nt) * TAU * 0.92 + 0.15, r = 5.3 + (i % 2) * 1.1;
         _o.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); _o.rotation.set(0, -a, 0); _o.scale.setScalar(1); _o.updateMatrix();
         St.tents.setMatrixAt(i, _o.matrix); St.tents.setColorAt(i, _c.set(sc.rescue && O.camp <= 0 ? '#f4f4f4' : TENT_C[EB(c.era)]));
       }
@@ -306,7 +307,7 @@
       }
       // duyệt binh quanh quảng trường
       if (sc.parade) {
-        for (let i = 0; i < 14; i++) { const a = tn * 0.00012 + (Math.floor(i / 2) / 7) * TAU, r = 6.6 + (i % 2) * 1.0; _q.set(Math.cos(a) * r, 0, Math.sin(a) * r); P1(own, 'melee', _q, -a - Math.PI, 1, 0, 540 + i); }
+        for (let i = 0; i < 14; i++) { const a = tn * 0.00012 + (Math.floor(i / 2) / 7) * TAU, r = 7.4 + (i % 2) * 1.0; _q.set(Math.cos(a) * r, 0, Math.sin(a) * r); P1(own, 'melee', _q, -a - Math.PI, 1, 0, 540 + i); }
       }
       // cứu dân: lính bới đổ nát, khiêng người
       if (sc.rescue) {
@@ -320,6 +321,10 @@
         const gt = gateToward(L, c.landBy), side = v3(-gt.z, 0, gt.x).normalize(), inn = gt.clone().normalize();
         for (let i = 0; i < 6; i++) { _q.copy(gt).addScaledVector(side, (i - 2.5) * 0.9).addScaledVector(inn, -1.4); P1(own, 'melee', _q, Math.atan2(inn.x, inn.z), 0, 1, 580 + i); }
         if (!reduce && tn - St.puffT > 800) { St.puffT = tn; puff(W2(L, gt, v3(0, 0, 0)).setY(1.4), false, '#c9b9a0'); }
+      }
+      // lính giặc bỏ chạy (mèo đen qua đường): chạy từ phố ra mép đảo
+      if (sc.rout && sc.rout.by != null && sc.rout.by >= 0) {
+        for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + 0.3, u = ((tn / 2600) + i * 0.13) % 1, r = 7 + u * 22; _q.set(Math.cos(a) * r, 0, Math.sin(a) * r); if (!L.inside(_q.x, _q.z, 2)) continue; P1(sc.rout.by, 'melee', _q, Math.atan2(Math.cos(a), Math.sin(a)), 1, 0, 640 + i); }
       }
       // quân giữ chiến luỹ
       if (sc.barricade) {

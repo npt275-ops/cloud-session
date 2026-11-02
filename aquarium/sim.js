@@ -2381,7 +2381,7 @@
     for (let k = 0; k < n && kinds.length; k++) { const t = kinds.splice(Math.floor(W.rand() * kinds.length), 1)[0]; out.push(t); delete c.bld[t]; if (t === 'wonder' && W.war.wonder && W.war.wonder.city === c.id) W.war.wonder = null; if (t === 'wall') { c.hpMax = hpMaxOf(c); c.hp = Math.min(c.hp, c.hpMax); } }
     return out;
   }
-  function godAct(W, key, cid) {
+  function godAct(W, key, cid, spot) {
     const o = godOffer(W, key, cid);
     if (!o.ok) return o;
     const P = POWERS[key], c = W.cities[cid], w = c.w, G = W.god, res = RESIST[c.era];
@@ -2448,6 +2448,16 @@
     } else if (key === 'truce') {
       for (const f of W.war.factions) if (f.alive && atWarF(W, c.owner, f.id)) { makePeace(W, c.owner, f.id); W.war.rel[c.owner][f.id].truce = W.day + 360; W.war.rel[f.id][c.owner].truce = W.day + 360; }
       fx.days = 6; title = 'Thần buộc ' + W.war.factions[c.owner].name + ' ngưng chiến'; text = 'Một vòng sáng bao quanh ' + c.name + '. Gươm súng hạ xuống, quân lính quay về. Không ai dám động binh trong một năm.';
+    }
+    // thần chạm vào một chỗ: thiên tai lấy chỗ đó làm tâm, những xưởng và ngôi nhà gần đó chịu trước
+    if (spot && (spot.x || spot.z)) {
+      fx.at = { x: spot.x, z: spot.z };
+      if (['quake', 'tornado', 'volcano', 'fire', 'flood'].includes(key)) {
+        const near = (spot.firms || []).filter((id) => w.firms.some((f) => f.id === id && f.alive)).slice(0, key === 'fire' ? 3 : 4);
+        fx.firms = [...near, ...(fx.firms || []).filter((id) => !near.includes(id))];
+        for (const id of near) { const f = w.firms.find((x) => x.id === id); f.downUntil = Math.max(f.downUntil || 0, W.day + (key === 'fire' ? 6 : 14)); }
+        for (const idx of (spot.houses || []).slice(0, key === 'fire' ? 2 : 3)) { const d = ignite(W, c, 'house', idx, 'god'); if (d && (key === 'quake' || key === 'tornado')) { d.state = 'ruin'; d.until = W.day + 16; } }
+      }
     }
     pillarTouch(W, c, key, fx);
     if (P.kind === 'bad') markHit(c, key, P.name, W.day);
@@ -3190,6 +3200,198 @@
     }
   }
 
+  /* =============== Thần mượn thân: phép của chim và mèo =============== */
+  // Vị thần hoá thành chim hay mèo thì dùng phép ngay tại chỗ con vật. Lớp hình ảnh dò quanh con vật rồi gửi vào "chỗ":
+  // toạ độ, những ngôi nhà, xưởng, đám cháy gần nhất (gần trước xa sau). Phép rẻ, hồi nhanh, chỉ tác dụng quanh đó, và hậu quả
+  // có thật trong nền kinh tế và chiến tranh: lửa tắt, lính ngã, nhà được trả lại, người khỏi bệnh, người đi lánh nạn.
+  // Mỗi lần giúp, dân kể lại thành truyền thuyết và tin thần hơn (thần lực hồi nhanh hơn); đủ năm lần thì dựng tượng con vật.
+  const CREATURE = {
+    rain: { body: 'bird', icon: '🌧', name: 'Mưa lành', cost: 10, cool: 12, info: 'Mây kéo tới dưới cánh chim: lửa quanh đó tắt, hạn hán chấm dứt, ruộng được tưới.' },
+    bolt: { body: 'bird', icon: '⚡', name: 'Sét trời', cost: 14, cool: 16, info: 'Sét đánh trúng toán giặc gần nhất đang vây hay đang chiếm thành bên dưới.' },
+    gust: { body: 'bird', icon: '🌬', name: 'Gió ngược', cost: 12, cool: 18, info: 'Gió quật lùi quân giặc trên cầu và trên biển, mấy ngày không vào được thành.' },
+    flock: { body: 'bird', icon: '🐦', name: 'Gọi đàn chim', cost: 10, cool: 20, info: 'Đàn chim hàng nghìn con mổ lính giặc quanh thành, giặc tan hàng.' },
+    letter: { body: 'bird', icon: '✉', name: 'Thư bay', cost: 6, cool: 14, info: 'Mang tin cho thành bên dưới: tường được vá kịp, dân hết sợ, lòng dân kháng chiến lên.' },
+    sun: { body: 'bird', icon: '☀', name: 'Nắng vàng', cost: 8, cool: 16, info: 'Ruộng dưới cánh chim được mùa, vết cháy xanh cỏ lại, thú về bãi săn.' },
+    alarm: { body: 'cat', icon: '🔔', name: 'Cào cửa báo động', cost: 5, cool: 10, info: 'Nhà quanh mèo tỉnh giấc kịp: hết sợ, dập được lửa, giặc không lẻn vào được mấy ngày.' },
+    gnaw: { body: 'cat', icon: '🦷', name: 'Gặm dây cửa', cost: 8, cool: 14, info: 'Giải phóng ngôi nhà bị giặc chiếm gần mèo nhất, gia đình từ trại tạm về nhà.' },
+    omen: { body: 'cat', icon: '🐈‍⬛', name: 'Mèo đen qua đường', cost: 10, cool: 18, info: 'Lính giặc quanh mèo hoảng sợ bỏ chạy, lòng dân lên, dân bớt sợ.' },
+    rats: { body: 'cat', icon: '🐀', name: 'Bắt chuột', cost: 6, cool: 14, info: 'Kho lương hết chuột: lương không mốc, dịch không có đường lan, người sốt khỏi dần.' },
+    purr: { body: 'cat', icon: '💗', name: 'Rù rì chữa lành', cost: 8, cool: 14, info: 'Người ốm, người bị thương trong những nhà quanh mèo khỏi hẳn; nhà có tang nguôi ngoai.' },
+    path: { body: 'cat', icon: '🐾', name: 'Dẫn lối bí mật', cost: 10, cool: 22, info: 'Dẫn người ở trại tạm theo lối bí mật đi lánh nạn; thành bị vây thì dẫn đoàn tiếp tế vào.' },
+  };
+  const CREATURE_TITLE = {
+    rain: (c) => 'Con chim xanh gọi mưa xuống ' + c.name, bolt: (c) => 'Sét theo cánh chim xanh giáng xuống ' + c.name, gust: (c) => 'Gió ngược thổi bạt quân giặc ở ' + c.name,
+    flock: (c) => 'Đàn chim vây đánh quân giặc ở ' + c.name, letter: (c) => 'Thư bay tới ' + c.name, sun: (c) => 'Nắng vàng trên ruộng ' + c.name,
+    alarm: (c) => 'Con mèo cào cửa báo động ở ' + c.name, gnaw: (c) => 'Con mèo trả lại một ngôi nhà ở ' + c.name, omen: (c) => 'Mèo đen qua đường, giặc ở ' + c.name + ' bỏ chạy',
+    rats: (c) => 'Con mèo bắt chuột trong kho lương ' + c.name, purr: (c) => 'Con mèo rù rì chữa bệnh ở ' + c.name, path: (c) => 'Con mèo dẫn lối bí mật ở ' + c.name,
+  };
+  const laneNear = (W, u, cid) => { const L = W.war.lanes[u.lane]; return !!L && ((L.a === cid && u.x < 0.6) || (L.b === cid && u.x > 0.4)); };
+  const foesNear = (W, c) => (W.war.on ? W.war.units.filter((u) => !u.dead && u.owner !== c.id && atWarF(W, u.owner, c.id) && ((u.lane && laneNear(W, u, c.id)) || (!u.lane && u.city === c.id))) : []);
+  // phép này có việc để làm ở đây không (lý do khi không)
+  function creatureNeed(W, key, c, spot) {
+    const O = c.occ || { h: {}, camp: 0 }, nearH = spot.houses || [];
+    if (key === 'gnaw' && !nearH.some((i) => O.h[i])) return 'Quanh mèo không có ngôi nhà nào bị giặc chiếm';
+    if (key === 'purr' && !c.w.households.some((h) => h.sick > 0)) return 'Ở ' + c.name + ' không ai ốm';
+    if (key === 'alarm' && !nearH.length) return 'Quanh mèo không có nhà nào';
+    if (key === 'path' && !(O.camp > 0) && !(W.day - (c.landHit == null ? -99 : c.landHit) <= 6) && c.owner === c.id) return 'Không ai cần lánh nạn, thành cũng không bị vây';
+    return null;
+  }
+  function creatureOffer(W, key, cid, spot) {
+    const P = CREATURE[key], c = W.cities[cid], G = W.god;
+    if (!P) return { ok: false, reason: '' };
+    if (!c || !c.settled) return { ok: false, reason: 'Ở đây chưa có ai để giúp', cost: P.cost };
+    const cd = Math.max(0, (G.cool['c:' + key] || 0) - W.day);
+    if (cd) return { ok: false, reason: P.name + ' còn hồi ' + cd + ' ngày', cost: P.cost, cd };
+    if (G.power < P.cost) return { ok: false, reason: 'Chưa đủ thần lực', cost: P.cost };
+    const need = creatureNeed(W, key, c, spot || {});
+    if (need) return { ok: false, reason: need, cost: P.cost, idle: true };
+    return { ok: true, cost: P.cost };
+  }
+  // những phép đang có việc quanh con vật: để giao diện làm sáng nút
+  function creatureHints(W, cid, spot) {
+    const c = W.cities[cid], out = {};
+    if (!c || !c.settled) return out;
+    spot = spot || {};
+    const O = c.occ || { h: {}, camp: 0 }, foes = foesNear(W, c).length, held = c.owner !== c.id, sieged = W.day - (c.landHit == null ? -99 : c.landHit) <= 3;
+    const fires = (c.dmg || []).filter((d) => d.state === 'fire').length, sick = c.w.households.some((h) => h.sick > 0);
+    out.rain = fires > 0 || c.w.phen.drought > 0; out.bolt = foes > 0; out.gust = sieged || foes > 0; out.flock = foes > 0 || held; out.letter = sieged || held;
+    out.sun = (c.dmg || []).some((d) => d.state === 'scorch') || (c.mods || []).some((m) => m.food < 1 && m.until > W.day);
+    out.alarm = sieged || (spot.dmg || []).length > 0; out.gnaw = (spot.houses || []).some((i) => O.h[i]); out.omen = held || foes > 0;
+    out.rats = c.w.epi.state !== 'none' || (c.mods || []).some((m) => m.food < 1 && m.until > W.day); out.purr = sick; out.path = O.camp > 0 || sieged;
+    return out;
+  }
+  function creatureAct(W, key, cid, spot) {
+    spot = spot || {};
+    const o = creatureOffer(W, key, cid, spot);
+    if (!o.ok) return o;
+    const P = CREATURE[key], c = W.cities[cid], w = c.w, G = W.god, X = W.war;
+    if (!c.occ) occInit(c);
+    const O = c.occ, fx = { key, city: cid, day: W.day, body: P.body, at: { x: spot.x || 0, z: spot.z || 0 } };
+    const nearH = (spot.houses || []).slice(0, 6), nearD = spot.dmg || [];
+    const people = (hs) => { const out = []; for (const i of hs) for (let j = 0; j < 4; j++) { const h = w.households[i * 4 + j]; if (h) out.push(h); } return out; };
+    const enemy = c.owner !== c.id ? c.owner : c.landBy != null ? c.landBy : -1;
+    let text = '';
+    if (key === 'rain') {
+      const out = [];
+      for (const d of c.dmg || []) if (d.state === 'fire' && (nearD.includes(d.id) || W.rand() < 0.4)) { d.state = 'scorch'; d.until = W.day + 10; d.saved = true; out.push(d.id); if (d.kind === 'firm') { const f = w.firms.find((x) => x.id === d.ref); if (f) f.downUntil = Math.min(f.downUntil || 0, W.day + 4); } }
+      const dry = w.phen.drought > 0;
+      w.phen.drought = 0; addMod(c, 1.12, W.day, W.day + 25);
+      fx.out = out;
+      text = (out.length ? out.length + ' đám cháy tắt phụt dưới mưa. ' : '') + (dry ? 'Hạn hán chấm dứt. ' : '') + 'Ruộng quanh đó được tưới đẫm, mùa này sẽ khá hơn.';
+    } else if (key === 'bolt') {
+      const foes = foesNear(W, c);
+      if (foes.length) {
+        const u = foes[Math.floor(W.rand() * foes.length)], killer = c.owner === c.id ? c.owner : c.id;
+        fx.lane = u.lane || null; fx.x = u.x; fx.unitCity = u.city; fx.killed = 0; fx.by = u.owner;
+        for (const v of foes) if (v === u || (v.lane && v.lane === u.lane && Math.abs(v.x - u.x) < 0.12)) { v.hp -= v === u ? v.hpMax * 2 : v.hpMax * 0.4; v.lastBy = killer; }
+        for (const v of X.units) if (v.hp <= 0 && !v.dead) { die(W, v); fx.killed++; }
+        X.units = X.units.filter((v) => !v.dead);
+        text = 'Sét đánh trúng toán quân ' + facName(W, u.owner) + (fx.killed > 1 ? ', ' + fx.killed + ' toán ngã xuống.' : ', cả toán ngã xuống.') + ' Quân giặc quanh đó vứt vũ khí mà chạy.';
+        if (c.owner !== c.id) addResist(c, 0.08);
+      } else {
+        CX.fear(W, c, 0.1, 4); CX.faith(W, c, 0.06); fx.killed = 0;
+        text = 'Sét giáng xuống khoảng đất trống giữa ' + c.name + '. Không trúng ai, nhưng cả thành nhìn lên trời.';
+      }
+    } else if (key === 'gust') {
+      let n = 0;
+      for (const u of X.units) {
+        if (u.dead || !u.lane || u.owner === c.owner || !atWarF(W, u.owner, c.owner)) continue;
+        const L = X.lanes[u.lane];
+        if (!L || (L.a !== cid && L.b !== cid)) continue;
+        u.px = u.x; u.x = clampN(u.x + (L.a === cid ? 0.3 : -0.3), 0, 1); u.hp -= u.hpMax * 0.06; n++;
+      }
+      for (const u of X.units) if (u.hp <= 0 && !u.dead) die(W, u);
+      X.units = X.units.filter((u) => !u.dead);
+      O.block = Math.max(O.block || 0, W.day + 4);
+      fx.pushed = n;
+      text = n ? 'Gió ngược quật ' + n + ' toán giặc lùi lại trên cầu và trên biển. Mấy ngày tới chúng chưa vào được thành.' : 'Gió mạnh thổi qua ' + c.name + ', lá bay mù trời. Đường vào thành vắng tanh.';
+    } else if (key === 'flock') {
+      const n1 = hitFoes(W, c, 0.14), n2 = c.owner !== c.id ? hitGarrison(W, c, 0.12) : 0;
+      O.block = Math.max(O.block || 0, W.day + 6);
+      if (c.owner !== c.id) addResist(c, 0.06);
+      fx.hit = n1 + n2; fx.by = enemy;
+      text = fx.hit ? 'Đàn chim kéo đến đen trời, mổ vào ' + fx.hit + ' toán lính giặc. Giặc tan hàng, mấy ngày không dám tới gần.' : 'Đàn chim bay vòng trên ' + c.name + ', che kín cả bầu trời. Ai đang định đánh thành cũng phải nghĩ lại.';
+    } else if (key === 'letter') {
+      const sieged = W.day - (c.landHit == null ? -99 : c.landHit) <= 3;
+      hpUp(c, sieged ? 0.12 : 0.05);
+      let calm = 0;
+      for (const h of w.households) if (h.fear > 0 && W.rand() < 0.6) { h.fear = 0; h.calm = 10; calm++; }
+      if (c.owner !== c.id) addResist(c, 0.14);
+      CX.pil(c, 'mil', 0.03); CX.pil(c, 'edu', 0.02);
+      fx.calm = calm;
+      text = (c.owner !== c.id ? 'Thư bay tới những người kháng chiến ở ' + c.name + ', lòng dân lên cao. ' : sieged ? 'Thư báo cổng nào giặc sắp đánh, quân giữ thành vá kịp tường. ' : 'Thư bay mang tin lành tới ' + c.name + '. ') + (calm ? calm + ' gia đình hết sợ.' : '');
+    } else if (key === 'sun') {
+      addMod(c, 1.22, W.day, W.day + 30);
+      let n = 0;
+      for (const d of c.dmg || []) if (d.state === 'scorch' && W.rand() < 0.7) { d.state = 'gone'; n++; }
+      c.dmg = (c.dmg || []).filter((d) => d.state !== 'gone');
+      if (c.game && c.game.K) c.game.stock = Math.min(c.game.K, c.game.stock + c.game.K * 0.15);
+      CX.pil(c, 'eco', 0.03);
+      fx.regrow = n;
+      text = 'Nắng vàng rót xuống ruộng ' + c.name + ', lúa trổ đòng thấy rõ. ' + (n ? n + ' vết cháy xanh cỏ trở lại. ' : '') + 'Một tháng tới kho lương đầy hơn.';
+    } else if (key === 'alarm') {
+      const hs = people(nearH);
+      for (const h of hs) { h.fear = 0; h.calm = 15; }
+      let healed = 0;
+      for (const h of hs) if (h.sick > 0 && W.rand() < 0.5) { h.sick = 0; healed++; }
+      O.block = Math.max(O.block || 0, W.day + 5);
+      const saved = (c.dmg || []).filter((d) => d.state === 'fire' && nearD.includes(d.id)).map((d) => { d.saved = true; return d.id; });
+      occScene(W, c, 'flee', 2, { house: nearH[0], drill: true });
+      fx.houses = nearH; fx.saved = saved;
+      text = 'Con mèo cào cửa từng nhà lúc nửa đêm. ' + hs.length + ' người tỉnh dậy kịp' + (saved.length ? ', dập được ' + saved.length + ' đám lửa' : '') + (healed ? ', ' + healed + ' người bị thương được đưa đi chữa' : '') + '. Mấy ngày tới giặc không lẻn vào được.';
+    } else if (key === 'gnaw') {
+      const idx = nearH.find((i) => O.h[i]), by = O.h[idx].by;
+      freeHouses(W, c, (o, i) => i === idx);
+      if (c.owner !== c.id) hitGarrison(W, c, 0.04);
+      addResist(c, 0.06);
+      occScene(W, c, 'cheer', 3, { house: idx });
+      fx.house = idx; fx.by = by;
+      text = 'Con mèo gặm đứt dây trói cửa ngôi nhà số ' + (idx + 1) + ', lính gác ' + facName(W, by) + ' ngủ gật bị trói ngược lại. Bốn gia đình từ trại tạm về nhà.';
+    } else if (key === 'omen') {
+      const n1 = c.owner !== c.id ? hitGarrison(W, c, 0.08) : 0, n2 = hitFoes(W, c, 0.06);
+      addResist(c, 0.12);
+      O.scenes = O.scenes.filter((s) => s.kind !== 'patrolx' && s.kind !== 'curfew');
+      occScene(W, c, 'rout', 3, { by: enemy });
+      let calm = 0;
+      for (const h of w.households) if (h.fear > 0 && W.rand() < 0.3) { h.fear = 0; calm++; }
+      fx.hit = n1 + n2; fx.by = enemy;
+      text = 'Một con mèo đen đi chậm rãi qua trước mặt lính ' + (enemy >= 0 ? facName(W, enemy) : 'tuần') + '. Chúng làm dấu rồi bỏ chạy về trại' + (fx.hit ? ', ' + fx.hit + ' toán bị thương vì giẫm lên nhau' : '') + '. Lệnh giới nghiêm bị bỏ.';
+    } else if (key === 'rats') {
+      let cured = 0;
+      for (const h of w.households) if (h.sick > 0 && W.rand() < 0.35) { h.sick = 0; cured++; }
+      c.mods = (c.mods || []).filter((m) => !(m.food < 1 && m.until > W.day));
+      addMod(c, 1.08, W.day, W.day + 25);
+      CX.pil(c, 'hea', 0.03);
+      fx.cured = cured; fx.firm = (spot.firms || [])[0];
+      text = 'Con mèo bắt sạch chuột trong kho lương. Lương không còn mốc, ' + (cured ? cured + ' người khỏi sốt.' : 'dịch không có đường lan.');
+    } else if (key === 'purr') {
+      const hs = people(nearH);
+      let healed = 0;
+      for (const h of hs) { if (h.sick > 0) { h.sick = 0; h.immune = Math.max(h.immune || 0, 60); healed++; } h.fear = 0; h.grief = 0; }
+      for (const h of w.households) if (h.sick > 0 && W.rand() < 0.15) { h.sick = 0; healed++; }
+      CX.pil(c, 'hea', 0.03);
+      fx.healed = healed; fx.houses = nearH;
+      text = 'Con mèo nằm rù rì bên giường người ốm. ' + healed + ' người khỏi bệnh, những nhà có tang cũng nguôi ngoai.';
+    } else if (key === 'path') {
+      const r = O.camp > 0 ? flee(W, c, 8 + Math.floor(W.rand() * 8), false) : null;
+      if (r) { fx.to = r.host.id; fx.bridge = r.bridge; fx.n = r.n; text = 'Con mèo dẫn ' + r.n + ' gia đình ở trại tạm theo lối bí mật sang ' + r.host.name + ', không ai bị giặc bắt gặp.'; }
+      else { CX.food(W, c, 1.15, 18); hpUp(c, 0.05); fx.supply = true; text = 'Con mèo dẫn đoàn tiếp tế theo lối bí mật vào ' + c.name + '. Lương đủ cho một tháng, tường được vá thêm.'; }
+      addResist(c, 0.04);
+    }
+    G.power -= P.cost; G.cool['c:' + key] = W.day + P.cool; G.acts++; G.used['c:' + key] = (G.used['c:' + key] || 0) + 1;
+    c.legend = c.legend || { bird: 0, cat: 0 };
+    c.legend[P.body]++;
+    faithShift(W, c, 0.04);
+    const place = fx.house != null ? { kind: 'house', id: fx.house } : { kind: 'plaza' };
+    wstory(W, 'miracle', 'major', CREATURE_TITLE[key](c), text, place, { city: cid, power: key, body: P.body });
+    let statue = null;
+    if (c.legend[P.body] === 5) {
+      statue = P.body;
+      wstory(W, 'statue', 'epic', 'Người ' + c.name + ' dựng tượng ' + (P.body === 'bird' ? 'con chim xanh' : 'con mèo cam'), 'Năm lần con vật lạ hiện ra giúp thành. Dân góp đồng đúc tượng nó trên quảng trường, ngày rằm thắp hương. Từ nay ở ' + c.name + ' không ai đuổi ' + (P.body === 'bird' ? 'chim' : 'mèo') + '.', { kind: 'plaza' }, { city: cid, body: P.body });
+    }
+    return { ok: true, fx, text, statue, title: CREATURE_TITLE[key](c) };
+  }
+
   /* =============== Nhịp chín năm: mười hai thời đại trong một ván =============== */
   // Ván của vị thần dài đúng chín năm. Mỗi thành phố có một lộ trình đi qua mười hai thời đại tính từ ngày đặt chân;
   // tri thức và dân số được kéo dần về lộ trình (đi chậm thì học nhanh hơn, có thêm người tìm đến; đi nhanh thì chậm lại),
@@ -3267,7 +3469,7 @@
     SPECIES, fisheryOf, zoneName,
     // tranh hùng
     BUILDINGS, UNITS, WONDERS, BONUS, PERSONA, FACTION_COLORS, STAT_E, ADV_COST, unitName, AI_ERA,
-    POWERS, godOffer, godAct, FAITH_BASE, LAST,
+    POWERS, godOffer, godAct, FAITH_BASE, LAST, CREATURE, creatureOffer, creatureAct, creatureHints,
     // sáu trụ cột, công trình riêng của miền, dấu vết chiến tranh, săn bắt
     PILLARS, PILLAR_NEED, PILLAR_KEY, PILLAR_WHY, LANDMARKS, BEYOND_TAG, landmarkName, pillarProgress, pillarsReady, weakestPillar, ignite, GAME, gameTier,
     // kịch bản hỗn loạn mỗi năm, chiến tranh trên trời và qua cổng
