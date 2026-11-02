@@ -829,57 +829,110 @@ test('mười hai thời đại: tám thời của loài người tới robot AI
   assert.equal(Sim.unitName('forest', 'melee', 9), 'Hiệp Sĩ Plasma');
 });
 
-test('vị thần: thiên tai và ban phước tốn thần lực, có thời gian hồi, làm dân sợ hay biết ơn mà tin; sổ cái vẫn khớp', () => {
+test('bàn tay ngoài bể kính: gõ, nứt, vá kính, đổ và rút nước, thả đồ, lắc bể đều tốn thần lực, có hồi chiêu và hậu quả thật', () => {
   const W = Sim.createWorld({ seed: 7, mode: 'god' });
   assert.equal(W.mode, 'god'); assert.equal(W.war.player, -1, 'không phe nào là của người chơi');
-  for (let d = 0; d < 200; d++) Sim.stepWorld(W);
+  assert.equal(Object.keys(Sim.POWERS).length, 15);
+  for (const k of ['flood', 'drought', 'plague', 'heal', 'truce']) assert.ok(!Sim.POWERS[k], 'quyền năng cũ ' + k + ' đã bỏ');
+  for (let d = 0; d < 260; d++) Sim.stepWorld(W);
   const c = W.cities[0], w = c.w;
   W.god.power = 100;
   const faith0 = c.faith;
-  // lũ: ruộng ngập, kho ướt, rồi phù sa
-  const inv0 = new Map(w.firms.map((f) => [f.id, f.inv]));
-  const r = Sim.godAct(W, 'flood', 0);
-  assert.ok(r.ok && r.fx.firms.length > 0);
-  assert.equal(W.god.power, 70, 'lũ tốn 30 thần lực');
-  assert.ok(r.fx.firms.every((id) => { const f = w.firms.find((x) => x.id === id); return f.inv < inv0.get(id) || inv0.get(id) === 0; }), 'kho của những nơi bị ngập ướt sũng');
-  assert.ok(c.faith > faith0, 'thiên tai làm dân sợ mà tin thần');
-  assert.ok(!Sim.godOffer(W, 'flood', 0).ok, 'phải chờ mới giáng lũ lần nữa');
-  assert.ok(W.stories.some((s) => s.type === 'god-flood'));
-  // hạn hán rồi mưa lành
-  W.god.power = 100; assert.ok(Sim.godAct(W, 'drought', 0).ok); assert.ok(w.phen.drought > 0);
-  W.god.power = 100; assert.ok(Sim.godAct(W, 'rain', 0).ok); assert.equal(w.phen.drought, 0, 'mưa lành chấm dứt hạn hán');
-  // động đất: nhà sập, có người bị thương, dư chấn sau vài ngày
-  W.god.power = 100; const q = Sim.godAct(W, 'quake', 0); assert.ok(q.ok);
-  assert.ok(w.households.some((h) => h.sick > 0), 'có người bị thương');
-  for (let d = 0; d < 6; d++) Sim.stepWorld(W);
-  assert.ok(W.stories.some((s) => s.type === 'god-aftershock'), 'dư chấn');
-  // dịch bệnh rồi chữa lành
-  const d1 = W.cities[1];
-  W.god.power = 100; assert.ok(Sim.godAct(W, 'plague', 1).ok); assert.equal(d1.w.epi.state, 'spreading');
-  W.god.power = 100; assert.ok(Sim.godAct(W, 'heal', 1).ok); assert.ok(d1.w.households.every((h) => !(h.sick > 0)), 'chữa lành tất cả');
+  // gõ kính: dân giật mình, quân quanh đảo đứng khựng
+  let r = Sim.godAct(W, 'tap', 0);
+  assert.ok(r.ok); assert.equal(W.god.power, 94, 'gõ kính tốn 6 thần lực'); assert.ok(c.faith > faith0);
+  assert.ok(W.war.calm[0] > W.day, 'quân quanh đảo đứng khựng');
+  assert.ok(!Sim.godOffer(W, 'tap', 0).ok, 'phải chờ mới gõ lần nữa');
+  assert.ok(W.stories.some((s) => s.type === 'god-tap'));
+  // làm nứt kính rồi vá: mất mùa trong lúc nứt, vá xong thì hết
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'crack', 0).ok); assert.ok(c.glass.crack > W.day);
+  assert.ok((c.mods || []).some((m) => m.food < 1 && m.until > W.day), 'kính nứt thì mất mùa');
+  assert.ok(!Sim.godOffer(W, 'crack', 0).ok, 'đang nứt thì không nứt thêm');
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'patch', 0).ok); assert.ok(!(c.glass.crack > W.day));
+  assert.ok(!(c.mods || []).some((m) => m.food < 1 && m.until > W.day), 'vá xong ruộng hồi lại');
+  W.god.power = 100; assert.ok(!Sim.godOffer(W, 'patch', 0).ok, 'kính lành thì không vá');
+  // rút nước: bến cá ngừng, tàu buôn nằm im; hết hạn thì nước về
+  W.god.power = 100; r = Sim.godAct(W, 'drain'); assert.ok(r.ok && r.fx.tank);
+  assert.equal(W.tank.kind, 'drain'); assert.ok(Sim.fisheryOf(c).downUntil > W.day + 30, 'biển cạn thì không đánh cá');
+  for (let d = 0; d < 42; d++) Sim.stepWorld(W);
+  assert.equal(W.tank.level, 0, 'nước về');
+  // thả đồng xu: mạch vàng mở; thả hạt giống: cây khổng lồ ở chỗ chạm
+  W.god.power = 100; W.god.cool = {}; r = Sim.godAct(W, 'coin', 0); assert.ok(r.ok && w.gold, 'cơn sốt vàng');
+  W.god.power = 100; r = Sim.godAct(W, 'seed', 0, { x: 9, z: -3, houses: [], firms: [] }); assert.ok(r.ok); assert.deepEqual([c.tree.x, c.tree.z], [9, -3]);
+  // lắc bể: động đất khắp sáu đảo
+  W.god.power = 100; r = Sim.godAct(W, 'shake'); assert.ok(r.ok);
+  assert.ok(W.stories.some((s) => s.type === 'god-shake'));
   // thần lực tự hồi theo đức tin
   W.god.power = 0; for (let d = 0; d < 30; d++) Sim.stepWorld(W);
   assert.ok(W.god.power > 10 && W.god.power < 40, 'thần lực hồi dần (' + W.god.power.toFixed(1) + ')');
-  W.god.power = 0; assert.ok(!Sim.godOffer(W, 'volcano', 2).ok, 'hết thần lực thì không giáng được');
-  for (let d = 0; d < 200; d++) Sim.stepWorld(W);
+  W.god.power = 0; W.god.cool = {}; assert.ok(!Sim.godOffer(W, 'shake').ok, 'hết thần lực thì không lắc được');
+  for (let d = 0; d < 100; d++) Sim.stepWorld(W);
   assert.ok(ledgerOk(W));
   const m = Sim.worldMoney(W); assert.ok(close(m.total, m.expected));
 });
 
-test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi trận có bản tổng kết; thần buộc được đình chiến', () => {
+test('đập vỡ kính: hai mươi ngày không vá thì thành chết, đảo trống, rồi bộ lạc mới đến chơi lại từ thời nguyên thuỷ; vá kịp thì sống', () => {
+  const W = Sim.createWorld({ seed: 21, mode: 'god', war: true });
+  W.cfg.noAI = true;
+  for (let d = 0; d < 520; d++) Sim.stepWorld(W);
+  const c = W.cities[2], d0 = W.day;
+  assert.ok(c.settled && c.era >= 1, 'đảo đã lên đời');
+  W.god.power = 100;
+  assert.ok(Sim.godAct(W, 'shatter', 2).ok);
+  assert.ok(c.glass.broken && c.glass.broken.collapse === d0 + 20);
+  for (let d = 0; d < 12; d++) Sim.stepWorld(W);
+  assert.ok(W.stories.some((s) => s.type === 'refugee' && s.city === 2), 'dân bỏ đảo chạy sang láng giềng');
+  for (let d = 0; d < 12; d++) Sim.stepWorld(W);
+  assert.ok(!c.settled, 'không ai vá: thành chết');
+  assert.ok(W.stories.some((s) => s.type === 'collapse' && s.city === 2));
+  assert.ok(W.bridges.every((B) => (B.a !== 2 && B.b !== 2) || B.level < 0), 'cầu tới đảo gãy');
+  assert.ok(untilDone(W, () => c.settled, 120), 'bộ lạc mới đến');
+  assert.equal(c.era, 0, 'chơi lại từ thời nguyên thuỷ');
+  assert.ok(W.stories.some((s) => s.type === 'settle' && s.city === 2 && s.title.includes('đảo hoang')));
+  // một đảo khác: vá kịp thì sống
+  const e = W.cities[0];
+  W.god.power = 100; W.god.cool = {};
+  assert.ok(Sim.godAct(W, 'shatter', 0).ok);
+  for (let d = 0; d < 10; d++) Sim.stepWorld(W);
+  W.god.power = 100; assert.ok(Sim.godAct(W, 'patch', 0).ok);
+  for (let d = 0; d < 20; d++) Sim.stepWorld(W);
+  assert.ok(e.settled && !e.glass.broken, 'vá kịp thì đảo sống');
+  assert.ok(ledgerOk(W));
+});
+
+test('mưa tên lửa và những đảo bị đẩy lùi: thành trì có thể sập, một đảo có thể rơi về thời trước và tụt sau', () => {
+  const W = Sim.createWorld({ seed: 23, mode: 'god', war: true });
+  W.cfg.noAI = true;
+  for (let d = 0; d < 1300; d++) Sim.stepWorld(W);
+  const A = W.cities[0], B = W.cities[1];
+  for (const c of [A, B]) while (c.era < 6) Sim.advanceEra(W, c.id);
+  B.bld.wall = { done: true, day: W.day }; B.hpMax = B.hpMax || 100;
+  let fell = false;
+  for (let k = 0; k < 30 && !fell; k++) { const before = !!(B.bld.wall && B.bld.wall.done); Sim.strike(W, 0, 1); fell = before && !(B.bld.wall && B.bld.wall.done); if (!(B.bld.wall && B.bld.wall.done)) B.bld.wall = { done: true, day: W.day }; }
+  assert.ok(W.stories.some((s) => s.type === 'strike' && s.city === 1), 'tên lửa trút xuống thành');
+  assert.ok(W.stories.some((s) => s.type === 'strike' && s.fell), 'có lúc tường thành, tháp canh đổ sập');
+  const e0 = B.era, k0 = Sim.knowledgeOf(B);
+  Sim.setback(W, 1);
+  assert.ok(B.era < e0, 'bị đẩy lùi về thời trước'); assert.ok(Sim.knowledgeOf(B) < k0, 'tri thức mất theo');
+  assert.ok(W.stories.some((s) => s.type === 'setback' && s.city === 1));
+  Sim.stepWorld(W);
+  assert.ok(ledgerOk(W));
+});
+
+test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi trận có bản tổng kết; lắc bể buộc mọi cuộc chiến dừng lại', () => {
   const W = Sim.createWorld({ seed: 11, mode: 'god' });
   let reports = 0, truce = false;
   for (let d = 0; d < 1800 && !truce; d++) {
     Sim.stepWorld(W);
     reports = W.stories.filter((s) => s.type === 'battle-end').length;
     const c = W.cities.find((x) => x.settled && W.war.factions.some((f) => f.alive && Sim.atWarF(W, x.owner, f.id)));
-    if (c && reports > 0) { W.god.power = 100; const r = Sim.godAct(W, 'truce', c.id); assert.ok(r.ok, r.reason); truce = true; assert.ok(!W.war.factions.some((f) => f.alive && Sim.atWarF(W, c.owner, f.id)), 'đình chiến chấm dứt mọi cuộc chiến của phe đó'); }
+    if (c && reports > 0) { W.god.power = 100; const r = Sim.godAct(W, 'shake'); assert.ok(r.ok, r.reason); truce = true; assert.ok(!W.war.factions.some((f) => f.alive && Sim.atWarF(W, c.owner, f.id)), 'lắc bể chấm dứt mọi cuộc chiến'); }
   }
   assert.ok(W.stories.some((s) => s.type === 'war'), 'các phe tự tuyên chiến');
   assert.ok(reports > 0, 'có bản tổng kết trận đánh');
   const rep = W.stories.find((s) => s.type === 'battle-end');
   assert.ok(rep.text.includes('mất') && rep.lost, 'bản tổng kết nói rõ thương vong');
-  assert.ok(truce, 'thần buộc được đình chiến');
+  assert.ok(truce, 'lắc bể buộc các phe ngưng chiến');
   assert.ok(ledgerOk(W));
 });
 
@@ -899,7 +952,11 @@ test('ván chín năm: sáu bộ lạc đến trong nửa năm đầu, năm năm
     }
   }
   assert.ok(W.cities.every((c) => c.founded <= 200), 'cả sáu bộ lạc đến trong khoảng nửa năm đầu');
-  assert.ok(W.cities.every((c) => c.era === 11), 'hết năm thứ chín cả sáu thành đã tới thời Siêu Việt (' + W.cities.map((c) => c.era).join('') + ')');
+  // một hai đảo bị đẩy lùi một cách ngẫu nhiên nên có thể tụt sau; những đảo còn lại đi hết mười hai thời
+  const pushed = new Set((W.setbacks || []).filter((S) => S.done).map((S) => S.city));
+  assert.ok(pushed.size >= 1 && pushed.size <= 2, 'có một hai đảo bị đẩy lùi (' + [...pushed].join(',') + ')');
+  assert.ok(W.cities.filter((c) => c.era === 11).length >= 4, 'ít nhất bốn thành tới thời Siêu Việt (' + W.cities.map((c) => c.era).join('') + ')');
+  assert.ok(W.cities.every((c) => c.era === 11 || pushed.has(c.id)), 'thành nào chưa tới thời cuối là thành đã bị đẩy lùi');
   const first = (e) => Math.min(...reached.map((r) => r[e]));
   assert.ok(first(7) > 1250 && first(7) <= 1800, 'thành đi đầu tới thời robot trong năm thứ năm (ngày ' + first(7) + ')');
   assert.ok(first(8) > 1800 && first(8) <= 2160, 'thời Vật Chất Sống mở đầu năm thứ sáu (ngày ' + first(8) + ')');
@@ -968,14 +1025,14 @@ test('sáu trụ cột: mỗi miền coi trọng một trụ cột, thiếu mộ
   assert.equal(Sim.weakestPillar(c).key, 'hea');
   c.pil.hea = (e + 1) * P.hea;
   assert.ok(untilDone(W, () => c.era > e, 400), 'đủ cả sáu trụ cột thì lên đời');
-  // thần chữa lành thì y tế lên, khai sáng thì học vấn lên
+  // khoan lỗ thở thì y tế lên, thả hạt giống thì kinh tế lên
   W.god.power = 100; c.w.households[0].sick = 5;
-  const h0 = c.pil.hea, e0 = c.pil.edu;
-  assert.ok(Sim.godAct(W, 'heal', 0).ok);
-  assert.ok(c.pil.hea > h0 || c.pil.hea >= (c.era + 1.6) * P.hea - 1e-9, 'chữa lành nâng trụ cột y tế');
+  const h0 = c.pil.hea, e0 = c.pil.eco;
+  assert.ok(Sim.godAct(W, 'vent', 0).ok);
+  assert.ok(c.pil.hea > h0 || c.pil.hea >= (c.era + 1.6) * P.hea - 1e-9, 'khí trời nâng trụ cột y tế');
   W.god.power = 100; W.god.cool = {};
-  assert.ok(Sim.godAct(W, 'enlighten', 0).ok);
-  assert.ok(c.pil.edu > e0 || c.pil.edu >= (c.era + 1.6) * P.edu - 1e-9, 'khai sáng nâng trụ cột giáo dục');
+  assert.ok(Sim.godAct(W, 'seed', 0).ok);
+  assert.ok(c.pil.eco > e0 || c.pil.eco >= (c.era + 1.6) * P.eco - 1e-9, 'cây khổng lồ nâng trụ cột kinh tế');
   assert.ok(ledgerOk(W));
 });
 
@@ -1117,78 +1174,17 @@ test('thế giới không chiến tranh: vẫn có thao luyện, cứu dân, ch�
   assert.ok(ledgerOk(W));
 });
 
-/* ===================== Thần mượn thân: phép của chim và mèo ===================== */
-test('thần mượn thân: mười hai phép của chim và mèo có hậu quả thật ở đúng chỗ, tốn thần lực, có hồi chiêu, giúp đủ năm lần thì dân dựng tượng', () => {
-  assert.equal(Object.keys(Sim.CREATURE).length, 12);
-  assert.equal(Object.values(Sim.CREATURE).filter((P) => P.body === 'bird').length, 6);
-  const W = Sim.createWorld({ seed: 12, mode: 'god', war: true });
-  W.cfg.noAI = true;
-  for (let d = 0; d < 320; d++) Sim.stepWorld(W);
-  const c = W.cities[0], nh = Math.ceil(c.w.households.length / 4);
-  W.god.power = W.god.max = 1000;
-  const fresh = () => { W.god.cool = {}; };
-  // không có việc thì không tốn thần lực
-  let p0 = W.god.power, r = Sim.creatureAct(W, 'gnaw', 0, { x: 3, z: 3, houses: [1, 2] });
-  assert.ok(!r.ok && r.idle, 'không có nhà bị chiếm quanh mèo thì không gặm được'); assert.equal(W.god.power, p0);
-  // mưa lành dập đúng đám cháy quanh chim
-  const d1 = Sim.ignite(W, c, 'house', 2, 'test'), d2 = Sim.ignite(W, c, 'house', 3, 'test');
-  c.w.phen.drought = 30;
-  r = Sim.creatureAct(W, 'rain', 0, { x: 5, z: 2, houses: [2], dmg: [d1.id] });
-  assert.ok(r.ok, r.reason); assert.equal(d1.state, 'scorch', 'đám cháy dưới cánh chim tắt'); assert.equal(c.w.phen.drought, 0, 'hết hạn');
-  assert.ok(W.god.power < p0, 'tốn thần lực'); assert.ok(r.fx.out.includes(d1.id));
-  assert.ok(!Sim.creatureAct(W, 'rain', 0, {}).ok, 'phép vừa dùng phải chờ hồi');
-  void d2;
-  // gặm dây cửa: ngôi nhà bị chiếm gần mèo nhất được trả lại
-  fresh();
-  const got = Sim.seize(W, 0, 1, 3, 'edge');
-  r = Sim.creatureAct(W, 'gnaw', 0, { x: 1, z: 1, houses: [got[1], 0] });
-  assert.ok(r.ok, r.reason); assert.equal(r.fx.house, got[1]);
-  assert.ok(!c.occ.h[got[1]], 'nhà được trả lại'); assert.ok(c.occ.h[got[0]], 'nhà khác vẫn bị chiếm');
-  for (let j = 0; j < 4; j++) { const h = c.w.households[got[1] * 4 + j]; if (h) assert.ok(h.away !== 1, 'gia đình về nhà'); }
-  // rù rì chữa lành: người ốm trong những nhà quanh mèo khỏi
-  fresh();
-  for (let j = 0; j < 4; j++) c.w.households[5 * 4 + j].sick = 9;
-  r = Sim.creatureAct(W, 'purr', 0, { houses: [5] });
-  assert.ok(r.ok, r.reason); for (let j = 0; j < 4; j++) assert.equal(c.w.households[5 * 4 + j].sick, 0);
-  // cào cửa: nhà quanh mèo hết sợ, giặc không phá vào được mấy ngày
-  fresh();
-  for (let j = 0; j < 4; j++) c.w.households[6 * 4 + j].fear = 9;
-  r = Sim.creatureAct(W, 'alarm', 0, { houses: [6] });
-  assert.ok(r.ok); for (let j = 0; j < 4; j++) assert.equal(c.w.households[6 * 4 + j].fear, 0); assert.ok(c.occ.block > W.day);
-  // dẫn lối bí mật: người ở trại tạm đi lánh nạn (hoặc đoàn tiếp tế vào thành)
-  fresh();
-  const camp0 = c.w.households.filter((h) => h.away === 1).length;
-  Sim.stepWorld(W);
-  r = Sim.creatureAct(W, 'path', 0, {});
-  assert.ok(r.ok, r.reason);
-  assert.ok(r.fx.supply || c.w.households.filter((h) => h.away === 1).length < camp0, 'người rời trại tạm hoặc có đoàn tiếp tế');
-  // nắng vàng xoá vết cháy, mùa tốt hơn
-  fresh();
-  const d3 = Sim.ignite(W, c, 'house', 7, 'test'); d3.state = 'scorch';
-  r = Sim.creatureAct(W, 'sun', 0, {});
-  assert.ok(r.ok); assert.ok((c.mods || []).some((m) => m.food > 1.2 && m.from === W.day));
-  // giúp đủ năm lần một loài thì dân dựng tượng
-  const n0 = W.stories.filter((s) => s.type === 'statue' && s.city === 0).length;
-  for (const k of ['letter', 'flock', 'gust', 'bolt']) { fresh(); const x = Sim.creatureAct(W, k, 0, {}); assert.ok(x.ok, k + ': ' + x.reason); assert.ok(x.text && x.text.length > 20, k); }
-  assert.ok(c.legend.bird >= 5, 'chim đã giúp ' + c.legend.bird + ' lần');
-  assert.ok(W.stories.filter((s) => s.type === 'statue' && s.city === 0).length > n0, 'dân dựng tượng chim');
-  for (const k of ['omen', 'rats']) { fresh(); assert.ok(Sim.creatureAct(W, k, 0, {}).ok, k); }
-  assert.ok(W.stories.filter((s) => s.type === 'miracle').length >= 12, 'mỗi phép thành một truyền thuyết');
-  Sim.stepWorld(W);
-  assert.ok(ledgerOk(W));
-});
 
-test('thần chạm vào một chỗ: thiên tai lấy chỗ đó làm tâm, xưởng và nhà gần đó chịu trước', () => {
+test('thần chạm vào một chỗ: viên sỏi rơi đúng chỗ, nhà và xưởng gần đó cháy sập', () => {
   const W = Sim.createWorld({ seed: 13, mode: 'god', war: false });
   for (let d = 0; d < 360; d++) Sim.stepWorld(W);
   const c = W.cities[0], alive = c.w.firms.filter((f) => f.alive && f.sector !== 'gold' && !f.sea);
   W.god.power = 100; W.god.cool = {};
   const target = alive[alive.length - 1];
-  const r = Sim.godAct(W, 'quake', 0, { x: 12, z: -4, firms: [target.id], houses: [4, 5] });
+  const r = Sim.godAct(W, 'pebble', 0, { x: 12, z: -4, firms: [target.id], houses: [4, 5] });
   assert.ok(r.ok, r.reason);
   assert.deepEqual(r.fx.at, { x: 12, z: -4 });
-  assert.equal(r.fx.firms[0], target.id, 'xưởng ở chỗ chạm sập trước');
-  assert.ok(target.downUntil > W.day);
+  assert.ok(target.downUntil > W.day, 'xưởng ở chỗ chạm sập');
   assert.ok((c.dmg || []).some((d) => d.kind === 'house' && (d.ref === 4 || d.ref === 5)), 'nhà gần chỗ chạm hư hại');
   Sim.stepWorld(W);
   assert.ok(ledgerOk(W));

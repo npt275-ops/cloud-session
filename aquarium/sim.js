@@ -1393,6 +1393,7 @@
     for (const f of goods) { f.avgSales = (k * 1.3) / goods.length; f.inv = f.avgSales * 1.5; }
     w.cityId = i; w.cityName = c.name;
     c.w = w; c.settled = true; c.founded = W.day;
+    if (c.resets && W.war) { const X = W.war; X.factions[i].alive = true; for (const f of X.factions) if (f.id !== i) { X.rel[i][f.id] = { state: 'peace', since: W.day, truce: W.day + 120 }; X.rel[f.id][i] = { state: 'peace', since: W.day, truce: W.day + 120 }; } }
     // bến cá: ba người của ruộng lớn nhất ra biển đánh cá từ ngày đầu, phần cá bù vào phần lúa
     const crew = [];
     for (let m = 0; m < 3; m++) {
@@ -1405,7 +1406,7 @@
     pillarInit(c); dmgInit(c); huntInit(c);
     c.faith = FAITH_BASE[0] * 0.8;
     const near = W.cities.filter((x) => x.settled && x !== c && W.bridges.some((b) => b.level >= 0 && ((b.a === i && b.b === x.id) || (b.b === i && b.a === x.id))));
-    wstory(W, 'settle', 'epic', c.name + ': những người đầu tiên', t.from, { kind: 'land', city: i }, { city: i, from: near.length ? near[0].id : -1, households: k });
+    wstory(W, 'settle', 'epic', c.name + (c.resets ? ': một bộ lạc mới trên đảo hoang' : ': những người đầu tiên'), c.resets ? 'Họ dựng lều giữa những nền nhà cũ, không biết ở đây từng có một thành phố. Mọi thứ bắt đầu lại từ thời nguyên thuỷ.' : t.from, { kind: 'land', city: i }, { city: i, from: near.length ? near[0].id : -1, households: k });
     return c;
   }
   // số nơi làm ăn tối thiểu và tối đa lớn dần theo dân số
@@ -1502,7 +1503,7 @@
     W.trade = []; W.hunts = [];
     if (!W.chaos) chaosInit(W);
     W.chaos.fx = [];
-    for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : W.cfg.pace ? Math.max(3, Math.round(c.terrain.settle * W.cfg.pace.settleScale)) : c.terrain.settle)) settle(W, c.id);
+    for (const c of W.cities) if (!c.settled && (c.resettle != null ? W.day >= c.resettle : W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : W.cfg.pace ? Math.max(3, Math.round(c.terrain.settle * W.cfg.pace.settleScale)) : c.terrain.settle))) settle(W, c.id);
     seaDay(W);
     for (const c of W.cities) {
       if (!c.settled) continue;
@@ -1521,9 +1522,9 @@
     warDay(W);
     if (W.war.on) battleTrack(W);
     godDay(W);
-    if (W.war.on) skyWarDay(W);
+    if (W.war.on) { skyWarDay(W); missileDay(W); }
     chaosDay(W);
-    pillarsDay(W); streetDay(W); damageDay(W); huntDay(W);
+    pillarsDay(W); streetDay(W); damageDay(W); huntDay(W); glassDay(W); setbackDay(W);
     if (W.cfg.pace) { paceDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ chín khép lại', 'Bể kính đã đi hết mười hai thời đại.', null, {}); } }
     else if (!W.war.on) {
       // Ngắm bể: thành phố tự bước sang thời mới khi đủ tri thức và dân số
@@ -1655,6 +1656,7 @@
   const S_DISPUTE_GAP = (W, k) => W.sea.disputes[k] != null && W.day - W.sea.disputes[k] < 720;
   // Tàu buôn: hai cảng bất kỳ đều đi lại được qua biển trong
   function seaTradeDay(W) {
+    if (W.tank && W.tank.kind === 'drain' && W.tank.until > W.day) return; // biển cạn: tàu buôn nằm im
     const ports = W.cities.filter((c) => c.settled && hasB(c, 'port'));
     for (let i = 0; i < ports.length; i++) for (let j = i + 1; j < ports.length; j++) {
       const A = ports[i], Z = ports[j];
@@ -1989,9 +1991,11 @@
   }
   function fxPush(W, e) { if (W.war.fx.length < 160) W.war.fx.push(e); }
   function laneStep(W, L, us, dt) {
-    const A = W.cities[L.a], Z = W.cities[L.b];
+    const A = W.cities[L.a], Z = W.cities[L.b], X0 = W.war;
+    if (X0.calm && ((X0.calm[L.a] || 0) > W.day || (X0.calm[L.b] || 0) > W.day)) return; // thần gõ kính, che đèn: quân đứng khựng
+    const drained = W.tank && W.tank.kind === 'drain' && W.tank.until > W.day;
     for (const u of us) {
-      if (u.hp <= 0 || u.cls === 'sub') continue;
+      if (u.hp <= 0 || u.cls === 'sub' || (u.naval && drained)) continue;
       const home = u.side === 0 ? A : Z, foe = u.side === 0 ? Z : A, dir = u.side === 0 ? 1 : -1;
       let tgt = null, best = 1e9;
       for (const v of us) {
@@ -2312,22 +2316,27 @@
   }
 
   /* =============== Thần của bể kính: thiên tai, ban phước, đức tin =============== */
-  // Người chơi đứng trên cả sáu nền văn minh. Thần lực hồi lại theo đức tin của dân; thiên tai làm dân sợ mà tin,
-  // ban phước làm dân biết ơn mà tin. Thời đại càng mới, người ta càng ít tin thần.
+  // Bàn tay ngoài bể kính: vị thần là một bàn tay khổng lồ bên ngoài chiếc bể. Mỗi quyền năng là một việc bàn tay thật làm được
+  // với một chiếc bể: gõ, khoan, làm nứt, đập vỡ, vá kính; đổ thêm nước, rút bớt nước, nghiêng bể; che đèn, kéo đèn lại gần, mở nắp;
+  // thả đồng xu, hạt giống, viên sỏi vào bể; lắc cả bể. Hậu quả đi thẳng vào kinh tế, dân số, chiến tranh của các đảo.
+  // Đập vỡ kính là phép duy nhất xoá được cả một đảo: bầu khí quyển trên đảo sụp, sau hai mươi ngày (nếu không vá) thành chết,
+  // đảo trống, rồi một bộ lạc mới đến và đảo chơi lại từ thời nguyên thuỷ.
   const POWERS = {
-    flood: { name: 'Lũ lụt', kind: 'bad', cost: 30, cool: 40, info: 'Nước dâng ngập ruộng và nhà, cuốn trôi cầu yếu. Rút đi để lại phù sa màu mỡ.' },
-    drought: { name: 'Hạn hán', kind: 'bad', cost: 25, cool: 60, info: 'Trời không mưa nhiều tháng, mùa màng thất bát, giá gạo leo thang.' },
-    quake: { name: 'Động đất', kind: 'bad', cost: 45, cool: 60, info: 'Nhà xưởng sập, tường thành nứt, cầu gãy. Thời đại càng mới nhà càng chịu được.' },
-    tornado: { name: 'Lốc xoáy', kind: 'bad', cost: 35, cool: 45, info: 'Một cột gió quét ngang miền đất, cuốn bay những gì trên đường đi.' },
-    plague: { name: 'Dịch bệnh', kind: 'bad', cost: 40, cool: 90, info: 'Dịch sốt lan trong thành, theo người buôn sang láng giềng, quật ngã cả quân lính.' },
-    volcano: { name: 'Núi lửa', kind: 'bad', cost: 60, cool: 120, info: 'Một miệng núi lửa thức dậy. Tro bụi phủ trời nhiều tháng, rồi đất thành màu mỡ.' },
-    tsunami: { name: 'Sóng thần', kind: 'bad', cost: 50, cool: 90, info: 'Biển trong dựng một bức tường nước đổ vào bờ: bến cá, cảng và tàu thuyền tan tác.' },
-    fire: { name: 'Sét lửa', kind: 'bad', cost: 20, cool: 30, info: 'Sét đánh xuống, lửa bén sang những xưởng nằm gần nhau.' },
-    rain: { name: 'Mưa lành', kind: 'good', cost: 15, cool: 30, info: 'Chấm dứt hạn hán, ruộng đồng xanh lại.' },
-    harvest: { name: 'Mùa bội thu', kind: 'good', cost: 25, cool: 90, info: 'Lương thực tăng ba phần mười trong một mùa.' },
-    enlighten: { name: 'Khai sáng', kind: 'good', cost: 30, cool: 60, info: 'Một phát minh ra đời, đẩy thành phố tới gần thời đại mới.' },
-    heal: { name: 'Chữa lành', kind: 'good', cost: 25, cool: 45, info: 'Dập tắt dịch bệnh, người ốm và người bị thương khỏi hẳn.' },
-    truce: { name: 'Đình chiến', kind: 'good', cost: 40, cool: 120, info: 'Buộc phe đang giữ miền này ngưng mọi cuộc chiến trong một năm.' },
+    tap: { group: 'glass', kind: 'mixed', target: 'island', name: 'Gõ kính', cost: 6, cool: 4, info: 'Ngón tay gõ lên vách kính: cả đảo giật mình bỏ việc một ngày, quân đang đánh nhau quanh đảo đứng khựng ba ngày. Dân tin thần hơn.' },
+    vent: { group: 'glass', kind: 'good', target: 'island', name: 'Khoan lỗ thở', cost: 20, cool: 40, info: 'Khí trời tràn vào một đảo hai tháng: người khoẻ, ruộng tốt. Nhưng côn trùng hay gió lạnh bên ngoài có thể lọt vào theo.' },
+    crack: { group: 'glass', kind: 'bad', target: 'island', name: 'Làm nứt kính', cost: 35, cool: 60, info: 'Khí trên đảo rò ra qua vết nứt hai tháng: lạnh, mất mùa, người ốm, xưởng chậm, cho tới khi vá.' },
+    shatter: { group: 'glass', kind: 'bad', target: 'island', name: 'Đập vỡ kính', cost: 90, cool: 360, info: 'Bầu khí quyển trên đảo sụp. Hai mươi ngày nữa, nếu không vá, cả thành chết, đảo trống trơn, rồi một bộ lạc mới đến chơi lại từ thời nguyên thuỷ.' },
+    patch: { group: 'glass', kind: 'good', target: 'island', name: 'Vá kính', cost: 25, cool: 20, info: 'Dán kín vết nứt, chỗ vỡ trên vách kính của một đảo; dừng đếm ngược nếu còn kịp.' },
+    pour: { group: 'water', kind: 'mixed', target: 'tank', name: 'Đổ thêm nước', cost: 30, cool: 60, info: 'Mực biển dâng bốn mươi ngày: bến cá và ruộng ven bờ ngập mặn, cảng có thể sập; cá về nhiều hơn.' },
+    drain: { group: 'water', kind: 'bad', target: 'tank', name: 'Rút bớt nước', cost: 30, cool: 60, info: 'Biển cạn bốn mươi ngày: thuyền mắc cạn, không ai đánh cá, tàu buôn và tàu chiến nằm im. Khi nước về, cá dồn lại.' },
+    tilt: { group: 'water', kind: 'bad', target: 'island', name: 'Nghiêng bể', cost: 50, cool: 120, info: 'Nước dồn về phía đảo được chạm: sóng lớn đánh vào đảo đó và hai đảo hai bên, tàu lật, cầu yếu gãy; đảo phía cao bến cạn.' },
+    shade: { group: 'light', kind: 'bad', target: 'island', name: 'Lấy tay che đèn', cost: 25, cool: 45, info: 'Mười ngày tối như đêm trên một đảo: ruộng ngừng lớn, dân hoảng, chợ đóng; quân giặc quanh đảo cũng dừng lại.' },
+    lamp: { group: 'light', kind: 'bad', target: 'island', name: 'Kéo đèn lại gần', cost: 35, cool: 60, info: 'Nóng như lò: hạn hán bốn mươi ngày, nhà quanh chỗ chạm bén lửa, đảo băng tan thành lũ, sa mạc lan ra.' },
+    lid: { group: 'light', kind: 'good', target: 'tank', name: 'Mở nắp bể', cost: 30, cool: 90, info: 'Gió và mưa thật từ ngoài rơi vào cả bể: mùa tốt, người khoẻ trên cả sáu đảo. Nhưng lá khô và châu chấu có thể rơi xuống một đảo.' },
+    coin: { group: 'drop', kind: 'good', target: 'island', name: 'Thả đồng xu', cost: 40, cool: 120, info: 'Một đồng xu khổng lồ rơi xuống đảo: người ta đào quanh nó và gặp mạch vàng; tiền từ ngoài đổ vào, giá cả leo thang.' },
+    seed: { group: 'drop', kind: 'good', target: 'island', name: 'Thả hạt giống', cost: 30, cool: 90, info: 'Hạt giống rơi đúng chỗ chạm và mọc thành cây khổng lồ: đất màu mỡ, người khoẻ, mùa tốt nhiều năm.' },
+    pebble: { group: 'drop', kind: 'bad', target: 'island', name: 'Thả viên sỏi', cost: 30, cool: 45, info: 'Viên sỏi rơi như thiên thạch đúng chỗ chạm: nhà, xưởng quanh đó cháy sập, người bị thương.' },
+    shake: { group: 'tank', kind: 'bad', target: 'tank', name: 'Lắc bể', cost: 70, cool: 180, info: 'Cả bể rung chuyển: động đất cùng lúc trên sáu đảo, nhà sập khắp nơi; mọi cuộc chiến buộc phải dừng một mùa.' },
   };
   const FAITH_BASE = [0.72, 0.64, 0.56, 0.46, 0.36, 0.27, 0.2, 0.15, 0.2, 0.28, 0.4, 0.58]; // thời vượt người: dân lại tìm đến thần
   const RESIST = [1, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.12]; // nhà thời sau chịu động đất, gió bão tốt hơn
@@ -2339,10 +2348,14 @@
     if (!P) return { ok: false, reason: '' };
     if ((G.cool[key] || 0) > W.day) return { ok: false, reason: P.name + ' còn ' + (G.cool[key] - W.day) + ' ngày nữa mới dùng lại được', cost: P.cost };
     if (G.power < P.cost) return { ok: false, reason: 'Thần lực chưa đủ (' + Math.floor(G.power) + '/' + P.cost + '). Đức tin của dân sẽ hồi lại thần lực.', cost: P.cost };
+    if (P.target === 'tank') return { ok: true, cost: P.cost };
     if (cid == null) return { ok: true, cost: P.cost, needTarget: true };
     if (!c || !c.settled) return { ok: false, reason: 'Miền này chưa có người ở', cost: P.cost };
-    if (key === 'truce' && !W.war.factions.some((f) => f.alive && atWarF(W, c.owner, f.id))) return { ok: false, reason: c.name + ' đang không có chiến tranh', cost: P.cost };
-    if (key === 'heal' && c.w.epi.state === 'none' && !c.w.households.some((h) => h.sick > 0)) return { ok: false, reason: 'Ở ' + c.name + ' không ai ốm', cost: P.cost };
+    const gl = c.glass || {};
+    if (key === 'patch' && !(gl.crack > W.day) && !gl.broken) return { ok: false, reason: 'Vách kính trên ' + c.name + ' còn lành', cost: P.cost };
+    if (key === 'shatter' && gl.broken) return { ok: false, reason: 'Vách kính trên ' + c.name + ' đã vỡ rồi', cost: P.cost };
+    if (key === 'crack' && (gl.crack > W.day || gl.broken)) return { ok: false, reason: 'Vách kính trên ' + c.name + ' đang nứt', cost: P.cost };
+    if (key === 'coin' && (c.w.gold || c.w.cfg.off.gold)) return { ok: false, reason: c.name + ' đang có mỏ vàng', cost: P.cost };
     return { ok: true, cost: P.cost };
   }
   function faithShift(W, c, k) { c.faith = Math.min(1, (c.faith || 0.35) + k * (1 - (c.faith || 0.35))); }
@@ -2384,88 +2397,236 @@
   function godAct(W, key, cid, spot) {
     const o = godOffer(W, key, cid);
     if (!o.ok) return o;
-    const P = POWERS[key], c = W.cities[cid], w = c.w, G = W.god, res = RESIST[c.era];
+    const P = POWERS[key], G = W.god, X = W.war, tank = P.target === 'tank';
+    const c = tank ? null : W.cities[cid], w = c ? c.w : null;
     G.power -= P.cost; G.cool[key] = W.day + P.cool; G.acts++; G.used[key] = (G.used[key] || 0) + 1;
-    const fx = { key, city: cid, day: W.day };
+    const fx = { key, city: c ? cid : cid != null ? cid : -1, day: W.day, tank };
+    if (spot && (spot.x || spot.z)) fx.at = { x: spot.x, z: spot.z };
+    const T = W.tank || (W.tank = { level: 0, until: 0, kind: null }), live = W.cities.filter((x) => x.settled);
+    const near = (n, kind) => (spot ? (kind === 'firm' ? spot.firms || [] : spot.houses || []).slice(0, n) : []);
+    const calm = (id, days) => { X.calm = X.calm || {}; X.calm[id] = Math.max(X.calm[id] || 0, W.day + days); };
     let title = '', text = '';
-    if (key === 'flood') {
-      fx.days = 20; fx.firms = hitFirms(W, c, 0.55, 18, 0.45);
-      for (const h of w.households) h.pantry = 0;
-      addMod(c, 0.5, W.day, W.day + 20); addMod(c, 1.2, W.day + 20, W.day + 140);
-      fx.bridges = hitBridges(W, cid, 1, 25);
-      injure(W, c, 0.05, 12); c.hp -= c.hpMax * 0.1 * res; hitUnits(W, cid, 0.3 * res, false);
-      title = 'Lũ lớn ở ' + c.name; text = 'Nước sông dâng trắng đồng, ruộng ngập, kho thóc ướt sũng.' + (fx.bridges.length ? ' Cây cầu yếu bị cuốn trôi.' : '') + ' Khi nước rút, phù sa sẽ làm đất màu mỡ hơn.';
-    } else if (key === 'drought') {
-      trigger(w, 'drought', 70); fx.days = 70;
-      title = 'Hạn hán ở ' + c.name; text = 'Trời không mưa. Ruộng nứt nẻ, giếng cạn, giá gạo bắt đầu leo thang.';
-    } else if (key === 'quake') {
-      fx.firms = hitFirms(W, c, 0.45 * res, 14 + Math.round(16 * res), 0.3); fx.bridges = hitBridges(W, cid, res > 0.75 ? 2 : res > 0.45 ? 1 : 0, 30);
-      fx.wrecked = wreck(W, c, res > 0.6 ? 2 : 1, ['wonder']);
-      const hurt = injure(W, c, 0.12 * res, 25); c.hp = Math.max(1, c.hp - c.hpMax * 0.35 * res); c.lastHit = W.day;
-      hitUnits(W, cid, 0.2 * res); fx.days = 6;
-      title = 'Động đất rung chuyển ' + c.name; text = fx.firms.length + ' nơi làm ăn đổ sập, ' + hurt + ' người bị thương.' + (fx.wrecked.length ? ' ' + fx.wrecked.map((t) => bName(c, t)).join(', ') + ' không còn.' : '') + (res < 0.6 ? ' Nhà cửa thời mới đứng vững hơn người ta tưởng.' : '');
-      G.after = { city: cid, day: W.day + 5 };
-    } else if (key === 'tornado') {
-      fx.firms = hitFirms(W, c, 0.35 * res + 0.1, 10 + Math.round(10 * res), 0.6, 5); fx.days = 4;
-      injure(W, c, 0.04 * res, 15); hitUnits(W, cid, 0.25 * res);
-      title = 'Lốc xoáy quét qua ' + c.name; text = 'Cột gió đen kịt đi ngang miền đất, cuốn mái nhà và cả những bao hàng lên trời. ' + fx.firms.length + ' nơi làm ăn tan hoang.';
-    } else if (key === 'plague') {
-      w.epi.state = 'none'; w.epi.cool = 0;
-      startEpidemic(w, 6, 'Thần giáng một cơn dịch.'); injure(W, c, 0.12, 14); hitUnits(W, cid, 0.25); fx.days = 60;
-      title = 'Dịch bệnh ở ' + c.name; text = 'Người ngã bệnh hàng loạt, xưởng thiếu thợ, lính trong trại cũng không đứng dậy nổi. Người buôn có thể mang dịch sang láng giềng.';
-    } else if (key === 'volcano') {
-      fx.firms = hitFirms(W, c, 0.5, 30, 0.5); fx.wrecked = wreck(W, c, 2, []); injure(W, c, 0.18, 30);
-      c.hp = Math.max(1, c.hp - c.hpMax * 0.5); c.lastHit = W.day; hitUnits(W, cid, 0.4); fx.bridges = hitBridges(W, cid, 0, 20);
-      addMod(c, 0.5, W.day, W.day + 90); addMod(c, 1.25, W.day + 90, W.day + 450); c.volcano = W.day + 120; fx.days = 120;
-      title = 'Núi lửa thức dậy ở ' + c.name; text = 'Đất rung, trời tối sầm giữa trưa. Dung nham chảy xuống sườn núi, tro phủ ruộng đồng ba tháng. Rồi đất tro sẽ thành màu mỡ nhất bể kính.';
-    } else if (key === 'tsunami') {
-      const f = fisheryOf(c);
-      if (f) { f.downUntil = W.day + 30; f.inv = 0; }
-      fx.port = hasB(c, 'port') && W.rand() < 0.6 ? wreck(W, c, 1, Object.keys(c.bld).filter((k) => k !== 'port')).length > 0 : false;
-      hitUnits(W, cid, 0.6, true); injure(W, c, 0.06, 15); W.sea.stock[cid] = W.sea.stock[cid].map((v) => v * 0.6); for (const h of w.households) if (W.rand() < 0.4) h.pantry = 0;
-      fx.days = 3;
-      title = 'Sóng thần đổ vào ' + c.name; text = 'Biển trong rút ra xa rồi dựng thành bức tường nước. Bến cá tan tác' + (fx.port ? ', cảng sập' : '') + ', tàu thuyền neo bến bị nhấn chìm.';
-    } else if (key === 'fire') {
-      const list = w.firms.filter((x) => x.alive && x.sector !== 'gold' && !(x.downUntil > W.day));
-      fx.firms = [];
-      for (let k = 0; k < 3 && list.length; k++) { const x = list.splice(Math.floor(W.rand() * list.length), 1)[0]; burn(w, x); fx.firms.push(x.id); }
-      fx.days = 3; title = 'Sét đánh ở ' + c.name; text = 'Một tia sét giữa trời quang. Lửa bén sang ' + fx.firms.length + ' xưởng nằm sát nhau.';
-    } else if (key === 'rain') {
-      w.phen.drought = 0; trigger(w, 'rain', 8); addMod(c, 1.1, W.day, W.day + 60); fx.days = 8;
-      title = 'Mưa lành trên ' + c.name; text = 'Những đám mây kéo về đúng lúc. Ruộng đồng xanh lại, người dân ra đường đón mưa.';
-    } else if (key === 'harvest') {
-      addMod(c, 1.3, W.day, W.day + 90); fx.days = 90;
-      title = 'Mùa bội thu ở ' + c.name; text = 'Lúa trĩu bông, lưới đầy cá. Kho thóc không còn chỗ chứa.';
-    } else if (key === 'enlighten') {
-      const best = w.firms.filter((x) => x.alive && x.sector !== 'gold').sort((a, b) => b.workers.length - a.workers.length)[0];
-      if (best) { invent(w, best, { seeded: true }); fx.firm = best.id; }
-      fx.days = 2; title = 'Khai sáng ở ' + c.name; text = 'Một tia sáng rơi xuống ' + (best ? best.name : 'thành phố') + '. Một phát minh ra đời trong một đêm.';
-    } else if (key === 'heal') {
-      for (const h of w.households) { h.sick = 0; h.immune = 240; }
-      w.epi.state = 'none'; w.sickN = 0; fx.days = 3;
-      for (const u of W.war.units) if (u.city === cid && !u.dead) u.hp = u.hpMax;
-      title = 'Chữa lành ở ' + c.name; text = 'Cơn sốt lui đi trong một buổi sáng. Người ốm ngồi dậy, quân lính lành vết thương.';
-    } else if (key === 'truce') {
-      for (const f of W.war.factions) if (f.alive && atWarF(W, c.owner, f.id)) { makePeace(W, c.owner, f.id); W.war.rel[c.owner][f.id].truce = W.day + 360; W.war.rel[f.id][c.owner].truce = W.day + 360; }
-      fx.days = 6; title = 'Thần buộc ' + W.war.factions[c.owner].name + ' ngưng chiến'; text = 'Một vòng sáng bao quanh ' + c.name + '. Gươm súng hạ xuống, quân lính quay về. Không ai dám động binh trong một năm.';
+    if (key === 'tap') {
+      CX.fear(W, c, 0.5, 3); hitFirms(W, c, 1, 1, 0); calm(cid, 3);
+      title = 'Một ngón tay gõ lên vách kính trên ' + c.name;
+      text = 'Tiếng cộc vang khắp đảo. Người ta bỏ việc, ngước nhìn trời một ngày; quân đang đánh nhau quanh đảo đứng khựng lại.';
+    } else if (key === 'vent') {
+      const gl = c.glass || (c.glass = {});
+      gl.vent = W.day + 60;
+      addMod(c, 1.12, W.day, W.day + 60); heal(W, c, 0.4); pillarNudge(c, 'hea', 0.25);
+      const r = W.rand(); fx.risk = r < 0.25 ? 'locusts' : r < 0.45 ? 'cold' : null;
+      if (fx.risk === 'locusts') addMod(c, 0.8, W.day + 4, W.day + 24); else if (fx.risk === 'cold') addMod(c, 0.9, W.day + 2, W.day + 22);
+      title = 'Một lỗ thở được khoan trên vách kính ' + c.name;
+      text = 'Khí trời tràn vào, người ốm ngồi dậy, ruộng xanh hơn.' + (fx.risk === 'locusts' ? ' Nhưng một đàn châu chấu ngoài bể cũng lọt vào theo.' : fx.risk === 'cold' ? ' Nhưng gió lạnh ngoài bể cũng ùa vào theo.' : '');
+    } else if (key === 'crack') {
+      const gl = c.glass || (c.glass = {});
+      gl.crack = W.day + 60;
+      addMod(c, 0.8, W.day, W.day + 60); CX.goods(W, c, 0.88, 60); injure(W, c, 0.04, 10);
+      pillarNudge(c, 'hea', -0.15); pillarNudge(c, 'eco', -0.1);
+      title = 'Vách kính trên ' + c.name + ' nứt';
+      text = 'Vết nứt bò dài trên vòm. Khí ấm rò ra, gió lạnh lùa vào: ruộng mất mùa, người ốm, xưởng chậm lại, cho tới khi kính được vá.';
+    } else if (key === 'shatter') {
+      const gl = c.glass || (c.glass = {});
+      gl.broken = { at: W.day, collapse: W.day + 20 }; gl.crack = 0;
+      injure(W, c, 0.08, 15); CX.fear(W, c, 0.8, 20); addMod(c, 0.45, W.day, W.day + 20); hitFirms(W, c, 0.4, 20, 0.3); calm(cid, 20);
+      title = 'Vách kính trên ' + c.name + ' vỡ toang';
+      text = 'Bầu khí quyển trên đảo sụp. Trời tím thẫm, sao hiện giữa ban ngày, gió hút ra lỗ thủng. Nếu không vá trong hai mươi ngày, ' + c.name + ' sẽ chết.';
+    } else if (key === 'patch') {
+      const gl = c.glass || (c.glass = {}), was = gl.broken ? 'broken' : 'crack';
+      gl.crack = 0; gl.broken = null;
+      c.mods = (c.mods || []).filter((m) => !(m.food < 1 && m.until > W.day));
+      fx.was = was;
+      title = 'Vách kính trên ' + c.name + ' được vá';
+      text = was === 'broken' ? 'Một miếng kính mới dán kín lỗ thủng. Trời xanh trở lại, gió ngừng hút, người ' + c.name + ' sống sót.' : 'Vết nứt được dán kín. Khí ấm thôi rò ra, ruộng sẽ hồi lại.';
+    } else if (key === 'pour') {
+      T.level = 1; T.until = W.day + 40; T.kind = 'pour';
+      for (const x of live) { const f = fisheryOf(x); if (f) { f.downUntil = Math.max(f.downUntil || 0, W.day + 12); f.inv *= 0.6; } addMod(x, 0.93, W.day, W.day + 40); if (hasB(x, 'port') && W.rand() < 0.3) wreck(W, x, 1, Object.keys(x.bld).filter((k) => k !== 'port')); }
+      for (let z = 0; z < W.sea.stock.length; z++) W.sea.stock[z] = W.sea.stock[z].map((v, s) => Math.min(SPECIES[s].K, v * 1.25));
+      title = 'Bàn tay đổ thêm nước vào bể';
+      text = 'Mực biển dâng lên bốn mươi ngày. Bến cá ngập, ruộng ven bờ nhiễm mặn, nhưng cá về nhiều hơn bao giờ hết.';
+    } else if (key === 'drain') {
+      T.level = -1; T.until = W.day + 40; T.kind = 'drain';
+      for (const x of live) { const f = fisheryOf(x); if (f) f.downUntil = Math.max(f.downUntil || 0, W.day + 40); }
+      for (const u of X.units) if (!u.dead && u.naval) u.hp -= u.hpMax * 0.1;
+      title = 'Bàn tay rút bớt nước khỏi bể';
+      text = 'Biển cạn trơ đáy. Thuyền nằm nghiêng trên bùn, tàu buôn, tàu chiến nằm im bốn mươi ngày.';
+    } else if (key === 'tilt') {
+      const sides = [cid, (cid + 5) % 6, (cid + 1) % 6], high = (cid + 3) % 6, hit = [];
+      for (const j of sides) {
+        const x = W.cities[j]; if (!x.settled) continue;
+        const f = fisheryOf(x); if (f) { f.downUntil = W.day + 25; f.inv = 0; }
+        injure(W, x, j === cid ? 0.08 : 0.04, 14); hitUnits(W, j, 0.5, true); hitFirms(W, x, j === cid ? 0.3 : 0.15, 14, 0.4);
+        W.sea.stock[j] = W.sea.stock[j].map((v) => v * 0.7); hit.push(x.name);
+      }
+      fx.bridges = hitBridges(W, cid, 1, 30); fx.sides = sides; fx.high = high;
+      const hx = W.cities[high]; if (hx.settled) { const f = fisheryOf(hx); if (f) f.downUntil = Math.max(f.downUntil || 0, W.day + 10); }
+      title = 'Bàn tay nghiêng bể về phía ' + c.name;
+      text = 'Nước dồn cả về một phía. Sóng lớn đánh vào ' + hit.join(', ') + ': tàu lật, bến tan.' + (fx.bridges.length ? ' Cây cầu yếu bị cuốn trôi.' : '') + ' Ở ' + hx.name + ' biển rút trơ đáy.';
+    } else if (key === 'shade') {
+      c.dark = W.day + 10; addMod(c, 0.55, W.day, W.day + 10); CX.fear(W, c, 0.5, 10); CX.goods(W, c, 0.8, 10); calm(cid, 10);
+      title = 'Bàn tay che đèn trên ' + c.name;
+      text = 'Mười ngày tối như đêm. Ruộng ngừng lớn, chợ đóng, người ta thắp đuốc giữa trưa. Quân giặc quanh đảo cũng không dám tiến.';
+    } else if (key === 'lamp') {
+      trigger(w, 'drought', 40); c.heat = W.day + 30;
+      const hs = near(3, 'house'), fs = near(1, 'firm');
+      for (const idx of hs) ignite(W, c, 'house', idx, 'god');
+      for (const id of fs) ignite(W, c, 'firm', id, 'god');
+      if (!hs.length && !fs.length) CX.fire(W, c, 2, 0.2);
+      if (c.terrain.key === 'tundra') { hitFirms(W, c, 0.4, 20, 0.4); addMod(c, 0.7, W.day, W.day + 30); fx.melt = true; }
+      if (c.terrain.key === 'desert') addMod(c, 0.8, W.day, W.day + 60);
+      pillarNudge(c, 'eco', -0.12);
+      title = 'Bàn tay kéo đèn lại gần ' + c.name;
+      text = 'Nóng như lò. Giếng cạn, mái nhà bén lửa' + (fx.melt ? ', băng tan thành lũ tràn qua làng' : '') + '. Hạn hán kéo dài bốn mươi ngày.';
+    } else if (key === 'lid') {
+      for (const x of live) { addMod(x, 1.1, W.day, W.day + 30); heal(W, x, 0.2); faithShift(W, x, 0.04); }
+      if (live.length && W.rand() < 0.35) { const x = live[Math.floor(W.rand() * live.length)]; addMod(x, 0.8, W.day + 3, W.day + 18); fx.bugs = x.id; }
+      title = 'Bàn tay mở nắp bể';
+      text = 'Gió và mưa thật từ ngoài bể rơi xuống cả sáu đảo: ruộng xanh, người khoẻ.' + (fx.bugs != null ? ' Nhưng một đàn châu chấu cũng theo lá khô rơi xuống ' + W.cities[fx.bugs].name + '.' : '');
+    } else if (key === 'coin') {
+      fx.gold = !!discoverGold(w);
+      title = 'Một đồng xu khổng lồ rơi xuống ' + c.name;
+      text = 'Đồng xu cắm xuống đất, lấp lánh như mặt trời. Người ta đào quanh nó và gặp mạch vàng: tiền từ ngoài đổ vào, giá cả bắt đầu leo thang.';
+    } else if (key === 'seed') {
+      c.tree = { x: fx.at ? fx.at.x : 0, z: fx.at ? fx.at.z : 0, day: W.day };
+      addMod(c, 1.15, W.day, W.day + 240); pillarNudge(c, 'hea', 0.2); pillarNudge(c, 'eco', 0.12); heal(W, c, 0.3);
+      title = 'Một hạt giống rơi xuống ' + c.name;
+      text = 'Hạt giống to bằng căn nhà nứt vỏ, mọc thành cây khổng lồ trong một đêm. Đất quanh đó màu mỡ, mùa màng tốt suốt nhiều năm.';
+    } else if (key === 'pebble') {
+      const hs = near(4, 'house'), fs = near(2, 'firm');
+      for (const idx of hs) { const d = ignite(W, c, 'house', idx, 'god'); if (d && W.rand() < 0.6) { d.state = 'ruin'; d.until = W.day + 20; } }
+      for (const id of fs) { const d = ignite(W, c, 'firm', id, 'god'); if (d) { d.state = 'ruin'; d.until = W.day + 20; const f = w.firms.find((x) => x.id === id); if (f) f.downUntil = Math.max(f.downUntil || 0, d.until); } }
+      if (!hs.length && !fs.length) CX.fire(W, c, 3, 0.6);
+      injure(W, c, 0.05, 15); CX.fear(W, c, 0.5, 10); pillarNudge(c, 'eco', -0.1);
+      fx.houses = hs; fx.firms = fs;
+      title = 'Một viên sỏi khổng lồ rơi xuống ' + c.name;
+      text = 'Như thiên thạch, viên sỏi đâm xuống ' + (hs.length + fs.length ? hs.length + fs.length + ' ngôi nhà và xưởng' : 'giữa thành') + ', để lại hố sâu và khói lửa.';
+    } else if (key === 'shake') {
+      let down = 0, hurt = 0;
+      for (const x of live) { const res = RESIST[x.era]; down += hitFirms(W, x, 0.3 * res, 10, 0.2).length; hurt += injure(W, x, 0.06 * res, 14); CX.fire(W, x, 2, 0.7); markHit(x, key, P.name, W.day); }
+      for (const f of X.factions) for (const g of X.factions) if (f.id < g.id && atWarF(W, f.id, g.id)) { makePeace(W, f.id, g.id); X.rel[f.id][g.id].truce = W.day + 90; X.rel[g.id][f.id].truce = W.day + 90; }
+      title = 'Bàn tay lắc cả bể';
+      text = 'Sáu đảo cùng rung chuyển. ' + down + ' nơi làm ăn đổ sập, ' + hurt + ' người bị thương. Mọi cuộc chiến buộc phải dừng một mùa.';
     }
-    // thần chạm vào một chỗ: thiên tai lấy chỗ đó làm tâm, những xưởng và ngôi nhà gần đó chịu trước
-    if (spot && (spot.x || spot.z)) {
-      fx.at = { x: spot.x, z: spot.z };
-      if (['quake', 'tornado', 'volcano', 'fire', 'flood'].includes(key)) {
-        const near = (spot.firms || []).filter((id) => w.firms.some((f) => f.id === id && f.alive)).slice(0, key === 'fire' ? 3 : 4);
-        fx.firms = [...near, ...(fx.firms || []).filter((id) => !near.includes(id))];
-        for (const id of near) { const f = w.firms.find((x) => x.id === id); f.downUntil = Math.max(f.downUntil || 0, W.day + (key === 'fire' ? 6 : 14)); }
-        for (const idx of (spot.houses || []).slice(0, key === 'fire' ? 2 : 3)) { const d = ignite(W, c, 'house', idx, 'god'); if (d && (key === 'quake' || key === 'tornado')) { d.state = 'ruin'; d.until = W.day + 16; } }
+    // dân thấy bàn tay: sợ mà tin, hay biết ơn mà tin
+    const shift = P.kind === 'bad' ? 0.2 : P.kind === 'good' ? 0.12 : 0.15;
+    if (c) {
+      faithShift(W, c, shift);
+      if (P.kind === 'bad') markHit(c, key, P.name, W.day);
+      for (const j of [(cid + 5) % 6, (cid + 1) % 6]) if (W.cities[j].settled) faithShift(W, W.cities[j], shift * 0.25);
+    } else for (const x of live) faithShift(W, x, shift * 0.5);
+    G.fx.push(fx);
+    wstory(W, 'god-' + key, P.kind === 'bad' ? 'epic' : 'major', title, text, c ? { kind: 'land', city: cid } : null, { city: c ? cid : -1, power: key });
+    return { ok: true, fx };
+  }
+  /* ----- Kính, nước và những đảo phải bắt đầu lại ----- */
+  // mỗi ngày: lỗ thở chữa bệnh dần; kính nứt làm người ốm; kính vỡ thì dân chạy, người ngã, hết hai mươi ngày thì thành chết
+  function glassDay(W) {
+    const T = W.tank;
+    if (T && T.until && W.day >= T.until) {
+      const was = T.kind; T.level = 0; T.until = 0; T.kind = null;
+      if (was === 'drain') for (let z = 0; z < W.sea.stock.length; z++) W.sea.stock[z] = W.sea.stock[z].map((v, s) => Math.min(SPECIES[s].K, v * 1.2));
+      wstory(W, 'tank', 'small', 'Mực nước trong bể trở lại như cũ', was === 'drain' ? 'Nước về, cá dồn lại các vùng biển, thuyền lại ra khơi.' : 'Nước rút bớt, bến cá khô ráo trở lại.', null, { city: -1 });
+    }
+    for (const c of W.cities) {
+      if (!c.settled || !c.glass) continue;
+      const gl = c.glass;
+      if (gl.vent > W.day && W.rand() < 0.3) heal(W, c, 0.06);
+      if (gl.crack > W.day && W.rand() < 0.2) injure(W, c, 0.01, 6);
+      if (gl.broken) {
+        injure(W, c, 0.02, 8);
+        if (!c.occ) occInit(c);
+        if ((W.day - gl.broken.at) % 4 === 3) {
+          let k = 0; for (const h of c.w.households) { if (k >= 8) break; if (!h.away && W.rand() < 0.5) { h.away = 1; k++; } }
+          const r = flee(W, c, 8, false);
+          if (r) wstory(W, 'refugee', 'major', r.n + ' gia đình bỏ ' + c.name + ' chạy sang ' + r.host.name, 'Trời trên ' + c.name + ' tím thẫm, khó thở. Họ gánh đồ đi trong gió hút.', r.bridge != null ? { kind: 'bridge', bridge: r.bridge } : { kind: 'land', city: r.host.id }, { city: c.id, to: r.host.id });
+        }
+        if (W.day >= gl.broken.collapse) resetCity(W, c, 'glass');
       }
     }
-    pillarTouch(W, c, key, fx);
-    if (P.kind === 'bad') markHit(c, key, P.name, W.day);
-    faithShift(W, c, P.kind === 'bad' ? 0.25 : 0.15);
-    for (const j of [(cid + 5) % 6, (cid + 1) % 6]) if (W.cities[j].settled) faithShift(W, W.cities[j], P.kind === 'bad' ? 0.06 : 0.03);
-    G.fx.push(fx);
-    wstory(W, 'god-' + key, P.kind === 'bad' ? 'epic' : 'major', title, text, { kind: 'land', city: cid }, { city: cid, power: key });
-    return { ok: true, fx };
+  }
+  // một đảo chết và bắt đầu lại: thành, quân, cầu, của cải đều mất; một thời gian sau bộ lạc mới đến từ thời nguyên thuỷ
+  function resetCity(W, c, why) {
+    const X = W.war, old = c.owner, name = c.name, era = c.era;
+    for (const u of X.units) if (u.city === c.id && !u.dead) { u.dead = true; release(W, u, false); }
+    X.units = X.units.filter((u) => !u.dead);
+    for (const B of W.bridges) if ((B.a === c.id || B.b === c.id) && B.level >= 0) { B.level = B.era = -1; B.build = null; }
+    if (X.wonder && X.wonder.city === c.id) X.wonder = null;
+    for (const k of ['bld', 'queue', 'stance', 'pil', 'pilDrv', 'dmg', 'dmgSeq', 'siegeHits', 'game', 'occ', 'legend', 'mods', 'gmods', 'hp', 'hpMax', 'glass', 'landHit', 'landBy', 'heldSince', 'sieged', 'fallout', 'nuke', 'volcano', 'pace', 'aiSince', 'tradeEma', 'dark', 'heat', 'tree', 'casualties', 'kills', 'lastHit', 'hunters', 'burnStory']) delete c[k];
+    c.settled = false; c.w = null; c.era = 0; c.learned = 0; c.founded = -1; c.owner = c.id; c.faith = FAITH_BASE[0] * 0.8;
+    c.resets = (c.resets || 0) + 1; c.resetAt = W.day; c.resettle = W.day + 40 + Math.floor(W.rand() * 40);
+    if (W.chaos) { delete W.chaos.plan[c.id]; delete W.chaos.used[c.id]; }
+    if (X.on && old >= 0 && !W.cities.some((x) => x.settled && x.owner === old)) {
+      X.factions[old].alive = false;
+      for (const f of X.factions) { X.rel[old][f.id].state = 'peace'; X.rel[f.id][old].state = 'peace'; }
+    }
+    wstory(W, 'collapse', 'epic', name + ' chết', (why === 'glass' ? 'Không ai vá vách kính kịp. ' : '') + 'Sau những ngày khó thở cuối cùng, ' + name + ' thời ' + ERAS[era].name.toLowerCase() + ' chỉ còn là đảo hoang. Một ngày nào đó sẽ có người khác đến.', { kind: 'land', city: c.id }, { city: c.id, from: era });
+  }
+  /* ----- Mưa tên lửa, bom, đại bác: thành trì có thể sập ----- */
+  function missileDay(W) {
+    const X = W.war;
+    if (!X.on) return;
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) {
+      if (i === j || !X.factions[i].alive || !X.factions[j].alive || !atWarF(W, i, j)) continue;
+      const A = capitalOf(W, i), B = capitalOf(W, j);
+      if (!A || !B || A.era < 3) continue;
+      if (X.calm && ((X.calm[A.id] || 0) > W.day || (X.calm[B.id] || 0) > W.day)) continue;
+      if (W.rand() > (A.era >= 6 ? 1 / 45 : A.era >= 4 ? 1 / 80 : 1 / 130)) continue;
+      strike(W, A, B);
+    }
+  }
+  function strike(W, A, B) {
+    const X = W.war, kind = A.era >= 8 ? 'beam' : A.era >= 6 ? 'missile' : A.era >= 5 ? 'bomber' : 'cannon';
+    const n = kind === 'cannon' ? 2 : 3 + Math.floor(W.rand() * 3);
+    let fires = 0;
+    for (let k = 0; k < n; k++) { const [kd, ref] = siegeTarget(W, B); if (ignite(W, B, kd, ref, 'missile')) fires++; }
+    B.hp = Math.max(1, B.hp - B.hpMax * (0.06 + W.rand() * 0.08)); B.lastHit = W.day;
+    let fell = null;
+    if (B.bld && W.rand() < (kind === 'cannon' ? 0.25 : 0.42)) {
+      const opts = ['wall', 'tower', 'barracks', 'forge', 'market', 'academy'].filter((t) => hasB(B, t));
+      if (opts.length) { fell = opts[Math.floor(W.rand() * opts.length)]; wreck(W, B, 1, Object.keys(B.bld).filter((t) => t !== fell)); }
+    }
+    injure(W, B, 0.02, 10); CX.fear(W, B, 0.4, 8);
+    const WHAT = { cannon: 'Đại bác', bomber: 'Máy bay ném bom', missile: 'Tên lửa', beam: 'Tia năng lượng' };
+    W.chaos.fx.push({ key: 'strike', city: B.id, from: A.id, kind, n, fell, by: A.owner, day: W.day });
+    wstory(W, 'strike', 'major', WHAT[kind] + ' của ' + X.factions[A.owner].name + ' trút xuống ' + B.name, n + ' quả trúng thành, ' + fires + ' nơi bốc cháy.' + (fell ? ' ' + bName(B, fell) + ' đổ sập.' : ''), { kind: 'land', city: B.id }, { city: B.id, from: A.id, fell });
+  }
+  /* ----- Một hai đảo bị đẩy lùi về thời trước, tụt sau các đảo khác ----- */
+  const SETBACK = {
+    fire: (c) => ['Đại hoả hoạn thiêu rụi ' + c.name, 'Lửa cháy suốt mười ngày, từ chợ lan sang trường, sang đền. Sách vở, máy móc, ruộng đồng thành tro.'],
+    missiles: (c) => ['Mưa tên lửa san phẳng ' + c.name, 'Không ai biết những quả tên lửa đến từ đâu. Tường thành đổ, nhà máy sập, người sống sót phải học lại từ đầu.'],
+    civil: (c) => ['Nội chiến xé nát ' + c.name, 'Hai phe trong thành đánh nhau cả năm. Khi tiếng súng dứt, chẳng còn ai nhớ cách làm những thứ của thời trước.'],
+  };
+  function setbackDay(W) {
+    if (!W.cfg.pace || W.cfg.noSetback) return;
+    if (!W.setbacks) {
+      if (W.day < 700) return;
+      const n = 1 + (W.rand() < 0.5 ? 1 : 0);
+      W.setbacks = [];
+      for (let k = 0; k < n; k++) W.setbacks.push({ day: 900 + Math.floor(W.rand() * 1700) + k * 150, done: false });
+    }
+    for (const S of W.setbacks) {
+      if (S.done || W.day < S.day) continue;
+      const live = W.cities.filter((x) => x.settled), top = Math.max(...live.map((x) => x.era));
+      const pool = live.filter((x) => x.era >= 2 && x.era < top && !(x.glass && x.glass.broken) && !W.setbacks.some((q) => q.city === x.id));
+      if (!pool.length) { S.day += 30; continue; }
+      S.done = true;
+      setback(W, pool[Math.floor(W.rand() * pool.length)], S);
+    }
+  }
+  function setback(W, c, S) {
+    const from = c.era, drop = c.era >= 6 ? 2 : 1, why = c.era >= 5 ? (W.rand() < 0.6 ? 'missiles' : 'fire') : W.rand() < 0.55 ? 'fire' : 'civil';
+    CX.fire(W, c, 10, 0.55); injure(W, c, 0.1, 20); CX.fear(W, c, 0.7, 25); hitFirms(W, c, 0.4, 30, 0.5);
+    if (c.bld) wreck(W, c, 2, ['wonder']);
+    c.era = Math.max(0, c.era - drop);
+    c.w.cfg.era = c.era; renameFirms(c.w);
+    const extra = knowledgeOf(c) - ERAS[c.era].know;
+    if (extra > 0) c.learned -= extra;
+    if (c.pil) for (const P of PILLARS) c.pil[P.key] = Math.min(c.pil[P.key], (c.era + 0.3) * needOf(c, P.key));
+    if (c.hpMax) { c.hpMax = hpMaxOf(c); c.hp = Math.max(1, c.hpMax * 0.2); c.lastHit = W.day; }
+    S.city = c.id; S.why = why; S.from = from; S.to = c.era;
+    const [title, text] = SETBACK[why](c);
+    W.chaos.fx.push({ key: 'setback', city: c.id, why, day: W.day });
+    wstory(W, 'setback', 'epic', title, text + ' ' + c.name + ' lùi từ thời ' + ERAS[from].name.toLowerCase() + ' về thời ' + ERAS[c.era].name.toLowerCase() + '.', { kind: 'land', city: c.id }, { city: c.id, from, to: c.era, why });
   }
   function godDay(W) {
     const G = W.god, live = W.cities.filter((c) => c.settled);
@@ -2608,15 +2769,6 @@
     }
   }
   function pillarNudge(c, k, amt) { if (!c.pil) return; const need = needOf(c, k); c.pil[k] = clampN(c.pil[k] + amt * need, c.era * need * 0.85, (c.era + 1.6) * need); }
-  // phép của thần chạm tới trụ cột: chữa lành thì y tế lên, khai sáng thì học vấn lên, thiên tai thì ngược lại
-  function pillarTouch(W, c, key, fx) {
-    const T = { heal: [['hea', 0.3]], enlighten: [['edu', 0.3]], harvest: [['eco', 0.22]], rain: [['eco', 0.08], ['hea', 0.06]], truce: [['tra', 0.1]], plague: [['hea', -0.25]], drought: [['eco', -0.12]], quake: [['eco', -0.1], ['mil', -0.08]], flood: [['eco', -0.1]], volcano: [['eco', -0.12], ['hea', -0.1]], tsunami: [['tra', -0.15]], tornado: [['eco', -0.06]], fire: [['eco', -0.05]] }[key] || [];
-    for (const [k, a] of T) pillarNudge(c, k, a);
-    // thiên tai để lại dấu vết trên nhà xưởng
-    const firms = fx && fx.firms ? fx.firms.slice(0, 4) : [];
-    if (key === 'fire' || key === 'volcano') for (const id of firms) ignite(W, c, 'firm', id, 'god');
-    if (key === 'quake' || key === 'tornado') for (const id of firms.slice(0, 3)) { const d = ignite(W, c, 'firm', id, 'god'); if (d) { d.state = 'ruin'; d.until = W.day + 18; } }
-  }
 
   /* =============== Dấu vết chiến tranh: lửa, đổ nát, dựng lại =============== */
   // Mỗi trận công thành đốt cháy nhà xưởng; cháy xong có nơi sập thành đống đổ nát, xưởng sập thì ngừng làm ra hàng
@@ -3200,198 +3352,6 @@
     }
   }
 
-  /* =============== Thần mượn thân: phép của chim và mèo =============== */
-  // Vị thần hoá thành chim hay mèo thì dùng phép ngay tại chỗ con vật. Lớp hình ảnh dò quanh con vật rồi gửi vào "chỗ":
-  // toạ độ, những ngôi nhà, xưởng, đám cháy gần nhất (gần trước xa sau). Phép rẻ, hồi nhanh, chỉ tác dụng quanh đó, và hậu quả
-  // có thật trong nền kinh tế và chiến tranh: lửa tắt, lính ngã, nhà được trả lại, người khỏi bệnh, người đi lánh nạn.
-  // Mỗi lần giúp, dân kể lại thành truyền thuyết và tin thần hơn (thần lực hồi nhanh hơn); đủ năm lần thì dựng tượng con vật.
-  const CREATURE = {
-    rain: { body: 'bird', icon: '🌧', name: 'Mưa lành', cost: 10, cool: 12, info: 'Mây kéo tới dưới cánh chim: lửa quanh đó tắt, hạn hán chấm dứt, ruộng được tưới.' },
-    bolt: { body: 'bird', icon: '⚡', name: 'Sét trời', cost: 14, cool: 16, info: 'Sét đánh trúng toán giặc gần nhất đang vây hay đang chiếm thành bên dưới.' },
-    gust: { body: 'bird', icon: '🌬', name: 'Gió ngược', cost: 12, cool: 18, info: 'Gió quật lùi quân giặc trên cầu và trên biển, mấy ngày không vào được thành.' },
-    flock: { body: 'bird', icon: '🐦', name: 'Gọi đàn chim', cost: 10, cool: 20, info: 'Đàn chim hàng nghìn con mổ lính giặc quanh thành, giặc tan hàng.' },
-    letter: { body: 'bird', icon: '✉', name: 'Thư bay', cost: 6, cool: 14, info: 'Mang tin cho thành bên dưới: tường được vá kịp, dân hết sợ, lòng dân kháng chiến lên.' },
-    sun: { body: 'bird', icon: '☀', name: 'Nắng vàng', cost: 8, cool: 16, info: 'Ruộng dưới cánh chim được mùa, vết cháy xanh cỏ lại, thú về bãi săn.' },
-    alarm: { body: 'cat', icon: '🔔', name: 'Cào cửa báo động', cost: 5, cool: 10, info: 'Nhà quanh mèo tỉnh giấc kịp: hết sợ, dập được lửa, giặc không lẻn vào được mấy ngày.' },
-    gnaw: { body: 'cat', icon: '🦷', name: 'Gặm dây cửa', cost: 8, cool: 14, info: 'Giải phóng ngôi nhà bị giặc chiếm gần mèo nhất, gia đình từ trại tạm về nhà.' },
-    omen: { body: 'cat', icon: '🐈‍⬛', name: 'Mèo đen qua đường', cost: 10, cool: 18, info: 'Lính giặc quanh mèo hoảng sợ bỏ chạy, lòng dân lên, dân bớt sợ.' },
-    rats: { body: 'cat', icon: '🐀', name: 'Bắt chuột', cost: 6, cool: 14, info: 'Kho lương hết chuột: lương không mốc, dịch không có đường lan, người sốt khỏi dần.' },
-    purr: { body: 'cat', icon: '💗', name: 'Rù rì chữa lành', cost: 8, cool: 14, info: 'Người ốm, người bị thương trong những nhà quanh mèo khỏi hẳn; nhà có tang nguôi ngoai.' },
-    path: { body: 'cat', icon: '🐾', name: 'Dẫn lối bí mật', cost: 10, cool: 22, info: 'Dẫn người ở trại tạm theo lối bí mật đi lánh nạn; thành bị vây thì dẫn đoàn tiếp tế vào.' },
-  };
-  const CREATURE_TITLE = {
-    rain: (c) => 'Con chim xanh gọi mưa xuống ' + c.name, bolt: (c) => 'Sét theo cánh chim xanh giáng xuống ' + c.name, gust: (c) => 'Gió ngược thổi bạt quân giặc ở ' + c.name,
-    flock: (c) => 'Đàn chim vây đánh quân giặc ở ' + c.name, letter: (c) => 'Thư bay tới ' + c.name, sun: (c) => 'Nắng vàng trên ruộng ' + c.name,
-    alarm: (c) => 'Con mèo cào cửa báo động ở ' + c.name, gnaw: (c) => 'Con mèo trả lại một ngôi nhà ở ' + c.name, omen: (c) => 'Mèo đen qua đường, giặc ở ' + c.name + ' bỏ chạy',
-    rats: (c) => 'Con mèo bắt chuột trong kho lương ' + c.name, purr: (c) => 'Con mèo rù rì chữa bệnh ở ' + c.name, path: (c) => 'Con mèo dẫn lối bí mật ở ' + c.name,
-  };
-  const laneNear = (W, u, cid) => { const L = W.war.lanes[u.lane]; return !!L && ((L.a === cid && u.x < 0.6) || (L.b === cid && u.x > 0.4)); };
-  const foesNear = (W, c) => (W.war.on ? W.war.units.filter((u) => !u.dead && u.owner !== c.id && atWarF(W, u.owner, c.id) && ((u.lane && laneNear(W, u, c.id)) || (!u.lane && u.city === c.id))) : []);
-  // phép này có việc để làm ở đây không (lý do khi không)
-  function creatureNeed(W, key, c, spot) {
-    const O = c.occ || { h: {}, camp: 0 }, nearH = spot.houses || [];
-    if (key === 'gnaw' && !nearH.some((i) => O.h[i])) return 'Quanh mèo không có ngôi nhà nào bị giặc chiếm';
-    if (key === 'purr' && !c.w.households.some((h) => h.sick > 0)) return 'Ở ' + c.name + ' không ai ốm';
-    if (key === 'alarm' && !nearH.length) return 'Quanh mèo không có nhà nào';
-    if (key === 'path' && !(O.camp > 0) && !(W.day - (c.landHit == null ? -99 : c.landHit) <= 6) && c.owner === c.id) return 'Không ai cần lánh nạn, thành cũng không bị vây';
-    return null;
-  }
-  function creatureOffer(W, key, cid, spot) {
-    const P = CREATURE[key], c = W.cities[cid], G = W.god;
-    if (!P) return { ok: false, reason: '' };
-    if (!c || !c.settled) return { ok: false, reason: 'Ở đây chưa có ai để giúp', cost: P.cost };
-    const cd = Math.max(0, (G.cool['c:' + key] || 0) - W.day);
-    if (cd) return { ok: false, reason: P.name + ' còn hồi ' + cd + ' ngày', cost: P.cost, cd };
-    if (G.power < P.cost) return { ok: false, reason: 'Chưa đủ thần lực', cost: P.cost };
-    const need = creatureNeed(W, key, c, spot || {});
-    if (need) return { ok: false, reason: need, cost: P.cost, idle: true };
-    return { ok: true, cost: P.cost };
-  }
-  // những phép đang có việc quanh con vật: để giao diện làm sáng nút
-  function creatureHints(W, cid, spot) {
-    const c = W.cities[cid], out = {};
-    if (!c || !c.settled) return out;
-    spot = spot || {};
-    const O = c.occ || { h: {}, camp: 0 }, foes = foesNear(W, c).length, held = c.owner !== c.id, sieged = W.day - (c.landHit == null ? -99 : c.landHit) <= 3;
-    const fires = (c.dmg || []).filter((d) => d.state === 'fire').length, sick = c.w.households.some((h) => h.sick > 0);
-    out.rain = fires > 0 || c.w.phen.drought > 0; out.bolt = foes > 0; out.gust = sieged || foes > 0; out.flock = foes > 0 || held; out.letter = sieged || held;
-    out.sun = (c.dmg || []).some((d) => d.state === 'scorch') || (c.mods || []).some((m) => m.food < 1 && m.until > W.day);
-    out.alarm = sieged || (spot.dmg || []).length > 0; out.gnaw = (spot.houses || []).some((i) => O.h[i]); out.omen = held || foes > 0;
-    out.rats = c.w.epi.state !== 'none' || (c.mods || []).some((m) => m.food < 1 && m.until > W.day); out.purr = sick; out.path = O.camp > 0 || sieged;
-    return out;
-  }
-  function creatureAct(W, key, cid, spot) {
-    spot = spot || {};
-    const o = creatureOffer(W, key, cid, spot);
-    if (!o.ok) return o;
-    const P = CREATURE[key], c = W.cities[cid], w = c.w, G = W.god, X = W.war;
-    if (!c.occ) occInit(c);
-    const O = c.occ, fx = { key, city: cid, day: W.day, body: P.body, at: { x: spot.x || 0, z: spot.z || 0 } };
-    const nearH = (spot.houses || []).slice(0, 6), nearD = spot.dmg || [];
-    const people = (hs) => { const out = []; for (const i of hs) for (let j = 0; j < 4; j++) { const h = w.households[i * 4 + j]; if (h) out.push(h); } return out; };
-    const enemy = c.owner !== c.id ? c.owner : c.landBy != null ? c.landBy : -1;
-    let text = '';
-    if (key === 'rain') {
-      const out = [];
-      for (const d of c.dmg || []) if (d.state === 'fire' && (nearD.includes(d.id) || W.rand() < 0.4)) { d.state = 'scorch'; d.until = W.day + 10; d.saved = true; out.push(d.id); if (d.kind === 'firm') { const f = w.firms.find((x) => x.id === d.ref); if (f) f.downUntil = Math.min(f.downUntil || 0, W.day + 4); } }
-      const dry = w.phen.drought > 0;
-      w.phen.drought = 0; addMod(c, 1.12, W.day, W.day + 25);
-      fx.out = out;
-      text = (out.length ? out.length + ' đám cháy tắt phụt dưới mưa. ' : '') + (dry ? 'Hạn hán chấm dứt. ' : '') + 'Ruộng quanh đó được tưới đẫm, mùa này sẽ khá hơn.';
-    } else if (key === 'bolt') {
-      const foes = foesNear(W, c);
-      if (foes.length) {
-        const u = foes[Math.floor(W.rand() * foes.length)], killer = c.owner === c.id ? c.owner : c.id;
-        fx.lane = u.lane || null; fx.x = u.x; fx.unitCity = u.city; fx.killed = 0; fx.by = u.owner;
-        for (const v of foes) if (v === u || (v.lane && v.lane === u.lane && Math.abs(v.x - u.x) < 0.12)) { v.hp -= v === u ? v.hpMax * 2 : v.hpMax * 0.4; v.lastBy = killer; }
-        for (const v of X.units) if (v.hp <= 0 && !v.dead) { die(W, v); fx.killed++; }
-        X.units = X.units.filter((v) => !v.dead);
-        text = 'Sét đánh trúng toán quân ' + facName(W, u.owner) + (fx.killed > 1 ? ', ' + fx.killed + ' toán ngã xuống.' : ', cả toán ngã xuống.') + ' Quân giặc quanh đó vứt vũ khí mà chạy.';
-        if (c.owner !== c.id) addResist(c, 0.08);
-      } else {
-        CX.fear(W, c, 0.1, 4); CX.faith(W, c, 0.06); fx.killed = 0;
-        text = 'Sét giáng xuống khoảng đất trống giữa ' + c.name + '. Không trúng ai, nhưng cả thành nhìn lên trời.';
-      }
-    } else if (key === 'gust') {
-      let n = 0;
-      for (const u of X.units) {
-        if (u.dead || !u.lane || u.owner === c.owner || !atWarF(W, u.owner, c.owner)) continue;
-        const L = X.lanes[u.lane];
-        if (!L || (L.a !== cid && L.b !== cid)) continue;
-        u.px = u.x; u.x = clampN(u.x + (L.a === cid ? 0.3 : -0.3), 0, 1); u.hp -= u.hpMax * 0.06; n++;
-      }
-      for (const u of X.units) if (u.hp <= 0 && !u.dead) die(W, u);
-      X.units = X.units.filter((u) => !u.dead);
-      O.block = Math.max(O.block || 0, W.day + 4);
-      fx.pushed = n;
-      text = n ? 'Gió ngược quật ' + n + ' toán giặc lùi lại trên cầu và trên biển. Mấy ngày tới chúng chưa vào được thành.' : 'Gió mạnh thổi qua ' + c.name + ', lá bay mù trời. Đường vào thành vắng tanh.';
-    } else if (key === 'flock') {
-      const n1 = hitFoes(W, c, 0.14), n2 = c.owner !== c.id ? hitGarrison(W, c, 0.12) : 0;
-      O.block = Math.max(O.block || 0, W.day + 6);
-      if (c.owner !== c.id) addResist(c, 0.06);
-      fx.hit = n1 + n2; fx.by = enemy;
-      text = fx.hit ? 'Đàn chim kéo đến đen trời, mổ vào ' + fx.hit + ' toán lính giặc. Giặc tan hàng, mấy ngày không dám tới gần.' : 'Đàn chim bay vòng trên ' + c.name + ', che kín cả bầu trời. Ai đang định đánh thành cũng phải nghĩ lại.';
-    } else if (key === 'letter') {
-      const sieged = W.day - (c.landHit == null ? -99 : c.landHit) <= 3;
-      hpUp(c, sieged ? 0.12 : 0.05);
-      let calm = 0;
-      for (const h of w.households) if (h.fear > 0 && W.rand() < 0.6) { h.fear = 0; h.calm = 10; calm++; }
-      if (c.owner !== c.id) addResist(c, 0.14);
-      CX.pil(c, 'mil', 0.03); CX.pil(c, 'edu', 0.02);
-      fx.calm = calm;
-      text = (c.owner !== c.id ? 'Thư bay tới những người kháng chiến ở ' + c.name + ', lòng dân lên cao. ' : sieged ? 'Thư báo cổng nào giặc sắp đánh, quân giữ thành vá kịp tường. ' : 'Thư bay mang tin lành tới ' + c.name + '. ') + (calm ? calm + ' gia đình hết sợ.' : '');
-    } else if (key === 'sun') {
-      addMod(c, 1.22, W.day, W.day + 30);
-      let n = 0;
-      for (const d of c.dmg || []) if (d.state === 'scorch' && W.rand() < 0.7) { d.state = 'gone'; n++; }
-      c.dmg = (c.dmg || []).filter((d) => d.state !== 'gone');
-      if (c.game && c.game.K) c.game.stock = Math.min(c.game.K, c.game.stock + c.game.K * 0.15);
-      CX.pil(c, 'eco', 0.03);
-      fx.regrow = n;
-      text = 'Nắng vàng rót xuống ruộng ' + c.name + ', lúa trổ đòng thấy rõ. ' + (n ? n + ' vết cháy xanh cỏ trở lại. ' : '') + 'Một tháng tới kho lương đầy hơn.';
-    } else if (key === 'alarm') {
-      const hs = people(nearH);
-      for (const h of hs) { h.fear = 0; h.calm = 15; }
-      let healed = 0;
-      for (const h of hs) if (h.sick > 0 && W.rand() < 0.5) { h.sick = 0; healed++; }
-      O.block = Math.max(O.block || 0, W.day + 5);
-      const saved = (c.dmg || []).filter((d) => d.state === 'fire' && nearD.includes(d.id)).map((d) => { d.saved = true; return d.id; });
-      occScene(W, c, 'flee', 2, { house: nearH[0], drill: true });
-      fx.houses = nearH; fx.saved = saved;
-      text = 'Con mèo cào cửa từng nhà lúc nửa đêm. ' + hs.length + ' người tỉnh dậy kịp' + (saved.length ? ', dập được ' + saved.length + ' đám lửa' : '') + (healed ? ', ' + healed + ' người bị thương được đưa đi chữa' : '') + '. Mấy ngày tới giặc không lẻn vào được.';
-    } else if (key === 'gnaw') {
-      const idx = nearH.find((i) => O.h[i]), by = O.h[idx].by;
-      freeHouses(W, c, (o, i) => i === idx);
-      if (c.owner !== c.id) hitGarrison(W, c, 0.04);
-      addResist(c, 0.06);
-      occScene(W, c, 'cheer', 3, { house: idx });
-      fx.house = idx; fx.by = by;
-      text = 'Con mèo gặm đứt dây trói cửa ngôi nhà số ' + (idx + 1) + ', lính gác ' + facName(W, by) + ' ngủ gật bị trói ngược lại. Bốn gia đình từ trại tạm về nhà.';
-    } else if (key === 'omen') {
-      const n1 = c.owner !== c.id ? hitGarrison(W, c, 0.08) : 0, n2 = hitFoes(W, c, 0.06);
-      addResist(c, 0.12);
-      O.scenes = O.scenes.filter((s) => s.kind !== 'patrolx' && s.kind !== 'curfew');
-      occScene(W, c, 'rout', 3, { by: enemy });
-      let calm = 0;
-      for (const h of w.households) if (h.fear > 0 && W.rand() < 0.3) { h.fear = 0; calm++; }
-      fx.hit = n1 + n2; fx.by = enemy;
-      text = 'Một con mèo đen đi chậm rãi qua trước mặt lính ' + (enemy >= 0 ? facName(W, enemy) : 'tuần') + '. Chúng làm dấu rồi bỏ chạy về trại' + (fx.hit ? ', ' + fx.hit + ' toán bị thương vì giẫm lên nhau' : '') + '. Lệnh giới nghiêm bị bỏ.';
-    } else if (key === 'rats') {
-      let cured = 0;
-      for (const h of w.households) if (h.sick > 0 && W.rand() < 0.35) { h.sick = 0; cured++; }
-      c.mods = (c.mods || []).filter((m) => !(m.food < 1 && m.until > W.day));
-      addMod(c, 1.08, W.day, W.day + 25);
-      CX.pil(c, 'hea', 0.03);
-      fx.cured = cured; fx.firm = (spot.firms || [])[0];
-      text = 'Con mèo bắt sạch chuột trong kho lương. Lương không còn mốc, ' + (cured ? cured + ' người khỏi sốt.' : 'dịch không có đường lan.');
-    } else if (key === 'purr') {
-      const hs = people(nearH);
-      let healed = 0;
-      for (const h of hs) { if (h.sick > 0) { h.sick = 0; h.immune = Math.max(h.immune || 0, 60); healed++; } h.fear = 0; h.grief = 0; }
-      for (const h of w.households) if (h.sick > 0 && W.rand() < 0.15) { h.sick = 0; healed++; }
-      CX.pil(c, 'hea', 0.03);
-      fx.healed = healed; fx.houses = nearH;
-      text = 'Con mèo nằm rù rì bên giường người ốm. ' + healed + ' người khỏi bệnh, những nhà có tang cũng nguôi ngoai.';
-    } else if (key === 'path') {
-      const r = O.camp > 0 ? flee(W, c, 8 + Math.floor(W.rand() * 8), false) : null;
-      if (r) { fx.to = r.host.id; fx.bridge = r.bridge; fx.n = r.n; text = 'Con mèo dẫn ' + r.n + ' gia đình ở trại tạm theo lối bí mật sang ' + r.host.name + ', không ai bị giặc bắt gặp.'; }
-      else { CX.food(W, c, 1.15, 18); hpUp(c, 0.05); fx.supply = true; text = 'Con mèo dẫn đoàn tiếp tế theo lối bí mật vào ' + c.name + '. Lương đủ cho một tháng, tường được vá thêm.'; }
-      addResist(c, 0.04);
-    }
-    G.power -= P.cost; G.cool['c:' + key] = W.day + P.cool; G.acts++; G.used['c:' + key] = (G.used['c:' + key] || 0) + 1;
-    c.legend = c.legend || { bird: 0, cat: 0 };
-    c.legend[P.body]++;
-    faithShift(W, c, 0.04);
-    const place = fx.house != null ? { kind: 'house', id: fx.house } : { kind: 'plaza' };
-    wstory(W, 'miracle', 'major', CREATURE_TITLE[key](c), text, place, { city: cid, power: key, body: P.body });
-    let statue = null;
-    if (c.legend[P.body] === 5) {
-      statue = P.body;
-      wstory(W, 'statue', 'epic', 'Người ' + c.name + ' dựng tượng ' + (P.body === 'bird' ? 'con chim xanh' : 'con mèo cam'), 'Năm lần con vật lạ hiện ra giúp thành. Dân góp đồng đúc tượng nó trên quảng trường, ngày rằm thắp hương. Từ nay ở ' + c.name + ' không ai đuổi ' + (P.body === 'bird' ? 'chim' : 'mèo') + '.', { kind: 'plaza' }, { city: cid, body: P.body });
-    }
-    return { ok: true, fx, text, statue, title: CREATURE_TITLE[key](c) };
-  }
-
   /* =============== Nhịp chín năm: mười hai thời đại trong một ván =============== */
   // Ván của vị thần dài đúng chín năm. Mỗi thành phố có một lộ trình đi qua mười hai thời đại tính từ ngày đặt chân;
   // tri thức và dân số được kéo dần về lộ trình (đi chậm thì học nhanh hơn, có thêm người tìm đến; đi nhanh thì chậm lại),
@@ -3469,7 +3429,7 @@
     SPECIES, fisheryOf, zoneName,
     // tranh hùng
     BUILDINGS, UNITS, WONDERS, BONUS, PERSONA, FACTION_COLORS, STAT_E, ADV_COST, unitName, AI_ERA,
-    POWERS, godOffer, godAct, FAITH_BASE, LAST, CREATURE, creatureOffer, creatureAct, creatureHints,
+    POWERS, godOffer, godAct, FAITH_BASE, LAST, resetCity: (W, cid) => resetCity(W, W.cities[cid], 'test'), strike: (W, a, b) => strike(W, W.cities[a], W.cities[b]), setback: (W, cid) => { const S = { day: W.day, done: true }; (W.setbacks = W.setbacks || []).push(S); setback(W, W.cities[cid], S); return S; },
     // sáu trụ cột, công trình riêng của miền, dấu vết chiến tranh, săn bắt
     PILLARS, PILLAR_NEED, PILLAR_KEY, PILLAR_WHY, LANDMARKS, BEYOND_TAG, landmarkName, pillarProgress, pillarsReady, weakestPillar, ignite, GAME, gameTier,
     // kịch bản hỗn loạn mỗi năm, chiến tranh trên trời và qua cổng
