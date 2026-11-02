@@ -53,7 +53,13 @@
     { key: 'modern', name: 'Hiện đại', know: 25, pop: 92, bank: 'Ngân Hàng Trung Tâm', hall: 'Trung Tâm Hành Chính', fest: 'Lễ hội ánh sáng', tech: 'điện, máy tính và tuabin gió' },
     { key: 'rocket', name: 'Tên lửa', know: 33, pop: 108, bank: 'Ngân Hàng Số', hall: 'Tháp Điều Hành', fest: 'Lễ hội phóng tàu', tech: 'tên lửa, vệ tinh và điện hạt nhân' },
     { key: 'ai', name: 'Robot AI', know: 42, pop: 124, bank: 'Kho Bạc Lượng Tử', hall: 'Lõi Trí Tuệ', fest: 'Lễ hội ánh sáng nhân tạo', tech: 'robot, trí tuệ nhân tạo và máy tính lượng tử' },
+    // bốn thời vượt tầm hiểu biết của con người
+    { key: 'nano', name: 'Vật Chất Sống', know: 52, pop: 138, bank: 'Kho Vật Chất', hall: 'Lõi San Hô', fest: 'Lễ hội nhà mọc', tech: 'vật chất lập trình được và những ngôi nhà tự mọc', beyond: true },
+    { key: 'star', name: 'Mặt Trời Nhân Tạo', know: 63, pop: 152, bank: 'Kho Năng Lượng Sao', hall: 'Tháp Lơ Lửng', fest: 'Lễ hội thắp sao', tech: 'cách thắp một mặt trời trong vòm kính', beyond: true },
+    { key: 'warp', name: 'Bẻ Cong Không Gian', know: 75, pop: 166, bank: 'Kho Đa Chiều', hall: 'Cổng Trung Tâm', fest: 'Lễ hội cổng mở', tech: 'cách gấp không gian để đi xuyên qua nó', beyond: true },
+    { key: 'light', name: 'Siêu Việt', know: 88, pop: 180, bank: 'Kho Ánh Sáng', hall: 'Cột Sáng', fest: 'Lễ hội thăng hoa', tech: 'cách sống như ánh sáng và nghĩ chung một ý', beyond: true },
   ];
+  const AI_ERA = 7;
   const LAST = ERAS.length - 1;
   const eraOf = (w) => ERAS[Math.max(0, Math.min(LAST, w.cfg.era == null ? 3 : w.cfg.era))];
   const bankOf = (w) => eraOf(w).bank;
@@ -250,9 +256,9 @@
   const GOODS_NAMES = ['Xưởng Bánh Răng Đồng', 'Lò Thuỷ Tinh Lam', 'Xưởng Đồng Hồ Sao', 'Lò Gốm Mây', 'Xưởng Dệt Gió', 'Lò Rèn Ánh Lửa', 'Xưởng Đèn Lồng', 'Xưởng Gỗ Rêu', 'Lò Đúc Chuông', 'Xưởng Giấy Sương', 'Xưởng Kính Màu', 'Xưởng Hộp Nhạc', 'Lò Nến Thơm', 'Xưởng Ô Giấy', 'Xưởng Diều Gió', 'Xưởng Pháo Hoa', 'Xưởng Thuyền Mây', 'Xưởng Mũ Lá'];
   const FOOD_ROOTS = ['Gió Bạc', 'Mây Vàng', 'Sương Sớm', 'Lúa Biếc', 'Ba Cánh', 'Bậc Thang', 'Đồi Gió', 'Trăng Non', 'Bên Suối', 'Hạt Ngọc', 'Lam Chiều', 'Mật Ong', 'Đá Rêu', 'Sao Rơi'];
   const GOODS_ROOTS = ['Bánh Răng Đồng', 'Thuỷ Tinh Lam', 'Đồng Hồ Sao', 'Gốm Mây', 'Dệt Gió', 'Ánh Lửa', 'Đèn Lồng', 'Gỗ Rêu', 'Đúc Chuông', 'Giấy Sương', 'Kính Màu', 'Hộp Nhạc', 'Nến Thơm', 'Ô Giấy', 'Diều Gió', 'Pháo Hoa', 'Thuyền Mây', 'Mũ Lá'];
-  const FOOD_PREFIX = ['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại', 'Nông Trại Thuỷ Canh', 'Nông Trại Robot'];
-  const GOODS_PREFIX = ['Lều Chế Tác', 'Lò', 'Lò Rèn', 'Xưởng', 'Nhà Máy', 'Công Ty', 'Tổ Hợp', 'Nhà Máy Tự Động'];
-  const SEA_PREFIX = ['Bè Cá', 'Thuyền Cá', 'Ghe Lưới', 'Tàu Cá', 'Đội Tàu Cá', 'Tập Đoàn Hải Sản', 'Trại Nuôi Biển', 'Trại Biển Tự Động'];
+  const FOOD_PREFIX = ['Bãi Săn', 'Ruộng', 'Cối Xay', 'Trang Trại', 'Nông Trường', 'Nông Trại', 'Nông Trại Thuỷ Canh', 'Nông Trại Robot', 'Vườn San Hô', 'Vườn Ánh Sao', 'Vườn Đa Chiều', 'Vườn Ánh Sáng'];
+  const GOODS_PREFIX = ['Lều Chế Tác', 'Lò', 'Lò Rèn', 'Xưởng', 'Nhà Máy', 'Công Ty', 'Tổ Hợp', 'Nhà Máy Tự Động', 'Lò Vật Chất', 'Xưởng Sao', 'Xưởng Xuyên Không', 'Xưởng Ánh Sáng'];
+  const SEA_PREFIX = ['Bè Cá', 'Thuyền Cá', 'Ghe Lưới', 'Tàu Cá', 'Đội Tàu Cá', 'Tập Đoàn Hải Sản', 'Trại Nuôi Biển', 'Trại Biển Tự Động', 'Rạn San Hô Sống', 'Trại Biển Ánh Sao', 'Trại Biển Đa Chiều', 'Trại Biển Ánh Sáng'];
   function firmTitle(sector, era, root) { return (sector === 'sea' ? SEA_PREFIX : sector === 'food' ? FOOD_PREFIX : GOODS_PREFIX)[Math.max(0, Math.min(LAST, era))] + ' ' + root; }
   function firmRootFor(w, sector) {
     const list = sector === 'food' ? FOOD_ROOTS : GOODS_ROOTS;
@@ -1329,16 +1335,20 @@
     'Những toà tháp kính mọc lên, đêm thành phố sáng rực, tuabin gió quay trên cánh đồng.',
     'Bệ phóng mọc bên bờ biển, vệ tinh lấp lánh trên vòm kính, nhà máy điện hạt nhân thắp sáng cả miền.',
     'Robot đi giữa phố cùng người, máy bay không người lái chở hàng, những toà tháp tự sửa mình trong đêm.',
+    'Những ngôi nhà tự mọc lên như san hô. Vật chất nghe lời người, đường ráp trên tường phát sáng.',
+    'Một mặt trời nhỏ được thắp ngay trong vòm kính. Các tầng nhà tách ra, lơ lửng giữa những vòng năng lượng.',
+    'Cổng không gian mở ra thay cho cầu. Nhà xoắn theo chiều cao, bóng vọng của chính nó lơ lửng bên cạnh.',
+    'Thành phố hoá thành ánh sáng. Người trong bể không còn cần vách kính, và bắt đầu nói chuyện với vị thần.',
   ];
-  const BRIDGE_TEXT = ['cầu dây leo', 'cầu gỗ trên trụ đá', 'cầu vòm đá', 'cầu có mái che và đèn', 'cầu sắt', 'cầu dây văng', 'cầu treo có tàu đệm từ', 'cầu năng lượng'];
-  const BRIDGE_CAP = [2, 4, 6, 9, 13, 18, 24, 32]; // số món hàng mỗi ngày mỗi chiều, theo thời đại của cây cầu
+  const BRIDGE_TEXT = ['cầu dây leo', 'cầu gỗ trên trụ đá', 'cầu vòm đá', 'cầu có mái che và đèn', 'cầu sắt', 'cầu dây văng', 'cầu treo có tàu đệm từ', 'cầu năng lượng', 'cầu vòm nano tự mọc', 'lối đi lơ lửng', 'cặp cổng không gian', 'cầu ánh sáng'];
+  const BRIDGE_CAP = [2, 4, 6, 9, 13, 18, 24, 32, 42, 54, 68, 84]; // số món hàng mỗi ngày mỗi chiều, theo thời đại của cây cầu
 
   function createWorld(opts) {
     opts = opts || {};
     const seed = opts.seed == null ? 7 : opts.seed, god = opts.mode === 'god', war = opts.mode === 'war' || (god && opts.war !== false);
     const W = {
       seed, day: 0, rand: makeRng(seed * 7919 + 13), mode: god ? 'god' : war ? 'war' : 'watch',
-      cfg: Object.assign({ start: 28, growth: 2.2, inventRate: 1 / 110, settle: war && !god ? [1, 2, 3, 4, 5, 6] : null, off: {}, pace: god ? { end: 1800, lead: 1480, last: 1730, lastSettle: 190, settleScale: 0.45 } : null }, opts),
+      cfg: Object.assign({ start: 28, growth: 2.2, inventRate: 1 / 110, settle: war && !god ? [1, 2, 3, 4, 5, 6] : null, off: {}, pace: god ? { end: 3240, lead: 2980, last: 3080, lastSettle: 190, settleScale: 0.45 } : null }, opts),
       cities: TERRAINS.map((t, i) => ({ id: i, terrain: t, name: t.city, era: 0, settled: false, w: null, learned: 0, founded: -1, owner: i })),
       // cầu chưa có: phải có người bỏ tiền ra bắc
       bridges: TERRAINS.map((t, i) => ({ id: i, a: i, b: (i + 1) % TERRAINS.length, level: -1, era: -1, build: null, traded: 0, firstTrade: false })),
@@ -1390,6 +1400,7 @@
     }
     openFishery(W, c, crew);
     cityWarInit(W, c);
+    pillarInit(c); dmgInit(c); huntInit(c);
     c.faith = FAITH_BASE[0] * 0.8;
     const near = W.cities.filter((x) => x.settled && x !== c && W.bridges.some((b) => b.level >= 0 && ((b.a === i && b.b === x.id) || (b.b === i && b.a === x.id))));
     wstory(W, 'settle', 'epic', c.name + ': những người đầu tiên', t.from, { kind: 'land', city: i }, { city: i, from: near.length ? near[0].id : -1, households: k });
@@ -1441,8 +1452,8 @@
     lo.learned++;
     lo.w.cands.push({ pri: 3, type: 'learn', title: 'Người ' + lo.name + ' học được ' + ERAS[hi.era].tech, text: 'Những ' + via + ' từ ' + hi.name + ' mang theo ' + ERAS[hi.era].tech + '.', place: { kind: 'plaza' }, actors: [] });
   }
-  const BRIDGE_COST = [60, 120, 220, 380, 600, 900, 1300, 1800], BRIDGE_DAYS = [16, 22, 28, 34, 38, 42, 44, 46];
-  const BRIDGE_LOAD = [0, 1, 2, 2, 3, 3, 3, 3]; // cầu dây leo chỉ cho người đi bộ; xe tăng cần cầu sắt
+  const BRIDGE_COST = [60, 120, 220, 380, 600, 900, 1300, 1800, 2400, 3100, 3900, 4800], BRIDGE_DAYS = [16, 22, 28, 34, 38, 42, 44, 46, 46, 44, 40, 36];
+  const BRIDGE_LOAD = [0, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]; // cầu dây leo chỉ cho người đi bộ; xe tăng cần cầu sắt
   function bridgeDay(W, B) {
     const A = W.cities[B.a], Z = W.cities[B.b];
     if (B.build) {
@@ -1486,7 +1497,7 @@
   }
   function stepWorld(W) {
     W.day++;
-    W.trade = [];
+    W.trade = []; W.hunts = [];
     for (const c of W.cities) if (!c.settled && W.day >= (W.cfg.settle ? W.cfg.settle[c.id] : W.cfg.pace ? Math.max(3, Math.round(c.terrain.settle * W.cfg.pace.settleScale)) : c.terrain.settle)) settle(W, c.id);
     seaDay(W);
     for (const c of W.cities) {
@@ -1506,7 +1517,8 @@
     warDay(W);
     if (W.war.on) battleTrack(W);
     godDay(W);
-    if (W.cfg.pace) { paceDay(W); revoltDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ năm khép lại', 'Bể kính đã đi hết tám thời đại.', null, {}); } }
+    pillarsDay(W); damageDay(W); huntDay(W);
+    if (W.cfg.pace) { paceDay(W); revoltDay(W); if (W.day >= W.cfg.pace.end && !W.ended) { W.ended = true; wstory(W, 'finale', 'epic', 'Năm thứ chín khép lại', 'Bể kính đã đi hết mười hai thời đại.', null, {}); } }
     else if (!W.war.on) {
       // Ngắm bể: thành phố tự bước sang thời mới khi đủ tri thức và dân số
       for (const c of W.cities) {
@@ -1534,10 +1546,10 @@
     { key: 'whale', name: 'cá voi', zones: [6], food: 30, coin: 40, K: 14, r: 0.003, q: 0.0006, era: 2, big: true },
     { key: 'squid', name: 'mực khổng lồ', zones: [6], food: 6, coin: 80, K: 4, r: 0.002, q: 0.0005, era: 3, big: true },
   ];
-  const GEAR = [1, 1.35, 1.8, 2.4, 3.1, 3.9, 4.6, 5.2];         // lưới, thuyền, máy dò cá: mỗi thời bắt được nhiều hơn
-  const DEEP = [0, 0.2, 0.35, 0.45, 0.5, 0.55, 0.6, 0.62];       // phần thuyền dám ra vùng khơi
-  const SHIP_CAP = [0, 4, 7, 10, 15, 22, 30, 40];                // tàu buôn: số món hàng mỗi chuyến
-  const AQUA = [0, 0, 0, 0, 0, 0.6, 1.4, 2.2];                   // nuôi trồng thuỷ sản: sản lượng mỗi ngư dân không lấy từ biển hoang
+  const GEAR = [1, 1.35, 1.8, 2.4, 3.1, 3.9, 4.6, 5.2, 5.8, 6.4, 7.0, 7.6];         // lưới, thuyền, máy dò cá: mỗi thời bắt được nhiều hơn
+  const DEEP = [0, 0.2, 0.35, 0.45, 0.5, 0.55, 0.6, 0.62, 0.64, 0.66, 0.68, 0.7];       // phần thuyền dám ra vùng khơi
+  const SHIP_CAP = [0, 4, 7, 10, 15, 22, 30, 40, 52, 66, 82, 100];                // tàu buôn: số món hàng mỗi chuyến
+  const AQUA = [0, 0, 0, 0, 0, 0.6, 1.4, 2.2, 3.0, 3.8, 4.6, 5.4];                   // nuôi trồng thuỷ sản: sản lượng mỗi ngư dân không lấy từ biển hoang
   const zoneName = (W, z) => (z === 6 ? 'vùng khơi giữa biển trong' : 'vùng biển trước ' + W.cities[z].name);
   function seaInit(W) {
     W.sea = { stock: [], low: [], catches: [], disputes: {}, shipped: 0, firstShip: false, caught: SPECIES.map(() => 0) };
@@ -1649,32 +1661,42 @@
   }
 
   /* =============== Tranh hùng: phe phái, công trình, quân lính, chiến tuyến trên cầu và trên biển =============== */
-  const STAT_E = [1, 1.7, 2.9, 4.9, 8.3, 14, 23, 38];          // sức mạnh quân lính theo thời đại
-  const COST_E = [1, 1.6, 2.5, 3.9, 6.1, 9.5, 14, 20];         // giá cả theo thời đại
+  const STAT_E = [1, 1.7, 2.9, 4.9, 8.3, 14, 23, 38, 60, 95, 150, 235];          // sức mạnh quân lính theo thời đại
+  const COST_E = [1, 1.6, 2.5, 3.9, 6.1, 9.5, 14, 20, 27, 36, 47, 60];         // giá cả theo thời đại
   const BUILDINGS = {
-    granary: { group: 'eco', era: 0, cost: 70, days: 14, names: ['Hầm Lương', 'Kho Lúa', 'Kho Lương', 'Kho Lương Đá', 'Kho Thóc Máy', 'Kho Lạnh', 'Kho Lạnh Hạt Nhân', 'Kho Tự Động'], info: 'Lương thực +15%' },
-    academy: { group: 'eco', era: 0, cost: 110, days: 22, names: ['Nhà Già Làng', 'Nhà Thông Thái', 'Thư Viện', 'Học Viện', 'Đại Học', 'Viện Nghiên Cứu', 'Trung Tâm Vũ Trụ', 'Viện Trí Tuệ'], info: 'Phát minh nhanh hơn 60%' },
-    market: { group: 'eco', era: 1, cost: 110, days: 18, names: ['', 'Chợ Phiên', 'Chợ Lớn', 'Thương Điếm', 'Sở Giao Dịch', 'Trung Tâm Thương Mại', 'Sàn Giao Dịch Số', 'Chợ Tự Vận Hành'], info: 'Hàng qua cầu và qua cảng +50%' },
-    port: { group: 'eco', era: 1, cost: 130, days: 22, names: ['', 'Bến Thuyền Buôn', 'Cảng Gỗ', 'Cảng Buồm', 'Cảng Hơi Nước', 'Cảng Container', 'Cảng Vũ Trụ', 'Cảng Robot'], info: 'Tàu buôn đi khắp biển trong; đóng tàu chiến' },
-    barracks: { group: 'mil', era: 0, cost: 50, days: 10, names: ['Bãi Tập', 'Trại Lính', 'Doanh Trại', 'Trại Quân', 'Doanh Trại Gạch', 'Căn Cứ Bộ Binh', 'Căn Cứ Giáp Trợ Lực', 'Xưởng Lắp Robot'], info: 'Luyện bộ binh' },
-    range: { group: 'mil', era: 0, cost: 60, days: 12, names: ['Bãi Ném Đá', 'Trường Cung', 'Trường Nỏ', 'Trường Bắn', 'Trường Súng', 'Trung Tâm Xạ Kích', 'Trung Tâm Tên Lửa Dẫn Đường', 'Tổ Ong Máy Bay Không Người Lái'], info: 'Luyện quân đánh xa' },
-    stable: { group: 'mil', era: 1, cost: 110, days: 16, names: ['', 'Chuồng Chiến Mã', 'Trại Kỵ Binh', 'Trại Ngựa Chiến', 'Xưởng Xe Bọc Thép', 'Căn Cứ Thiết Giáp', 'Xưởng Xe Tăng Tên Lửa', 'Xưởng Cỗ Máy Bọc Thép'], info: 'Kỵ binh, về sau là xe bọc thép' },
-    siege: { group: 'mil', era: 1, cost: 140, days: 20, names: ['', 'Xưởng Xe Phá Thành', 'Xưởng Máy Bắn Đá', 'Xưởng Đúc Pháo', 'Xưởng Pháo Binh', 'Căn Cứ Pháo Tự Hành', 'Căn Cứ Tên Lửa', 'Bệ Pháo Điện Từ'], info: 'Vũ khí công thành' },
-    forge: { group: 'mil', era: 1, cost: 120, days: 16, names: ['', 'Lò Đúc Đồng', 'Lò Rèn Sắt', 'Xưởng Đúc Súng', 'Nhà Máy Thép', 'Nhà Máy Vũ Khí', 'Nhà Máy Hợp Kim', 'Lò Đúc Nano'], info: 'Sức đánh +20%, hàng hoá +6%' },
-    tower: { group: 'def', era: 0, cost: 60, days: 12, names: ['Chòi Canh', 'Tháp Cung', 'Tháp Đá', 'Pháo Đài', 'Lô Cốt', 'Trận Địa Phòng Không', 'Lá Chắn Tên Lửa', 'Tháp Laser'], info: 'Bắn kẻ địch ở đầu cầu và trước cảng' },
-    wall: { group: 'def', era: 1, cost: 130, days: 20, names: ['', 'Tường Đất', 'Tường Thành Đá', 'Thành Lũy Hình Sao', 'Chiến Hào', 'Tường Bê Tông', 'Tường Thép Composite', 'Khiên Năng Lượng'], info: 'Sức chịu của thành +70%' },
+    granary: { group: 'eco', era: 0, cost: 70, days: 14, names: ['Hầm Lương', 'Kho Lúa', 'Kho Lương', 'Kho Lương Đá', 'Kho Thóc Máy', 'Kho Lạnh', 'Kho Lạnh Hạt Nhân', 'Kho Tự Động', 'Kho San Hô', 'Kho Ánh Sao', 'Kho Đa Chiều', 'Kho Ánh Sáng'], info: 'Lương thực +15%' },
+    academy: { group: 'eco', era: 0, cost: 110, days: 22, names: ['Nhà Già Làng', 'Nhà Thông Thái', 'Thư Viện', 'Học Viện', 'Đại Học', 'Viện Nghiên Cứu', 'Trung Tâm Vũ Trụ', 'Viện Trí Tuệ', 'Viện Vật Chất', 'Viện Mặt Trời', 'Viện Không Gian', 'Viện Ánh Sáng'], info: 'Phát minh nhanh hơn 60%' },
+    market: { group: 'eco', era: 1, cost: 110, days: 18, names: ['', 'Chợ Phiên', 'Chợ Lớn', 'Thương Điếm', 'Sở Giao Dịch', 'Trung Tâm Thương Mại', 'Sàn Giao Dịch Số', 'Chợ Tự Vận Hành', 'Chợ Tự Mọc', 'Chợ Ánh Sao', 'Chợ Xuyên Cổng', 'Chợ Ánh Sáng'], info: 'Hàng qua cầu và qua cảng +50%' },
+    port: { group: 'eco', era: 1, cost: 130, days: 22, names: ['', 'Bến Thuyền Buôn', 'Cảng Gỗ', 'Cảng Buồm', 'Cảng Hơi Nước', 'Cảng Container', 'Cảng Vũ Trụ', 'Cảng Robot', 'Cảng San Hô', 'Cảng Ánh Sao', 'Cảng Xuyên Cổng', 'Cảng Ánh Sáng'], info: 'Tàu buôn đi khắp biển trong; đóng tàu chiến' },
+    barracks: { group: 'mil', era: 0, cost: 50, days: 10, names: ['Bãi Tập', 'Trại Lính', 'Doanh Trại', 'Trại Quân', 'Doanh Trại Gạch', 'Căn Cứ Bộ Binh', 'Căn Cứ Giáp Trợ Lực', 'Xưởng Lắp Robot', 'Lò Ấp Chiến Binh Nano', 'Doanh Trại Plasma', 'Doanh Trại Dịch Chuyển', 'Điện Ánh Sáng'], info: 'Luyện bộ binh' },
+    range: { group: 'mil', era: 0, cost: 60, days: 12, names: ['Bãi Ném Đá', 'Trường Cung', 'Trường Nỏ', 'Trường Bắn', 'Trường Súng', 'Trung Tâm Xạ Kích', 'Trung Tâm Tên Lửa Dẫn Đường', 'Tổ Ong Máy Bay Không Người Lái', 'Tổ Hạt Nano', 'Đài Tia Mặt Trời', 'Đài Xạ Kích Xuyên Cổng', 'Lăng Kính Chiến'], info: 'Luyện quân đánh xa' },
+    stable: { group: 'mil', era: 1, cost: 110, days: 16, names: ['', 'Chuồng Chiến Mã', 'Trại Kỵ Binh', 'Trại Ngựa Chiến', 'Xưởng Xe Bọc Thép', 'Căn Cứ Thiết Giáp', 'Xưởng Xe Tăng Tên Lửa', 'Xưởng Cỗ Máy Bọc Thép', 'Xưởng Cỗ Máy Tự Mọc', 'Xưởng Xe Đệm Plasma', 'Xưởng Cỗ Máy Chớp Tắt', 'Xưởng Vầng Sáng'], info: 'Kỵ binh, về sau là xe bọc thép' },
+    siege: { group: 'mil', era: 1, cost: 140, days: 20, names: ['', 'Xưởng Xe Phá Thành', 'Xưởng Máy Bắn Đá', 'Xưởng Đúc Pháo', 'Xưởng Pháo Binh', 'Căn Cứ Pháo Tự Hành', 'Căn Cứ Tên Lửa', 'Bệ Pháo Điện Từ', 'Bệ Pháo Vật Chất', 'Bệ Pháo Sao', 'Bệ Pháo Không Gian', 'Bệ Lăng Kính'], info: 'Vũ khí công thành' },
+    forge: { group: 'mil', era: 1, cost: 120, days: 16, names: ['', 'Lò Đúc Đồng', 'Lò Rèn Sắt', 'Xưởng Đúc Súng', 'Nhà Máy Thép', 'Nhà Máy Vũ Khí', 'Nhà Máy Hợp Kim', 'Lò Đúc Nano', 'Lò Vật Chất Sống', 'Lò Hợp Hạch', 'Lò Đa Chiều', 'Lò Ánh Sáng'], info: 'Sức đánh +20%, hàng hoá +6%' },
+    tower: { group: 'def', era: 0, cost: 60, days: 12, names: ['Chòi Canh', 'Tháp Cung', 'Tháp Đá', 'Pháo Đài', 'Lô Cốt', 'Trận Địa Phòng Không', 'Lá Chắn Tên Lửa', 'Tháp Laser', 'Tháp San Hô', 'Tháp Plasma', 'Tháp Bẻ Cong', 'Tháp Ánh Sáng'], info: 'Bắn kẻ địch ở đầu cầu và trước cảng' },
+    wall: { group: 'def', era: 1, cost: 130, days: 20, names: ['', 'Tường Đất', 'Tường Thành Đá', 'Thành Lũy Hình Sao', 'Chiến Hào', 'Tường Bê Tông', 'Tường Thép Composite', 'Khiên Năng Lượng', 'Tường Tự Lành', 'Khiên Plasma', 'Tường Gấp Khúc', 'Màn Ánh Sáng'], info: 'Sức chịu của thành +70%' },
     wonder: { group: 'win', era: 3, cost: 3200, days: 300, names: null, info: 'Đứng vững một năm thì thắng' },
-    silo: { group: 'win', era: 6, cost: 230, days: 90, names: ['', '', '', '', '', '', 'Hầm Phóng Hạt Nhân', 'Hầm Phóng Hạt Nhân'], info: 'Một tên lửa hạt nhân mỗi năm' },
+    silo: { group: 'win', era: 6, cost: 230, days: 90, names: ['', '', '', '', '', '', 'Hầm Phóng Hạt Nhân', 'Hầm Phóng Hạt Nhân', 'Hầm Phóng Nano', 'Hầm Phóng Sao', 'Hầm Phóng Xuyên Cổng', 'Hầm Phóng Ánh Sáng'], info: 'Một tên lửa hạt nhân mỗi năm' },
   };
   const WONDERS = { plains: 'Tháp Hạt Vàng', forest: 'Cây Mẹ Ngàn Năm', mountain: 'Tượng Thần Đá Mây', tundra: 'Cung Điện Băng', coast: 'Hải Đăng Muôn Sóng', desert: 'Kim Tự Tháp Hồng' };
   const UNITS = {
-    melee: { bld: 'barracks', era: 0, hp: 60, atk: 11, range: [1.2], speed: 1.6, cost: 34, days: 5, w: [0, 0, 0, 0, 0, 0, 0, 1], names: ['Chiến Binh Rìu Đá', 'Lính Giáo Đồng', 'Kiếm Sĩ Giáp Sắt', 'Lính Lưỡi Lê', 'Bộ Binh Súng Trường', 'Lính Đặc Nhiệm', 'Lính Giáp Trợ Lực', 'Robot Chiến Đấu'] },
-    ranged: { bld: 'range', era: 0, hp: 34, atk: 9, range: [5, 6, 6.5, 7, 7.5, 8, 9, 10], speed: 1.5, cost: 42, days: 6, w: [0, 0, 0, 0, 0, 0, 0, 0], names: ['Người Ném Đá', 'Cung Thủ', 'Nỏ Thủ', 'Lính Hoả Mai', 'Xạ Thủ Súng Máy', 'Lính Tên Lửa Vác Vai', 'Đội Tên Lửa Dẫn Đường', 'Bầy Máy Bay Không Người Lái'] },
-    mounted: { bld: 'stable', era: 1, hp: 95, atk: 14, range: [1.4, 1.4, 1.4, 1.4, 3, 4, 5, 5], speed: 3.0, cost: 78, days: 8, w: [0, 1, 1, 1, 2, 3, 3, 3], names: ['', 'Chiến Xa', 'Kỵ Sĩ Giáp Sắt', 'Kỵ Binh Kiếm', 'Xe Bọc Thép', 'Xe Tăng', 'Xe Tăng Tên Lửa', 'Cỗ Máy Bọc Thép'] },
-    siege: { bld: 'siege', era: 1, hp: 70, atk: 16, range: [1.2, 1.2, 8, 9, 12, 16, 20, 24], speed: 1.0, cost: 96, days: 10, w: [0, 1, 1, 2, 3, 3, 3, 3], vsGate: 3, splash: [0, 0, 1.2, 1.5, 2, 2.5, 3, 3], names: ['', 'Xe Phá Thành', 'Máy Bắn Đá', 'Đại Bác', 'Pháo Binh', 'Pháo Tự Hành', 'Xe Phóng Tên Lửa', 'Pháo Điện Từ'] },
-    ship: { bld: 'port', era: 1, naval: true, hp: 150, atk: 15, range: [3, 3, 5, 8, 10, 14, 18, 22], speed: 3.2, cost: 120, days: 12, w: [0, 0, 0, 0, 0, 0, 0, 0], vsGate: 1.5, splash: [0, 0, 0, 1, 1.5, 2, 2.5, 3], names: ['', 'Thuyền Chiến Mái Chèo', 'Thuyền Buồm Chiến', 'Chiến Hạm Đại Bác', 'Tàu Thiết Giáp', 'Khu Trục Hạm', 'Tuần Dương Hạm Tên Lửa', 'Chiến Hạm Tự Hành'] },
-    sub: { bld: 'port', era: 6, naval: true, sub: true, hp: 200, atk: 0, range: [0], speed: 0, cost: 220, days: 60, w: [0, 0, 0, 0, 0, 0, 0, 0], names: ['', '', '', '', '', '', 'Tàu Ngầm Hạt Nhân', 'Tàu Ngầm Robot'] },
+    melee: { bld: 'barracks', era: 0, hp: 60, atk: 11, range: [1.2], speed: 1.6, cost: 34, days: 5, w: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0], names: ['Chiến Binh Rìu Đá', 'Lính Giáo Đồng', 'Kiếm Sĩ Giáp Sắt', 'Lính Lưỡi Lê', 'Bộ Binh Súng Trường', 'Lính Đặc Nhiệm', 'Lính Giáp Trợ Lực', 'Robot Chiến Đấu', 'Chiến Binh Nano', 'Hiệp Sĩ Plasma', 'Lính Dịch Chuyển', 'Chiến Binh Ánh Sáng'] },
+    ranged: { bld: 'range', era: 0, hp: 34, atk: 9, range: [5, 6, 6.5, 7, 7.5, 8, 9, 10, 11, 12, 13, 14], speed: 1.5, cost: 42, days: 6, w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], names: ['Người Ném Đá', 'Cung Thủ', 'Nỏ Thủ', 'Lính Hoả Mai', 'Xạ Thủ Súng Máy', 'Lính Tên Lửa Vác Vai', 'Đội Tên Lửa Dẫn Đường', 'Bầy Máy Bay Không Người Lái', 'Bầy Hạt Nano', 'Pháo Thủ Tia Sao', 'Xạ Thủ Xuyên Cổng', 'Người Bắn Tia Sáng'] },
+    mounted: { bld: 'stable', era: 1, hp: 95, atk: 14, range: [1.4, 1.4, 1.4, 1.4, 3, 4, 5, 5, 5, 6, 6, 7], speed: 3.0, cost: 78, days: 8, w: [0, 1, 1, 1, 2, 3, 3, 3, 3, 2, 2, 1], names: ['', 'Chiến Xa', 'Kỵ Sĩ Giáp Sắt', 'Kỵ Binh Kiếm', 'Xe Bọc Thép', 'Xe Tăng', 'Xe Tăng Tên Lửa', 'Cỗ Máy Bọc Thép', 'Cỗ Máy Tự Mọc', 'Xe Đệm Plasma', 'Cỗ Máy Chớp Tắt', 'Vầng Sáng Chiến'] },
+    siege: { bld: 'siege', era: 1, hp: 70, atk: 16, range: [1.2, 1.2, 8, 9, 12, 16, 20, 24, 26, 28, 30, 32], speed: 1.0, cost: 96, days: 10, w: [0, 1, 1, 2, 3, 3, 3, 3, 3, 3, 2, 1], vsGate: 3, splash: [0, 0, 1.2, 1.5, 2, 2.5, 3, 3, 3.2, 3.4, 3.6, 3.8], names: ['', 'Xe Phá Thành', 'Máy Bắn Đá', 'Đại Bác', 'Pháo Binh', 'Pháo Tự Hành', 'Xe Phóng Tên Lửa', 'Pháo Điện Từ', 'Pháo Vật Chất', 'Pháo Mặt Trời', 'Pháo Không Gian', 'Lăng Kính Công Thành'] },
+    ship: { bld: 'port', era: 1, naval: true, hp: 150, atk: 15, range: [3, 3, 5, 8, 10, 14, 18, 22, 24, 26, 28, 30], speed: 3.2, cost: 120, days: 12, w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], vsGate: 1.5, splash: [0, 0, 0, 1, 1.5, 2, 2.5, 3, 3.2, 3.4, 3.6, 3.8], names: ['', 'Thuyền Chiến Mái Chèo', 'Thuyền Buồm Chiến', 'Chiến Hạm Đại Bác', 'Tàu Thiết Giáp', 'Khu Trục Hạm', 'Tuần Dương Hạm Tên Lửa', 'Chiến Hạm Tự Hành', 'Tàu San Hô', 'Tàu Sao', 'Tàu Xuyên Cổng', 'Thuyền Ánh Sáng'] },
+    sub: { bld: 'port', era: 6, naval: true, sub: true, hp: 200, atk: 0, range: [0], speed: 0, cost: 220, days: 60, w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], names: ['', '', '', '', '', '', 'Tàu Ngầm Hạt Nhân', 'Tàu Ngầm Robot', 'Tàu Ngầm Nano', 'Tàu Ngầm Sao', 'Tàu Ngầm Xuyên Cổng', 'Tàu Ngầm Ánh Sáng'] },
   };
+  // tên quân riêng của mỗi miền ở bốn thời đầu: mỗi miền có vũ khí, thú cưỡi và cách đánh của mình
+  const REGION_UNITS = {
+    plains: { melee: ['Chiến Binh Chày Đá', 'Lính Giáo Đồng Bằng', 'Lính Kích Lúa Vàng', 'Lính Lưỡi Lê Lúa Vàng'], ranged: ['Người Ném Đá', 'Cung Thủ Đồng Lúa', 'Nỏ Thủ Đồng Bằng', 'Lính Hoả Mai Đồng Bằng'], mounted: ['', 'Chiến Xa Ngựa Kéo', 'Kỵ Sĩ Giáo Dài', 'Kỵ Binh Đồng Bằng'] },
+    forest: { melee: ['Chiến Binh Rìu Đá', 'Lính Rìu Rừng', 'Kiếm Sĩ Khiên Gỗ', 'Lính Kiểm Lâm'], ranged: ['Thợ Săn Ném Lao', 'Cung Thủ Rừng Già', 'Cung Thủ Cung Dài', 'Xạ Thủ Rừng'], mounted: ['', 'Kỵ Sĩ Hươu Sừng', 'Kỵ Sĩ Nai Chiến', 'Kỵ Binh Rừng'] },
+    mountain: { melee: ['Chiến Binh Búa Đá', 'Lính Chuỳ Đồng', 'Lính Búa Chiến', 'Công Binh Núi'], ranged: ['Người Lăn Đá', 'Lính Ná Núi', 'Nỏ Thủ Vách Đá', 'Pháo Thủ Núi'], mounted: ['', 'Kỵ Sĩ Dê Núi', 'Kỵ Sĩ Dê Giáp', 'Kỵ Binh Núi'] },
+    tundra: { melee: ['Thợ Săn Lao Xương', 'Lính Lao Móc Băng', 'Chiến Binh Rìu Băng', 'Lính Trượt Tuyết'], ranged: ['Người Ném Lao Băng', 'Cung Thủ Lông Thú', 'Nỏ Thủ Băng Giá', 'Xạ Thủ Tuyết'], mounted: ['', 'Kỵ Sĩ Voi Ma Mút', 'Kỵ Sĩ Ma Mút Giáp', 'Kỵ Binh Xe Trượt'] },
+    coast: { melee: ['Chiến Binh Chĩa Ba', 'Lính Chĩa Ba Đồng', 'Lính Kiếm Cong Biển', 'Thuỷ Quân Lục Chiến'], ranged: ['Người Ném Lưới', 'Cung Thủ Thuyền', 'Nỏ Thủ Mạn Tàu', 'Lính Súng Kíp Biển'], mounted: ['', 'Chiến Xa Bờ Cát', 'Kỵ Sĩ Ngựa Bờ Biển', 'Kỵ Binh Bờ Biển'] },
+    desert: { melee: ['Chiến Binh Dao Đá', 'Lính Mã Tấu Đồng', 'Kiếm Sĩ Mã Tấu', 'Lính Gươm Cong'], ranged: ['Người Ném Đá Cát', 'Cung Thủ Lạc Đà', 'Nỏ Thủ Ốc Đảo', 'Lính Súng Dài Sa Mạc'], mounted: ['', 'Kỵ Binh Lạc Đà', 'Kỵ Sĩ Lạc Đà Giáp', 'Kỵ Binh Cát'] },
+  };
+  function unitName(ter, cls, era) { const r = REGION_UNITS[ter] && REGION_UNITS[ter][cls]; return (r && era < r.length && r[era]) || UNITS[cls].names[era]; }
   // khắc chế: giáo dài chặn ngựa, cung bắn bộ binh, kỵ binh xông vào cung thủ, công thành phá tường
   const CLASS_MULT = {
     melee: { melee: 1, ranged: 1.3, mounted: 1.4, siege: 1.6, ship: 1, sub: 1 },
@@ -1702,7 +1724,7 @@
     desert: { aggr: 0.8, trade: 0.5, navy: 0.3, build: 0.5 },
   };
   const FACTION_COLORS = ['#e0b23a', '#3f9a5a', '#8e7cc3', '#5fc6e6', '#3f7fd6', '#e05a6a'];
-  const ADV_COST = [0, 200, 420, 820, 1400, 2300, 3400, 4800];
+  const ADV_COST = [0, 200, 420, 820, 1400, 2300, 3400, 4800, 6500, 8600, 11200, 14500];
   const LANE_LEN = { bridge: 30, sea: [0, 50, 86.6, 100] };
   const HOLD = 0.1;
   const hasB = (c, t) => !!(c && c.bld && c.bld[t] && c.bld[t].done);
@@ -1823,7 +1845,7 @@
   function unitOffer(W, cid, cls) {
     const c = W.cities[cid], U = UNITS[cls], X = W.war;
     if (!X.on || !c || !c.settled || !U) return { ok: false, reason: '' };
-    const name = U.names[Math.max(U.era, c.era)];
+    const name = unitName(c.terrain.key, cls, Math.max(U.era, c.era));
     if (c.era < U.era) return { ok: false, reason: 'Cần thời ' + ERAS[U.era].name, locked: true, name };
     if (!hasB(c, U.bld)) return { ok: false, reason: 'Cần ' + bName(c, U.bld), locked: true, name };
     if (cls === 'sub' && X.units.some((u) => u.cls === 'sub' && u.city === cid && !u.dead)) return { ok: false, reason: 'Mỗi cảng chỉ nuôi một tàu ngầm', name };
@@ -2005,7 +2027,7 @@
     const floor = u.naval ? foe.hpMax * 0.15 : 0;
     u.fight = W.day;
     foe.hp = Math.max(Math.min(foe.hp, floor), foe.hp - dmg);
-    foe.lastHit = W.day;
+    foe.lastHit = W.day; foe.siegeHits = (foe.siegeHits || 0) + 1;
     fxPush(W, { lane: L.key, kind: u.cls, era: u.era, x0: u.x, x1: u.side === 0 ? 1 : 0, side: u.side, owner: u.owner, gate: foe.id });
     if (!foe.sieged || W.day - foe.sieged > 120) { foe.sieged = W.day; wstory(W, 'siege', 'major', 'Quân ' + W.war.factions[u.owner].name + ' đánh tới cổng ' + foe.name, 'Thành ' + foe.name + ' đang bị vây. Nếu sức chịu của thành cạn, thành phố sẽ đổi chủ.', { kind: 'lane', lane: L.key }, { city: foe.id, lane: L.key }); }
     if (foe.hp <= 0 && !u.naval) conquer(W, foe, u.owner);
@@ -2033,6 +2055,7 @@
     if (cap && cap !== c && c.w.gov.cash > 0) { const amt = c.w.gov.cash * 0.5; c.w.gov.cash -= amt; c.w.ledger.outflow += amt; cap.w.gov.cash += amt; cap.w.ledger.inflow += amt; }
     if (c.bld.wonder) { delete c.bld.wonder; if (X.wonder && X.wonder.city === c.id) X.wonder = null; }
     c.hpMax = hpMaxOf(c); c.hp = c.hpMax * 0.4; c.lastHit = W.day;
+    sack(W, c);
     for (const h of c.w.households) if (W.rand() < 0.5) scare(c.w, h, 15);
     if (by === c.id) wstory(W, 'conquer', 'epic', c.name + ' giành lại thành của mình', 'Quân ' + c.name + ' quay về, cờ của ' + X.factions[old].name + ' bị hạ xuống. Người dân đổ ra đường.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
     else wstory(W, 'conquer', 'epic', X.factions[by].name + ' chiếm ' + c.name, 'Cổng thành đã vỡ. Từ nay ' + c.name + ' nộp thuế cho ' + X.factions[by].name + '. Người dân đóng cửa ở trong nhà.', { kind: 'land', city: c.id }, { city: c.id, by, from: old });
@@ -2297,8 +2320,8 @@
     heal: { name: 'Chữa lành', kind: 'good', cost: 25, cool: 45, info: 'Dập tắt dịch bệnh, người ốm và người bị thương khỏi hẳn.' },
     truce: { name: 'Đình chiến', kind: 'good', cost: 40, cool: 120, info: 'Buộc phe đang giữ miền này ngưng mọi cuộc chiến trong một năm.' },
   };
-  const FAITH_BASE = [0.72, 0.64, 0.56, 0.46, 0.36, 0.27, 0.2, 0.15];
-  const RESIST = [1, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3]; // nhà thời sau chịu động đất, gió bão tốt hơn
+  const FAITH_BASE = [0.72, 0.64, 0.56, 0.46, 0.36, 0.27, 0.2, 0.15, 0.2, 0.28, 0.4, 0.58]; // thời vượt người: dân lại tìm đến thần
+  const RESIST = [1, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.12]; // nhà thời sau chịu động đất, gió bão tốt hơn
   function godInit(W) { W.god = { power: 60, max: 100, cool: {}, fx: [], acts: 0, used: {}, awakened: false }; }
   const foodMods = (c, day) => (c.mods || []).reduce((m, x) => (x.from <= day && x.until > day ? m * x.food : m), 1);
   function addMod(c, food, from, until) { (c.mods = c.mods || []).push({ food, from, until }); c.mods = c.mods.filter((x) => x.until > from - 1); }
@@ -2417,6 +2440,7 @@
       for (const f of W.war.factions) if (f.alive && atWarF(W, c.owner, f.id)) { makePeace(W, c.owner, f.id); W.war.rel[c.owner][f.id].truce = W.day + 360; W.war.rel[f.id][c.owner].truce = W.day + 360; }
       fx.days = 6; title = 'Thần buộc ' + W.war.factions[c.owner].name + ' ngưng chiến'; text = 'Một vòng sáng bao quanh ' + c.name + '. Gươm súng hạ xuống, quân lính quay về. Không ai dám động binh trong một năm.';
     }
+    pillarTouch(W, c, key, fx);
     faithShift(W, c, P.kind === 'bad' ? 0.25 : 0.15);
     for (const j of [(cid + 5) % 6, (cid + 1) % 6]) if (W.cities[j].settled) faithShift(W, W.cities[j], P.kind === 'bad' ? 0.06 : 0.03);
     G.fx.push(fx);
@@ -2445,10 +2469,10 @@
     }
     // thời Robot AI: những cỗ máy nhận ra vách kính
     if (!G.awakened) {
-      const c = live.find((x) => x.era >= LAST && x.aiSince != null && W.day - x.aiSince >= 120);
+      const c = live.find((x) => x.era >= AI_ERA && x.aiSince != null && W.day - x.aiSince >= 120);
       if (c) { G.awakened = true; G.awakeCity = c.id; wstory(W, 'awaken', 'epic', 'Những cỗ máy nhìn thấy vách kính', 'Robot của ' + c.name + ' đo được độ cong của bầu trời. Chúng hiểu mình đang sống trong một chiếc bể, và có ai đó đang nhìn vào. Chúng bắt đầu gõ lên kính từ phía bên trong.', { kind: 'land', city: c.id }, { city: c.id }); }
     }
-    for (const c of live) if (c.era >= LAST && c.aiSince == null) c.aiSince = W.day;
+    for (const c of live) if (c.era >= AI_ERA && c.aiSince == null) c.aiSince = W.day;
   }
   // Trận đánh: mỗi chiến tuyến có những trận, mỗi trận một bản tổng kết
   function battleTrack(W) {
@@ -2475,11 +2499,189 @@
   }
 
 
-  /* =============== Nhịp năm năm: tám thời đại trong một ván =============== */
-  // Ván của vị thần dài đúng năm năm. Mỗi thành phố có một lộ trình đi qua tám thời đại tính từ ngày đặt chân;
+
+  /* =============== Sáu trụ cột: lên đời cần cả sáu cùng vững =============== */
+  // Lên đời không chỉ cần tri thức và dân số. Kinh tế, quân sự, giáo dục, y tế, tôn giáo và giao thương của mỗi thành
+  // lớn dần theo chính đời sống của nó (có việc làm, có quân, có học, ít người ốm, có đức tin, có buôn bán).
+  // Mỗi miền coi trọng mỗi trụ cột một khác: trụ cột chính của miền đòi cao hơn, nhưng miền cũng giỏi đúng thứ đó.
+  const PILLARS = [
+    { key: 'eco', name: 'Kinh tế' }, { key: 'mil', name: 'Quân sự' }, { key: 'edu', name: 'Giáo dục' },
+    { key: 'hea', name: 'Y tế' }, { key: 'rel', name: 'Tôn giáo' }, { key: 'tra', name: 'Giao thương' },
+  ];
+  const PILLAR_NEED = {
+    plains: { eco: 1.2, mil: 0.9, edu: 0.95, hea: 1.0, rel: 1.05, tra: 0.95 },
+    forest: { eco: 0.9, mil: 0.95, edu: 0.95, hea: 1.2, rel: 1.05, tra: 0.9 },
+    mountain: { eco: 1.0, mil: 1.2, edu: 1.05, hea: 0.9, rel: 1.0, tra: 0.85 },
+    tundra: { eco: 0.9, mil: 1.0, edu: 1.2, hea: 1.05, rel: 0.95, tra: 0.85 },
+    coast: { eco: 1.0, mil: 0.9, edu: 0.95, hea: 0.95, rel: 0.9, tra: 1.2 },
+    desert: { eco: 0.9, mil: 1.05, edu: 1.0, hea: 0.9, rel: 1.2, tra: 1.0 },
+  };
+  const PILLAR_KEY = { plains: 'eco', forest: 'hea', mountain: 'mil', tundra: 'edu', coast: 'tra', desert: 'rel' };
+  const PILLAR_WHY = {
+    plains: 'Vựa lúa của bể kính: Lúa Vàng chỉ lên đời khi kinh tế dẫn đầu.',
+    forest: 'Rừng thuốc: Thông Xanh chỉ lên đời khi cả thành khoẻ mạnh.',
+    mountain: 'Thành trên vách đá: quân sự là xương sống của Đá Mây.',
+    tundra: 'Băng nguyên đêm dài: Tuyết Trắng lên đời bằng học vấn.',
+    coast: 'Con của biển: Cửa Sóng sống nhờ buôn bán.',
+    desert: 'Xứ mặt trời: Cát Hồng không lên đời khi đức tin lung lay.',
+  };
+  // công trình riêng của mỗi miền cho mỗi trụ cột: tên chung và bốn dáng qua các thời của loài người
+  const LANDMARKS = {
+    plains: { eco: ['Cối Xay', ['Cối Nước', 'Cối Xay Gió', 'Nhà Máy Xay', 'Lò Nhiệt Hạch']], mil: ['Đấu Trường', ['Vòng Đá Tỉ Thí', 'Đấu Trường Đá', 'Sân Vận Động', 'Đấu Trường Ảo']], edu: ['Văn Miếu', ['Nhà Dài Già Làng', 'Văn Miếu', 'Đại Học', 'Viện Trí Tuệ']], hea: ['Nhà Thuốc', ['Lều Thầy Lang', 'Nhà Thuốc Nam', 'Bệnh Viện', 'Tháp Chữa Lành']], rel: ['Đền Trời', ['Gò Tô Tem', 'Kim Tự Tháp Bậc', 'Nhà Thờ Lớn', 'Tháp Trắng']], tra: ['Ngã Tư Lớn', ['Cột Mốc', 'Trạm Ngựa', 'Ga Xe Lửa', 'Ga Đệm Từ']] },
+    forest: { eco: ['Xưởng Gỗ', ['Bãi Đốn Gỗ', 'Xưởng Cưa', 'Nhà Máy Gỗ', 'Xưởng Sinh Học']], mil: ['Chòi Săn', ['Lều Phục Săn', 'Nhà Sàn Canh Rừng', 'Tháp Canh Lửa', 'Tổ Máy Bay']], edu: ['Nhà Học Trên Cây', ['Chòi Kể Chuyện', 'Trường Trên Cây', 'Thư Viện Quanh Cây', 'Tháp Tri Thức Sống']], hea: ['Vườn Thuốc', ['Vườn Thuốc', 'Nhà Kính Thuốc', 'Mái Vòm Sinh Học', 'Tháp Xanh']], rel: ['Đền Rừng', ['Vòng Gỗ Thiêng', 'Chùa Gỗ Ba Tầng', 'Đền Kính Cây Mẹ', 'Đền Ánh Lá']], tra: ['Cầu Tán Cây', ['Cầu Dây', 'Cầu Ván', 'Cầu Thép', 'Cầu Kính Vòng']] },
+    mountain: { eco: ['Hầm Mỏ', ['Hang Đá', 'Giàn Mỏ Gỗ', 'Giàn Mỏ Thép', 'Mũi Khoan Lõi Đất']], mil: ['Pháo Đài Vách Đá', ['Tường Đá Khô', 'Thành Đá', 'Lô Cốt', 'Thành Khiên Năng Lượng']], edu: ['Đài Ngắm Sao', ['Ụ Đá Ngắm Sao', 'Tu Viện Ngắm Sao', 'Đài Thiên Văn', 'Dàn Kính Viễn Vọng']], hea: ['Suối Khoáng', ['Đập Đá Giữ Suối', 'Nhà Tắm Cối Nước', 'Đập Thủy Điện', 'Lõi Địa Nhiệt']], rel: ['Chùa Núi', ['Am Đá Cờ Phướn', 'Chùa Tầng', 'Bảo Tháp Vàng', 'Bảo Tháp Lơ Lửng']], tra: ['Cáp Treo', ['Ròng Rọc', 'Tàu Leo Núi', 'Cáp Treo', 'Thang Phản Trọng Lực']] },
+    tundra: { eco: ['Hầm Hạt Giống', ['Ụ Đá Cất Giữ', 'Cửa Hầm Đá', 'Hầm Hạt Giống', 'Kho Trí Nhớ']], mil: ['Sảnh Băng', ['Lều Tuyết Lớn', 'Nhà Dài Băng', 'Cung Điện Băng', 'Thành Đông Lạnh']], edu: ['Trạm Nghiên Cứu', ['Lều Thám Hiểm', 'Chòi Thám Hiểm', 'Trạm Cực', 'Phòng Thí Nghiệm Lượng Tử']], hea: ['Suối Nóng', ['Suối Nước Nóng', 'Nhà Tắm', 'Nhà Máy Địa Nhiệt', 'Tháp Nhiệt Sâu']], rel: ['Đền Cực Quang', ['Cổng Xương Cá Voi', 'Cột Cầu Cực Quang', 'Đài Cực Quang', 'Vòng Hứng Cực Quang']], tra: ['Trạm Tuần Lộc', ['Bãi Tuần Lộc', 'Trạm Xe Trượt', 'Xưởng Xe Xích', 'Nhà Xe Bay']] },
+    coast: { eco: ['Xưởng Đóng Tàu', ['Bãi Đẽo Xuồng', 'Ụ Tàu Gỗ', 'Ụ Khô Cần Cẩu', 'Hầm Tàu Ngầm']], mil: ['Pháo Đài Biển', ['Chòi Cọc', 'Đồn Đá Tròn', 'Trận Địa Pháo', 'Tháp Laser']], edu: ['Hải Đăng', ['Lửa Hiệu Trên Đá', 'Hải Đăng Đá', 'Hải Đăng Sọc', 'Tháp Chùm Sáng']], hea: ['Trạm Cứu Hộ', ['Vũng Tắm Muối', 'Nhà Nghỉ Biển', 'Bệnh Viện Biển', 'Tàu Bệnh Viện Nổi']], rel: ['Đền Thủy Triều', ['Vòng Đá Triều', 'Đền Nhà Sàn', 'Nhà Nguyện Mái Xanh', 'Đền Tuabin Triều']], tra: ['Chợ Ngọc Trai', ['Sạp Vỏ Sò', 'Nhà Buôn', 'Sở Giao Dịch', 'Chợ Nổi']] },
+    desert: { eco: ['Lò Thủy Tinh', ['Lò Nung', 'Xưởng Thủy Tinh', 'Xưởng Silic', 'Nhà Máy Chip']], mil: ['Cánh Đồng Gương Đốt', ['Đá Mài Bóng', 'Vườn Gương Đốt', 'Cánh Đồng Pin Mặt Trời', 'Dàn Chảo Hội Tụ']], edu: ['Tháp Gió', ['Bờ Chắn Gió', 'Nhà Tháp Gió', 'Tháp Làm Mát', 'Tháp Khí Hậu']], hea: ['Giếng Ốc Đảo', ['Giếng Và Chà Là', 'Tháp Kênh Ngầm', 'Trạm Bơm', 'Máy Hứng Hơi Nước']], rel: ['Đền Mặt Trời', ['Vòng Đá Mặt Trời', 'Kim Tự Tháp Hồng', 'Đài Quan Sát Mặt Trời', 'Tháp Mặt Trời']], tra: ['Trạm Lạc Đà', ['Lều Lạc Đà', 'Lữ Quán', 'Kho Dầu', 'Cảng Vũ Trụ']] },
+  };
+  const BEYOND_TAG = ['san hô', 'lơ lửng', 'xoắn', 'ánh sáng'];
+  function landmarkName(ter, k, era) { const L = LANDMARKS[ter][k]; return era >= 8 ? L[1][3] + ' ' + BEYOND_TAG[Math.min(3, era - 8)] : L[1][Math.floor(era / 2)]; }
+  function pillarInit(c) { c.pil = { eco: 0, mil: 0, edu: 0, hea: 0, rel: 0, tra: 0 }; c.pilDrv = {}; c.tradeEma = 0; }
+  const needOf = (c, k) => PILLAR_NEED[c.terrain.key][k];
+  // phần đã đi được tới thời sau của mỗi trụ cột (0..1)
+  function pillarProgress(c) { const out = {}; for (const P of PILLARS) out[P.key] = c.pil ? clampN(c.pil[P.key] / needOf(c, P.key) - c.era, 0, 1) : 1; return out; }
+  function pillarsReady(c) { if (!c.pil) return true; for (const P of PILLARS) if (c.pil[P.key] < (c.era + 1) * needOf(c, P.key) - 1e-9) return false; return true; }
+  function weakestPillar(c) { const pr = pillarProgress(c); let key = null, pct = 2; for (const P of PILLARS) if (pr[P.key] < pct) { pct = pr[P.key]; key = P.key; } return { key, pct, name: PILLARS.find((P) => P.key === key).name }; }
+  // sức lớn của mỗi trụ cột hôm nay, tính từ chính đời sống của thành phố (1 là đi đúng nhịp)
+  function pillarDrivers(W, c) {
+    const w = c.w, n = Math.max(1, w.households.length), st = w.stats.length ? w.stats[w.stats.length - 1] : null;
+    const ue = st ? st.unemployment / 100 : 0.1, hungry = st ? st.hungry / n : 0, sick = (w.sickN || 0) / n;
+    let links = 0;
+    for (const B of W.bridges) if (B.level >= 0 && (B.a === c.id || B.b === c.id)) links++;
+    const army = W.war.units.filter((u) => u.city === c.id && !u.dead).length;
+    const milB = ['barracks', 'range', 'stable', 'siege', 'forge', 'tower', 'wall'].filter((t) => hasB(c, t)).length;
+    const next = ERAS[Math.min(LAST, c.era + 1)];
+    const ruined = (kind) => (c.dmg || []).filter((d) => d.state === 'ruin' && (kind == null || d.kind === kind)).length;
+    const d = {
+      eco: 0.42 + 0.6 * (1 - Math.min(1, ue * 2.5)) * (1 - Math.min(1, hungry * 3)) + (w.gov.cash > 50 ? 0.05 : 0) + (hasB(c, 'granary') ? 0.08 : 0) - 0.04 * ruined('firm'),
+      mil: 0.45 + 0.5 * Math.min(1, army / Math.max(2, armyCap(c) * 0.5)) + 0.04 * milB + (W.war.on ? 0 : 0.55),
+      edu: 0.5 + 0.45 * Math.min(1.3, knowledgeOf(c) / Math.max(1, c.pace ? c.pace.know : next.know)) + (hasB(c, 'academy') ? 0.1 : 0),
+      hea: 0.45 + 0.6 * (1 - Math.min(1, sick * 4)) * (1 - Math.min(1, hungry * 3)) - (w.epi && w.epi.state === 'spreading' ? 0.25 : 0) - (c.fallout > 0 ? 0.4 : 0) - 0.03 * ruined('house'),
+      rel: 0.45 + 0.55 * Math.min(1.6, (c.faith == null ? 0.4 : c.faith) / FAITH_BASE[c.era]),
+      tra: 0.45 + 0.08 * Math.min(3, links) + 0.45 * Math.min(1, (c.tradeEma || 0) / Math.max(1, BRIDGE_CAP[c.era] * 0.45)) + (hasB(c, 'port') ? 0.1 : 0) + (hasB(c, 'market') ? 0.08 : 0),
+    };
+    d[PILLAR_KEY[c.terrain.key]] += 0.06; // miền giỏi đúng thứ nó coi trọng, nhưng vẫn phải gắng hơn ở thứ đó
+    for (const k in d) d[k] = clampN(d[k], 0.3, 1.5);
+    return d;
+  }
+  function pillarsDay(W) {
+    const P = W.cfg.pace;
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (!c.pil) pillarInit(c);
+      let q = 0;
+      for (const t of W.trade) if (t.from === c.id || t.to === c.id) q += t.q;
+      c.tradeEma = (c.tradeEma || 0) * 0.96 + q * 0.04;
+      const d = pillarDrivers(W, c);
+      c.pilDrv = d;
+      // nhịp ván chín năm: thành tụt lại thì cả sáu trụ cột được kéo nhanh hơn, thành vượt trước thì chậm lại
+      let span = 180, band = 1;
+      if (P && c.pace) {
+        const e = Math.min(LAST - 1, c.era);
+        span = Math.max(40, c.pace.J * (PACE_FR[e + 1] - PACE_FR[e]));
+        band = clampN(1 + 1.4 * (c.pace.era - (c.era + weakestPillar(c).pct)), 0.3, 4);
+      }
+      for (const Pi of PILLARS) {
+        const k = Pi.key, cap = (Math.min(LAST, c.era) + 1.6) * needOf(c, k);
+        c.pil[k] = Math.min(cap, c.pil[k] + (d[k] * band) / span);
+      }
+    }
+  }
+  function pillarNudge(c, k, amt) { if (!c.pil) return; const need = needOf(c, k); c.pil[k] = clampN(c.pil[k] + amt * need, c.era * need * 0.85, (c.era + 1.6) * need); }
+  // phép của thần chạm tới trụ cột: chữa lành thì y tế lên, khai sáng thì học vấn lên, thiên tai thì ngược lại
+  function pillarTouch(W, c, key, fx) {
+    const T = { heal: [['hea', 0.3]], enlighten: [['edu', 0.3]], harvest: [['eco', 0.22]], rain: [['eco', 0.08], ['hea', 0.06]], truce: [['tra', 0.1]], plague: [['hea', -0.25]], drought: [['eco', -0.12]], quake: [['eco', -0.1], ['mil', -0.08]], flood: [['eco', -0.1]], volcano: [['eco', -0.12], ['hea', -0.1]], tsunami: [['tra', -0.15]], tornado: [['eco', -0.06]], fire: [['eco', -0.05]] }[key] || [];
+    for (const [k, a] of T) pillarNudge(c, k, a);
+    // thiên tai để lại dấu vết trên nhà xưởng
+    const firms = fx && fx.firms ? fx.firms.slice(0, 4) : [];
+    if (key === 'fire' || key === 'volcano') for (const id of firms) ignite(W, c, 'firm', id, 'god');
+    if (key === 'quake' || key === 'tornado') for (const id of firms.slice(0, 3)) { const d = ignite(W, c, 'firm', id, 'god'); if (d) { d.state = 'ruin'; d.until = W.day + 18; } }
+  }
+
+  /* =============== Dấu vết chiến tranh: lửa, đổ nát, dựng lại =============== */
+  // Mỗi trận công thành đốt cháy nhà xưởng; cháy xong có nơi sập thành đống đổ nát, xưởng sập thì ngừng làm ra hàng
+  // cho tới khi dựng lại. Công trình trụ cột bị phá thì trụ cột đó tụt xuống, nên chiến tranh làm chậm cả việc lên đời.
+  function dmgInit(c) { c.dmg = []; c.dmgSeq = 0; c.siegeHits = 0; }
+  function ignite(W, c, kind, ref, why) {
+    if (!c.dmg) dmgInit(c);
+    if (c.dmg.length >= 30 || c.dmg.some((d) => d.kind === kind && d.ref === ref)) return null;
+    const d = { id: ++c.dmgSeq, kind, ref, state: 'fire', day: W.day, until: W.day + 3 + Math.floor(W.rand() * 3), why };
+    c.dmg.push(d);
+    if (kind === 'firm') { const f = c.w.firms.find((x) => x.id === ref); if (f) { f.downUntil = Math.max(f.downUntil || 0, d.until); f.inv *= 0.6; } }
+    return d;
+  }
+  function siegeTarget(W, c) {
+    const r = W.rand();
+    if (r < 0.45) { const fs = c.w.firms.filter((f) => f.alive && !f.sea && f.sector !== 'gold'); if (fs.length) return ['firm', fs[Math.floor(W.rand() * fs.length)].id]; }
+    if (r < 0.92) { const nh = Math.ceil(c.w.households.length / 4); return ['house', Math.floor(W.rand() * nh)]; }
+    return ['land', PILLARS[Math.floor(W.rand() * PILLARS.length)].key];
+  }
+  // thành bị chiếm thì bị cướp phá: nhiều nơi cháy cùng lúc
+  function sack(W, c) { let lit = 0; const n = 3 + Math.floor(W.rand() * 3); for (let k = 0; k < 16 && lit < n; k++) { const [kind, ref] = siegeTarget(W, c); if (ignite(W, c, kind, ref, 'sack')) lit++; } }
+  function damageDay(W) {
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (!c.dmg) dmgInit(c);
+      const hits = c.siegeHits || 0;
+      c.siegeHits = 0;
+      if (hits > 0 && W.rand() < Math.min(0.5, 0.08 + 0.02 * hits)) {
+        const [kind, ref] = siegeTarget(W, c), d = ignite(W, c, kind, ref, 'siege');
+        if (d && (!c.burnStory || W.day - c.burnStory > 90)) { c.burnStory = W.day; wstory(W, 'burn', 'major', 'Lửa cháy trong thành ' + c.name, 'Tên lửa, đá và đạn bay qua tường thành. ' + (kind === 'land' ? landmarkName(c.terrain.key, ref, c.era) + ' bốc cháy.' : kind === 'firm' ? 'Một xưởng bốc cháy, thợ bỏ chạy.' : 'Một dãy nhà bốc cháy, dân bế con chạy ra quảng trường.'), { kind: 'land', city: c.id }, { city: c.id, dmg: d.id }); }
+      }
+      for (const d of c.dmg) {
+        if (W.day < d.until) continue;
+        if (d.state === 'fire') {
+          if (W.rand() < (d.kind === 'land' ? 0.4 : 0.55)) {
+            d.state = 'ruin'; d.until = W.day + 20 + Math.floor(W.rand() * 20);
+            if (d.kind === 'firm') { const f = c.w.firms.find((x) => x.id === d.ref); if (f) f.downUntil = Math.max(f.downUntil || 0, d.until); }
+            if (d.kind === 'land') { pillarNudge(c, d.ref, -0.3); wstory(W, 'ruin', 'major', landmarkName(c.terrain.key, d.ref, c.era) + ' của ' + c.name + ' sụp đổ', 'Lửa tắt, chỉ còn tường đổ và tro. ' + PILLARS.find((P) => P.key === d.ref).name + ' của ' + c.name + ' tụt lại, phải mất nhiều tháng mới gượng dậy.', { kind: 'land', city: c.id }, { city: c.id, pillar: d.ref }); }
+          } else { d.state = 'scorch'; d.until = W.day + 12; }
+        } else if (d.state === 'ruin') { d.state = 'rebuild'; d.until = W.day + 10; }
+        else d.state = 'gone';
+      }
+      c.dmg = c.dmg.filter((d) => d.state !== 'gone');
+    }
+  }
+
+  /* =============== Săn bắt trên cạn =============== */
+  // Mỗi miền một bầy thú. Thời nguyên thủy là khủng long, cá sấu khổng lồ, voi ma mút; sau đó là thú lớn rồi thú nhỏ.
+  // Thợ săn đi từ bãi săn của thành, săn quá tay thì đàn thú cạn dần; thời máy móc thì không còn ai đi săn nữa.
+  const GAME = {
+    plains: ['khủng long cổ dài', 'bò rừng', 'nai'], forest: ['khủng long bạo chúa', 'hươu sừng', 'lợn rừng'],
+    mountain: ['thằn lằn bay', 'dê núi', 'dê núi'], tundra: ['voi ma mút', 'tuần lộc', 'cáo tuyết'],
+    coast: ['cá sấu khổng lồ', 'lợn rừng', 'rùa'], desert: ['khủng long săn mồi', 'linh dương', 'lạc đà hoang'],
+  };
+  const gameTier = (era) => (era === 0 ? 0 : era <= 2 ? 1 : era <= 5 ? 2 : -1);
+  function huntInit(c) { c.game = { tier: 0, stock: 60, K: 60, kills: 0, low: false }; }
+  function huntDay(W) {
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (!c.game) huntInit(c);
+      const G = c.game, tier = gameTier(c.era), ter = c.terrain.key;
+      if (tier !== G.tier) {
+        if (G.tier === 0) wstory(W, 'last-dino', 'major', 'Đàn ' + GAME[ter][0] + ' cuối cùng rời ' + c.name, 'Người ' + c.name + ' bước vào thời mới, đàn ' + GAME[ter][0] + ' cuối cùng cũng bỏ đi. Về sau người ta còn kể chuyện chúng rất lâu.', { kind: 'land', city: c.id }, { city: c.id });
+        G.tier = tier; G.K = tier === 2 ? 40 : 60; G.stock = tier < 0 ? 0 : G.K * 0.85; G.low = false;
+      }
+      if (tier < 0) { c.hunters = 0; continue; }
+      G.stock = Math.min(G.K, G.stock + 0.02 * G.stock * (1 - G.stock / G.K) + 0.01);
+      const n = c.w.households.length;
+      c.hunters = tier === 2 ? Math.min(4, Math.max(1, Math.round(n * 0.03))) : Math.min(6, Math.max(2, Math.round(n * 0.07)));
+      for (let k = 0; k < c.hunters; k++) {
+        if (G.stock < 1 || W.rand() > 0.03 * (G.stock / G.K)) continue;
+        G.stock -= 1; G.kills++;
+        W.hunts.push({ city: c.id, tier, day: W.day });
+        if (W.cfg.pace) addMod(c, 1.02, W.day, W.day + 5); // thịt thú săn được thêm vào bữa ăn của thành
+      }
+      if (!G.low && G.stock < G.K * 0.15) { G.low = true; wstory(W, 'hunt-low', 'small', GAME[ter][tier] + ' ở ' + c.name + ' cạn dần', 'Thợ săn đi cả ngày mới thấy một con. Người già bảo phải để rừng nghỉ.', { kind: 'land', city: c.id }, { city: c.id }); }
+    }
+  }
+
+  /* =============== Nhịp chín năm: mười hai thời đại trong một ván =============== */
+  // Ván của vị thần dài đúng chín năm. Mỗi thành phố có một lộ trình đi qua mười hai thời đại tính từ ngày đặt chân;
   // tri thức và dân số được kéo dần về lộ trình (đi chậm thì học nhanh hơn, có thêm người tìm đến; đi nhanh thì chậm lại),
   // nhưng ai dẫn trước, ai tụt lại, ai đánh ai vẫn do nền kinh tế và chiến tranh quyết định.
-  const PACE_FR = [0, 0.12, 0.25, 0.38, 0.52, 0.66, 0.8, 1];
+  // tám thời của loài người trong năm năm đầu (Robot AI ở năm 5), bốn thời vượt người trong năm 6 đến 9
+  const PACE_FR = [0, 0.059, 0.123, 0.188, 0.257, 0.326, 0.395, 0.493, 0.65, 0.777, 0.893, 1];
   function paceOf(W, c) {
     const P = W.cfg.pace, f = Math.max(0, c.founded);
     const end = P.lead + (f / P.lastSettle) * (P.last - P.lead), J = Math.max(200, end - f);
@@ -2513,7 +2715,7 @@
       // lên thời mới khi đủ tri thức, đủ dân, và đã sống đủ lâu ở thời hiện tại để mọi người kịp thấy nó
       if (c.era < LAST) {
         const next = ERAS[c.era + 1], minDay = T.f + T.J * PACE_FR[c.era + 1] * 0.9;
-        if (knowledgeOf(c) >= next.know && n >= next.pop && W.day >= minDay) advanceEra(W, c);
+        if (knowledgeOf(c) >= next.know && n >= next.pop && W.day >= minDay && pillarsReady(c)) advanceEra(W, c);
       }
     }
   }
@@ -2569,8 +2771,10 @@
     // biển trong
     SPECIES, fisheryOf, zoneName,
     // tranh hùng
-    BUILDINGS, UNITS, WONDERS, BONUS, PERSONA, FACTION_COLORS, STAT_E, ADV_COST,
+    BUILDINGS, UNITS, WONDERS, BONUS, PERSONA, FACTION_COLORS, STAT_E, ADV_COST, unitName, AI_ERA,
     POWERS, godOffer, godAct, FAITH_BASE, LAST,
+    // sáu trụ cột, công trình riêng của miền, dấu vết chiến tranh, săn bắt
+    PILLARS, PILLAR_NEED, PILLAR_KEY, PILLAR_WHY, LANDMARKS, BEYOND_TAG, landmarkName, pillarProgress, pillarsReady, weakestPillar, ignite, GAME, gameTier,
     buildOffer, build, bridgeOffer, buildBridge, advanceOffer, advanceCity, unitOffer, train, unitStats, armyOf, armyCap, hasB, bName,
     lanesOf, laneOf, laneUnits, setStance, declareWar, offerPeace, acceptPeace, makePeace, powerOf, connected, nukeOffer, launchNuke, conquer, atWar, atWarF, capitalOf, blockadeOf,
     create, step, printMoney, grantTreasury, setPolicy, fund, openFirm: (w, sector, why) => openFirmAt(w, sector, why, true), addHouseholds, phenomena, trigger, SEASONS, totalMoney, expectedMoney, gini, DEFAULTS,

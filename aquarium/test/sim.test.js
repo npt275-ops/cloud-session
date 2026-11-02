@@ -803,19 +803,30 @@ test('kỳ quan: xây xong và đứng vững một năm thì thắng; Tranh hù
 });
 
 
-/* ===================== Tám thời đại và vị thần của bể kính ===================== */
-test('tám thời đại: tới tên lửa và robot AI, mọi công trình và quân lính đều có tên và sức mạnh riêng', () => {
-  assert.equal(Sim.ERAS.length, 8);
-  assert.deepStrictEqual(Sim.ERAS.slice(5).map((e) => e.name), ['Hiện đại', 'Tên lửa', 'Robot AI']);
-  for (let e = 1; e < 8; e++) assert.ok(Sim.ERAS[e].know > Sim.ERAS[e - 1].know && Sim.ERAS[e].pop > Sim.ERAS[e - 1].pop);
+/* ===================== Mười hai thời đại và vị thần của bể kính ===================== */
+test('mười hai thời đại: tám thời của loài người tới robot AI, rồi bốn thời vượt tầm hiểu biết; mọi công trình và quân lính đều có tên và sức mạnh riêng', () => {
+  assert.equal(Sim.ERAS.length, 12);
+  assert.equal(Sim.ERAS[Sim.AI_ERA].name, 'Robot AI');
+  assert.deepStrictEqual(Sim.ERAS.slice(8).map((e) => e.name), ['Vật Chất Sống', 'Mặt Trời Nhân Tạo', 'Bẻ Cong Không Gian', 'Siêu Việt']);
+  for (let e = 1; e < 12; e++) assert.ok(Sim.ERAS[e].know > Sim.ERAS[e - 1].know && Sim.ERAS[e].pop > Sim.ERAS[e - 1].pop);
+  for (const key of ['BRIDGE_CAP', 'BRIDGE_TEXT', 'BRIDGE_LOAD', 'STAT_E', 'ADV_COST', 'FAITH_BASE']) assert.equal(Sim[key].length, 12, key);
   const W = warWorld(10), c = W.cities[0];
   for (let e = 0; e < 7; e++) Sim.advanceEra(W, 0);
   assert.equal(c.era, 7);
   assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food' && !f.sea).every((f) => f.name.startsWith('Nông Trại Robot')));
-  for (const t of Object.keys(Sim.BUILDINGS)) { const o = Sim.buildOffer(W, 0, t); assert.ok(o.name || t === 'wonder', 'công trình ' + t + ' có tên ở thời robot'); }
-  for (const k of Object.keys(Sim.UNITS)) { const st = Sim.unitStats(c, k, 7); assert.ok(Number.isFinite(st.hp) && st.hp > 0 && Number.isFinite(st.range), k); assert.ok(Sim.UNITS[k].names[7], k); }
+  for (let e = 7; e < 11; e++) Sim.advanceEra(W, 0);
+  assert.equal(c.era, 11);
+  assert.ok(c.w.firms.filter((f) => f.alive && f.sector === 'food' && !f.sea).every((f) => f.name.startsWith('Vườn Ánh Sáng')));
+  for (const t of Object.keys(Sim.BUILDINGS)) { const o = Sim.buildOffer(W, 0, t); assert.ok(o.name || t === 'wonder', 'công trình ' + t + ' có tên ở thời cuối'); }
+  for (const k of Object.keys(Sim.UNITS)) for (let e = Sim.UNITS[k].era; e < 12; e++) { const st = Sim.unitStats(c, k, e); assert.ok(Number.isFinite(st.hp) && st.hp > 0 && Number.isFinite(st.range) && st.w != null, k + e); assert.ok(Sim.UNITS[k].names[e] || (k === 'sub' && e < 6), k + e); }
   assert.ok(Sim.unitStats(c, 'melee', 7).hp > Sim.unitStats(c, 'melee', 5).hp * 2, 'robot mạnh hơn hẳn lính hiện đại');
-  assert.ok(!Sim.advanceOffer(W, 0).ok, 'không có thời nào sau robot AI');
+  assert.ok(Sim.unitStats(c, 'melee', 11).hp > Sim.unitStats(c, 'melee', 7).hp * 3, 'chiến binh ánh sáng mạnh hơn hẳn robot');
+  assert.ok(!Sim.advanceOffer(W, 0).ok, 'không có thời nào sau Siêu Việt');
+  // quân lính bốn thời đầu mang tên và thú cưỡi riêng của miền
+  assert.equal(Sim.unitName('tundra', 'mounted', 1), 'Kỵ Sĩ Voi Ma Mút');
+  assert.equal(Sim.unitName('desert', 'mounted', 1), 'Kỵ Binh Lạc Đà');
+  assert.notEqual(Sim.unitName('forest', 'ranged', 1), Sim.unitName('coast', 'ranged', 1));
+  assert.equal(Sim.unitName('forest', 'melee', 9), 'Hiệp Sĩ Plasma');
 });
 
 test('vị thần: thiên tai và ban phước tốn thần lực, có thời gian hồi, làm dân sợ hay biết ơn mà tin; sổ cái vẫn khớp', () => {
@@ -826,11 +837,11 @@ test('vị thần: thiên tai và ban phước tốn thần lực, có thời gi
   W.god.power = 100;
   const faith0 = c.faith;
   // lũ: ruộng ngập, kho ướt, rồi phù sa
-  const food0 = w.firms.filter((f) => f.alive && f.sector === 'food').reduce((t, f) => t + f.inv, 0);
+  const inv0 = new Map(w.firms.map((f) => [f.id, f.inv]));
   const r = Sim.godAct(W, 'flood', 0);
   assert.ok(r.ok && r.fx.firms.length > 0);
   assert.equal(W.god.power, 70, 'lũ tốn 30 thần lực');
-  assert.ok(w.firms.filter((f) => f.alive && f.sector === 'food').reduce((t, f) => t + f.inv, 0) < food0, 'kho lương ướt sũng');
+  assert.ok(r.fx.firms.every((id) => { const f = w.firms.find((x) => x.id === id); return f.inv < inv0.get(id) || inv0.get(id) === 0; }), 'kho của những nơi bị ngập ướt sũng');
   assert.ok(c.faith > faith0, 'thiên tai làm dân sợ mà tin thần');
   assert.ok(!Sim.godOffer(W, 'flood', 0).ok, 'phải chờ mới giáng lũ lần nữa');
   assert.ok(W.stories.some((s) => s.type === 'god-flood'));
@@ -873,18 +884,103 @@ test('chiến sự trong mắt thần: các phe máy tự đánh nhau, mỗi tr�
 });
 
 
-test('ván năm năm: sáu bộ lạc đến trong nửa năm đầu, đi qua đủ tám thời đại, chiến tranh kéo tới cuối, nổi dậy làm thế giới không yên', () => {
+test('ván chín năm: sáu bộ lạc đến trong nửa năm đầu, năm năm đầu tới robot AI, bốn năm sau đi hết bốn thời vượt người; lên đời cần đủ sáu trụ cột', () => {
   const W = Sim.createWorld({ seed: 2, mode: 'god', war: true });
-  const reached = W.cities.map(() => []);
-  for (let d = 0; d < 1800; d++) { Sim.stepWorld(W); for (const c of W.cities) if (c.settled && reached[c.id][c.era] == null) reached[c.id][c.era] = W.day; }
+  const reached = W.cities.map(() => []), weakest = new Set();
+  for (let d = 0; d < 3240; d++) {
+    Sim.stepWorld(W);
+    for (const c of W.cities) {
+      if (!c.settled) continue;
+      if (reached[c.id][c.era] == null) { reached[c.id][c.era] = W.day; for (const P of Sim.PILLARS) assert.ok(c.pil[P.key] >= c.era * Sim.PILLAR_NEED[c.terrain.key][P.key] - 1e-9, c.name + ' lên thời ' + c.era + ' khi trụ cột ' + P.name + ' đã vững'); }
+      if (c.era < Sim.LAST) weakest.add(c.terrain.key + ':' + Sim.weakestPillar(c).key);
+    }
+  }
   assert.ok(W.cities.every((c) => c.founded <= 200), 'cả sáu bộ lạc đến trong khoảng nửa năm đầu');
-  assert.ok(W.cities.every((c) => c.era === 7), 'đến cuối năm thứ năm cả sáu thành đã tới thời Robot AI (' + W.cities.map((c) => c.era).join('') + ')');
-  const lead = Math.min(...W.cities.map((c, i) => reached[i][7]));
-  assert.ok(lead > 1250 && lead < 1650, 'thành đi đầu tới thời robot vào cuối năm thứ tư (ngày ' + lead + ')');
-  for (let e = 1; e <= 7; e++) { const first = Math.min(...reached.map((r) => r[e])); assert.ok(first > (e - 1) * 120, 'thời ' + e + ' không đến quá sớm (ngày ' + first + ')'); }
-  assert.ok(W.ended && W.stories.some((s) => s.type === 'finale'), 'ván dừng ở ngày 1800');
-  assert.ok(W.stories.some((s) => s.type === 'awaken'), 'những cỗ máy kịp nhìn thấy vách kính trước khi ván kết thúc');
-  const wars = W.stories.filter((s) => s.type === 'war');
-  assert.ok(wars.some((s) => s.day > 1200), 'vẫn có chiến tranh ở thời tên lửa và thời robot');
+  assert.ok(W.cities.every((c) => c.era === 11), 'hết năm thứ chín cả sáu thành đã tới thời Siêu Việt (' + W.cities.map((c) => c.era).join('') + ')');
+  const first = (e) => Math.min(...reached.map((r) => r[e]));
+  assert.ok(first(7) > 1250 && first(7) <= 1800, 'thành đi đầu tới thời robot trong năm thứ năm (ngày ' + first(7) + ')');
+  assert.ok(first(8) > 1800 && first(8) <= 2160, 'thời Vật Chất Sống mở đầu năm thứ sáu (ngày ' + first(8) + ')');
+  assert.ok(first(11) > 2880 && first(11) <= 3240, 'thời Siêu Việt đến trong năm thứ chín (ngày ' + first(11) + ')');
+  for (let e = 1; e <= 11; e++) assert.ok(first(e) > first(e - 1), 'thời ' + e + ' đến sau thời ' + (e - 1));
+  assert.ok(W.ended && W.stories.some((s) => s.type === 'finale' && s.title.includes('chín')), 'ván dừng ở ngày 3240');
+  assert.ok(W.god.awakened, 'những cỗ máy vẫn kịp nhìn thấy vách kính ở thời robot');
+  const regions = new Set([...weakest].map((x) => x.split(':')[1]));
+  assert.ok(regions.size >= 4, 'mỗi lúc một trụ cột khác níu chân các thành (' + [...regions].join(', ') + ')');
+  assert.ok(W.stories.some((s) => s.type === 'war' && s.day > 1800), 'vẫn có chiến tranh ở các thời vượt người');
   assert.ok(ledgerOk(W));
+});
+
+/* ===================== Sáu trụ cột, dấu vết chiến tranh, săn bắt ===================== */
+test('sáu trụ cột: mỗi miền coi trọng một trụ cột, thiếu một trụ cột thì chưa lên đời; phép thần chạm tới trụ cột', () => {
+  for (const ter of Object.keys(Sim.PILLAR_NEED)) {
+    const need = Sim.PILLAR_NEED[ter], key = Sim.PILLAR_KEY[ter];
+    assert.equal(Object.keys(need).length, 6, ter);
+    assert.ok(Object.values(need).every((v) => v <= need[key]), ter + ' đòi cao nhất ở ' + key);
+    for (const P of Sim.PILLARS) { assert.ok(Sim.LANDMARKS[ter][P.key][0], ter + P.key); for (let e = 0; e < 12; e++) assert.ok(Sim.landmarkName(ter, P.key, e), ter + P.key + e); }
+  }
+  assert.equal(new Set(Object.values(Sim.PILLAR_KEY)).size, 6, 'sáu miền coi trọng sáu trụ cột khác nhau');
+  const W = Sim.createWorld({ seed: 4, mode: 'god', war: false });
+  for (let d = 0; d < 700; d++) Sim.stepWorld(W);
+  const c = W.cities[0], e = c.era, P = Sim.PILLAR_NEED.plains;
+  c.learned += 400; Sim.addHouseholds(c.w, 60, 30, true);
+  for (let d = 0; d < 60; d++) { c.pil.hea = 0; Sim.stepWorld(W); }
+  assert.equal(c.era, e, 'đủ tri thức và dân nhưng y tế còn yếu thì chưa lên đời');
+  assert.equal(Sim.weakestPillar(c).key, 'hea');
+  c.pil.hea = (e + 1) * P.hea;
+  assert.ok(untilDone(W, () => c.era > e, 400), 'đủ cả sáu trụ cột thì lên đời');
+  // thần chữa lành thì y tế lên, khai sáng thì học vấn lên
+  W.god.power = 100; c.w.households[0].sick = 5;
+  const h0 = c.pil.hea, e0 = c.pil.edu;
+  assert.ok(Sim.godAct(W, 'heal', 0).ok);
+  assert.ok(c.pil.hea > h0 || c.pil.hea >= (c.era + 1.6) * P.hea - 1e-9, 'chữa lành nâng trụ cột y tế');
+  W.god.power = 100; W.god.cool = {};
+  assert.ok(Sim.godAct(W, 'enlighten', 0).ok);
+  assert.ok(c.pil.edu > e0 || c.pil.edu >= (c.era + 1.6) * P.edu - 1e-9, 'khai sáng nâng trụ cột giáo dục');
+  assert.ok(ledgerOk(W));
+});
+
+test('dấu vết chiến tranh: công thành làm nhà xưởng bốc cháy, xưởng cháy ngừng làm ra hàng, sập rồi dựng lại; thành bị chiếm thì bị cướp phá', () => {
+  const W = warWorld(12), c = W.cities[1];
+  for (let d = 0; d < 30; d++) Sim.stepWorld(W);
+  const f = c.w.firms.find((x) => x.alive && !x.sea && x.sector === 'goods');
+  const d0 = Sim.ignite(W, c, 'firm', f.id, 'test');
+  assert.ok(d0 && d0.state === 'fire' && f.downUntil >= d0.until, 'xưởng đang cháy thì ngừng');
+  const inv = f.inv;
+  Sim.stepWorld(W);
+  assert.ok(f.inv <= inv + 1e-9, 'xưởng cháy không làm ra hàng');
+  const seen = new Set();
+  for (let d = 0; d < 80 && c.dmg.includes(d0); d++) { seen.add(d0.state); Sim.stepWorld(W); }
+  assert.ok(!c.dmg.includes(d0), 'cháy xong thì sập hoặc ám khói, rồi dựng lại và biến mất');
+  assert.ok(seen.has('ruin') || seen.has('scorch'));
+  // vây thành: lửa cháy trong thành
+  let fires = 0;
+  for (let d = 0; d < 40; d++) { c.siegeHits = 40; Sim.stepWorld(W); fires += c.dmg.filter((x) => x.day === W.day).length; }
+  assert.ok(fires > 3, 'bị vây lâu ngày thì nhiều nơi bốc cháy (' + fires + ')');
+  assert.ok(W.stories.some((s) => s.type === 'burn' && s.city === 1));
+  const before = c.dmg.length;
+  Sim.conquer(W, c, 0);
+  assert.ok(c.dmg.length >= Math.min(30, before + 2), 'thành bị chiếm thì bị cướp phá');
+  assert.ok(ledgerOk(W));
+});
+
+test('săn bắt: thời nguyên thủy săn khủng long, săn quá tay thì thú cạn, sang thời mới đàn khủng long bỏ đi; thời máy móc thôi đi săn', () => {
+  const W = Sim.createWorld({ seed: 9, mode: 'god', war: false });
+  let hunts = 0;
+  for (let d = 0; d < 150; d++) { Sim.stepWorld(W); hunts += W.hunts.length; }
+  const c = W.cities[0];
+  assert.equal(c.era, 0); assert.equal(c.game.tier, 0);
+  assert.ok(c.hunters > 0 && hunts > 0 && c.game.kills > 0, 'thợ săn của ' + c.name + ' đã hạ được ' + Sim.GAME.plains[0]);
+  // săn quá tay thì thú cạn dần
+  c.game.stock = c.game.K * 0.2;
+  const s0 = c.game.stock;
+  for (let d = 0; d < 20; d++) Sim.stepWorld(W);
+  assert.ok(c.game.stock < c.game.K * 0.4, 'đàn thú khó hồi khi vẫn bị săn');
+  assert.ok(untilDone(W, () => c.era >= 1, 400));
+  Sim.stepWorld(W);
+  assert.ok(W.stories.some((s) => s.type === 'last-dino' && s.city === 0), 'đàn khủng long cuối cùng bỏ đi khi sang thời cổ đại');
+  assert.equal(c.game.tier, 1);
+  for (let e = c.era; e < 6; e++) Sim.advanceEra(W, 0);
+  Sim.stepWorld(W);
+  assert.equal(c.game.tier, -1); assert.equal(c.hunters, 0, 'thời tên lửa không còn ai đi săn');
+  assert.ok(s0 > 0 && ledgerOk(W));
 });
