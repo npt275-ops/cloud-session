@@ -909,8 +909,8 @@ test('mưa tên lửa và những đảo bị đẩy lùi: thành trì có thể
   B.bld.wall = { done: true, day: W.day }; B.hpMax = B.hpMax || 100;
   let fell = false;
   for (let k = 0; k < 30 && !fell; k++) { const before = !!(B.bld.wall && B.bld.wall.done); Sim.strike(W, 0, 1); fell = before && !(B.bld.wall && B.bld.wall.done); if (!(B.bld.wall && B.bld.wall.done)) B.bld.wall = { done: true, day: W.day }; }
-  assert.ok(W.stories.some((s) => s.type === 'strike' && s.city === 1), 'tên lửa trút xuống thành');
-  assert.ok(W.stories.some((s) => s.type === 'strike' && s.fell), 'có lúc tường thành, tháp canh đổ sập');
+  assert.ok(W.stories.some((s) => s.type === 'missile' && s.city === 1), 'tên lửa trút xuống thành');
+  assert.ok(W.stories.some((s) => s.type === 'missile' && s.fell), 'có lúc tường thành, tháp canh đổ sập');
   const e0 = B.era, k0 = Sim.knowledgeOf(B);
   Sim.setback(W, 1);
   assert.ok(B.era < e0, 'bị đẩy lùi về thời trước'); assert.ok(Sim.knowledgeOf(B) < k0, 'tri thức mất theo');

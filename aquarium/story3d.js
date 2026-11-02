@@ -25,6 +25,10 @@
     'god-flood': ['Thần giáng lũ', '#7fb8d9'], 'god-drought': ['Thần giáng hạn', '#e0b060'], 'god-quake': ['Thần làm rung đất', '#c9a37a'], 'god-tornado': ['Thần gọi lốc', '#a6b0bb'],
     'god-plague': ['Thần gieo dịch', '#9fe07a'], 'god-volcano': ['Núi lửa', '#ff7a2a'], 'god-tsunami': ['Sóng thần', '#5fb0d9'], 'god-fire': ['Sét lửa', '#ffd36b'],
     'god-rain': ['Mưa lành', '#9fd3f0'], 'god-harvest': ['Bội thu', '#ffd36b'], 'god-enlighten': ['Khai sáng', '#fff3c4'], 'god-heal': ['Chữa lành', '#bff5c8'], 'god-truce': ['Đình chiến', '#f4fbff'],
+    'god-tap': ['Ngón tay gõ kính', '#cfe8ff'], 'god-vent': ['Lỗ thở', '#bff5c8'], 'god-crack': ['Kính nứt', '#ffb3a8'], 'god-shatter': ['Kính vỡ', '#c58bff'], 'god-patch': ['Vá kính', '#9fd3f0'],
+    'god-pour': ['Biển dâng', '#7fb8d9'], 'god-drain': ['Biển cạn', '#c9a37a'], 'god-tilt': ['Bể nghiêng', '#5fb0d9'], 'god-shade': ['Bóng bàn tay', '#8a8fb0'], 'god-lamp': ['Đèn sát đảo', '#ffb36b'],
+    'god-lid': ['Nắp bể mở', '#a6d6a0'], 'god-coin': ['Đồng xu khổng lồ', '#ffd36b'], 'god-seed': ['Cây khổng lồ', '#7be08a'], 'god-pebble': ['Viên sỏi rơi', '#c9a37a'], 'god-shake': ['Bể rung chuyển', '#ff9b8f'],
+    collapse: ['Thành chết', '#c58bff'], refugee: ['Chạy nạn', '#ffb36b'], tank: ['Mực nước', '#7fd6ff'], missile: ['Mưa tên lửa', '#ff6b4a'], setback: ['Tụt lùi', '#ff8a5a'],
     'god-aftershock': ['Dư chấn', '#c9a37a'], 'plague-spread': ['Dịch lan', '#8fdc9a'], 'battle-end': ['Tổng kết trận', '#ff9b8f'], awaken: ['Thức tỉnh', '#7ff0ff'], burn: ['Lửa chiến tranh', '#ff8a5a'], ruin: ['Đổ nát', '#c9a37a'], 'last-dino': ['Khủng long cuối cùng', '#b5c46a'], 'hunt-low': ['Thú cạn', '#c9b48a'], chaos: ['Tai hoạ', '#ff8a80'], 'air-battle': ['Không chiến', '#9fd3f0'], 'portal-assault': ['Đổ quân qua cổng', '#c9a6ff'], seize: ['Nhà bị chiếm', '#ff8a5a'], refugee: ['Tản cư', '#ffd59a'], retake: ['Giành lại nhà', '#9df0c4'], return: ['Trở về', '#9df0c4'], uprising: ['Khởi nghĩa', '#ffe08a'], resist: ['Chống trả', '#9df0c4'], civ: ['Người dân', '#ffe08a'], army: ['Quân đội', '#9fd3f0'],
   };
   const TIER_PRI = { small: 1, major: 2, epic: 3 }, TIER_HOLD = { small: 4800, major: 7500, epic: 10000 }, TIER_DIST = { small: 26, major: 32, epic: 44 }, TIER_AGE = { small: 8, major: 24, epic: 45 };
@@ -439,8 +443,9 @@
       }
       if (shake) {
         const k = (n - shake.t0) / 650;
-        if (k >= 1 || reduce) { island.position.copy(CEN); shake = null; }
-        else { const a = shake.amp * (1 - k); island.position.set(CEN.x + (Math.random() - 0.5) * a, CEN.y + (Math.random() - 0.5) * a * 0.5, CEN.z + (Math.random() - 0.5) * a); }
+        const isl = island.parent || island; // rung cả hòn đảo, không chỉ lớp này
+        if (k >= 1 || reduce) { isl.position.copy(CEN); shake = null; }
+        else { const a = shake.amp * (1 - k); isl.position.set(CEN.x + (Math.random() - 0.5) * a, CEN.y + (Math.random() - 0.5) * a * 0.5, CEN.z + (Math.random() - 0.5) * a); }
       }
     }
     function doTap(p) {
@@ -896,7 +901,7 @@
       dockLamp.material.opacity = calling ? 1 : 0.7;
     }
     computeAuras();
-    return { onDay, update, ingest, placePos, wants, doSeed, doTap, doWhisper, callAirship, customCard, customPos, extraPos, hideHalos, goTo: (st) => placePos(st.place) };
+    return { onDay, update, ingest, placePos, wants, doSeed, doTap, doWhisper, callAirship, customCard, customPos, extraPos, hideHalos, goTo: (st) => placePos(st.place), get world() { return world; } };
   }
 
   /* =============== Người dẫn chuyện chung cho cả sáu miền =============== */
@@ -1134,9 +1139,10 @@
 
     /* ----- Ngữ cảnh của một miền cho lớp hình ảnh ----- */
     function contextFor(L) {
-      const c = W.cities[L.i];
+      const c = W.cities[L.i], sub = new THREE.Group(); // mỗi lớp một nhóm riêng: thành chết thì gỡ cả nhóm
+      sub.name = 'story-layer'; L.g.add(sub); subs[L.i] = sub;
       return {
-        THREE, Sim, W, city: L.i, cityName: c.name, island: L.g, center: L.center, dome: G.dome, outAng: L.ang,
+        THREE, Sim, W, city: L.i, cityName: c.name, island: sub, center: L.center, dome: G.dome, outAng: L.ang,
         houses: L.houses, firmObj: L.firmObj, glowTex: G.glowTex, mat: G.mat, mesh: G.mesh, box: G.box, C: G.C, audio, $, reduce,
         PLAZA: new THREE.Vector3(0, 0, 0), R: lands3d.LAND_R, bank: { position: L.bankPos }, school: { position: L.schoolPos }, minePos: L.minePos,
         plazaExits: [...L.landing, L.bankPos, L.schoolPos],
@@ -1156,8 +1162,14 @@
       };
     }
     const N = { showSub, addChron, enqueue, dequeue, setMode, pause: (ms) => { pausedUntil = now() + ms; }, get mode() { return mode; } };
+    const subs = [];
     function ensureLayers() {
-      for (const L of lands3d.lands) if (!layers[L.i] && W.cities[L.i].settled && L.shown) layers[L.i] = makeLayer(contextFor(L), N);
+      for (const L of lands3d.lands) {
+        const c = W.cities[L.i];
+        // thành chết (kính vỡ): bỏ lớp cũ, bộ lạc mới đến thì dựng lớp mới
+        if (layers[L.i] && (!c.settled || !L.shown || layers[L.i].world !== c.w)) { const g = subs[L.i]; if (g) { G.unclickable(g); if (g.parent) g.parent.remove(g); } layers[L.i] = null; subs[L.i] = null; }
+        if (!layers[L.i] && c.settled && L.shown) layers[L.i] = makeLayer(contextFor(L), N);
+      }
     }
     function onDay() {
       ensureLayers();

@@ -1838,11 +1838,46 @@
     for (let i = 0; i < 6; i++) makeLand(i);
     for (const b of W.bridges) { const B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); buildBridge(B, b.era); }
 
+    /* =============== Thành chết: đảo hoang, chỉ còn phế tích =============== */
+    // Kính vỡ không kịp vá thì thành trên đảo chết: nhà, xưởng, quảng trường đổ hết, còn lại nền nhà cháy đen.
+    // Khi một bộ lạc mới đến, đảo dựng lại từ thời nguyên thuỷ. Mảng nhà, bảng xưởng được làm rỗng tại chỗ vì lớp câu chuyện giữ tham chiếu.
+    function wipe(L) {
+      const lots = L.houses.map((H) => L.houseLots[H.idx].p.clone());
+      for (const H of L.houses) { L.g.remove(H.g); unclickable(H.g); disposeGroup(H.g); }
+      L.houses.length = 0; for (const lot of L.houseLots) lot.used = false;
+      for (const [, o] of L.firmObj) { L.g.remove(o.g); unclickable(o.g); disposeGroup(o.g); }
+      L.firmObj.clear(); L.slotOf.clear(); L.farmOwner.fill(null); L.shopOwner.fill(null);
+      for (const key of Object.keys(L.civic)) { const o = L.civic[key]; if (o) { L.g.remove(o); unclickable(o); disposeGroup(o); } delete L.civic[key]; }
+      for (const s of L.glows) L.g.remove(s);
+      L.glows = []; L.lamps = []; L.fires = []; L.queue = [];
+      L.era = -1; L.shown = false; L.shirtEra = -2;
+      if (L.crowd) { crowdBegin(L.crowd); crowdEnd(L.crowd); }
+      if (L.hats) L.hats.count = 0;
+      // phế tích: nền nhà cháy đen, cột gãy, tro
+      if (L.ruins) { L.g.remove(L.ruins); disposeGroup(L.ruins); }
+      const k = new Kit();
+      lots.forEach((p, n) => {
+        if (n % 2) return;
+        const h = hash(n * 7 + L.i);
+        k.box('#2f2a26', p.x, 0.02, p.z, 2.6 + h, 0.18, 2.2 + h * 0.8, h * 3);
+        k.box('#3b332d', p.x + 0.6, 0.1, p.z - 0.4, 0.3, 0.9 + h * 1.4, 0.3, h * 2);
+        if (h > 0.4) k.box('#463c34', p.x - 0.7, 0.1, p.z + 0.5, 1.2, 0.35, 0.3, h * 5);
+      });
+      k.cyl('#5a524b', 0, 0.02, 0, 6.2, 0.08, 20);
+      for (let n = 0; n < 7; n++) { const a = (n / 7) * TAU + 0.3; k.box('#6d655c', Math.cos(a) * 5.4, 0.05, Math.sin(a) * 5.4, 0.6, 0.6 + hash(n) * 1.6, 0.6, a); }
+      const { body } = k.bake();
+      L.ruins = new THREE.Group();
+      if (body) { const m = new THREE.Mesh(body, bodyMat); m.castShadow = true; m.receiveShadow = true; L.ruins.add(m); }
+      L.g.add(L.ruins);
+      for (let n = 0; n < 10 && !reduce; n++) { const p = lots[(n * 3) % Math.max(1, lots.length)] || new THREE.Vector3(); puff(L.world(new THREE.Vector3(p.x, 1, p.z)), true, '#3a3a3a'); }
+    }
+
     /* =============== Mỗi ngày: đồng bộ với nền kinh tế =============== */
     function syncDay(animate) {
       for (const L of lands) {
         const c = W.cities[L.i];
-        if (!c.settled) continue;
+        if (!c.settled) { if (L.shown) wipe(L); continue; }
+        if (!L.shown && L.ruins) { L.g.remove(L.ruins); disposeGroup(L.ruins); L.ruins = null; }
         if (!L.shown) { L.shown = true; setEra(L, c.era, false); }
         else if (c.era !== L.era) setEra(L, c.era, animate);
         syncHouses(L, c.w, animate);
@@ -1870,7 +1905,7 @@
     const _dir2 = new THREE.Vector3();
     function updatePeople(L, tod, t, fadNow) {
       const w = W.cities[L.i].w, S = L.crowd;
-      if (!w || !S) { L.hats.count = 0; return; }
+      if (!w || !S) { if (S && S.n.some((v) => v)) { crowdBegin(S); crowdEnd(S); } L.hats.count = 0; return; }
       if (L.hush && L.hush > performance.now()) { crowdBegin(S); crowdEnd(S); L.hats.count = 0; return; } // giới nghiêm, xuống hầm: phố vắng
       const N = Math.min(L.peopleN, w.households.length);
       crowdBegin(S);
@@ -1962,7 +1997,7 @@
 
     const peopleKit = { bodyGeo, headGeo, headMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), shirts: SHIRTS[3] };
     return {
-      lands, bridges, syncDay, animate, seasons, setEra, walkPath, procession, people: peopleKit, LAND_R, RING, SC, bridgePoint, deckY,
+      lands, bridges, syncDay, animate, seasons, setEra, walkPath, wipe, procession, people: peopleKit, LAND_R, RING, SC, bridgePoint, deckY,
       fig: { FigKit, figMaterial, crowdSet, crowdBegin, crowdPut, crowdEnd, crowdDispose, DRESS, dressOf, SKIN_T, FIG_UNI, personShape, soldierShape },
       kit: { Kit, meshOf, motif, conch, windTower, ribs, hull, tint, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng, setBeyond: (e) => { BEY = e; }, glowMat, ghostMat, recolorG },
       landOf: (i) => lands[i],

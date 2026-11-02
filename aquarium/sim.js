@@ -2588,7 +2588,7 @@
     injure(W, B, 0.02, 10); CX.fear(W, B, 0.4, 8);
     const WHAT = { cannon: 'Đại bác', bomber: 'Máy bay ném bom', missile: 'Tên lửa', beam: 'Tia năng lượng' };
     W.chaos.fx.push({ key: 'strike', city: B.id, from: A.id, kind, n, fell, by: A.owner, day: W.day });
-    wstory(W, 'strike', 'major', WHAT[kind] + ' của ' + X.factions[A.owner].name + ' trút xuống ' + B.name, n + ' quả trúng thành, ' + fires + ' nơi bốc cháy.' + (fell ? ' ' + bName(B, fell) + ' đổ sập.' : ''), { kind: 'land', city: B.id }, { city: B.id, from: A.id, fell });
+    wstory(W, 'missile', 'major', WHAT[kind] + ' của ' + X.factions[A.owner].name + ' trút xuống ' + B.name, n + ' quả trúng thành, ' + fires + ' nơi bốc cháy.' + (fell ? ' ' + bName(B, fell) + ' đổ sập.' : ''), { kind: 'land', city: B.id }, { city: B.id, from: A.id, fell });
   }
   /* ----- Một hai đảo bị đẩy lùi về thời trước, tụt sau các đảo khác ----- */
   const SETBACK = {

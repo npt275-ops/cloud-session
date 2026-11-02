@@ -28,6 +28,7 @@
     }
     waterGeo.setAttribute('color', new THREE.Float32BufferAttribute(wcol, 3));
     const waterMat = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.84, roughness: 0.2, metalness: 0.15, flatShading: true, emissive: '#0b3550', emissiveIntensity: 0.28, depthWrite: false });
+    let seaDy = 0; // bàn tay đổ thêm nước hay rút bớt nước: mặt biển dâng, hạ
     const water = new THREE.Mesh(waterGeo, waterMat); water.position.y = SEA_Y; water.receiveShadow = true; water.renderOrder = 2; sea.add(water);
     water.raycast = () => {};
     // đáy biển: cát vàng ven bờ, xanh thẫm ngoài khơi; bên dưới là bồn đá
@@ -281,7 +282,7 @@
       const a = portWater(lands[t.from]), b = portWater(lands[t.to]), ctrl = a.clone().add(b).multiplyScalar(0.5).multiplyScalar(0.55).setY(SEA_Y);
       ships.push({ a, b, ctrl, t0: performance.now(), dur: (a.distanceTo(b) / 7) * 1000 + 2500, era: Math.max(1, Math.min(A.era, Z.era)), color: K.factionColor(A.owner) });
     }
-    const bez = (a, c, b, u, out) => out.set((1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * c.x + u * u * b.x, SEA_Y, (1 - u) * (1 - u) * a.z + 2 * (1 - u) * u * c.z + u * u * b.z);
+    const bez = (a, c, b, u, out) => out.set((1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * c.x + u * u * b.x, (SEA_Y + seaDy), (1 - u) * (1 - u) * a.z + 2 * (1 - u) * u * c.z + u * u * b.z);
 
     /* =============== Công trình theo miền và thời đại =============== */
     const BLD_OF = {}; // khoá "city:type" -> { g, key }
@@ -423,9 +424,8 @@
     function updateBuildings(animate) {
       for (const L of lands) {
         const c = W.cities[L.i];
-        if (!c.settled || !c.bld) continue;
-        const want = new Map();
-        for (const type in c.bld) {
+        const want = new Map(); // thành chết (đảo hoang) thì gỡ hết công trình quân sự
+        if (c.settled && c.bld) for (const type in c.bld) {
           const b = c.bld[type];
           const step = b.done ? 10 : Math.floor((1 - b.left / b.total) * 5);
           if (type === 'tower') L.towerPos.forEach((p, i) => want.set('tower' + i, { type, p, step, e: c.era }));
@@ -512,7 +512,7 @@
       }
       const PA = portWater(lands[Ln.a]), PZ = portWater(lands[Ln.b]);
       out.copy(PA).lerp(PZ, x); dir.copy(PZ).sub(PA).setY(0).normalize();
-      out.x += -dir.z * lat * 3; out.z += dir.x * lat * 3; out.y = SEA_Y;
+      out.x += -dir.z * lat * 3; out.z += dir.x * lat * 3; out.y = (SEA_Y + seaDy);
       return true;
     }
 
@@ -673,7 +673,7 @@
         wh.g.position.set(Math.cos(a) * wh.r, -2.4 + up * 2.3, Math.sin(a) * wh.r); wh.g.rotation.set(-up * 0.25, -a + Math.PI, 0);
         if (up > 0.9 && ts - wh.spout > 6 && !reduce) { wh.spout = ts; puff(wh.g.position.clone().setY(1.2), false, '#ffffff'); }
       });
-      sharks.forEach((s, i) => { s.g.visible = i < ns; if (!s.g.visible) return; const a = s.ph - ts * 0.18; s.g.position.set(Math.cos(a) * s.r, SEA_Y + 0.05, Math.sin(a) * s.r); s.g.rotation.y = -a; });
+      sharks.forEach((s, i) => { s.g.visible = i < ns; if (!s.g.visible) return; const a = s.ph - ts * 0.18; s.g.position.set(Math.cos(a) * s.r, (SEA_Y + seaDy) + 0.05, Math.sin(a) * s.r); s.g.rotation.y = -a; });
       turtles.forEach((tt, i) => { const z = tt.zone, nt = Math.round(3 * stockFrac(z, 'turtle')); tt.g.visible = (i % 3) < nt; if (!tt.g.visible) return; const c = zoneC(z), a = tt.ph + ts * 0.08; tt.g.position.set(c.x + Math.cos(a) * tt.r, -1.1 + Math.sin(ts + i) * 0.1, c.z + Math.sin(a) * tt.r); tt.g.rotation.y = -a; });
       seals.forEach((s, i) => { const z = s.zone, cnt = Math.round((z === 3 ? 5 : 3) * stockFrac(z, 'seal')); s.g.visible = (z === 3 ? i : i - 5) < cnt; if (!s.g.visible) return; const L = lands[z], base = L.world(L.dockPos).addScaledVector(L.inw, 9 + (i % 3) * 3).add(v3(Math.cos(i * 2.1) * 6, 0, Math.sin(i * 2.1) * 6)); s.g.position.set(base.x, SEA_Y + 0.25 + Math.sin(ts * 0.8 + i) * 0.08, base.z); s.g.rotation.y = i; });
       for (const P of pearls) { const show = (P.i % 6) < Math.round(6 * stockFrac(P.z, 'pearl')); P.s.material.opacity = show ? 0.35 + 0.35 * Math.max(0, Math.sin(ts * 2 + P.ph)) : 0; }
@@ -697,13 +697,13 @@
         if (b.state === 'dock') { p = home; ry = Math.atan2(L.inw.x, L.inw.z); }
         else if (b.state === 'fish') { p = b.spot; ry = ts * 0.3 + b.slot; if (Math.random() < 0.004 && !reduce) puff(b.spot.clone().setY(0.2), false, '#e8f4fa'); }
         else { const a = b.state === 'out' ? home : b.spot, z = b.state === 'out' ? b.spot : home; p = a.clone().lerp(z, u * u * (3 - 2 * u)); ry = Math.atan2(z.x - a.x, z.z - a.z); }
-        put(modelOf('fish:' + e), _pos.copy(p).setY(SEA_Y + Math.sin(ts * 2 + b.slot) * 0.06), ry, 1, K.factionColor(c.owner));
+        put(modelOf('fish:' + e), _pos.copy(p).setY((SEA_Y + seaDy) + Math.sin(ts * 2 + b.slot) * 0.06), ry, 1, K.factionColor(c.owner));
       }
       for (let i = ships.length - 1; i >= 0; i--) {
         const s = ships[i], u = (now - s.t0) / s.dur;
         if (u >= 1) { ships.splice(i, 1); continue; }
         bez(s.a, s.ctrl, s.b, u, _pos); bez(s.a, s.ctrl, s.b, Math.min(1, u + 0.01), _p);
-        put(modelOf('trade:' + s.era), _pos.setY(SEA_Y + Math.sin(ts * 1.6 + i) * 0.08), Math.atan2(_p.x - _pos.x, _p.z - _pos.z), 1, s.color);
+        put(modelOf('trade:' + s.era), _pos.setY((SEA_Y + seaDy) + Math.sin(ts * 1.6 + i) * 0.08), Math.atan2(_p.x - _pos.x, _p.z - _pos.z), 1, s.color);
       }
       // quân lính: trên tuyến thì nội suy vị trí giữa hai ngày; trong doanh trại thì đứng thành hàng
       for (const key in SOLDIER_SETS) F.crowdBegin(SOLDIER_SETS[key]);
@@ -719,7 +719,7 @@
             if (fig) { drawSquad(u, _pos, ry, moving, fighting, col, now); continue; }
             const S = modelOf(keyOf(u)), naval = u.naval;
             if (!naval && moving) _pos.y += Math.abs(Math.sin(ts * 9 + u.id)) * 0.06;
-            if (naval) _pos.y = SEA_Y + Math.sin(ts * 1.4 + u.id) * 0.07;
+            if (naval) _pos.y = (SEA_Y + seaDy) + Math.sin(ts * 1.4 + u.id) * 0.07;
             if (u.cls === 'ranged') _pos.y += 2.2 + Math.sin(ts * 3 + u.id) * 0.2; // bầy máy bay không người lái
             if (fighting && (u.cls === 'mounted' || u.cls === 'siege') && !reduce) _pos.addScaledVector(_dir, -fwd * Math.max(0, Math.sin(ts * 14 + u.id)) * 0.12); // giật lùi khi bắn
             put(S, _pos, ry, naval ? 1 : 1.25, col);
@@ -728,7 +728,7 @@
             if (u.naval) {
               if (g > 4) continue;
               const p = portWater(L).addScaledVector(v3(-L.inw.z, 0, L.inw.x), (g - 2.5) * 3.2);
-              p.y = u.cls === 'sub' ? SEA_Y - 0.55 : SEA_Y + Math.sin(ts + g) * 0.06;
+              p.y = u.cls === 'sub' ? (SEA_Y + seaDy) - 0.55 : (SEA_Y + seaDy) + Math.sin(ts + g) * 0.06;
               put(modelOf(u.cls + ':' + u.era), p, Math.atan2(L.inw.x, L.inw.z), 1, col);
             } else {
               if (g > 24) continue;
@@ -803,7 +803,11 @@
 
     // những người lính vừa ngã (kể cả giữa ngày, vì phép của chim, mèo): xác nằm lại ngay chỗ ngã
     function deathsNow() { for (const d of W.war.deaths) if (!d.shown) { d.shown = true; onDeath(d); } }
-    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, deathsNow, SEA_R, SEA_Y, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };
+    function setSea(dy, tiltX, tiltZ) {
+      seaDy = dy; water.position.y = SEA_Y + dy; rim.position.y = SEA_Y - 1.45 + dy;
+      water.rotation.x = tiltX || 0; water.rotation.z = tiltZ || 0;
+    }
+    return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, deathsNow, SEA_R, SEA_Y, setSea, get seaDy() { return seaDy; }, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };
   }
 
   root.War3D = { create, SEA_R, SEA_Y };
