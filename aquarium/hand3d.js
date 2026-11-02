@@ -358,7 +358,7 @@
     }
     // lấy tay che đèn: bàn tay xoè ra che trên đảo bao lâu còn tối
     function shade(L, fx, done) {
-      const H = shadeHand, o = overIsland(L, 0, 0, 34), far = o.pos.clone().add(v3(0, 90, 0)).addScaledVector(o.inw, -80);
+      const H = shadeHand, o = overIsland(L, 0, 0, 30), far = o.pos.clone().add(v3(0, 26, 0)).addScaledVector(o.inw, -75); // lướt vào từ phía ngoài bể
       pose(H, 'flat'); place(H, far, far.clone().addScaledVector(o.inw, 10));
       H.busy = 1;
       run(2200, (u) => { const k = ease(u); H.g.position.copy(far).lerp(o.pos.clone().addScaledVector(o.inw, -20), k); H.g.lookAt(H.g.position.clone().addScaledVector(o.inw, 10)); if (u >= 1) done(); }, () => { shades[L.i] = { H, pos: H.g.position.clone(), inw: o.inw }; });

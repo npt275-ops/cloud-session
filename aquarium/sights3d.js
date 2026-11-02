@@ -113,7 +113,7 @@
       const cand = [];
       for (let r = L.rOf(0) - 6; r > 15; r -= 2) for (let a = 0; a < TAU; a += 0.04) {
         const x = Math.cos(a) * r, z = Math.sin(a) * r;
-        if (!L.inside(x, z, 5.5) || L.blocked(x, z, 3.6) || L.roadDist(x, z) < 4.8) continue;
+        if (!L.inside(x, z, 5.5) || L.blocked(x, z, 3.6) || L.roadDist(x, z) < 3.6) continue;
         if (keep.some(([qx, qz, qr]) => (qx - x) ** 2 + (qz - z) ** 2 < qr * qr)) continue;
         cand.push({ x, z, r });
       }
@@ -124,7 +124,7 @@
       if (out.length < n) {
         for (let r = L.rOf(0) - 5; r > 12 && out.length < n; r -= 1.5) for (let a = 0; a < TAU && out.length < n; a += 0.05) {
           const x = Math.cos(a) * r, z = Math.sin(a) * r;
-          if (!L.inside(x, z, 4.5) || L.roadDist(x, z) < 3.6 || L.blocked(x, z, 2.4)) continue;
+          if (!L.inside(x, z, 4.5) || L.roadDist(x, z) < 2.6 || L.blocked(x, z, 2.4)) continue;
           if (keep.some(([qx, qz, qr]) => (qx - x) ** 2 + (qz - z) ** 2 < qr * qr * 0.7)) continue;
           if (out.every((o) => (o.x - x) ** 2 + (o.z - z) ** 2 > 64)) out.push({ x, z, r });
         }

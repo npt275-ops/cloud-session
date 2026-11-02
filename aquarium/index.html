@@ -612,7 +612,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 420 });
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
   scene.add(sun); scene.add(sun.target);
-  const moon = new THREE.DirectionalLight(0x8fa8ff, 0.0);
+  const moon = new THREE.DirectionalLight(0xb4c3ff, 0.0);
   scene.add(moon);
 
   /* =============== Vật liệu =============== */
@@ -637,6 +637,11 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(c);
   })();
+  // vầng trăng trên trời: đĩa sáng bạc và quầng mờ, mọc ở phía đối diện mặt trời
+  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(34, 40), new THREE.MeshBasicMaterial({ color: '#f2f5ff', transparent: true, opacity: 0, fog: false, depthWrite: false }));
+  const moonHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#c9d6ff', transparent: true, opacity: 0, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+  moonHalo.scale.setScalar(260); moonDisc.renderOrder = -1; moonHalo.renderOrder = -1; moonDisc.userData.noFade = moonHalo.userData.noFade = true;
+  scene.add(moonDisc, moonHalo);
 
   /* =============== Bể kính bao quanh cả sáu miền =============== */
   const DOME = Lands3D.RING + Lands3D.LAND_R + 16;
@@ -829,6 +834,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
   const wx = { rain: 0, snow: 0, drought: 0, festival: 0, panic: 0 };
   const sunDir = new THREE.Vector3();
+  const _moonP = new THREE.Vector3();
   function applyTime() {
     const ang = (tod - 0.25) * Math.PI * 2, e = Math.sin(ang);
     const day = clamp(e * 2.2 + 0.25, 0, 1), night = 1 - clamp(e * 3 + 0.6, 0, 1), gold = clamp(1 - Math.abs(e) * 3.2, 0, 1) * (e > -0.25 ? 1 : 0);
@@ -839,9 +845,10 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     sun.intensity = 1.0 * day;
     document.body.classList.toggle('day', day > 0.55);
     sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8);
-    moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.32 * night;
-    hemi.intensity = 0.22 + 0.3 * day + 0.12 * night;
-    hemi.color.copy(C('#dff1ff')).lerp(C('#6f86c9'), night);
+    moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.52 * night; // trăng sáng hơn: đêm không tối mịt
+    hemi.intensity = 0.22 + 0.3 * day + 0.24 * night;
+    hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night);
+    { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = night > 0.02; }
     const top = SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
     const bot = SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
     const overcast = Math.max(wx.rain, wx.snow) * 0.6;
@@ -1474,7 +1481,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     }
     // việc cho một đảo: camera ở phía giữa bể nhìn ra, thấp, thấy đảo phía trước, bàn tay ngoài vách kính ngay sau mép đảo
     const L = lands[i], a = Math.atan2(L.center.z, L.center.x), hi = HIGH_SHOT[k], R = Math.hypot(L.center.x, L.center.z) + 18;
-    flyTo(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R), hi ? 290 : 260, new THREE.Vector3(-Math.cos(a) * 0.95, 0.31, -Math.sin(a) * 0.95), hi ? 55 : 45);
+    flyTo(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R), hi ? 290 : 260, new THREE.Vector3(-Math.cos(a) * 0.95, 0.31, -Math.sin(a) * 0.95), hi ? 62 : 45);
     return a + Math.PI;
   }
   function castPower(k, i, spot) {

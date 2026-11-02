@@ -948,14 +948,13 @@
       const waterMat = (col) => { const m = new THREE.MeshStandardMaterial({ color: col || '#4aa3c7', roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide }); L.waterMats.push(m); return m; };
       if (L.ter === 'plains') {
         // đồng bằng: ruộng bậc ô vuông vàng xanh ở hai cánh, đồng cỏ săn ở giữa, sông uốn khúc đổ thành thác
-        for (const side of [-1, 1]) for (let ai = 0; ai < 7; ai++) for (let ri = 0; ri < 4; ri++) {
-          const deg = side * (48 + ai * 9.5), r = 22 + ri * 3.6;
+        for (const side of [-1, 1]) for (let ai = 0; ai < 7; ai++) for (let ri = 0; ri < 3; ri++) {
+          const deg = side * (48 + ai * 9.5), r = 37 + ri * 3.6; // ruộng bậc ở vùng ven ngoài vành đai, lõi thành để dựng nhà
           if (r > edge(deg, 2.4)) continue;
           const [x, z] = at(deg, r), c = pick(['#d9c35a', '#9fcf62', '#c8d86a', '#7fb6a8', '#e3cf73', '#86bf5c'], hash(L.i * 31 + ai * 7 + ri * 3 + side));
           k.box(c, x, 0.02, z, 3.3, 0.07, 3.3, -(oa + (deg * Math.PI) / 180)); k.box('#7d6a4a', x, 0.03, z, 3.5, 0.05, 0.16, -(oa + (deg * Math.PI) / 180));
           if (c === '#7fb6a8') k.box('#bfe6f2', x, 0.075, z, 2.9, 0.01, 2.9, -(oa + (deg * Math.PI) / 180));
           if (hash(ai * 13 + ri + side) < 0.18) { k.cone('#d9b25a', x + 0.8, 0.07, z - 0.6, 0.6, 1.1, 8); }
-          prop(x, z, 1.9);
         }
         const pts = [];
         for (let s = 0; s <= 40; s++) { const u = s / 40, d = -36 + u * 72, r = 24 + 5 * Math.sin(u * Math.PI * 2.5) + u * 10; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
@@ -1033,7 +1032,7 @@
       }
       if (k.b.length || k.l.length) meshOf(k, L.litMat || bodyMat, L.g, 0, 0, 0);
       // bãi săn: vùng hoang phía ngoài; bãi tập kết quân: một khoảng đất nện cạnh đường ra cổng
-      L.hunt = { oa, spread: 1.05, r0: 23, margin: 3 };
+      L.hunt = { oa, spread: 0.86, r0: 24, margin: 3 };
     }
     const SPHG = () => base('sphg', () => new THREE.SphereGeometry(1, 10, 6, 0, TAU, 0, Math.PI / 2));
 
@@ -1111,15 +1110,147 @@
       if (any) for (const m of [L.trees.trunks, L.trees.cones, L.trees.icos]) m.instanceMatrix.needsUpdate = true;
     }
 
+    /* =============== Mạng đường của mỗi đảo =============== */
+    // Mỗi đảo một mạng đường riêng: đường lớn từ quảng trường ra hai cổng cầu và ra bến, hai vành đai, những nhánh toả ra,
+    // những lối nhỏ ra tới mép đảo, cộng một kiểu đường riêng của miền: bờ ruộng ô bàn cờ ở đồng bằng, đường mòn săn bắn
+    // ngoằn ngoèo trong rừng, đường dốc chữ chi lên mỏ trên núi, vệt xe trượt tuyết ra bờ băng, lối gỗ ven biển,
+    // đường đoàn lạc đà qua ốc đảo. Đường không đi xuyên công trình: gặp công trình thì dừng trước cửa.
+    // Mạng đường cũng là đồ thị để người đi lại: mọi chỗ giao nhau là một nút, người tìm đường ngắn nhất theo đồ thị.
+    function planRoads(L, wildAt) {
+      const V = (x, z) => new THREE.Vector2(x, z), at = (a, r) => V(Math.cos(a) * r, Math.sin(a) * r);
+      const oa = Math.atan2(L.out.z, L.out.x), ia = oa + Math.PI, rng = landRng(L.i + 77);
+      const res = [[L.bankPos, 3.4], [L.schoolPos, 3.4], [L.dockPos, 3.2], [L.portPos, 4.2], [L.musterPos, 5.6], [L.wonderPos, 4.2], [L.siloPos, 3.2]];
+      for (const k2 of ['eco', 'hea', 'rel', 'tra', 'mil']) res.push([L.slots[k2], 4.2]);
+      if (L.lake) res.push([{ x: L.lake[0], z: L.lake[1] }, 5.2]);
+      if (L.oasis) res.push([{ x: L.oasis[0], z: L.oasis[1] }, 4.0]);
+      const hit = (x, z) => !L.inside(x, z, 2.4) || res.some(([p, r]) => (p.x - x) ** 2 + (p.z - z) ** 2 < r * r) || L.blockedWild(x, z, 0.6);
+      const segs = [];
+      // một đường gấp khúc: cắt bỏ đoạn đi vào công trình, vào vùng hoang (trừ đường mòn), vào quảng trường
+      function poly(pts, w, kind, wild, inner) {
+        for (let i = 0; i + 1 < pts.length; i++) {
+          const a = pts[i], b = pts[i + 1], n = Math.max(1, Math.ceil(a.distanceTo(b) / 2.2));
+          let run = null;
+          for (let k = 0; k < n; k++) {
+            const p = a.clone().lerp(b, k / n), q = a.clone().lerp(b, (k + 1) / n), mx = (p.x + q.x) / 2, mz = (p.y + q.y) / 2;
+            const bad = hit(mx, mz) || (!wild && wildAt(mx, mz)) || Math.hypot(mx, mz) < (inner == null ? 6.6 : inner);
+            if (bad) { if (run) { segs.push(run); run = null; } continue; }
+            if (run) run.b = q; else run = { a: p, b: q, w, kind };
+          }
+          if (run) segs.push(run);
+        }
+      }
+      const arc = (r, a0, a1, n) => { const out = []; for (let k = 0; k <= n; k++) out.push(at(a0 + ((a1 - a0) * k) / n, r)); return out; };
+      // đường lớn: quảng trường ra hai cổng cầu, ngân hàng ra bến
+      for (const p of L.landing) poly([at(Math.atan2(p.z, p.x), 6.2), V(p.x, p.z)], 0, 'main', true, 6);
+      poly([V(L.bankPos.x * 1.3, L.bankPos.z * 1.3), V(L.harbor.x, L.harbor.z)], 0, 'main', true, 6);
+      // vành đai, những phố toả ra từ quảng trường, lối nhỏ ra mép đảo
+      poly(arc(34, 0, TAU, 80), 1, 'street');
+      const nSp = 6;
+      for (let k = 0; k < nSp; k++) { const a = oa + Math.PI / nSp + (k / nSp) * TAU; poly([at(a, 6.4), at(a + 0.06, 19), at(a, 34.7)], 1, 'street'); }
+      for (let k = 0; k < 3; k++) { const a = ia + (k - 1) * 0.8 + (rng() - 0.5) * 0.12; poly([at(a, 33.5), at(a + (rng() - 0.5) * 0.1, 40), at(a, 46.5)], 2, 'lane'); }
+      // kiểu đường riêng của từng miền
+      if (L.ter === 'plains') {
+        // bờ ruộng: những đường thẳng song song, cắt nhau thành ô bàn cờ
+        const ux = Math.cos(oa), uz = Math.sin(oa), vx = -uz, vz = ux;
+        for (const d of [-25]) poly([V(ux * -46 + vx * d, uz * -46 + vz * d), V(ux * 46 + vx * d, uz * 46 + vz * d)], 2, 'field');
+        for (const d of [19]) poly([V(vx * -46 + ux * d, vz * -46 + uz * d), V(vx * 46 + ux * d, vz * 46 + uz * d)], 2, 'field');
+      } else if (L.ter === 'forest') {
+        // đường mòn săn bắn uốn lượn vào rừng sâu
+        for (const [a0, a1] of [[oa - 1.25, oa - 0.35], [oa + 1.25, oa + 0.4], [oa - 0.1, oa + 0.15]]) {
+          const pts = []; for (let k = 0; k <= 10; k++) { const u = k / 10, r = 34 + u * 12, a = a0 + (a1 - a0) * u + Math.sin(u * 9 + a0) * 0.12; pts.push(at(a, r)); }
+          poly(pts, 2, 'trail', true);
+        }
+      } else if (L.ter === 'mountain') {
+        // đường dốc chữ chi lên mỏ và lên đèo
+        for (const [to, a0] of [[L.minePos, null], [null, oa]]) {
+          const ta = to ? Math.atan2(to.z, to.x) : a0, tr = to ? Math.hypot(to.x, to.z) - 2 : 44, pts = [];
+          for (let k = 0; k <= 8; k++) { const u = k / 8, r = 12 + (tr - 12) * u, side = k % 2 ? 1 : -1; pts.push(at(ta + (k && k < 8 ? side * (4.5 / r) : 0), r)); }
+          poly(pts, 2, 'switch', true);
+        }
+      } else if (L.ter === 'tundra') {
+        // vệt xe trượt tuyết kéo thẳng ra bờ băng
+        for (let k = 0; k < 6; k++) { const a = oa + (k - 2.5) * 0.36; poly([at(a, 20), at(a + 0.04, 34), at(a, 47)], 2, 'track', true); }
+      } else if (L.ter === 'coast') {
+        // lối gỗ chạy dọc bờ trong, những cầu tàu nhỏ ra mép nước
+        poly(arc(42.5, ia - 1.15, ia + 1.15, 30), 1, 'boardwalk', true);
+        for (const da of [-0.95, -0.55, 0.62, 1.0]) poly([at(ia + da, 42.5), at(ia + da, 48.5)], 2, 'boardwalk', true);
+      } else if (L.ter === 'desert') {
+        // đường đoàn lạc đà: cổng cầu này qua ốc đảo sang cổng cầu kia
+        const g0 = L.gates[0], g1 = L.gates[1], mid = L.oasis ? V(L.oasis[0], L.oasis[1]) : at(oa, 25), pts = [];
+        for (let k = 0; k <= 24; k++) { const u = k / 24, a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, c = u * u; pts.push(V(g0.x * a + mid.x * 1.25 * b + g1.x * c, g0.z * a + mid.y * 1.25 * b + g1.z * c)); }
+        poly(pts, 0, 'caravan', true);
+      }
+      // tách đoạn ở chỗ giao nhau để mọi ngã tư, ngã ba đều là nút của đồ thị
+      const cross = (p, q, r, s2) => { const d = (q.x - p.x) * (s2.y - r.y) - (q.y - p.y) * (s2.x - r.x); if (Math.abs(d) < 1e-6) return null; const t = ((r.x - p.x) * (s2.y - r.y) - (r.y - p.y) * (s2.x - r.x)) / d, u = ((r.x - p.x) * (q.y - p.y) - (r.y - p.y) * (q.x - p.x)) / d; return t > -0.02 && t < 1.02 && u > -0.02 && u < 1.02 ? [t, u] : null; };
+      const cuts = segs.map(() => []);
+      for (let i = 0; i < segs.length; i++) for (let j = i + 1; j < segs.length; j++) {
+        const c = cross(segs[i].a, segs[i].b, segs[j].a, segs[j].b); if (!c) continue;
+        if (c[0] > 0.02 && c[0] < 0.98) cuts[i].push(c[0]);
+        if (c[1] > 0.02 && c[1] < 0.98) cuts[j].push(c[1]);
+      }
+      const out = [];
+      segs.forEach((S, i) => { const ts = [0, ...cuts[i].sort((a, b) => a - b), 1]; for (let k = 0; k + 1 < ts.length; k++) { if (ts[k + 1] - ts[k] < 1e-3) continue; out.push({ a: S.a.clone().lerp(S.b, ts[k]), b: S.a.clone().lerp(S.b, ts[k + 1]), w: S.w, kind: S.kind }); } });
+      // đồ thị: đầu mút gần nhau gộp thành một nút
+      const nodes = [], adj = [];
+      const nodeAt = (p) => { for (let i = 0; i < nodes.length; i++) if (nodes[i].distanceToSquared(p) < 0.5) return i; nodes.push(p.clone()); adj.push([]); return nodes.length - 1; };
+      nodeAt(V(0, 0)); // quảng trường là nút đầu tiên
+      for (const S of out) { const i = nodeAt(S.a), j = nodeAt(S.b); if (i === j) continue; const w = S.a.distanceTo(S.b) * (S.w === 2 ? 1.25 : 1); adj[i].push([j, w]); adj[j].push([i, w]); }
+      // đường lớn chạm quảng trường: nối vào nút giữa
+      nodes.forEach((p, i) => { if (i && p.length() < 7) { const w = p.length(); adj[0].push([i, w]); adj[i].push([0, w]); } });
+      // những đoạn đường bị công trình cắt rời: nối vào mạng chính bằng lối mòn ngắn
+      const clearLine = (a, b) => { const n = Math.ceil(a.distanceTo(b) / 1.5); for (let k = 1; k < n; k++) { const x = a.x + ((b.x - a.x) * k) / n, z = a.y + ((b.y - a.y) * k) / n; if (hit(x, z) || Math.hypot(x, z) < 6.2) return false; } return true; };
+      for (let pass = 0; pass < 12; pass++) {
+        const comp = new Int32Array(nodes.length).fill(-1); let nc = 0;
+        for (let i = 0; i < nodes.length; i++) { if (comp[i] >= 0 || (!adj[i].length && i)) continue; const st = [i]; comp[i] = nc; while (st.length) { const u = st.pop(); for (const [v] of adj[u]) if (comp[v] < 0) { comp[v] = nc; st.push(v); } } nc++; }
+        if (nc <= 1) break;
+        let best = null;
+        for (let i = 0; i < nodes.length; i++) { if (comp[i] <= 0) continue; for (let j = 0; j < nodes.length; j++) { if (comp[j] !== 0) continue; const d = nodes[i].distanceTo(nodes[j]); if (d < 16 && (!best || d < best[2]) && clearLine(nodes[i], nodes[j])) best = [i, j, d]; } }
+        if (!best) break;
+        const [i, j, d] = best; adj[i].push([j, d * 1.25]); adj[j].push([i, d * 1.25]);
+        out.push({ a: nodes[i].clone(), b: nodes[j].clone(), w: 2, kind: 'lane' });
+      }
+      return { segs: out, nodes, adj };
+    }
+    // tìm đường theo mạng đường: từ chỗ gần nhất của điểm đi tới chỗ gần nhất của điểm đến (Dijkstra, có nhớ)
+    function routeOn(L, ax, az, bx, bz) {
+      const N = L.net, near = (x, z) => { let best = 0, bd = 1e9; N.nodes.forEach((p, i) => { const d = (p.x - x) ** 2 + (p.y - z) ** 2; if (d < bd && N.adj[i].length) { bd = d; best = i; } }); return best; };
+      const s0 = near(ax, az), t0 = near(bx, bz);
+      // cây đường ngắn nhất từ một nút tới mọi nút: tính một lần cho mỗi nút xuất phát rồi nhớ
+      let T = N.cache.get(s0);
+      if (!T) {
+        const n = N.nodes.length, dist = new Float32Array(n).fill(1e9), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n);
+        dist[s0] = 0;
+        for (let it = 0; it < n; it++) {
+          let u = -1, bd = 1e9; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < bd) { bd = dist[i]; u = i; }
+          if (u < 0) break; done[u] = 1;
+          for (const [v, w] of N.adj[u]) if (dist[u] + w < dist[v]) { dist[v] = dist[u] + w; prev[v] = u; }
+        }
+        T = { dist, prev }; N.cache.set(s0, T);
+      }
+      const path = [];
+      if (T.dist[t0] < 1e9) for (let v = t0; v >= 0; v = T.prev[v]) { path.push(v); if (v === s0) break; }
+      path.reverse();
+      // đường vòng quá xa so với đi thẳng (hai mảnh đường không nối): đi thẳng
+      if (path.length && T.dist[t0] > 3.2 * Math.hypot(ax - bx, az - bz) + 30) path.length = 0;
+      const pts = [new THREE.Vector3(ax, 0, az)];
+      for (const i of path) pts.push(new THREE.Vector3(N.nodes[i].x, 0, N.nodes[i].y));
+      pts.push(new THREE.Vector3(bx, 0, bz));
+      return pts;
+    }
+
     /* =============== Bố trí lô đất của mỗi miền =============== */
     function layout(L) {
       const taken = [];
-      const roadsSeg = L.landing.map((p) => [new THREE.Vector2(0, 0), new THREE.Vector2(p.x, p.z)]);
-      roadsSeg.push([new THREE.Vector2(L.bankPos.x * 1.3, L.bankPos.z * 1.3), new THREE.Vector2(L.harbor.x, L.harbor.z)]);
-      const segDist = (x, z, a, b) => { const abx = b.x - a.x, abz = b.y - a.y, t = clamp(((x - a.x) * abx + (z - a.y) * abz) / (abx * abx + abz * abz), 0, 1); return Math.hypot(x - (a.x + abx * t), z - (a.y + abz * t)); };
       const oa = Math.atan2(L.out.z, L.out.x);
-      const wildAt = (x, z) => { const r = Math.hypot(x, z), a = Math.atan2(z, x), rel = Math.abs(Math.atan2(Math.sin(a - oa), Math.cos(a - oa))); return r > 21.5 && rel < 1.12; };
-      L.roadDist = (x, z) => Math.min(...roadsSeg.map(([a, b]) => segDist(x, z, a, b)));
+      // bãi săn hoang dã phía ngoài đảo (thu hẹp lại một chút để lõi thành đủ chỗ cho nhà)
+      const wildAt = (x, z) => { const r = Math.hypot(x, z), a = Math.atan2(z, x), rel = Math.abs(Math.atan2(Math.sin(a - oa), Math.cos(a - oa))); return r > 23 && rel < 0.9; };
+      L.net = planRoads(L, wildAt); L.net.cache = new Map();
+      L.roadNet = L.net.segs;
+      L.route = (ax, az, bx, bz) => routeOn(L, ax, az, bx, bz);
+      const HW = [1.4, 0.8, 0.25]; // nửa bề rộng (lối nhỏ tính hẹp hơn: nhà được sát lối mòn)
+      const roadsSeg = L.roadNet.map((S) => [S.a, S.b, HW[S.w]]);
+      const segDist = (x, z, a, b) => { const abx = b.x - a.x, abz = b.y - a.y, t = clamp(((x - a.x) * abx + (z - a.y) * abz) / (abx * abx + abz * abz), 0, 1); return Math.hypot(x - (a.x + abx * t), z - (a.y + abz * t)); };
+      L.roadDist = (x, z) => { let m = 1e9; for (const [a, b, hw] of roadsSeg) { const d = segDist(x, z, a, b) - hw; if (d < m) m = d; } return m; }; // khoảng cách tới mép đường gần nhất
       L.wildAt = wildAt;
       // chỗ dành sẵn: quảng trường, ngân hàng, trường, mỏ
       taken.push({ x: 0, z: 0, r: 7.4 }, { x: L.bankPos.x, z: L.bankPos.z, r: 4.2 }, { x: L.schoolPos.x, z: L.schoolPos.z, r: 4.2 }, { x: L.minePos.x, z: L.minePos.z, r: 4.4 });
@@ -1129,7 +1260,7 @@
       for (const t of L.towerPos) taken.push({ x: t.x, z: t.z, r: 1.7 });
       L.blocked = (x, z, r) => {
         if (Math.hypot(x, z) < 6.6 + r) return true;
-        if (L.roadDist(x, z) < 1.6 + r) return true;
+        if (L.roadDist(x, z) < 0.3 + r * 0.85) return true; // nhà, cây không lấn ra đường
         if (Math.hypot(x - L.bankPos.x, z - L.bankPos.z) < 3.4 + r || Math.hypot(x - L.schoolPos.x, z - L.schoolPos.z) < 3.4 + r) return true;
         if (L.river) for (const [px, pz] of L.river) if ((px - x) ** 2 + (pz - z) ** 2 < (3.4 + r) ** 2) return true;
         if (L.lake && Math.hypot(x - L.lake[0], z - L.lake[1]) < 4.6 + r) return true;
@@ -1139,34 +1270,42 @@
         for (const k2 in L.slots) if (Math.hypot(x - L.slots[k2].x, z - L.slots[k2].z) < 4.2 + r) return true;
         return false;
       };
-      const free = (x, z, r) => L.inside(x, z, 1.6 + r * 0.4) && !wildAt(x, z) && !L.blocked(x, z, r) && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2);
-      function hexLots(r, gap, cap, accept) {
-        const sp = 2 * r + gap, out = [];
-        for (let j = -12; j <= 12; j++) {
+      const free = (x, z, r, wildOk) => L.inside(x, z, 1.6 + r * 0.4) && (wildOk || !wildAt(x, z)) && !L.blocked(x, z, r) && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2);
+      function hexLots(r, gap, cap, accept, wildOk) {
+        const sp = 2 * r + gap, out = [], jN = Math.ceil(58 / (sp * 0.866)), iN = Math.ceil(58 / sp); // phủ hết đảo dù lưới dày hay thưa
+        for (let j = -jN; j <= jN; j++) {
           const z = j * sp * 0.866;
-          for (let i2 = -14; i2 <= 14; i2++) {
+          for (let i2 = -iN; i2 <= iN; i2++) {
             const x = i2 * sp + (j % 2 ? sp / 2 : 0);
             const jx = x + (hash(L.i * 91 + j * 31 + i2) - 0.5) * gap, jz = z + (hash(L.i * 77 + j * 17 + i2 * 3) - 0.5) * gap;
-            if (accept(jx, jz) && free(jx, jz, r)) out.push(new THREE.Vector3(jx, 0, jz));
+            if (accept(jx, jz) && free(jx, jz, r, wildOk)) out.push(new THREE.Vector3(jx, 0, jz));
           }
         }
         return out;
       }
       const near = (pts, cap, key) => { pts.sort((a, b) => key(a) - key(b)); const res = []; for (const p of pts) { if (res.length >= cap) break; if (taken.every((t) => (t.x - p.x) ** 2 + (t.z - p.z) ** 2 > (t.r + p.r) ** 2)) { taken.push({ x: p.x, z: p.z, r: p.r }); res.push(p); } } return res; };
+      const sh = hexLots(2.8, 0.4, 0, (x, z) => L.roadDist(x, z) < 7 && Math.hypot(x, z) > 8).map((p) => Object.assign(p, { r: 2.8 }));
+      L.shopLots = near(sh, 16, (p) => Math.hypot(p.x, p.z));
       // tám lô cho công trình quân sự và kinh tế, rải đều trên vành ngoài khu dân cư
-      const ml = hexLots(3.0, 0.6, 0, (x, z) => { const r = Math.hypot(x, z); return r > 19 && r < 32; }).map((p) => Object.assign(p, { r: 3.0 }));
+      const ml = hexLots(3.0, 0.6, 0, (x, z) => { const r = Math.hypot(x, z); return r > 15 && r < (wildAt(x, z) ? 34 : 41); }, true).map((p) => Object.assign(p, { r: 3.0 }));
       ml.sort((a, b) => Math.abs(a.length() - 25.5) - Math.abs(b.length() - 25.5));
       L.milLots = [];
       for (const gap of [7.4, 6.4, 5.6]) for (const p of ml) { if (L.milLots.length >= 8) break; if (!L.milLots.includes(p) && L.milLots.every((q) => q.distanceTo(p) > gap)) L.milLots.push(p); }
+      // đảo chật (núi, mesa): tìm thêm chỗ nhỏ hơn, rộng hơn cho đủ tám công trình
+      if (L.milLots.length < 8) {
+        const m2 = hexLots(2.6, 0.3, 0, (x, z) => { const r = Math.hypot(x, z); return r > 11 && r < (wildAt(x, z) ? 40 : 45); }, true).filter((p) => L.milLots.every((q) => q.distanceTo(p) > 5.4)).map((p) => Object.assign(p, { r: 2.6 }));
+        m2.sort((a2, b2) => Math.abs(a2.length() - 25.5) - Math.abs(b2.length() - 25.5));
+        for (const p of m2) { if (L.milLots.length >= 8) break; if (L.milLots.every((q) => q.distanceTo(p) > 5.4)) L.milLots.push(p); }
+      }
       for (const p of L.milLots) taken.push({ x: p.x, z: p.z, r: 3.2 });
       L.milLot = {};
       ['barracks', 'range', 'stable', 'siege', 'forge', 'granary', 'academy', 'market'].forEach((key, i) => { L.milLot[key] = L.milLots[i % Math.max(1, L.milLots.length)]; });
-      const sh = hexLots(2.8, 0.4, 0, (x, z) => L.roadDist(x, z) < 6.5 && Math.hypot(x, z) > 8).map((p) => Object.assign(p, { r: 2.8 }));
-      L.shopLots = near(sh, 16, (p) => Math.hypot(p.x, p.z));
-      const fm = hexLots(3.4, 0.3, 0, (x, z) => Math.hypot(x, z) > 15).map((p) => Object.assign(p, { r: 3.4 }));
-      L.farmLots = near(fm, 12, (p) => Math.abs(Math.hypot(p.x, p.z) - 21));
-      const hs = hexLots(2.05, 0.3, 0, (x, z) => Math.hypot(x, z) > 7.4).map((p) => Object.assign(p, { r: 2.05 }));
-      L.houseLots = near(hs, 110, (p) => Math.hypot(p.x, p.z)).map((p) => ({ p, used: false }));
+      // ruộng trước: ưu tiên dải giáp bãi săn hoang dã (ruộng giáp rừng, giáp đồng cỏ), rồi vùng ven
+      const fm = hexLots(3.1, 0.3, 0, (x, z) => { const r = Math.hypot(x, z); return r > 15 && (!wildAt(x, z) || r < 39); }, true).map((p) => Object.assign(p, { r: 3.1 }));
+      L.farmLots = near(fm, 12, (p) => Math.abs(Math.hypot(p.x, p.z) - 31) + (wildAt(p.x, p.z) ? 0 : 7));
+      // nhà ở: lõi thành, gần quảng trường trước
+      const hs = hexLots(1.8, 0.15, 0, (x, z) => Math.hypot(x, z) > 7.4).map((p) => Object.assign(p, { r: 1.8 }));
+      L.houseLots = near(hs, 96, (p) => Math.hypot(p.x, p.z)).map((p) => ({ p, used: false }));
       L.farmOwner = L.farmLots.map(() => null); L.shopOwner = L.shopLots.map(() => null);
     }
 
@@ -1468,10 +1607,9 @@
       // quảng trường và đường đến hai cây cầu
       const k = new Kit(), pc = PLAZA_C[eb];
       k.cyl(pc, 0, 0.03, 0, 6.9, 0.1, 28); k.cyl(e >= 3 ? '#c0b292' : pc, 0, 0.05, 0, 5.4, 0.1, 28);
-      for (const p of L.landing) { const len = p.length() - 6.2, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.2 + len / 2); k.box(ROAD[eb], m.x, 0.02, m.z, e >= 4 ? 2.8 : 1.8, 0.08, len, a); if (e >= 5) k.box(e === 7 ? BEY_LAMP[Math.max(0, eb - 7)] : '#f4f4f4', m.x, 0.1, m.z, 0.12, 0.02, len - 1, a, e === 7 ? 'glow' : false); }
+      drawRoads(L, k, eb, e);
       // lối nhỏ tới ngân hàng và trường
       for (const p of [L.bankPos, L.schoolPos]) { const len = p.length() - 6.0, a = Math.atan2(p.x, p.z), m = p.clone().normalize().multiplyScalar(6.0 + len / 2 - 1.3); k.box(ROAD[eb], m.x, 0.025, m.z, 1.5, 0.08, len - 2.6, a); }
-      { const a = L.bankPos.clone().multiplyScalar(1.3), b = L.harbor, len = a.distanceTo(b), m = a.clone().lerp(b, 0.5); k.box(ROAD[eb], m.x, 0.025, m.z, 1.6, 0.08, len, Math.atan2(b.x - a.x, b.z - a.z)); }
       if (e === 4) for (let s = 0; s < 8; s++) { const a = (s / 8) * TAU; k.box('#8f8f8f', Math.cos(a) * 3.2, 0.06, Math.sin(a) * 3.2, 0.4, 0.4, 0.4); }
       L.civic.plaza = meshOf(k, L.litMat, L.g, 0, 0, 0);
       // nơi của chính quyền ở giữa, ngân hàng phía trong, trường phía ngoài
@@ -1488,22 +1626,59 @@
       L.orb = bx && bx.orb ? addGlow(L, L.civic.bank, e === 7 ? '#ffe9a8' : '#ffd36b', e >= 5 ? 5 : 4, bx.orb, false) : null;
       if (!L.noSchool) { const ks = new Kit(); buildSchool(ks, e, L.ter); motif(ks, L.ter, e); L.civic.school = meshOf(ks, L.litMat, L.g, L.schoolPos.x, L.schoolPos.z, Math.atan2(-L.schoolPos.x, -L.schoolPos.z)); clickable(L.civic.school, { type: 'school', land: L.i }); }
       BEY = 0;
-      // đèn quanh quảng trường và dọc đường
+      // đèn quanh quảng trường và dọc mạng đường: thời xưa đuốc dọc đường lớn, rồi đèn lồng, đèn khí, đèn điện trên mọi phố
       const kl = new Kit(), lampSpots = [];
       for (let s = 0; s < 10; s++) { const a = (s / 10) * TAU + 0.31; lampSpots.push([Math.cos(a) * 7.3, Math.sin(a) * 7.3]); }
-      for (const p of L.landing) for (const u of [0.45, 0.8]) { const q = p.clone().multiplyScalar(u), s2 = new THREE.Vector3(-p.z, 0, p.x).normalize().multiplyScalar(e >= 4 ? 1.9 : 1.4); lampSpots.push([q.x + s2.x, q.z + s2.z]); }
+      const gapOf = (S) => (S.w === 0 ? (eb <= 2 ? 11 : 8) : S.w === 1 && eb >= 3 ? 11 : 0);
+      let side = 1;
+      for (const S of L.roadNet) {
+        const gap = gapOf(S); if (!gap || S.kind === 'track') continue;
+        const dx = S.b.x - S.a.x, dz = S.b.y - S.a.y, len = Math.hypot(dx, dz); if (len < 2) continue;
+        const nx = -dz / len, nz = dx / len, off = (S.w === 0 ? (e >= 4 ? 1.9 : 1.4) : 1.25);
+        for (let d = gap * 0.5; d < len; d += gap) { side = -side; const x = S.a.x + (dx * d) / len + nx * off * side, z = S.a.y + (dz * d) / len + nz * off * side; if (Math.hypot(x, z) > 7.8 && L.inside(x, z, 1.5)) lampSpots.push([x, z]); }
+      }
       for (const [x, z] of lampSpots) {
         const kk = new Kit(), top = buildLamp(kk, e);
         for (const part of kk.b) { part.translate(x, 0, z); kl.b.push(part); }
         for (const part of kk.l) { part.translate(x, 0, z); kl.l.push(part); }
         L.lamps.push([x + top[0], top[1], z + top[2]]);
       }
+      // thời xưa: bốn lò lửa ở bốn góc quảng trường
+      if (eb <= 4) for (let s = 0; s < 4; s++) { const a = (s / 4) * TAU + 0.78, x = Math.cos(a) * 6.2, z = Math.sin(a) * 6.2; kl.cyl('#4a3b2e', x, 0, z, 0.38, 0.75, 8); kl.cyl('#2b2420', x, 0.75, z, 0.5, 0.12, 8); }
       L.civic.lamps = meshOf(kl, L.litMat, L.g, 0, 0, 0);
-      const lc = e <= 2 ? '#ff9a45' : e === 7 ? BEY_LAMP[Math.max(0, eb - 7)] : e >= 5 ? '#e8f6ff' : '#ffc970';
-      for (const [x, y, z] of L.lamps) addGlow(L, L.g, lc, e >= 5 ? 3.6 : 3.0, [x, y, z], true);
+      if (eb <= 4) for (let s = 0; s < 4; s++) { const a = (s / 4) * TAU + 0.78; addFire(L, L.civic.lamps, [Math.cos(a) * 6.2, 1.25, Math.sin(a) * 6.2], 'civic', 1.9); }
+      const lc = e <= 2 ? '#ff9a45' : eb === 11 ? '#ff5ad1' : e === 7 ? BEY_LAMP[Math.max(0, eb - 7)] : e >= 5 ? '#e8f6ff' : '#ffc970';
+      // ánh đèn: một lớp điểm sáng cho cả đảo (một lượt vẽ), cộng vũng sáng trên mặt đường
+      for (const key of ['lampPts', 'lampPool']) if (L[key]) { L.g.remove(L[key]); L[key].geometry.dispose(); L[key].material.dispose(); L[key] = null; }
+      if (L.lamps.length) {
+        const pos = new Float32Array(L.lamps.length * 3), pool = new Float32Array(L.lamps.length * 3);
+        L.lamps.forEach(([x, y, z], i) => { pos.set([x, y, z], i * 3); pool.set([x, 0.25, z], i * 3); });
+        const mk = (arr, size, col) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3)); const m = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex, color: col, size, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); m.raycast = () => {}; m.userData.noFade = true; L.g.add(m); return m; };
+        L.lampPts = mk(pos, e >= 5 ? 3.4 : 2.8, lc);
+        L.lampPool = mk(pool, e >= 5 ? 9 : 7, lc);
+      }
       BEY = 0;
       clearTrees(L, 0, 0, 7.6); clearTrees(L, L.bankPos.x, L.bankPos.z, 4.2); clearTrees(L, L.schoolPos.x, L.schoolPos.z, 4.2);
       for (const p of L.landing) for (let u = 0.2; u <= 1.0; u += 0.1) clearTrees(L, p.x * u, p.z * u, 2.4);
+    }
+    // vẽ mạng đường theo thời đại: đường đất, đá, nhựa; vạch kẻ ở thời hiện đại; viền neon ở bốn thời cuối
+    const PATH_C = ['#a88a62', '#b89c72', '#a89f8c', '#c2b59b', '#8f897f', '#6b6e74', '#4d5056', '#34373d', '#d3dbe2', '#ddcdb4', '#a99ad6', '#2a2440'];
+    const NEON = ['#7ff0ff', '#ff5ad1', '#ffe45a', '#9a7bff'];
+    function drawRoads(L, k, eb, e) {
+      const near = (S, wd) => ({ dx: S.b.x - S.a.x, dz: S.b.y - S.a.y, mx: (S.a.x + S.b.x) / 2, mz: (S.a.y + S.b.y) / 2, wd });
+      for (const S of L.roadNet) {
+        const wd = S.w === 0 ? (e >= 4 ? 2.8 : 1.9) : S.w === 1 ? (e >= 4 ? 1.8 : 1.35) : S.kind === 'boardwalk' ? 1.2 : 0.95;
+        const q = near(S, wd), len = Math.hypot(q.dx, q.dz), ry = Math.atan2(q.dx, q.dz), cx = Math.cos(ry), cz = -Math.sin(ry);
+        if (len < 0.05) continue;
+        if (S.kind === 'track') { for (const sd of [-0.42, 0.42]) k.box('#b9c8d3', q.mx + cx * sd, 0.02, q.mz + cz * sd, 0.2, 0.05, len + 0.1, ry); continue; }
+        const col = S.kind === 'boardwalk' ? '#9b7650' : S.kind === 'caravan' ? (eb >= 5 ? ROAD[eb] : '#c9a46a') : S.kind === 'field' && eb < 5 ? '#9c8a5c' : S.w === 2 ? PATH_C[eb] : ROAD[eb];
+        k.box(col, q.mx, S.w === 0 ? 0.02 : S.w === 1 ? 0.025 : 0.03, q.mz, wd, S.kind === 'boardwalk' ? 0.22 : 0.08, len + wd * 0.45, ry);
+        if (S.w === 0 && e >= 5 && len > 1.2) for (let u = 0.25; u < 1; u += 0.5) k.box(eb === 11 ? '#ffe45a' : e === 7 ? BEY_LAMP[Math.max(0, eb - 7)] : '#f4f4f4', S.a.x + q.dx * u, 0.1, S.a.y + q.dz * u, 0.16, 0.02, Math.min(1.1, len * 0.3), ry);
+        // bốn thời cuối: viền đường phát sáng; thời thứ mười hai: neon hai màu rực rỡ
+        if (eb >= 8 && S.w <= 1) { const c1 = eb === 11 ? NEON[(L.i + (S.w ? 1 : 0)) % 4] : BEY_LAMP[Math.max(0, eb - 7)], c2 = eb === 11 ? NEON[(L.i + 2) % 4] : c1; for (const [sd, c] of [[-wd / 2, c1], [wd / 2, c2]]) k.box(c, q.mx + cx * sd, 0.09, q.mz + cz * sd, 0.14, 0.05, len + 0.05, ry, 'glow'); }
+      }
+      // gốc cây trên đường bị dọn đi
+      for (const S of L.roadNet) if (S.w <= 1 || S.kind === 'caravan') for (let u = 0; u <= 1; u += 0.5) clearTrees(L, S.a.x + (S.b.x - S.a.x) * u, S.a.y + (S.b.y - S.a.y) * u, S.w === 0 ? 1.8 : 1.2);
     }
     function addGlow(L, parent, color, size, pos, nightOnly) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 }));
@@ -1850,7 +2025,8 @@
       for (const key of Object.keys(L.civic)) { const o = L.civic[key]; if (o) { L.g.remove(o); unclickable(o); disposeGroup(o); } delete L.civic[key]; }
       for (const s of L.glows) L.g.remove(s);
       L.glows = []; L.lamps = []; L.fires = []; L.queue = [];
-      L.era = -1; L.shown = false; L.shirtEra = -2;
+      for (const key of ['lampPts', 'lampPool']) if (L[key]) { L.g.remove(L[key]); L[key].geometry.dispose(); L[key].material.dispose(); L[key] = null; }
+      L.era = -1; L.shown = false; L.shirtEra = -2; L.lastTod = null; // lịch đi lại lập lại khi có người mới
       if (L.crowd) { crowdBegin(L.crowd); crowdEnd(L.crowd); }
       if (L.hats) L.hats.count = 0;
       // phế tích: nền nhà cháy đen, cột gãy, tro
@@ -1902,33 +2078,137 @@
       if (G && !G.closed && h.employer === G.firmId) return [home, L.minePos]; // thợ mỏ lên Đồi Mây
       return null;
     }
-    const _dir2 = new THREE.Vector3();
+    /* =============== Người có việc để làm: lịch một ngày của từng người =============== */
+    // Mỗi gia đình hiện thành một người. Sáng sớm bước ra từ cửa nhà, theo đường lớn, đường phố tới chỗ làm: ruộng, quầy
+    // chợ, xưởng, bến cá, mỏ, trại lính; trẻ tới trường; người chưa có việc ra chợ tìm việc, đi theo nghề riêng của miền
+    // (ra đồng, săn trong rừng, đào quặng, câu cá trên băng, kéo lưới ven biển, theo đoàn lạc đà) hay tới đứng quanh căn nhà
+    // đang dựng; ngày lễ chiều tối ghé đền rồi mới về. Tới nơi thì làm việc ở đó; chiều tối theo đường cũ về nhà, khuất sau
+    // cánh cửa. Lịch lập cho mỗi vòng ngày đêm (lúc mọi người đang ngủ), nên không ai hiện ra hay biến mất giữa đường.
+    const TRIP_W = 0.00105; // thời gian đi bộ (phần của một ngày) cho mỗi đơn vị đường
+    const REGION = { plains: ['field', 'farm'], forest: ['trail', 'hunt'], mountain: ['switch', 'mine'], tundra: ['track', 'icefish'], coast: ['boardwalk', 'fish'], desert: ['caravan', 'trade'] };
+    const SPREAD = { farm: 2.4, shop: 1.4, fish: 1.2, mine: 2.2, drill: 2.6, school: 2.2, market: 3.2, build: 0.6, pray: 1.3, hunt: 3.4, icefish: 1.4, trade: 1.6, idle: 1.8 };
+    const ATK = { farm: 0.8, mine: 1, build: 1, fish: 0.45, icefish: 0.2, drill: 0.3 };
+    const _w2 = new THREE.Vector3(), _d2 = new THREE.Vector3();
+    // chỗ đứng trước một công trình: lùi về phía quảng trường để không đứng trong tường
+    const front = (p, back) => { const r = Math.hypot(p.x, p.z) || 1; return new THREE.Vector3(p.x - (p.x / r) * back, 0, p.z - (p.z / r) * back); };
+    function regionPt(L, n, vday) {
+      const R = REGION[L.ter], segs = L.roadNet.filter((S) => S.kind === R[0]);
+      if (L.ter === 'mountain' && hashI(n + vday) < 0.5) return front(L.minePos, 2.8);
+      if (!segs.length) return null;
+      const S = segs[Math.floor(hashI(n * 3 + vday * 7 + L.i) * segs.length)], u = L.ter === 'plains' ? hashI(n + 5) : 1;
+      return new THREE.Vector3(S.a.x + (S.b.x - S.a.x) * u, 0, S.a.y + (S.b.y - S.a.y) * u);
+    }
+    function sitesOf(L) { const out = []; for (const H of L.houses) if (H.grow < 1) out.push(L.houseLots[H.idx].p); for (const [, o] of L.firmObj) if (o.grow < 1 && !o.dying) out.push(lotOf(L, o) || o.g.position); for (const q of L.queue.slice(0, 4)) { if (q.kind === 'house') out.push(L.houseLots[q.H.idx].p); } return out; }
+    function planOf(L, n, h, vday, fresh) {
+      const H = L.houses[Math.floor(n / 4)]; if (!H) return null;
+      const home = L.houseLots[H.idx].p, j1 = hashI(n * 3 + L.i * 11), j2 = hashI(n * 5 + vday * 17 + L.i), j3 = hashI(n * 13 + vday * 3);
+      const plan = { vday, stops: [], legs: [], hidden: false };
+      if (fresh || h.sick > 0) { plan.hidden = true; return plan; } // người mới đến, người ốm: ở trong nhà tới hết ngày
+      const w = W.cities[L.i].w, G = w && w.gold;
+      let dest = null, act = 'idle', t0 = 0.24, t2 = 0.7;
+      if (h.employer === -1 && L.milLot.barracks) { dest = front(L.milLot.barracks, 4.6); act = 'drill'; t0 = 0.2 + j1 * 0.03; t2 = 0.72 + j2 * 0.04; }
+      else if (G && !G.closed && h.employer === G.firmId) { dest = front(L.minePos, 2.8); act = 'mine'; t0 = 0.21 + j1 * 0.05; t2 = 0.68 + j2 * 0.06; }
+      else if (h.employer != null) { const o = L.firmObj.get(h.employer); if (o && !o.dying) { const lp = lotOf(L, o); if (lp) { act = o.kind === 'farm' ? 'farm' : o.kind === 'dock' ? 'fish' : 'shop'; dest = act === 'shop' ? front(lp, 3.4) : act === 'fish' ? lp.clone() : new THREE.Vector3(lp.x, 0, lp.z); t0 = 0.21 + j1 * 0.05; t2 = 0.68 + j2 * 0.06; } } }
+      if (!dest) {
+        const sites = sitesOf(L);
+        if (L.era >= 1 && j1 < 0.2 && L.civic.school) { dest = front(L.schoolPos, 3.8); act = 'school'; t0 = 0.27 + j3 * 0.03; t2 = 0.58 + j2 * 0.05; }
+        else if (j2 < 0.34 && (dest = regionPt(L, n, vday))) { act = REGION[L.ter][1]; t0 = 0.23 + j3 * 0.05; t2 = 0.64 + j1 * 0.06; }
+        else if (sites.length && j2 < 0.56) { dest = sites[Math.floor(j3 * sites.length)]; act = 'build'; t0 = 0.25 + j1 * 0.04; t2 = 0.69 + j3 * 0.04; }
+        else if (L.shopLots.length && j3 < 0.7) { dest = front(L.shopLots[Math.floor(j2 * L.shopLots.length)], 3.4); act = 'market'; t0 = 0.3 + j1 * 0.1; t2 = 0.52 + j2 * 0.12; }
+        else { const b = j2 * TAU; dest = new THREE.Vector3(Math.cos(b) * 5.4, 0, Math.sin(b) * 5.4); act = 'idle'; t0 = 0.33 + j1 * 0.08; t2 = 0.56 + j3 * 0.1; } // quanh quảng trường, chờ việc
+      }
+      // chỗ đứng: người bán xếp hàng trước quầy, lính đứng thành hàng, người khác rải quanh nơi đến; mỗi nơi chỉ vài người
+      // đứng ngoài, số còn lại làm việc bên trong (đi tới cửa rồi khuất vào trong)
+      const ck = act + ':' + (h.employer != null ? h.employer : Math.round(dest.x) + ',' + Math.round(dest.z)), idx = L.slotUse.get(ck) || 0;
+      L.slotUse.set(ck, idx + 1);
+      const CAP = { shop: 4, farm: 6, fish: 5, mine: 6, drill: 12, build: 6, school: 12 };
+      const sp = SPREAD[act] || 1.5, rr0 = Math.hypot(dest.x, dest.z) || 1, tx = -dest.z / rr0, tz = dest.x / rr0;
+      let stand;
+      if (act === 'shop') stand = dest.clone().add(new THREE.Vector3(tx * (idx - 1.5) * 1.15, 0, tz * (idx - 1.5) * 1.15));
+      else if (act === 'drill') { const col = idx % 4, row = Math.floor(idx / 4) % 3; stand = dest.clone().add(new THREE.Vector3(tx * (col - 1.5) * 1.2 - (dest.x / rr0) * row * 1.3, 0, tz * (col - 1.5) * 1.2 - (dest.z / rr0) * row * 1.3)); }
+      else { const a = hashI(n * 29 + 7) * TAU, rr = act === 'build' ? 2.7 : sp * Math.sqrt(hashI(n * 31 + 3)); stand = dest.clone().add(new THREE.Vector3(Math.cos(a) * rr, 0, Math.sin(a) * rr)); }
+      const inside = CAP[act] != null && idx >= CAP[act];
+      const r0 = Math.hypot(home.x, home.z) || 1, door = new THREE.Vector3(home.x - (home.x / r0) * 2.0, 0, home.z - (home.z / r0) * 2.0); // cửa nhà: phía quảng trường
+      plan.stops.push({ p: door, act: 'home', t: t0 });
+      plan.stops.push({ p: inside ? dest.clone() : stand, act, t: t2, at: dest, inside });
+      // ngày lễ (mỗi bảy vòng ngày đêm một lần): chiều tối nhiều người ghé đền
+      const rel = L.slots.rel;
+      if (rel && vday % 7 === 3 && j3 < 0.55 && L.era >= 1) { const b = hashI(n * 41) * TAU, rp = rel.clone().add(new THREE.Vector3(Math.cos(b) * 5.6, 0, Math.sin(b) * 5.6)); plan.stops.push({ p: rp, act: 'pray', t: Math.max(t2 + 0.06, 0.8), at: rel }); }
+      plan.stops.push({ p: door, act: 'home', t: 2 });
+      // các chặng đi bộ theo mạng đường
+      let tt = plan.stops[0].t;
+      for (let k = 0; k + 1 < plan.stops.length; k++) {
+        const A = plan.stops[k], B = plan.stops[k + 1], pts = L.route(A.p.x, A.p.z, B.p.x, B.p.z), cum = [0];
+        for (let q = 1; q < pts.length; q++) cum.push(cum[q - 1] + pts[q].distanceTo(pts[q - 1]));
+        const len = cum[cum.length - 1], dur = clamp(len * TRIP_W, 0.006, 0.075), start = Math.max(tt, A.t);
+        plan.legs.push({ pts, cum, len, start, end: start + dur });
+        tt = start + dur + 0.004;
+      }
+      return plan;
+    }
+    // vị trí của một người theo lịch: trên đường (đi) hay ở một chỗ (làm việc), hay ở trong nhà (null)
+    function placeOn(L, plan, tod, t, n, out) {
+      if (plan.hidden) return null;
+      const legs = plan.legs, stops = plan.stops;
+      for (let k = 0; k < legs.length; k++) {
+        const g = legs[k];
+        if (tod < g.start) { if (k === 0) return null; const S = stops[k]; return S.act === 'home' || S.inside ? null : stayAt(L, S, t, n, out); }
+        if (tod <= g.end) {
+          const d = ((tod - g.start) / (g.end - g.start)) * g.len;
+          let q = 1; while (q < g.pts.length - 1 && g.cum[q] < d) q++;
+          const a = g.pts[q - 1], b = g.pts[q], seg = g.cum[q] - g.cum[q - 1] || 1, u = clamp((d - g.cum[q - 1]) / seg, 0, 1);
+          out.p.copy(a).lerp(b, u); _d2.copy(b).sub(a);
+          const side = hashI(n + 3) > 0.5 ? 0.42 : -0.42, dl = Math.hypot(_d2.x, _d2.z) || 1; // đi về một bên đường, hai chiều không giẫm lên nhau
+          out.p.x += (-_d2.z / dl) * side; out.p.z += (_d2.x / dl) * side;
+          out.ry = Math.atan2(_d2.x, _d2.z); out.walk = 1; out.atk = 0;
+          return out;
+        }
+      }
+      return null; // đã về nhà
+    }
+    function stayAt(L, S, t, n, out) {
+      const act = S.act, at = S.at || S.p, k = hashI(n * 17 + 5);
+      out.p.copy(S.p); out.walk = 0; out.atk = 0;
+      if (act === 'farm' || act === 'hunt' || act === 'market' || act === 'idle') { // đi lại chậm trong một khoảng nhỏ
+        const sp = (SPREAD[act] || 1.5) * 0.45, ph = t * 0.0004 * (0.6 + k) + n;
+        out.p.x += Math.cos(ph) * sp; out.p.z += Math.sin(ph * 1.3) * sp;
+        const moving = Math.sin(t * 0.0011 + n) > -0.2;
+        out.walk = moving ? 0.6 : 0; out.ry = moving ? -ph + Math.PI / 2 : Math.atan2(at.x - out.p.x, at.z - out.p.z);
+        out.atk = act === 'farm' && !moving ? ATK.farm : 0;
+      } else {
+        out.ry = Math.atan2(at.x - out.p.x, at.z - out.p.z) + (act === 'shop' ? Math.PI : 0); // người bán quay ra đường, người khác nhìn vào việc
+        out.atk = ATK[act] || 0;
+        if (act === 'drill') { const m = Math.sin(t * 0.0016 + Math.floor(n / 6)) > 0; out.walk = m ? 1 : 0; out.atk = m ? 0 : 0.6; } // tập hàng: dậm chân tại chỗ rồi vung vũ khí
+      }
+      return out;
+    }
     function updatePeople(L, tod, t, fadNow) {
-      const w = W.cities[L.i].w, S = L.crowd;
+      const c = W.cities[L.i], w = c.w, S = L.crowd;
       if (!w || !S) { if (S && S.n.some((v) => v)) { crowdBegin(S); crowdEnd(S); } L.hats.count = 0; return; }
       if (L.hush && L.hush > performance.now()) { crowdBegin(S); crowdEnd(S); L.hats.count = 0; return; } // giới nghiêm, xuống hầm: phố vắng
-      const N = Math.min(L.peopleN, w.households.length);
+      // vòng ngày đêm mới (nửa đêm): lập lại lịch cho mọi người
+      if (L.lastTod == null) { L.lastTod = tod; L.vday = 0; L.plans = new Map(); L.known = new Set(); L.slotUse = new Map(); }
+      if (tod < L.lastTod - 0.5) { L.vday++; L.plans.clear(); L.known.clear(); L.slotUse.clear(); }
+      L.lastTod = tod;
+      const N = Math.min(L.peopleN, w.households.length), first = !L.known.size;
       crowdBegin(S);
       let nh = 0;
+      const out = L.tmpOut || (L.tmpOut = { p: new THREE.Vector3(), ry: 0, walk: 0, atk: 0 });
       for (let n = 0; n < N; n++) {
-        const h = w.households[n], off = (hashI(n + L.i * 1000) - 0.5) * 0.06;
-        let p = null, walking = false, ry = hashI(n + 21) * TAU;
-        if (h.sick > 0) { /* nằm nhà */ }
-        else if (h.employer !== null) {
-          const pts = walkPath(L, h);
-          if (pts) {
-            if (tod > 0.24 + off && tod < 0.33 + off) { p = _v.copy(pts[0]).lerp(pts[1], (tod - 0.24 - off) / 0.09); walking = true; _dir2.copy(pts[1]).sub(pts[0]); ry = Math.atan2(_dir2.x, _dir2.z); }
-            else if (tod > 0.7 + off && tod < 0.79 + off) { p = _v.copy(pts[1]).lerp(pts[0], (tod - 0.7 - off) / 0.09); walking = true; _dir2.copy(pts[0]).sub(pts[1]); ry = Math.atan2(_dir2.x, _dir2.z); }
-          }
-        } else if (tod > 0.3 && tod < 0.74) {
-          const sgn = hashI(n) > 0.5 ? 1 : -1, a = hashI(n + 3) * TAU + t * 0.00006 * sgn, r = 4.6 + hashI(n + 4) * 2.0;
-          p = _v.set(Math.cos(a) * r, 0, Math.sin(a) * r); walking = true; ry = -a + (sgn > 0 ? 0 : Math.PI);
+        const h = w.households[n];
+        let plan = L.plans.get(n);
+        if (!plan) {
+          // người mới dọn đến giữa ngày thì ở trong nhà; lúc vừa mở bể thì ai cũng có lịch ngay
+          const fresh = !first && !L.known.has(n) && tod > 0.2;
+          plan = planOf(L, n, h, L.vday, fresh); L.known.add(n);
+          if (!plan) continue;
+          L.plans.set(n, plan);
         }
-        if (!p) continue;
-        p.x += (hashI(n + 8) - 0.5) * 0.8; p.z += (hashI(n + 9) - 0.5) * 0.8;
+        const q = placeOn(L, plan, tod, t, n, out);
+        if (!q) continue;
         const v = S.e >= 7 && n % 5 === 0 ? 2 : n % 3 === 0 ? 1 : 0;
-        crowdPut(S, v, p, ry, walking && !reduce ? 1 : 0, 0, n * 13 + L.i * 7, 1.05);
-        if (fadNow && h.hype === fadNow.id && nh < L.peopleN) { _o.position.set(p.x, 1.24, p.z); _o.rotation.set(0, 0, 0); _o.scale.setScalar(0.7); _o.updateMatrix(); L.hats.setMatrixAt(nh++, _o.matrix); }
+        crowdPut(S, v, q.p, q.ry, reduce ? 0 : q.walk, reduce ? 0 : q.atk, n * 13 + L.i * 7, 1.05);
+        if (fadNow && h.hype === fadNow.id && nh < L.peopleN) { _o.position.set(q.p.x, 1.24, q.p.z); _o.rotation.set(0, 0, 0); _o.scale.setScalar(0.7); _o.updateMatrix(); L.hats.setMatrixAt(nh++, _o.matrix); }
       }
       crowdEnd(S);
       L.hats.count = nh; L.hats.instanceMatrix.needsUpdate = true;
@@ -1969,6 +2249,7 @@
         for (const F of L.fires) { const fl = 0.7 + 0.3 * Math.sin(t * 0.017 + F.ph) * Math.sin(t * 0.011 + F.ph * 2); F.s.scale.setScalar(F.base * fl); F.s.material.opacity = (0.25 + night * 0.7) * fl * (F.s.userData.level == null ? 1 : F.s.userData.level); }
         const dk = L.dark && L.dark > performance.now() ? 0.06 : 1;
         for (const s of L.glows) s.material.opacity = dk * (s.userData.nightOnly ? night * 0.85 * s.userData.level : (0.35 + night * 0.5) * s.userData.level);
+        if (L.lampPts) { const on = night > 0.03 && dk > 0.5; L.lampPts.visible = L.lampPool.visible = on; if (on) { L.lampPts.material.opacity = 0.9 * night; L.lampPool.material.opacity = 0.32 * night; } }
         // khói bếp lúc sáng và chiều tối
         if (!reduce && L.era >= 1 && L.era <= 4 && ((tod > 0.7 && tod < 0.85) || (tod > 0.22 && tod < 0.28))) for (const H of L.houses) { H.smokeT -= dt / 1000; if (H.smokeT <= 0) { H.smokeT = 1.4 + Math.random() * 1.5; puff(L.world(new THREE.Vector3(L.houseLots[H.idx].p.x + 0.6, 4.6 + (H.lv - 1) * 1.3, L.houseLots[H.idx].p.z - 0.4)), false); } }
         for (const m of L.waterMats) m.emissiveIntensity = 0.25 + Math.sin(t * 0.002 + L.i) * 0.05 + night * 0.15;

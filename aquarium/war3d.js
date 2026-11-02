@@ -497,6 +497,39 @@
     const gateW = (i, j) => { const L = lands[i], k = L.neighbors.indexOf(j); return L.world(L.gates[Math.max(0, k)]); };
     const _a = v3(0, 0, 0), _b = v3(0, 0, 0);
     // điểm thứ x (0..1) trên tuyến; trả về vị trí và hướng tiến của phe a
+    // Hành quân: được giao chiến tuyến thì lính rời bãi tập, đi theo đường phố ra cổng cầu rồi mới lên cầu;
+    // rút về thì đi từ cổng theo đường cũ về bãi tập. Không ai hiện ra giữa cầu hay biến mất khỏi cầu.
+    const marches = new Map(), _mp = v3(0, 0, 0), _md = v3(0, 0, 0);
+    function marchOf(u, now, frac) {
+      const onLane = !!(u.lane && W.war.lanes[u.lane]), st = onLane ? 'l' : 'g';
+      let m = marches.get(u.id);
+      if (!m) { marches.set(u.id, { st, end: 0, lane: onLane ? u.lane : null }); return false; }
+      if (m.st !== st) {
+        const Ln = W.war.lanes[onLane ? u.lane : m.lane], L = lands[u.city];
+        m.st = st; m.pts = null;
+        if (Ln && Ln.kind === 'bridge' && L && L.route) {
+          const other = Ln.a === u.city ? Ln.b : Ln.a, gate = L.gates[Math.max(0, L.neighbors.indexOf(other))], mus = L.musterPos || L.milLot.barracks;
+          if (gate && mus) {
+            const seat = mus.clone().add(v3(((u.id % 6) - 2.5) * 1.2, 0, ((u.id >> 3) % 4 - 1.5) * 1.3));
+            const pts = (onLane ? L.route(seat.x, seat.z, gate.x, gate.z) : L.route(gate.x, gate.z, seat.x, seat.z)).map((p) => L.world(p));
+            let len = 0; const cum = [0]; for (let i = 1; i < pts.length; i++) { len += pts[i].distanceTo(pts[i - 1]); cum.push(len); }
+            m.pts = pts; m.cum = cum; m.len = len; m.t0 = now; m.end = now + clamp(len * 70, 1400, 4200) + (u.id % 5) * 160; m.toLane = onLane;
+          }
+        }
+      }
+      if (onLane) m.lane = u.lane;
+      if (!m.pts || now >= m.end) return false;
+      const k = clamp((now - m.t0 - (u.id % 5) * 160) / (m.end - m.t0 - (u.id % 5) * 160), 0, 1);
+      // ra trận: ba phần tư đầu đi trên phố tới cổng, phần cuối nhập vào chỗ của mình trên tuyến
+      const walkK = m.toLane ? Math.min(1, k / 0.78) : k, d = walkK * m.len;
+      let i = 1; while (i < m.pts.length - 1 && m.cum[i] < d) i++;
+      const a = m.pts[i - 1], b = m.pts[i], sl = m.cum[i] - m.cum[i - 1] || 1;
+      _pos.copy(a).lerp(b, clamp((d - m.cum[i - 1]) / sl, 0, 1)); _dir.copy(b).sub(a).setY(0);
+      if (m.toLane && k > 0.78 && lanePos(u.lane, lerp(u.px, u.x, clamp(frac, 0, 1)), u.lat, _mp, _md)) { const e = (k - 0.78) / 0.22; _dir.copy(_mp).sub(_pos).setY(0); _pos.lerp(_mp, e); }
+      if (_dir.lengthSq() < 1e-6) _dir.set(0, 0, 1); else _dir.normalize();
+      _pos.y = 0;
+      return true;
+    }
     function lanePos(key, x, lat, out, dir) {
       const Ln = W.war.lanes[key];
       if (!Ln) return false;
@@ -709,9 +742,15 @@
       for (const key in SOLDIER_SETS) F.crowdBegin(SOLDIER_SETS[key]);
       if (W.war.on) {
         const garrison = {};
+        if (marches.size > W.war.units.length * 2 + 40) { const live = new Set(W.war.units.map((u) => u.id)); for (const id of marches.keys()) if (!live.has(id)) marches.delete(id); }
         for (const u of W.war.units) {
           if (u.dead) continue;
           const col = K.factionColor(u.owner), fig = isFig(u), fighting = W.day - (u.fight == null ? -9 : u.fight) <= 1;
+          if (!u.naval && marchOf(u, now, frac)) { // đang hành quân giữa bãi tập và cổng cầu
+            const ry = Math.atan2(_dir.x, _dir.z);
+            if (fig) { drawSquad(u, _pos, ry, true, false, col, now); continue; }
+            _pos.y += Math.abs(Math.sin(ts * 9 + u.id)) * 0.06; put(modelOf(keyOf(u)), _pos, ry, 1.25, col); continue;
+          }
           if (u.lane && W.war.lanes[u.lane]) {
             const x = lerp(u.px, u.x, clamp(frac, 0, 1));
             if (!lanePos(u.lane, x, u.lat, _pos, _dir)) continue;
