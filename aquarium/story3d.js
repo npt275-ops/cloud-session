@@ -89,7 +89,7 @@
     }
 
     /* =============== Sợi lan truyền =============== */
-    const ARC_N = 72, SEG = 18, arcs = [];
+    const ARC_N = 40, SEG = 18, arcs = []; // chỉ vẽ ở đảo đang xem: đủ thấy tin đồn lan mà không tốn lượt vẽ
     for (let i = 0; i < ARC_N; i++) {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array((SEG + 1) * 3), 3));
       const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -592,6 +592,7 @@
         const it = mesh(k % 3 ? new THREE.ConeGeometry(0.42, 0.22, 8) : new THREE.BoxGeometry(0.34, 0.3, 0.34), k % 2 ? coneM : dark, Math.cos(a) * r, h, Math.sin(a) * r, g);
         it.rotation.set((Math.random() - 0.5) * 2.4, Math.random() * 3, (Math.random() - 0.5) * 2.4);
       }
+      bakeGroup(g); // cả đống đồ cũ thành một khối, một lượt vẽ
       X.clickable(g, { type: 'memo', id: m.id });
       return { g, kind: 'pile' };
     }
@@ -687,6 +688,8 @@
       for (let k = 0; k < 3; k++) mesh(new THREE.OctahedronGeometry(0.15, 0), goldMat, 1.65 + k * 0.15, 1.05, 3.3 + (k % 2) * 0.15, mineG);
       mineParts.cart = cart;
       const g = new THREE.Sprite(additive('#ffd36b', 0)); g.scale.set(9, 9, 1); g.position.set(0, 2, 0.6); mineG.add(g); mineParts.glow = g;
+      // gộp những phần đứng yên của tháp giếng (gầu kéo lên kéo xuống thì để riêng)
+      mineG.remove(bucket); bakeGroup(mineG); mineG.add(bucket);
     })();
     X.clickable(mineG, { type: 'mine' });
     function mineFirm() { const G = world.gold; return G ? world.firms.find((f) => f.id === G.firmId) : null; }
@@ -885,7 +888,8 @@
       world = W0.cities[CI].w;
       ingest();
       if (rumorWatch) rumorWatch.peak = Math.max(rumorWatch.peak, rumorWatch.kind === 'bank' ? world.fearShare || 0 : (world.foodRumorN || 0) / world.households.length);
-      spreadArcs(); computeAuras(); sendCrates(); syncMemories(true); wearDay();
+      if (!X.isFocus || X.isFocus()) spreadArcs(); else for (const A of arcs) if (A.line.visible) A.line.visible = A.spark.visible = false;
+      computeAuras(); sendCrates(); syncMemories(true); wearDay();
     }
     let lastSlow = 0;
     function update(dt, t) {
@@ -1157,6 +1161,7 @@
         setAutoRotate: G.setAutoRotate, closePanels: G.closePanels,
         people: G.people, tod: G.tod,
         clickable: (g, sel) => G.clickable(g, Object.assign({ land: L.i }, sel)), unclickable: G.unclickable,
+        isFocus: () => G.focus() === L.i,
         walkPath: (h) => lands3d.walkPath(L, h),
         procession: (n) => { const nb = L.neighbors.filter((j) => W.cities[j].settled); lands3d.procession(L.i, n, nb.length ? nb[Math.floor(Math.random() * nb.length)] : -1); },
       };

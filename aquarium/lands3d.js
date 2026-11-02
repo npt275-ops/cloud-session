@@ -1759,6 +1759,9 @@
         if (lit) { body = joinLit(body, lit); lit = null; }
         const list = [];
         const n = Math.max(1, cap[kd]);
+        // các bản sao rải khắp đảo: khung cắt theo cả hòn đảo chứ không theo một căn nhà ở tâm đảo
+        const isle = new THREE.Sphere(new THREE.Vector3(0, 6, 0), LAND_R + 14);
+        if (body) body.boundingSphere = isle.clone(); if (glow) glow.boundingSphere = isle.clone();
         if (body) { const m = new THREE.InstancedMesh(body, body.attributes.aLit ? mergedMat(L.litMat, false) : bodyMat, n); m.castShadow = true; m.receiveShadow = true; m.count = 0; m.raycast = () => {}; L.g.add(m); list.push(m); L.front.meshes.push(m); }
         if (glow) { const m = new THREE.InstancedMesh(glow, glowMat, n); m.count = 0; m.raycast = () => {}; L.g.add(m); list.push(m); L.front.meshes.push(m); }
         L.front.byKind.push(list);
@@ -2055,9 +2058,23 @@
     cartMesh.castShadow = true; cartMesh.frustumCulled = false; scene.add(cartMesh);
     for (let n = 0; n < CART_N; n++) { carts.push({ on: false }); cartMesh.setMatrixAt(n, ZERO); }
     let cartIdx = 0;
+    // Thương nhân kéo xe hàng: rời một quầy chợ, theo đường phố ra cổng cầu, qua cầu, theo đường phố đảo bên kia vào chợ.
+    // Không ai hiện ra hay biến mất giữa cầu; mỗi cây cầu nhiều nhất năm chuyến hàng cùng lúc.
+    const roadPath = (L, ax, az, bx, bz) => L.route(ax, az, bx, bz).map((p) => L.world(p));
     function sendCart(B, fromA, sector) {
+      const LA = lands[fromA ? B.a : B.b], LB = lands[fromA ? B.b : B.a];
+      if (!LA.route || !LB.route || !LA.shopLots.length || !LB.shopLots.length) return;
+      const busy = walkers.filter((w) => w.on && w.trade === B).length; if (busy >= 5) return;
       const n = cartIdx++ % CART_N, c = carts[n];
-      Object.assign(c, { on: true, B, dir: fromA ? 1 : -1, t0: performance.now() + Math.random() * 900, dur: 5200 - B.era * 450, lane: (Math.random() - 0.5) * 0.6 });
+      const sa = front(LA.shopLots[Math.floor(Math.random() * LA.shopLots.length)], 3.4), sb = front(LB.shopLots[Math.floor(Math.random() * LB.shopLots.length)], 3.4);
+      const ga = LA.landing[Math.max(0, LA.neighbors.indexOf(LB.i))].clone().multiplyScalar(0.96), gb = LB.landing[Math.max(0, LB.neighbors.indexOf(LA.i))].clone().multiplyScalar(0.96);
+      const pts = roadPath(LA, sa.x, sa.z, ga.x, ga.z);
+      for (let k = 1; k < 12; k++) pts.push(bridgePoint(B, fromA ? k / 12 : 1 - k / 12, new THREE.Vector3()).setY(0));
+      for (const p of roadPath(LB, gb.x, gb.z, sb.x, sb.z)) pts.push(p);
+      const lens = [0]; for (let j = 1; j < pts.length; j++) lens.push(lens[j - 1] + pts[j].distanceTo(pts[j - 1]));
+      const w = walkers[walkIdx++ % WALK_N]; freeWalker(w);
+      Object.assign(w, { on: true, pts, lens, t0: performance.now() + Math.random() * 900, dur: lens[lens.length - 1] * 95 + Math.random() * 1500, side: 0.45, e: Math.max(0, LA.era), seed: n * 31 + LA.i, cart: n, trade: B, cartSc: B.era >= 4 ? 1.4 : B.era >= 2 ? 1.1 : 0.8 });
+      Object.assign(c, { on: true, walker: true });
       cartMesh.setColorAt(n, C(sector === 'food' ? '#d9b65a' : '#8a6a4a'));
       if (cartMesh.instanceColor) cartMesh.instanceColor.needsUpdate = true;
     }
@@ -2065,7 +2082,7 @@
     function updateCarts() {
       const now = performance.now();
       carts.forEach((c, n) => {
-        if (!c.on) return;
+        if (!c.on || c.walker) return; // xe của thương nhân đi theo người kéo (vẽ cùng người đi bộ)
         const k = (now - c.t0) / c.dur;
         if (k < 0) { cartMesh.setMatrixAt(n, ZERO); return; }
         if (k > 1) { c.on = false; cartMesh.setMatrixAt(n, ZERO); return; }
@@ -2095,12 +2112,24 @@
       const pal = SHIRTS[Math.max(0, L.era)];
       for (let k = 0; k < n; k++) {
         const idx = walkIdx++ % WALK_N, w = walkers[idx], a = Math.random() * TAU, r = 2.5 + Math.random() * 4;
+        freeWalker(w);
         const pts = base.map((v) => v.clone());
-        pts.push(L.world(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)));
+        if (B && L.route) { const g = L.landing[Math.max(0, L.neighbors.indexOf(from))]; for (const p of L.route(g.x * 0.96, g.z * 0.96, Math.cos(a) * r, Math.sin(a) * r).slice(1)) pts.push(L.world(p)); } // theo đường phố vào quảng trường
+        else pts.push(L.world(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)));
         const lens = [0]; for (let j = 1; j < pts.length; j++) lens.push(lens[j - 1] + pts[j].distanceTo(pts[j - 1]));
         Object.assign(w, { on: true, pts, lens, t0: now + k * 420, dur: lens[lens.length - 1] * 260 + Math.random() * 800, side: (Math.random() - 0.5) * 0.9, e: Math.max(0, L.era), seed: idx * 17 + to });
       }
       void pal;
+    }
+    const _bp = new THREE.Vector3(), _cv = new THREE.Vector3();
+    // trả lại xe hàng của một chỗ trong đoàn người trước khi dùng chỗ đó cho người khác
+    function freeWalker(w) { if (w.cart != null) { const c = carts[w.cart]; if (c && c.walker) { c.on = false; c.walker = false; cartMesh.setMatrixAt(w.cart, ZERO); cartMesh.instanceMatrix.needsUpdate = true; } } w.cart = null; w.trade = null; }
+    function bridgeU(B, p) {
+      if (!B || !B.pa) return -1;
+      const ax = B.pb.x - B.pa.x, az = B.pb.z - B.pa.z, L2 = ax * ax + az * az, u = ((p.x - B.pa.x) * ax + (p.z - B.pa.z) * az) / L2;
+      if (u < 0 || u > 1) return -1;
+      const ox = B.pa.x + ax * u - p.x, oz = B.pa.z + az * u - p.z;
+      return ox * ox + oz * oz < 9 ? u : -1;
     }
     function updateWalkers(t) {
       const now = performance.now();
@@ -2111,11 +2140,20 @@
         any = true;
         const k = (now - w.t0) / w.dur;
         if (k < 0) { wP.setMatrixAt(n, ZERO); return; }
-        if (k >= 1) { w.on = false; wP.setMatrixAt(n, ZERO); return; }
+        if (k >= 1) { w.on = false; wP.setMatrixAt(n, ZERO); if (w.cart != null) { const c = carts[w.cart]; if (c && c.walker) { c.on = false; c.walker = false; cartMesh.setMatrixAt(w.cart, ZERO); cartMesh.instanceMatrix.needsUpdate = true; } w.cart = null; w.trade = null; } return; }
         const d = k * w.lens[w.lens.length - 1];
         let j = 1; while (j < w.lens.length - 1 && w.lens[j] < d) j++;
         const s = (d - w.lens[j - 1]) / Math.max(1e-6, w.lens[j] - w.lens[j - 1]);
         _v.lerpVectors(w.pts[j - 1], w.pts[j], s);
+        if (w.trade) { const B = w.trade, ub = bridgeU(B, _v); if (ub >= 0) { bridgePoint(B, ub, _bp); _v.y = _bp.y - 0.12; } } // trên mặt cầu thì theo độ cong của cầu
+        if (w.cart != null) { // xe hàng đi trước người kéo một bước
+          const d2 = Math.min(w.lens[w.lens.length - 1], d + 1.1); let q = 1; while (q < w.lens.length - 1 && w.lens[q] < d2) q++;
+          const s2 = (d2 - w.lens[q - 1]) / Math.max(1e-6, w.lens[q] - w.lens[q - 1]); _cv.lerpVectors(w.pts[q - 1], w.pts[q], s2);
+          const ub = bridgeU(w.trade, _cv); if (ub >= 0) { bridgePoint(w.trade, ub, _bp); _cv.y = _bp.y - 0.12; }
+          const dir0 = w.pts[q].clone().sub(w.pts[q - 1]).setY(0);
+          _o.position.copy(_cv).setY(_cv.y + 0.3); _o.rotation.set(0, -Math.atan2(dir0.z, dir0.x), 0); _o.scale.setScalar(w.cartSc || 1); _o.updateMatrix();
+          cartMesh.setMatrixAt(w.cart, _o.matrix); cartMesh.instanceMatrix.needsUpdate = true;
+        }
         const dir = w.pts[j].clone().sub(w.pts[j - 1]).setY(0).normalize(), side = new THREE.Vector3(-dir.z, 0, dir.x);
         const bob = reduce ? 0 : Math.abs(Math.sin(t * 0.012 + n)) * 0.08;
         const S = walkSets[w.e] || (walkSets[w.e] = crowdSet(scene, 60, w.e)), pos = _v.clone().addScaledVector(side, w.side);
