@@ -323,15 +323,35 @@ cấm vận kẻ phóng. Thắng khi sáu miền chung một lá cờ, hoặc kh
 Kiến trúc mỗi đời của mỗi miền đều khác nhau: bảng phong cách sáu miền × sáu thời đại (tường, mái, kiểu mái,
 viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi công trình.
 
-## Chạy
+## Chơi trên máy tính và điện thoại
 
-Trang cần được phục vụ qua HTTP (vì tải `sim.js`, `audio.js`, `lands3d.js`, `war3d.js`, `landmarks3d.js`, `fauna3d.js`, `chaos3d.js`, `streets3d.js`, `sights3d.js`, `avatar3d.js`, `powers3d.js`, `god3d.js`, `story3d.js` cùng thư mục):
+Bể Kính được đóng gói thành hai bản, đều dựng từ cùng mã nguồn bằng `python3 aquarium/tools/build-package.py`
+(chạy từ thư mục gốc của repo, không cần thư viện ngoài):
+
+- **Máy tính, không cần mạng:** `docs/BeKinh-ban-may-tinh.zip` (khoảng 0,8 MB). Giải nén, mở thư mục `BeKinh`, bấm đúp
+  `Choi Be Kinh (Windows).bat` hay `Choi Be Kinh (Mac).command` (mở trong cửa sổ riêng như ứng dụng, bằng Edge hay
+  Chrome), `choi-be-kinh-linux.sh`, hoặc mở thẳng `index.html`. Trong gói có sẵn three.js r128, OrbitControls và phông chữ,
+  nên không tải gì từ mạng. Trong trang Bể Kính trên claude.ai có mục **⋯ → Tải về máy tính** để lưu gói này.
+- **Điện thoại, cài như ứng dụng:** thư mục `docs/` là một ứng dụng web cài được (PWA): tệp cài ứng dụng, biểu tượng, và
+  bộ nhớ đệm lưu cả game ở lần mở đầu tiên để những lần sau chơi được khi không có mạng. Bật GitHub Pages cho repo
+  (Settings → Pages → Deploy from a branch → nhánh chứa `docs/`, thư mục `/docs`) là có địa chỉ
+  `https://npt275-ops.github.io/cloud-session/`. Mở địa chỉ đó trên điện thoại rồi **Cài đặt ứng dụng / Thêm vào màn hình
+  chính** (Android, Chrome) hay **Chia sẻ → Thêm vào MH chính** (iPhone, Safari). Mục **⋯ → Cài lên điện thoại** trong
+  game ghi lại các bước này.
+
+Đã thử: mở gói đã giải nén từ ổ đĩa với mọi truy cập mạng bị chặn (không một yêu cầu nào ra ngoài, phông chữ và three.js
+nạp từ gói); chạy bản web qua máy chủ cục bộ trên cấu hình điện thoại Android, đợi bộ nhớ đệm lưu 32 tệp, ngắt mạng rồi
+tải lại: game vẫn chạy.
+
+## Chạy khi phát triển
+
+Mã nguồn trong `aquarium/` dùng three.js từ CDN. Mở thẳng `index.html` hoặc phục vụ qua HTTP:
 
 ```bash
 cd aquarium && python3 -m http.server 8000
 ```
 
-Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CDN.
+Rồi mở `http://localhost:8000`.
 
 ## Cấu trúc
 
@@ -349,6 +369,8 @@ Rồi mở `http://localhost:8000`. Thư viện 3D (three.js r128) tải từ CD
 | `sights3d.js` | Sáu mươi công trình kỳ lạ của sáu đảo, mỗi đảo mười, đổi theo thời đại |
 | `god3d.js` | Hình ảnh thiên tai dùng chung (lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét) cho quyền năng và các kịch bản hỗn loạn |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
+| `tools/build-package.py` | Đóng gói: bản web cài được cho điện thoại (`docs/`) và gói chơi không cần mạng cho máy tính (`docs/BeKinh-ban-may-tinh.zip`) |
+| `vendor/`, `icons/` | three.js r128, OrbitControls, phông chữ Fraunces và Outfit cho bản không cần mạng; biểu tượng ứng dụng |
 | `story3d.js` | Mỗi miền một lớp hình ảnh của câu chuyện (sợi lan truyền, ký ức, mỏ vàng, lều...), một người dẫn chuyện chung (phụ đề, biên niên sử, đạo diễn camera, công cụ, chương năm) |
 | `sim.js` | Lõi kinh tế, bộ máy câu chuyện và thế giới sáu thành phố: tất định theo seed, chạy được bằng Node |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio, không dùng file âm thanh |

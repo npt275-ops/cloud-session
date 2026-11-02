@@ -344,6 +344,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   <button id="cycle" aria-pressed="true">Ngày và đêm</button>
   <button id="fpsBtn" aria-pressed="false">Số khung hình</button>
   <button id="flyBtn" aria-pressed="false">Nút bay trên màn hình</button>
+  <button id="dlBtn" hidden>Tải về máy tính</button>
+  <button id="appBtn" aria-pressed="false" aria-controls="app">Cài lên điện thoại</button>
   <button id="money" aria-pressed="true" hidden>Dòng tiền</button>
   <button id="orbit" aria-pressed="true" hidden>Tự xoay</button>
 </div>
@@ -399,6 +401,22 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   <label class="sl" for="rWage"><span>Lương tối thiểu mỗi ngày</span><output id="oWage">6 xu</output></label>
   <input type="range" id="rWage" min="0" max="18" step="1" value="6">
   <p class="note" id="nWage"></p>
+</section>
+<section class="panel glass" id="app" hidden aria-labelledby="aTitle">
+  <div class="ph"><h3 id="aTitle">Bể Kính trên máy tính và điện thoại</h3><button class="x" id="aClose" aria-label="Đóng hướng dẫn cài đặt">×</button></div>
+  <p class="sub">Một bể kính, chơi ở đâu cũng được.</p>
+  <button class="btn primary" id="appInstall" hidden>Cài Bể Kính lên máy này</button>
+  <p class="legend-h">Máy tính: chơi không cần mạng</p>
+  <ul class="legend">
+    <li><i style="background:#ffd36b"></i><span>Bấm <b>⋯ → Tải về máy tính</b> để lưu gói <b>BeKinh-ban-may-tinh.zip</b>, giải nén, rồi mở <b>Choi Be Kinh</b> (Windows, Mac) hoặc <b>index.html</b>. Cả bể kính nằm trong thư mục đó, không cần mạng.</span></li>
+  </ul>
+  <p class="legend-h">Điện thoại: thêm vào màn hình chính</p>
+  <ul class="legend">
+    <li><i style="background:#9df0c4"></i><span><b>Android</b> (Chrome): mở trang Bể Kính, bấm <b>⋮</b> rồi <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</span></li>
+    <li><i style="background:#9cc3ff"></i><span><b>iPhone, iPad</b> (Safari): bấm nút <b>Chia sẻ</b> rồi <b>Thêm vào MH chính</b>.</span></li>
+    <li><i style="background:#c8b6ff"></i><span>Biểu tượng Bể Kính nằm trên màn hình chính, mở ra là chơi toàn màn hình. Mở từ bản web của Bể Kính thì lần đầu game tự lưu vào máy, những lần sau chơi được cả khi không có mạng.</span></li>
+    <li><i style="background:#ff9db8"></i><span>Trên điện thoại: kéo một ngón để xoay, hai ngón để phóng to, sáu nút bay ở góc phải để lướt và lên xuống.</span></li>
+  </ul>
 </section>
 <section class="panel glass" id="help" hidden aria-labelledby="hTitle">
   <div class="ph"><h3 id="hTitle">Đọc thành phố</h3><button class="x" id="hClose" aria-label="Đóng chú giải">×</button></div>
@@ -1311,7 +1329,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (story && story.chapterOpen) return story.hideChapter();
     if (story && story.mode) return story.setMode(null);
     if (!$('whisperMenu').hidden) return story.setMode(null);
-    if (!$('policy').hidden || !$('help').hidden || !$('chron').hidden) { closePanels(); return; }
+    if (!$('policy').hidden || !$('help').hidden || !$('chron').hidden || !$('app').hidden) { closePanels(); return; }
     if (sel) select(null);
   });
   document.addEventListener('visibilitychange', () => { if (audio) (document.hidden ? audio.suspend() : audio.resume()); });
@@ -1407,7 +1425,50 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (open) { openPolicy(false); openHelp(false); story.renderChron(); }
     document.body.classList.toggle('panel-open', open || !$('policy').hidden || !$('help').hidden);
   }
-  function closePanels() { openPolicy(false); openHelp(false); openChron(false); toggleMore(false); }
+  function closePanels() { openPolicy(false); openHelp(false); openChron(false); openApp(false); toggleMore(false); }
+  /* ----- Đóng gói: tải về máy tính, cài lên điện thoại ----- */
+  // Trong trang Bể Kính trên claude.ai: tải gói qua quyền tải tệp của trang. Bản web đặt trên máy chủ: tải thẳng tệp zip
+  // nằm cạnh trang. Bản đã tải về máy (mở từ ổ đĩa): đã có cả bể kính rồi nên không hiện mục tải.
+  const ZIP = 'BeKinh-ban-may-tinh.zip';
+  let dlWay = null, installEvt = null;
+  function openApp(open) {
+    $('app').hidden = !open; $('appBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openPolicy(false); openHelp(false); openChron(false); }
+    document.body.classList.toggle('panel-open', open || !$('policy').hidden || !$('help').hidden);
+  }
+  $('appBtn').onclick = () => { toggleMore(false); openApp($('app').hidden); };
+  $('aClose').onclick = () => openApp(false);
+  (async () => {
+    try {
+      if (window.claude && typeof window.claude.use === 'function') {
+        const dl = await window.claude.use('downloads');
+        if (dl) { dlWay = { kind: 'claude', dl }; $('dlBtn').hidden = false; }
+      } else if (/^https?:$/.test(location.protocol) && navigator.onLine !== false) {
+        const r = await fetch(ZIP, { method: 'HEAD' });
+        if (r.ok) { dlWay = { kind: 'link' }; $('dlBtn').hidden = false; }
+      }
+    } catch (err) { /* không tải được thì không hiện mục tải */ }
+  })();
+  $('dlBtn').onclick = async () => {
+    toggleMore(false);
+    if (!dlWay) return;
+    if (dlWay.kind === 'link') { const a = document.createElement('a'); a.href = ZIP; a.download = ZIP; document.body.appendChild(a); a.click(); a.remove(); return; }
+    toast('Đang chuẩn bị gói Bể Kính…', 2400);
+    try {
+      const res = await fetch(ZIP); if (!res.ok) throw new Error('không tìm thấy gói');
+      await dlWay.dl.save({ filename: ZIP, data: await res.blob() });
+      toast('Đã lưu <b>' + ZIP + '</b>. Giải nén rồi mở <b>Choi Be Kinh</b> hoặc <b>index.html</b> để chơi không cần mạng.', 7000);
+    } catch (err) {
+      if (err && err.code === 'declined') return;
+      toast('Chưa tải được gói Bể Kính' + (err && err.message ? ': ' + err.message : '') + '.', 4200);
+    }
+  };
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('appInstall').hidden = false; });
+  $('appInstall').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (err) { /* bỏ qua */ } installEvt = null; $('appInstall').hidden = true; };
+  // bản web đặt trên máy chủ: lưu cả game vào máy để chơi không cần mạng (không chạy trong khung của claude.ai hay khi mở từ ổ đĩa)
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.claude && window.top === window.self) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
   $('chronBtn').onclick = () => openChron($('chron').hidden);
   $('chClose').onclick = () => openChron(false);
   function toggleMore(open) {
