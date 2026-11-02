@@ -222,6 +222,7 @@ body.intro .lands { opacity: 0; pointer-events: none; }
 .confirm p { margin: 0 0 6px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
 .btn.danger { background: #c4473a; border-color: #c4473a; color: #fff; }
 body.panel-open .pad, body.cmd-open .pad, body.intro .pad { display: none; }
+.cmdline { display: block; margin-top: 6px; padding: 7px 9px; border-radius: 9px; background: rgba(0, 0, 0, 0.35); color: #e8f4ff; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; user-select: all; -webkit-user-select: all; }
 .pw:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
 .pw.on { background: rgba(255, 210, 122, 0.26); border-color: var(--amber); }
 .pw:disabled { opacity: 0.42; cursor: default; }
@@ -406,15 +407,17 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   <div class="ph"><h3 id="aTitle">Bể Kính trên máy tính và điện thoại</h3><button class="x" id="aClose" aria-label="Đóng hướng dẫn cài đặt">×</button></div>
   <p class="sub">Một bể kính, chơi ở đâu cũng được.</p>
   <button class="btn primary" id="appInstall" hidden>Cài Bể Kính lên máy này</button>
-  <p class="legend-h">Máy tính: chơi không cần mạng</p>
+  <p class="legend-h">Máy tính: cài bằng một lệnh</p>
   <ul class="legend">
-    <li><i style="background:#ffd36b"></i><span>Bấm <b>⋯ → Tải về máy tính</b> để lưu gói <b>BeKinh-ban-may-tinh.zip</b>, giải nén, rồi mở <b>Choi Be Kinh</b> (Windows, Mac) hoặc <b>index.html</b>. Cả bể kính nằm trong thư mục đó, không cần mạng.</span></li>
+    <li><i style="background:#ffd36b"></i><span><b>Windows</b>: mở PowerShell, dán lệnh dưới đây. Lệnh tải toàn bộ mã nguồn về máy, tạo biểu tượng Bể Kính trên Desktop và Start menu, rồi mở game.<code class="cmdline">irm https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.ps1 | iex</code></span></li>
+    <li><i style="background:#ffb36b"></i><span><b>macOS, Linux</b>: mở Terminal, dán lệnh dưới đây. Lệnh tạo phần mềm Bể Kính (Launchpad trên Mac, danh sách ứng dụng trên Linux) rồi mở game.<code class="cmdline">curl -fsSL https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.sh | bash</code></span></li>
+    <li><i style="background:#9df0c4"></i><span>Không muốn dùng lệnh: bấm <b>⋯ → Tải về máy tính</b> để lưu gói <b>BeKinh-ban-may-tinh.zip</b>, giải nén, mở <b>Choi Be Kinh</b> hoặc <b>index.html</b>. Cả hai cách đều chơi không cần mạng.</span></li>
   </ul>
   <p class="legend-h">Điện thoại: thêm vào màn hình chính</p>
   <ul class="legend">
     <li><i style="background:#9df0c4"></i><span><b>Android</b> (Chrome): mở trang Bể Kính, bấm <b>⋮</b> rồi <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</span></li>
     <li><i style="background:#9cc3ff"></i><span><b>iPhone, iPad</b> (Safari): bấm nút <b>Chia sẻ</b> rồi <b>Thêm vào MH chính</b>.</span></li>
-    <li><i style="background:#c8b6ff"></i><span>Biểu tượng Bể Kính nằm trên màn hình chính, mở ra là chơi toàn màn hình. Mở từ bản web của Bể Kính thì lần đầu game tự lưu vào máy, những lần sau chơi được cả khi không có mạng.</span></li>
+    <li><i style="background:#c8b6ff"></i><span>Biểu tượng Bể Kính nằm trên màn hình chính, mở ra là chơi toàn màn hình. Bản web của Bể Kính ở <b>npt275-ops.github.io/cloud-session</b>: lần đầu game tự lưu vào máy, những lần sau chơi được cả khi không có mạng.</span></li>
     <li><i style="background:#ff9db8"></i><span>Trên điện thoại: kéo một ngón để xoay, hai ngón để phóng to, sáu nút bay ở góc phải để lướt và lên xuống.</span></li>
   </ul>
 </section>

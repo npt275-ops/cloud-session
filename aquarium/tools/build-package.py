@@ -149,7 +149,14 @@ GUIDE = """BỂ KÍNH
 Vị thần ngoài bể kính: sáu đảo, mười hai thời đại, chín năm.
 Phiên bản %(ver)s
 
-CHƠI TRÊN MÁY TÍNH (không cần mạng)
+CÀI BẰNG MỘT LỆNH (tải toàn bộ mã nguồn, tạo phần mềm Bể Kính có biểu tượng, mở game)
+ - Windows: mở PowerShell, dán lệnh:
+     irm https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.ps1 | iex
+ - macOS, Linux: mở Terminal, dán lệnh:
+     curl -fsSL https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.sh | bash
+ Chạy lại đúng lệnh đó là cập nhật lên bản mới nhất.
+
+CHƠI TRÊN MÁY TÍNH TỪ GÓI ZIP (không cần mạng)
  1. Giải nén BeKinh-ban-may-tinh.zip (chuột phải, chọn Extract All / Giải nén tất cả).
  2. Mở thư mục BeKinh vừa giải nén:
     - Windows: bấm đúp "Choi Be Kinh (Windows).bat". Game mở trong một cửa sổ riêng như ứng dụng
@@ -207,8 +214,8 @@ def main():
     for dp, _, fs in os.walk(OUT):
         for f in sorted(fs):
             rel = os.path.relpath(os.path.join(dp, f), OUT).replace(os.sep, '/')
-            if rel in ('.nojekyll', 'sw.js', ZIP_NAME, 'goi-files.json') or rel.startswith('launch/'):
-                continue
+            if rel in ('.nojekyll', 'sw.js', ZIP_NAME, 'goi-files.json') or rel.startswith('launch/') or rel.endswith(('.icns', '.ico')):
+                continue  # biểu tượng .ico, .icns chỉ dành cho lệnh cài trên Windows, macOS
             files.append(rel)
     files.sort()
     digest = hashlib.sha1()

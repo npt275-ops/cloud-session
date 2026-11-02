@@ -325,8 +325,26 @@ viền, nền, kính) dùng chung cho nhà dân, xưởng, bến cá và mọi c
 
 ## Chơi trên máy tính và điện thoại
 
-Bể Kính được đóng gói thành hai bản, đều dựng từ cùng mã nguồn bằng `python3 aquarium/tools/build-package.py`
-(chạy từ thư mục gốc của repo, không cần thư viện ngoài):
+**Cài lên máy tính bằng một lệnh.** Lệnh tải toàn bộ mã nguồn của repo về máy, tạo phần mềm "Bể Kính" có biểu
+tượng, rồi mở game trong một cửa sổ riêng (không có thanh địa chỉ, như phần mềm). Chơi không cần mạng; chạy lại đúng lệnh
+là cập nhật.
+
+- Windows 10, 11 (PowerShell): cài vào `%LOCALAPPDATA%\BeKinh`, lối tắt trên Desktop và trong Start menu, mở bằng Edge
+  (có sẵn trên Windows) hay Chrome.
+
+  ```powershell
+  irm https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.ps1 | iex
+  ```
+
+- macOS, Linux (Terminal): cài vào `~/BeKinh`, phần mềm `Bể Kính.app` trong `~/Applications` (Launchpad, Spotlight) hay
+  mục "Bể Kính" trong danh sách ứng dụng Linux, mở bằng Chrome, Edge, Brave (không có thì Safari hay trình duyệt mặc định).
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.sh | bash
+  ```
+
+Ngoài lệnh cài, còn hai bản dựng từ cùng mã nguồn bằng `python3 aquarium/tools/build-package.py` (chạy từ thư mục gốc của
+repo, không cần thư viện ngoài):
 
 - **Máy tính, không cần mạng:** `docs/BeKinh-ban-may-tinh.zip` (khoảng 0,8 MB). Giải nén, mở thư mục `BeKinh`, bấm đúp
   `Choi Be Kinh (Windows).bat` hay `Choi Be Kinh (Mac).command` (mở trong cửa sổ riêng như ứng dụng, bằng Edge hay
