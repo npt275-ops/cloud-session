@@ -60,9 +60,9 @@ trình. NPC tự diễn lần lượt cả thư viện, mỗi cử chỉ lặp 5
 dưới cho biết đang diễn cử chỉ nào. Không có tên trên đầu; **bấm vào NPC** để mở thẻ nhỏ: tuổi, 8 gen tính cách, dáng,
 thói quen, và danh sách cử chỉ theo nhóm để chọn diễn một cử chỉ (bấm "Tự diễn lần lượt" để chạy lại cả danh sách).
 
-**Cỡ người cân với nhà:** người trưởng thành cao 0,8, vừa khung cửa nhà thời đầu (cao 0,85). Cả NPC mẫu lẫn người trong
+**Cỡ người:** người trưởng thành cao 1,4: đủ to để nhìn rõ, vẫn thấp hơn mái nhà thời đầu (khoảng 2,35). Cả NPC mẫu lẫn người trong
 làng dùng chung một hằng số ở `render/rig3d.js` (`PERSON_HEIGHT`, `PERSON_SCALE`). Đổi cỡ là phóng to hay thu nhỏ đều cả
-người, nên cử chỉ, tay chạm và khuôn mặt không phải sửa. Sân diễn nằm trước kho bạc; camera cho phép tới gần 1,6 để nhìn
+người, nên cử chỉ, tay chạm và khuôn mặt không phải sửa. Sân diễn nằm trước kho bạc; camera cho phép tới gần 2,5 để nhìn
 rõ một người.
 
 | Nhóm | Cử chỉ |

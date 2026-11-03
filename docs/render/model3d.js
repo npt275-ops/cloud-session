@@ -14,8 +14,8 @@
     const { THREE, scene, L, person, clearTrees } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Gs = BK.Gestures3D, Brain = BK.Brain;
     const SCALE = Rig.PERSON_SCALE, LOOP_SEC = 5, HOLD_SEC = 0.9; // cùng cỡ với người trong làng, cân với nhà (render/rig3d.js)
     // sân diễn: bãi trống trước kho bạc, phía biển trong (render/buildings3d.js: SMALL), nhìn vào thấy người đứng trước nhà để so cỡ
-    const ia = Math.atan2(L.inw.z, L.inw.x), stage = new THREE.Vector3(Math.cos(ia) * 14, 0, Math.sin(ia) * 14), R = 1.2;
-    if (clearTrees) clearTrees(L, stage.x, stage.z, R + 1.5);
+    const ia = Math.atan2(L.inw.z, L.inw.x), stage = new THREE.Vector3(Math.cos(ia) * 14, 0, Math.sin(ia) * 14), R = 2;
+    if (clearTrees) clearTrees(L, stage.x, stage.z, R + 2);
 
     /* ---------- Khung và bộ phận: một người nên mỗi bộ phận là một khối riêng ---------- */
     const rig = Rig.build(Object.assign({}, person, { role: null }), 0), shapes = Rig.shapes();
@@ -24,7 +24,7 @@
     const props = Rig.buildProps(rig.nodes);
     scene.add(rig.root); rig.root.rotation.order = 'YXZ';
     // vòng sáng dưới chân: nhìn từ xa vẫn thấy NPC mẫu đứng ở đâu
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.56, 40), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.72, 0.96, 40), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.renderOrder = 3; scene.add(ring);
     const K = Object.assign(Brain.knobs(person.genome, 0.3), { seed: person.id * 1.7 });
     const face = BK.Face3D.create({ THREE, head: rig.nodes.head });

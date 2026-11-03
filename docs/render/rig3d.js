@@ -132,9 +132,10 @@
   }
 
   /* ---------- Cỡ người trong thế giới ---------- */
-  // khung cao 1,74 (từ gót tới đỉnh tóc). Người trưởng thành cao 0,8: vừa khung cửa nhà thời đầu (cao 0,85, lands3d.js housePlains).
+  // khung cao 1,74 (từ gót tới đỉnh tóc). Người trưởng thành cao 1,4: đủ to để nhìn rõ khi xem cả đảo, vẫn thấp hơn mái nhà thời đầu
+  // (mái cao khoảng 2,35, cửa 0,85, lands3d.js housePlains). Muốn đổi cỡ người thì chỉ sửa PERSON_HEIGHT.
   // Chỉ phóng to thu nhỏ đều cả người, nên cử chỉ, tay chạm (render/ik3d.js) và khuôn mặt không phải sửa.
-  const RIG_HEIGHT = 1.74, PERSON_HEIGHT = 0.8, PERSON_SCALE = PERSON_HEIGHT / RIG_HEIGHT;
+  const RIG_HEIGHT = 1.74, PERSON_HEIGHT = 1.4, PERSON_SCALE = PERSON_HEIGHT / RIG_HEIGHT;
 
   return { shapes, build, buildProps, CLAN_COLOR, PROP_OF, RIG_HEIGHT, PERSON_HEIGHT, PERSON_SCALE };
 });
