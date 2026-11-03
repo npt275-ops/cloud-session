@@ -52,7 +52,7 @@
         if (P.clear) lands3d.clearTrees(L, p.x, p.y, P.clear);
       }
       L.g.add(group);
-      shown[i] = { group, level, pieces, tris: Math.round(tris), count: pieces.length, t0: clock, name: lay.NAME.hall };
+      shown[i] = { group, level, pieces, tris: Math.round(tris), count: pieces.length, t0: clock, name: lay.NAME.hall, yard: lay.yard ? lay.yard.r : 12 };
     }
 
     function animate(dt, t, night) {
@@ -73,8 +73,31 @@
         }
       }
     }
+    // những chỗ người hay đến, theo làng đang có (toạ độ trên đảo): nhà chính, sân, ruộng, nhà ở (cửa), chỗ tuần tra
+    const HOME = new Set(['hut', 'tent', 'house', 'row', 'flats', 'tower', 'pods', 'bud', 'floatHouse', 'folded', 'crystal']);
+    const FIELD = new Set(['field', 'wildRice', 'lily', 'greenhouse', 'knap', 'kiln', 'forge', 'factory', 'market', 'datacenter']);
+    const SQUARE = new Set(['fire', 'well', 'totem', 'sun', 'miniPortal']);
+    function places(i) {
+      const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
+      const out = { hall: null, square: [], field: [], homes: [], guard: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      for (const p of sh.pieces) {
+        const g = p.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = g.userData.kind;
+        if (k === 'hall') out.hall = pos.clone().addScaledVector(fwd, 6);
+        else if (HOME.has(k)) out.homes.push(pos.clone().addScaledVector(fwd, 2.8));
+        else if (FIELD.has(k)) out.field.push(pos.clone().addScaledVector(fwd, 0.5));
+        else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, 2.2));
+        else if (k === 'gate' || k === 'pad' || k === 'station') out.guard.push(pos.clone().addScaledVector(fwd, 3));
+      }
+      const r = sh.yard || 12;
+      for (const a of [-0.9, 0, 0.9]) out.guard.push(new THREE.Vector3(Math.sin(a) * 0 + f.x * r * 0.9 * Math.cos(a) - f.y * r * 0.9 * Math.sin(a), 0, f.y * r * 0.9 * Math.cos(a) + f.x * r * 0.9 * Math.sin(a)));
+      if (!out.hall) out.hall = new THREE.Vector3(f.x * 4, 0, f.y * 4);
+      if (!out.square.length) out.square.push(new THREE.Vector3(f.x * 7, 0, f.y * 7));
+      if (!out.field.length) out.field.push(new THREE.Vector3(f.x * 14, 0, f.y * 14));
+      if (!out.homes.length) out.homes.push(out.square[0].clone());
+      return out;
+    }
     const stats = (i) => shown[i] && { level: shown[i].level, tris: shown[i].tris, count: shown[i].count, hall: shown[i].name };
-    return { show, animate, stats };
+    return { show, animate, stats, places };
   }
   return { create };
 });

@@ -59,6 +59,8 @@
       if (want && p.sex === want) f += 0.1;
       if (f > bs) { bs = f; best = p; }
     }
+    // không còn ai có tên đủ tuổi: lấy người dân thường đã cưới vào làng, còn hơn để ghế trống
+    if (!best) for (const p of S.people.values()) { if (!p.alive || p.role || !p.commoner) continue; const age = P.ageOf(p, S.day); if (age < R.ADULT_AGE || age >= R.RETIRE_AGE) continue; const f = seat.fit(p.genome.traits); if (f > bs) { bs = f; best = p; } }
     if (!best) return;
     best.role = seat.key; S.seats[seat.key] = best.id;
     S.log.push({ day: S.day, kind: 'seat', ids: [best.id], text: P.fullName(best) + ' lên làm ' + seatName(seat.key, best.sex) + (prev ? ', thay ' + P.fullName(prev) : '') + '.' });

@@ -14,7 +14,7 @@
   const STATES = ['idle', 'walk', 'talk', 'attack', 'panic'];
   const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện' };
   // những chỗ trong làng (vị trí cụ thể do phần vẽ đặt, logic chỉ biết tên chỗ)
-  const PLACES = ['home', 'field', 'hall', 'square', 'bridge'];
+  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard']; // guard: chỗ lính đi tuần (cổng, mép làng)
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
   function knobs(genome, stress) {
@@ -49,7 +49,7 @@
     if (X.war > day) {
       if (t.piety > 0.68 && t.aggression < 0.6) return d('idle', { mood: 'pray', place: 'hall', intensity: t.piety });
       if (t.fear > 0.6 && t.fear > t.aggression) return d('panic', { place: 'home', intensity: t.fear });
-      if (t.aggression > 0.55 || p.role === 'general1' || p.role === 'general2') return d('attack', { place: 'bridge', intensity: 0.4 + t.aggression * 0.6 });
+      if (t.aggression > 0.55 || p.job === 'soldier' || p.role === 'general1' || p.role === 'general2') return d('attack', { place: 'bridge', intensity: 0.4 + t.aggression * 0.6 });
       if (t.paranoia > 0.6 && king != null && king !== p.id) return d('talk', { mood: 'argue', target: king, intensity: t.paranoia });
       return d('walk', { place: 'hall', intensity: 0.6 });
     }
@@ -64,8 +64,13 @@
     if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: 'hall', intensity: 0.3 });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa
     if (X.festival > day) return rng.chance(0.55) ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7 }) : d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'square', intensity: 0.7 });
-    // ngày thường
+    // ngày thường: lính đi tuần, nông dân ra ruộng, người già ngồi ở nhà hay ra sân làng, tướng ra chỗ lính
     const r = rng.next();
+    if (p.job === 'soldier' && r < 0.5) return d(r < 0.3 ? 'walk' : 'idle', { place: 'guard', intensity: 0.5 });
+    if ((p.role === 'general1' || p.role === 'general2') && r < 0.35) return d('walk', { place: 'guard', intensity: 0.5 });
+    if (p.job === 'farmer' && r < 0.45) return d(r < 0.25 ? 'walk' : 'idle', { place: 'field', intensity: 0.4 });
+    if (p.job === 'elder' && r < 0.5) return d('idle', { place: r < 0.25 ? 'home' : 'square', intensity: 0.2 });
+    if (p.role === 'king' && r < 0.3) return d('idle', { place: 'hall', intensity: 0.4 });
     if (r < 0.38) return d('walk', { place: rng.pick(['home', 'field', 'hall', 'square', 'field']), intensity: 0.4 });
     if (r < 0.66) { const f = friendOf(S, p, rng); if (f != null) return d('talk', { target: f, intensity: 0.4 }); }
     // người đa nghi, hiếu chiến đôi khi gây sự

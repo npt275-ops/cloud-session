@@ -25,8 +25,10 @@
     RETIRE_AGE: 72,                      // rời hội đồng
     OLD_AGE: 62,                         // từ tuổi này bắt đầu có thể mất vì già
     DEATH_K: 0.0026,                     // độ dốc của rủi ro mất vì già (mỗi ngày)
-    CHILDREN: [1, 3],                    // mỗi cặp mỗi thế hệ có 1 tới 3 con
-    NAMED_CAP: 40,                       // tối đa số người có tên còn sống trên một đảo (phần dân còn lại chỉ là con số, làm sau)
+    CHILDREN: [2, 4],                    // mỗi cặp mỗi thế hệ có 2 tới 4 con khi làng còn thưa (mỗi người mẹ chỉ kịp sinh ở một mốc thế hệ)
+    CHILDREN_FULL: [2, 3],               // làng gần đầy: vẫn đủ thay thế thế hệ trước, không để hụt một lứa
+    POP_CAP: 200,                        // tối đa người trên một đảo
+    NAMED_CAP: 40,                       // (cũ, không còn dùng: nay mọi người đều có tên, trần là POP_CAP)
 
     // ghép đôi: điểm hợp = (1 - khác biệt tính cách) × nặng + ngẫu nhiên × (1 - nặng)
     MATCH_FIT_WEIGHT: 0.6,
@@ -36,5 +38,6 @@
     THINK_PER_DAY: 6,
     DROUGHT_CHANCE: 0.35,                // xác suất có hạn hán vào mỗi mùa hạ
     DROUGHT_DAYS: [18, 40],
+    SOLDIER_SHARE: 0.3,                  // phần người lớn ngoài hội đồng làm lính (logic/jobs.js)
   };
 });

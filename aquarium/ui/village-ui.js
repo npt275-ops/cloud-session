@@ -23,6 +23,7 @@
 .vpanel a, .vcard a { color: var(--ink); text-decoration: underline dotted; cursor: pointer; }
 .vpanel .log { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 3px; color: var(--ink-dim); font-size: 12px; }
 .vpanel .log b { color: var(--amber); font-weight: 500; }
+.vpanel .stat { color: var(--ink-dim); font-size: 12px; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
 .vpanel .sec { margin-top: 8px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
 .vcard { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 84px); width: min(320px, calc(100% - 32px)); max-height: calc(100% - 190px); overflow: auto; border-radius: 16px; padding: 12px 14px; font-size: 13px; }
 .vcard h2 { margin: 0 0 2px; font: 700 20px var(--font-display); }
@@ -44,6 +45,7 @@
     let sel = null, lastKey = '';
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
+    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần' };
     const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
 
     function renderPanel() {
@@ -51,7 +53,10 @@
       const chips = [['war', 'Chiến tranh'], ['drought', 'Hạn hán'], ['quarrel', 'Đang cãi nhau'], ['festival', 'Lễ hội'], ['mourning', 'Để tang']].filter(([k]) => X[k]).map(([, t]) => '<span class="chip hot">' + t + '</span>').join('') || '<span class="chip">Ngày thường</span>';
       const seats = CO.SEATS.map((s) => { const id = S.seats[s.key], p = id != null && S.people.get(id); return '<span>' + (p ? CO.seatName(s.key, p.sex) : s.name) + '</span><div>' + (p ? name(id) + ' · ' + Math.floor(P.ageOf(p, S.day)) + ' tuổi' : '<i>trống</i>') + '</div>'; }).join('');
       const log = S.log.slice(-7).reverse().map((e) => '<li><b>' + when(e.day) + '</b> ' + e.text + '</li>').join('');
+      const J = BK.Jobs, E = BK.Eras, lv = S.level || 1;
+      const jobs = J ? ' · lính ' + J.count(S, 'soldier') + ' · nông dân ' + J.count(S, 'farmer') + ' · già ' + J.count(S, 'elder') : '';
       panel.innerHTML = '<h3>Làng ' + S.name + ' <small>thế hệ ' + (S.gen + 1) + ' · ' + live.length + ' người · ' + live.filter((p) => P.ageOf(p, S.day) < R.ADULT_AGE).length + ' trẻ</small></h3>' +
+        '<div class="stat">' + (E ? 'Cấp ' + lv + ' · ' + E.of(lv).name + ' · ' : '') + when(S.day) + '<br>Đã sinh ' + (S.births || 0) + ' · đã mất ' + (S.deaths || 0) + jobs + '</div>' +
         '<div class="chips">' + chips + '</div>' +
         '<div class="sec">Thử tình huống</div><div class="tests">' + TEST.map(([k, t]) => '<button data-t="' + k + '">' + t + '</button>').join('') + '<button data-fly="1">Xem làng</button></div>' +
         '<div class="sec">Hội đồng</div><div class="seats">' + seats + '</div>' +
@@ -61,14 +66,14 @@
       const p = sel != null && S.people.get(sel);
       if (!p) { card.hidden = true; return; }
       const g = p.genome, mind = S.minds.get(p.id), age = P.ageOf(p, S.day);
-      const doing = !p.alive ? 'Đã mất (' + when(p.died) + ')' : mind ? (B.STATE_NAME[mind.mood || mind.state] || mind.state) + (mind.target != null && S.people.get(mind.target) ? ' với ' + P.fullName(S.people.get(mind.target)) : '') : '';
+      const doing = !p.alive ? 'Đã mất (' + when(p.died) + ')' : mind ? (B.STATE_NAME[mind.mood || mind.state] || mind.state) + (mind.place ? ' · ' + (PLACE_NAME[mind.place] || mind.place) : '') + (mind.target != null && S.people.get(mind.target) ? ' với ' + P.fullName(S.people.get(mind.target)) : '') : '';
       const bars = G.TRAITS.map((t) => { const v = g.traits[t.key], mut = g.mutations && g.mutations.some((m) => m.key === t.key); return '<div class="row"><span class="k">' + t.name + (mut ? ' ✦' : '') + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + Math.round(v * 100) + '</span></div>'; }).join('');
       const gait = G.GAIT.map((x) => { const v = g.gait[x.key]; return '<div class="row"><span class="k">' + x.name + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + (v < 0.4 ? x.low.split(',')[0] : v > 0.6 ? x.high.split(',')[0] : 'vừa') + '</span></div>'; }).join('');
       const kids = p.children.map(name).join(', ') || 'chưa có';
       const spouse = p.spouses.map(name).join(', ') || 'chưa có';
       card.hidden = false;
       card.innerHTML = '<button class="x" data-close="1" aria-label="Đóng">✕</button><h2>' + P.fullName(p) + '</h2>' +
-        '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
+        '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
         '<p><span class="k">Đang:</span> ' + doing + '</p>' +
         '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + '</p>' +
         '<div class="sec">Tính cách</div>' + bars +
@@ -90,7 +95,8 @@
     };
     panel.addEventListener('click', click); card.addEventListener('click', click);
     render(true);
-    return { render, select, get selected() { return sel; } };
+    const togglePanel = (on) => { panel.hidden = on == null ? !panel.hidden : !on; render(true); return !panel.hidden; };
+    return { render, select, togglePanel, get selected() { return sel; } };
   }
 
   return { create };

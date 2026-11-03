@@ -34,8 +34,8 @@
     // ưu tiên người trong hội đồng được ghép trước
     pairs.sort((x, y) => (+!!y[1].role + +!!y[2].role) - (+!!x[1].role + +!!x[2].role) || y[0] - x[0]);
     for (const [, a, b] of pairs) { if (taken.has(a.id) || taken.has(b.id)) continue; taken.add(a.id); taken.add(b.id); made.push([a, b]); }
-    // người trong hội đồng còn lẻ bóng: cưới người dân thường
-    for (const p of pool) if (!taken.has(p.id) && p.role) made.push(p.sex === 'm' ? [p, commonerFor(S, p, rng)] : [commonerFor(S, p, rng), p]);
+    // ai còn lẻ bóng (trong hội đồng trước, rồi tới mọi người có tên): cưới người dân thường, mang dòng máu mới vào làng
+    for (const p of pool) if (!taken.has(p.id)) made.push(p.sex === 'm' ? [p, commonerFor(S, p, rng)] : [commonerFor(S, p, rng), p]);
     return made;
   }
   function commonerFor(S, p, rng) {
@@ -54,8 +54,9 @@
   function haveChildren(S, a, b, rng, food) {
     const mom = a.sex === 'f' ? a : b, dad = a.sex === 'm' ? a : b;
     if (P.ageOf(mom, S.day) > R.FERTILE_MAX) return [];
-    const room = R.NAMED_CAP - living(S).length; if (room <= 0) return [];
-    const n = Math.min(room, Math.max(0, Math.min(R.CHILDREN[1], rng.int(R.CHILDREN[0], R.CHILDREN[1]) - (food < 0.5 ? 1 : 0)))); // đói thì ít con hơn
+    const pop = living(S).length, room = R.POP_CAP - pop; if (room <= 0) return [];
+    const C = pop > R.POP_CAP * 0.6 ? R.CHILDREN_FULL : R.CHILDREN; // làng gần đầy thì sinh vừa đủ thay thế
+    const n = Math.min(room, Math.max(0, rng.int(C[0], C[1]) - (food < 0.5 ? 1 : 0))); // đói thì ít con hơn
     const clan = dad.commoner ? mom.clan : dad.clan, out = [];
     for (let i = 0; i < n; i++) {
       const sex = rng.chance(0.5) ? 'm' : 'f', genome = G.cross(dad.genome, mom.genome, rng);

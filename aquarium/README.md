@@ -47,8 +47,24 @@ vát, chân sẫm dần lên mái), cỡ theo người cao 1,4, mỗi công trì
 | 11 | Bẻ Cong Không Gian | Cổng Trung Tâm (lòng cổng xoáy) | Nhà gấp khúc, cổng nhỏ, mảnh không gian trôi |
 | 12 | Siêu Việt | Cột Sáng | Nhà pha lê, đốm sáng trôi |
 
-Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Vàng. NPC theo thời (người đứng đầu, 2 tướng, lính, dân
-thường nam và nữ) là bước tiếp theo.
+Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Vàng.
+
+### Người và logic ngầm chạy theo thời gian thực
+- Logic của đảo (`logic/island.js`) chạy cùng đồng hồ của bể. 8 người lập làng (4 nam, 4 nữ), hội đồng 8 ghế; mỗi ngày
+  người già đi và có thể mất; cứ 1,5 năm một mốc thế hệ: ai đủ tuổi thì kết đôi (lẻ bóng thì cưới người dân thường), mỗi
+  cặp sinh 2 tới 4 con (làng gần đầy thì 2 tới 3). Tối đa 200 người một đảo. Hạn hán mùa hạ, tang, cãi nhau tự xảy ra.
+- Việc của dân (`logic/jobs.js`): 30% người lớn ngoài hội đồng làm lính (người máu chiến nhất), còn lại là nông dân;
+  người già, trẻ em. Lính đi tuần, nông dân ra ruộng, người già ngồi ở nhà hoặc sân làng.
+- Người vẽ theo nét đã chốt (`render/rig3d.js`), trang phục theo thời và theo nhóm (`render/outfits3d.js`: người đứng
+  đầu, tướng, lính, dân thường nam, dân thường nữ; nữ luôn có tóc dài và ngực). Nét mặt đổi theo việc, mắt tự chớp.
+  Người đi giữa các công trình thật của thời đang có (nhà chính, sân, ruộng, nhà ở, chỗ tuần tra). Không có tên trên đầu:
+  bấm vào một người để mở thẻ (tính cách, dáng, cha mẹ, vợ chồng, con, việc đang làm).
+- Nút **Làng** trên thanh dưới mở bảng theo dõi: cấp và năm, số người, đã sinh, đã mất, số lính, nông dân, người già,
+  hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh chiến tranh, cãi nhau, lễ hội, yên ổn, sang thế hệ mới).
+- Nút ⏭ tua nhanh tới đầu thời sau: logic chạy hết những ngày bị bỏ qua. Không có nút quay lại thời trước (logic không
+  chạy ngược). Mở với `?seed=7` để thử một làng khác.
+- Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 200 người vào năm 5 đến 6 rồi giữ quanh 180 đến 200; khoảng
+  250 đến 300 lượt sinh, 60 đến 125 lượt mất; hội đồng gần như luôn đủ ghế. Cả làng 200 người: khoảng 26 lượt vẽ.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -188,11 +204,11 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | File | Vai trò |
 |---|---|
 | `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình |
-| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp (game đang nạp `rules.js` và `eras.js`) |
-| `render/` | **Vẽ người** (chưa nạp vào game): `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) |
+| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` lính, nông dân, người già |
+| `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) |
 | `render/build/` | `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên). Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
-| `ui/` | **Bảng trên màn hình** (chưa nạp): `model-ui.js` thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng |
+| `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người và bảng làng (nút Làng); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
 | `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông, cây, đổi màu theo mùa, sáu cây cầu thô |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |

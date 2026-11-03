@@ -48,7 +48,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .pad button { width: 46px; height: 46px; border: 1px solid var(--glass-line); border-radius: 14px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--ink); font-size: 18px; touch-action: none; }
 .pad button.on { background: rgba(255, 255, 255, 0.22); }
 .err { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; }
-@media (max-width: 720px) { .brand h1 { font-size: 28px; } .lands { top: calc(env(safe-area-inset-top, 0px) + 64px); } .bar button { padding: 8px 10px; } .bar .era span { min-width: 0; font-size: 11.5px; } .note { display: none; } }
+@media (max-width: 720px) { .brand h1 { font-size: 28px; } .lands { top: calc(env(safe-area-inset-top, 0px) + 64px); } .bar { gap: 0; } .bar button { padding: 8px 7px; } .bar .sep { margin: 6px 1px; } .bar .era span { min-width: 0; font-size: 11.5px; } .note { display: none; } }
 </style>
 <canvas id="scene" tabindex="0" aria-label="Bể kính với sáu hòn đảo"></canvas>
 <header class="brand"><h1>Bể Kính</h1></header>
@@ -57,7 +57,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="speed" title="Đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
   <span class="sep"></span>
-  <div class="era" role="group" aria-label="Thời kỳ"><button id="eraPrev" aria-label="Về thời trước">‹</button><span id="eraName">Cấp 1/12 · Thời đồ đá</span><button id="eraNext" aria-label="Sang thời sau">›</button></div>
+  <div class="era" role="group" aria-label="Thời kỳ"><span id="eraName">Cấp 1/12 · Thời đồ đá</span><button id="eraNext" title="Tua nhanh tới thời sau (logic chạy theo)" aria-label="Tua tới thời sau">⏭</button></div>
+  <span class="sep"></span>
+  <button id="villageBtn" aria-pressed="false" title="Bảng làng: dân số, hội đồng, nhật ký, thử tình huống">Làng</button>
   <span class="sep"></span>
   <button id="sound" aria-pressed="false">Âm thanh</button>
   <button id="flyBtn" aria-pressed="false" title="Nút bay trên màn hình (phím mũi tên, W A S D, Q E)">Bay</button>
@@ -75,8 +77,23 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="sea3d.js"></script>
 <script src="clouds3d.js"></script>
 <!-- công trình: bộ dựng hình chung, kiểu nhà từng đảo theo cấp, rồi phần đặt công trình lên đảo -->
+<!-- logic ngầm của đảo: không vẽ gì, chạy được bằng Node (test/) -->
+<script src="logic/rng.js"></script>
 <script src="logic/rules.js"></script>
+<script src="logic/genes.js"></script>
+<script src="logic/people.js"></script>
+<script src="logic/family.js"></script>
+<script src="logic/council.js"></script>
+<script src="logic/jobs.js"></script>
 <script src="logic/eras.js"></script>
+<script src="logic/brain.js"></script>
+<script src="logic/island.js"></script>
+<!-- người: trang phục theo thời, khung khớp, cử động, làng -->
+<script src="render/outfits3d.js"></script>
+<script src="render/rig3d.js"></script>
+<script src="render/anim3d.js"></script>
+<script src="render/village3d.js"></script>
+<script src="ui/village-ui.js"></script>
 <script src="render/build/kit3d.js"></script>
 <!-- Lúa Vàng: phần chung rồi mỗi thời một tệp (cấp 1 Thời đồ đá … cấp 12 Siêu Việt) -->
 <script src="render/build/plains/common.js"></script>
@@ -262,20 +279,37 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (force || key !== seasonKey) { seasonKey = key; lands3d.seasons(w, 0); }
   }
 
-  /* =============== Chín năm, mười hai thời kỳ (logic/eras.js); công trình theo thời (render/buildings3d.js) =============== */
-  // Lúa Vàng làm trước; năm đảo còn lại để trống tới khi chốt Lúa Vàng
-  const Eras = BK.Eras, buildings = BK.Buildings3D.create({ THREE, lands3d });
-  { const q = +new URLSearchParams(location.search).get('cap'); if (q >= 1 && q <= Eras.COUNT) W.day = Eras.startOf(q); }
-  let level = Eras.levelOfDay(W.day);
+  /* =============== Chín năm, mười hai thời kỳ (logic/eras.js); logic ngầm của Lúa Vàng (logic/island.js) =============== */
+  // Đảo chạy theo thời gian thực: mỗi ngày trong game, người già đi, kết đôi, sinh con, mất; 1,5 năm một thế hệ;
+  // thời kỳ lên theo lịch. Công trình (render/buildings3d.js) và trang phục (render/outfits3d.js) đổi theo thời.
+  // Năm đảo còn lại để trống tới khi chốt Lúa Vàng.
+  const Eras = BK.Eras, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
+  const isle = Island.create({ key: 'plains', seed: +new URLSearchParams(location.search).get('seed') || 42 });
+  { const q = +new URLSearchParams(location.search).get('cap'); if (q > 1 && q <= Eras.COUNT) { W.day = Eras.startOf(q) + 0.01; Island.step(isle, W.day); } }
+  let level = isle.level;
   buildings.show(0, level, false);
-  function eraLabel() { const E = Eras.of(level); return 'Cấp ' + level + '/' + Eras.COUNT + ' · ' + E.name + (W.day >= Eras.MATCH_DAYS ? ' · hết 9 năm' : ''); }
-  function syncEra(animate) { const l = Eras.levelOfDay(W.day); if (l !== level) { level = l; buildings.show(0, level, animate); } $('eraName').textContent = eraLabel(); }
-  // xem nhanh từng thời: nhảy tới đầu thời trước hoặc thời sau (thời gian vẫn chạy, không tạm dừng)
-  const jumpEra = (d) => { const l = Math.max(1, Math.min(Eras.COUNT, level + d)); if (l === level) return; W.day = Eras.startOf(l) + 0.01; updateSeasons(true); syncEra(true); };
-  $('eraPrev').onclick = () => jumpEra(-1); $('eraNext').onclick = () => jumpEra(1);
+  const village = BK.Village3D.create({ THREE, scene, L: lands[0], S: isle, level, places: buildings.places(0) });
+  const villageUi = BK.VillageUI.create({ S: isle, Island, panel: false, onFly: () => flyTo(lands[0].center, 34, lands[0].inw.clone().setY(0.55), 1.5) });
+  function eraLabel() { return 'Cấp ' + level + '/' + Eras.COUNT + ' · ' + Eras.of(level).name + (W.day >= Eras.MATCH_DAYS ? ' · hết 9 năm' : ''); }
+  function syncEra(animate) {
+    if (isle.level !== level) { level = isle.level; buildings.show(0, level, animate); village.setLevel(level); village.setPlaces(buildings.places(0)); }
+    $('eraName').textContent = eraLabel();
+  }
+  // tua nhanh tới đầu thời sau: logic chạy hết những ngày bị bỏ qua (người vẫn già đi, sinh con, mất)
+  const jumpEra = () => { if (level >= Eras.COUNT) return; const to = Eras.startOf(level + 1) + 0.01, d = to - W.day; if (d <= 0) return; W.day = to; Island.step(isle, d); updateSeasons(true); syncEra(true); villageUi.render(true); };
+  $('eraNext').onclick = jumpEra;
+  $('villageBtn').onclick = () => { const on = villageUi.togglePanel(); $('villageBtn').setAttribute('aria-pressed', String(on)); };
   $('eraName').textContent = eraLabel();
   // mở game là nhìn vào làng Lúa Vàng (cuộn ra để thấy cả bể)
   { const L = lands[0]; controls.target.copy(L.center).setY(1.5); camera.position.copy(L.center).addScaledVector(L.inw, 26).add(new THREE.Vector3(6, 17, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
+  // bấm vào một người (chạm nhẹ, không kéo) để mở thẻ nhỏ; bấm chỗ khác để đóng
+  { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+    canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+    canvas.addEventListener('pointerup', (e) => {
+      if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+      ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+      const id = village.pick(ray); village.select(id); villageUi.select(id);
+    }); }
 
   /* =============== Thanh sáu vùng đất =============== */
   const TER_DOT = { plains: '#86bb63', forest: '#3f7a4c', mountain: '#a39d90', tundra: '#e4edf2', coast: '#4aa3c7', desert: '#e3c58e' };
@@ -435,17 +469,18 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     const dt = Math.max(0, Math.min(100, t - last)); last = t; // khung hình đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
     governQuality(dt);
     tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút
-    W.day += (dt * tps) / 1000;
+    const dDays = (dt * tps) / 1000; W.day += dDays; Island.step(isle, dDays);
     const { night } = applyTime();
     const doy = ((W.day % 360) + 360) % 360, winter = doy >= 270 ? clamp((doy - 270) / 10, 0, 1) * clamp((360 - doy) / 10, 0, 1) : 0;
     if (t - lastSlow > 1000) {
       lastSlow = t; updateSeasons(false);
       const dt2 = dateText(); if (dt2 !== lastDate) { lastDate = dt2; $('date').textContent = dt2; }
-      syncEra(true);
+      syncEra(true); villageUi.render();
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
     lands3d.animate(dt, t, night, tod, null, null);
     buildings.animate(dt, t, night);
+    village.update(dt, t);
     sea3d.animate(dt, t, night);
     clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
     updateSnow(dt, t, winter);
@@ -472,7 +507,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   // móc cho các bài kiểm tra chạy trình duyệt không giao diện
   window.__glass = {
     THREE, W, scene, camera, controls, renderer, lands3d, clouds3d, sea3d,
-    buildings, jumpEra, level: () => level,
+    buildings, jumpEra, level: () => level, isle, village, villageUi,
     ff: (days) => { W.day += days; updateSeasons(true); },
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, perf: PERF,
   };

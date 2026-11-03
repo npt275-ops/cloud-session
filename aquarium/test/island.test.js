@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -26,7 +26,7 @@ test('chín năm: đủ 6 thế hệ, có người mất và người sinh ra, h
   assert.ok(births >= 20, 'quá ít trẻ sinh ra: ' + births);
   assert.ok(deaths >= 8, 'tám người đầu tiên phải mất dần trong chín năm: ' + deaths);
   assert.ok(minSeats >= 6, 'hội đồng thiếu người: ' + minSeats);
-  assert.ok(Island.living(S).length <= Rules.NAMED_CAP, 'vượt giới hạn người có tên');
+  assert.ok(Island.living(S).length <= Rules.POP_CAP, "vượt giới hạn dân số của đảo");
   const firsts = [...S.people.values()].filter((p) => p.gen === 0);
   assert.ok(firsts.every((p) => !p.alive), 'người đầu tiên vẫn còn sống sau 150 năm đời người');
   assert.ok(Math.max(...[...S.people.values()].map((p) => p.gen)) >= 4, 'dòng dõi phải kéo dài qua nhiều đời');
@@ -87,4 +87,17 @@ test('hạn hán mùa hạ có thể xảy ra và làm thiếu lương thực, �
   let droughts = 0;
   for (const seed of [1, 2, 3, 4, 5, 6]) droughts += runMatch(seed).log.filter((e) => e.kind === 'drought').length;
   assert.ok(droughts >= 3, 'sáu trận, chín năm mỗi trận, phải có vài đợt hạn: ' + droughts);
+});
+
+test('chín năm: lên đủ 12 thời kỳ, có lính và nông dân, ghi sinh và mất', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 9 });
+  const eraLog = [];
+  for (let d = 0; d < 9 * 360; d++) { BK.Island.step(S, 1); }
+  for (const e of S.log) if (e.kind === 'era') eraLog.push(e.text);
+  assert.strictEqual(S.level, 12);
+  assert.ok(S.log.some((e) => e.kind === 'era' && /Siêu Việt/.test(e.text)), 'có dòng nhật ký lên Siêu Việt');
+  const live = BK.Island.living(S);
+  assert.ok(BK.Jobs.count(S, 'soldier') >= 1 && BK.Jobs.count(S, 'farmer') >= 1, 'có lính và nông dân');
+  assert.ok(S.births > 8 && S.deaths > 0, 'có sinh và mất: ' + S.births + '/' + S.deaths);
+  assert.ok(live.length > 8 && live.length <= BK.Rules.POP_CAP);
 });

@@ -50,8 +50,48 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/brain.js",
+  "src": "logic/brain.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/council.js",
+  "src": "logic/council.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/eras.js",
   "src": "logic/eras.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/family.js",
+  "src": "logic/family.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/genes.js",
+  "src": "logic/genes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/island.js",
+  "src": "logic/island.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/jobs.js",
+  "src": "logic/jobs.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/people.js",
+  "src": "logic/people.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/rng.js",
+  "src": "logic/rng.js",
   "mode": 420
  },
  {
@@ -62,6 +102,11 @@
  {
   "path": "BeKinh/manifest.webmanifest",
   "src": "manifest.webmanifest",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/anim3d.js",
+  "src": "render/anim3d.js",
   "mode": 420
  },
  {
@@ -140,8 +185,28 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/outfits3d.js",
+  "src": "render/outfits3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/rig3d.js",
+  "src": "render/rig3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/village3d.js",
+  "src": "render/village3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/sea3d.js",
   "src": "sea3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/village-ui.js",
+  "src": "ui/village-ui.js",
   "mode": 420
  },
  {
