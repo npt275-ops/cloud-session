@@ -13,7 +13,7 @@
   function create(o) {
     const { THREE, scene, L, S, clearTrees } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People;
     const CAP = 64; // số người tối đa vẽ được (logic giới hạn 40 người có tên)
-    const SCALE = 1.45; // cỡ người so với nhà và đảo
+    const SCALE = BK.Rig3D.PERSON_SCALE; // cỡ người so với nhà và đảo (render/rig3d.js)
 
     /* ---------- Những chỗ trong làng (toạ độ trên đảo) ---------- */
     const at = (a, r) => new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-6cea382">
+<meta name="bekinh-version" content="2026.11.03-8f134e7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -149,13 +149,13 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 4200);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.12, 4200);
   const OVERVIEW = 525;
   camera.position.set(0, 318, 414);
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.target.set(0, 0, 0);
   controls.enableDamping = true; controls.dampingFactor = 0.07;
-  controls.minDistance = 14; controls.maxDistance = 820; controls.maxPolarAngle = Math.PI * 0.49;
+  controls.minDistance = 1.6; controls.maxDistance = 820; controls.maxPolarAngle = Math.PI * 0.49;
   controls.autoRotate = false; // camera chỉ đi theo tay người chơi
   controls.enablePan = true; controls.screenSpacePanning = true;
   function resize() {
@@ -291,10 +291,10 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const modelPerson = isle.people.get(isle.seats.king);
   const model = BK.Model3D.create({ THREE, scene, L: lands[0], person: modelPerson, clearTrees: K3.clearTrees });
   const modelUi = BK.ModelUI.create({ model });
-  const lookAtModel = () => { const sp = model.worldPos(); flyTo(sp, 13, lands[0].inw.clone().setY(0.35), 1.8); };
+  const lookAtModel = () => { const sp = model.worldPos(); flyTo(sp, 4.2, lands[0].inw.clone().setY(0.3), 0.45); };
   $('toModel').onclick = lookAtModel;
   // mở game là nhìn vào sân diễn trước nhà chính (cuộn ra để thấy cả bể)
-  { const sp = model.worldPos(); controls.target.copy(sp).setY(1.8); camera.position.copy(sp).addScaledVector(lands[0].inw, 11).add(new THREE.Vector3(3, 5, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
+  { const sp = model.worldPos(); controls.target.copy(sp).setY(0.45); camera.position.copy(sp).addScaledVector(lands[0].inw, 5.5).add(new THREE.Vector3(1.5, 2.2, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
   // bấm vào NPC (chạm nhẹ, không kéo) để mở thẻ nhỏ; bấm chỗ khác để đóng
   { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
     canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
@@ -343,7 +343,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (FLY.v.lengthSq() < 4e-6) { FLY.v.set(0, 0, 0); FLY.on = false; return false; }
     if (!FLY.on) { FLY.on = true; focusTween = null; stopOrbit(); if (story) story.userMoved(); }
     const off = _fo.copy(camera.position).sub(controls.target), dist = off.length();
-    const sp = clamp(dist * 0.85, 10, 230) * dt / 1000;
+    const sp = clamp(dist * 0.85, 1.5, 230) * dt / 1000; // gần người thì bay chậm
     _ff.copy(off).setY(0); if (_ff.lengthSq() < 1e-6) _ff.set(0, 0, -1); else _ff.normalize().negate();
     _frt.set(-_ff.z, 0, _ff.x);
     const mx = _ff.x * FLY.v.z * sp + _frt.x * FLY.v.x * sp, mz = _ff.z * FLY.v.z * sp + _frt.z * FLY.v.x * sp;
@@ -441,7 +441,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (!renderer.shadowMap.enabled) return;
     const moved = controls.target.distanceToSquared(PERF.lastT) > 0.0004;
     if (moved) PERF.lastT.copy(controls.target);
-    const half = clamp(camera.position.distanceTo(controls.target) * 0.62, 26, 80);
+    const half = clamp(camera.position.distanceTo(controls.target) * 0.62, 10, 80); // nhìn gần thì bóng sắc hơn
     if (Math.abs(half - PERF.half) > 3) { PERF.half = half; const sc = sun.shadow.camera; sc.left = -half; sc.right = half; sc.top = half; sc.bottom = -half; sc.updateProjectionMatrix(); PERF.force = true; }
     renderer.shadowMap.needsUpdate = PERF.force || moved || PERF.frame % PERF.shadowEvery === 0;
     PERF.force = false;

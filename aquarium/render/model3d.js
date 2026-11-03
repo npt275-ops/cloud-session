@@ -12,10 +12,10 @@
 
   function create(o) {
     const { THREE, scene, L, person, clearTrees } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Gs = BK.Gestures3D, Brain = BK.Brain;
-    const SCALE = 2.2, LOOP_SEC = 5, HOLD_SEC = 0.9; // to hơn người trong làng để dễ xem cử chỉ
-    // sân diễn: khoảng trống phía biển trong, trước dãy công trình (nhà chính, kho bạc, đèn đường nằm trong bán kính 11)
-    const ia = Math.atan2(L.inw.z, L.inw.x), stage = new THREE.Vector3(Math.cos(ia) * 18, 0, Math.sin(ia) * 18), R = 3.2;
-    if (clearTrees) clearTrees(L, stage.x, stage.z, R + 2);
+    const SCALE = Rig.PERSON_SCALE, LOOP_SEC = 5, HOLD_SEC = 0.9; // cùng cỡ với người trong làng, cân với nhà (render/rig3d.js)
+    // sân diễn: bãi trống trước kho bạc, phía biển trong (render/buildings3d.js: SMALL), nhìn vào thấy người đứng trước nhà để so cỡ
+    const ia = Math.atan2(L.inw.z, L.inw.x), stage = new THREE.Vector3(Math.cos(ia) * 14, 0, Math.sin(ia) * 14), R = 1.2;
+    if (clearTrees) clearTrees(L, stage.x, stage.z, R + 1.5);
 
     /* ---------- Khung và bộ phận: một người nên mỗi bộ phận là một khối riêng ---------- */
     const rig = Rig.build(Object.assign({}, person, { role: null }), 0), shapes = Rig.shapes();
@@ -24,7 +24,7 @@
     const props = Rig.buildProps(rig.nodes);
     scene.add(rig.root); rig.root.rotation.order = 'YXZ';
     // vòng sáng dưới chân: nhìn từ xa vẫn thấy NPC mẫu đứng ở đâu
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.25, 40), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.56, 40), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.renderOrder = 3; scene.add(ring);
     const K = Object.assign(Brain.knobs(person.genome, 0.3), { seed: person.id * 1.7 });
     const face = BK.Face3D.create({ THREE, head: rig.nodes.head });
@@ -54,12 +54,12 @@
       const u = G.loop ? (el % LOOP_SEC) / LOOP_SEC : Math.min(1, el / G.dur);
       // đi vòng quanh sân khi cử chỉ có di chuyển (lùi lại thì đi giật lùi)
       if (G.move) {
-        const v = G.move * K.tempo * 0.9 * (0.8 + 0.4 * K.stride);
+        const v = G.move * K.tempo * 0.9 * (0.8 + 0.4 * K.stride) * SCALE; // bước dài theo cỡ người
         ang += (v * sec) / R; pos.set(stage.x + Math.cos(ang) * R, 0, stage.z + Math.sin(ang) * R);
         const fwd = Math.atan2(-Math.sin(ang), Math.cos(ang)) ; // hướng tiếp tuyến của vòng tròn
         const want = v >= 0 ? fwd : fwd + Math.PI;
         let d = want - yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; yaw += d * Math.min(1, sec * 6);
-        ph += (Math.abs(v) * sec) / (0.55 + 0.3 * K.stride) * Math.PI;
+        ph += (Math.abs(v) * sec) / ((0.55 + 0.3 * K.stride) * SCALE) * Math.PI;
       } else {
         ph += sec * 3 * K.tempo;
         // đứng yên thì quay mặt ra phía camera nhìn vào (phía biển trong)
