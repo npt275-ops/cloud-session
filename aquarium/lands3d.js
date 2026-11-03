@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
   // đảo rộng hơn để có chỗ cho bãi săn và bãi tập kết quân; SC đổi các khoảng cách cũ (đảo bán kính 30) sang đảo mới
-  const LAND_R = 50, RING = 132, SC = LAND_R / 30;
+  const LAND_R = 62, RING = 154, SC = LAND_R / 30; // đảo to hơn nữa (bán kính 50 → 62); vòng đảo nới ra để giữ khe biển giữa các đảo
 
   function create(K) {
     const { THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable } = K;
@@ -940,7 +940,9 @@
         const me = new THREE.Mesh(geo, m); me.rotation.x = -Math.PI / 2; me.rotation.z = ry || 0; me.position.set(x, y || 0.06, z); me.receiveShadow = true; L.g.add(me); L.waterMats.push(m); return me;
       };
       const flat = (geo, x, z, y, col, rough) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: rough == null ? 0.95 : rough, flatShading: true })); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
-      const fall = (a, wid, col) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.6, 24, wid), new THREE.MeshStandardMaterial({ color: col || '#8fd3ee', transparent: true, opacity: 0.72, emissive: '#2a6f8f', emissiveIntensity: 0.3 })); const r = L.rOf(a) + 0.2; f.position.set(Math.cos(a) * r, -12, Math.sin(a) * r); f.rotation.y = -a; L.g.add(f); };
+      // hồ: mặt nước theo một đường viền riêng r(góc), mỗi miền một dáng
+      const lakeGeo = (R, rf, n) => { const sh = new THREE.Shape(); for (let i = 0; i <= (n || 48); i++) { const t = (i / (n || 48)) * TAU, r = R * rf(t); if (i === 0) sh.moveTo(Math.cos(t) * r, Math.sin(t) * r); else sh.lineTo(Math.cos(t) * r, Math.sin(t) * r); } return new THREE.ShapeGeometry(sh); };
+      const setLake = (x, z, R) => { L.lake = [x, z]; L.lakeR = R; prop(x, z, R + 0.4); };
       const k = new Kit(), rng = landRng(L.i), oa = L.oa;
       const at = (deg, r) => { const a = oa + (deg * Math.PI) / 180; return [Math.cos(a) * r, Math.sin(a) * r]; };
       const edge = (deg, m) => L.rOf(oa + (deg * Math.PI) / 180) - (m || 0);
@@ -972,7 +974,13 @@
         for (let s = 0; s <= 40; s++) { const u = s / 40, d = -36 + u * 72, r = 24 + 5 * Math.sin(u * Math.PI * 2.5) + u * 10; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
         ribbon(pts, 6.2, 0.03, new THREE.MeshStandardMaterial({ color: '#c9b48a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
         ribbon(pts, 4.0, 0.08, waterMat());
-        L.river = pts; fall(oa + (36 * Math.PI) / 180, 4);
+        L.river = pts;
+        // hồ sen cuối sông: dáng quả thận, lá sen xanh và hoa hồng
+        { const [ex, ez] = pts[pts.length - 1], [bx, bz] = at(30, 27), x = (ex + bx) / 2, z = (ez + bz) / 2, R = 6.2;
+          flat(lakeGeo(R + 1.2, (t) => 1 + 0.24 * Math.sin(2 * t) + 0.1 * Math.sin(3 * t + 1)), x, z, 0.03, '#c9b48a');
+          water(lakeGeo(R, (t) => 1 + 0.24 * Math.sin(2 * t) + 0.1 * Math.sin(3 * t + 1)), x, z, 0, 0.08, '#4aa3c7');
+          for (let i = 0; i < 22; i++) { const a = rng() * TAU, r = Math.sqrt(rng()) * R * 0.78; k.cyl('#5d9e4a', x + Math.cos(a) * r, 0.1, z + Math.sin(a) * r, 0.55 + rng() * 0.35, 0.03, 8); if (rng() < 0.4) k.add(ICO(), pick(['#f28ab2', '#f7b6cf', '#ffffff'], rng()), x + Math.cos(a) * r, 0.22, z + Math.sin(a) * r, 0.22, 0.22, 0.22); }
+          setLake(x, z, R * 1.15); }
         for (let i = 0; i < 26; i++) { const [x, z] = at((rng() - 0.5) * 70, 25 + rng() * 8); if (L.inside(x, z, 1)) k.cone(pick(['#b7c46a', '#a7b85e', '#c9cf74'], rng()), x, 0, z, 0.35, 0.7 + rng() * 0.6, 5); }
       }
       if (L.ter === 'forest') {
@@ -988,7 +996,15 @@
         for (let s = 0; s <= 30; s++) { const u = s / 30, d = 40 + u * 40, r = 18 + u * 18 + Math.sin(u * 9) * 1.2; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
         ribbon(pts, 3.2, 0.03, new THREE.MeshStandardMaterial({ color: '#6b5a3a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
         ribbon(pts, 2.0, 0.08, waterMat('#3f9cc6'));
-        L.river = pts; fall(oa + (80 * Math.PI) / 180, 2.6);
+        L.river = pts;
+        // hồ rừng cuối suối: bờ lượn nhiều khúc, lau sậy, lá súng và cầu gỗ nhỏ
+        { const [ex, ez] = pts[pts.length - 1], [bx, bz] = at(70, 26), x = (ex + bx) / 2, z = (ez + bz) / 2, R = 6.6, rf = (t) => 1 + 0.16 * Math.sin(3 * t) + 0.1 * Math.cos(5 * t + 0.6);
+          flat(lakeGeo(R + 1, rf), x, z, 0.03, '#6b5a3a');
+          water(lakeGeo(R, rf), x, z, 0, 0.08, '#2f7f9a');
+          for (let i = 0; i < 30; i++) { const t = rng() * TAU, r = R * rf(t) * (0.9 + rng() * 0.2); k.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), x + Math.cos(t) * r, 0, z + Math.sin(t) * r, 0.07, 1.1 + rng() * 0.9, 0.07, (rng() - 0.5) * 0.3, 0, (rng() - 0.5) * 0.3); }
+          for (let i = 0; i < 9; i++) { const a = rng() * TAU, r = Math.sqrt(rng()) * R * 0.7; k.cyl('#4f8a3f', x + Math.cos(a) * r, 0.1, z + Math.sin(a) * r, 0.4 + rng() * 0.3, 0.03, 7); }
+          { const t = 0.4, r = R * rf(t); k.box('#8a6a46', x + Math.cos(t) * (r - 1.4), 0.25, z + Math.sin(t) * (r - 1.4), 3.2, 0.12, 0.9, -t); }
+          setLake(x, z, R * 1.2); }
         for (let i = 0; i < 40; i++) { const [x, z] = at((rng() - 0.5) * 200, 12 + rng() * 26); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 0.5)) k.cone(pick(['#4f8f45', '#5f9f4a', '#3f7a4c'], rng()), x, 0, z, 0.45, 0.6, 5); }
       }
       if (L.ter === 'mountain') {
@@ -1000,12 +1016,25 @@
           prop(x, z, rad * 0.9);
         }
         { const [x, z] = at(-28, 24); k.tcyl('#8f8a7c', x, 0, z, 6.2, 5.8, 4.2, 9); k.cyl('#8fa274', x, 4.2, z, 5.8, 0.12, 9); for (let s = 0; s < 6; s++) k.box('#a39b8e', x + 5.6 + s * 0.05, s * 0.7, z - 2 + s * 0.65, 1.6, 0.7, 1.2, -(oa - 0.49)); prop(x, z, 6.4); L.plateau = [x, z, 4.3]; }
-        water(new THREE.CircleGeometry(4.6, 20), ...at(30, 22), 0, 0.07, '#7fb9cf'); L.lake = at(30, 22); prop(...L.lake, 4.8);
+        // hồ núi hình giọt nước, xanh thẫm, viền đá cuội và một hòn đảo đá nhỏ giữa hồ
+        { const [x, z] = at(30, 22), R = 5.6, rf = (t) => 0.72 + 0.36 * Math.cos(t) * Math.abs(Math.cos(t * 0.5)) + 0.06 * Math.sin(4 * t);
+          const ry = -(oa + 0.6); // mũi giọt nước chĩa về phía trong đảo
+          flat(lakeGeo(R + 0.9, rf), x, z, 0.03, '#9d9589').rotation.z = ry;
+          water(lakeGeo(R, rf), x, z, ry, 0.08, '#2c6f9a');
+          for (let i = 0; i < 18; i++) { const t = (i / 18) * TAU, r = R * rf(t) + 0.5; k.blob(DOD(), pick(['#8b8577', '#7c776b', '#a39b8e'], rng()), x + Math.cos(t + ry) * r, 0.15, z - Math.sin(t + ry) * r, 0.35 + rng() * 0.35, 0.6); }
+          k.blob(DOD(), '#7f7a6e', x, 0.1, z, 0.9, 0.8); k.cone('#3f7a4c', x + 0.2, 0.6, z, 0.4, 1.2, 6);
+          setLake(x, z, R * 1.1); }
         for (let b = 0; b < 26; b++) { const [x, z] = at((rng() - 0.5) * 190, 20 + rng() * 14); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 0.5)) k.blob(DOD(), pick(['#8b8577', '#7c776b', '#9d9589'], rng()), x, 0.2, z, 0.4 + rng() * 0.9, 0.7); }
       }
       if (L.ter === 'tundra') {
         // băng nguyên: hồ đóng băng, sống băng, vách sông băng, khe nứt, mảng băng trôi tách khỏi đảo
-        water(new THREE.CircleGeometry(6.2, 24), ...at(-22, 23), 0, 0.06, '#cfeaf5'); L.lake = at(-22, 23); prop(...L.lake, 6.4);
+        // hồ băng sáu cạnh: mặt băng nứt, một lỗ câu cá và lều câu bằng băng
+        { const [x, z] = at(-22, 23), R = 7.4, rf = (t) => { const s6 = Math.PI / 3, u = ((t % s6) + s6) % s6 - s6 / 2; return (Math.cos(s6 / 2) / Math.cos(u)) * (1 + 0.05 * Math.sin(7 * t)); };
+          flat(lakeGeo(R + 0.8, rf, 72), x, z, 0.03, '#eef6fa').rotation.z = 0.3;
+          water(lakeGeo(R, rf, 72), x, z, 0.3, 0.06, '#cfeaf5');
+          for (let i = 0; i < 6; i++) { const a = rng() * TAU, l = 2 + rng() * 3.5; k.box('#9cc7dc', x + Math.cos(a) * l * 0.5, 0.075, z + Math.sin(a) * l * 0.5, l, 0.01, 0.08, -a); }
+          k.cyl('#1d4a63', x + 2, 0.08, z - 1.2, 0.7, 0.01, 12); k.add(SPHG(), '#e9f3f8', x + 3.6, 0.06, z - 0.2, 1.1, 1.0, 1.1);
+          setLake(x, z, R * 1.05); }
         { const [x, z] = at(8, Math.min(edge(8, 4), 32)); for (let i = 0; i < 9; i++) k.add(OCT(), pick(['#cfeaf5', '#e6f6fb', '#b9e0ef'], rng()), x + (i - 4) * 1.8, 0, z + (rng() - 0.5) * 2, 1.6 + rng(), 4 + rng() * 5, 1.4, -(oa + 0.14) + rng() * 0.4); prop(x, z, 8); }
         for (let i = 0; i < 16; i++) { const d = (rng() - 0.5) * 180, [x, z] = at(d, 18 + rng() * 14); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 1)) { k.blob(OCT(), pick(['#bfe3f2', '#d6eef7', '#a9d6ea'], rng()), x, 0.3, z, 0.7 + rng() * 1.1, 1.6); } }
         for (let i = 0; i < 10; i++) { const d = (rng() - 0.5) * 220, r0 = 14 + rng() * 8, [x0, z0] = at(d, r0), [x1, z1] = at(d + (rng() - 0.5) * 20, Math.min(edge(d, 0.5), r0 + 8 + rng() * 8)); const len = Math.hypot(x1 - x0, z1 - z0); k.box('#7fa7c0', (x0 + x1) / 2, 0.015, (z0 + z1) / 2, 0.18, 0.03, len, Math.atan2(x1 - x0, z1 - z0)); }
@@ -1018,8 +1047,10 @@
       if (L.ter === 'coast') {
         // biển: đầm phá xanh ngọc khoét vào nửa ngoài, đảo nhỏ có dừa, san hô dưới nước, bãi cát dài
         const lagoon = at(0, 26), LR = 9.5;
-        flat(new THREE.CircleGeometry(LR + 2.6, 40), lagoon[0], lagoon[1], 0.03, '#ecd9a8');
-        const lw = water(new THREE.CircleGeometry(LR, 40), lagoon[0], lagoon[1], 0, 0.1, '#3fc0c8', 0.78);
+        // đầm phá hình bông hoa năm cánh, bãi cát bao quanh
+        const lagoonF = (t) => 1 + 0.2 * Math.cos(5 * t) + 0.05 * Math.sin(9 * t);
+        flat(lakeGeo(LR + 2.6, lagoonF, 80), lagoon[0], lagoon[1], 0.03, '#ecd9a8');
+        const lw = water(lakeGeo(LR, lagoonF, 80), lagoon[0], lagoon[1], 0, 0.1, '#3fc0c8', 0.78);
         lw.renderOrder = 2;
         for (let i = 0; i < 26; i++) { const a = rng() * TAU, r = rng() * (LR - 1.2); k.blob(ICO(), pick(['#ff8f7a', '#ffb36b', '#e97ab0', '#7fd1c6', '#f4e3a1', '#c46a9a'], rng()), lagoon[0] + Math.cos(a) * r, 0.02, lagoon[1] + Math.sin(a) * r, 0.25 + rng() * 0.35, 0.6); }
         for (const [dx, dz, R] of [[-3.2, 2.2, 1.6], [3.6, -1.2, 1.3], [0.6, -4.4, 1.1]]) { k.add(SPHG(), '#ecd9a8', lagoon[0] + dx, 0, lagoon[1] + dz, R, 0.35, R); k.add(UCYL(5), '#8a6a46', lagoon[0] + dx, 0.2, lagoon[1] + dz, 0.12, 2.4, 0.12, 0, 0.18, 0.1); k.blob(ICO(), '#5f9f4a', lagoon[0] + dx + 0.4, 2.6, lagoon[1] + dz + 0.2, 1.1, 0.3); }
@@ -1028,7 +1059,6 @@
         ribbon(sandPts, 4.6, 0.025, new THREE.MeshStandardMaterial({ color: '#ecd9a8', roughness: 0.95, flatShading: true, side: THREE.DoubleSide }));
         for (let b = 0; b < 4; b++) { const [x, z] = at(-80 + b * 52, edge(-80 + b * 52, 3)); k.box('#8f6a46', x, 0.05, z, 1.6, 0.35, 0.7, rng() * 3); k.cyl('#6d5139', x, 0.3, z, 0.04, 1.6, 4); }
         for (let r2 = 0; r2 < 12; r2++) { const d = -110 + rng() * 220, [x, z] = at(d, edge(d, 0.8)); k.blob(DOD(), '#7d7a74', x, 0.2, z, 0.6 + rng() * 0.8, 0.7); }
-        fall(oa, 5, '#7fd8e6');
       }
       if (L.ter === 'desert') {
         // sa mạc: đồi cát gợn sóng, mỏm đá đỏ đầu bằng, hẻm núi, ốc đảo
@@ -1040,7 +1070,12 @@
         }
         for (let m = 0; m < 4; m++) { const deg = -70 + m * 46 + rng() * 10, [x, z] = at(deg, Math.min(edge(deg, 4), 31 + rng() * 3)), R = 3.2 + rng() * 1.8, h = 6 + rng() * 6; for (let j = 0; j < 4; j++) k.tcyl(pick(['#c98a5a', '#a8603e', '#b87b4f', '#d99a62'], j * 0.27 + m * 0.1), x, (h / 4) * j, z, R * (1 - j * 0.04), R * (1 - (j + 1) * 0.04), h / 4, 8); prop(x, z, R); }
         { const pts = []; for (let s = 0; s <= 24; s++) { const u = s / 24, d = -10 + u * 34, r = 20 + u * 18; pts.push(at(d, Math.min(edge(d, 0.4), r))); } ribbon(pts, 3.4, 0.02, new THREE.MeshStandardMaterial({ color: '#7a3f2a', roughness: 1, flatShading: true, side: THREE.DoubleSide })); ribbon(pts, 1.4, 0.035, new THREE.MeshStandardMaterial({ color: '#4a2a1e', roughness: 1, flatShading: true, side: THREE.DoubleSide })); L.canyon = pts; }
-        water(new THREE.CircleGeometry(3.4, 16), ...at(62, 20), 0, 0.07, '#3fb0b8'); L.oasis = at(62, 20); prop(...L.oasis, 3.6);
+        // ốc đảo hình trăng khuyết, bờ cát sẫm và hàng cỏ lác
+        { const [x, z] = at(62, 20), R = 5.2, rot = -(oa + (62 * Math.PI) / 180);
+          const cres = (rr) => { const sh = new THREE.Shape(); for (let i = 0; i <= 40; i++) { const t = -2.4 + (i / 40) * 4.8; const px = Math.cos(t) * rr, py = Math.sin(t) * rr; if (i === 0) sh.moveTo(px, py); else sh.lineTo(px, py); } for (let i = 40; i >= 0; i--) { const t = -2.0 + (i / 40) * 4.0; sh.lineTo(Math.cos(t) * rr * 0.62 + rr * 0.42, Math.sin(t) * rr * 0.62); } return new THREE.ShapeGeometry(sh); };
+          flat(cres(R + 1.1), x, z, 0.03, '#b98a55').rotation.z = rot;
+          water(cres(R), x, z, rot, 0.07, '#3fb0b8');
+          L.oasis = [x, z]; L.lakeR = R; prop(x, z, R + 0.6); }
       }
       if (k.b.length || k.l.length) meshOf(k, L.litMat || bodyMat, L.g, 0, 0, 0);
       // bãi săn: vùng hoang phía ngoài; bãi tập kết quân: một khoảng đất nện cạnh đường ra cổng
@@ -1133,8 +1168,8 @@
       const oa = Math.atan2(L.out.z, L.out.x), ia = oa + Math.PI, rng = landRng(L.i + 77);
       const res = [[L.bankPos, 3.4], [L.schoolPos, 3.4], [L.dockPos, 3.2], [L.portPos, 4.2], [L.musterPos, 5.6], [L.wonderPos, 4.2], [L.siloPos, 3.2]];
       for (const k2 of ['eco', 'hea', 'rel', 'tra', 'mil']) res.push([L.slots[k2], 4.2]);
-      if (L.lake) res.push([{ x: L.lake[0], z: L.lake[1] }, 5.2]);
-      if (L.oasis) res.push([{ x: L.oasis[0], z: L.oasis[1] }, 4.0]);
+      if (L.lake) res.push([{ x: L.lake[0], z: L.lake[1] }, (L.lakeR || 4.6) + 0.6]);
+      if (L.oasis) res.push([{ x: L.oasis[0], z: L.oasis[1] }, (L.lakeR || 3.4) + 0.6]);
       const hit = (x, z) => !L.inside(x, z, 2.4) || res.some(([p, r]) => (p.x - x) ** 2 + (p.z - z) ** 2 < r * r) || L.blockedWild(x, z, 0.6);
       const segs = [];
       // một đường gấp khúc: cắt bỏ đoạn đi vào công trình, vào vùng hoang (trừ đường mòn), vào quảng trường
@@ -1275,8 +1310,8 @@
         if (L.roadDist(x, z) < 0.3 + r * 0.85) return true; // nhà, cây không lấn ra đường
         if (Math.hypot(x - L.bankPos.x, z - L.bankPos.z) < 3.4 + r || Math.hypot(x - L.schoolPos.x, z - L.schoolPos.z) < 3.4 + r) return true;
         if (L.river) for (const [px, pz] of L.river) if ((px - x) ** 2 + (pz - z) ** 2 < (3.4 + r) ** 2) return true;
-        if (L.lake && Math.hypot(x - L.lake[0], z - L.lake[1]) < 4.6 + r) return true;
-        if (L.oasis && Math.hypot(x - L.oasis[0], z - L.oasis[1]) < 3.6 + r) return true;
+        if (L.lake && Math.hypot(x - L.lake[0], z - L.lake[1]) < (L.lakeR || 4.6) + r) return true;
+        if (L.oasis && Math.hypot(x - L.oasis[0], z - L.oasis[1]) < (L.lakeR || 3.4) + 0.2 + r) return true;
         if (Math.hypot(x - L.dockPos.x, z - L.dockPos.z) < 3.4 + r || Math.hypot(x - L.portPos.x, z - L.portPos.z) < 4.2 + r) return true;
         if (L.blockedWild(x, z, r) || Math.hypot(x - L.musterPos.x, z - L.musterPos.z) < 6 + r) return true;
         for (const k2 in L.slots) if (Math.hypot(x - L.slots[k2].x, z - L.slots[k2].z) < 4.2 + r) return true;
@@ -1284,7 +1319,7 @@
       };
       const free = (x, z, r, wildOk) => L.inside(x, z, 1.6 + r * 0.4) && (wildOk || !wildAt(x, z)) && !L.blocked(x, z, r) && taken.every((t) => (t.x - x) ** 2 + (t.z - z) ** 2 > (t.r + r) ** 2);
       function hexLots(r, gap, cap, accept, wildOk) {
-        const sp = 2 * r + gap, out = [], jN = Math.ceil(58 / (sp * 0.866)), iN = Math.ceil(58 / sp); // phủ hết đảo dù lưới dày hay thưa
+        const sp = 2 * r + gap, out = [], jN = Math.ceil((LAND_R + 12) / (sp * 0.866)), iN = Math.ceil((LAND_R + 12) / sp); // phủ hết đảo dù lưới dày hay thưa
         for (let j = -jN; j <= jN; j++) {
           const z = j * sp * 0.866;
           for (let i2 = -iN; i2 <= iN; i2++) {

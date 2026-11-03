@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-8c9b4c6">
+<meta name="bekinh-version" content="2026.11.03-ae851f4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -608,8 +608,8 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   renderer.shadowMap.autoUpdate = false; // bóng đổ được vẽ lại theo nhịp riêng (xem phần Mượt và nét)
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 4200);
-  const OVERVIEW = 450;
-  camera.position.set(0, 272, 354);
+  const OVERVIEW = 525;
+  camera.position.set(0, 318, 414); // xa hơn một chút vì đảo và bể đã to ra
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.target.set(0, 0, 0);
   controls.enableDamping = true; controls.dampingFactor = 0.07;

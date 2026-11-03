@@ -48,7 +48,7 @@
     for (const m of [wall, bottom, glassWall, glassFloor, footRing]) m.raycast = () => {};
     function fitBody() { const top = SEA_Y + seaDy; wall.scale.y = top - FLOOR_Y; wall.position.y = (top + FLOOR_Y) / 2; }
     fitBody();
-    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(62));
+    const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(lands3d.RING - lands3d.LAND_R - 20)); // vùng biển ven bờ trước mỗi đảo
     const inwW = (L) => L.inw.clone();
     const dockEnd = (L) => L.world(L.dockPos).addScaledVector(inwW(L), 8.4).setY(SEA_Y);
     const portWater = (L) => L.world(L.portPos).addScaledVector(inwW(L), 7.5).setY(SEA_Y);

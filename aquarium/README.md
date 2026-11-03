@@ -12,7 +12,7 @@ Mọi thứ nhìn thấy đều sinh ra từ một nền kinh tế mô phỏng t
 
 | Miền | Thành phố | Đặc điểm | Đến lượt định cư |
 |---|---|---|---|
-| Đồng bằng | Lúa Vàng | Sông cong, thác đổ; lương thực dồi dào (×1,15) | Ngày 3 |
+| Đồng bằng | Lúa Vàng | Sông cong đổ vào hồ sen; lương thực dồi dào (×1,15) | Ngày 3 |
 | Rừng | Thông Xanh | Rừng già, suối; nhiều gỗ cho xưởng (×1,1) | Ngày 90 |
 | Sa mạc | Cát Hồng | Đồi cát, núi bàn, ốc đảo; khó trồng trọt (×0,82) | Ngày 150 |
 | Núi | Đá Mây | Đỉnh tuyết, hồ núi; đá và quặng (×1,15), ít ruộng (×0,85) | Ngày 240 |
@@ -75,7 +75,7 @@ phá thì trụ cột đó tụt, nên chiến tranh làm chậm cả việc lê
 
 ## Sáu đảo, sáu kiến trúc, sáu mươi công trình kỳ lạ
 
-Đảo rộng hơn trước (bán kính 50 thay vì 38, vòng đảo 132 thay vì 100), bể kính rộng theo. Mỗi đảo một kiến trúc riêng qua mọi
+Đảo rộng hơn trước (bán kính 62, vòng đảo 154), bể kính rộng theo. Không còn thác nước đổ ra ngoài mép đảo. Mỗi miền một hồ có dáng riêng: hồ sen hình quả thận cuối sông (đồng bằng), hồ rừng bờ lượn nhiều khúc có lau sậy, lá súng và cầu gỗ (rừng), hồ núi hình giọt nước viền đá cuội có hòn đảo đá giữa hồ (núi), hồ băng sáu cạnh có vết nứt và lỗ câu cá (băng nguyên), đầm phá hình bông hoa năm cánh có san hô (biển), ốc đảo hình trăng khuyết (sa mạc). Mỗi đảo một kiến trúc riêng qua mọi
 thời đại, không đảo nào dùng lại dáng nhà của đảo khác:
 
 | Đảo | Nhà ở | Tháp giữa thành (từ thời cận đại) | Hoạ tiết trên xưởng, bến, công trình |
