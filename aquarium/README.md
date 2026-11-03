@@ -25,9 +25,10 @@ Ván chín năm ở tốc độ 1× hết khoảng 72 phút; đồng hồ góc p
 
 NPC mẫu đã ra khỏi bể (code vẫn giữ trong `render/`, `ui/`, `logic/` để dùng lại). Công trình cũ đã bỏ hẳn; code cũ còn
 trong lịch sử git. Một trận dài **9 năm**, đi qua **12 thời kỳ** (`logic/eras.js`). Bây giờ mỗi thời dài 270 ngày
-(9 tháng trong game; ở tốc độ 1× khoảng 6 phút), sau này logic của đảo sẽ quyết định khi nào lên cấp. Thanh dưới màn hình
-ghi cấp và tên thời, có nút ‹ › để nhảy tới đầu thời trước hoặc sau (thời gian vẫn chạy, không tạm dừng).
-Mở với `?cap=5` để vào thẳng cấp 5.
+(9 tháng trong game), sau này logic của đảo sẽ quyết định khi nào lên cấp. Như bể kính cũ: tốc độ 1×, 2×, 4× (4× là
+nhanh nhất), không có tạm dừng, không có nút tua; mỗi thời trôi qua trước mắt: 6 phút ở 1×, 3 phút ở 2×, 1,5 phút ở 4×
+(cả trận 72, 36, 18 phút). Đồng hồ ghi cấp x/12 · mùa · ngày; thanh dưới ghi tên thời và phần đã đi tới thời sau.
+Mở với `?cap=5` để vào thẳng cấp 5 khi phát triển.
 
 Lên cấp thì làng cũ lún xuống, làng mới mọc lên từ nhà chính ra ngoài. Công trình vẽ theo cách của đảo (mặt phẳng, góc
 vát, chân sẫm dần lên mái), cỡ theo người cao 1,4, mỗi công trình gộp thành một khối.
@@ -61,8 +62,7 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   bấm vào một người để mở thẻ (tính cách, dáng, cha mẹ, vợ chồng, con, việc đang làm).
 - Nút **Làng** trên thanh dưới mở bảng theo dõi: cấp và năm, số người, đã sinh, đã mất, số lính, nông dân, người già,
   hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh chiến tranh, cãi nhau, lễ hội, yên ổn, sang thế hệ mới).
-- Nút ⏭ tua nhanh tới đầu thời sau: logic chạy hết những ngày bị bỏ qua. Không có nút quay lại thời trước (logic không
-  chạy ngược). Mở với `?seed=7` để thử một làng khác.
+- Mở với `?seed=7` để thử một làng khác.
 - Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 200 người vào năm 5 đến 6 rồi giữ quanh 180 đến 200; khoảng
   250 đến 300 lượt sinh, 60 đến 125 lượt mất; hội đồng gần như luôn đủ ghế. Cả làng 200 người: khoảng 26 lượt vẽ.
 
