@@ -1393,7 +1393,7 @@
       layout(L);
       plantTrees(L);
       clearTrees(L, L.minePos.x, L.minePos.z, 3.6);
-      people(L);
+      if (!K.noPeople) people(L); // bản sáu đảo thô chưa có người: không cấp bộ đệm đám đông
       L.world = (p) => p.clone().add(center);
       lands.push(L);
       return L;
@@ -2368,7 +2368,7 @@
     }
     function updatePeople(L, tod, t, fadNow) {
       const c = W.cities[L.i], w = c.w, S = L.crowd;
-      if (!w || !S) { if (S && S.n.some((v) => v)) { crowdBegin(S); crowdEnd(S); } L.hats.count = 0; return; }
+      if (!w || !S) { if (S && S.n.some((v) => v)) { crowdBegin(S); crowdEnd(S); } if (L.hats) L.hats.count = 0; return; }
       if (L.hush && L.hush > performance.now()) { crowdBegin(S); crowdEnd(S); L.hats.count = 0; return; } // giới nghiêm, xuống hầm: phố vắng
       // vòng ngày đêm mới (nửa đêm): lập lại lịch cho mọi người
       if (L.lastTod == null) { L.lastTod = tod; L.vday = 0; L.plans = new Map(); L.known = new Set(); L.slotUse = new Map(); }

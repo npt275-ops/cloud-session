@@ -208,7 +208,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
 
   /* =============== Sáu vùng đất, biển, mây =============== */
-  const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable });
+  const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable, noPeople: true });
   const lands = lands3d.lands;
   const sea3d = Sea3D.create({ THREE, scene, lands3d, C, clamp, reduce });
   let lightFlash = 0, stormK = 0;

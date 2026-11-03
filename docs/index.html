@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-9350510">
+<meta name="bekinh-version" content="2026.11.03-705162f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -223,7 +223,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   }
 
   /* =============== Sáu vùng đất, biển, mây =============== */
-  const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable });
+  const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable, noPeople: true });
   const lands = lands3d.lands;
   const sea3d = Sea3D.create({ THREE, scene, lands3d, C, clamp, reduce });
   let lightFlash = 0, stormK = 0;

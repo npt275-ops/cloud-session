@@ -9,7 +9,7 @@ qua 12 cấp văn minh và 6 thế hệ (1,5 năm một thế hệ); thống nh�
 
 Bước 1 của kế hoạch là dọn sạch. Mở game là thấy bể kính yên tĩnh với sáu hòn đảo chỉ có thiên nhiên:
 
-| Giữ | Bỏ khỏi game (lưu ở `archive/v1/`) |
+| Giữ | Bỏ khỏi game |
 |---|---|
 | Bể kính, vòng đồng, biển phủ kín đáy bể, chậu kính trong suốt đựng nước | Nền kinh tế mô phỏng từng hộ gia đình (`sim.js`) |
 | Sáu dáng đất: Lúa Vàng (đồng bằng), Thông Xanh (rừng), Đá Mây (núi), Tuyết Trắng (băng nguyên), Cửa Sóng (biển), Cát Hồng (sa mạc) | NPC, đám đông, lính, thú săn |
@@ -97,8 +97,8 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `audio.js` | Âm thanh tự sinh bằng Web Audio |
 | `tools/build-package.py` | Đóng gói: bản web cài được cho điện thoại (`docs/`) và gói chơi không cần mạng cho máy tính |
 | `vendor/`, `icons/` | three.js r128, OrbitControls, phông chữ Fraunces và Outfit; biểu tượng ứng dụng |
-| `archive/v1/` | Bản cũ để tham khảo: trang game cũ, nền kinh tế, NPC, chiến tranh, kịch bản hỗn loạn, quyền năng, 53 bài kiểm thử, README cũ |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
 
-Các tệp trong `lands3d.js` vẫn còn phần dựng người, đường sá và nhà theo nền kinh tế cũ; phần đó không còn được gọi và
-sẽ được thay khi làm logic mới.
+Mã của bản cũ (trang game cũ, nền kinh tế, NPC, chiến tranh, kịch bản hỗn loạn, quyền năng, 53 bài kiểm thử) đã xoá khỏi
+kho để gói tải về gọn nhẹ; lấy lại được từ lịch sử git ở commit `705162f` (`git show 705162f:aquarium/archive/v1/sim.js`).
+`lands3d.js` vẫn còn phần dựng người, đường sá và nhà theo nền kinh tế cũ, không còn được gọi; sẽ thay khi làm logic mới.
