@@ -97,7 +97,7 @@ người khác sẽ làm khác. Logic làng vẫn tạo đủ tám người như
 
 ## Nét vẽ NPC đã chốt (chưa đưa vào game)
 
-Bản mẫu: `design/npc-tinh-chinh.html`. Trang này mở riêng, game không tải nó; mẫu gồm nông dân nam, nông dân nữ, cụ già và vua.
+Bản mẫu: `design/npc-tinh-chinh.html`; mẫu các thời đại khác (cổ đại, trung đại, hiện đại, vượt thời không) ở `design/npc-cac-thoi-dai.html`. Trang này mở riêng, game không tải nó; mẫu gồm nông dân nam, nông dân nữ, cụ già và vua.
 - Giữ nguyên bộ khung và tỉ lệ ở `render/rig3d.js`, nên 65 cử chỉ, tay chạm và 7 biểu cảm không phải sửa.
 - Thân là một khối áo liền, gấu áo che hông. Tay chân bo tròn, có khớp vai; bàn tay kiểu găng có ngón cái; chân đi dép.
 - Đầu hơi bè ngang, có tai, mũi, má hồng. Mắt to hơn và hạ thấp: khuôn mặt cũ được đặt lên một nút phóng to (x 1,22, y 1,16,
