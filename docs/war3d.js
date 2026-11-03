@@ -34,12 +34,20 @@
     let seaDy = 0; // thần đổ thêm nước hay rút bớt nước: mặt biển dâng, hạ
     const water = new THREE.Mesh(waterGeo, waterMat); water.position.y = SEA_Y; water.renderOrder = 2; sea.add(water);
     water.raycast = () => {};
-    // thành nước áp sát vách kính và đáy bể: nhìn từ ngoài thấy cả khối nước trong bể
-    const BODY_H = 34;
-    const seaBodyMat = new THREE.MeshStandardMaterial({ color: '#1f6f98', roughness: 0.7, emissive: '#0b3550', emissiveIntensity: 0.3, side: THREE.DoubleSide });
-    const wall = new THREE.Mesh(new THREE.CylinderGeometry(EDGE_R, EDGE_R, BODY_H, 120, 1, true), seaBodyMat); wall.position.y = -BODY_H / 2; water.add(wall);
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(EDGE_R, 120), seaBodyMat); bottom.rotation.x = Math.PI / 2; bottom.position.y = -BODY_H; water.add(bottom);
-    wall.raycast = bottom.raycast = () => {};
+    // Đáy bể là thuỷ tinh trong suốt: một chậu kính dưới vòm, nước xanh trong đựng bên trong,
+    // nhìn từ ngoài thấy cả chân đá của sáu đảo chìm trong nước.
+    const BODY_H = 34, FLOOR_Y = SEA_Y - BODY_H, GLASS_R = EDGE_R + 0.35;
+    const seaBodyMat = new THREE.MeshStandardMaterial({ color: '#2a8fbf', roughness: 0.5, emissive: '#0b3550', emissiveIntensity: 0.3, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(EDGE_R, EDGE_R, 1, 120, 1, true), seaBodyMat); wall.renderOrder = 3; sea.add(wall);
+    const bottom = new THREE.Mesh(new THREE.CircleGeometry(EDGE_R, 120), seaBodyMat); bottom.rotation.x = -Math.PI / 2; bottom.position.y = FLOOR_Y + 0.05; bottom.renderOrder = 3; sea.add(bottom);
+    const glassMat = new THREE.MeshPhongMaterial({ color: 0xe8f6ff, transparent: true, opacity: 0.1, shininess: 160, specular: 0xffffff, side: THREE.DoubleSide, depthWrite: false });
+    const glassWall = new THREE.Mesh(new THREE.CylinderGeometry(GLASS_R, GLASS_R, -FLOOR_Y + 0.6, 120, 1, true), glassMat); glassWall.position.y = (FLOOR_Y - 0.6) / 2; glassWall.renderOrder = 4; sea.add(glassWall);
+    const glassFloor = new THREE.Mesh(new THREE.CircleGeometry(GLASS_R, 120), glassMat); glassFloor.rotation.x = -Math.PI / 2; glassFloor.position.y = FLOOR_Y - 0.6; glassFloor.renderOrder = 4; sea.add(glassFloor);
+    const brass = new THREE.MeshStandardMaterial({ color: '#b08d57', metalness: 0.6, roughness: 0.35 });
+    const footRing = new THREE.Mesh(new THREE.TorusGeometry(GLASS_R, 0.9, 8, 180), brass); footRing.rotation.x = Math.PI / 2; footRing.position.y = FLOOR_Y - 0.6; sea.add(footRing);
+    for (const m of [wall, bottom, glassWall, glassFloor, footRing]) m.raycast = () => {};
+    function fitBody() { const top = SEA_Y + seaDy; wall.scale.y = top - FLOOR_Y; wall.position.y = (top + FLOOR_Y) / 2; }
+    fitBody();
     const zoneC = (z) => (z === 6 ? v3(0, 0, 0) : flat(lands[z].center).normalize().multiplyScalar(62));
     const inwW = (L) => L.inw.clone();
     const dockEnd = (L) => L.world(L.dockPos).addScaledVector(inwW(L), 8.4).setY(SEA_Y);
@@ -835,7 +843,7 @@
     // những người lính vừa ngã (kể cả giữa ngày, vì phép của chim, mèo): xác nằm lại ngay chỗ ngã
     function deathsNow() { for (const d of W.war.deaths) if (!d.shown) { d.shown = true; onDeath(d); } }
     function setSea(dy, tiltX, tiltZ) {
-      seaDy = dy; water.position.y = SEA_Y + dy;
+      seaDy = dy; water.position.y = SEA_Y + dy; fitBody();
       water.rotation.x = tiltX || 0; water.rotation.z = tiltZ || 0;
     }
     return { syncDay, animate, lanePos, portWater, zoneC, shotRaw, deathsNow, SEA_R, SEA_Y, setSea, get seaDy() { return seaDy; }, buildings: BLD_OF, addSoldiers: (fn) => extraSoldiers.push(fn), soldierColors: (owner, era, seed) => [K.factionColor(owner), PANTS[era], HELMS[era], F.SKIN_T[(seed >>> 0) % 6]] };

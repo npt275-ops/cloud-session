@@ -298,6 +298,18 @@ hải cẩu, rùa biển, trai ngọc, cá mập, cá voi, mực khổng lồ b�
 Biển không của riêng ai nên dễ cạn: cá trước bến cạn thì thuyền sang vùng láng giềng, sinh ra **tranh chấp biển**.
 Mỗi thời đại có lưới tốt hơn và thuyền dám ra khơi xa hơn.
 
+Nước phủ kín đáy bể tới sát mép trong vách kính. Đáy và thành dưới của bể là **thuỷ tinh trong suốt**: nhìn từ bên
+ngoài thấy cả khối nước xanh và chân đá của sáu đảo chìm trong nước. Mặt nước đục, không bóng loáng, nên màu biển
+đứng yên khi xoay camera.
+
+## Mây, giông và mưa trong bể
+
+Mây chỉ có **bên trong vòm kính**; bên ngoài không có mây. Mây kéo vào **từng đợt** (ba tới sáu đám) từ phía đầu gió,
+trôi ngang bể rồi tan khi chạm vách kính. Khi từ năm đám trở lên dồn vào một chỗ, chúng hút nhau lại, tích nước, nặng
+dần và **sẫm thành mây đen**; đủ nặng thì **sấm sét** nổ (tia chớp, cả bể loé sáng, tiếng sấm) và **mưa** trút xuống
+đảo và biển bên dưới, trời sầm lại. Mưa xả hết nước thì mây bạc màu và tan. Khi một đảo đang mùa mưa (theo mô phỏng),
+các đợt mây kéo về phía đảo đó dày hơn. Toàn bộ mây vẽ trong một lượt (`clouds3d.js`).
+
 **Cầu và cảng phải tự xây** bằng tiền kho bạc. Cầu do một bên bắc theo thời đại của mình (cầu dây leo, cầu gỗ,
 cầu vòm đá, cầu có mái, cầu sắt, cầu dây văng); cầu yếu thì xe nặng không qua được. Cảng cho tàu buôn đi giữa
 hai cảng bất kỳ qua biển trong.
@@ -386,6 +398,7 @@ Rồi mở `http://localhost:8000`.
 | `sky3d.js` | Bầu trời chiến tranh (đại bác, máy bay ném bom, tên lửa, tia năng lượng, thành trì sập, đảo cháy rụi) và máy bay ngày thường theo thời đại |
 | `sights3d.js` | Sáu mươi công trình kỳ lạ của sáu đảo, mỗi đảo mười, đổi theo thời đại |
 | `god3d.js` | Hình ảnh thiên tai dùng chung (lũ, hạn, động đất, lốc xoáy, dịch, núi lửa, sóng thần, sét) cho quyền năng và các kịch bản hỗn loạn |
+| `clouds3d.js` | Mây trong bể kính: đợt mây theo gió, mây dồn lại thành mây đen, sấm sét, mưa |
 | `war3d.js` | Biển trong (sóng, cá, cá voi, cá mập, rùa, hải cẩu, ngọc trai), thuyền cá, tàu buôn, công trình kinh tế và quân sự theo miền và thời đại, quân lính trên chiến tuyến, đạn, khói, hạt nhân |
 | `tools/build-package.py` | Đóng gói: bản web cài được cho điện thoại (`docs/`) và gói chơi không cần mạng cho máy tính (`docs/BeKinh-ban-may-tinh.zip`) |
 | `vendor/`, `icons/` | three.js r128, OrbitControls, phông chữ Fraunces và Outfit cho bản không cần mạng; biểu tượng ứng dụng |

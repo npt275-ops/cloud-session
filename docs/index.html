@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-fc0fcc2">
+<meta name="bekinh-version" content="2026.11.03-4525b00">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -572,6 +572,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
 <script src="god3d.js"></script>
 <script src="powers3d.js"></script>
 <script src="sky3d.js"></script>
+<script src="clouds3d.js"></script>
 <script src="story3d.js"></script>
 <script>
 (function () {
@@ -682,7 +683,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   /* =============== Bể kính bao quanh cả sáu miền =============== */
   const DOME = Lands3D.RING + Lands3D.LAND_R + 16;
   const dome = new THREE.Mesh(new THREE.SphereGeometry(DOME, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({ color: 0xe8f6ff, transparent: true, opacity: 0.06, shininess: 160, specular: 0xffffff, side: THREE.DoubleSide, depthWrite: false }));
-  dome.raycast = () => {};
+  dome.raycast = () => {}; dome.renderOrder = 4;
   scene.add(dome);
   const ring = mesh(new THREE.TorusGeometry(DOME, 0.9, 8, 180), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), 0, 0, 0, scene);
   ring.rotation.x = Math.PI / 2;
@@ -702,16 +703,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     for (const g of gs) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
     const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); m.computeBoundingSphere(); return m;
   }
-  const clouds = [];
-  const cloudMat = mat('#ffffff', { roughness: 1, emissive: '#ffffff', emissiveIntensity: 0.18 });
-  for (let i = 0; i < 22; i++) {
-    const g = new THREE.Group();
-    const puffs = []; for (let k = 0; k < 4; k++) { const ge = new THREE.IcosahedronGeometry(5 + hash(i * 9 + k) * 6, 1); ge.translate(k * 7 - 11, hash(i + k) * 3, hash(i * 3 + k) * 4); puffs.push(ge); }
-    mesh(mergePlain(puffs), cloudMat, 0, 0, 0, g).castShadow = false;
-    const a = hash(i) * Math.PI * 2, r = 240 + hash(i + 1) * 500;
-    g.position.set(Math.cos(a) * r, -50 + hash(i + 2) * 90, Math.sin(a) * r);
-    scene.add(g); clouds.push({ g, a, r, v: 0.00025 + hash(i + 5) * 0.0004 });
-  }
+  // mây chỉ có bên trong bể kính: xem clouds3d.js
 
   /* =============== Bấm được, khói, đốm sáng =============== */
   const clickables = [];
@@ -796,6 +788,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const powers3d = Powers3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
   // bầu trời chiến tranh: đại bác, máy bay ném bom, tên lửa, tia năng lượng; đảo bị đẩy lùi; máy bay theo thời đại
   const sky3d = Sky3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, shake, audio, factionColor });
+  const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: DOME, reduce, glowTex, audio, flash: (k) => { lightFlash = Math.max(lightFlash, k); }, rainOf: () => rainyAt, speed: () => tps / 0.75 });
   /* ----- Bay tự do: phím mũi tên để lướt qua lại, Page Up / Page Down để lên xuống ----- */
   // Như mắt chim mà không có con chim nào: vị thần lướt tới, lùi, sang trái, sang phải, lên cao, sà thấp để ngắm thành phố.
   const FLY = { keys: new Set(), pad: new Set(), v: new THREE.Vector3(), on: false, padOn: false, near: 0 };
@@ -871,6 +864,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const DAY_MS = 90000;
   const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
   const wx = { rain: 0, snow: 0, drought: 0, festival: 0, panic: 0 };
+  let lightFlash = 0, rainyAt = null, stormK = 0; // chớp của giông trong bể; đảo đang mưa (theo mô phỏng) để mây kéo về
   const sunDir = new THREE.Vector3();
   const _moonP = new THREE.Vector3();
   function applyTime() {
@@ -889,7 +883,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = night > 0.02; }
     const top = SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
     const bot = SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
-    const overcast = Math.max(wx.rain, wx.snow) * 0.6;
+    const overcast = Math.max(wx.rain, wx.snow, stormK * 0.55) * 0.6; // giông trong bể cũng làm trời sầm lại
     if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
     if (wx.drought > 0.001) { top.lerp(C('#c9b98f'), wx.drought * 0.3 * day); bot.lerp(C('#f2d39a'), wx.drought * 0.6 * day); }
     const M = moodNow();
@@ -897,7 +891,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     if (chaosDim > 0.001) { top.multiplyScalar(1 - 0.8 * chaosDim); bot.multiplyScalar(1 - 0.8 * chaosDim); }
     if (M.k > 0.001) { top.lerp(M.top, M.k * (0.55 + 0.45 * day)); bot.lerp(M.bot, M.k * (0.55 + 0.45 * day)); sun.color.lerp(M.sunCol, M.k * 0.5); }
     sun.intensity *= M.sun * (1 - 0.9 * chaosDim); hemi.intensity *= M.hemi * (1 - 0.7 * chaosDim);
-    cloudMat.color.copy(C('#ffffff').lerp(C('#8e98a2'), overcast * 0.8));
+    if (lightFlash > 0.001) { hemi.intensity += lightFlash * 1.3; } // chớp loé sáng cả bể
     skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
     skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);
     scene.fog.color.copy(bot);
@@ -1817,7 +1811,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
     setTime: (v) => { tod = v; cycleOn = false; },
     ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
-    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, powers3d, sky3d, fly: FLY, flyStep, aimAt,
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, powers3d, sky3d, clouds3d, fly: FLY, flyStep, aimAt,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, quality: () => quality, perf: PERF,
     renderer, scene,
   };
@@ -1841,7 +1835,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const { night } = applyTime();
     updateMoments(performance.now(), night);
     chaos3d.update();
-    if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
+    if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); rainyAt = null; for (let i = 0; i < lands.length && !rainyAt; i++) { const w = wOf(i), ph = w ? Sim.phenomena(w) : null; if (ph && ph.rain) rainyAt = lands[i].center; } if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
     viewTick();
     streets3d.animate(dt, t, night, inView);
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);
@@ -1855,7 +1849,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     updateWeather(dt, t);
     updateFestival(dt, t, night);
     for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
-    for (const c of clouds) { if (!reduce) c.a += c.v * dt * 0.06; c.g.position.x = Math.cos(c.a) * c.r; c.g.position.z = Math.sin(c.a) * c.r; }
+    clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
     if (flyStep(dt)) focusTween = null;
     else if (focusTween) {
       const k = clamp((now - focusTween.t0) / (focusTween.dur || 1200), 0, 1), e = 1 - Math.pow(1 - k, 3);

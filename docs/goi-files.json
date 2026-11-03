@@ -15,6 +15,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/clouds3d.js",
+  "src": "clouds3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/fauna3d.js",
   "src": "fauna3d.js",
   "mode": 420
