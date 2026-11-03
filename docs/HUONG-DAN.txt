@@ -1,6 +1,6 @@
 ﻿BỂ KÍNH
 Vị thần ngoài bể kính: sáu đảo, mười hai thời đại, chín năm.
-Phiên bản 2026.11.03-1ba25a3
+Phiên bản 2026.11.03-8c9b4c6
 
 CÀI BẰNG MỘT LỆNH (tải toàn bộ mã nguồn, tạo phần mềm Bể Kính có biểu tượng, mở game)
  - Windows: mở PowerShell, dán lệnh:

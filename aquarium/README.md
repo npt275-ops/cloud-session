@@ -305,14 +305,22 @@ ngoài thấy cả khối nước xanh và chân đá của sáu đảo chìm tr
 ## Mây, giông và mưa trong bể
 
 Mây chỉ có **bên trong vòm kính**; bên ngoài không có mây. Mây bay trên **cùng một tầng**, như một mặt phẳng mây.
-Mây kéo vào **từng đợt** (bảy tới mười hai đám) từ phía đầu gió, mỗi đợt hẹn nhau về một chỗ ngẫu nhiên: trên một đảo
-hay ngoài biển. Mây chạm nhau thì **dính lại theo bề ngang**: cụm mây rộng ra chứ không to lên. Cụm từ ba đám trở lên
-tích nước, sẫm lại thành **mây đen** rồi **mưa**. Mỗi đám mây chỉ chứa một lượng nước nhất định, nên một cơn mưa
-kéo dài khoảng 15 tới 25 giây ở tốc độ 1×, trút **theo đợt**: nặng hạt vài giây, ngớt, rồi lại nặng hạt. Cụm càng
-nhiều mây thì **vệt mưa càng rộng**; mây trắng trôi tới chạm vào cơn mưa cũng dính vào và mưa theo. Mây nào **hết nước
-thì tan** biến, rồi đợt mây mới lại kéo đến và tích tụ lại. Cụm mưa lớn có **sấm sét** (tia chớp, cả bể loé sáng,
-tiếng sấm) và làm trời sầm lại. Khi một đảo đang mùa mưa (theo mô phỏng), các đợt mây hay hẹn về đảo đó hơn.
-Toàn bộ mây vẽ trong một lượt (`clouds3d.js`).
+Mây kéo vào **từng đợt** (sáu tới mười một đám) từ phía đầu gió rồi tản ra một vùng ngẫu nhiên bất kỳ trong bể:
+đảo có người, **đảo hoang** hay ngoài biển, như nhau. Mây tình cờ chạm nhau thì **dính lại theo bề ngang**: cụm mây
+rộng ra chứ không to lên, mỗi cụm **tối đa chín đám**.
+
+Mưa đi theo mùa:
+
+| Mùa | Mây | Mưa |
+|---|---|---|
+| Mùa hạ | Cụm từ ba đám tích nước, chuyển dần từ trắng sang xám rồi đen | **Mưa to**, theo đợt nặng hạt rồi ngớt, có sấm sét khi cụm từ bốn đám |
+| Cuối thu (ngày 45 tới 90 của mùa thu) | Như mùa hạ, đen chậm hơn | **Mưa nhỏ**, lâm thâm, không sấm sét |
+| Xuân, đầu thu, đông | Vẫn có mây và vẫn dính thành cụm | Không mưa: mây luôn trắng |
+
+Cơn mưa **nhỏ nhất ba đám, lớn nhất chín đám**; cụm càng nhiều mây thì vệt mưa càng rộng. Mỗi đám mây chỉ chứa một
+lượng nước nhất định, nên một cơn mưa kéo dài khoảng 15 tới 25 giây ở tốc độ 1×. Mưa xong, mây đen **tan hẳn**, không
+còn sót lại mây đen; đợt mây mới lại kéo đến và tích tụ lại. Mùa hạ có khoảng hai cơn mưa mỗi phút trên cả bể.
+Mưa chỉ rơi từ các cụm mây này (không còn màn mưa trùm cả đảo). Toàn bộ mây vẽ trong một lượt (`clouds3d.js`).
 
 **Cầu và cảng phải tự xây** bằng tiền kho bạc. Cầu do một bên bắc theo thời đại của mình (cầu dây leo, cầu gỗ,
 cầu vòm đá, cầu có mái, cầu sắt, cầu dây văng); cầu yếu thì xe nặng không qua được. Cảng cho tàu buôn đi giữa

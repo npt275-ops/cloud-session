@@ -773,7 +773,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const powers3d = Powers3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
   // bầu trời chiến tranh: đại bác, máy bay ném bom, tên lửa, tia năng lượng; đảo bị đẩy lùi; máy bay theo thời đại
   const sky3d = Sky3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, shake, audio, factionColor });
-  const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: DOME, reduce, glowTex, audio, flash: (k) => { lightFlash = Math.max(lightFlash, k); }, rainOf: () => rainyAt, speed: () => tps / 0.75 });
+  const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: DOME, reduce, glowTex, audio, flash: (k) => { lightFlash = Math.max(lightFlash, k); }, dayOfYear: () => ((W.day % 360) + 360) % 360, speed: () => tps / 0.75 });
   /* ----- Bay tự do: phím mũi tên để lướt qua lại, Page Up / Page Down để lên xuống ----- */
   // Như mắt chim mà không có con chim nào: vị thần lướt tới, lùi, sang trái, sang phải, lên cao, sà thấp để ngắm thành phố.
   const FLY = { keys: new Set(), pad: new Set(), v: new THREE.Vector3(), on: false, padOn: false, near: 0 };
@@ -849,7 +849,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   const DAY_MS = 90000;
   const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
   const wx = { rain: 0, snow: 0, drought: 0, festival: 0, panic: 0 };
-  let lightFlash = 0, rainyAt = null, stormK = 0; // chớp của giông trong bể; đảo đang mưa (theo mô phỏng) để mây kéo về
+  let lightFlash = 0, stormK = 0; // chớp và độ sầm trời của các cơn mưa trong bể
   const sunDir = new THREE.Vector3();
   const _moonP = new THREE.Vector3();
   function applyTime() {
@@ -1236,7 +1236,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
   function updateWeather(dt, t) {
     const w = wOf(focus), L = lands[focus], ph = w ? Sim.phenomena(w) : null, k = Math.min(1, dt / 1600);
     const tundraSnow = L.ter === 'tundra' && ph && ph.season === 3;
-    wx.rain += ((ph && ph.rain && L.ter !== 'tundra' ? 1 : 0) - wx.rain) * k;
+    wx.rain += (0 - wx.rain) * k; // mưa chỉ rơi từ các cụm mây trong bể (clouds3d.js), không còn màn mưa trùm cả đảo
     wx.snow += ((ph && (ph.snow || (ph.rain && L.ter === 'tundra') || tundraSnow) ? 1 : 0) - wx.snow) * k;
     wx.drought += ((ph && ph.drought > 0 ? 1 : 0) - wx.drought) * Math.min(1, dt / 4000);
     wx.festival += ((ph && ph.festival ? 1 : 0) - wx.festival) * k;
@@ -1820,7 +1820,7 @@ body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55
     const { night } = applyTime();
     updateMoments(performance.now(), night);
     chaos3d.update();
-    if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); rainyAt = null; for (let i = 0; i < lands.length && !rainyAt; i++) { const w = wOf(i), ph = w ? Sim.phenomena(w) : null; if (ph && ph.rain) rainyAt = lands[i].center; } if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: wx.rain, snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
+    if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: Math.max(wx.rain, stormK), snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
     viewTick();
     streets3d.animate(dt, t, night, inView);
     lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);

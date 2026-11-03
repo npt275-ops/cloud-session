@@ -1,8 +1,9 @@
 /* Bể Kính — mây trong bể kính.
  * Mây chỉ sống bên trong vòm kính (bên ngoài không có mây) và bay trên CÙNG MỘT TẦNG, như một mặt phẳng mây.
- * Mây kéo vào từng đợt theo gió, mỗi đợt hướng về một chỗ ngẫu nhiên (trên đảo hay ngoài biển).
- * Mây chạm nhau thì dính lại theo bề ngang: cụm mây rộng ra chứ không to lên. Cụm đủ đông thì tích nước, sẫm lại
- * thành mây đen rồi đổ mưa. Mỗi đám mây chỉ chứa một lượng nước nhất định: mưa trút từng đợt nặng hạt, ngớt, rồi
+ * Mây kéo vào từng đợt theo gió, tản ra khắp bể (trên đảo có người, đảo hoang hay ngoài biển) và ngẫu nhiên
+ * chạm nhau. Mây chạm nhau thì dính lại theo bề ngang: cụm mây rộng ra chứ không to lên; một cụm tối đa chín đám.
+ * Mưa theo mùa: mùa hạ mưa to, cuối thu mưa nhỏ, các mùa khác chỉ có mây trắng. Trong mùa mưa, cụm từ ba đám trở lên
+ * tích nước, chuyển dần từ trắng sang đen rồi đổ mưa. Mỗi đám mây chỉ chứa một lượng nước nhất định: mưa trút từng đợt nặng hạt, ngớt, rồi
  * lại nặng hạt; cụm càng nhiều mây thì vệt mưa càng rộng. Mây nào hết nước thì tan biến. Mây trắng trôi tới chạm
  * vào cơn mưa đang rơi cũng dính vào, làm vệt mưa rộng thêm. Sau đó đợt mây mới lại kéo đến và tích tụ lại.
  * Toàn bộ mây là một lượt vẽ; mưa và chớp dùng chung vài khối dựng sẵn. */
@@ -10,10 +11,10 @@
   'use strict';
 
   function create(K) {
-    const { THREE, scene, lands3d, dome, reduce, glowTex, audio, flash, rainOf } = K;
+    const { THREE, scene, lands3d, dome, reduce, glowTex, audio, flash } = K;
     const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
     const rnd = Math.random;
-    const MAXC = 72, PUFFS = 5;
+    const MAXC = 72, PUFFS = 5, MIN_RAIN = 3, MAX_CLUMP = 9;
     const LAYER = 64;           // độ cao của tầng mây
     const CONTACT = 15;         // hai đám mây cách nhau dưới khoảng này là dính vào nhau
     const REST = 12.5;          // khoảng cách hai đám mây dính nhau tự xếp tới (sát cạnh, không chồng lên nhau)
@@ -34,14 +35,10 @@
     const clouds = [];
     let wind = rnd() * Math.PI * 2, nextWave = 2500, waveLeft = 0, waveGap = 0, waveAim = null;
 
-    // một chỗ ngẫu nhiên trong bể: trên một đảo hay ngoài biển
-    function randomSpot() {
-      const rainy = rainOf ? rainOf() : null;
-      if (rainy && rnd() < 0.45) return rainy.clone();
-      if (rnd() < 0.45) return lands3d.lands[Math.floor(rnd() * lands3d.lands.length)].center.clone();
-      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * (inR - 20);
-      return v3(Math.cos(a) * r, 0, Math.sin(a) * r);
-    }
+    // một chỗ ngẫu nhiên bất kỳ trong bể: trên đảo có người, đảo hoang hay ngoài biển, như nhau
+    function randomSpot() { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * (inR - 20); return v3(Math.cos(a) * r, 0, Math.sin(a) * r); }
+    // mùa mưa: 2 = mùa hạ (mưa to), 1 = cuối thu (mưa nhỏ), 0 = không mưa
+    const rainSeason = () => { const d = K.dayOfYear ? K.dayOfYear() : 120; return d >= 90 && d < 180 ? 2 : d >= 225 && d < 270 ? 1 : 0; };
 
     function spawn(aim) {
       if (clouds.length >= MAXC) return;
@@ -49,7 +46,7 @@
       const side = wind + Math.PI + (rnd() - 0.5) * 1.3;
       const pos = v3(Math.cos(side) * inR * 0.95, 0, Math.sin(side) * inR * 0.95);
       const to = aim ? aim.clone() : v3(0, 0, 0);
-      to.x += (rnd() - 0.5) * 36; to.z += (rnd() - 0.5) * 36;
+      to.x += (rnd() - 0.5) * 110; to.z += (rnd() - 0.5) * 110; // mỗi đám lệch một chút: gặp nhau là do tình cờ
       const vel = to.sub(pos).setY(0).normalize().multiplyScalar(3 + rnd() * 1.8);
       const parts = [];
       // các cục bông xoè ngang, đáy gần như phẳng
@@ -63,7 +60,7 @@
 
     /* ----- cơn mưa: tối đa năm cơn cùng lúc, mỗi cơn một khối hạt ----- */
     const DROPS = 900, slots = [];
-    for (let s = 0; s < 5; s++) {
+    for (let s = 0; s < 6; s++) {
       const pos = new Float32Array(DROPS * 6), seed = [];
       for (let i = 0; i < DROPS; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 7; seed.push({ ox: Math.cos(a) * r, oz: Math.sin(a) * r, u: rnd(), cut: rnd() }); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -99,57 +96,64 @@
     /* ----- cập nhật ----- */
     const SPEED = () => Math.max(0.5, (K.speed ? K.speed() : 1));
     const comps = [];
+    let frame = 0;
     function update(dt, t, night) {
       if (dt > 250) dt = 250;
+      frame++;
       const sdt = (dt / 1000) * (reduce ? 0.4 : 1), sp = Math.min(4, SPEED()), st_ = sdt * sp;
 
-      // các đợt mây: mỗi đợt bảy tới mười hai đám, hẹn nhau về một chỗ ngẫu nhiên
+      // các đợt mây: mỗi đợt sáu tới mười một đám, kéo về một vùng ngẫu nhiên rồi tản ra
       wind += sdt * 0.01;
       nextWave -= dt * sp;
       if (nextWave <= 0 && waveLeft <= 0) {
-        waveLeft = 7 + Math.floor(rnd() * 6); waveGap = 0; waveAim = randomSpot();
-        nextWave = 10000 + rnd() * 12000;
+        waveLeft = 6 + Math.floor(rnd() * 6); waveGap = 0; waveAim = randomSpot();
+        nextWave = 12000 + rnd() * 14000;
       }
       if (waveLeft > 0) { waveGap -= dt * sp; if (waveGap <= 0) { spawn(waveAim); waveLeft--; waveGap = 700 + rnd() * 1300; } }
 
       // mây chạm nhau thì dính lại thành cụm, xếp sát cạnh nhau trên cùng một tầng
       const live = clouds.filter((c) => !c.fade);
-      for (let i = 0; i < live.length; i++) live[i].comp = i;
+      for (let i = 0; i < live.length; i++) { live[i].comp = i; live[i].csz = 1; }
       const find = (i) => { while (live[i].comp !== i) { live[i].comp = live[live[i].comp].comp; i = live[i].comp; } return i; };
       for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
         const a = live[i], b = live[j], dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, d = Math.hypot(dx, dz) || 0.01;
-        if (d < CONTACT + 8) {
-          // lò xo: kéo lại tới khoảng nghỉ, đẩy ra nếu chồng lên nhau
-          const f = (d - REST) * (d < CONTACT ? 1.4 : 0.5) * st_ / d;
-          a.vel.x += dx * f; a.vel.z += dz * f; b.vel.x -= dx * f; b.vel.z -= dz * f;
-        }
-        if (d < CONTACT) {
+        const same = a.rain && b.rain && a.slot && a.slot === b.slot, reach = same ? CONTACT + 10 : CONTACT; // mây cùng một cơn mưa bám chặt nhau
+        if (d >= reach + 8) continue;
+        const ri0 = find(i), rj0 = find(j), full = ri0 !== rj0 && live[ri0].csz + live[rj0].csz > MAX_CLUMP;
+        // lò xo: kéo lại tới khoảng nghỉ, đẩy ra nếu chồng lên nhau; cụm đã đủ chín đám thì đẩy mây lạ ra
+        const f = (full ? Math.min(0, d - CONTACT - 9) * 0.8 : (d - REST) * (d < reach ? (same ? 2.2 : 1.4) : 0.5)) * st_ / d;
+        a.vel.x += dx * f; a.vel.z += dz * f; b.vel.x -= dx * f; b.vel.z -= dz * f;
+        if (d < reach && !full) {
           // dính rồi thì trôi cùng nhau
           const mx = (a.vel.x + b.vel.x) / 2, mz = (a.vel.z + b.vel.z) / 2, k = Math.min(1, st_ * 2);
           a.vel.x += (mx - a.vel.x) * k; a.vel.z += (mz - a.vel.z) * k; b.vel.x += (mx - b.vel.x) * k; b.vel.z += (mz - b.vel.z) * k;
-          const ri = find(i), rj = find(j); if (ri !== rj) live[ri].comp = rj;
+          if (ri0 !== rj0) { live[ri0].comp = rj0; live[rj0].csz += live[ri0].csz; }
         }
       }
       comps.length = 0;
       const byRoot = new Map();
       for (let i = 0; i < live.length; i++) { const r = find(i); let g = byRoot.get(r); if (!g) { g = []; byRoot.set(r, g); comps.push(g); } g.push(live[i]); }
 
-      // mỗi cụm: tích nước, sẫm lại, đủ nặng thì mưa
+      // mỗi cụm: tích nước, sẫm lại, đủ nặng thì mưa (chỉ trong mùa mưa)
+      const season = rainSeason();
       for (const s of slots) s.members.length = 0;
       for (const g of comps) {
         const n = g.length;
         let raining = g.some((c) => c.rain), w = 0;
         for (const c of g) w += c.water;
         const avg = w / n;
-        if (!raining && ((n >= 3 && avg >= 1.0) || (n === 2 && avg >= 1.05 && rnd() < st_ * 0.15))) raining = true; // đôi khi hai đám cũng đổ một cơn mưa nhỏ
+        const dark = g.reduce((a, c) => a + c.dark, 0) / n;
+        if (!raining && season && n >= MIN_RAIN && avg >= 1.0 && dark > 0.85) raining = true; // đủ cụm, đã đen hẳn mới mưa
         let slot = null;
         if (raining) {
-          for (const c of g) if (c.slot && c.slot.on) { slot = c.slot; break; }
-          if (!slot) { slot = slots.find((s) => !s.on); if (slot) { slot.on = true; slot.k = 0; slot.I = 0; slot.heavy = true; slot.burstT = 2500 + rnd() * 2500; slot.nextBolt = 1500 + rnd() * 2500; } }
+          for (const c of g) if (c.slot && c.slot.on && (c.slot.frame !== frame || c.slot.members.length + n <= MAX_CLUMP)) { slot = c.slot; break; } // mỗi cơn mưa thuộc đúng một cụm
+          if (!slot) { slot = slots.find((s) => !s.on && s.k < 0.03); if (slot) { slot.on = true; slot.k = 0; slot.I = 0; slot.heavy = true; slot.light = season === 1; slot.burstT = 2500 + rnd() * 2500; slot.nextBolt = 1500 + rnd() * 2500; } }
         }
+        if (slot) slot.frame = frame;
         for (const c of g) {
           if (raining) { c.rain = true; c.slot = slot; if (slot) slot.members.push(c); } // mây trắng mới dính vào cũng mưa với lượng nước nó mang theo
-          else c.water = Math.max(0, Math.min(1.3, c.water + (n >= 2 ? 0.05 * (n - 1) : -0.01) * st_)); // tích nước khi đứng chung cụm; mây lẻ khô dần
+          // mùa mưa: cụm từ ba đám tích nước dần (trắng chuyển xám rồi đen); mùa khô hay mây lẻ thì khô dần, mây vẫn trắng
+          else c.water = Math.max(0, Math.min(1.3, c.water + (season && n >= MIN_RAIN ? (season === 2 ? 0.016 : 0.012) * (n - 2) : -0.02) * st_));
         }
       }
 
@@ -159,10 +163,10 @@
         if (c.rain) {
           // mưa xả nước theo đợt nặng hạt hay ngớt của cơn mưa; hết nước thì tan
           const I = c.slot ? c.slot.I : 0.7;
-          c.water -= RAIN_RATE * (0.25 + I) * st_;
-          if (c.water <= 0) { c.rain = false; c.fade = true; c.slot = null; }
+          c.water -= RAIN_RATE * (c.slot && c.slot.light ? 0.95 : 0.25 + I) * st_; // mưa nhỏ cuối thu cũng không kéo dài
+          if (c.water <= 0) { c.rain = false; c.fade = true; c.spent = true; c.slot = null; } // mưa xong: mây tan hẳn, không còn mây đen
         }
-        const want = c.fade ? 0.35 : c.rain ? 1 : Math.max(0, Math.min(1, (c.water - 0.45) / 0.5));
+        const want = c.fade ? 0 : c.rain ? 1 : Math.max(0, Math.min(1, (c.water - 0.45) / 0.5));
         c.dark += (want - c.dark) * Math.min(1, sdt * 0.8);
         // trôi theo gió; mây nặng trôi chậm
         const sl = Math.hypot(c.vel.x, c.vel.z), cap = 4 * (1 - 0.7 * c.dark);
@@ -177,7 +181,7 @@
           if (c.age > 25 && !c.rain) c.fade = true;
         }
         if (c.age > c.life && !c.rain && c.water < 0.9) c.fade = true;
-        c.size = c.fade ? c.size - sdt * 0.3 : Math.min(1, c.size + sdt * 0.15);
+        c.size = c.fade ? c.size - sdt * (c.spent ? 0.45 : 0.3) : Math.min(1, c.size + sdt * 0.15);
         if (c.fade && c.size <= 0) { clouds.splice(i, 1); continue; }
       }
       for (const s of slots) if (s.on) s.members = s.members.filter((c) => c.rain);
@@ -189,11 +193,11 @@
           // mưa theo đợt: nặng hạt vài giây rồi ngớt, rồi lại nặng hạt
           st.burstT -= dt * sp;
           if (st.burstT <= 0) { st.heavy = !st.heavy; st.burstT = st.heavy ? 2500 + rnd() * 3500 : 1200 + rnd() * 2200; }
-          st.I += ((st.heavy ? 1 : 0.18) - st.I) * Math.min(1, sdt * 2.5);
+          st.I += ((st.heavy ? (st.light ? 0.4 : 1) : (st.light ? 0.1 : 0.2)) - st.I) * Math.min(1, sdt * 2.5); // cuối thu: mưa nhỏ, lâm thâm
           st.k += ((has ? 1 : 0) - st.k) * Math.min(1, sdt * 1.2);
           if (!has && st.k < 0.03) { st.on = false; st.k = 0; }
           st.nextBolt -= dt;
-          if (has && st.members.length >= 3 && st.heavy && st.nextBolt <= 0 && !reduce) { fireBolt(st); st.nextBolt = 3000 + rnd() * 6000; }
+          if (has && !st.light && st.members.length >= 4 && st.heavy && st.nextBolt <= 0 && !reduce) { fireBolt(st); st.nextBolt = 3000 + rnd() * 6000; }
           if (has) st.last = st.members.slice(); // giữ chỗ để hạt mưa cuối cùng rơi nốt
         }
         st.m.visible = st.on && st.k > 0.02;
