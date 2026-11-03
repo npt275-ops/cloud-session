@@ -201,6 +201,7 @@ def main():
     for f in scripts:
         if f.startswith('vendor/'):
             continue
+        os.makedirs(os.path.dirname(os.path.join(OUT, f)), exist_ok=True)  # mã chia theo thư mục: logic/, render/, ui/
         shutil.copy2(os.path.join(SRC, f), os.path.join(OUT, f))
     shutil.copytree(os.path.join(SRC, 'vendor'), os.path.join(OUT, 'vendor'))
     shutil.copytree(os.path.join(SRC, 'icons'), os.path.join(OUT, 'icons'))

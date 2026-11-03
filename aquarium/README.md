@@ -31,11 +31,36 @@ Ván chín năm ở tốc độ 1× hết khoảng 72 phút; đồng hồ góc p
 Nút **‹ ›** đổi thời đại từ thời 1 (Nguyên thuỷ) tới thời 12 (Siêu việt) để đối chiếu và cải tiến từng thời. Công trình
 mẫu chỉ để xem, chưa gắn với logic nào.
 
+## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
+
+Bước 2 bắt đầu từ một đảo. Mở game là nhìn vào làng Lúa Vàng: tám người lập làng (4 nam, 4 nữ), mỗi người đứng đầu một
+gia tộc (Thóc, Mạ, Rơm, Đòng, Cốm, Liềm, Cò, Bông, áo mỗi nhà một màu), ngồi một ghế trong hội đồng (vua hoặc nữ vương,
+hai tướng, quân sư, tư tế, thương chủ, học giả, thợ cả; mỗi ghế cầm một món đồ riêng).
+
+- **Gen:** 8 gen tính cách (tham vọng, hiếu chiến, đa nghi, sợ hãi, trí tuệ, nhu nhược, sùng đạo, mưu mô), 4 gen dáng
+  (bước chân, dáng lưng, thế đứng, nhịp riêng), 1 thói quen khi đứng chờ (khoanh tay, chống nạnh, chắp tay sau lưng, gãi
+  đầu, xoa tay, đung đưa người), đôi khi một gen hiếm (bạo chúa, thánh nhân, thiên tài, kẻ phản bội, người mang dấu thần).
+- **Thế hệ mỗi 1,5 năm:** ghép đôi theo độ hợp tính cách cộng một phần ngẫu nhiên; cấm cha mẹ với con và anh chị em ruột,
+  anh em họ được nhưng kém hợp; ai trong hội đồng hết người hợp lệ thì cưới một người dân thường (dòng máu mới). Mỗi cặp
+  1 tới 3 con (đói thì ít hơn); làng tối đa 40 người có tên. Lập làng là tám người kết đôi và sinh lứa con đầu tiên ngay.
+- **Lai tạo:** gen của con là trung bình cha mẹ cộng một chút lệch; 5% mỗi gen bị đột biến (lệch 0,15 tới 0,35, nhật ký
+  và thẻ người đánh dấu ✦); gen dáng lai như tính cách nên con đi đứng "nửa giống cha nửa giống mẹ"; thói quen bốc thăm
+  từ cha hoặc mẹ, 5% ra thói quen mới.
+- **Tuổi:** một thế hệ ứng với khoảng 25 năm đời người; từ 62 tuổi có thể mất vì già, 72 tuổi rời hội đồng. Ghế trống thì
+  người cùng gia tộc (ưu tiên con của người vừa rời ghế) giỏi nhất vào thay, giữ 4 nam 4 nữ khi được.
+- **Bộ não và cử động:** mỗi người tự chọn một trong 5 trạng thái (đứng yên, đi, nói chuyện hay tranh cãi, đánh, hoảng sợ
+  chạy) theo tình huống và gen. Lệnh chiến tranh: người máu chiến ra cầu đánh, người nhút nhát chạy về nhà, người sùng
+  đạo cầu nguyện, người đa nghi đi cãi với vua. Hạn hán (mùa hạ, ngẫu nhiên): cầu mưa, đổ lỗi cho vua hay thương chủ, ra
+  đồng. Cùng một trạng thái nhưng gen đổi nhịp, biên độ, ngả tới hay lùi, độ run và việc liếc nhìn quanh.
+- **Bảng làng** (góc trái): thế hệ, số người, tình huống, hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh
+  chiến tranh, cãi nhau, lễ hội, yên ổn, sang thế hệ mới). **Bấm vào một người** để xem thẻ: gen, dáng, thói quen, cha
+  mẹ, vợ chồng, con cái, việc đang làm.
+
 ## Thứ tự làm tiếp
 
 1. ~~Làm sạch: sáu đảo trống, giữ thời tiết và thiên nhiên.~~
-2. Logic ngầm: 48 người cốt lõi, 8 gen và di truyền mỗi 1,5 năm, hội đồng ra quyết định, tài nguyên và đặc sản, dân tối
-   đa 200 người mỗi đảo, kèm bài kiểm thử chạy 9 năm bằng Node.
+2. Logic ngầm: ~~8 người cốt lõi của Lúa Vàng, gen, di truyền mỗi 1,5 năm, hội đồng, bộ não, cử động, kiểm thử 9 năm~~;
+   còn lại: tài nguyên và đặc sản, dân tối đa 200 người, hội đồng bỏ phiếu chính sách, rồi nhân lên 6 đảo (48 người).
 3. Hiển thị đảo: nhà chính ở giữa, bãi tài nguyên xung quanh, công trình theo cấp, nhân vật cốt lõi.
 4. Chiến tranh qua cầu và thôn tính.
 5. Nối quyền năng của thần, viện trợ, cấm vận và thì thầm vào logic mới.
@@ -88,7 +113,11 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 
 | File | Vai trò |
 |---|---|
-| `index.html` | Bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, phòng mẫu công trình |
+| `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, phòng mẫu công trình, làng |
+| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
+| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn |
+| `ui/` | **Bảng trên màn hình**: `village-ui.js` bảng làng và thẻ người |
+| `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Dáng đất sáu miền, hồ, sông, cây, cầu; chứa luôn các hàm dựng nhà, ruộng, chợ, toà thị chính, kho bạc, trường, đèn theo tám thời (bốn thời vượt người biến hình từ thời thứ tám) |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |
 | `clouds3d.js` | Mây trong bể kính: đợt mây theo gió, mây dính thành cụm, mây đen, sấm sét, mưa theo mùa |
@@ -98,6 +127,8 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `tools/build-package.py` | Đóng gói: bản web cài được cho điện thoại (`docs/`) và gói chơi không cần mạng cho máy tính |
 | `vendor/`, `icons/` | three.js r128, OrbitControls, phông chữ Fraunces và Outfit; biểu tượng ứng dụng |
 | `archive/` | Các bản đề xuất giao diện trước khi chốt 3D |
+
+Mỗi tệp mở đầu bằng một đoạn ghi nó làm gì và cần tệp nào; logic không biết gì về 3D, phần vẽ chỉ đọc trạng thái logic.
 
 Mã của bản cũ (trang game cũ, nền kinh tế, NPC, chiến tranh, kịch bản hỗn loạn, quyền năng, 53 bài kiểm thử) đã xoá khỏi
 kho để gói tải về gọn nhẹ; lấy lại được từ lịch sử git ở commit `705162f` (`git show 705162f:aquarium/archive/v1/sim.js`).
