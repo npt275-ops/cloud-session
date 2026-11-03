@@ -100,5 +100,34 @@
     return { root, nodes, parts };
   }
 
-  return { shapes, build, CLAN_COLOR, PROP_OF };
+  /* ---------- Đồ cầm tay của các cử chỉ (cuốc, liềm, rìu, búa, giáo, khiên, bao hàng, xu, bát, cốc, em bé, gậy) ---------- */
+  // mỗi món gắn vào một nút của khung, ẩn sẵn; cử chỉ nào cần thì hiện (render/gestures3d.js ghi món của từng cử chỉ)
+  // tay cầm dọc theo cẳng tay: trục -y của nút cổ tay là hướng từ khuỷu ra bàn tay
+  function buildProps(nodes) {
+    const THREE = T(), out = {};
+    const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7 }, o || {}));
+    const wood = M('#8a5a32'), metal = M('#a8adb3', { metalness: 0.5, roughness: 0.35 }), gold = M('#e8c24a', { metalness: 0.6, roughness: 0.3 });
+    const mesh = (g, m, x, y, z, rx, ry, rz) => { const me = new THREE.Mesh(g, m); me.position.set(x || 0, y || 0, z || 0); me.rotation.set(rx || 0, ry || 0, rz || 0); me.castShadow = true; return me; };
+    const group = (node, ...ms) => { const g = new THREE.Group(); for (const m of ms) g.add(m); g.visible = false; node.add(g); return g; };
+    const stick = (len, r) => new THREE.CylinderGeometry(r || 0.02, r || 0.02, len, 6);
+    out.hoe = group(nodes.wrR, mesh(stick(1.1), wood, 0, -0.4, 0), mesh(new THREE.BoxGeometry(0.06, 0.04, 0.22), metal, 0, -0.95, 0.1));
+    out.sickle = group(nodes.wrR, mesh(stick(0.22), wood, 0, -0.1, 0), mesh(new THREE.TorusGeometry(0.13, 0.015, 5, 12, Math.PI * 1.2), metal, 0, -0.3, 0.1, 0, Math.PI / 2, 0));
+    out.axe = group(nodes.wrR, mesh(stick(0.75), wood, 0, -0.25, 0), mesh(new THREE.BoxGeometry(0.05, 0.16, 0.2), metal, 0, -0.58, 0.1));
+    out.hammer = group(nodes.wrR, mesh(stick(0.38), wood, 0, -0.12, 0), mesh(new THREE.BoxGeometry(0.16, 0.08, 0.08), metal, 0, -0.3, 0));
+    const spearParts = () => [mesh(stick(1.7, 0.018), wood, 0, -0.3, 0), mesh(new THREE.ConeGeometry(0.045, 0.18, 5), metal, 0, -1.24, 0, Math.PI, 0, 0)];
+    out.spear = group(nodes.wrR, ...spearParts());
+    const shieldMesh = () => mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 14), M('#8a6a46'), 0.09, -0.12, 0, 0, 0, Math.PI / 2);
+    out.shield = group(nodes.elL, shieldMesh());
+    out.spearShield = group(nodes.wrR, ...spearParts()); out.spearShield.userData.with = 'shield';
+    out.sack = group(nodes.chest, mesh(new THREE.SphereGeometry(0.22, 10, 8), M('#c9a46e'), -0.24, 0.52, -0.06));
+    out.coin = group(nodes.wrR, mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.015, 10), gold, 0, -0.07, 0.04, Math.PI / 2, 0, 0));
+    out.crown = group(nodes.head, mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.08, 8, 1, true), gold, 0, 0.37, 0));
+    out.bowl = group(nodes.wrL, mesh(new THREE.SphereGeometry(0.1, 10, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M('#a8603e', { side: THREE.DoubleSide }), 0, -0.06, 0.06));
+    out.cup = group(nodes.wrR, mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.11, 8), M('#c27a4a'), 0, -0.07, 0.05));
+    out.baby = group(nodes.chest, mesh(new THREE.SphereGeometry(0.12, 10, 8), M('#f1e6c8'), 0, 0.17, 0.24), mesh(new THREE.SphereGeometry(0.07, 10, 8), M('#f2c6a0'), 0.1, 0.22, 0.26));
+    out.cane = group(nodes.wrR, mesh(stick(0.95, 0.022), wood, 0, -0.42, 0.02));
+    return out;
+  }
+
+  return { shapes, build, buildProps, CLAN_COLOR, PROP_OF };
 });

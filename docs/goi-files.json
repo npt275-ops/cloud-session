@@ -110,13 +110,18 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/render/rig3d.js",
-  "src": "render/rig3d.js",
+  "path": "BeKinh/render/gestures3d.js",
+  "src": "render/gestures3d.js",
   "mode": 420
  },
  {
-  "path": "BeKinh/render/village3d.js",
-  "src": "render/village3d.js",
+  "path": "BeKinh/render/model3d.js",
+  "src": "render/model3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/rig3d.js",
+  "src": "render/rig3d.js",
   "mode": 420
  },
  {
@@ -130,8 +135,8 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/ui/village-ui.js",
-  "src": "ui/village-ui.js",
+  "path": "BeKinh/ui/model-ui.js",
+  "src": "ui/model-ui.js",
   "mode": 420
  },
  {

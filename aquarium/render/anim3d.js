@@ -14,17 +14,29 @@
 
   // các góc của một tư thế (radian); tay và chân: L, R
   const KEYS = ['py', 'pry', 'prz', 'cx', 'cy', 'hx', 'hy', 'hz',
-    'sxL', 'szL', 'syL', 'exL', 'sxR', 'szR', 'syR', 'exR', 'hxL', 'hzL', 'kxL', 'hxR', 'hzR', 'kxR'];
+    'sxL', 'szL', 'syL', 'exL', 'sxR', 'szR', 'syR', 'exR', 'hxL', 'hzL', 'kxL', 'hxR', 'hzR', 'kxR',
+    'rx', 'ty']; // rx: ngả cả người (ngã, ngủ), ty: hạ cả người (quỳ, ngồi); phần vẽ áp hai khoá này lên gốc của khung
   const blank = () => { const p = {}; for (const k of KEYS) p[k] = 0; return p; };
 
   /* ---------- Tư thế đích của từng trạng thái ---------- */
   // ph: pha nhịp (radian, tăng theo tốc độ), t: thời gian (giây), K: núm vặn, o: { habit, mood, moving }
-  function target(state, ph, t, K, o) {
-    const p = blank(), A = K.amplitude, lean = K.lean;
-    // dáng nền: khom hay thẳng lưng, đứng khép hay dạng chân
-    p.cx = (0.5 - K.posture) * 0.3 + lean * 0.12;
+  // dáng nền theo gen: khom hay thẳng lưng, đứng khép hay dạng chân (dùng chung cho mọi trạng thái và mọi cử chỉ)
+  function basePose(K) {
+    const p = blank();
+    p.cx = (0.5 - K.posture) * 0.3 + K.lean * 0.12;
     p.hzL = 0.03 + K.stance * 0.09; p.hzR = p.hzL;
     p.szL = p.szR = 0.08;
+    return p;
+  }
+  // nét sống động theo gen: liếc nhìn quanh (đa nghi, mưu mô), run tay chân (sợ hãi, nhu nhược)
+  function addLife(p, t, K) {
+    const g = S(t * 0.7 + K.seed) * S(t * 0.31 + K.seed * 2);
+    if (g > 0.55 - 0.3 * K.glance) p.hy += K.glance * 0.9 * Math.sign(S(t * 0.13 + K.seed));
+    if (K.jitter > 0.02) { const j = K.jitter * 0.09; p.sxL += S(t * 23) * j; p.sxR += S(t * 21 + 1) * j; p.hy += S(t * 17) * j; p.cx += S(t * 19) * j * 0.5; }
+    return p;
+  }
+  function target(state, ph, t, K, o) {
+    const p = basePose(K), A = K.amplitude, lean = K.lean;
     const walkLegs = (amp, freqMul) => {
       const s = S(ph * freqMul);
       p.hxL = s * amp; p.hxR = -s * amp;
@@ -75,12 +87,7 @@
       p.hy = S(t * 1.3) * 0.9;
       if (!o.moving) { p.hxL = p.hxR = 0; p.kxL = p.kxR = 0.35; p.py = -0.08; p.cx = 0.35; p.sxL = p.sxR = 1.2; p.exL = p.exR = 1.9; p.szL = p.szR = -0.1; } // co rúm tại chỗ
     }
-    // liếc nhìn quanh (đa nghi, mưu mô): thỉnh thoảng quay đầu nhanh
-    const g = S(t * 0.7 + K.seed) * S(t * 0.31 + K.seed * 2);
-    if (g > 0.55 - 0.3 * K.glance) p.hy += K.glance * 0.9 * Math.sign(S(t * 0.13 + K.seed));
-    // run tay chân (sợ hãi, nhu nhược)
-    if (K.jitter > 0.02) { const j = K.jitter * 0.09; p.sxL += S(t * 23) * j; p.sxR += S(t * 21 + 1) * j; p.hy += S(t * 17) * j; p.cx += S(t * 19) * j * 0.5; }
-    return p;
+    return addLife(p, t, K);
   }
 
   // thói quen khi đứng chờ (bốc thăm từ cha hoặc mẹ); half: chỉ tay trái (tay phải đang nói chuyện)
@@ -109,5 +116,5 @@
     n.knL.rotation.set(P.kxL, 0, 0); n.knR.rotation.set(P.kxR, 0, 0);
   }
 
-  return { KEYS, blank, target, apply };
+  return { KEYS, blank, basePose, addLife, target, apply };
 });

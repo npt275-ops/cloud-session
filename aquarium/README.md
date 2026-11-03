@@ -53,6 +53,32 @@ hai tướng, quân sư, tư tế, thương chủ, học giả, thợ cả; mỗ
   Bảng làng (hội đồng, nhật ký, nút thử tình huống) đã ẩn cho dễ nhìn; bật lại bằng `panel: true` khi tạo
   `BK.VillageUI` trong `index.html`. Các tình huống vẫn chạy thật theo mùa (hạn hán mùa hạ) và theo tính cách (cãi nhau).
 
+## NPC mẫu và thư viện cử chỉ (65 cử chỉ)
+
+Hiện trên đảo chỉ còn **một NPC mẫu** (người lập làng ngồi ghế vua), đứng ở sân trống phía biển trong, trước dãy công
+trình. NPC tự diễn lần lượt cả thư viện, mỗi cử chỉ lặp 5 giây (cử chỉ một lần thì diễn hết rồi nghỉ). Dòng chữ nhỏ phía
+dưới cho biết đang diễn cử chỉ nào. Không có tên trên đầu; **bấm vào NPC** để mở thẻ nhỏ: tuổi, 8 gen tính cách, dáng,
+thói quen, và danh sách cử chỉ theo nhóm để chọn diễn một cử chỉ (bấm "Tự diễn lần lượt" để chạy lại cả danh sách).
+
+| Nhóm | Cử chỉ |
+|---|---|
+| Di chuyển | đứng thở, đi bộ, đi vội, chạy, chạy hoảng loạn, đi rón rén, đi khệnh khạng, đi khập khiễng, lùi lại |
+| Đứng chờ | khoanh tay, chống nạnh, chắp tay sau lưng, gãi đầu, xoa tay, đung đưa người, nhìn quanh, gõ chân sốt ruột |
+| Giao tiếp | nói chuyện, gật đầu, lắc đầu, vẫy tay chào, chỉ tay, tranh cãi, cười lớn, thì thầm, cúi chào |
+| Cảm xúc | vui nhảy cẫng, giận dậm chân, sợ co rúm, buồn cúi đầu, khóc che mặt, giật mình, suy nghĩ chống cằm |
+| Lao động | cuốc đất, gặt lúa, chặt cây, đập đá, vác hàng trên vai, trao đổi hàng, đóng búa xây nhà |
+| Tôn giáo | cầu nguyện, quỳ lạy, giơ tay cầu mưa |
+| Chính trị | diễn thuyết, ra lệnh, tuyên chiến, đầu hàng, quỳ thần phục, đăng quang |
+| Chiến đấu | thủ thế, đâm giáo, chém bổ xuống, đỡ đòn, bị đánh trúng, ngã gục, mừng chiến thắng |
+| Đời sống | ngồi, ăn, uống, ngủ, bế con, nhảy múa lễ hội |
+| Sinh tử | già yếu chống gậy, ốm ôm bụng, qua đời |
+
+Mỗi cử chỉ là một công thức tư thế trong `render/gestures3d.js` (kèm nhóm, có lặp hay không, tốc độ đi, đồ cầm tay,
+và gen thường gọi tới nó); đồ cầm tay (cuốc, liềm, rìu, búa, giáo, khiên, bao hàng, xu, bát, cốc, em bé, gậy) dựng ở
+`render/rig3d.js`. Nhịp, biên độ, ngả tới lùi, độ run và liếc nhìn vẫn theo gen của người diễn, nên cùng một cử chỉ
+người khác sẽ làm khác. Logic làng vẫn tạo đủ tám người nhưng tạm dừng (NPC mẫu không già đi); làng nhiều người
+(`render/village3d.js`, `ui/village-ui.js`) để đó, bật lại khi áp thư viện cho mọi NPC.
+
 ## Thứ tự làm tiếp
 
 1. ~~Làm sạch: sáu đảo trống, giữ thời tiết và thiên nhiên.~~
@@ -112,8 +138,8 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 |---|---|
 | `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình, làng |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
-| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo |
-| `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người (và bảng làng, đang ẩn) |
+| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo; `gestures3d.js` thư viện 65 cử chỉ; `model3d.js` NPC mẫu diễn thư viện |
+| `ui/` | **Bảng trên màn hình**: `model-ui.js` dòng cử chỉ và thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng (chưa dùng) |
 | `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Dáng đất sáu miền, hồ, sông, cây, cầu; chứa luôn các hàm dựng nhà, ruộng, chợ, toà thị chính, kho bạc, trường, đèn theo tám thời (bốn thời vượt người biến hình từ thời thứ tám) |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-c82a3e6">
+<meta name="bekinh-version" content="2026.11.03-6ee4327">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -98,13 +98,14 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="logic/council.js"></script>
 <script src="logic/brain.js"></script>
 <script src="logic/island.js"></script>
-<!-- vẽ người: khung khớp, cử động, làng -->
+<!-- vẽ người: khung khớp, cử động, thư viện cử chỉ, NPC mẫu; công trình có sẵn -->
 <script src="render/rig3d.js"></script>
 <script src="render/anim3d.js"></script>
-<script src="render/village3d.js"></script>
+<script src="render/gestures3d.js"></script>
+<script src="render/model3d.js"></script>
 <script src="render/buildings3d.js"></script>
-<!-- bảng làng và thẻ người -->
-<script src="ui/village-ui.js"></script>
+<!-- thẻ nhỏ của NPC mẫu -->
+<script src="ui/model-ui.js"></script>
 <script>
 (function () {
   'use strict';
@@ -279,21 +280,22 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const buildings = BK.Buildings3D.create({ THREE, W, Sim, lands3d, hash, puff, reduce });
   buildings.show(0, 0); // đảo Lúa Vàng, thời nguyên thuỷ
 
-  /* =============== Làng Lúa Vàng: 8 người cốt lõi đầu tiên (logic ở logic/, hình ở render/, bảng ở ui/) =============== */
+  /* =============== NPC mẫu: một người duy nhất, huấn luyện cả thư viện cử chỉ (render/gestures3d.js) =============== */
+  // Logic làng (logic/) vẫn tạo đủ tám người lập làng để lấy gen; chỉ vẽ một người: người lập làng ngồi ghế vua.
+  // Làng nhiều người (render/village3d.js, ui/village-ui.js) để đó, bật lại khi áp cử chỉ cho mọi NPC.
   const isle = BK.Island.create({ key: 'plains', seed: 42 });
-  const village = BK.Village3D.create({ THREE, scene, L: lands[0], S: isle, clearTrees: K3.clearTrees });
-  const villageUi = BK.VillageUI.create({ S: isle, Island: BK.Island, panel: false, onPick: (id) => village.select(id), onFly: () => flyTo(lands[0].center, 48) });
-  // mở game là nhìn vào làng (cuộn ra để thấy cả bể)
-  controls.target.copy(lands[0].center).setY(1.2);
-  camera.position.copy(lands[0].center).addScaledVector(lands[0].inw, 22).add(new THREE.Vector3(6, 13, 0)); // đứng phía biển trong nhìn vào làng
-  if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.4).add(controls.target);
-  // bấm vào một người (chạm nhẹ, không kéo) để xem thẻ người đó
+  const modelPerson = isle.people.get(isle.seats.king);
+  const model = BK.Model3D.create({ THREE, scene, L: lands[0], person: modelPerson, clearTrees: K3.clearTrees });
+  const modelUi = BK.ModelUI.create({ model });
+  // mở game là nhìn vào sân diễn trước nhà chính (cuộn ra để thấy cả bể)
+  { const sp = model.worldPos(); controls.target.copy(sp).setY(1.4); camera.position.copy(sp).addScaledVector(lands[0].inw, 9).add(new THREE.Vector3(3, 4.5, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
+  // bấm vào NPC (chạm nhẹ, không kéo) để mở thẻ nhỏ; bấm chỗ khác để đóng
   { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
     canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
     canvas.addEventListener('pointerup', (e) => {
       if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
       ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-      const id = village.pick(ray); villageUi.select(id);
+      if (model.hit(ray)) modelUi.open(e.clientX, e.clientY); else modelUi.close();
     }); }
 
   /* =============== Thanh sáu vùng đất =============== */
@@ -454,9 +456,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     const dt = Math.min(100, t - last); last = t;
     governQuality(dt);
     tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút
-    const dd = (dt * tps) / 1000;
-    W.day += dd;
-    BK.Island.step(isle, dd); // logic ngầm của làng chạy theo cùng đồng hồ
+    W.day += (dt * tps) / 1000; // logic làng tạm dừng: NPC mẫu không già đi trong lúc huấn luyện cử chỉ
     const { night } = applyTime();
     const doy = ((W.day % 360) + 360) % 360, winter = doy >= 270 ? clamp((doy - 270) / 10, 0, 1) * clamp((360 - doy) / 10, 0, 1) : 0;
     if (t - lastSlow > 1000) {
@@ -469,7 +469,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     sea3d.animate(dt, t, night);
     clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
     updateSnow(dt, t, winter);
-    village.update(dt, t, camera); villageUi.render();
+    model.update(dt, t); modelUi.render();
     const now = performance.now();
     updatePuffs(now, dt);
     for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
@@ -494,7 +494,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   window.__glass = {
     THREE, W, scene, camera, controls, renderer, lands3d, clouds3d, sea3d,
     buildings,
-    ff: (days) => { W.day += days; BK.Island.step(isle, days); updateSeasons(true); }, isle, village, villageUi,
+    ff: (days) => { W.day += days; updateSeasons(true); }, isle, model, modelUi,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, perf: PERF,
   };
 })();
