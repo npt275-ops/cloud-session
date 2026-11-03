@@ -105,6 +105,8 @@ Bản mẫu: `design/npc-tinh-chinh.html`; mẫu các thời đại khác (cổ 
 - Tóc có khối; trang phục theo vai: nón lá, áo tứ thân với yếm, khăn đóng với râu bạc, mũ miện với áo bào.
 - Tô hoạt hình ba tầng sáng tối, có viền sẫm mảnh. Người ở xa nên bỏ viền cho nhẹ.
 - **Nữ ở mọi thời đại phải có tóc dài và ngực** (phần nhô ra ở ngực).
+- **Công trình (đã chốt cách vẽ "Như đảo"):** giữ kiểu dáng ở `design/cong-trinh-lang-lua.html`. Tô mặt phẳng, góc vát một lớp,
+  chân nhà sẫm dần lên mái, mỗi công trình gộp thành một khối. Cùng một cách vẽ cho cả 12 thời.
 
 ## Thứ tự làm tiếp
 
