@@ -110,6 +110,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/face3d.js",
+  "src": "render/face3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/gestures3d.js",
   "src": "render/gestures3d.js",
   "mode": 420

@@ -2,7 +2,8 @@
  * NPC mẫu: một người duy nhất trên đảo, dùng để huấn luyện từng cử chỉ trong thư viện (render/gestures3d.js) trước khi áp
  * cho mọi NPC. Tự diễn lần lượt cả danh sách, hoặc diễn một cử chỉ được chọn. Cử chỉ có di chuyển thì người đi vòng
  * quanh sân trước nhà chính. Đồ cầm tay hiện theo cử chỉ. Núm vặn cử động lấy từ gen của người này (logic/brain.js).
- * Cần: three.js, render/rig3d.js, render/anim3d.js, render/gestures3d.js, logic/brain.js. */
+ * Khuôn mặt (render/face3d.js) đổi theo cử chỉ, hoặc theo biểu cảm được ghim.
+ * Cần: three.js, render/rig3d.js, render/anim3d.js, render/gestures3d.js, render/face3d.js, logic/brain.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Model3D = factory(BK);
@@ -18,16 +19,20 @@
 
     /* ---------- Khung và bộ phận: một người nên mỗi bộ phận là một khối riêng ---------- */
     const rig = Rig.build(Object.assign({}, person, { role: null }), 0), shapes = Rig.shapes();
-    const meshes = rig.parts.map((part) => { const m = new THREE.Mesh(shapes[part.type], new THREE.MeshStandardMaterial({ color: part.color, roughness: 0.75 })); m.matrixAutoUpdate = false; m.castShadow = true; m.userData.model = true; scene.add(m); return { m, part }; });
+    // mắt dựng riêng ở khuôn mặt (render/face3d.js), nên bỏ mắt mặc định của khung
+    const meshes = rig.parts.filter((part) => part.type !== 'eye').map((part) => { const m = new THREE.Mesh(shapes[part.type], new THREE.MeshStandardMaterial({ color: part.color, roughness: 0.75 })); m.matrixAutoUpdate = false; m.castShadow = true; m.userData.model = true; scene.add(m); return { m, part }; });
     const props = Rig.buildProps(rig.nodes);
     scene.add(rig.root); rig.root.rotation.order = 'YXZ';
     // vòng sáng dưới chân: nhìn từ xa vẫn thấy NPC mẫu đứng ở đâu
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.25, 40), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.renderOrder = 3; scene.add(ring);
     const K = Object.assign(Brain.knobs(person.genome, 0.3), { seed: person.id * 1.7 });
+    const face = BK.Face3D.create({ THREE, head: rig.nodes.head });
+    let pinnedFace = null; // null: biểu cảm theo cử chỉ
 
     /* ---------- Đang diễn gì ---------- */
-    let idx = 0, auto = true, startT = 0, ang = 0, yaw = ia + Math.PI, ph = 0;
+    const faceYaw = Math.atan2(L.inw.x, L.inw.z); // quay mặt về phía biển trong (phía camera nhìn vào); góc quay theo trục y dùng atan2(x, z)
+    let idx = 0, auto = true, startT = 0, ang = 0, yaw = faceYaw, ph = 0;
     const pos = stage.clone(), cur = Anim.blank();
     const current = () => Gs.LIST[idx];
     function play(key, keepAuto) { const i = Gs.LIST.findIndex((g) => g.key === key); if (i < 0) return; idx = i; startT = -1; auto = !!keepAuto; }
@@ -58,8 +63,10 @@
       } else {
         ph += sec * 3 * K.tempo;
         // đứng yên thì quay mặt ra phía camera nhìn vào (phía biển trong)
-        let d = ia + Math.PI - yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; yaw += d * Math.min(1, sec * 2);
+        let d = faceYaw - yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; yaw += d * Math.min(1, sec * 2);
       }
+      face.set(pinnedFace || G.face); face.setClosed(!pinnedFace && G.closed && (G.loop || u > 0.55));
+      face.update(dt, ts);
       const p = Anim.basePose(K);
       G.pose(p, ph, u, ts, K);
       Anim.addLife(p, ts, K);
@@ -74,7 +81,8 @@
     /* ---------- Bấm vào người mẫu ---------- */
     function hit(raycaster) { return raycaster.intersectObjects(meshes.map((x) => x.m)).length > 0; }
     const worldPos = () => L.center.clone().add(pos); // dùng được ngay cả trước khung hình đầu tiên
-    return { update, play, setAuto, hit, worldPos, person, knobs: K, get current() { return current(); }, get index() { return idx; }, get auto() { return auto; } };
+    const setFace = (key) => { pinnedFace = key || null; };
+    return { update, play, setAuto, setFace, hit, worldPos, person, knobs: K, get face() { return face.key; }, get pinnedFace() { return pinnedFace; }, get current() { return current(); }, get index() { return idx; }, get auto() { return auto; } };
   }
 
   return { create };

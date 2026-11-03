@@ -73,6 +73,12 @@ thói quen, và danh sách cử chỉ theo nhóm để chọn diễn một cử 
 | Đời sống | ngồi, ăn, uống, ngủ, bế con, nhảy múa lễ hội |
 | Sinh tử | già yếu chống gậy, ốm ôm bụng, qua đời |
 
+**7 biểu cảm khuôn mặt cố định** (`render/face3d.js`): Bình thường, Vui (mắt cười, miệng cười, má hồng), Buồn (lông mày
+nhướn đầu trong, miệng mếu), Giận (mắt nheo, chau mày, nghiến răng), Sợ hãi (mắt mở to, con ngươi nhỏ, miệng há nhỏ),
+Ngạc nhiên (mắt tròn, lông mày nhướn cao, há to), Nghi ngờ (một mắt nheo, một bên lông mày nhướn, miệng lệch). Mắt tự
+chớp, nhắm khi ngủ, cầu nguyện, quỳ lạy và qua đời. Mỗi cử chỉ tự gắn một biểu cảm (ví dụ cười lớn thì Vui, tranh cãi
+thì Giận, đi rón rén thì Nghi ngờ); trong thẻ nhỏ có thể ghim một biểu cảm để xem riêng.
+
 Mỗi cử chỉ là một công thức tư thế trong `render/gestures3d.js` (kèm nhóm, có lặp hay không, tốc độ đi, đồ cầm tay,
 và gen thường gọi tới nó); đồ cầm tay (cuốc, liềm, rìu, búa, giáo, khiên, bao hàng, xu, bát, cốc, em bé, gậy) dựng ở
 `render/rig3d.js`. Nhịp, biên độ, ngả tới lùi, độ run và liếc nhìn vẫn theo gen của người diễn, nên cùng một cử chỉ
@@ -138,7 +144,7 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 |---|---|
 | `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình, làng |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
-| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo; `gestures3d.js` thư viện 65 cử chỉ; `model3d.js` NPC mẫu diễn thư viện |
+| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `model3d.js` NPC mẫu diễn thư viện |
 | `ui/` | **Bảng trên màn hình**: `model-ui.js` dòng cử chỉ và thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng (chưa dùng) |
 | `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Dáng đất sáu miền, hồ, sông, cây, cầu; chứa luôn các hàm dựng nhà, ruộng, chợ, toà thị chính, kho bạc, trường, đèn theo tám thời (bốn thời vượt người biến hình từ thời thứ tám) |

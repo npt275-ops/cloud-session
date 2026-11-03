@@ -119,6 +119,19 @@
   add('sick', 'Sinh tử', 'Ốm, ôm bụng', { gene: 'dịch bệnh, đói' }, (p, ph, u, t) => { crouch(p, 0.4); p.cx += 0.35; armL(p, 0.7, -0.4, 1.6); armR(p, 0.7, -0.4, 1.6); p.prz = S(t * 1.3) * 0.05; p.hx = 0.3; });
   add('die', 'Sinh tử', 'Qua đời', { loop: false, dur: 4.5, gene: 'tuổi già, chiến tranh' }, (p, ph, u) => { const a = ramp(u, 0, 0.35), b = ramp(u, 0.35, 0.75); p.kxL = p.kxR = 1.55 * a * (1 - b); p.ty = -0.36 * a * (1 - b) + 0.12 * b; p.rx = 1.5 * b; p.cx = 0.3 * a; p.hx = 0.4 * a; armL(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); armR(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); });
 
+  /* ---------- Biểu cảm khuôn mặt đi kèm mỗi cử chỉ (render/face3d.js); 'closed': nhắm mắt ---------- */
+  const FACE = {
+    happy: ['cheer', 'laugh', 'dance', 'victory', 'wave', 'holdBaby', 'eat', 'drink', 'crown', 'speech', 'strut', 'trade'],
+    sad: ['sad', 'cry', 'limp', 'elder', 'sick', 'submit', 'die'],
+    angry: ['argue', 'stomp', 'thrust', 'slash', 'declareWar', 'command', 'guard', 'tapFoot', 'point', 'chop', 'mine'],
+    fear: ['panicRun', 'cower', 'backAway', 'surrender', 'block', 'fall'],
+    surprise: ['startle', 'hit'],
+    suspicious: ['sneak', 'lookAround', 'whisper', 'shakeHead', 'rubHands', 'crossArms'],
+  };
+  const CLOSED = ['sleep', 'pray', 'kneelPray', 'die'];
+  for (const G of L) { G.face = 'neutral'; G.closed = CLOSED.includes(G.key); }
+  for (const f in FACE) for (const k of FACE[f]) { const G = L.find((x) => x.key === k); if (G) G.face = f; }
+
   const BY_KEY = {}; for (const G of L) BY_KEY[G.key] = G;
   const GROUPS = [...new Set(L.map((G) => G.g))];
   return { LIST: L, BY_KEY, GROUPS, ease, bump, ramp };

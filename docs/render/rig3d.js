@@ -21,8 +21,9 @@
     S.torso = new THREE.SphereGeometry(1, 14, 10);
     S.head = new THREE.SphereGeometry(1, 16, 12);
     S.eye = new THREE.SphereGeometry(1, 6, 4);
-    S.hairShort = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.52);
-    S.hairLong = (() => { const g = new THREE.SphereGeometry(1, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.8); g.scale(1, 1.15, 1); return g; })();
+    S.hairShort = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.4); // chỏm tóc trên đỉnh, chừa trán và lông mày
+    // tóc dài: chỉ phần sau và hai bên (chừa khoảng mặt phía trước, +z), đội cùng chỏm tóc ngắn
+    S.hairLong = (() => { const g = new THREE.SphereGeometry(1, 14, 10, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, Math.PI * 0.25, Math.PI * 0.55); g.scale(1, 1.15, 1); return g; })();
     S.upper = down(new THREE.CylinderGeometry(0.055, 0.05, 0.3, 8), 0.3);
     S.fore = down(new THREE.CylinderGeometry(0.048, 0.042, 0.27, 8), 0.27);
     S.hand = new THREE.SphereGeometry(0.062, 8, 6);
@@ -80,7 +81,8 @@
     put('torso', nodes.chest, M(0, 0.18, 0, 0.22, 0.25, 0.16), cloth);
     put('head', nodes.head, M(0, 0.17, 0, 0.19, 0.2, 0.19), skin);
     for (const sx of [-1, 1]) put('eye', nodes.head, M(sx * 0.068, 0.19, 0.17, 0.026, 0.032, 0.014), '#1d1a24');
-    put(person.sex === 'f' ? 'hairLong' : 'hairShort', nodes.head, M(0, person.sex === 'f' ? 0.2 : 0.19, -0.01, 0.205, 0.21, 0.205), hair);
+    put('hairShort', nodes.head, M(0, 0.19, -0.01, 0.205, 0.21, 0.205), hair);
+    if (person.sex === 'f') put('hairLong', nodes.head, M(0, 0.17, -0.01, 0.208, 0.22, 0.208), hair);
     for (const s of ['L', 'R']) {
       put('upper', nodes['sh' + s], M(0, 0, 0), era === 0 ? skin : cloth);
       put('fore', nodes['el' + s], M(0, 0, 0), skin);

@@ -31,7 +31,8 @@
     let lastCap = '', lastTag = '';
 
     const ver = (document.querySelector('meta[name="bekinh-version"]') || {}).content || 'phát triển';
-    function capText() { const g = model.current; return 'Bản ' + ver + ' · Cử chỉ ' + (model.index + 1) + '/' + Gs.LIST.length + ' · <b>' + g.n + '</b> · ' + g.g + (model.auto ? '' : ' · đang giữ'); }
+    const faceName = (k) => (BK.Face3D.BY_KEY[k] || {}).name || k;
+    function capText() { const g = model.current; return 'Bản ' + ver + ' · Cử chỉ ' + (model.index + 1) + '/' + Gs.LIST.length + ' · <b>' + g.n + '</b> · ' + g.g + ' · mặt ' + faceName(model.face).toLowerCase() + (model.pinnedFace ? ' (ghim)' : '') + (model.auto ? '' : ' · đang giữ'); }
     function tagHtml() {
       const t = p.genome.traits, g = p.genome.gait, cur = model.current;
       const traits = G.TRAITS.map((x) => '<span>' + x.name + ' <i>' + Math.round(t[x.key] * 100) + '</i></span>').join('');
@@ -41,6 +42,7 @@
         '<div class="sub">NPC mẫu · ' + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(P.ageOf(p, 0)) + ' tuổi · thói quen ' + G.habitName(p.genome.habit).toLowerCase() + '</div>' +
         '<div class="tr">' + traits + '</div>' +
         '<div class="sec">Dáng</div><div>' + gait + '</div>' +
+        '<div class="sec">Biểu cảm khuôn mặt (' + BK.Face3D.EXPR.length + ')</div><div class="chips"><button data-f="" aria-pressed="' + !model.pinnedFace + '">Theo cử chỉ</button>' + BK.Face3D.EXPR.map((e) => '<button data-f="' + e.key + '" aria-pressed="' + (model.pinnedFace === e.key) + '">' + e.name + '</button>').join('') + '</div>' +
         '<div class="sec">Cử chỉ đã huấn luyện (' + Gs.LIST.length + ')</div><button data-auto="1" aria-pressed="' + model.auto + '">Tự diễn lần lượt</button>' + list;
     }
     function render() {
@@ -56,6 +58,7 @@
     }
     const close = () => { tag.hidden = true; };
     tag.addEventListener('click', (e) => {
+      const fb = e.target.closest('[data-f]'); if (fb) { model.setFace(fb.dataset.f); lastTag = ''; render(); return; }
       const b = e.target.closest('[data-g]'); if (b) { model.play(b.dataset.g); lastTag = ''; render(); return; }
       if (e.target.closest('[data-auto]')) { model.setAuto(!model.auto); lastTag = ''; render(); return; }
       if (e.target.closest('[data-x]')) close();
