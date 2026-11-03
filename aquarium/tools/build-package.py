@@ -181,9 +181,9 @@ CHƠI TRÊN ĐIỆN THOẠI
  - Phím mũi tên hay W A S D: lướt tới, lùi, sang trái, sang phải. Page Up / Page Down (E / Q, Space / Shift): lên cao,
    sà xuống. Trên điện thoại có sáu nút bay ở góc phải.
  - Nút tốc độ: 1×, 2×, 4×. Một trận chín năm ở 1× hết khoảng 72 phút.
- - Mẫu công trình: hiện công trình tiêu biểu và vài công trình nhỏ của mỗi đảo; nút ‹ › để đổi thời đại (1 tới 12).
+ - Làng Lúa Vàng: tám người lập làng và con cháu, cùng các công trình có sẵn. Bấm vào một người để xem thẻ (gen, cha mẹ, con cái).
  - Âm thanh, Bay (nút bay trên màn hình). Phím F: số khung hình.
- - Bản này là sáu đảo thô: chỉ có thiên nhiên, mùa, mây và mưa. Người và logic mới (Chaos Sandbox) đang làm.
+ - Năm đảo còn lại là đảo thô: chỉ có thiên nhiên, mùa, mây và mưa. Logic mới (Chaos Sandbox) đang làm từ Lúa Vàng.
 
 GIẤY PHÉP
  - three.js r128: giấy phép MIT (vendor/LICENSE-three.txt).

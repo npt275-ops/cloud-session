@@ -21,15 +21,12 @@ Bước 1 của kế hoạch là dọn sạch. Mở game là thấy bể kính y
 
 Ván chín năm ở tốc độ 1× hết khoảng 72 phút; đồng hồ góc phải ghi năm, mùa và ngày.
 
-## Phòng mẫu công trình
+## Công trình có sẵn trên Lúa Vàng
 
-Để không mất những công trình đã làm cho từng thời đại, nút **Mẫu công trình** hiện lên mỗi đảo:
-
-- sáu công trình trụ cột và mười công trình kỳ lạ riêng của đảo (tiêu biểu);
-- ở giữa đảo, toà thị chính (chỗ của **nhà chính** sau này), ba kiểu nhà, ruộng, chợ, kho bạc và hai đèn đường (công trình nhỏ).
-
-Nút **‹ ›** đổi thời đại từ thời 1 (Nguyên thuỷ) tới thời 12 (Siêu việt) để đối chiếu và cải tiến từng thời. Công trình
-mẫu chỉ để xem, chưa gắn với logic nào.
+Bản chính để bắt đầu build: trên đảo Lúa Vàng luôn có các công trình có sẵn ở thời nguyên thuỷ, đứng cùng các NPC:
+toà thị chính ở giữa đảo (chỗ của **nhà chính** sau này), ba kiểu nhà, ruộng, chợ, kho bạc, hai đèn đường, sáu công
+trình trụ cột và mười công trình kỳ lạ của đảo. Năm đảo còn lại vẫn là đảo thô. Việc chọn và đặt công trình nằm ở
+`render/buildings3d.js` (`show(đảo, thời)`); hình của từng công trình vẫn ở `lands3d.js`, `landmarks3d.js`, `sights3d.js`.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -52,9 +49,9 @@ hai tướng, quân sư, tư tế, thương chủ, học giả, thợ cả; mỗ
   chạy) theo tình huống và gen. Lệnh chiến tranh: người máu chiến ra cầu đánh, người nhút nhát chạy về nhà, người sùng
   đạo cầu nguyện, người đa nghi đi cãi với vua. Hạn hán (mùa hạ, ngẫu nhiên): cầu mưa, đổ lỗi cho vua hay thương chủ, ra
   đồng. Cùng một trạng thái nhưng gen đổi nhịp, biên độ, ngả tới hay lùi, độ run và việc liếc nhìn quanh.
-- **Bảng làng** (góc trái): thế hệ, số người, tình huống, hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh
-  chiến tranh, cãi nhau, lễ hội, yên ổn, sang thế hệ mới). **Bấm vào một người** để xem thẻ: gen, dáng, thói quen, cha
-  mẹ, vợ chồng, con cái, việc đang làm.
+- **Bấm vào một người** để xem thẻ: gen, dáng, thói quen, cha mẹ, vợ chồng, con cái, việc đang làm (bấm ✕ để đóng).
+  Bảng làng (hội đồng, nhật ký, nút thử tình huống) đã ẩn cho dễ nhìn; bật lại bằng `panel: true` khi tạo
+  `BK.VillageUI` trong `index.html`. Các tình huống vẫn chạy thật theo mùa (hạn hán mùa hạ) và theo tính cách (cãi nhau).
 
 ## Thứ tự làm tiếp
 
@@ -113,10 +110,10 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 
 | File | Vai trò |
 |---|---|
-| `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, phòng mẫu công trình, làng |
+| `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình, làng |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
-| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn |
-| `ui/` | **Bảng trên màn hình**: `village-ui.js` bảng làng và thẻ người |
+| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo |
+| `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người (và bảng làng, đang ẩn) |
 | `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Dáng đất sáu miền, hồ, sông, cây, cầu; chứa luôn các hàm dựng nhà, ruộng, chợ, toà thị chính, kho bạc, trường, đèn theo tám thời (bốn thời vượt người biến hình từ thời thứ tám) |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |

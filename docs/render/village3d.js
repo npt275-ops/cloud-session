@@ -13,19 +13,20 @@
   function create(o) {
     const { THREE, scene, L, S, clearTrees } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People;
     const CAP = 64; // số người tối đa vẽ được (logic giới hạn 40 người có tên)
+    const SCALE = 1.45; // cỡ người so với nhà và đảo
 
     /* ---------- Những chỗ trong làng (toạ độ trên đảo) ---------- */
     const at = (a, r) => new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
     const ia = Math.atan2(L.inw.z, L.inw.x), oa = L.oa;
     const SPOT = {
-      hall: new THREE.Vector3(0, 0, 0),
+      hall: at(ia, 5.2), // trước cửa nhà chính (toà nhà đứng ở giữa đảo)
       square: at(ia, 6.5),
       field: at(oa + 0.9, 27),
       bridge: L.landing[0].clone().multiplyScalar(0.86),
     };
     const homeOf = (clan) => { const i = Math.max(0, S.clans.indexOf(clan)); return at(ia + 0.6 + i * (Math.PI * 2 - 1.2) / 8, 11.5); };
     // dọn một khoảng đất trống cho làng (cây quanh chỗ ở và nhà chính)
-    if (clearTrees) { clearTrees(L, 0, 0, 9); clearTrees(L, SPOT.square.x, SPOT.square.z, 4); for (const c of S.clans) { const h = homeOf(c); clearTrees(L, h.x, h.z, 3.2); } }
+    if (clearTrees) { clearTrees(L, 0, 0, 7); clearTrees(L, SPOT.square.x, SPOT.square.z, 4); for (const c of S.clans) { const h = homeOf(c); clearTrees(L, h.x, h.z, 3.2); } }
 
     /* ---------- Khối lặp cho từng loại bộ phận ---------- */
     const shapes = Rig.shapes(), mat = new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0 });
@@ -65,7 +66,7 @@
       x.fillStyle = '#ffd27a'; x.font = '500 16px Outfit, system-ui, sans-serif'; x.fillText(p.role ? BK.Council.seatName(p.role, p.sex) : p.commoner ? 'người dân thường' : 'đời thứ ' + (p.gen + 1), 128, 52);
       const t = new THREE.CanvasTexture(c);
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
-      s.scale.set(1.7, 0.42, 1); s.renderOrder = 10; return s;
+      s.scale.set(2.0, 0.5, 1); s.renderOrder = 10; return s;
     }
 
     /* ---------- Đi tới đâu ---------- */
@@ -109,11 +110,11 @@
         Anim.apply(f.rig, f.cur, tgt, dt);
         // đặt khung vào thế giới: trẻ con nhỏ hơn
         const age = P.ageOf(p, S.day), sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
-        f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.rotation.y = f.yaw; f.rig.root.scale.setScalar(sc * 1.15);
+        f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.rotation.y = f.yaw; f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
         // tên: hiện khi nhìn gần
-        f.label.position.copy(f.rig.root.position).setY(2.55 * sc * 1.15 + 0.35);
-        f.label.visible = camera.position.distanceTo(f.label.position) < 34 || selected === p.id; // tên chỉ hiện khi nhìn gần, hoặc người đang chọn
+        f.label.position.copy(f.rig.root.position).setY(2.55 * sc * SCALE + 0.35);
+        f.label.visible = camera.position.distanceTo(f.label.position) < 48 || selected === p.id; // tên chỉ hiện khi nhìn gần, hoặc người đang chọn
       }
       for (const [id, f] of folks) if (!alive.has(id)) { scene.remove(f.label); f.label.material.map.dispose(); folks.delete(id); if (selected === id) selected = null; }
       // đổ vào các khối lặp

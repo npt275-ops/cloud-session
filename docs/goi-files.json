@@ -105,6 +105,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/buildings3d.js",
+  "src": "render/buildings3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/rig3d.js",
   "src": "render/rig3d.js",
   "mode": 420

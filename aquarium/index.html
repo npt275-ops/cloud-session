@@ -57,9 +57,6 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="speed" title="Đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
   <span class="sep"></span>
-  <button id="gallery" aria-pressed="false" title="Hiện hoặc ẩn công trình mẫu">Mẫu công trình</button>
-  <span class="era" id="eraBox" hidden><button id="eraPrev" aria-label="Thời trước">‹</button><span id="eraName">Thời 1</span><button id="eraNext" aria-label="Thời sau">›</button></span>
-  <span class="sep"></span>
   <button id="sound" aria-pressed="false">Âm thanh</button>
   <button id="flyBtn" aria-pressed="false" title="Nút bay trên màn hình (phím mũi tên, W A S D, Q E)">Bay</button>
 </div>
@@ -90,6 +87,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="render/rig3d.js"></script>
 <script src="render/anim3d.js"></script>
 <script src="render/village3d.js"></script>
+<script src="render/buildings3d.js"></script>
 <!-- bảng làng và thẻ người -->
 <script src="ui/village-ui.js"></script>
 <script>
@@ -113,7 +111,6 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     { key: 'plains', land: 'Đồng bằng', city: 'Lúa Vàng' }, { key: 'forest', land: 'Rừng', city: 'Thông Xanh' }, { key: 'mountain', land: 'Núi', city: 'Đá Mây' },
     { key: 'tundra', land: 'Băng nguyên', city: 'Tuyết Trắng' }, { key: 'coast', land: 'Biển', city: 'Cửa Sóng' }, { key: 'desert', land: 'Sa mạc', city: 'Cát Hồng' },
   ];
-  const ERA_NAMES = ['Nguyên thuỷ', 'Cổ đại', 'Trung đại', 'Phục hưng', 'Công nghiệp', 'Cận đại', 'Hiện đại', 'Tương lai gần', 'Ánh sáng', 'Mặt trời', 'Không gian', 'Siêu việt'];
   const W = {
     day: 0,
     // các lớp dựng hình cũ đọc trạng thái mỗi đảo từ đây; w: null nghĩa là chưa có người
@@ -262,53 +259,18 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (force || key !== seasonKey) { seasonKey = key; lands3d.seasons(w, 0); }
   }
 
-  /* =============== Phòng mẫu công trình: tiêu biểu và vài công trình nhỏ, đủ mười hai thời =============== */
-  // Giữ lại để đối chiếu và cải tiến: sáu công trình trụ cột và mười công trình kỳ lạ của mỗi đảo, toà thị chính ở giữa đảo
-  // (chỗ của nhà chính sau này), ba kiểu nhà, ruộng, chợ, kho bạc và đèn đường. Chọn thời để xem từng thời khác nhau ra sao.
-  let marks = null, sights = null, galleryOn = false, galleryEra = 0;
-  const smallSets = lands.map(() => null);
+  /* =============== Công trình có sẵn trên Lúa Vàng (render/buildings3d.js), làm bản chính để bắt đầu build =============== */
   const K3 = lands3d.kit;
-  function buildSmall(L, e) {
-    if (smallSets[L.i]) { L.g.remove(smallSets[L.i]); K3.disposeGroup(smallSets[L.i]); }
-    const g = new THREE.Group(); L.g.add(g); smallSets[L.i] = g;
-    const ia = Math.atan2(L.inw.z, L.inw.x), at = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
-    const e7 = Math.min(7, e); // các mẫu nhỏ có tám thời; bốn thời vượt người biến hình từ thời thứ tám (setBeyond)
-    const put = (fn, a, r) => { const [x, z] = at(a, r), k = new K3.Kit(); fn(k); K3.setBeyond(e >= 8 ? e : 0); K3.meshOf(k, L.litMat, g, x, z, Math.atan2(-x, -z)); K3.setBeyond(0); K3.clearTrees(L, x, z, 4.2); };
-    put((k) => K3.buildHall(k, e7, L.ter), 0, 0); // nhà chính (tạm dùng toà thị chính)
-    put((k) => K3.buildHouse(k, e7, L.ter, 0, 1), ia + 1.0, 8.5);
-    put((k) => K3.buildHouse(k, e7, L.ter, 1, 2), ia + 1.35, 9.5);
-    put((k) => K3.buildHouse(k, e7, L.ter, 2, 3), ia - 1.0, 8.5);
-    put((k) => K3.buildFarm(k, e7, L.ter, 0), ia + Math.PI - 0.6, 9.5);
-    put((k) => K3.buildShop(k, e7, L.ter, 0), ia - 1.35, 9.5);
-    put((k) => K3.buildBank(k, e7, L.ter), ia, 10.5);
-    for (const a of [ia + 0.55, ia - 0.55]) put((k) => K3.buildLamp(k, e7), a, 6.4);
-  }
-  function setGallery(on, e) {
-    galleryOn = on; galleryEra = e;
-    for (const c of W.cities) { c.era = e; c.settled = on; }
-    if (on && !marks) { marks = Landmarks3D.create({ THREE, Sim, W, lands3d, hash, puff, clickable, unclickable, reduce }); sights = Sights3D.create({ THREE, W, lands3d, clickable, unclickable }); }
-    if (marks) marks.syncDay(false);
-    if (sights) sights.syncDay();
-    for (const L of lands) {
-      if (on) buildSmall(L, e); else if (smallSets[L.i]) { L.g.remove(smallSets[L.i]); K3.disposeGroup(smallSets[L.i]); smallSets[L.i] = null; }
-      L.g.traverse((o) => { if (o.userData && o.userData.sight) o.visible = on; });
-    }
-    $('gallery').setAttribute('aria-pressed', String(on));
-    $('eraBox').hidden = !on;
-    $('eraName').textContent = 'Thời ' + (e + 1) + ': ' + ERA_NAMES[e];
-    PERF.force = true;
-  }
-  $('gallery').onclick = () => setGallery(!galleryOn, galleryEra);
-  $('eraPrev').onclick = () => setGallery(true, (galleryEra + 11) % 12);
-  $('eraNext').onclick = () => setGallery(true, (galleryEra + 1) % 12);
+  const buildings = BK.Buildings3D.create({ THREE, W, Sim, lands3d, hash, puff, reduce });
+  buildings.show(0, 0); // đảo Lúa Vàng, thời nguyên thuỷ
 
   /* =============== Làng Lúa Vàng: 8 người cốt lõi đầu tiên (logic ở logic/, hình ở render/, bảng ở ui/) =============== */
   const isle = BK.Island.create({ key: 'plains', seed: 42 });
   const village = BK.Village3D.create({ THREE, scene, L: lands[0], S: isle, clearTrees: K3.clearTrees });
-  const villageUi = BK.VillageUI.create({ S: isle, Island: BK.Island, onPick: (id) => village.select(id), onFly: () => flyTo(lands[0].center, 48) });
+  const villageUi = BK.VillageUI.create({ S: isle, Island: BK.Island, panel: false, onPick: (id) => village.select(id), onFly: () => flyTo(lands[0].center, 48) });
   // mở game là nhìn vào làng (cuộn ra để thấy cả bể)
   controls.target.copy(lands[0].center).setY(1.2);
-  camera.position.copy(lands[0].center).addScaledVector(lands[0].out, 24).add(new THREE.Vector3(10, 17, 0));
+  camera.position.copy(lands[0].center).addScaledVector(lands[0].inw, 22).add(new THREE.Vector3(6, 13, 0)); // đứng phía biển trong nhìn vào làng
   if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.4).add(controls.target);
   // bấm vào một người (chạm nhẹ, không kéo) để xem thẻ người đó
   { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
@@ -488,7 +450,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
     lands3d.animate(dt, t, night, tod, null, null);
-    if (marks) marks.animate(dt);
+    buildings.animate(dt);
     sea3d.animate(dt, t, night);
     clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
     updateSnow(dt, t, winter);
@@ -516,7 +478,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   // móc cho các bài kiểm tra chạy trình duyệt không giao diện
   window.__glass = {
     THREE, W, scene, camera, controls, renderer, lands3d, clouds3d, sea3d,
-    setGallery, gallery: () => ({ on: galleryOn, era: galleryEra }),
+    buildings,
     ff: (days) => { W.day += days; BK.Island.step(isle, days); updateSeasons(true); }, isle, village, villageUi,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, perf: PERF,
   };

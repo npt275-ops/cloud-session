@@ -38,7 +38,8 @@
   function create(o) {
     const { S, Island, onPick, onFly } = o, P = BK.People, G = BK.Genes, CO = BK.Council, B = BK.Brain, R = BK.Rules;
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
-    const panel = document.createElement('section'); panel.className = 'vpanel glass'; panel.setAttribute('aria-label', 'Làng ' + S.name); document.body.appendChild(panel);
+    // panel: false thì không hiện bảng làng, chỉ hiện thẻ người khi bấm vào một người
+    const panel = document.createElement('section'); panel.className = 'vpanel glass'; panel.setAttribute('aria-label', 'Làng ' + S.name); panel.hidden = o.panel === false; document.body.appendChild(panel);
     const card = document.createElement('section'); card.className = 'vcard glass'; card.hidden = true; document.body.appendChild(card);
     let sel = null, lastKey = '';
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
@@ -78,7 +79,7 @@
     function render(force) {
       const key = S.log.length + '|' + S.gen + '|' + Math.floor(S.day * 4) + '|' + sel;
       if (!force && key === lastKey) return; lastKey = key;
-      renderPanel(); renderCard();
+      if (!panel.hidden) renderPanel(); renderCard();
     }
     function select(id) { sel = id; render(true); if (onPick) onPick(id); }
     const click = (e) => {
