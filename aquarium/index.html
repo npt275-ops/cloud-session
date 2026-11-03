@@ -57,8 +57,6 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="speed" title="Đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
   <span class="sep"></span>
-  <button id="toModel" title="Bay tới NPC mẫu">NPC mẫu</button>
-  <span class="sep"></span>
   <button id="sound" aria-pressed="false">Âm thanh</button>
   <button id="flyBtn" aria-pressed="false" title="Nút bay trên màn hình (phím mũi tên, W A S D, Q E)">Bay</button>
 </div>
@@ -73,28 +71,11 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="audio.js"></script>
 <script src="lands3d.js"></script>
 <script src="sea3d.js"></script>
-<script src="landmarks3d.js"></script>
-<script src="sights3d.js"></script>
 <script src="clouds3d.js"></script>
-<!-- logic ngầm của một đảo: không vẽ gì, chạy được bằng Node (test/island.test.js) -->
-<script src="logic/rng.js"></script>
-<script src="logic/rules.js"></script>
-<script src="logic/genes.js"></script>
-<script src="logic/people.js"></script>
-<script src="logic/family.js"></script>
-<script src="logic/council.js"></script>
-<script src="logic/brain.js"></script>
-<script src="logic/island.js"></script>
-<!-- vẽ người: khung khớp, cử động, thư viện cử chỉ, NPC mẫu; công trình có sẵn -->
-<script src="render/rig3d.js"></script>
-<script src="render/ik3d.js"></script>
-<script src="render/anim3d.js"></script>
-<script src="render/gestures3d.js"></script>
-<script src="render/face3d.js"></script>
-<script src="render/model3d.js"></script>
+<!-- công trình: bộ dựng hình chung, kiểu nhà từng đảo theo cấp, rồi phần đặt công trình lên đảo -->
+<script src="render/build/kit3d.js"></script>
+<script src="render/build/plains3d.js"></script>
 <script src="render/buildings3d.js"></script>
-<!-- thẻ nhỏ của NPC mẫu -->
-<script src="ui/model-ui.js"></script>
 <script>
 (function () {
   'use strict';
@@ -264,30 +245,11 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     if (force || key !== seasonKey) { seasonKey = key; lands3d.seasons(w, 0); }
   }
 
-  /* =============== Công trình có sẵn trên Lúa Vàng (render/buildings3d.js), làm bản chính để bắt đầu build =============== */
-  const K3 = lands3d.kit;
-  const buildings = BK.Buildings3D.create({ THREE, W, Sim, lands3d, hash, puff, reduce });
-  buildings.show(0, 0); // đảo Lúa Vàng, thời nguyên thuỷ
-
-  /* =============== NPC mẫu: một người duy nhất, huấn luyện cả thư viện cử chỉ (render/gestures3d.js) =============== */
-  // Logic làng (logic/) vẫn tạo đủ tám người lập làng để lấy gen; chỉ vẽ một người: người lập làng ngồi ghế vua.
-  // Làng nhiều người (render/village3d.js, ui/village-ui.js) để đó, bật lại khi áp cử chỉ cho mọi NPC.
-  const isle = BK.Island.create({ key: 'plains', seed: 42 });
-  const modelPerson = isle.people.get(isle.seats.king);
-  const model = BK.Model3D.create({ THREE, scene, L: lands[0], person: modelPerson, clearTrees: K3.clearTrees });
-  const modelUi = BK.ModelUI.create({ model });
-  const lookAtModel = () => { const sp = model.worldPos(); flyTo(sp, 7, lands[0].inw.clone().setY(0.3), 0.8); };
-  $('toModel').onclick = lookAtModel;
-  // mở game là nhìn vào sân diễn trước nhà chính (cuộn ra để thấy cả bể)
-  { const sp = model.worldPos(); controls.target.copy(sp).setY(0.8); camera.position.copy(sp).addScaledVector(lands[0].inw, 9).add(new THREE.Vector3(2.5, 3.6, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
-  // bấm vào NPC (chạm nhẹ, không kéo) để mở thẻ nhỏ; bấm chỗ khác để đóng
-  { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
-    canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
-    canvas.addEventListener('pointerup', (e) => {
-      if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
-      ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-      if (model.hit(ray)) modelUi.open(e.clientX, e.clientY); else modelUi.close();
-    }); }
+  /* =============== Công trình (render/buildings3d.js): bắt đầu từ cấp 1, đảo Lúa Vàng trước =============== */
+  const buildings = BK.Buildings3D.create({ THREE, lands3d });
+  buildings.show(0, 1);
+  // mở game là nhìn vào làng Lúa Vàng (cuộn ra để thấy cả bể)
+  { const L = lands[0]; controls.target.copy(L.center).setY(1.5); camera.position.copy(L.center).addScaledVector(L.inw, 26).add(new THREE.Vector3(6, 17, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
 
   /* =============== Thanh sáu vùng đất =============== */
   const TER_DOT = { plains: '#86bb63', forest: '#3f7a4c', mountain: '#a39d90', tundra: '#e4edf2', coast: '#4aa3c7', desert: '#e3c58e' };
@@ -456,11 +418,10 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
     lands3d.animate(dt, t, night, tod, null, null);
-    buildings.animate(dt);
+    buildings.animate(dt, t, night);
     sea3d.animate(dt, t, night);
     clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
     updateSnow(dt, t, winter);
-    model.update(dt, t); modelUi.render();
     const now = performance.now();
     updatePuffs(now, dt);
     for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
@@ -485,7 +446,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   window.__glass = {
     THREE, W, scene, camera, controls, renderer, lands3d, clouds3d, sea3d,
     buildings,
-    ff: (days) => { W.day += days; updateSeasons(true); }, isle, model, modelUi,
+    ff: (days) => { W.day += days; updateSeasons(true); }, buildings,
     lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, perf: PERF,
   };
 })();

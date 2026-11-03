@@ -21,12 +21,19 @@ Bước 1 của kế hoạch là dọn sạch. Mở game là thấy bể kính y
 
 Ván chín năm ở tốc độ 1× hết khoảng 72 phút; đồng hồ góc phải ghi năm, mùa và ngày.
 
-## Công trình có sẵn trên Lúa Vàng
+## Bản chính: công trình bắt đầu từ cấp 1
 
-Bản chính để bắt đầu build: trên đảo Lúa Vàng luôn có các công trình có sẵn ở thời nguyên thuỷ, đứng cùng các NPC:
-toà thị chính ở giữa đảo (chỗ của **nhà chính** sau này), ba kiểu nhà, ruộng, chợ, kho bạc, hai đèn đường, sáu công
-trình trụ cột và mười công trình kỳ lạ của đảo. Năm đảo còn lại vẫn là đảo thô. Việc chọn và đặt công trình nằm ở
-`render/buildings3d.js` (`show(đảo, thời)`); hình của từng công trình vẫn ở `lands3d.js`, `landmarks3d.js`, `sights3d.js`.
+NPC mẫu đã ra khỏi bể (code vẫn giữ trong `render/`, `ui/`, `logic/` để dùng lại). Công trình cũ (toà thị chính, nhà,
+chợ, kho bạc, đèn, sáu công trình trụ cột, mười công trình kỳ lạ) đã bỏ hẳn; code cũ còn trong lịch sử git.
+
+Công trình làm lại từ **cấp 1**, đảo Lúa Vàng trước, vẽ theo cách của đảo (mặt phẳng, góc vát, chân sẫm dần lên mái),
+cỡ theo người cao 1,4. Mở game là nhìn vào làng cấp 1:
+- **Nhà dài của tù trưởng** (nhà chính, giữa làng): nhà sàn thấp, mái rơm trùm gần chạm sàn, hai cột chạm có sừng trâu, cầu thang gỗ.
+- Năm **lều tròn** mái rơm quay cửa về bếp lửa, có chum nước hoặc khúc gỗ ngồi trước cửa.
+- **Bếp lửa chung** có vòng đá và lửa bập bùng, **cột vật tổ** có chim trên đỉnh, **kho lương** trên cột có đĩa chặn chuột.
+- **Giàn phơi lúa**, **thửa ruộng đầu tiên** có rào, hai **đống rơm**, **bãi đá thờ**, sân đất quanh làng.
+
+Năm đảo còn lại chưa có công trình. Mỗi công trình gộp thành một khối (một lượt vẽ); cả làng cấp 1 khoảng 11 nghìn tam giác.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -55,7 +62,7 @@ hai tướng, quân sư, tư tế, thương chủ, học giả, thợ cả; mỗ
 
 ## NPC mẫu và thư viện cử chỉ (65 cử chỉ)
 
-Hiện trên đảo chỉ còn **một NPC mẫu** (người lập làng ngồi ghế vua), đứng ở sân trống phía biển trong, trước dãy công
+(Đã ra khỏi bể kính khi bắt đầu bản chính; mô tả dưới đây là bản mẫu để áp cho mọi NPC sau này.) Trước đây trên đảo có **một NPC mẫu** (người lập làng ngồi ghế vua), đứng ở sân trống phía biển trong, trước dãy công
 trình. NPC tự diễn lần lượt cả thư viện, mỗi cử chỉ lặp 5 giây (cử chỉ một lần thì diễn hết rồi nghỉ). Dòng chữ nhỏ phía
 dưới cho biết đang diễn cử chỉ nào. Không có tên trên đầu; **bấm vào NPC** để mở thẻ nhỏ: tuổi, 8 gen tính cách, dáng,
 thói quen, và danh sách cử chỉ theo nhóm để chọn diễn một cử chỉ (bấm "Tự diễn lần lượt" để chạy lại cả danh sách).
@@ -165,16 +172,16 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 
 | File | Vai trò |
 |---|---|
-| `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình, làng |
+| `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
-| `render/` | **Vẽ người**: `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng, đi lại, tên trên đầu, bấm chọn; `buildings3d.js` đặt công trình có sẵn lên một đảo; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện |
-| `ui/` | **Bảng trên màn hình**: `model-ui.js` dòng cử chỉ và thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng (chưa dùng) |
+| `render/` | **Vẽ người** (chưa nạp vào game): `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) |
+| `render/build/` | `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm); `plains3d.js` kiểu công trình và bố cục làng Lúa Vàng theo từng cấp (`LEVELS`, `BUILD`). Đảo khác thêm tệp riêng cùng kiểu |
+| `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
+| `ui/` | **Bảng trên màn hình** (chưa nạp): `model-ui.js` thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng |
 | `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
-| `lands3d.js` | Dáng đất sáu miền, hồ, sông, cây, cầu; chứa luôn các hàm dựng nhà, ruộng, chợ, toà thị chính, kho bạc, trường, đèn theo tám thời (bốn thời vượt người biến hình từ thời thứ tám) |
+| `lands3d.js` | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông, cây, đổi màu theo mùa, sáu cây cầu thô |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |
 | `clouds3d.js` | Mây trong bể kính: đợt mây theo gió, mây dính thành cụm, mây đen, sấm sét, mưa theo mùa |
-| `landmarks3d.js` | Sáu công trình trụ cột của mỗi miền qua mười hai thời |
-| `sights3d.js` | Mười công trình kỳ lạ của mỗi đảo, đổi theo thời đại |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio |
 | `tools/build-package.py` | Đóng gói: bản web cài được cho điện thoại (`docs/`) và gói chơi không cần mạng cho máy tính |
 | `vendor/`, `icons/` | three.js r128, OrbitControls, phông chữ Fraunces và Outfit; biểu tượng ứng dụng |
