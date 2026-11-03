@@ -1,0 +1,795 @@
+<title>NPC tinh chỉnh</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root { --sky: #9fd0ea; --ink: #1c2430; --panel: rgba(250, 247, 240, 0.92); --line: rgba(28, 36, 48, 0.14); --accent: #b8563a; --muted: #5a6270;
+  --f: "Be Vietnam Pro", system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --panel: rgba(24, 30, 40, 0.9); --ink: #eef1f5; --line: rgba(255,255,255,0.14); --muted: #aab3c0; --accent: #e88a6a; color-scheme: dark } }
+:root[data-theme="dark"] { --panel: rgba(24, 30, 40, 0.9); --ink: #eef1f5; --line: rgba(255,255,255,0.14); --muted: #aab3c0; --accent: #e88a6a; color-scheme: dark }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--sky); color: var(--ink); font: 500 14px/1.4 var(--f); }
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.card { position: fixed; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(6px); }
+#head { top: calc(12px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); max-width: min(440px, calc(100% - 32px)); padding: 10px 14px; }
+#head h1 { margin: 0 0 2px; font-size: 16px; font-weight: 700; text-wrap: balance; }
+#head p { margin: 0; color: var(--muted); font-size: 12.5px; }
+#bar { left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 8px 10px; width: max-content; max-width: calc(100% - 32px); }
+#bar select, #bar button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-height: 34px; }
+#bar select { max-width: 46vw; }
+#bar button { cursor: pointer; min-width: 34px; }
+#bar button:focus-visible, #bar select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#bar label { display: flex; gap: 6px; align-items: center; }
+#now { width: 100%; text-align: center; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lab { position: fixed; left: 0; top: 0; pointer-events: none; text-align: center; font-size: 12px; color: #1c2430; background: rgba(255,255,255,0.78); border-radius: 8px; padding: 3px 8px; white-space: nowrap; }
+.lab b { display: block; font-weight: 700; } .lab span { color: #5a6270; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .lab { font-size: 10px; padding: 2px 5px; } .lab span { display: none; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;700&display=swap">
+<canvas id="c"></canvas>
+<div class="card" id="head"><h1>NPC tinh chỉnh · xem trước</h1>
+<p>Bên trái là NPC hiện tại, bốn người còn lại được vẽ lại. Tất cả cao 1,4 như trong game và dùng chung bộ khung, 65 cử chỉ, 7 biểu cảm. Ngôi nhà sàn phía sau đúng cỡ nhà thời đầu. Bỏ chọn "Tô hoạt hình" để so với cách tô thường. Kéo để xoay, cuộn để phóng to.</p></div>
+<div id="labels"></div>
+<div class="card" id="bar">
+<button id="prev" aria-label="Cử chỉ trước">‹</button>
+<select id="gesture" aria-label="Cử chỉ"></select>
+<button id="next" aria-label="Cử chỉ sau">›</button>
+<select id="face" aria-label="Biểu cảm"></select>
+<label><input type="checkbox" id="auto" checked> Tự diễn</label>
+<label><input type="checkbox" id="toon" checked> Tô hoạt hình</label>
+<div id="now"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* Bể Kính · render/rig3d.js
+ * Bộ khung khớp của một người: hông, ngực, cổ, đầu, hai vai và khuỷu tay, hai hông và đầu gối.
+ * Khung là các nút ẩn (không vẽ); mỗi bộ phận (thân, đầu, tóc, tay, chân, đồ cầm tay) gắn vào một nút.
+ * Phần vẽ (render/village3d.js) gom bộ phận cùng loại của mọi người vào một khối lặp: số lượt vẽ không tăng theo số người.
+ * Hình dáng: tròn có khớp, theo kiểu nhân vật hiện tại. Cần: three.js. */
+(function (root, factory) {
+  const BK = root.BK || (root.BK = {});
+  BK.Rig3D = factory(BK);
+})(typeof self !== 'undefined' ? self : globalThis, function (BK) {
+  'use strict';
+  const T = () => window.THREE;
+
+  /* ---------- Hình của từng loại bộ phận (dựng một lần, dùng chung) ---------- */
+  // mỗi hình đặt sao cho gốc toạ độ nằm ở khớp, phần thân kéo xuống dưới (tay, chân) hay lên trên (đầu)
+  let SHAPES = null;
+  function shapes() {
+    if (SHAPES) return SHAPES;
+    const THREE = T(), S = {};
+    const down = (g, len) => { g.translate(0, -len / 2, 0); return g; };
+    S.pelvis = new THREE.SphereGeometry(1, 12, 9);
+    S.torso = new THREE.SphereGeometry(1, 14, 10);
+    S.head = new THREE.SphereGeometry(1, 16, 12);
+    S.eye = new THREE.SphereGeometry(1, 6, 4);
+    S.hairShort = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.4); // chỏm tóc trên đỉnh, chừa trán và lông mày
+    // tóc dài: chỉ phần sau và hai bên (chừa khoảng mặt phía trước, +z), đội cùng chỏm tóc ngắn
+    S.hairLong = (() => { const g = new THREE.SphereGeometry(1, 14, 10, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, Math.PI * 0.25, Math.PI * 0.55); g.scale(1, 1.15, 1); return g; })();
+    S.upper = down(new THREE.CylinderGeometry(0.055, 0.05, 0.3, 8), 0.3);
+    S.fore = down(new THREE.CylinderGeometry(0.048, 0.042, 0.27, 8), 0.27);
+    S.hand = new THREE.SphereGeometry(0.062, 8, 6);
+    S.thigh = down(new THREE.CylinderGeometry(0.075, 0.062, 0.36, 8), 0.36);
+    S.shin = down(new THREE.CylinderGeometry(0.06, 0.05, 0.36, 8), 0.36);
+    S.foot = (() => { const g = new THREE.SphereGeometry(1, 8, 6); g.scale(0.07, 0.045, 0.12); g.translate(0, 0, 0.04); return g; })();
+    S.skirt = (() => { const g = new THREE.CylinderGeometry(0.16, 0.27, 0.34, 10, 1, true); g.translate(0, -0.12, 0); return g; })();
+    S.fur = (() => { const g = new THREE.ConeGeometry(0.27, 0.36, 7, 1, true); g.rotateX(Math.PI); g.translate(0, -0.1, 0); return g; })();
+    // đồ cầm tay theo vai trong hội đồng
+    S.crown = (() => { const g = new THREE.CylinderGeometry(0.13, 0.12, 0.08, 8, 1, true); return g; })();
+    S.spear = (() => { const g = new THREE.CylinderGeometry(0.016, 0.016, 1.5, 5); g.translate(0, 0.2, 0); return g; })();
+    S.spearTip = (() => { const g = new THREE.ConeGeometry(0.045, 0.16, 5); g.translate(0, 1.03, 0); return g; })();
+    S.staff = (() => { const g = new THREE.CylinderGeometry(0.02, 0.024, 1.4, 6); g.translate(0, 0.15, 0); return g; })();
+    S.bag = new THREE.SphereGeometry(0.1, 8, 6);
+    S.scroll = (() => { const g = new THREE.CylinderGeometry(0.04, 0.04, 0.22, 8); g.rotateZ(Math.PI / 2); return g; })();
+    S.hammer = (() => { const h = new THREE.CylinderGeometry(0.015, 0.015, 0.36, 5); h.translate(0, -0.1, 0); return h; })();
+    S.hammerHead = (() => { const g = new THREE.BoxGeometry(0.16, 0.07, 0.07); g.translate(0, -0.27, 0); return g; })();
+    SHAPES = S; return S;
+  }
+
+  /* ---------- Màu ---------- */
+  const SKIN = ['#f2c6a0', '#e0ac84', '#c99068', '#f5d2b4', '#b87a52', '#e8b48a'];
+  const HAIR = ['#2e2420', '#4a2e1a', '#1e1a1a', '#6b4426', '#8a5a32', '#3a2a20'];
+  // màu áo theo gia tộc: nhìn là biết người nhà nào
+  const CLAN_COLOR = { Thóc: '#c0392b', Mạ: '#3f8a5a', Rơm: '#e0a23a', Đòng: '#3f6fb0', Cốm: '#7fbf5a', Liềm: '#8a5ab0', Cò: '#e8e2d0', Bông: '#e07aa0' };
+  const hashStr = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+  const PROP_OF = { king: ['crown'], general1: ['spear', 'spearTip'], general2: ['spear', 'spearTip'], priest: ['staff'], merchant: ['bag'], scholar: ['scroll'], builder: ['hammer', 'hammerHead'] };
+  const PROP_COLOR = { crown: '#e8c24a', spear: '#8a5a32', spearTip: '#9a9a9a', staff: '#c9a46e', bag: '#8a6a46', scroll: '#f1e6c8', hammer: '#7a5134', hammerHead: '#6d6359' };
+
+  /* ---------- Dựng khung cho một người ---------- */
+  // trả về { root, nodes, parts }: parts là danh sách { type, node, local (Matrix4), color }
+  function build(person, era) {
+    const THREE = T(), S = shapes(), h = hashStr(person.name + person.id);
+    const skin = SKIN[h % SKIN.length], hair = HAIR[(h >>> 4) % HAIR.length]; // >>> để không ra số âm
+    const cloth = era === 0 ? '#9c6436' : (CLAN_COLOR[person.clan] || '#9aa3ad'), pants = era === 0 ? skin : '#5a4a3a';
+    const N = (name, parent, x, y, z) => { const o = new THREE.Object3D(); o.name = name; o.position.set(x, y, z); parent.add(o); return o; };
+    const root = new THREE.Object3D();
+    const nodes = {};
+    nodes.pelvis = N('pelvis', root, 0, 0.78, 0);
+    nodes.chest = N('chest', nodes.pelvis, 0, 0.16, 0);
+    nodes.neck = N('neck', nodes.chest, 0, 0.36, 0);
+    nodes.head = N('head', nodes.neck, 0, 0.05, 0);
+    for (const [s, x] of [['L', 0.21], ['R', -0.21]]) {
+      nodes['sh' + s] = N('sh' + s, nodes.chest, x, 0.3, 0);
+      nodes['el' + s] = N('el' + s, nodes['sh' + s], 0, -0.3, 0);
+      nodes['wr' + s] = N('wr' + s, nodes['el' + s], 0, -0.27, 0);
+      nodes['hip' + s] = N('hip' + s, nodes.pelvis, x * 0.48, -0.02, 0);
+      nodes['kn' + s] = N('kn' + s, nodes['hip' + s], 0, -0.36, 0);
+      nodes['an' + s] = N('an' + s, nodes['kn' + s], 0, -0.36, 0);
+    }
+    const parts = [];
+    const M = (x, y, z, sx, sy, sz, rx, ry, rz) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx || 0, ry || 0, rz || 0)), new THREE.Vector3(sx || 1, sy || 1, sz || 1));
+    const put = (type, node, local, color) => parts.push({ type, node, local, color: new THREE.Color(color) });
+    put('pelvis', nodes.pelvis, M(0, 0, 0, 0.19, 0.15, 0.14), era === 0 ? cloth : pants);
+    put('torso', nodes.chest, M(0, 0.18, 0, 0.22, 0.25, 0.16), cloth);
+    put('head', nodes.head, M(0, 0.17, 0, 0.19, 0.2, 0.19), skin);
+    for (const sx of [-1, 1]) put('eye', nodes.head, M(sx * 0.068, 0.19, 0.17, 0.026, 0.032, 0.014), '#1d1a24');
+    put('hairShort', nodes.head, M(0, 0.19, -0.01, 0.205, 0.21, 0.205), hair);
+    if (person.sex === 'f') put('hairLong', nodes.head, M(0, 0.17, -0.01, 0.208, 0.22, 0.208), hair);
+    for (const s of ['L', 'R']) {
+      put('upper', nodes['sh' + s], M(0, 0, 0), era === 0 ? skin : cloth);
+      put('fore', nodes['el' + s], M(0, 0, 0), skin);
+      put('hand', nodes['wr' + s], M(0, -0.03, 0), skin);
+      put('thigh', nodes['hip' + s], M(0, 0, 0), pants);
+      put('shin', nodes['kn' + s], M(0, 0, 0), era === 0 ? skin : pants);
+      put('foot', nodes['an' + s], M(0, -0.02, 0), era === 0 ? '#6b4a2e' : '#3a2a1e');
+    }
+    if (era === 0) put('fur', nodes.pelvis, M(0, 0, 0), cloth); // áo da thú cho thời nguyên thuỷ
+    else if (person.sex === 'f') put('skirt', nodes.pelvis, M(0, 0, 0), cloth);
+    // đồ cầm tay theo vai: vương miện đội trên đầu, còn lại cầm ở tay phải
+    for (const type of PROP_OF[person.role] || []) {
+      if (type === 'crown') put('crown', nodes.head, M(0, 0.37, 0), PROP_COLOR.crown);
+      else if (type === 'bag') put('bag', nodes.pelvis, M(-0.2, -0.05, 0.08), PROP_COLOR.bag);
+      else put(type, nodes.wrR, M(0, -0.05, 0.02), PROP_COLOR[type]);
+    }
+    return { root, nodes, parts };
+  }
+
+  /* ---------- Đồ cầm tay của các cử chỉ (cuốc, liềm, rìu, búa, giáo, khiên, bao hàng, xu, bát, cốc, em bé, gậy) ---------- */
+  // mỗi món gắn vào một nút của khung, ẩn sẵn; cử chỉ nào cần thì hiện (render/gestures3d.js ghi món của từng cử chỉ)
+  // tay cầm dọc theo cẳng tay: trục -y của nút cổ tay là hướng từ khuỷu ra bàn tay
+  function buildProps(nodes) {
+    const THREE = T(), out = {};
+    const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7 }, o || {}));
+    const wood = M('#8a5a32'), metal = M('#a8adb3', { metalness: 0.5, roughness: 0.35 }), gold = M('#e8c24a', { metalness: 0.6, roughness: 0.3 });
+    const mesh = (g, m, x, y, z, rx, ry, rz) => { const me = new THREE.Mesh(g, m); me.position.set(x || 0, y || 0, z || 0); me.rotation.set(rx || 0, ry || 0, rz || 0); me.castShadow = true; return me; };
+    const group = (node, ...ms) => { const g = new THREE.Group(); for (const m of ms) g.add(m); g.visible = false; node.add(g); return g; };
+    const stick = (len, r) => new THREE.CylinderGeometry(r || 0.02, r || 0.02, len, 6);
+    out.hoe = group(nodes.wrR, mesh(stick(1.1), wood, 0, -0.4, 0), mesh(new THREE.BoxGeometry(0.06, 0.04, 0.22), metal, 0, -0.95, 0.1));
+    out.sickle = group(nodes.wrR, mesh(stick(0.22), wood, 0, -0.1, 0), mesh(new THREE.TorusGeometry(0.13, 0.015, 5, 12, Math.PI * 1.2), metal, 0, -0.3, 0.1, 0, Math.PI / 2, 0));
+    out.axe = group(nodes.wrR, mesh(stick(0.75), wood, 0, -0.25, 0), mesh(new THREE.BoxGeometry(0.05, 0.16, 0.2), metal, 0, -0.58, 0.1));
+    out.hammer = group(nodes.wrR, mesh(stick(0.38), wood, 0, -0.12, 0), mesh(new THREE.BoxGeometry(0.16, 0.08, 0.08), metal, 0, -0.3, 0));
+    const spearParts = () => [mesh(stick(1.7, 0.018), wood, 0, -0.3, 0), mesh(new THREE.ConeGeometry(0.045, 0.18, 5), metal, 0, -1.24, 0, Math.PI, 0, 0)];
+    out.spear = group(nodes.wrR, ...spearParts());
+    const shieldMesh = () => mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 14), M('#8a6a46'), 0.09, -0.12, 0, 0, 0, Math.PI / 2);
+    out.shield = group(nodes.elL, shieldMesh());
+    out.spearShield = group(nodes.wrR, ...spearParts()); out.spearShield.userData.with = 'shield';
+    out.sack = group(nodes.chest, mesh(new THREE.SphereGeometry(0.22, 10, 8), M('#c9a46e'), -0.24, 0.52, -0.06));
+    out.coin = group(nodes.wrR, mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.015, 10), gold, 0, -0.07, 0.04, Math.PI / 2, 0, 0));
+    out.crown = group(nodes.head, mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.08, 8, 1, true), gold, 0, 0.37, 0));
+    out.bowl = group(nodes.wrL, mesh(new THREE.SphereGeometry(0.1, 10, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M('#a8603e', { side: THREE.DoubleSide }), 0, -0.06, 0.06));
+    out.cup = group(nodes.wrR, mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.11, 8), M('#c27a4a'), 0, -0.07, 0.05));
+    out.baby = group(nodes.chest, mesh(new THREE.SphereGeometry(0.12, 10, 8), M('#f1e6c8'), 0, 0.17, 0.24), mesh(new THREE.SphereGeometry(0.07, 10, 8), M('#f2c6a0'), 0.1, 0.22, 0.26));
+    out.cane = group(nodes.wrR, mesh(stick(0.95, 0.022), wood, 0, -0.42, 0.02));
+    return out;
+  }
+
+  /* ---------- Cỡ người trong thế giới ---------- */
+  // khung cao 1,74 (từ gót tới đỉnh tóc). Người trưởng thành cao 1,4: đủ to để nhìn rõ khi xem cả đảo, vẫn thấp hơn mái nhà thời đầu
+  // (mái cao khoảng 2,35, cửa 0,85, lands3d.js housePlains). Muốn đổi cỡ người thì chỉ sửa PERSON_HEIGHT.
+  // Chỉ phóng to thu nhỏ đều cả người, nên cử chỉ, tay chạm (render/ik3d.js) và khuôn mặt không phải sửa.
+  const RIG_HEIGHT = 1.74, PERSON_HEIGHT = 1.4, PERSON_SCALE = PERSON_HEIGHT / RIG_HEIGHT;
+
+  return { shapes, build, buildProps, CLAN_COLOR, PROP_OF, RIG_HEIGHT, PERSON_HEIGHT, PERSON_SCALE };
+});
+
+</script>
+<script>
+/* Bể Kính · render/ik3d.js
+ * Tay tự tìm đúng chỗ chạm trên cơ thể (IK hai khúc: bắp tay, cẳng tay): chống hông, chống cằm, chắp tay, khoanh tay,
+ * ôm bụng, che mặt, gãi đầu... Cử chỉ chỉ cần ghi điểm bàn tay phải tới (theo một mốc của cơ thể) và hướng khuỷu tay;
+ * tệp này tính góc vai và khuỷu sao cho tâm bàn tay đặt đúng vào điểm đó.
+ * Mốc: 'pelvis' (hông, bụng), 'chest' (ngực), 'head' (cằm, mặt, đỉnh đầu). Toạ độ theo khung ở render/rig3d.js.
+ * Cần: three.js. Được gọi từ render/anim3d.js sau khi đã đặt góc thân và đầu. */
+(function (root, factory) {
+  const BK = root.BK || (root.BK = {});
+  BK.IK3D = factory();
+})(typeof self !== 'undefined' ? self : globalThis, function () {
+  'use strict';
+  const L1 = 0.3, L2 = 0.3; // bắp tay (vai tới khuỷu), cẳng tay tới tâm bàn tay
+  let V = null;
+  function tmp() {
+    if (V) return V;
+    const T = window.THREE;
+    V = { T, m: new T.Matrix4(), m2: new T.Matrix4(), p: new T.Vector3(), s: new T.Vector3(), d: new T.Vector3(), pole: new T.Vector3(), perp: new T.Vector3(), u: new T.Vector3(), e: new T.Vector3(), f: new T.Vector3(), x: new T.Vector3(), y: new T.Vector3(), z: new T.Vector3(), q: new T.Quaternion(), qFk: new T.Quaternion(), basis: new T.Matrix4() };
+    return V;
+  }
+
+  // đổi một điểm từ mốc cơ thể sang hệ toạ độ của ngực (vai là con của ngực)
+  function toChest(rig, space, xyz, out) {
+    const t = tmp(), n = rig.nodes;
+    out.set(xyz[0], xyz[1], xyz[2]);
+    if (space === 'chest') return out;
+    if (space === 'head') { n.neck.updateMatrix(); n.head.updateMatrix(); return out.applyMatrix4(n.head.matrix).applyMatrix4(n.neck.matrix); }
+    // pelvis: ngực là con của hông, nên nhân ngược ma trận của ngực
+    n.chest.updateMatrix(); t.m2.copy(n.chest.matrix).invert(); return out.applyMatrix4(t.m2);
+  }
+
+  // đặt một cánh tay ('L' hoặc 'R') với độ nặng w (0: giữ góc cũ, 1: theo đúng điểm chạm)
+  function solveArm(rig, side, ik, w) {
+    if (!ik || w <= 0.001) return;
+    const t = tmp(), n = rig.nodes, sh = n['sh' + side], el = n['el' + side];
+    t.s.copy(sh.position);
+    toChest(rig, ik.s || 'chest', ik.p, t.p);
+    t.d.copy(t.p).sub(t.s);
+    const D = Math.max(0.05, Math.min(L1 + L2 - 0.005, t.d.length()));
+    t.d.normalize();
+    // hướng khuỷu: mặc định chĩa xuống, ra ngoài, hơi ra sau
+    const sx = side === 'L' ? 1 : -1, pl = ik.pole || [0.6, -1, -0.35];
+    t.pole.set(pl[0] * sx, pl[1], pl[2]).normalize();
+    t.perp.copy(t.pole).addScaledVector(t.d, -t.pole.dot(t.d));
+    if (t.perp.lengthSq() < 1e-6) t.perp.set(0, -1, 0).addScaledVector(t.d, t.d.y); t.perp.normalize();
+    // định lý cos: góc ở vai giữa đường vai–tay và bắp tay
+    const ca = (L1 * L1 + D * D - L2 * L2) / (2 * L1 * D), a = Math.acos(Math.max(-1, Math.min(1, ca)));
+    t.u.copy(t.d).multiplyScalar(Math.cos(a)).addScaledVector(t.perp, Math.sin(a)).normalize(); // hướng bắp tay
+    t.e.copy(t.s).addScaledVector(t.u, L1);
+    t.f.copy(t.p).sub(t.e).normalize(); // hướng cẳng tay
+    // khung của vai: trục -y theo bắp tay, cẳng tay gập về phía trục +z
+    t.y.copy(t.u).negate();
+    t.z.copy(t.f).addScaledVector(t.u, -t.f.dot(t.u)); if (t.z.lengthSq() < 1e-6) t.z.set(0, 0, 1); t.z.normalize();
+    t.x.crossVectors(t.y, t.z).normalize(); t.z.crossVectors(t.x, t.y).normalize();
+    t.basis.makeBasis(t.x, t.y, t.z); t.q.setFromRotationMatrix(t.basis);
+    const bend = Math.acos(Math.max(-1, Math.min(1, t.u.dot(t.f))));
+    // trộn với góc cũ cho chuyển động mềm
+    t.qFk.copy(sh.quaternion); sh.quaternion.copy(t.qFk).slerp(t.q, w);
+    el.rotation.set(el.rotation.x + (-bend - el.rotation.x) * w, 0, 0);
+  }
+
+  return { solveArm, L1, L2 };
+});
+
+</script>
+<script>
+/* Bể Kính · render/anim3d.js
+ * Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi,
+ * đánh, hoảng sợ chạy) cộng tư thế cầu nguyện và 6 thói quen khi đứng chờ.
+ * Mỗi trạng thái cho ra một "tư thế đích" theo thời gian; tư thế đang có trượt dần về tư thế đích, nên đổi trạng thái
+ * luôn mềm (khoảng 0,3 giây). Núm vặn từ gen (logic/brain.js: knobs) đổi nhịp, biên độ, ngả tới lùi, độ run, liếc nhìn:
+ * cùng là đánh nhau nhưng người máu chiến khua nhanh và rộng, người nhút nhát lóng ngóng và lùi về sau.
+ * Chỉ xoay các nút của khung (render/rig3d.js), không biết gì về logic hay cách vẽ. */
+(function (root, factory) {
+  const BK = root.BK || (root.BK = {});
+  BK.Anim3D = factory(BK);
+})(typeof self !== 'undefined' ? self : globalThis, function (BK) {
+  'use strict';
+  const S = Math.sin, C = Math.cos, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // các góc của một tư thế (radian); tay và chân: L, R
+  const KEYS = ['py', 'pry', 'prz', 'cx', 'cy', 'hx', 'hy', 'hz',
+    'sxL', 'szL', 'syL', 'exL', 'sxR', 'szR', 'syR', 'exR', 'hxL', 'hzL', 'kxL', 'hxR', 'hzR', 'kxR',
+    'rx', 'ty']; // rx: ngả cả người (ngã, ngủ), ty: hạ cả người (quỳ, ngồi); phần vẽ áp hai khoá này lên gốc của khung
+  const blank = () => { const p = {}; for (const k of KEYS) p[k] = 0; return p; };
+
+  /* ---------- Tư thế đích của từng trạng thái ---------- */
+  // ph: pha nhịp (radian, tăng theo tốc độ), t: thời gian (giây), K: núm vặn, o: { habit, mood, moving }
+  // dáng nền theo gen: khom hay thẳng lưng, đứng khép hay dạng chân (dùng chung cho mọi trạng thái và mọi cử chỉ)
+  function basePose(K) {
+    const p = blank();
+    p.cx = (0.5 - K.posture) * 0.3 + K.lean * 0.12;
+    p.hzL = 0.03 + K.stance * 0.09; p.hzR = p.hzL;
+    p.szL = p.szR = 0.08;
+    return p;
+  }
+  // nét sống động theo gen: liếc nhìn quanh (đa nghi, mưu mô), run tay chân (sợ hãi, nhu nhược)
+  function addLife(p, t, K) {
+    const g = S(t * 0.7 + K.seed) * S(t * 0.31 + K.seed * 2);
+    if (g > 0.55 - 0.3 * K.glance) p.hy += K.glance * 0.9 * Math.sign(S(t * 0.13 + K.seed));
+    if (K.jitter > 0.02) { const j = K.jitter * 0.09; p.sxL += S(t * 23) * j; p.sxR += S(t * 21 + 1) * j; p.hy += S(t * 17) * j; p.cx += S(t * 19) * j * 0.5; }
+    return p;
+  }
+  function target(state, ph, t, K, o) {
+    const p = basePose(K), A = K.amplitude, lean = K.lean;
+    const walkLegs = (amp, freqMul) => {
+      const s = S(ph * freqMul);
+      p.hxL = s * amp; p.hxR = -s * amp;
+      p.kxL = Math.max(0, -S(ph * freqMul - 0.6)) * amp * 1.4; p.kxR = Math.max(0, S(ph * freqMul - 0.6)) * amp * 1.4;
+      p.py = Math.abs(C(ph * freqMul)) * 0.035 * (0.6 + K.stride);
+      p.pry = s * 0.06;
+    };
+    if (state === 'walk' || (o.moving && state !== 'attack' && state !== 'panic')) {
+      const amp = (0.28 + 0.3 * K.stride) * (0.7 + 0.5 * A);
+      walkLegs(amp, 1);
+      p.sxL = -S(ph) * (0.25 + 0.45 * A); p.sxR = S(ph) * (0.25 + 0.45 * A);
+      p.exL = p.exR = 0.25 + 0.2 * A;
+    }
+    if (state === 'idle' && !o.moving) {
+      const br = S(t * 1.6) * 0.02; p.cx += br; p.hx = -br;
+      habit(p, o.habit, t, K);
+      if (o.mood === 'pray') { // cầu nguyện: cúi đầu, chắp tay trước ngực, hơi khuỵu gối
+        p.cx = 0.28; p.hx = 0.45; p.sxL = p.sxR = 0.85; p.szL = p.szR = -0.32; p.exL = p.exR = 1.75; p.syL = 0.3; p.syR = -0.3;
+        p.kxL = p.kxR = 0.25; p.hxL = p.hxR = -0.12; p.py = -0.04;
+      }
+    }
+    if (state === 'talk' && !o.moving) {
+      if (o.mood === 'argue') { // tranh cãi: hai tay chỉ trỏ, nhịp gắt, người chồm tới
+        p.cx += 0.12 + lean * 0.15; p.hx = -0.1 + S(ph * 2.3) * 0.12;
+        p.sxR = 0.7 + S(ph * 2.2) * 0.6 * (0.5 + A); p.szR = 0.25; p.exR = 0.5 + 0.5 * S(ph * 2.2 + 1);
+        p.sxL = 0.4 + S(ph * 1.7 + 2) * 0.5 * A; p.szL = 0.35 + 0.25 * S(ph * 1.3); p.exL = 0.9 + 0.4 * S(ph * 1.9);
+        p.hxL = 0.12; p.hxR = -0.08;
+      } else { // nói chuyện: gật đầu, một tay đưa lên đưa xuống
+        p.hx = S(ph * 1.1) * 0.08; p.hy = S(ph * 0.4) * 0.15;
+        p.sxR = 0.45 + S(ph * 0.9) * 0.3 * (0.4 + A); p.exR = 1.0 + S(ph * 1.3) * 0.35; p.szR = 0.15;
+        habit(p, o.habit, t, K, true);
+      }
+    }
+    if (state === 'attack') { // đánh: bước chéo chân, tay phải bổ xuống theo nhịp, người chồm tới hay lùi theo tính cách
+      const c = ph * 1.4;
+      p.py = -0.06 - 0.03 * A;
+      p.hxL = 0.35 + lean * 0.15; p.hxR = -0.3 + lean * 0.15; p.kxL = 0.4; p.kxR = 0.45;
+      p.cx = 0.18 + lean * 0.3 + S(c) * 0.12 * A;
+      p.sxR = 1.1 + S(c) * (0.6 + 1.0 * A); p.szR = 0.2; p.exR = 0.35 + 0.5 * (1 + C(c)) * 0.5;
+      p.sxL = 0.6 + S(c + 2) * 0.3 * A; p.szL = 0.35; p.exL = 1.2;
+      p.pry = S(c) * 0.25 * A;
+      if (o.moving) walkLegs(0.5, 1);
+    }
+    if (state === 'panic') { // hoảng sợ chạy: chân nhanh, tay quơ trên đầu, ngoái lại phía sau
+      walkLegs(0.55 + 0.2 * A, 1);
+      p.cx = 0.22;
+      p.sxL = 2.2 + S(ph * 2.5) * 0.4; p.sxR = 2.1 + S(ph * 2.5 + 1.5) * 0.4; p.szL = p.szR = 0.45; p.exL = p.exR = 0.6;
+      p.hy = S(t * 1.3) * 0.9;
+      if (!o.moving) { p.hxL = p.hxR = 0; p.kxL = p.kxR = 0.35; p.py = -0.08; p.cx = 0.35; p.sxL = p.sxR = 1.2; p.exL = p.exR = 1.9; p.szL = p.szR = -0.1; } // co rúm tại chỗ
+    }
+    return addLife(p, t, K);
+  }
+
+  // thói quen khi đứng chờ (bốc thăm từ cha hoặc mẹ); half: chỉ tay trái (tay phải đang nói chuyện)
+  function habit(p, h, t, K, half) {
+    const L = (sx, sz, ex, sy) => { p.sxL = sx; p.szL = sz; p.exL = ex; p.syL = sy || 0; };
+    const R = (sx, sz, ex, sy) => { if (half) return; p.sxR = sx; p.szR = sz; p.exR = ex; p.syR = sy || 0; };
+    if (h === 'crossArms') { L(0.75, -0.45, 1.95, 0.4); R(0.85, -0.45, 1.85, -0.4); }
+    else if (h === 'handsOnHips') { L(-0.1, 0.65, 1.7, -0.6); R(-0.1, 0.65, 1.7, 0.6); }
+    else if (h === 'handsBehind') { L(-0.45, 0.05, 1.0, 0.5); R(-0.45, 0.05, 1.0, -0.5); p.cx -= 0.04; }
+    else if (h === 'scratchHead') { const on = S(t * 0.45 + K.seed) > 0.4; if (on && !half) R(2.5, 0.55, 2.0 + S(t * 9) * 0.25, 0); }
+    else if (h === 'rubHands') { const r = S(t * 6) * 0.12; L(0.65, -0.28, 1.35, 0.3 + r); R(0.65, -0.28, 1.35, -0.3 + r); }
+    else if (h === 'sway') { p.prz = S(t * 1.2 + K.seed) * 0.06; p.pry += S(t * 0.6) * 0.08; p.hzL += 0.03; p.hzR += 0.03; }
+  }
+
+  /* ---------- Trượt tư thế hiện có về tư thế đích, rồi xoay các nút ---------- */
+  function apply(rig, cur, tgt, dt) {
+    const k = 1 - Math.exp(-Math.max(0, dt) / 0.11); // thời gian âm hay hỏng thì không trượt
+    for (const key of KEYS) { const v = cur[key] + (tgt[key] - cur[key]) * k; cur[key] = Number.isFinite(v) ? v : tgt[key] || 0; }
+    const n = rig.nodes, P = cur;
+    n.pelvis.position.y = 0.78 + P.py; n.pelvis.rotation.set(0, P.pry, P.prz);
+    n.chest.rotation.set(P.cx, P.cy, 0);
+    n.head.rotation.set(P.hx, clamp(P.hy, -1.2, 1.2), P.hz);
+    n.shL.rotation.set(-P.sxL, P.syL, P.szL); n.shR.rotation.set(-P.sxR, P.syR, -P.szR);
+    n.elL.rotation.set(-P.exL, 0, 0); n.elR.rotation.set(-P.exR, 0, 0);
+    n.hipL.rotation.set(-P.hxL, 0, P.hzL); n.hipR.rotation.set(-P.hxR, 0, -P.hzR);
+    n.knL.rotation.set(P.kxL, 0, 0); n.knR.rotation.set(P.kxR, 0, 0);
+    // tay chạm đúng chỗ trên cơ thể (render/ik3d.js): tư thế đích ghi ikL / ikR = { s: mốc, p: điểm, pole: hướng khuỷu }
+    for (const side of ['L', 'R']) {
+      const want = tgt['ik' + side] ? 1 : 0, wk = 'ikw' + side;
+      cur[wk] = (cur[wk] || 0) + (want - (cur[wk] || 0)) * k;
+      if (tgt['ik' + side]) cur['ik' + side] = tgt['ik' + side];
+      if (cur[wk] > 0.001 && cur['ik' + side] && BK.IK3D) BK.IK3D.solveArm(rig, side, cur['ik' + side], cur[wk]);
+    }
+  }
+
+  return { KEYS, blank, basePose, addLife, target, apply };
+});
+
+</script>
+<script>
+/* Bể Kính · render/gestures3d.js
+ * Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo,
+ * chính trị, chiến đấu, đời sống, sinh tử. Mỗi cử chỉ là một công thức tư thế theo thời gian (không có tệp hoạt ảnh):
+ *   pose(p, ph, u, t, K): p tư thế (khoá theo render/anim3d.js, cộng rx: ngả cả người, ty: hạ cả người),
+ *   ph pha nhịp (radian), u tiến độ 0..1 của cử chỉ một lần, t thời gian (giây), K núm vặn từ gen (logic/brain.js).
+ * Mỗi cử chỉ ghi: nhóm, tên, lặp hay một lần, thời lượng, tốc độ đi (nếu có), đồ cầm tay, và gen nào thường gọi tới nó.
+ * Huấn luyện trên một NPC mẫu (render/model3d.js) trước, rồi áp cho mọi NPC. */
+(function (root, factory) {
+  const BK = root.BK || (root.BK = {});
+  BK.Gestures3D = factory();
+})(typeof self !== 'undefined' ? self : globalThis, function () {
+  'use strict';
+  const S = Math.sin, C = Math.cos, PI = Math.PI;
+  const ease = (u) => u * u * (3 - 2 * u);
+  const bump = (u, a, b) => (u < a || u > b ? 0 : S(((u - a) / (b - a)) * PI)); // nhô lên rồi hạ xuống trong khoảng a..b
+  const ramp = (u, a, b) => ease(Math.max(0, Math.min(1, (u - a) / (b - a))));
+
+  /* ---------- Các mảnh tư thế dùng chung ---------- */
+  function legsWalk(p, ph, amp, K) {
+    const s = S(ph);
+    p.hxL = s * amp; p.hxR = -s * amp;
+    p.kxL = Math.max(0, -S(ph - 0.6)) * amp * 1.4; p.kxR = Math.max(0, S(ph - 0.6)) * amp * 1.4;
+    p.py = Math.abs(C(ph)) * 0.035 * (0.6 + K.stride); p.pry = s * 0.06;
+  }
+  function armsSwing(p, ph, amp) { p.sxL = -S(ph) * amp; p.sxR = S(ph) * amp; p.exL = p.exR = 0.25 + amp * 0.3; }
+  const armL = (p, sx, sz, ex, sy) => { p.sxL = sx; p.szL = sz; p.exL = ex; p.syL = sy || 0; };
+  const armR = (p, sx, sz, ex, sy) => { p.sxR = sx; p.szR = sz; p.exR = ex; p.syR = sy || 0; };
+  const kneel = (p) => { p.ty = -0.36; p.hxL = p.hxR = 0.05; p.kxL = p.kxR = 1.55; p.cx += 0.05; };
+  const sit = (p) => { p.ty = -0.42; p.hxL = p.hxR = 1.5; p.kxL = p.kxR = 1.5; };
+  // điểm chạm cho tay (render/ik3d.js). side: 1 tay trái (phía +x), -1 tay phải. Toạ độ theo khung ở render/rig3d.js
+  const IK = (s, p, pole) => ({ s, p, pole });
+  const onHip = (side) => IK('pelvis', [side * 0.215, 0.06, 0.01], [1, -0.1, -0.75]);            // chống nạnh: lòng bàn tay áp eo, khuỷu chĩa ra sau
+  const onChin = () => IK('head', [-0.015, -0.035, 0.155], [0.25, -1, 0.35]);                     // chống cằm (tay phải)
+  const prayL = IK('chest', [0.022, 0.2, 0.235], [1, -0.7, -0.1]), prayR = IK('chest', [-0.022, 0.2, 0.235], [1, -0.7, -0.1]); // chắp tay trước ngực
+  const crossL = IK('chest', [-0.16, 0.14, 0.215], [0.45, -1, 0.6]), crossR = IK('chest', [0.16, 0.11, 0.245], [0.45, -1, 0.6]); // khoanh tay: bàn tay tới bắp tay bên kia
+  const belly = (side) => IK('pelvis', [side * 0.075, 0.13, 0.165], [0.8, -1, 0]);                // ôm bụng
+  const crouch = (p, k) => { p.py = -0.12 * k; p.hxL = p.hxR = 0.5 * k; p.kxL = p.kxR = 0.9 * k; p.cx += 0.25 * k; };
+
+  /* ---------- Danh sách cử chỉ ---------- */
+  // g: nhóm, n: tên, loop: lặp lại, dur: giây (một lần), move: tốc độ đi (đơn vị mỗi giây, âm là lùi), prop: đồ cầm, gene: gen gọi tới
+  const L = [];
+  const add = (key, g, n, o, pose) => L.push(Object.assign({ key, g, n, loop: true, dur: 4, move: 0, prop: null, gene: '' }, o, { pose }));
+
+  // ===== Di chuyển =====
+  add('stand', 'Di chuyển', 'Đứng thở', { gene: 'mọi người' }, (p, ph, u, t) => { const b = S(t * 1.6) * 0.02; p.cx += b; p.hx = -b; });
+  add('walk', 'Di chuyển', 'Đi bộ', { move: 1.1, gene: 'mọi người' }, (p, ph, u, t, K) => { legsWalk(p, ph, (0.28 + 0.3 * K.stride) * (0.7 + 0.5 * K.amplitude), K); armsSwing(p, ph, 0.25 + 0.45 * K.amplitude); });
+  add('hurry', 'Di chuyển', 'Đi vội', { move: 2.0, gene: 'tham vọng, sợ hãi' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.5, K); armsSwing(p, ph, 0.6); p.cx += 0.15; });
+  add('run', 'Di chuyển', 'Chạy', { move: 3.6, gene: 'hiếu chiến' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.75, K); p.kxL *= 1.5; p.kxR *= 1.5; armsSwing(p, ph, 0.9); p.exL = p.exR = 1.4; p.cx += 0.28; p.py *= 2; });
+  add('panicRun', 'Di chuyển', 'Chạy hoảng loạn', { move: 3.2, gene: 'sợ hãi' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.7, K); p.cx += 0.2; armL(p, 2.3 + S(ph * 2.5) * 0.4, 0.5, 0.6); armR(p, 2.2 + S(ph * 2.5 + 1.5) * 0.4, 0.5, 0.6); p.hy = S(t * 1.6) * 0.9; });
+  add('sneak', 'Di chuyển', 'Đi rón rén', { move: 0.6, gene: 'mưu mô, đa nghi' }, (p, ph, u, t, K) => { legsWalk(p, ph * 0.8, 0.3, K); crouch(p, 0.5); p.hxL += S(ph * 0.8) * 0.2; p.hxR -= S(ph * 0.8) * 0.2; armL(p, 0.5, 0.3, 1.3); armR(p, 0.5, 0.3, 1.3); p.hy = S(t * 0.9) * 0.6; });
+  add('strut', 'Di chuyển', 'Đi khệnh khạng', { move: 0.9, gene: 'tham vọng (vua)' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.32, K); p.cx -= 0.14; p.hx = -0.12; armL(p, -0.2, 0.35, 0.3); armR(p, -0.2, 0.35, 0.3); p.pry = S(ph) * 0.15; });
+  add('limp', 'Di chuyển', 'Đi khập khiễng', { move: 0.5, gene: 'bị thương, già' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.25, K); p.kxR = 0.1; p.hxR *= 0.4; p.prz = S(ph) * 0.12; p.cx += 0.2; p.py -= Math.max(0, S(ph)) * 0.05; armL(p, 0.1, 0.4, 0.5); });
+  add('backAway', 'Di chuyển', 'Lùi lại', { move: -0.7, gene: 'sợ hãi, nhu nhược' }, (p, ph, u, t, K) => { legsWalk(p, -ph, 0.25, K); p.cx -= 0.2; armL(p, 0.9, 0.2, 0.4); armR(p, 0.9, 0.2, 0.4); p.hx = -0.1; });
+
+  // ===== Đứng chờ (thói quen thừa hưởng từ cha mẹ) =====
+  add('crossArms', 'Đứng chờ', 'Khoanh tay', { gene: 'thói quen' }, (p) => { armL(p, 0.75, -0.45, 1.95, 0.4); armR(p, 0.85, -0.45, 1.85, -0.4); p.ikL = crossL; p.ikR = crossR; });
+  add('handsOnHips', 'Đứng chờ', 'Chống nạnh', { gene: 'thói quen, tham vọng' }, (p) => { p.cx -= 0.05; p.ikL = onHip(1); p.ikR = onHip(-1); });
+  add('handsBehind', 'Đứng chờ', 'Chắp tay sau lưng', { gene: 'thói quen, trí tuệ' }, (p) => { p.cx -= 0.04; p.ikL = IK('pelvis', [0.045, 0.06, -0.2], [1, -0.3, -0.5]); p.ikR = IK('pelvis', [-0.045, 0.06, -0.2], [1, -0.3, -0.5]); });
+  add('scratchHead', 'Đứng chờ', 'Gãi đầu', { gene: 'thói quen, nhu nhược' }, (p, ph, u, t) => { p.hz = 0.12; p.ikR = IK('head', [-0.13 + S(t * 9) * 0.015, 0.31, 0.02 + C(t * 9) * 0.015], [1, 0.5, 0.2]); });
+  add('rubHands', 'Đứng chờ', 'Xoa tay', { gene: 'thói quen, mưu mô' }, (p, ph, u, t) => { const r = S(t * 6) * 0.025; p.ikL = IK('chest', [0.03 + r, 0.03, 0.24], [0.8, -1, 0]); p.ikR = IK('chest', [-0.03 + r, 0.03, 0.24], [0.8, -1, 0]); });
+  add('sway', 'Đứng chờ', 'Đung đưa người', { gene: 'thói quen' }, (p, ph, u, t) => { p.prz = S(t * 1.2) * 0.07; p.pry = S(t * 0.6) * 0.1; p.hzL += 0.03; p.hzR += 0.03; });
+  add('lookAround', 'Đứng chờ', 'Nhìn quanh', { gene: 'đa nghi' }, (p, ph, u, t) => { p.hy = S(t * 0.9) * 1.0; p.cy = S(t * 0.9) * 0.25; armL(p, 0.1, 0.1, 0.4); });
+  add('tapFoot', 'Đứng chờ', 'Gõ chân sốt ruột', { gene: 'hiếu chiến, tham vọng' }, (p, ph, u, t) => { p.hxR = 0.15 + Math.max(0, S(t * 7)) * 0.2; p.kxR = 0.1; p.ikL = crossL; p.ikR = crossR; });
+
+  // ===== Giao tiếp =====
+  add('talk', 'Giao tiếp', 'Nói chuyện', { gene: 'mọi người' }, (p, ph, u, t, K) => { p.hx = S(t * 2.2) * 0.08; armR(p, 0.45 + S(t * 1.8) * 0.3 * (0.4 + K.amplitude), 0.15, 1.0 + S(t * 2.6) * 0.35); });
+  add('nod', 'Giao tiếp', 'Gật đầu', { gene: 'nhu nhược' }, (p, ph, u, t) => { p.hx = Math.max(0, S(t * 5)) * 0.35; });
+  add('shakeHead', 'Giao tiếp', 'Lắc đầu', { gene: 'đa nghi' }, (p, ph, u, t) => { p.hy = S(t * 7) * 0.45; p.ikL = crossL; p.ikR = crossR; });
+  add('wave', 'Giao tiếp', 'Vẫy tay chào', { gene: 'mọi người' }, (p, ph, u, t) => { armR(p, 1.3, 1.1, 0.6 + S(t * 7) * 0.5); p.hz = -0.08; });
+  add('point', 'Giao tiếp', 'Chỉ tay', { gene: 'tham vọng' }, (p, ph, u, t) => { armR(p, 1.5, 0.05, 0.05); p.cx += 0.05; p.hx = -0.05; });
+  add('argue', 'Giao tiếp', 'Tranh cãi', { gene: 'hiếu chiến, đa nghi' }, (p, ph, u, t, K) => { p.cx += 0.14 + K.lean * 0.12; armR(p, 0.7 + S(t * 6) * 0.6 * (0.5 + K.amplitude), 0.25, 0.5 + 0.5 * S(t * 6 + 1)); armL(p, 0.4 + S(t * 4.5 + 2) * 0.5, 0.4, 0.9 + 0.4 * S(t * 5)); p.hx = -0.08 + S(t * 6) * 0.1; });
+  add('laugh', 'Giao tiếp', 'Cười lớn, ôm bụng', { gene: 'lễ hội' }, (p, ph, u, t) => { const b = Math.abs(S(t * 9)) * 0.12; p.cx = 0.15 + b; p.hx = -0.3; p.py = -b * 0.2; p.ikL = belly(1); p.ikR = belly(-1); });
+  add('whisper', 'Giao tiếp', 'Thì thầm', { gene: 'mưu mô' }, (p, ph, u, t) => { p.cx += 0.2; p.cy = 0.3; p.hz = 0.25; p.hy = 0.3; p.ikR = IK('head', [-0.11, 0.1, 0.17], [0.8, -1, 0.3]); });
+  add('bow', 'Giao tiếp', 'Cúi chào', { loop: false, dur: 2.4, gene: 'nhu nhược, sùng đạo' }, (p, ph, u) => { const k = bump(u, 0, 1); p.cx = 0.9 * k; p.hx = 0.3 * k; armL(p, 0.2 * k, 0, 0.2); armR(p, 0.2 * k, 0, 0.2); });
+
+  // ===== Cảm xúc =====
+  add('cheer', 'Cảm xúc', 'Vui nhảy cẫng', { gene: 'lễ hội' }, (p, ph, u, t) => { const j = Math.max(0, S(t * 7)); p.ty = j * 0.22; armL(p, 2.6, 0.6, 0.3 + j * 0.3); armR(p, 2.6, 0.6, 0.3 + j * 0.3); p.kxL = p.kxR = (1 - j) * 0.6; p.hxL = p.hxR = (1 - j) * 0.3; });
+  add('stomp', 'Cảm xúc', 'Giận dậm chân', { gene: 'hiếu chiến' }, (p, ph, u, t) => { const s = Math.max(0, S(t * 5)); p.hxR = s * 0.5; p.kxR = s * 0.8; armL(p, 0.4, 0.3, 1.6); armR(p, 0.4, 0.3, 1.6); p.cx += 0.12; p.hx = -0.1; });
+  add('cower', 'Cảm xúc', 'Sợ co rúm', { gene: 'sợ hãi' }, (p, ph, u, t, K) => { crouch(p, 0.9); armL(p, 1.6, -0.1, 2.1); armR(p, 1.6, -0.1, 2.1); p.hx = 0.4; p.cx += S(t * 25) * 0.02 * (0.5 + K.jitter); });
+  add('sad', 'Cảm xúc', 'Buồn cúi đầu', { gene: 'tang' }, (p) => { p.cx = 0.25; p.hx = 0.55; armL(p, 0.05, 0.02, 0.1); armR(p, 0.05, 0.02, 0.1); p.py = -0.02; });
+  add('cry', 'Cảm xúc', 'Khóc, che mặt', { gene: 'tang, sợ hãi' }, (p, ph, u, t) => { p.cx = 0.3 + S(t * 6) * 0.04; p.hx = 0.45; p.ikL = IK('head', [0.065, 0.16, 0.205], [0.6, -1, 0.3]); p.ikR = IK('head', [-0.065, 0.16, 0.205], [0.6, -1, 0.3]); });
+  add('startle', 'Cảm xúc', 'Giật mình', { loop: false, dur: 1.6, gene: 'sợ hãi' }, (p, ph, u) => { const k = bump(u, 0, 0.6) + ramp(u, 0.3, 0.6) * 0.3; p.cx = -0.25 * k; p.hx = -0.3 * k; armL(p, 1.2 * k, 0.6 * k, 1.2 * k); armR(p, 1.2 * k, 0.6 * k, 1.2 * k); p.ty = bump(u, 0, 0.25) * 0.1; });
+  add('think', 'Cảm xúc', 'Suy nghĩ, chống cằm', { gene: 'trí tuệ' }, (p, ph, u, t) => { p.hx = 0.12; p.hz = 0.1; p.hy = S(t * 0.4) * 0.12; p.ikR = onChin(); p.ikL = IK('chest', [-0.13, 0.04, 0.23], [0.6, -1, 0.2]); }); // tay trái đỡ khuỷu tay phải
+
+  // ===== Lao động =====
+  add('hoe', 'Lao động', 'Cuốc đất', { prop: 'hoe', gene: 'nông dân' }, (p, ph, u, t) => { const c = (t * 1.3) % 1, up = c < 0.6 ? ease(c / 0.6) : 1 - ease((c - 0.6) / 0.4); p.cx = 0.35 - up * 0.3; armR(p, 0.4 + up * 2.0, 0.1, 0.3); armL(p, 0.5 + up * 1.8, 0.05, 0.4); p.hxL = 0.3; p.kxL = 0.3; p.kxR = 0.2; });
+  add('harvest', 'Lao động', 'Gặt lúa', { prop: 'sickle', gene: 'nông dân' }, (p, ph, u, t) => { crouch(p, 0.7); p.cx += 0.2; armR(p, 0.9, 0.3 + S(t * 4) * 0.5, 0.6, S(t * 4) * 0.6); armL(p, 1.0, -0.2, 0.8); });
+  add('chop', 'Lao động', 'Chặt cây', { prop: 'axe', gene: 'thợ' }, (p, ph, u, t) => { const c = (t * 1.1) % 1, sw = c < 0.55 ? ease(c / 0.55) : 1 - ease((c - 0.55) / 0.45); p.cy = 0.6 - sw * 0.9; armR(p, 0.8 + sw * 0.6, 1.3 - sw * 0.8, 0.4); armL(p, 0.9 + sw * 0.5, 0.2, 0.6); p.hxL = 0.25; });
+  add('mine', 'Lao động', 'Đập đá', { prop: 'hammer', gene: 'thợ cả' }, (p, ph, u, t) => { const c = (t * 1.4) % 1, up = c < 0.6 ? ease(c / 0.6) : 1 - ease((c - 0.6) / 0.4) * 1.1; p.cx = 0.4 - up * 0.35; armR(p, 0.6 + up * 2.2, 0.15, 0.4); armL(p, 0.7 + up * 2.0, 0.1, 0.4); crouch(p, 0.4); });
+  add('carry', 'Lao động', 'Vác hàng trên vai', { prop: 'sack', move: 0.8, gene: 'thương nhân, dân' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.25, K); p.cx += 0.15; armR(p, 2.6, 0.5, 2.0); armL(p, -S(ph) * 0.3, 0.1, 0.4); });
+  add('trade', 'Lao động', 'Trao đổi hàng', { prop: 'coin', loop: false, dur: 2.6, gene: 'thương chủ' }, (p, ph, u) => { const k = bump(u, 0.05, 0.85); armR(p, 0.4 + k * 1.0, 0.1, 0.7 - k * 0.5); p.cx = 0.1 + k * 0.1; p.hx = 0.1; });
+  add('build', 'Lao động', 'Đóng búa xây nhà', { prop: 'hammer', gene: 'thợ cả' }, (p, ph, u, t) => { const h = Math.max(0, S(t * 8)); armR(p, 1.1 + h * 0.7, 0.2, 1.1 - h * 0.5); armL(p, 1.0, -0.15, 0.6); p.cx = 0.25; p.hx = 0.25; });
+
+  // ===== Tôn giáo =====
+  add('pray', 'Tôn giáo', 'Cầu nguyện', { gene: 'sùng đạo' }, (p, ph, u, t) => { p.cx = 0.22; p.hx = 0.45 + S(t * 1.2) * 0.04; p.kxL = p.kxR = 0.2; p.py = -0.03; p.ikL = prayL; p.ikR = prayR; });
+  add('kneelPray', 'Tôn giáo', 'Quỳ lạy', { gene: 'sùng đạo' }, (p, ph, u, t) => { kneel(p); const b = Math.max(0, S(t * 1.4)); p.cx = 0.3 + b * 0.6; p.hx = 0.3; p.ikL = prayL; p.ikR = prayR; }); // chắp tay, cúi lạy
+  add('rainDance', 'Tôn giáo', 'Giơ tay cầu mưa', { gene: 'sùng đạo (hạn hán)' }, (p, ph, u, t) => { armL(p, 2.8, 0.6 + S(t * 2) * 0.2, 0.2); armR(p, 2.8, 0.6 + S(t * 2 + 1) * 0.2, 0.2); p.hx = -0.45; p.cx = -0.1; p.prz = S(t * 1.5) * 0.06; });
+
+  // ===== Chính trị =====
+  add('speech', 'Chính trị', 'Diễn thuyết', { gene: 'tham vọng (vua, quân sư)' }, (p, ph, u, t) => { p.cx = -0.08; p.hx = -0.1; const k = Math.max(0, S(t * 2.2)); armR(p, 1.4 + k * 1.2, 0.5, 0.5 - k * 0.3); armL(p, 0.6 + S(t * 1.3) * 0.4, 0.5, 0.8); });
+  add('command', 'Chính trị', 'Ra lệnh', { loop: false, dur: 2.2, gene: 'vua, tướng' }, (p, ph, u) => { const k = ramp(u, 0, 0.25) * (1 - ramp(u, 0.8, 1)); armR(p, 1.6 * k, 0.05, 0.05); p.cx = 0.08 * k; p.hx = -0.05; armL(p, -0.1, 0.65 * k, 1.7 * k, -0.6 * k); });
+  add('declareWar', 'Chính trị', 'Tuyên chiến', { prop: 'spear', gene: 'hiếu chiến (vua, tướng)' }, (p, ph, u, t) => { const k = Math.max(0, S(t * 2.5)); armR(p, 2.9, 0.3, 0.1 + k * 0.4); armL(p, 0.4, 0.5, 1.6); p.hx = -0.35; p.cx = -0.1; p.ty = k * 0.05; });
+  add('surrender', 'Chính trị', 'Đầu hàng', { gene: 'sợ hãi, nhu nhược' }, (p, ph, u, t) => { kneel(p); armL(p, 2.8, 0.55, 0.3); armR(p, 2.8, 0.55, 0.3); p.hx = 0.25; p.cx += S(t * 20) * 0.015; });
+  add('submit', 'Chính trị', 'Quỳ thần phục', { gene: 'nhu nhược' }, (p) => { kneel(p); p.cx = 0.85; p.hx = 0.5; armL(p, 0.8, 0.3, 0.3); armR(p, 0.8, 0.3, 0.3); });
+  add('crown', 'Chính trị', 'Đăng quang', { loop: false, dur: 3.2, prop: 'crown', gene: 'vua mới' }, (p, ph, u) => { const k = ramp(u, 0, 0.45), d = ramp(u, 0.55, 0.9); armL(p, 2.7 * k * (1 - d) + 0.1 * d, 0.3, 1.4 * k * (1 - d)); armR(p, 2.7 * k * (1 - d) + 0.1 * d, 0.3, 1.4 * k * (1 - d)); p.hx = -0.15 * k; p.cx = -0.05 * d; });
+
+  // ===== Chiến đấu =====
+  add('guard', 'Chiến đấu', 'Thủ thế', { prop: 'spearShield', gene: 'tướng, lính' }, (p, ph, u, t, K) => { p.hxL = 0.35; p.hxR = -0.3; p.kxL = 0.35; p.kxR = 0.4; p.py = -0.07; p.cx = 0.12 + K.lean * 0.1; armR(p, 0.9, 0.3, 0.9 + S(t * 3) * 0.08); armL(p, 1.2, 0.2, 1.5); p.pry = S(t * 2) * 0.05; });
+  add('thrust', 'Chiến đấu', 'Đâm giáo', { prop: 'spear', gene: 'hiếu chiến' }, (p, ph, u, t, K) => { const c = (t * (1 + K.tempo * 0.6)) % 1, k = c < 0.35 ? ease(c / 0.35) : 1 - ease((c - 0.35) / 0.65); p.hxL = 0.4 + k * 0.2; p.hxR = -0.35; p.kxL = 0.4; p.kxR = 0.3; p.py = -0.07; p.cx = 0.1 + k * 0.35; armR(p, 1.2 + k * 0.4, 0.1, 1.6 - k * 1.5); armL(p, 1.1, 0.1, 1.2 - k * 0.8); });
+  add('slash', 'Chiến đấu', 'Chém, bổ xuống', { prop: 'axe', gene: 'hiếu chiến, bạo chúa' }, (p, ph, u, t, K) => { const c = (t * (0.9 + K.tempo * 0.5)) % 1, up = c < 0.55 ? ease(c / 0.55) : 1 - ease((c - 0.55) / 0.45); p.cx = 0.05 + (1 - up) * 0.35; armR(p, 0.6 + up * 2.4, 0.3, 0.3 + up * 0.6); armL(p, 0.6, 0.4, 1.3); p.hxL = 0.35; p.hxR = -0.25; p.kxL = 0.35; p.kxR = 0.3; p.py = -0.06; });
+  add('block', 'Chiến đấu', 'Đỡ đòn', { prop: 'shield', loop: false, dur: 1.6, gene: 'thận trọng' }, (p, ph, u) => { const k = bump(u, 0, 1); armL(p, 1.6 * k + 0.4, 0.2, 1.8 * k); p.cx = -0.15 * k; p.hx = 0.2 * k; p.hxL = 0.2; p.hxR = -0.2; p.kxL = p.kxR = 0.3; p.py = -0.06 * k; });
+  add('hit', 'Chiến đấu', 'Bị đánh trúng', { loop: false, dur: 1.4, gene: 'thua trận' }, (p, ph, u) => { const k = bump(u, 0, 0.7); p.cx = -0.45 * k; p.hx = -0.45 * k; armL(p, 0.8 * k, 0.9 * k, 0.6); armR(p, 0.8 * k, 0.9 * k, 0.6); p.hxR = -0.3 * k; p.kxL = 0.3 * k; });
+  add('fall', 'Chiến đấu', 'Ngã gục', { loop: false, dur: 3.2, gene: 'tử trận' }, (p, ph, u) => { const k = ramp(u, 0.15, 0.6); p.kxL = p.kxR = bump(u, 0, 0.4) * 1.2; p.rx = -1.52 * k; p.ty = 0.12 * k; armL(p, 2.2 * k, 0.8 * k, 0.2); armR(p, 2.0 * k, 0.9 * k, 0.3); p.hx = -0.3 * k; });
+  add('victory', 'Chiến đấu', 'Mừng chiến thắng', { prop: 'spear', gene: 'thắng trận' }, (p, ph, u, t) => { const j = Math.max(0, S(t * 5)); armR(p, 2.8, 0.3, 0.2); armL(p, 1.4 + j * 1.2, 1.0, 1.4 - j); p.ty = j * 0.1; p.hx = -0.35; });
+
+  // ===== Đời sống =====
+  add('sit', 'Đời sống', 'Ngồi', { gene: 'nghỉ ngơi' }, (p, ph, u, t) => { sit(p); p.cx = 0.1; armL(p, 0.6, 0.15, 0.9); armR(p, 0.6, 0.15, 0.9); p.hx = S(t * 0.5) * 0.05; });
+  add('eat', 'Đời sống', 'Ăn', { prop: 'bowl', gene: 'mọi người' }, (p, ph, u, t) => { sit(p); armL(p, 0.9, -0.2, 1.4); const s = Math.max(0, S(t * 3)); armR(p, 0.8 + s * 0.5, -0.25, 1.4 + s * 0.8); p.hx = 0.2 - s * 0.1; p.cx = 0.15; });
+  add('drink', 'Đời sống', 'Uống', { prop: 'cup', loop: false, dur: 3, gene: 'lễ hội' }, (p, ph, u) => { const k = bump(u, 0.1, 0.9); armR(p, 0.7 + k * 0.8, -0.1, 1.5 + k * 0.6); p.hx = -0.45 * k; p.cx = -0.12 * k; });
+  add('sleep', 'Đời sống', 'Ngủ', { gene: 'ban đêm' }, (p, ph, u, t) => { p.rx = -1.52; p.ty = 0.12; armL(p, 0.15, 0.25, 0.2); armR(p, 0.15, 0.25, 0.2); p.cx = S(t * 1.1) * 0.03; p.hz = 0.3; });
+  add('holdBaby', 'Đời sống', 'Bế con', { prop: 'baby', gene: 'cha mẹ' }, (p, ph, u, t) => { p.pry = S(t * 1.2) * 0.12; p.hx = 0.35; p.hy = -0.15; p.ikL = IK('chest', [0.1, 0.08, 0.27], [0.7, -1, 0]); p.ikR = IK('chest', [-0.12, 0.15, 0.3], [0.7, -1, 0]); }); // hai tay đỡ dưới em bé
+  add('dance', 'Đời sống', 'Nhảy múa lễ hội', { gene: 'lễ hội' }, (p, ph, u, t) => { const s = S(t * 4); p.pry = s * 0.35; p.prz = S(t * 8) * 0.06; armL(p, 1.5 + s * 0.8, 1.0, 0.8 + C(t * 4) * 0.5); armR(p, 1.5 - s * 0.8, 1.0, 0.8 - C(t * 4) * 0.5); p.hxL = Math.max(0, s) * 0.4; p.hxR = Math.max(0, -s) * 0.4; p.kxL = Math.max(0, s) * 0.5; p.kxR = Math.max(0, -s) * 0.5; p.ty = Math.abs(S(t * 4)) * 0.05; });
+
+  // ===== Sinh tử =====
+  add('elder', 'Sinh tử', 'Già yếu chống gậy', { prop: 'cane', move: 0.35, gene: 'tuổi già' }, (p, ph, u, t, K) => { legsWalk(p, ph * 0.7, 0.15, K); p.cx = 0.45; p.hx = -0.3; armR(p, 0.6 + S(ph * 0.7) * 0.15, 0.25, 0.3); armL(p, -0.3, 0.1, 0.8); p.kxL += 0.15; p.kxR += 0.15; });
+  add('sick', 'Sinh tử', 'Ốm, ôm bụng', { gene: 'dịch bệnh, đói' }, (p, ph, u, t) => { crouch(p, 0.4); p.cx += 0.35; p.prz = S(t * 1.3) * 0.05; p.hx = 0.3; p.ikL = belly(1); p.ikR = belly(-1); });
+  add('die', 'Sinh tử', 'Qua đời', { loop: false, dur: 4.5, gene: 'tuổi già, chiến tranh' }, (p, ph, u) => { const a = ramp(u, 0, 0.35), b = ramp(u, 0.35, 0.75); p.kxL = p.kxR = 1.55 * a * (1 - b); p.ty = -0.36 * a * (1 - b) + 0.12 * b; p.rx = 1.5 * b; p.cx = 0.3 * a; p.hx = 0.4 * a; armL(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); armR(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); });
+
+  /* ---------- Biểu cảm khuôn mặt đi kèm mỗi cử chỉ (render/face3d.js); 'closed': nhắm mắt ---------- */
+  const FACE = {
+    happy: ['cheer', 'laugh', 'dance', 'victory', 'wave', 'holdBaby', 'eat', 'drink', 'crown', 'speech', 'strut', 'trade'],
+    sad: ['sad', 'cry', 'limp', 'elder', 'sick', 'submit', 'die'],
+    angry: ['argue', 'stomp', 'thrust', 'slash', 'declareWar', 'command', 'guard', 'tapFoot', 'point', 'chop', 'mine'],
+    fear: ['panicRun', 'cower', 'backAway', 'surrender', 'block', 'fall'],
+    surprise: ['startle', 'hit'],
+    suspicious: ['sneak', 'lookAround', 'whisper', 'shakeHead', 'rubHands', 'crossArms'],
+  };
+  const CLOSED = ['sleep', 'pray', 'kneelPray', 'die'];
+  for (const G of L) { G.face = 'neutral'; G.closed = CLOSED.includes(G.key); }
+  for (const f in FACE) for (const k of FACE[f]) { const G = L.find((x) => x.key === k); if (G) G.face = f; }
+
+  const BY_KEY = {}; for (const G of L) BY_KEY[G.key] = G;
+  const GROUPS = [...new Set(L.map((G) => G.g))];
+  return { LIST: L, BY_KEY, GROUPS, ease, bump, ramp };
+});
+
+</script>
+<script>
+/* Bể Kính · render/face3d.js
+ * Khuôn mặt NPC với 7 biểu cảm cố định: Bình thường, Vui, Buồn, Giận, Sợ hãi, Ngạc nhiên, Nghi ngờ.
+ * Mỗi biểu cảm ghép từ: hai mắt (độ mở, mỗi bên có thể khác), lông mày (cao thấp, nghiêng xếch hay chau), miệng (một trong
+ * sáu hình: mím, cười, mếu, há nhỏ, há to, nghiến răng) và má hồng. Mắt tự chớp; nhắm mắt khi ngủ, cầu nguyện, qua đời.
+ * Đổi biểu cảm thì mắt và lông mày trượt mềm, miệng đổi hình. Các mảnh gắn vào nút đầu của khung (render/rig3d.js).
+ * Cần: three.js. */
+(function (root, factory) {
+  const BK = root.BK || (root.BK = {});
+  BK.Face3D = factory();
+})(typeof self !== 'undefined' ? self : globalThis, function () {
+  'use strict';
+
+  /* ---------- Bảy biểu cảm ---------- */
+  // eye: độ mở mắt [trái, phải] (1 bình thường), pupil: cỡ con ngươi, brow: độ cao lông mày [trái, phải],
+  // tilt: độ nghiêng lông mày [trái, phải] (dương: chau, đầu trong cụp xuống như giận; âm: đầu trong nhướn lên như buồn, sợ),
+  // mouth: hình miệng, mw: độ rộng miệng, mx: lệch miệng sang bên, cheek: má hồng
+  const EXPR = [
+    { key: 'neutral', name: 'Bình thường', eye: [1, 1], pupil: 1, brow: [0, 0], tilt: [0, 0], mouth: 'line', mw: 0.8, mx: 0, cheek: 0 },
+    { key: 'happy', name: 'Vui', eye: [0.62, 0.62], pupil: 1, brow: [0.012, 0.012], tilt: [-0.1, -0.1], mouth: 'smile', mw: 1.2, mx: 0, cheek: 1 },
+    { key: 'sad', name: 'Buồn', eye: [0.75, 0.75], pupil: 1, brow: [0.006, 0.006], tilt: [-0.5, -0.5], mouth: 'frown', mw: 0.9, mx: 0, cheek: 0 },
+    { key: 'angry', name: 'Giận', eye: [0.55, 0.55], pupil: 0.9, brow: [-0.012, -0.012], tilt: [0.55, 0.55], mouth: 'grit', mw: 1.1, mx: 0, cheek: 0 },
+    { key: 'fear', name: 'Sợ hãi', eye: [1.3, 1.3], pupil: 0.6, brow: [0.02, 0.02], tilt: [-0.45, -0.45], mouth: 'small', mw: 0.9, mx: 0, cheek: 0 },
+    { key: 'surprise', name: 'Ngạc nhiên', eye: [1.4, 1.4], pupil: 0.75, brow: [0.035, 0.035], tilt: [0, 0], mouth: 'open', mw: 1, mx: 0, cheek: 0 },
+    { key: 'suspicious', name: 'Nghi ngờ', eye: [0.45, 1.05], pupil: 1, brow: [-0.01, 0.025], tilt: [0.35, -0.15], mouth: 'line', mw: 0.7, mx: 0.022, cheek: 0 },
+  ];
+  const BY_KEY = {}; for (const E of EXPR) BY_KEY[E.key] = E;
+
+  /* ---------- Dựng mặt trên nút đầu ---------- */
+  // toạ độ theo nút đầu của khung: tâm đầu ở (0, 0.17, 0), mặt trước ở z khoảng 0.18
+  function create(o) {
+    const { THREE, head } = o;
+    const ink = new THREE.MeshBasicMaterial({ color: '#1d1a24' }), white = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+    const pink = new THREE.MeshBasicMaterial({ color: '#ff8f9a', transparent: true, opacity: 0, depthWrite: false });
+    const mk = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); head.add(m); return m; };
+    const sph = (a, b) => new THREE.SphereGeometry(1, a, b);
+    const F = { eyes: [], shines: [], brows: [], cheeks: [], mouths: {} };
+    for (const sx of [1, -1]) { // [0]: mắt trái của NPC (phía +x), [1]: mắt phải
+      const e = mk(sph(10, 8), ink, sx * 0.068, 0.19, 0.172); F.eyes.push(e);
+      F.shines.push(mk(sph(6, 4), white, sx * 0.068 + 0.008, 0.2, 0.186));
+      const b = mk(new THREE.BoxGeometry(0.06, 0.014, 0.01), ink, sx * 0.07, 0.245, 0.172); F.brows.push(b);
+      const c = mk(new THREE.CircleGeometry(0.03, 12), pink, sx * 0.105, 0.135, 0.163); c.rotation.y = sx * 0.55; F.cheeks.push(c);
+    }
+    const MY = 0.105, MZ = 0.176;
+    F.mouths.line = mk(new THREE.BoxGeometry(0.06, 0.01, 0.01), ink, 0, MY, MZ);
+    F.mouths.smile = mk(new THREE.TorusGeometry(0.036, 0.008, 5, 12, Math.PI), ink, 0, MY + 0.014, MZ); F.mouths.smile.rotation.z = Math.PI;
+    F.mouths.frown = mk(new THREE.TorusGeometry(0.032, 0.008, 5, 12, Math.PI), ink, 0, MY - 0.018, MZ);
+    F.mouths.small = mk(sph(8, 6), ink, 0, MY, MZ); F.mouths.small.scale.set(0.017, 0.021, 0.008);
+    F.mouths.open = mk(sph(10, 8), ink, 0, MY - 0.006, MZ); F.mouths.open.scale.set(0.027, 0.034, 0.01);
+    F.mouths.grit = new THREE.Group(); F.mouths.grit.position.set(0, MY, MZ); head.add(F.mouths.grit);
+    { const g = F.mouths.grit, m1 = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.018, 0.008), white); g.add(m1);
+      for (const y of [-0.0095, 0.0095]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.004, 0.01), ink); l.position.y = y; g.add(l); }
+      for (const x of [-0.014, 0, 0.014]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.018, 0.01), ink); l.position.x = x; g.add(l); } }
+
+    /* ---------- Trạng thái và chuyển mềm ---------- */
+    let target = BY_KEY.neutral, closed = false, blinkAt = 2, blinkT = 0;
+    const cur = { eye: [1, 1], pupil: 1, brow: [0, 0], tilt: [0, 0], mw: 0.8, mx: 0, cheek: 0 };
+    function set(key) { if (BY_KEY[key]) target = BY_KEY[key]; for (const k in F.mouths) F.mouths[k].visible = k === target.mouth; }
+    function setClosed(on) { closed = !!on; }
+    set('neutral');
+    function update(dt, t) {
+      dt = Math.max(0, dt || 0); const k = 1 - Math.exp(-dt / 0.12);
+      for (const i of [0, 1]) { cur.eye[i] += (target.eye[i] - cur.eye[i]) * k; cur.brow[i] += (target.brow[i] - cur.brow[i]) * k; cur.tilt[i] += (target.tilt[i] - cur.tilt[i]) * k; }
+      cur.pupil += (target.pupil - cur.pupil) * k; cur.mw += (target.mw - cur.mw) * k; cur.mx += (target.mx - cur.mx) * k; cur.cheek += (target.cheek - cur.cheek) * k;
+      // chớp mắt vài giây một lần
+      if (t > blinkAt) { blinkT = 0.14; blinkAt = t + 2.2 + Math.random() * 3; }
+      blinkT = Math.max(0, blinkT - dt / 1000);
+      const shut = closed ? 0.08 : blinkT > 0 ? 0.12 : 1;
+      for (const i of [0, 1]) {
+        const sx = i === 0 ? 1 : -1, open = cur.eye[i] * shut;
+        F.eyes[i].scale.set(0.032 * cur.pupil * (closed ? 1.3 : 1), 0.04 * open, 0.016);
+        F.shines[i].visible = open > 0.3; F.shines[i].scale.setScalar(0.011 * cur.pupil);
+        F.brows[i].position.y = 0.245 + cur.brow[i] + (closed ? -0.01 : 0);
+        F.brows[i].rotation.z = sx * cur.tilt[i] * 0.5; // dương: đầu trong cụp xuống (chau mày)
+      }
+      pink.opacity = 0.6 * cur.cheek;
+      for (const key in F.mouths) { const m = F.mouths[key]; m.position.x = cur.mx; if (key !== 'small' && key !== 'open') m.scale.x = cur.mw; }
+    }
+    return { set, setClosed, update, get key() { return target.key; } };
+  }
+
+  return { EXPR, BY_KEY, create };
+});
+
+</script>
+<script>
+/* Xem trước nét vẽ NPC tinh chỉnh: giữ nguyên khung, tỉ lệ, 65 cử chỉ và 7 biểu cảm của game. Không sửa code game. */
+(function () {
+  const T = THREE, Rig = BK.Rig3D, Anim = BK.Anim3D, Gs = BK.Gestures3D;
+  const Q = new URLSearchParams(location.search);
+  const canvas = document.getElementById('c');
+  const renderer = new T.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  const scene = new T.Scene(); scene.background = new T.Color('#a6d3ea'); scene.fog = new T.Fog('#a6d3ea', 30, 70);
+  const camera = new T.PerspectiveCamera(30, 1, 0.05, 200);
+  const controls = new T.OrbitControls(camera, canvas); controls.target.set(0, 0.75, 0); controls.enableDamping = true;
+  controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 1.5; controls.maxDistance = 30;
+  scene.add(new T.HemisphereLight('#eef6ff', '#6a8a45', 0.6));
+  const sun = new T.DirectionalLight('#fff0d8', 0.95); sun.position.set(5, 9, 7); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7 }); sun.shadow.bias = -0.0005; scene.add(sun);
+
+  /* ---------- Cách tô: hoạt hình ba tầng sáng tối và viền sẫm mảnh ---------- */
+  const grad = new T.DataTexture(new Uint8Array([92, 160, 228]), 3, 1, T.LuminanceFormat); grad.minFilter = grad.magFilter = T.NearestFilter; grad.needsUpdate = true;
+  const toonCache = {}, stdCache = {};
+  const toon = (c) => toonCache[c] || (toonCache[c] = new T.MeshToonMaterial({ color: c, gradientMap: grad }));
+  const std = (c) => stdCache[c] || (stdCache[c] = new T.MeshStandardMaterial({ color: c, roughness: 0.8 }));
+  const inkMat = new T.ShaderMaterial({ side: T.BackSide, uniforms: { w: { value: 0.011 } },
+    vertexShader: 'uniform float w; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * w * clamp(-mv.z * 0.18, 0.6, 3.0); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'void main(){ gl_FragColor = vec4(0.17, 0.12, 0.1, 1.0); }' });
+  let toonOn = Q.get('toon') !== '0';
+  const styled = []; // { mesh, color, ink }
+  function put(node, geo, color, x, y, z, o) {
+    o = o || {};
+    const m = new T.Mesh(geo, toonOn ? toon(color) : std(color)); m.position.set(x || 0, y || 0, z || 0); if (o.rot) m.rotation.set(...o.rot); if (o.sc) m.scale.set(...o.sc);
+    m.castShadow = true; node.add(m);
+    let ink = null; if (o.ink !== false) { ink = new T.Mesh(geo, inkMat); m.add(ink); ink.visible = toonOn; }
+    styled.push({ m, color, ink }); return m;
+  }
+  function setToon(on) { toonOn = on; for (const s of styled) { s.m.material = on ? toon(s.color) : std(s.color); if (s.ink) s.ink.visible = on; } }
+
+  /* ---------- Hình khối mềm, liền mạch ---------- */
+  const V2 = (x, y) => new T.Vector2(x, y);
+  // ống bo tròn hai đầu, kéo từ khớp xuống dưới: r1 ở khớp, r2 ở đầu kia
+  function limb(r1, r2, len, seg) {
+    const pts = []; const n = 2;
+    for (let i = n; i >= 0; i--) { const a = (i / n) * Math.PI / 2; pts.push(V2(Math.cos(a) * r2 + 0.0001, -len - Math.sin(a) * r2 * 0.9)); }
+    for (let i = 0; i <= n; i++) { const a = (i / n) * Math.PI / 2; pts.push(V2(Math.cos(a) * r1 + 0.0001, Math.sin(a) * r1 * 0.9)); }
+    return new T.LatheGeometry(pts, seg || 7);
+  }
+  const lathe = (prof, seg, zs) => { const g = new T.LatheGeometry(prof.map(([r, y]) => V2(r, y)), seg || 14); if (zs) g.scale(1, 1, zs); g.computeVertexNormals(); return g; };
+  const sph = (w, h) => new T.SphereGeometry(1, w || 10, h || 7);
+  // thân áo hình hạt đậu: từ gấu áo (che hông) lên vai, liền một khối
+  const shirt = (hem, flare) => lathe([[0.001, hem - 0.01], [0.19 + flare, hem], [0.185, hem + 0.07], [0.175, -0.08], [0.19, 0.06], [0.2, 0.2], [0.18, 0.3], [0.12, 0.37], [0.06, 0.4], [0.001, 0.405]], 12, 0.74);
+  const robe = (len, top, bot) => { const g = new T.CylinderGeometry(top, bot, len, 12, 1, true); g.translate(0, -len / 2, 0); g.scale(1, 1, 0.8); return g; };
+
+  function refined(o) {
+    const rig = Rig.build({ name: o.name, id: o.id, sex: o.sex, clan: 'Thóc', role: null }, 1), n = rig.nodes, C = o.c;
+    // thân: áo liền, quần ngắn ở hông
+    put(n.chest, shirt(o.hem != null ? o.hem : -0.25, o.flare || 0.02), C.shirt, 0, 0, 0);
+    // yếm đỏ lộ ra giữa hai vạt áo tứ thân: một dải phía trước, ôm sát thân áo
+    if (o.front) { const g = new T.LatheGeometry([[0.192, 0.0], [0.203, 0.08], [0.207, 0.2], [0.188, 0.3], [0.135, 0.365]].map(([r, y]) => V2(r, y)), 6, -0.36, 0.72); g.scale(1, 1, 0.75); g.computeVertexNormals(); put(n.chest, g, C.front, 0, 0, 0.004, { ink: false }); }
+    if (o.sash) put(n.pelvis, new T.TorusGeometry(0.17, 0.028, 4, 14).scale(1, 0.74, 1).rotateX(Math.PI / 2), C.sash, 0, 0.06, 0, { ink: false });
+    put(n.pelvis, lathe([[0.001, -0.1], [0.14, -0.09], [0.16, 0.0], [0.15, 0.08], [0.001, 0.09]], 10, 0.76), C.pants, 0, 0, 0, { ink: false });
+    if (o.skirt) put(n.pelvis, robe(o.skirt, 0.165, o.skirtBot || 0.24), C.skirt, 0, 0.02, 0);
+    // cổ, đầu hơi bè, tai, mũi
+    put(n.neck, limb(0.05, 0.055, 0.05).rotateX(Math.PI), C.skin, 0, -0.01, 0, { ink: false });
+    put(n.head, sph(14, 10), C.skin, 0, 0.17, 0, { sc: [0.205, 0.192, 0.18] });
+    for (const sx of [1, -1]) put(n.head, sph(8, 6), C.skin, sx * 0.2, 0.16, -0.01, { sc: [0.03, 0.045, 0.03] });
+    put(n.head, sph(8, 6), C.nose || C.skin, 0, 0.135, 0.178, { sc: [0.026, 0.022, 0.02], ink: false });
+    // tóc: chỏm có khối, phía sau dài hơn, chừa trán và lông mày
+    put(n.head, new T.SphereGeometry(1, 14, 6, 0, Math.PI * 2, 0, Math.PI * 0.37), C.hair, 0, 0.18, -0.004, { sc: [0.218, 0.215, 0.205], rot: [0, 0, o.part || 0.06] });
+    put(n.head, new T.SphereGeometry(1, 9, 5, Math.PI + 0.55, Math.PI - 1.1, Math.PI * 0.3, Math.PI * (o.longHair ? 0.5 : 0.38)), C.hair, 0, 0.17, 0, { sc: [0.214, 0.205, 0.205], ink: false });
+    if (o.bun) put(n.head, sph(10, 8), C.hair, 0, 0.25, -0.2, { sc: [0.085, 0.08, 0.075] });
+    if (o.wrap) put(n.head, new T.TorusGeometry(0.2, 0.035, 5, 16).scale(1, 0.93, 1).rotateX(Math.PI / 2 - 0.25), C.wrap, 0, 0.29, -0.01);
+    if (o.khanDong) { put(n.head, new T.CylinderGeometry(0.215, 0.21, 0.085, 14, 1), C.wrap, 0, 0.31, -0.005); put(n.head, new T.TorusGeometry(0.212, 0.016, 5, 22).rotateX(Math.PI / 2), C.wrapLine, 0, 0.29, -0.005, { ink: false }); }
+    if (o.beard) put(n.head, new T.ConeGeometry(0.06, 0.15, 10).rotateX(Math.PI), C.beard, 0, 0.005, 0.13, { rot: [-0.35, 0, 0] });
+    if (o.nonLa) { put(n.head, new T.ConeGeometry(0.4, 0.21, 16, 1, true), C.hat, 0, 0.42, -0.01, { rot: [-0.08, 0, 0] }); put(n.head, new T.TorusGeometry(0.4, 0.008, 4, 24).rotateX(Math.PI / 2), C.hatRim, 0, 0.315, 0.0, { rot: [-0.08, 0, 0], ink: false }); }
+    if (o.crown) {
+      put(n.head, new T.CylinderGeometry(0.2, 0.215, 0.09, 14, 1), C.crown, 0, 0.32, 0);
+      for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; put(n.head, new T.ConeGeometry(0.03, 0.09, 6), C.crown, Math.sin(a) * 0.19, 0.4, Math.cos(a) * 0.19, { ink: false }); }
+      put(n.head, sph(8, 6), C.gem, 0, 0.33, 0.212, { sc: [0.03, 0.03, 0.015], ink: false });
+    }
+    // tay: bắp tay, cẳng tay bo tròn; khớp vai và khuỷu che chỗ nối; bàn tay kiểu găng có ngón cái
+    for (const s of ['L', 'R']) {
+      const sx = s === 'L' ? 1 : -1;
+      put(n['sh' + s], sph(8, 6), C.shirt, 0, 0, 0, { sc: [0.075, 0.075, 0.075], ink: false });
+      put(n['sh' + s], limb(0.07, 0.058, 0.3), C.shirt, 0, 0, 0);
+      put(n['el' + s], limb(0.056, 0.047, 0.24), o.longSleeve ? C.shirt : C.skin, 0, 0, 0);
+      put(n['wr' + s], sph(9, 6), C.skin, 0, -0.045, 0.005, { sc: [0.055, 0.068, 0.04] });
+      put(n['wr' + s], sph(6, 4), C.skin, sx * 0.042, -0.025, 0.018, { sc: [0.022, 0.03, 0.022], ink: false });
+      // chân: đùi, cẳng chân (quần xắn tới bắp chân thì lộ da), dép
+      put(n['hip' + s], limb(0.085, 0.066, 0.36), C.pants, 0, 0, 0);
+      put(n['kn' + s], limb(0.066, 0.05, 0.34), o.bareShin ? C.skin : C.pants, 0, 0, 0);
+      if (o.bareShin) put(n['kn' + s], limb(0.07, 0.068, 0.07), C.pants, 0, 0, 0, { ink: false }); // ống quần xắn
+      put(n['an' + s], sph(9, 6), C.shoe, 0, -0.035, 0.045, { sc: [0.068, 0.045, 0.12] });
+    }
+    // mặt: dùng đúng khuôn mặt của game, nhưng mắt to hơn và hạ thấp (đặt trên một nút con để không sửa render/face3d.js)
+    const faceRoot = new T.Object3D(); faceRoot.position.set(0, -0.038, 0.012); faceRoot.scale.set(1.22, 1.16, 1); n.head.add(faceRoot);
+    const props = Rig.buildProps(n);
+    for (const k in props) props[k].traverse((m) => { if (m.isMesh) { const c = '#' + m.material.color.getHexString(); styled.push({ m, color: c, ink: null }); m.material = toonOn ? toon(c) : std(c); } });
+    return { rig, props, faceNode: faceRoot, label: o.label };
+  }
+  function current(o) {
+    const rig = Rig.build({ name: o.name, id: o.id, sex: o.sex, clan: 'Thóc', role: null }, 1), S = Rig.shapes();
+    for (const part of rig.parts) { if (part.type === 'eye') continue; const m = new T.Mesh(S[part.type], new T.MeshStandardMaterial({ color: part.color, roughness: 0.75 })); m.matrixAutoUpdate = false; m.matrix.copy(part.local); m.castShadow = true; part.node.add(m); }
+    return { rig, props: Rig.buildProps(rig.nodes), faceNode: rig.nodes.head, label: o.label };
+  }
+
+  const SKIN = '#e8b48c', SKIN2 = '#d29a70';
+  const cast = [
+    current({ name: 'Thóc Văn An', id: 1, sex: 'm', label: 'Hiện tại' }),
+    refined({ name: 'Mạ', id: 2, sex: 'm', label: 'Nông dân nam', nonLa: true, bareShin: true, sash: true,
+      c: { shirt: '#8a5a3a', pants: '#d9c7a2', skin: SKIN2, hair: '#2a201c', shoe: '#5a3a24', sash: '#c9a14a', hat: '#e8d29a', hatRim: '#b89a5a' } }),
+    refined({ name: 'Bông', id: 3, sex: 'f', label: 'Nông dân nữ', front: true, sash: true, skirt: 0.5, skirtBot: 0.25, bun: true, wrap: true, longHair: true, hem: -0.2,
+      c: { shirt: '#9a6a44', front: '#b8423a', pants: '#2e2a2a', skirt: '#2e2a2a', skin: SKIN, hair: '#1e1816', shoe: '#5a3a24', sash: '#3f8a5a', wrap: '#2e2a2a' } }),
+    refined({ name: 'Rơm', id: 4, sex: 'm', label: 'Cụ già', khanDong: true, beard: true, longSleeve: true, skirt: 0.46, skirtBot: 0.25, hem: -0.22,
+      c: { shirt: '#34466b', pants: '#ece4d2', skirt: '#34466b', skin: '#e6b48e', hair: '#e8e6e2', beard: '#f2f0ec', shoe: '#2e2620', wrap: '#2a3550', wrapLine: '#4a5a80' } }),
+    refined({ name: 'Thóc', id: 5, sex: 'm', label: 'Vua', crown: true, longSleeve: true, skirt: 0.56, skirtBot: 0.29, sash: true, hem: -0.22, flare: 0.04,
+      c: { shirt: '#e2b23a', pants: '#a8322c', skirt: '#e2b23a', skin: SKIN, hair: '#1e1816', shoe: '#6b2a22', sash: '#a8322c', crown: '#f0cc4a', gem: '#c8302a' } }),
+  ];
+  const H = 1.4, SCALE = H / Rig.RIG_HEIGHT, GAP = 1.3;
+
+  /* ---------- Nền: đồng cỏ và một nhà sàn thời đầu, đúng cỡ trong game ---------- */
+  { const g = new T.CircleGeometry(30, 48); g.rotateX(-Math.PI / 2); const m = new T.Mesh(g, new T.MeshStandardMaterial({ color: '#86b04f', roughness: 1 })); m.receiveShadow = true; scene.add(m);
+    const house = new T.Group(); house.position.set(-1.6, 0, -3.4); scene.add(house); const M = (c) => new T.MeshStandardMaterial({ color: c, roughness: 0.9, flatShading: true });
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const p = new T.Mesh(new T.CylinderGeometry(0.09, 0.09, 0.45, 5), M('#6d5139')); p.position.set(Math.cos(a) * 0.95, 0.225, Math.sin(a) * 0.95); house.add(p); }
+    const wall = new T.Mesh(new T.CylinderGeometry(1.15, 1.15, 1.25, 12), M('#b9875a')); wall.position.y = 0.45 + 0.625; house.add(wall);
+    const door = new T.Mesh(new T.BoxGeometry(0.46, 0.85, 0.06), M('#4a3426')); door.position.set(0, 0.45 + 0.425, 1.13); house.add(door);
+    const roof = new T.Mesh(new T.ConeGeometry(1.95, 0.75, 14), M('#d8b25a')); roof.position.y = 1.6 + 0.375; house.add(roof);
+    const top = new T.Mesh(new T.ConeGeometry(0.42, 0.75, 8), M('#e4c06a')); top.position.y = 2.3 + 0.375; house.add(top);
+    house.traverse((m) => { if (m.isMesh) { m.castShadow = m.receiveShadow = true; } });
+    const rice = new T.MeshStandardMaterial({ color: '#e2c04a', roughness: 1, flatShading: true });
+    for (let i = 0; i < 46; i++) { const t = new T.Mesh(new T.ConeGeometry(0.1, 0.45, 5), rice); t.position.set(1.2 + (i % 12) * 0.32, 0.22, -2.6 - Math.floor(i / 12) * 0.35); t.castShadow = true; scene.add(t); }
+  }
+
+  cast.forEach((c, i) => {
+    c.x = (i - (cast.length - 1) / 2) * GAP; c.cur = Anim.blank(); scene.add(c.rig.root); c.rig.root.rotation.order = 'YXZ';
+    c.face = BK.Face3D.create({ THREE: T, head: c.faceNode });
+    c.K = { tempo: 1, amplitude: 0.55, lean: 0.1, jitter: 0, glance: 0.1, stride: 0.5, posture: 0.55, stance: 0.45, seed: i * 1.7 };
+    let tris = 0; c.rig.root.traverseVisible((m) => { if (m.isMesh && m.material !== inkMat) { const g = m.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); c.tris = Math.round(tris);
+  });
+
+  /* ---------- Bảng chọn ---------- */
+  const sel = document.getElementById('gesture'), faceSel = document.getElementById('face'), autoBox = document.getElementById('auto'), toonBox = document.getElementById('toon');
+  for (const gname of Gs.GROUPS) { const og = document.createElement('optgroup'); og.label = gname; Gs.LIST.forEach((G, i) => { if (G.g === gname) { const op = document.createElement('option'); op.value = i; op.textContent = G.n; og.appendChild(op); } }); sel.appendChild(og); }
+  faceSel.innerHTML = '<option value="">Mặt theo cử chỉ</option>' + BK.Face3D.EXPR.map((e) => `<option value="${e.key}">${e.name}</option>`).join('');
+  let idx = Math.max(0, Gs.LIST.findIndex((g) => g.key === (Q.get('g') || 'handsOnHips'))), startT = -1, ph = 0, pinned = Q.get('face') || '';
+  sel.value = idx; faceSel.value = pinned;
+  if (Q.get('auto') === '0') autoBox.checked = false;
+  toonBox.checked = toonOn; toonBox.addEventListener('change', () => setToon(toonBox.checked));
+  sel.addEventListener('change', () => { idx = +sel.value; startT = -1; });
+  faceSel.addEventListener('change', () => { pinned = faceSel.value; });
+  document.getElementById('prev').onclick = () => { idx = (idx + Gs.LIST.length - 1) % Gs.LIST.length; sel.value = idx; startT = -1; };
+  document.getElementById('next').onclick = () => { idx = (idx + 1) % Gs.LIST.length; sel.value = idx; startT = -1; };
+  const labels = document.getElementById('labels');
+  for (const c of cast) { const d = document.createElement('div'); d.className = 'lab'; d.innerHTML = `<b>${c.label}</b><span>${c.tris} tam giác</span>`; labels.appendChild(d); c.el = d; }
+  function showProps(G) { for (const c of cast) { for (const k in c.props) c.props[k].visible = false; if (G.prop && c.props[G.prop]) { c.props[G.prop].visible = true; const w = c.props[G.prop].userData.with; if (w) c.props[w].visible = true; } } }
+
+  function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < 1.1 ? 46 : 28; camera.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+  const narrow = innerWidth / innerHeight < 1.1;
+  camera.position.set(0, 1.6, narrow ? 10.5 : 7.4);
+  if (Q.get('cam') === 'close') { controls.target.set(0.65, 0.95, 0); camera.position.set(0.65, 1.15, 2.6); }
+
+  let last = performance.now(); const v = new T.Vector3();
+  function frame(t) {
+    const dt = Math.max(0, Math.min(100, t - last)); last = t; const ts = t * 0.001, sec = dt / 1000;
+    if (startT < 0) { startT = ts; showProps(Gs.LIST[idx]); }
+    let G = Gs.LIST[idx], el = ts - startT; const span = G.loop ? 5 : G.dur + 0.9;
+    if (autoBox.checked && el > span) { idx = (idx + 1) % Gs.LIST.length; sel.value = idx; startT = ts; el = 0; G = Gs.LIST[idx]; showProps(G); }
+    const u = G.loop ? (el % 5) / 5 : Math.min(1, el / G.dur);
+    ph += G.move ? sec * Math.abs(G.move) * 1.3 * Math.PI : sec * 3;
+    for (const c of cast) {
+      const p = Anim.basePose(c.K); G.pose(p, ph, u, ts, c.K); Anim.addLife(p, ts, c.K); Anim.apply(c.rig, c.cur, p, dt);
+      c.face.set(pinned || G.face); c.face.setClosed(!pinned && G.closed && (G.loop || u > 0.55)); c.face.update(dt, ts);
+      const r = c.rig.root; r.position.set(c.x, c.cur.ty * SCALE, 0); r.rotation.set(c.cur.rx, 0, 0); r.scale.setScalar(SCALE);
+    }
+    controls.update(); renderer.render(scene, camera);
+    for (const c of cast) { v.set(c.x, 0, 0.45).project(camera); c.el.style.transform = `translate(${(v.x * 0.5 + 0.5) * innerWidth}px, ${(-v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, 0)`; c.el.hidden = v.z > 1 || Q.get('cam') === 'close'; }
+    document.getElementById('now').textContent = `${idx + 1}/${Gs.LIST.length} · ${G.n} · ${G.g}`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  window.__rf = { cast };
+})();
+
+</script>

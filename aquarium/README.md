@@ -95,6 +95,17 @@ và gen thường gọi tới nó); đồ cầm tay (cuốc, liềm, rìu, búa,
 người khác sẽ làm khác. Logic làng vẫn tạo đủ tám người nhưng tạm dừng (NPC mẫu không già đi); làng nhiều người
 (`render/village3d.js`, `ui/village-ui.js`) để đó, bật lại khi áp thư viện cho mọi NPC.
 
+## Nét vẽ NPC đã chốt (chưa đưa vào game)
+
+Bản mẫu: `design/npc-tinh-chinh.html`. Trang này mở riêng, game không tải nó; mẫu gồm nông dân nam, nông dân nữ, cụ già và vua.
+- Giữ nguyên bộ khung và tỉ lệ ở `render/rig3d.js`, nên 65 cử chỉ, tay chạm và 7 biểu cảm không phải sửa.
+- Thân là một khối áo liền, gấu áo che hông. Tay chân bo tròn, có khớp vai; bàn tay kiểu găng có ngón cái; chân đi dép.
+- Đầu hơi bè ngang, có tai, mũi, má hồng. Mắt to hơn và hạ thấp: khuôn mặt cũ được đặt lên một nút phóng to (x 1,22, y 1,16,
+  hạ 0,038), không sửa `render/face3d.js`.
+- Tóc có khối; trang phục theo vai: nón lá, áo tứ thân với yếm, khăn đóng với râu bạc, mũ miện với áo bào.
+- Tô hoạt hình ba tầng sáng tối, có viền sẫm mảnh. Người ở xa nên bỏ viền cho nhẹ.
+- **Nữ ở mọi thời đại phải có tóc dài và ngực** (phần nhô ra ở ngực).
+
 ## Thứ tự làm tiếp
 
 1. ~~Làm sạch: sáu đảo trống, giữ thời tiết và thiên nhiên.~~
