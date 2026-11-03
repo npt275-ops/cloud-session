@@ -304,11 +304,15 @@ ngoài thấy cả khối nước xanh và chân đá của sáu đảo chìm tr
 
 ## Mây, giông và mưa trong bể
 
-Mây chỉ có **bên trong vòm kính**; bên ngoài không có mây. Mây kéo vào **từng đợt** (ba tới sáu đám) từ phía đầu gió,
-trôi ngang bể rồi tan khi chạm vách kính. Khi từ năm đám trở lên dồn vào một chỗ, chúng hút nhau lại, tích nước, nặng
-dần và **sẫm thành mây đen**; đủ nặng thì **sấm sét** nổ (tia chớp, cả bể loé sáng, tiếng sấm) và **mưa** trút xuống
-đảo và biển bên dưới, trời sầm lại. Mưa xả hết nước thì mây bạc màu và tan. Khi một đảo đang mùa mưa (theo mô phỏng),
-các đợt mây kéo về phía đảo đó dày hơn. Toàn bộ mây vẽ trong một lượt (`clouds3d.js`).
+Mây chỉ có **bên trong vòm kính**; bên ngoài không có mây. Mây bay trên **cùng một tầng**, như một mặt phẳng mây.
+Mây kéo vào **từng đợt** (bảy tới mười hai đám) từ phía đầu gió, mỗi đợt hẹn nhau về một chỗ ngẫu nhiên: trên một đảo
+hay ngoài biển. Mây chạm nhau thì **dính lại theo bề ngang**: cụm mây rộng ra chứ không to lên. Cụm từ ba đám trở lên
+tích nước, sẫm lại thành **mây đen** rồi **mưa**. Mỗi đám mây chỉ chứa một lượng nước nhất định, nên một cơn mưa
+kéo dài khoảng 15 tới 25 giây ở tốc độ 1×, trút **theo đợt**: nặng hạt vài giây, ngớt, rồi lại nặng hạt. Cụm càng
+nhiều mây thì **vệt mưa càng rộng**; mây trắng trôi tới chạm vào cơn mưa cũng dính vào và mưa theo. Mây nào **hết nước
+thì tan** biến, rồi đợt mây mới lại kéo đến và tích tụ lại. Cụm mưa lớn có **sấm sét** (tia chớp, cả bể loé sáng,
+tiếng sấm) và làm trời sầm lại. Khi một đảo đang mùa mưa (theo mô phỏng), các đợt mây hay hẹn về đảo đó hơn.
+Toàn bộ mây vẽ trong một lượt (`clouds3d.js`).
 
 **Cầu và cảng phải tự xây** bằng tiền kho bạc. Cầu do một bên bắc theo thời đại của mình (cầu dây leo, cầu gỗ,
 cầu vòm đá, cầu có mái, cầu sắt, cầu dây văng); cầu yếu thì xe nặng không qua được. Cảng cho tàu buôn đi giữa
