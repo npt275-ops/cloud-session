@@ -961,15 +961,9 @@
       };
       const waterMat = (col) => { const m = new THREE.MeshStandardMaterial({ color: col || '#4aa3c7', roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide }); L.waterMats.push(m); return m; };
       if (L.ter === 'plains') {
-        // đồng bằng: ruộng bậc ô vuông vàng xanh ở hai cánh, đồng cỏ săn ở giữa, sông uốn khúc đổ thành thác
-        for (const side of [-1, 1]) for (let ai = 0; ai < 7; ai++) for (let ri = 0; ri < 3; ri++) {
-          const deg = side * (48 + ai * 9.5), r = 37 + ri * 3.6; // ruộng bậc ở vùng ven ngoài vành đai, lõi thành để dựng nhà
-          if (r > edge(deg, 2.4)) continue;
-          const [x, z] = at(deg, r), c = pick(['#d9c35a', '#9fcf62', '#c8d86a', '#7fb6a8', '#e3cf73', '#86bf5c'], hash(L.i * 31 + ai * 7 + ri * 3 + side));
-          k.box(c, x, 0.02, z, 3.3, 0.07, 3.3, -(oa + (deg * Math.PI) / 180)); k.box('#7d6a4a', x, 0.03, z, 3.5, 0.05, 0.16, -(oa + (deg * Math.PI) / 180));
-          if (c === '#7fb6a8') k.box('#bfe6f2', x, 0.075, z, 2.9, 0.01, 2.9, -(oa + (deg * Math.PI) / 180));
-          if (hash(ai * 13 + ri + side) < 0.18) { k.cone('#d9b25a', x + 0.8, 0.07, z - 0.6, 0.6, 1.1, 8); }
-        }
+        // đồng bằng: đồng cỏ hoa dại ở hai cánh, đồng cỏ ở giữa, sông uốn khúc đổ vào hồ sen
+        // đồng cỏ hoa dại ở hai cánh (trước đây là ruộng bậc; đảo thô chưa có người cày cấy)
+        for (let i = 0; i < 26; i++) { const deg = (i % 2 ? 1 : -1) * (48 + rng() * 64), r = 34 + rng() * 9; if (r > edge(deg, 2.4)) continue; const [x, z] = at(deg, r); k.add(SPHG(), pick(['#9fcf62', '#b5d86a', '#86bf5c'], rng()), x, -0.02, z, 1.6 + rng() * 1.8, 0.12, 1.4 + rng() * 1.6, rng() * 3); for (let f = 0; f < 4; f++) k.blob(ICO(), pick(['#f4e07a', '#f2a0b8', '#ffffff', '#c9a0f0'], rng()), x + (rng() - 0.5) * 2.4, 0.12, z + (rng() - 0.5) * 2.4, 0.12, 0.4); }
         const pts = [];
         for (let s = 0; s <= 40; s++) { const u = s / 40, d = -36 + u * 72, r = 24 + 5 * Math.sin(u * Math.PI * 2.5) + u * 10; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
         ribbon(pts, 6.2, 0.03, new THREE.MeshStandardMaterial({ color: '#c9b48a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
@@ -997,13 +991,12 @@
         ribbon(pts, 3.2, 0.03, new THREE.MeshStandardMaterial({ color: '#6b5a3a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
         ribbon(pts, 2.0, 0.08, waterMat('#3f9cc6'));
         L.river = pts;
-        // hồ rừng cuối suối: bờ lượn nhiều khúc, lau sậy, lá súng và cầu gỗ nhỏ
+        // hồ rừng cuối suối: bờ lượn nhiều khúc, lau sậy, lá súng
         { const [ex, ez] = pts[pts.length - 1], [bx, bz] = at(70, 26), x = (ex + bx) / 2, z = (ez + bz) / 2, R = 6.6, rf = (t) => 1 + 0.16 * Math.sin(3 * t) + 0.1 * Math.cos(5 * t + 0.6);
           flat(lakeGeo(R + 1, rf), x, z, 0.03, '#6b5a3a');
           water(lakeGeo(R, rf), x, z, 0, 0.08, '#2f7f9a');
           for (let i = 0; i < 30; i++) { const t = rng() * TAU, r = R * rf(t) * (0.9 + rng() * 0.2); k.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), x + Math.cos(t) * r, 0, z + Math.sin(t) * r, 0.07, 1.1 + rng() * 0.9, 0.07, (rng() - 0.5) * 0.3, 0, (rng() - 0.5) * 0.3); }
           for (let i = 0; i < 9; i++) { const a = rng() * TAU, r = Math.sqrt(rng()) * R * 0.7; k.cyl('#4f8a3f', x + Math.cos(a) * r, 0.1, z + Math.sin(a) * r, 0.4 + rng() * 0.3, 0.03, 7); }
-          { const t = 0.4, r = R * rf(t); k.box('#8a6a46', x + Math.cos(t) * (r - 1.4), 0.25, z + Math.sin(t) * (r - 1.4), 3.2, 0.12, 0.9, -t); }
           setLake(x, z, R * 1.2); }
         for (let i = 0; i < 40; i++) { const [x, z] = at((rng() - 0.5) * 200, 12 + rng() * 26); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 0.5)) k.cone(pick(['#4f8f45', '#5f9f4a', '#3f7a4c'], rng()), x, 0, z, 0.45, 0.6, 5); }
       }
@@ -1015,7 +1008,7 @@
           k.cone('#f4f7f9', x, hgt * 0.62, z, rad * 0.38, hgt * 0.38 + 0.05, 7, rng() * 3);
           prop(x, z, rad * 0.9);
         }
-        { const [x, z] = at(-28, 24); k.tcyl('#8f8a7c', x, 0, z, 6.2, 5.8, 4.2, 9); k.cyl('#8fa274', x, 4.2, z, 5.8, 0.12, 9); for (let s = 0; s < 6; s++) k.box('#a39b8e', x + 5.6 + s * 0.05, s * 0.7, z - 2 + s * 0.65, 1.6, 0.7, 1.2, -(oa - 0.49)); prop(x, z, 6.4); L.plateau = [x, z, 4.3]; }
+        { const [x, z] = at(-28, 24); k.tcyl('#8f8a7c', x, 0, z, 6.2, 5.8, 4.2, 9); k.cyl('#8fa274', x, 4.2, z, 5.8, 0.12, 9); prop(x, z, 6.4); L.plateau = [x, z, 4.3]; }
         // hồ núi hình giọt nước, xanh thẫm, viền đá cuội và một hòn đảo đá nhỏ giữa hồ
         { const [x, z] = at(30, 22), R = 5.6, rf = (t) => 0.72 + 0.36 * Math.cos(t) * Math.abs(Math.cos(t * 0.5)) + 0.06 * Math.sin(4 * t);
           const ry = -(oa + 0.6); // mũi giọt nước chĩa về phía trong đảo
@@ -1028,12 +1021,11 @@
       }
       if (L.ter === 'tundra') {
         // băng nguyên: hồ đóng băng, sống băng, vách sông băng, khe nứt, mảng băng trôi tách khỏi đảo
-        // hồ băng sáu cạnh: mặt băng nứt, một lỗ câu cá và lều câu bằng băng
+        // hồ băng sáu cạnh, mặt băng nứt
         { const [x, z] = at(-22, 23), R = 7.4, rf = (t) => { const s6 = Math.PI / 3, u = ((t % s6) + s6) % s6 - s6 / 2; return (Math.cos(s6 / 2) / Math.cos(u)) * (1 + 0.05 * Math.sin(7 * t)); };
           flat(lakeGeo(R + 0.8, rf, 72), x, z, 0.03, '#eef6fa').rotation.z = 0.3;
           water(lakeGeo(R, rf, 72), x, z, 0.3, 0.06, '#cfeaf5');
           for (let i = 0; i < 6; i++) { const a = rng() * TAU, l = 2 + rng() * 3.5; k.box('#9cc7dc', x + Math.cos(a) * l * 0.5, 0.075, z + Math.sin(a) * l * 0.5, l, 0.01, 0.08, -a); }
-          k.cyl('#1d4a63', x + 2, 0.08, z - 1.2, 0.7, 0.01, 12); k.add(SPHG(), '#e9f3f8', x + 3.6, 0.06, z - 0.2, 1.1, 1.0, 1.1);
           setLake(x, z, R * 1.05); }
         { const [x, z] = at(8, Math.min(edge(8, 4), 32)); for (let i = 0; i < 9; i++) k.add(OCT(), pick(['#cfeaf5', '#e6f6fb', '#b9e0ef'], rng()), x + (i - 4) * 1.8, 0, z + (rng() - 0.5) * 2, 1.6 + rng(), 4 + rng() * 5, 1.4, -(oa + 0.14) + rng() * 0.4); prop(x, z, 8); }
         for (let i = 0; i < 16; i++) { const d = (rng() - 0.5) * 180, [x, z] = at(d, 18 + rng() * 14); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 1)) { k.blob(OCT(), pick(['#bfe3f2', '#d6eef7', '#a9d6ea'], rng()), x, 0.3, z, 0.7 + rng() * 1.1, 1.6); } }
@@ -1057,7 +1049,6 @@
         prop(lagoon[0], lagoon[1], LR + 1.6); L.lagoon = [lagoon[0], lagoon[1], LR];
         const sandPts = []; for (let s = 0; s <= 50; s++) { const d = -120 + s * 4.8; sandPts.push(at(d, edge(d, 2.4))); }
         ribbon(sandPts, 4.6, 0.025, new THREE.MeshStandardMaterial({ color: '#ecd9a8', roughness: 0.95, flatShading: true, side: THREE.DoubleSide }));
-        for (let b = 0; b < 4; b++) { const [x, z] = at(-80 + b * 52, edge(-80 + b * 52, 3)); k.box('#8f6a46', x, 0.05, z, 1.6, 0.35, 0.7, rng() * 3); k.cyl('#6d5139', x, 0.3, z, 0.04, 1.6, 4); }
         for (let r2 = 0; r2 < 12; r2++) { const d = -110 + rng() * 220, [x, z] = at(d, edge(d, 0.8)); k.blob(DOD(), '#7d7a74', x, 0.2, z, 0.6 + rng() * 0.8, 0.7); }
       }
       if (L.ter === 'desert') {
@@ -2474,7 +2465,7 @@
     return {
       lands, bridges, syncDay, animate, seasons, setEra, walkPath, wipe, procession, people: peopleKit, LAND_R, RING, SC, bridgePoint, deckY,
       fig: { FigKit, figMaterial, crowdSet, crowdBegin, crowdPut, crowdEnd, crowdDispose, DRESS, dressOf, SKIN_T, FIG_UNI, personShape, soldierShape },
-      kit: { Kit, meshOf, motif, conch, windTower, ribs, hull, tint, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng, setBeyond: (e) => { BEY = e; }, glowMat, ghostMat, recolorG },
+      kit: { Kit, meshOf, buildHouse, buildFarm, buildShop, buildHall, buildBank, buildSchool, buildLamp, motif, conch, windTower, ribs, hull, tint, UBOX, UCYL, UCONE, TCYL, DOME, GABLE, VAULT, ICO, DOD, OCT, SPHG, TORUS, disposeGroup, bodyMat, metalMat, pick, STY, roofOn, styHall, addFire, addGlow, clearTrees, dust, landRng, setBeyond: (e) => { BEY = e; }, glowMat, ghostMat, recolorG },
       landOf: (i) => lands[i],
       firmPos: (i, id) => { const L = lands[i], o = L.firmObj.get(id); return o ? o.g.position : null; },
       housePos: (i, idx) => { const L = lands[i], H = L.houses[idx]; return H ? L.houseLots[H.idx].p : null; },

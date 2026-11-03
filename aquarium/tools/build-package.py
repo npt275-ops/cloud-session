@@ -147,7 +147,7 @@ LAUNCHERS = [('windows', LAUNCH_WIN, True), ('mac', LAUNCH_MAC, False), ('linux'
 LAUNCH_NAMES = [('windows', 'Choi Be Kinh (Windows).bat', 0o644), ('mac', 'Choi Be Kinh (Mac).command', 0o755), ('linux', 'choi-be-kinh-linux.sh', 0o755)]
 
 GUIDE = """BỂ KÍNH
-Vị thần ngoài bể kính: sáu đảo, mười hai thời đại, chín năm.
+Chaos Sandbox: sáu đảo, mười hai thời đại, chín năm. Bản làm lại từ đầu: sáu đảo thô.
 Phiên bản %(ver)s
 
 CÀI BẰNG MỘT LỆNH (tải toàn bộ mã nguồn, tạo phần mềm Bể Kính có biểu tượng, mở game)
@@ -180,9 +180,10 @@ CHƠI TRÊN ĐIỆN THOẠI
  - Kéo chuột (hay một ngón tay) để xoay, cuộn (hay hai ngón) để phóng to, bấm tên đảo để bay tới.
  - Phím mũi tên hay W A S D: lướt tới, lùi, sang trái, sang phải. Page Up / Page Down (E / Q, Space / Shift): lên cao,
    sà xuống. Trên điện thoại có sáu nút bay ở góc phải.
- - Nút tốc độ: 1×, 2×, 4×. 1× chậm để nhìn rõ từng người; ván chín năm ở 2× hết khoảng 36 phút.
- - Quyền năng: mười lăm phép của thần. Việc cho cả bể làm ngay; việc cho một đảo thì chạm đúng chỗ trên đảo.
- - Nút ⋯: biên niên sử, âm thanh, chú giải, ngày và đêm, số khung hình, nút bay, cài lên điện thoại.
+ - Nút tốc độ: 1×, 2×, 4×. Một trận chín năm ở 1× hết khoảng 72 phút.
+ - Mẫu công trình: hiện công trình tiêu biểu và vài công trình nhỏ của mỗi đảo; nút ‹ › để đổi thời đại (1 tới 12).
+ - Âm thanh, Bay (nút bay trên màn hình). Phím F: số khung hình.
+ - Bản này là sáu đảo thô: chỉ có thiên nhiên, mùa, mây và mưa. Người và logic mới (Chaos Sandbox) đang làm.
 
 GIẤY PHÉP
  - three.js r128: giấy phép MIT (vendor/LICENSE-three.txt).

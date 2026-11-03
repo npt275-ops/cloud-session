@@ -2,7 +2,7 @@
 
 | Dự án | Mô tả |
 |---|---|
-| [`aquarium/`](aquarium/README.md) | **Bể Kính**: thành phố tưởng tượng 3D trên hòn đảo bay trong bể kính, chạy bằng một nền kinh tế mô phỏng thật. |
+| [`aquarium/`](aquarium/README.md) | **Bể Kính — Chaos Sandbox**: sáu hòn đảo trong bể kính 3D, đang làm lại từ đầu (hiện là sáu đảo thô với thiên nhiên, mùa, mây và mưa, cùng phòng mẫu công trình theo mười hai thời đại). |
 | [`docs/`](docs/) | Bể Kính đã đóng gói: ứng dụng web cài lên điện thoại (bật GitHub Pages cho thư mục này) và [`BeKinh-ban-may-tinh.zip`](docs/BeKinh-ban-may-tinh.zip) để tải về máy tính chơi không cần mạng. |
 
 ## Bể Kính: cài trên máy tính bằng một lệnh

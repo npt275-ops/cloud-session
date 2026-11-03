@@ -1,0 +1,1858 @@
+<title>Bể Kính</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap">
+<style>
+/* Bố cục: cả màn hình là thế giới 3D. Chữ và điều khiển chỉ là lớp kính mỏng ở mép. */
+:root {
+  --ink: #f5f1e8; --title: #fffaf0; --title-dim: rgba(255, 250, 240, 0.8); --ink-dim: rgba(245, 241, 232, 0.72); --glass: rgba(14, 22, 38, 0.42); --glass-line: rgba(255, 255, 255, 0.16);
+  --amber: #ffd27a; --good: #8fe0b2; --warn: #ffd27a; --bad: #ff9b94; --bg: #0b1430;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Outfit", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font-body); overflow: hidden; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+.glass { background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+
+body.day { --title: #13233a; --title-dim: rgba(19, 35, 58, 0.78); --glass: rgba(14, 22, 38, 0.6); }
+.brand, .clock { color: var(--title); transition: color 1.2s; }
+.brand p, .clock span { color: var(--title-dim) !important; }
+body.day .brand, body.day .clock { text-shadow: 0 1px 12px rgba(255, 255, 255, 0.55); }
+.brand { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 18px); pointer-events: none; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35); }
+.brand h1 { margin: 0; font: 700 clamp(30px, 4.4vw, 54px)/0.95 var(--font-display); letter-spacing: -0.01em; }
+.brand p { margin: 8px 0 0; max-width: 34ch; color: var(--ink-dim); font-size: 14.5px; }
+.clock { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 20px); text-align: right; pointer-events: none; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35); }
+.clock b { display: block; font: 500 clamp(26px, 3vw, 38px)/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.clock span { font-size: 13px; color: var(--ink-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.pulse { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); border-radius: 14px; padding: 10px 14px; display: grid; gap: 4px; font-size: 13px; max-width: 280px; }
+.pulse div { display: flex; align-items: center; gap: 8px; }
+.pulse i { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: var(--good); box-shadow: 0 0 10px currentColor; }
+.pulse .ph-line { border-top: 1px solid var(--glass-line); padding-top: 4px; margin-top: 2px; }
+
+.bar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; border-radius: 999px; }
+.bar button { border: 0; background: transparent; color: var(--ink); font: 500 13px var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.bar button:hover { background: rgba(255, 255, 255, 0.08); }
+.bar button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.16); }
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.card { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); width: min(330px, calc(100% - 40px)); border-radius: 18px; padding: 16px 18px 14px; animation: rise 0.35s ease-out; }
+@keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+.card .kind { font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+.card h2 { margin: 2px 0 6px; font: 700 23px/1.1 var(--font-display); }
+.card p { margin: 0 0 8px; color: var(--ink-dim); font-size: 14px; }
+.card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+.card li { display: flex; justify-content: space-between; gap: 10px; }
+.card li span:last-child { color: var(--ink-dim); text-align: right; }
+.card .x { position: absolute; right: 10px; top: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 16px; cursor: pointer; }
+.hint { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); transform: translateX(-50%); font-size: 13px; color: var(--ink-dim); pointer-events: none; transition: opacity 0.6s; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); white-space: nowrap; }
+.x { width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 16px; cursor: pointer; flex: 0 0 auto; }
+.panel { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); width: min(330px, calc(100% - 40px)); max-height: calc(100vh - 250px); overflow: auto; border-radius: 18px; padding: 14px 16px 16px; display: grid; gap: 8px; animation: rise 0.3s ease-out; }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.panel h3 { margin: 0; font: 700 21px/1.1 var(--font-display); }
+.panel .sub { margin: -2px 0 2px; font-size: 13px; color: var(--ink-dim); }
+.big { text-align: left; border: 1px solid rgba(255, 210, 122, 0.5); background: rgba(255, 210, 122, 0.12); color: var(--ink); border-radius: 14px; padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; font: inherit; }
+.big:hover { background: rgba(255, 210, 122, 0.2); }
+.big b { font: 600 15px var(--font-body); color: var(--amber); }
+.big span { font-size: 13px; color: var(--ink-dim); }
+.sl { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; margin-top: 4px; }
+.sl output { font-variant-numeric: tabular-nums; color: var(--amber); font-weight: 600; }
+.panel input[type="range"] { width: 100%; accent-color: #ffd27a; margin: 0; }
+.note { margin: 0 0 2px; font-size: 12.5px; color: var(--ink-dim); min-height: 2.6em; }
+.kinds { display: grid; gap: 8px; }
+.kopt { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.05); color: var(--ink); border-radius: 14px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: 14px 1fr; column-gap: 10px; row-gap: 2px; font: inherit; }
+.kopt i { grid-row: 1 / span 3; width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; box-shadow: 0 0 10px currentColor; }
+.kopt b { font: 600 15px var(--font-body); }
+.kopt span { font-size: 13px; color: var(--ink-dim); }
+.kopt em { font-style: normal; font-size: 12px; color: var(--amber); }
+.kopt:hover { background: rgba(255, 255, 255, 0.1); }
+.kopt[aria-checked="true"] { border-color: var(--amber); background: rgba(255, 210, 122, 0.14); }
+.hintline { margin: 2px 0 0; font-size: 13px; color: var(--amber); }
+.toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 22px); transform: translateX(-50%); border-radius: 16px; padding: 10px 16px; font-size: 14px; max-width: min(560px, calc(100% - 40px)); text-align: center; animation: drop 0.35s ease-out; z-index: 5; }
+.toast b { color: var(--amber); font-weight: 600; }
+@keyframes drop { from { transform: translate(-50%, -8px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+.brand, .clock, .pulse, .bar, .hint { transition: opacity 0.8s, color 1.2s; }
+body.intro .brand, body.intro .clock, body.intro .pulse, body.intro .bar, body.intro .hint, body.intro .rail { opacity: 0; pointer-events: none; }
+.intro { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(8, 14, 30, 0.12), rgba(8, 14, 30, 0.55)); z-index: 10; transition: opacity 0.8s; }
+.intro.out { opacity: 0; pointer-events: none; }
+.intro-card { width: min(560px, 100%); border-radius: 24px; padding: 26px 26px 22px; max-height: calc(100vh - 32px); overflow: auto; background: rgba(14, 22, 38, 0.62); }
+.intro .eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.intro h2 { margin: 6px 0 10px; font: 700 clamp(44px, 7vw, 68px)/0.92 var(--font-display); letter-spacing: -0.01em; color: var(--ink); }
+.intro p { margin: 0 0 14px; color: var(--ink-dim); max-width: 50ch; }
+.intro ul { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; font-size: 14.5px; color: var(--ink-dim); }
+.intro li b { color: var(--ink); font-weight: 600; }
+.intro-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.08); color: var(--ink); border-radius: 999px; padding: 11px 18px; font: 600 14.5px var(--font-body); cursor: pointer; }
+.btn:hover { background: rgba(255, 255, 255, 0.14); }
+.btn.primary { background: var(--amber); color: #2a1d05; border-color: var(--amber); }
+.btn.primary:hover { background: #ffe0a0; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font-size: 13.5px; }
+.legend li { display: grid; grid-template-columns: 12px 1fr; gap: 9px; align-items: start; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+.legend b { font-weight: 600; }
+.legend span { color: var(--ink-dim); }
+.legend-h { margin: 6px 0 0; font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+.bar .sep { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--glass-line); }
+.bar button { position: relative; }
+.badge { position: absolute; top: -4px; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #ff6b6b; color: #fff; font: 600 11px/18px var(--font-body); text-align: center; }
+.more { position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); display: grid; gap: 2px; padding: 6px; border-radius: 16px; min-width: 190px; z-index: 6; }
+.more button { border: 0; background: transparent; color: var(--ink); font: 500 13.5px var(--font-body); text-align: left; padding: 9px 12px; border-radius: 10px; cursor: pointer; }
+.more button:hover { background: rgba(255, 255, 255, 0.08); }
+.more kbd { float: right; margin-left: 10px; padding: 0 5px; border: 1px solid var(--glass-line); border-radius: 5px; font: 600 11px/16px var(--font-body); color: var(--ink-dim); }
+.pad { position: fixed; right: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 6px; z-index: 6; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pad button { border: 1px solid var(--glass-line); border-radius: 14px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--ink); font-size: 20px; touch-action: none; }
+.pad button.on { background: rgba(255, 210, 122, 0.3); }
+.pad .p-up { grid-area: 1 / 1; } .pad .p-fwd { grid-area: 1 / 2; } .pad .p-down { grid-area: 1 / 3; } .pad .p-left { grid-area: 2 / 1; } .pad .p-back { grid-area: 2 / 2; } .pad .p-right { grid-area: 2 / 3; }
+.fps { position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); z-index: 6; padding: 5px 9px; border-radius: 9px; background: rgba(8, 18, 28, 0.62); color: #e8f4ff; font: 600 12px/1.2 var(--font-body); font-variant-numeric: tabular-nums; pointer-events: none; }
+.more button[aria-pressed="true"]::after { content: "Bật"; float: right; color: var(--amber); font-size: 12px; }
+.rail { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; z-index: 3; }
+.tool { --p: 1; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass); color: var(--ink); cursor: pointer; font: inherit; text-align: left; backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+.tool .ic { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--amber) calc(var(--p) * 360deg), rgba(255, 255, 255, 0.12) 0); flex: 0 0 auto; }
+.tool .ic::before { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: #1b2436; }
+.tool .ic svg { position: relative; width: 20px; height: 20px; fill: rgba(255, 233, 170, 0.55); }
+.tool.ready .ic svg { fill: #ffe39a; filter: drop-shadow(0 0 6px rgba(255, 210, 120, 0.9)); }
+.tool .tl { display: grid; line-height: 1.25; }
+.tool .tl b { font-weight: 600; font-size: 14px; }
+.tool .tl em { font-style: normal; font-size: 12px; color: var(--ink-dim); }
+.tool[aria-pressed="true"] { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255, 210, 122, 0.25); }
+body.seeding #scene { cursor: crosshair; }
+.lands { position: fixed; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; gap: 4px; padding: 5px; border-radius: 999px; z-index: 3; max-width: calc(100% - 520px); overflow-x: auto; scrollbar-width: none; }
+.lands::-webkit-scrollbar { display: none; }
+.lands button { border: 0; background: transparent; color: var(--ink); font: 600 12.5px var(--font-body); padding: 6px 12px 6px 10px; border-radius: 999px; cursor: pointer; display: grid; grid-template-columns: auto 1fr; column-gap: 7px; text-align: left; line-height: 1.2; white-space: nowrap; }
+.lands button i { grid-row: 1 / span 2; width: 9px; height: 9px; border-radius: 50%; align-self: center; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18); }
+.lands button span { font: 500 11px var(--font-body); color: var(--ink-dim); }
+.lands button:hover { background: rgba(255, 255, 255, 0.08); }
+.lands button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24); }
+.lands button.wild b { font-weight: 500; opacity: 0.7; }
+body.intro .lands { opacity: 0; pointer-events: none; }
+/* Tranh hùng: chọn chế độ, chọn miền, bảng chỉ huy */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 12px; }
+.mode { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.06); color: var(--ink); border-radius: 18px; padding: 14px 14px 12px; cursor: pointer; font: inherit; display: grid; gap: 5px; align-content: start; }
+.mode:hover, .mode:focus-visible { background: rgba(255, 255, 255, 0.13); }
+.mode b { font: 700 21px/1.1 var(--font-display); }
+.mode span { font-size: 13px; color: var(--ink-dim); }
+.mode.war { border-color: rgba(255, 150, 120, 0.5); background: rgba(255, 120, 90, 0.12); }
+.mode.war:hover { background: rgba(255, 120, 90, 0.22); }
+.snd { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-dim); cursor: pointer; }
+.snd input { accent-color: var(--amber); width: 16px; height: 16px; }
+.picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 14px; }
+.pick { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.05); color: var(--ink); border-radius: 14px; padding: 10px 10px 9px; cursor: pointer; font: inherit; display: grid; gap: 3px; align-content: start; }
+.pick:hover, .pick:focus-visible { background: rgba(255, 255, 255, 0.14); }
+.pick b { font-size: 15px; display: flex; align-items: center; gap: 7px; }
+.pick b i { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+.pick small { font-size: 11.5px; color: var(--ink-dim); line-height: 1.32; }
+.pick em { font-style: normal; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.intro .back { background: none; border: 0; color: var(--ink-dim); cursor: pointer; font: inherit; padding: 0; margin: 0 0 4px; }
+.intro .back:hover { color: var(--ink); }
+.cmd { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 92px); width: min(372px, calc(100vw - 32px)); max-height: calc(100vh - 262px); display: flex; flex-direction: column; border-radius: 18px; z-index: 4; animation: rise 0.3s ease-out; }
+.cmd .ch { padding: 12px 14px 8px; display: grid; gap: 6px; border-bottom: 1px solid var(--glass-line); }
+.cmd .ct { display: flex; align-items: center; gap: 8px; }
+.cmd .ct i { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+.cmd .ct h3 { margin: 0; font: 700 20px/1.1 var(--font-display); flex: 1; }
+.cmd .ct button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); font-size: 15px; cursor: pointer; }
+.cmd .stats { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12.5px; color: var(--ink-dim); }
+.cmd .stats b { color: var(--ink); font-weight: 600; }
+.cmd .tabs { display: flex; gap: 4px; padding: 8px 10px 0; }
+.cmd .tabs button { flex: 1; border: 0; background: rgba(255, 255, 255, 0.06); color: var(--ink); font: 600 12.5px var(--font-body); padding: 7px 2px; border-radius: 10px; cursor: pointer; }
+.cmd .tabs button[aria-selected="true"] { background: rgba(255, 210, 122, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.5); }
+.cmd .cb { overflow-y: auto; padding: 8px 10px 12px; display: grid; gap: 6px; align-content: start; }
+.cmd h4 { margin: 6px 2px 0; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); font-weight: 600; }
+.cmd .note { font-size: 12.5px; color: var(--ink-dim); margin: 0 2px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
+.row b { font-size: 13.5px; font-weight: 600; }
+.row small { grid-column: 1; font-size: 12px; color: var(--ink-dim); line-height: 1.32; }
+.row .act { grid-row: 1 / span 3; grid-column: 2; display: flex; gap: 4px; }
+.row button, .adv button { border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.1); color: var(--ink); border-radius: 999px; padding: 6px 11px; font: 600 12px var(--font-body); cursor: pointer; white-space: nowrap; }
+.row button:hover:not(:disabled), .adv button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+.row button.go, .adv button.go { background: var(--amber); color: #2a1d05; border-color: var(--amber); }
+.row button.red { background: #ff8a7a; color: #2a0d05; border-color: #ff8a7a; }
+.row button[aria-pressed="true"] { background: rgba(255, 210, 122, 0.3); border-color: var(--amber); }
+.row button:disabled, .adv button:disabled { opacity: 0.42; cursor: default; }
+.row.done b::after { content: " ✓"; color: var(--good); }
+.row .prog, .row .pw { grid-column: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; margin-top: 3px; }
+.row .prog i, .row .pw i { display: block; height: 100%; background: var(--amber); }
+/* sáu trụ cột: sáu vạch nhỏ, vạch đang níu chân thành phố có viền */
+.row .pills { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; }
+.row .pills span { display: grid; gap: 2px; font-size: 10.5px; line-height: 1.1; opacity: 0.85; }
+.row .pills span b { font-weight: 600; font-size: 10.5px; }
+.row .pills span i { display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.row .pills span i em { display: block; height: 100%; background: #9df0c4; }
+.row .pills span.low i em { background: #ffb36b; }
+.row .pills span.key b::after { content: ' ★'; color: var(--amber); }
+.row .pills span.low { opacity: 1; }
+.row small.chaos { grid-column: 1 / -1; color: #ffb3a8; margin-top: 4px; }
+.row .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.adv { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-dim); }
+.lands button.mine b { text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
+.lands button.foe span { color: #ffb0a8; }
+.note-i { font-size: 13px; color: var(--amber) !important; margin-top: -6px !important; }
+.gameover ul { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 5px; text-align: left; font-size: 13.5px; color: var(--ink-dim); }
+.gameover li b { color: var(--ink); font-weight: 600; }
+.gameover li i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.gameover .gc { max-height: calc(100vh - 40px); overflow: auto; }
+.intro-opts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0 0 14px; }
+.bar .mbar, .mana .mbar { display: inline-block; width: 46px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.16); overflow: hidden; vertical-align: middle; margin-right: 7px; }
+.mbar i { display: block; height: 100%; width: 60%; background: linear-gradient(90deg, #ffd27a, #fff3c4); }
+.mana { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.mana .mbar { flex: 1; height: 8px; }
+.pwgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pw { text-align: left; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.06); color: var(--ink); border-radius: 12px; padding: 8px 10px; cursor: pointer; font: inherit; display: grid; gap: 1px; }
+.pw b { font-size: 13.5px; font-weight: 600; }
+.pw span { font-size: 11.5px; color: var(--ink-dim); }
+.pw.bad { box-shadow: inset 3px 0 0 #ff8a7a; }
+.pw.good { box-shadow: inset 3px 0 0 #ffd27a; }
+.pw.mixed { box-shadow: inset 3px 0 0 #9fd4ff; }
+.pw { grid-template-columns: 26px 1fr; column-gap: 8px; align-items: center; }
+.pw .ic { grid-row: 1 / span 2; width: 26px; height: 26px; color: var(--ink); }
+.pw .ic svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.pw.bad .ic { color: #ffb3a8; } .pw.good .ic { color: #ffe08a; } .pw.mixed .ic { color: #bfe3ff; }
+.pw.hot { box-shadow: 0 0 0 2px rgba(255, 210, 122, 0.9), 0 0 16px rgba(255, 210, 122, 0.4); }
+.pwg h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pwg h4 small { font: 400 11.5px var(--font-body); letter-spacing: 0; text-transform: none; color: var(--ink-dim); }
+.pwstate { display: grid; gap: 4px; margin: 10px 2px 4px; font-size: 12.5px; line-height: 1.4; color: var(--ink-dim); }
+.pwstate b { color: var(--ink); font-weight: 600; }
+.pwstate .warn { color: #ffb3a8; } .pwstate .warn b { color: #ffd0c8; }
+.confirm { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100% - 32px)); padding: 18px 20px 16px; border-radius: 20px; z-index: 9; display: grid; gap: 8px; }
+.confirm b { font: 700 20px/1.2 var(--font-display); }
+.confirm p { margin: 0 0 6px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
+.btn.danger { background: #c4473a; border-color: #c4473a; color: #fff; }
+body.panel-open .pad, body.cmd-open .pad, body.intro .pad { display: none; }
+.cmdline { display: block; margin-top: 6px; padding: 7px 9px; border-radius: 9px; background: rgba(0, 0, 0, 0.35); color: #e8f4ff; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; user-select: all; -webkit-user-select: all; }
+.pw:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.pw.on { background: rgba(255, 210, 122, 0.26); border-color: var(--amber); }
+.pw:disabled { opacity: 0.42; cursor: default; }
+body.aiming #scene { cursor: crosshair !important; }
+body.aiming .lands button { box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.55); }
+.bhud { position: fixed; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 86px); width: min(560px, calc(100vw - 32px)); border-radius: 18px; padding: 12px 16px 12px; z-index: 4; display: grid; gap: 6px; }
+.bhud .eyebrow { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+.bhud > b { font: 700 18px/1.15 var(--font-display); }
+.bhud .x { position: absolute; right: 10px; top: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: var(--ink); cursor: pointer; }
+.bsides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12.5px; }
+.bsides div { display: grid; gap: 2px; align-content: start; }
+.bsides b { font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+.bsides b i { width: 10px; height: 10px; border-radius: 3px; }
+.bsides span { color: var(--ink-dim); }
+.bsides .hp { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); overflow: hidden; margin-top: 3px; }
+.bsides .hp i { display: block; height: 100%; }
+.gameover { position: fixed; inset: 0; display: grid; place-items: center; z-index: 9; background: rgba(8, 14, 30, 0.45); padding: 16px; }
+.gameover .gc { width: min(480px, 100%); border-radius: 24px; padding: 24px; text-align: center; background: rgba(14, 22, 38, 0.7); }
+.gameover h2 { font: 700 44px/1 var(--font-display); margin: 6px 0 10px; }
+.gameover p { color: var(--ink-dim); margin: 0 0 16px; }
+.gameover .intro-actions { justify-content: center; }
+.gameover .eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.pulse .era { color: var(--amber); font-size: 12px; letter-spacing: 0.04em; }
+.wmenu { position: fixed; bottom: auto; min-width: 0; z-index: 7; }
+.wmenu button { display: grid; gap: 2px; padding: 10px 12px; }
+.wmenu button b { font-weight: 600; font-size: 14px; }
+.wmenu button span { font-size: 12.5px; color: var(--ink-dim); line-height: 1.35; }
+.chapter { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -46%); width: min(560px, calc(100% - 32px)); padding: 26px 28px 22px; border-radius: 24px; z-index: 8; opacity: 0; transition: opacity 0.9s, transform 0.9s; text-align: center; }
+.chapter.in { opacity: 1; transform: translate(-50%, -50%); }
+.chapter .cy { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
+.chapter h2 { margin: 8px 0 14px; font: 700 clamp(26px, 4.2vw, 38px)/1.12 var(--font-display); }
+.chapter ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 7px; text-align: left; }
+.chapter li { font-size: 14.5px; color: var(--ink-dim); padding-left: 18px; position: relative; line-height: 1.4; }
+.chapter li::before { content: ""; position: absolute; left: 3px; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.chapter button { border: 1px solid var(--glass-line); background: rgba(255, 255, 255, 0.08); color: var(--ink); font: 500 14px var(--font-body); padding: 9px 22px; border-radius: 999px; cursor: pointer; }
+.chapter button:hover { background: rgba(255, 255, 255, 0.16); }
+.chron-list .t-chapter button { grid-template-columns: 1fr; background: linear-gradient(90deg, rgba(255, 210, 122, 0.2), rgba(255, 210, 122, 0.04)); box-shadow: inset 3px 0 0 var(--amber); padding: 10px 12px; margin: 6px 0 2px; }
+.chron-list .t-chapter .cd { color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; }
+.chron-list .t-chapter b { font: 700 17px/1.2 var(--font-display); }
+.subtitle { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); transform: translateX(-50%); width: min(680px, calc(100% - 40px)); border-radius: 18px; padding: 12px 18px 13px; display: grid; gap: 2px; z-index: 4; opacity: 0; transition: opacity 0.5s, transform 0.5s; pointer-events: none; }
+.subtitle.in { opacity: 1; }
+.subtitle.out { opacity: 0; }
+.subtitle .sk { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; }
+.subtitle b { font: 700 19px/1.2 var(--font-display); }
+.subtitle .st { font-size: 14px; color: var(--ink-dim); }
+.chron-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.chron-list li button { width: 100%; text-align: left; border: 0; background: rgba(255, 255, 255, 0.04); color: var(--ink); border-radius: 12px; padding: 8px 10px; display: grid; grid-template-columns: 10px 1fr; column-gap: 9px; cursor: pointer; font: inherit; }
+.chron-list li button:hover { background: rgba(255, 255, 255, 0.1); }
+.chron-list i { grid-row: 1 / span 3; width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; box-shadow: 0 0 8px currentColor; }
+.chron-list .cd { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; }
+.chron-list b { font-weight: 600; font-size: 14px; }
+.chron-list .ct { font-size: 12.5px; color: var(--ink-dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.chron-list .t-epic button { background: rgba(255, 210, 122, 0.1); box-shadow: inset 2px 0 0 var(--amber); }
+.chron-list .t-small b { font-weight: 500; }
+.chron-list .empty { color: var(--ink-dim); font-size: 13.5px; padding: 6px 2px; }
+.err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--ink-dim); }
+
+@media (max-width: 720px) {
+  .brand p { display: none; }
+  .pulse { left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); max-width: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); grid-template-columns: 1fr; }
+  .bar { max-width: calc(100% - 24px); overflow-x: auto; }
+  .bar button { padding: 8px 10px; font-size: 12.5px; }
+  .card { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); }
+  .hint { display: none; }
+  .rail { top: 40%; transform: none; left: auto; right: max(12px, env(safe-area-inset-right, 0px)); }
+  .tool { padding: 5px; }
+  .tool .tl { display: none; }
+  .subtitle { bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 116px); width: calc(100% - 24px); }
+  .lands { top: calc(env(safe-area-inset-top, 0px) + 60px); left: 12px; right: 12px; transform: none; max-width: none; }
+  .rail { top: 30%; gap: 8px; }
+  .chapter { padding: 20px 18px 16px; }
+  .subtitle b { font-size: 17px; }
+  .panel { left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 58vh; }
+  body.panel-open .pulse { display: none; }
+  .cmd { left: 12px; right: 12px; width: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); max-height: 54vh; }
+  body.cmd-open .pulse, body.cmd-open .card { display: none; }
+  .bhud { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); }
+  body.cmd-open .bhud { display: none; }
+  .bar .mbar { width: 30px; }
+  .picker { grid-template-columns: 1fr 1fr; }
+  .modes { grid-template-columns: 1fr; }
+  .toast { top: calc(env(safe-area-inset-top, 0px) + 74px); }
+}
+@media (prefers-reduced-motion: reduce) { .card, .panel, .toast { animation: none; } .intro, .brand, .clock, .pulse, .bar, .hint { transition: none; } }
+</style>
+
+<canvas id="scene" aria-label="Một thành phố tưởng tượng trên hòn đảo bay, đặt trong bể kính"></canvas>
+
+<div class="brand">
+  <h1>Bể Kính</h1>
+  <p hidden>Sáu miền đất trong một bể kính, nối nhau bằng sáu cây cầu. <span id="pop">0</span> gia đình đang sống.</p>
+</div>
+<div class="clock"><b id="time">06:00</b><span id="day">Ngày 1</span></div>
+
+<div class="pulse glass" id="pulse" aria-live="polite" hidden></div>
+<div class="hint" id="hint">Kéo để xoay · cuộn để phóng to · bấm tên một thành phố để bay tới</div>
+<nav class="lands glass" id="landBar" aria-label="Sáu thành phố"></nav>
+
+<div class="bar glass" role="toolbar" aria-label="Điều khiển">
+  <button id="powBtn" aria-pressed="false" aria-controls="powers" hidden><span class="mbar"><i id="manaFill"></i></span><span id="manaTxt">Quyền năng</span></button>
+  <button id="cmdBtn" aria-pressed="false" aria-controls="cmd" hidden>Thế giới</button>
+  <button id="speed" title="Chạm để đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
+  <button id="moreBtn" aria-expanded="false" aria-controls="more" aria-label="Thêm">⋯<span class="badge" id="chronBadge" hidden>0</span></button>
+  <button id="policyBtn" aria-pressed="false" aria-controls="policy" hidden>Chính sách</button>
+  <button id="dirBtn" aria-pressed="false" hidden>Phim tài liệu</button>
+</div>
+<div class="fps" id="fps" hidden aria-live="off"></div>
+<div class="pad" id="flyPad" hidden aria-label="Bay quanh bể">
+  <button data-k="up" class="p-up" aria-label="Lên cao">⤒</button>
+  <button data-k="fwd" class="p-fwd" aria-label="Lướt tới">▲</button>
+  <button data-k="down" class="p-down" aria-label="Sà xuống thấp">⤓</button>
+  <button data-k="left" class="p-left" aria-label="Sang trái">◀</button>
+  <button data-k="back" class="p-back" aria-label="Lùi lại">▼</button>
+  <button data-k="right" class="p-right" aria-label="Sang phải">▶</button>
+</div>
+<div class="more glass" id="more" hidden>
+  <button id="chronBtn" aria-pressed="false" aria-controls="chron">Biên niên sử</button>
+  <button id="soundBtn" aria-pressed="false">Âm thanh</button>
+  <button id="helpBtn" aria-pressed="false" aria-controls="help">Chú giải</button>
+  <button id="cycle" aria-pressed="true">Ngày và đêm</button>
+  <button id="fpsBtn" aria-pressed="false">Số khung hình</button>
+  <button id="flyBtn" aria-pressed="false">Nút bay trên màn hình</button>
+  <button id="dlBtn" hidden>Tải về máy tính</button>
+  <button id="appBtn" aria-pressed="false" aria-controls="app">Cài lên điện thoại</button>
+  <button id="money" aria-pressed="true" hidden>Dòng tiền</button>
+  <button id="orbit" aria-pressed="false" hidden>Tự xoay</button>
+</div>
+<nav class="rail" aria-label="Công cụ người giữ bể" hidden>
+  <button class="tool ready" id="toolSeed" aria-pressed="false">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5l2.1 7.4L21.5 11l-7.4 2.1L12 20.5l-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span>
+    <span class="tl"><b>Gieo phát minh</b><em id="seedWait">Sẵn sàng</em></span>
+  </button>
+  <button class="tool ready" id="toolTap" aria-pressed="false">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 2.2a6.8 6.8 0 1 1 0 13.6 6.8 6.8 0 0 1 0-13.6zm0 3.3a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/></svg></span>
+    <span class="tl"><b>Gõ vào kính</b><em id="tapWait">Chạm vào đảo</em></span>
+  </button>
+  <button class="tool ready" id="toolWhisper" aria-pressed="false" aria-haspopup="menu" aria-expanded="false" aria-controls="whisperMenu">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm3 4.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm5 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm5 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg></span>
+    <span class="tl"><b>Thì thầm tin đồn</b><em id="whisperWait">Sẵn sàng</em></span>
+  </button>
+  <button class="tool ready" id="toolCall" aria-pressed="false">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2c4.4 0 8 2.9 8 6.5S16.4 15 12 15s-8-2.9-8-6.5S7.6 2 12 2zm-3 14h6l-.8 3h-4.4zm1 4h4v2h-4z"/></svg></span>
+    <span class="tl"><b>Gọi khí cầu</b><em id="callWait">Sẵn sàng</em></span>
+  </button>
+</nav>
+<div class="more glass wmenu" id="whisperMenu" role="menu" aria-label="Chọn lời thì thầm" hidden>
+  <button role="menuitem" data-k="bank"><b>“Kho Bạc sắp vỡ”</b><span>Gieo vào một ngôi nhà. Nỗi sợ có thể tự tắt, hoặc lan thành đám đông kéo đến rút tiền.</span></button>
+  <button role="menuitem" data-k="food"><b>“Năm nay sắp mất mùa”</b><span>Gieo vào một ngôi nhà. Người tin sẽ đổ xô mua gạo tích trữ, và chính họ làm giá lên.</span></button>
+  <button role="menuitem" data-k="fad"><b>“Xưởng kia có món mới”</b><span>Gieo vào một xưởng thủ công. Có thể bùng thành cơn sốt, rồi thành bong bóng.</span></button>
+</div>
+<section class="chapter glass" id="chapter" role="dialog" aria-labelledby="cpTitle" hidden>
+  <div class="cy" id="cpYear">Năm 1 khép lại</div>
+  <h2 id="cpTitle"></h2>
+  <ul id="cpList"></ul>
+  <button id="cpClose">Tiếp tục</button>
+</section>
+<div class="subtitle glass" id="subtitle" aria-live="polite" hidden></div>
+
+<div class="card glass" id="card" hidden>
+  <button class="x" id="close" aria-label="Đóng">×</button>
+  <div class="kind" id="cKind"></div>
+  <h2 id="cTitle"></h2>
+  <p id="cText"></p>
+  <ul id="cList"></ul>
+</div>
+
+<section class="panel glass" id="policy" hidden aria-labelledby="pTitle">
+  <div class="ph"><h3 id="pTitle">Chính sách</h3><button class="x" id="pClose" aria-label="Đóng bảng chính sách">×</button></div>
+  <p class="sub">Mỗi quyết định thay đổi nền kinh tế thật. Thành phố sẽ báo lại hệ quả sau vài tuần.</p>
+  <button class="big" id="pRain"><b>Rắc 10.000 xu xuống thành phố</b><span>Vàng rơi xuống mọi nhà. Dân có thêm tiền tiêu, nhưng giá cả có thể tăng theo.</span></button>
+  <label class="sl" for="rRate"><span>Lãi suất ngân hàng</span><output id="oRate">5%</output></label>
+  <input type="range" id="rRate" min="0" max="20" step="1" value="5">
+  <p class="note" id="nRate"></p>
+  <label class="sl" for="rTax"><span>Thuế thu nhập</span><output id="oTax">10%</output></label>
+  <input type="range" id="rTax" min="0" max="50" step="1" value="10">
+  <p class="note" id="nTax"></p>
+  <label class="sl" for="rWage"><span>Lương tối thiểu mỗi ngày</span><output id="oWage">6 xu</output></label>
+  <input type="range" id="rWage" min="0" max="18" step="1" value="6">
+  <p class="note" id="nWage"></p>
+</section>
+<section class="panel glass" id="app" hidden aria-labelledby="aTitle">
+  <div class="ph"><h3 id="aTitle">Bể Kính trên máy tính và điện thoại</h3><button class="x" id="aClose" aria-label="Đóng hướng dẫn cài đặt">×</button></div>
+  <p class="sub">Một bể kính, chơi ở đâu cũng được.</p>
+  <button class="btn primary" id="appInstall" hidden>Cài Bể Kính lên máy này</button>
+  <p class="legend-h">Máy tính: cài bằng một lệnh</p>
+  <ul class="legend">
+    <li><i style="background:#ffd36b"></i><span><b>Windows</b>: mở PowerShell, dán lệnh dưới đây. Lệnh tải toàn bộ mã nguồn về máy, tạo biểu tượng Bể Kính trên Desktop và Start menu, rồi mở game.<code class="cmdline">irm https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.ps1 | iex</code></span></li>
+    <li><i style="background:#ffb36b"></i><span><b>macOS, Linux</b>: mở Terminal, dán lệnh dưới đây. Lệnh tạo phần mềm Bể Kính (Launchpad trên Mac, danh sách ứng dụng trên Linux) rồi mở game.<code class="cmdline">curl -fsSL https://raw.githubusercontent.com/npt275-ops/cloud-session/claude/eloquent-faraday-raquyc/install.sh | bash</code></span></li>
+    <li><i style="background:#9df0c4"></i><span>Không muốn dùng lệnh: bấm <b>⋯ → Tải về máy tính</b> để lưu gói <b>BeKinh-ban-may-tinh.zip</b>, giải nén, mở <b>Choi Be Kinh</b> hoặc <b>index.html</b>. Cả hai cách đều chơi không cần mạng.</span></li>
+  </ul>
+  <p class="legend-h">Điện thoại: thêm vào màn hình chính</p>
+  <ul class="legend">
+    <li><i style="background:#9df0c4"></i><span><b>Android</b> (Chrome): mở trang Bể Kính, bấm <b>⋮</b> rồi <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</span></li>
+    <li><i style="background:#9cc3ff"></i><span><b>iPhone, iPad</b> (Safari): bấm nút <b>Chia sẻ</b> rồi <b>Thêm vào MH chính</b>.</span></li>
+    <li><i style="background:#c8b6ff"></i><span>Biểu tượng Bể Kính nằm trên màn hình chính, mở ra là chơi toàn màn hình. Bản web của Bể Kính ở <b>npt275-ops.github.io/cloud-session</b>: lần đầu game tự lưu vào máy, những lần sau chơi được cả khi không có mạng.</span></li>
+    <li><i style="background:#ff9db8"></i><span>Trên điện thoại: kéo một ngón để xoay, hai ngón để phóng to, sáu nút bay ở góc phải để lướt và lên xuống.</span></li>
+  </ul>
+</section>
+<section class="panel glass" id="help" hidden aria-labelledby="hTitle">
+  <div class="ph"><h3 id="hTitle">Đọc thành phố</h3><button class="x" id="hClose" aria-label="Đóng chú giải">×</button></div>
+  <p class="sub">Mọi hình ảnh đều sinh ra từ nền kinh tế bên dưới.</p>
+  <ul class="legend">
+    <li><i style="background:#f4f4f4"></i><span><b>Khói bếp</b> bay lên lúc sáng và chiều: nhà đó có cơm ăn. Bếp nguội là có người đang đói.</span></li>
+    <li><i style="background:#ffcf7a"></i><span><b>Cửa sổ sáng</b>: có người ở nhà. Ban ngày cửa tối là cả nhà đi làm.</span></li>
+    <li><i style="background:#e36f8f"></i><span><b>Nhà cao thêm tầng, có hoa trước cửa</b>: các gia đình trong nhà giàu lên.</span></li>
+    <li><i style="background:#e4c35a"></i><span><b>Ruộng vàng óng</b>: kho lương thực đầy. Ruộng xanh là kho đang vơi.</span></li>
+    <li><i style="background:#ff8a3d"></i><span><b>Lò rực lửa, bánh răng quay nhanh</b>: xưởng đông thợ.</span></li>
+    <li><i style="background:#ffd36b"></i><span><b>Quả cầu Kho Bạc</b> vàng ấm khi lãi suất thấp, xanh lạnh khi lãi cao, sáng hơn khi cho vay nhiều.</span></li>
+    <li><i style="background:#9aa3ad"></i><span><b>Người ở quảng trường giữa ngày</b>: đang tìm việc.</span></li>
+    <li><i style="background:#ff8a80"></i><span><b>Cờ phe khác trên mái nhà, lính gác trước cửa</b>: nhà đã bị giặc chiếm. Lều trên quảng trường là trại của những gia đình mất nhà.</span></li>
+    <li><i style="background:#9df0c4"></i><span><b>Phím mũi tên</b> (hay W A S D): lướt tới, lùi, sang trái, sang phải trên bể. <b>Page Up / Page Down</b> (hay E / Q, Space / Shift): lên cao, sà xuống thấp. Trên điện thoại: bật <b>Nút bay</b> trong menu ⋯.</span></li>
+  </ul>
+  <p class="legend-h">Đốm sáng là dòng tiền</p>
+  <ul class="legend">
+    <li><i style="background:#ffd36b"></i><span><b>Vàng</b>: tiền mua hàng.</span></li>
+    <li><i style="background:#9df0c4"></i><span><b>Xanh lá</b>: tiền lương và cổ tức.</span></li>
+    <li><i style="background:#ff9db8"></i><span><b>Hồng</b>: tiền vay, trả lãi, trả nợ.</span></li>
+    <li><i style="background:#c8b6ff"></i><span><b>Tím</b>: thuế, trợ cấp, tiền in.</span></li>
+  </ul>
+  <p class="legend-h">Biển trong và Tranh hùng</p>
+  <ul class="legend">
+    <li><i style="background:#46b3cf"></i><span><b>Biển trong</b>: ngư trường chung. Cá cơm, cá thu, tôm cua nuôi người; hải cẩu, rùa, ngọc trai, cá voi, mực khổng lồ bán được nhiều tiền. Đánh bắt quá tay thì cá cạn, ngừng tay thì cá hồi lại.</span></li>
+    <li><i style="background:#c8b6ff"></i><span><b>Cầu và cảng</b>: phải bỏ tiền kho bạc ra xây. Có cầu, có cảng thì hàng hoá và tri thức qua lại; trong Tranh hùng đó cũng là đường cho quân lính và tàu chiến.</span></li>
+    <li><i style="background:#ff8a7a"></i><span><b>Chiến tuyến</b>: quân đánh nhau trên cầu và trên đường biển giữa hai cảng. Phá được cổng thì chiếm thành. Thanh trên mỗi thành là sức chịu của thành.</span></li>
+  </ul>
+  <p class="legend-h">Sáu thời đại</p>
+  <ul class="legend">
+    <li><i style="background:#c9a45c"></i><span><b>Nguyên thủy</b>: lều lá, lều da, nhà tuyết, lửa trại, cầu dây leo.</span></li>
+    <li><i style="background:#d9b98a"></i><span><b>Cổ đại</b>: nhà gạch bùn mái bằng, đền cột đá, kim tự tháp bậc thang.</span></li>
+    <li><i style="background:#9b4a35"></i><span><b>Trung đại</b>: nhà khung gỗ mái dốc, thành đá, cối xay gió, cầu vòm đá.</span></li>
+    <li><i style="background:#3d5a80"></i><span><b>Cận đại</b>: nhà ba tầng sơn màu, tháp đồng hồ, Kho Bạc mái vòm, khí cầu.</span></li>
+    <li><i style="background:#a5543f"></i><span><b>Công nghiệp</b>: nhà gạch đỏ, nhà máy ống khói, cầu sắt.</span></li>
+    <li><i style="background:#9fc3d8"></i><span><b>Hiện đại</b>: tháp kính, nhà kính, tuabin gió, cầu dây văng.</span></li>
+  </ul>
+  <p class="legend-h">Sợi sáng giữa các mái nhà là chuyện đang lan</p>
+  <ul class="legend">
+    <li><i style="background:#ff5a5a"></i><span><b>Đỏ</b>: nỗi sợ. Ít người sợ thì tự tắt, quá ba phần mười dân sợ thì thành đám đông kéo đến Kho Bạc.</span></li>
+    <li><i style="background:#ff6b9d"></i><span><b>Màu của cơn sốt</b>: người mê món hàng mới, đội mũ cùng màu và chen trước cửa xưởng.</span></li>
+    <li><i style="background:#f0b85a"></i><span><b>Hổ phách</b>: tin đồn mất mùa. Người tin vác bao gạo về tích trữ.</span></li>
+    <li><i style="background:#8fdc9a"></i><span><b>Xanh lá</b>: dịch sốt. Người ốm nằm nhà, đường phố vắng hẳn, trạm xá dựng cạnh Đài Quan Sát Sao.</span></li>
+    <li><i style="background:#c3a6ff"></i><span><b>Tím</b>: lời đồn về chiếc lều hứa lãi ba phần trăm mỗi tuần cạnh Kho Bạc.</span></li>
+  </ul>
+  <p class="legend-h">Những biến cố lớn</p>
+  <ul class="legend">
+    <li><i style="background:#ffd36b"></i><span><b>Tháp giếng trên Đồi Mây</b>: mạch vàng. Bánh xe quay khi có thợ đào, bụi vàng bay lên là vàng được bán ra ngoài đảo.</span></li>
+    <li><i style="background:#d9473a"></i><span><b>Biển đỏ trước xưởng</b>: thợ đang đình công. Lò nguội, không ai nhận lương.</span></li>
+    <li><i style="background:#ffd04d"></i><span><b>Cờ vàng trên mái</b>: nơi này độc quyền, giá cứ nhích lên cho đến khi có đối thủ mới.</span></li>
+    <li><i style="background:#ffb3c7"></i><span><b>Hoa hồng bay giữa hai nhà</b>: một đám cưới. Khi đủ bốn đứa trẻ lớn lên, một ngôi nhà mới mọc lên.</span></li>
+  </ul>
+  <p class="legend-h">Thành phố ghi nhớ</p>
+  <ul class="legend">
+    <li><i style="background:#a9824f"></i><span><b>Tượng đồng quanh tháp đồng hồ</b>: mỗi phát minh dựng một bức. Bấm vào để đọc tên người nghĩ ra nó.</span></li>
+    <li><i style="background:#8f8373"></i><span><b>Tàn tích</b> trên lô đất: xưởng đã phá sản, nằm đó cho đến khi có người mở xưởng mới.</span></li>
+    <li><i style="background:#86b86a"></i><span><b>Đảo Đồ Cũ</b> lơ lửng cạnh rìa: đồ của những cơn sốt đã vỡ.</span></li>
+    <li><i style="background:#9e7e54"></i><span><b>Đường mòn</b> hằn dần trên cỏ theo lối người ta đi làm mỗi ngày.</span></li>
+  </ul>
+</section>
+<section class="panel glass" id="chron" hidden aria-labelledby="cTitleH">
+  <div class="ph"><h3 id="cTitleH">Biên niên sử</h3><button class="x" id="chClose" aria-label="Đóng biên niên sử">×</button></div>
+  <p class="sub">Mọi chuyện đã xảy ra trong thành phố. Bấm vào một dòng để bay đến nơi đó.</p>
+  <ol class="chron-list" id="chronList"></ol>
+</section>
+<div class="toast glass" id="toast" role="status" hidden></div>
+<div class="intro" id="intro">
+  <div class="intro-card glass" role="dialog" aria-modal="true" aria-labelledby="iTitle">
+    <div id="introMain">
+      <div class="eyebrow">Sáu miền đất quanh một biển trong</div>
+      <h2 id="iTitle">Bể Kính</h2>
+      <p>Bạn là vị thần đứng ngoài vách kính. Bên trong, sáu bộ lạc đến trên đất hoang, đánh cá, bắc cầu, buôn bán, đánh nhau, và trong chín năm đi qua mười hai thời đại: năm năm đầu từ nguyên thủy tới robot AI, bốn năm sau là những thời vượt tầm hiểu biết của con người: vật chất sống, mặt trời nhân tạo, bẻ cong không gian, siêu việt. Mỗi miền lên đời theo cách riêng, cần đủ kinh tế, quân sự, giáo dục, y tế, tôn giáo và giao thương. Nền kinh tế bên dưới là thật. Họ tự sống. Bạn quyết định khi nào trời mưa, khi nào đất rung.</p>
+      <p class="note-i">Một ván dài chín năm: khoảng 36 phút ở tốc độ 1×, 18 phút ở 2×, 9 phút ở 4×.</p>
+      <ul>
+        <li><b>Thiên tai:</b> lũ lụt, hạn hán, động đất, lốc xoáy, dịch bệnh, núi lửa, sóng thần, sét lửa.</li>
+        <li><b>Ban phước:</b> mưa lành, mùa bội thu, khai sáng, chữa lành, buộc đình chiến.</li>
+        <li><b>Thần lực</b> hồi lại nhờ đức tin. Dân tin thần khi sợ hãi và khi biết ơn; thời đại càng mới, người ta càng ít tin.</li>
+      </ul>
+      <div class="intro-opts"><label class="snd"><input type="checkbox" id="warOn" checked> Loài người có chiến tranh</label><label class="snd"><input type="checkbox" id="sndOn" checked> Có âm thanh</label></div>
+      <div class="intro-actions"><button class="btn primary" id="enterGod">Bước vào bể kính</button></div>
+    </div>
+    <div class="intro-actions" hidden><button class="btn primary" id="enterSound">Bước vào, có âm thanh</button><button class="btn" id="enterQuiet">Bước vào trong im lặng</button></div>
+  </div>
+</div>
+<section class="cmd glass" id="cmd" hidden aria-labelledby="cmdTitle">
+  <div class="ch">
+    <div class="ct"><i id="cmdDot" style="background:#ffd27a"></i><h3 id="cmdTitle">Sáu nền văn minh</h3><button id="cmdClose" aria-label="Đóng bảng thế giới">×</button></div>
+    <div class="stats" id="cmdStats"></div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Thế giới">
+    <button role="tab" data-tab="civ" aria-selected="true">Văn minh</button>
+    <button role="tab" data-tab="war" aria-selected="false">Chiến sự</button>
+  </div>
+  <div class="cb" id="cmdBody" role="tabpanel"></div>
+</section>
+<section class="cmd glass" id="powers" hidden aria-labelledby="pwTitle">
+  <div class="ch">
+    <div class="ct"><i style="background:#fff3c4"></i><h3 id="pwTitle">Quyền năng của thần</h3><button id="pwClose" aria-label="Đóng bảng quyền năng">×</button></div>
+    <div class="mana"><span class="mbar"><i id="pwFill"></i></span><b id="pwVal">60</b></div>
+    <p class="note" id="pwInfo">Chọn một quyền năng.</p>
+  </div>
+  <div class="cb" id="pwGod">
+    <div id="pwGroups"></div>
+    <div class="pwstate" id="pwState" aria-live="polite"></div>
+    <p class="note" id="pwFaith"></p>
+  </div>
+</section>
+<section class="confirm glass" id="pwConfirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="pcTitle" aria-describedby="pcText">
+  <b id="pcTitle">Đập vỡ kính?</b>
+  <p id="pcText"></p>
+  <div class="intro-actions"><button class="btn danger" id="pcYes">Đập vỡ</button><button class="btn" id="pcNo">Thôi</button></div>
+</section>
+<section class="bhud glass" id="bhud" hidden aria-live="polite">
+  <button class="x" id="bhClose" aria-label="Thôi theo dõi trận này">×</button>
+  <div class="eyebrow" id="bhKind"></div>
+  <b id="bhTitle"></b>
+  <div class="bsides" id="bhSides"></div>
+</section>
+<section class="gameover" id="gameover" hidden role="dialog" aria-labelledby="goTitle">
+  <div class="gc glass"><div class="eyebrow" id="goKind"></div><h2 id="goTitle"></h2><p id="goText"></p><ul id="goList"></ul><div class="intro-actions"><button class="btn primary" id="goNew">Ván mới</button><button class="btn" id="goWatch">Ở lại ngắm bể</button></div></div>
+</section>
+<script>document.body.classList.add('intro');</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="sim.js"></script>
+<script src="audio.js"></script>
+<script src="lands3d.js"></script>
+<script src="war3d.js"></script>
+<script src="landmarks3d.js"></script>
+<script src="fauna3d.js"></script>
+<script src="chaos3d.js"></script>
+<script src="streets3d.js"></script>
+<script src="sights3d.js"></script>
+<script src="god3d.js"></script>
+<script src="powers3d.js"></script>
+<script src="sky3d.js"></script>
+<script src="clouds3d.js"></script>
+<script src="story3d.js"></script>
+<script>
+(function () {
+  'use strict';
+  if (!window.THREE || !THREE.OrbitControls || !window.Lands3D || !window.Sim || !window.War3D || !window.God3D) {
+    document.body.insertAdjacentHTML('beforeend', '<div class="err">Không tải được thư viện 3D. Hãy tải lại trang.</div>');
+    return;
+  }
+  const $ = (id) => document.getElementById(id);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const C = (h) => new THREE.Color(h);
+  const audio = window.CityAudio ? CityAudio.create() : null;
+
+  /* =============== Sáu miền đất, chạy ngầm bên dưới =============== */
+  const W = Sim.createWorld({ seed: 42, mode: 'god' });
+  const ERAS = Sim.ERAS, nameOf = (id) => Sim.nameOf(id);
+  let focus = 0; // thành phố đang xem
+  const cityOf = (i) => W.cities[i];
+  const worldLevel = () => { let e = 0; for (const c of W.cities) if (c.settled) e = Math.max(e, c.era); return e + 1; };
+  const wOf = (i) => (W.cities[i] && W.cities[i].settled ? W.cities[i].w : null);
+  const TER_DOT = { plains: '#86bb63', forest: '#3f7a4c', mountain: '#a39d90', tundra: '#e4edf2', coast: '#4aa3c7', desert: '#e3c58e' };
+  const SCHOOL_NAMES = ['Vòng Đá', 'Đền Học', 'Thư Viện Tháp Chuông', 'Đài Quan Sát Sao', 'Trường Đại Học', 'Trung Tâm Khoa Học'];
+
+  /* =============== Renderer, camera =============== */
+  const canvas = $('scene');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false; // bóng đổ được vẽ lại theo nhịp riêng (xem phần Mượt và nét)
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 4200);
+  const OVERVIEW = 525;
+  camera.position.set(0, 318, 414); // xa hơn một chút vì đảo và bể đã to ra
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.set(0, 0, 0);
+  controls.enableDamping = true; controls.dampingFactor = 0.07;
+  controls.minDistance = 14; controls.maxDistance = 820; controls.maxPolarAngle = Math.PI * 0.49;
+  controls.autoRotate = false; // camera chỉ đi theo tay người chơi, không tự xoay
+  controls.enablePan = true; controls.screenSpacePanning = true;
+  function resize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = w < 720 ? 50 : 34;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  if (window.innerWidth < 720) camera.position.multiplyScalar(1.5);
+
+  /* =============== Bầu trời, ánh sáng =============== */
+  const skyMat = new THREE.ShaderMaterial({
+    uniforms: { top: { value: C('#5aa9e6') }, bottom: { value: C('#cfe8f5') }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: C('#fff3d0') } },
+    vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: 'uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vW; void main(){ vec3 d = normalize(vW); float h = clamp(d.y * 1.4 + 0.25, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.8)); float s = max(dot(d, normalize(sunDir)), 0.0); c += sunCol * (pow(s, 600.0) * 1.2 + pow(s, 12.0) * 0.18); gl_FragColor = vec4(c, 1.0); }',
+    side: THREE.BackSide, depthWrite: false,
+  });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1900, 32, 16), skyMat));
+  scene.fog = new THREE.Fog(0xcfe8f5, 600, 2400);
+  const starPos = [];
+  for (let i = 0; i < 700; i++) { const u = hash(i), t = hash(i + 7) * Math.PI * 2, r = 1750, y = u; starPos.push(Math.cos(t) * Math.sqrt(1 - y * y) * r, y * r, Math.sin(t) * Math.sqrt(1 - y * y) * r); }
+  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  scene.add(new THREE.Points(starGeo, starMat));
+  const hemi = new THREE.HemisphereLight(0xdff1ff, 0x5d6b4a, 0.55);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff1d6, 1.1);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 420 });
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+  scene.add(sun); scene.add(sun.target);
+  const moon = new THREE.DirectionalLight(0xb4c3ff, 0.0);
+  scene.add(moon);
+
+  /* =============== Vật liệu =============== */
+  const mats = new Map();
+  function mat(hex, o) {
+    const k = hex + JSON.stringify(o || {});
+    if (!mats.has(k)) mats.set(k, new THREE.MeshStandardMaterial(Object.assign({ color: hex, flatShading: true, roughness: 0.88, metalness: 0.02 }, o || {})));
+    return mats.get(k);
+  }
+  function mesh(geo, m, x, y, z, parent) {
+    const me = new THREE.Mesh(geo, m);
+    me.position.set(x || 0, y || 0, z || 0);
+    me.castShadow = true; me.receiveShadow = true;
+    if (parent) parent.add(me);
+    return me;
+  }
+  const box = (w, h, d) => { const g = new THREE.BoxGeometry(w, h, d); g.translate(0, h / 2, 0); return g; };
+  const glowTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  // vầng trăng trên trời: đĩa sáng bạc và quầng mờ, mọc ở phía đối diện mặt trời
+  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(34, 40), new THREE.MeshBasicMaterial({ color: '#f2f5ff', transparent: true, opacity: 0, fog: false, depthWrite: false }));
+  const moonHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#c9d6ff', transparent: true, opacity: 0, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+  moonHalo.scale.setScalar(260); moonDisc.renderOrder = -1; moonHalo.renderOrder = -1; moonDisc.userData.noFade = moonHalo.userData.noFade = true;
+  scene.add(moonDisc, moonHalo);
+
+  /* =============== Bể kính bao quanh cả sáu miền =============== */
+  const DOME = Lands3D.RING + Lands3D.LAND_R + 16;
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(DOME, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({ color: 0xe8f6ff, transparent: true, opacity: 0.06, shininess: 160, specular: 0xffffff, side: THREE.DoubleSide, depthWrite: false }));
+  dome.raycast = () => {}; dome.renderOrder = 4;
+  scene.add(dome);
+  const ring = mesh(new THREE.TorusGeometry(DOME, 0.9, 8, 180), mat('#b08d57', { metalness: 0.6, roughness: 0.35 }), 0, 0, 0, scene);
+  ring.rotation.x = Math.PI / 2;
+  for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2; mesh(new THREE.SphereGeometry(1.4, 8, 6), mat('#c9a66b', { metalness: 0.6, roughness: 0.3 }), Math.cos(a) * DOME, 0, Math.sin(a) * DOME, scene); }
+  // đá trôi lơ lửng bên ngoài bể và mây
+  const floaters = [];
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + hash(i), r = DOME + 16 + hash(i + 2) * 70, s = 3 + hash(i + 4) * 7;
+    const rock = mesh(new THREE.DodecahedronGeometry(s, 0), mat('#7b6a58'), Math.cos(a) * r, -18 - hash(i + 6) * 50, Math.sin(a) * r, scene);
+    mesh(new THREE.CylinderGeometry(s * 0.9, s * 0.7, 0.8, 7), mat('#86b86a'), 0, s * 0.75, 0, rock);
+    floaters.push({ m: rock, y: rock.position.y, ph: hash(i) * 6 });
+  }
+  // gộp vài khối cùng vật liệu thành một khối (một lượt vẽ)
+  function mergePlain(list) {
+    let n = 0; const gs = list.map((g) => (g.index ? g.toNonIndexed() : g)); for (const g of gs) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3); let o = 0;
+    for (const g of gs) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
+    const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); m.computeBoundingSphere(); return m;
+  }
+  // mây chỉ có bên trong bể kính: xem clouds3d.js
+
+  /* =============== Bấm được, khói, đốm sáng =============== */
+  const clickables = [];
+  function clickable(group, sel) { group.traverse((o) => { if (o.isMesh) { o.userData.sel = sel; clickables.push(o); } }); }
+  function unclickable(group) { const gone = new Set(); group.traverse((o) => gone.add(o)); for (let i = clickables.length - 1; i >= 0; i--) if (gone.has(clickables[i])) clickables.splice(i, 1); }
+  const puffGeo = new THREE.IcosahedronGeometry(0.35, 0), puffs = [];
+  for (let i = 0; i < 160; i++) { const m = new THREE.Mesh(puffGeo, new THREE.MeshStandardMaterial({ color: '#f2f2f2', transparent: true, opacity: 0, flatShading: true, roughness: 1, depthWrite: false })); m.visible = false; scene.add(m); puffs.push({ m, t0: -1 }); }
+  let puffIdx = 0;
+  function puff(worldPos, dark, color) { const p = puffs[puffIdx++ % puffs.length]; p.m.position.copy(worldPos); p.m.material.color.set(color || (dark ? '#8d8d8d' : '#f4f4f4')); p.t0 = performance.now(); p.m.visible = true; }
+  const motes = [];
+  for (let i = 0; i < 260; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffd36b', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); s.scale.set(0.9, 0.9, 1); s.visible = false; scene.add(s); motes.push({ s, t0: -1 }); }
+  let moteIdx = 0, showMoney = true;
+  function spawnMote(a, b, color, dur) {
+    const m = motes[moteIdx++ % motes.length];
+    m.a = a; m.b = b; m.t0 = performance.now() + Math.random() * 500; m.dur = dur || 1800; m.force = true;
+    m.s.material.color.set(color); m.s.visible = true;
+  }
+
+  /* =============== Sáu miền đất =============== */
+  const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable });
+  const sights3d = Sights3D.create({ THREE, W, lands3d, clickable, unclickable }); // mười công trình kỳ lạ của mỗi đảo
+  const factionColor = (o) => Sim.FACTION_COLORS[o] || '#ffffff';
+  let shakeUntil = 0;
+  function shake(ms) { if (!reduce) shakeUntil = performance.now() + ms; }
+  const war3d = War3D.create({ THREE, scene, Sim, W, lands3d, hash, C, clamp, lerp, reduce, glowTex, puff, label3d, clickable, unclickable, audio, factionColor, shake });
+  const isWar = () => W.mode === 'war';
+  const PL = () => W.war.player;
+  const mine = (i) => isWar() && W.cities[i] && W.cities[i].settled && W.cities[i].owner === PL();
+  const warOn = () => W.war && W.war.on;
+  const fighting = (c) => warOn() && c.settled && W.war.factions.some((f) => f.alive && Sim.atWarF(W, c.owner, f.id));
+  const marks = Landmarks3D.create({ THREE, Sim, W, lands3d, hash, puff, clickable, unclickable, reduce });
+  const fauna = Fauna3D.create({ THREE, scene, Sim, W, lands3d, war3d, hash, puff, reduce });
+  /* =============== Mặt trời nhân tạo, cột sáng và khoảnh khắc lên đời =============== */
+  const artSun = new THREE.Mesh(new THREE.SphereGeometry(5, 20, 14), new THREE.MeshBasicMaterial({ color: '#fff1c4' }));
+  artSun.position.set(0, 74, 0); artSun.visible = false; scene.add(artSun);
+  const glowSprite = (color, size) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending })); sp.scale.setScalar(size); scene.add(sp); return sp; };
+  const artGlow = glowSprite('#ffd27a', 64); artGlow.position.copy(artSun.position); artGlow.visible = false;
+  const artLight = new THREE.PointLight('#ffd9a0', 0, 440); artLight.position.copy(artSun.position); scene.add(artLight);
+  const pillars = lands3d.lands.map((L) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 3.2, 140, 16, 1, true), new THREE.MeshBasicMaterial({ color: '#fff6dc', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.copy(L.center).setY(100); m.visible = false; m.userData.flash = 0; scene.add(m); return m; });
+  const moments = [];
+  const later = (dur, update, end) => moments.push({ t0: performance.now(), dur, update, end });
+  // mỗi thời một khoảnh khắc: tên lửa chạm vòm kính, mặt trời thứ hai bừng sáng, cổng không gian mở, cột sáng chạm trời
+  function eraMoment(city, era) {
+    const L = lands3d.lands[city]; if (!L || reduce) return;
+    const C0 = L.center.clone().setY(2);
+    if (era === 6) {
+      const g = new THREE.Group(), bodyM = new THREE.MeshStandardMaterial({ color: '#f4f6f8', flatShading: true });
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 6, 10), bodyM); b.position.y = 3; g.add(b);
+      const n = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2, 10), new THREE.MeshStandardMaterial({ color: '#e05a6a', flatShading: true })); n.position.y = 7; g.add(n);
+      const fl = glowSprite('#ffb347', 6), start = L.world(L.siloPos || new THREE.Vector3()).setY(1), end = start.clone().multiplyScalar(0.55); end.y = Math.sqrt(Math.max(1, DOME * DOME - end.x * end.x - end.z * end.z)) - 6;
+      scene.add(g); g.position.copy(start);
+      later(4800, (u) => { g.position.copy(start).lerp(end, u * u); fl.position.copy(g.position).setY(g.position.y - 0.8); if (Math.random() < 0.6) puff(g.position.clone(), false, '#e8e8e8'); }, () => { scene.remove(g); scene.remove(fl); const f = glowSprite('#ffffff', 10); f.position.copy(end); shake(400); if (audio && audio.on && audio.boom) audio.boom(); later(2400, (u) => { f.scale.setScalar(10 + u * 90); f.material.opacity = 0.9 * (1 - u); }, () => scene.remove(f)); });
+    } else if (era === 7) {
+      for (let i = 0; i < 24; i++) setTimeout(() => puff(C0.clone().add(new THREE.Vector3((Math.random() - 0.5) * 24, 2 + Math.random() * 8, (Math.random() - 0.5) * 24)), false, '#7ff0ff'), i * 90);
+    } else if (era === 8) {
+      for (let i = 0; i < 3; i++) setTimeout(() => ripple(C0, '#eef3f7'), i * 450);
+    } else if (era === 9) {
+      if (!artSun.visible || W.cities.filter((c) => c.settled && c.era >= 9).length <= 1) { artGlow.visible = true; shake(500); later(2800, (u) => { artGlow.scale.setScalar(420 - u * 356); artGlow.material.opacity = 1 - u * 0.4; }, () => { artGlow.scale.setScalar(64); }); }
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const a = C0.clone(), d = artSun.position.clone().sub(a); beam.scale.y = d.length(); beam.position.copy(a).addScaledVector(d, 0.5); beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); scene.add(beam);
+      later(3500, (u) => { beam.material.opacity = 0.7 * Math.sin(u * Math.PI); }, () => scene.remove(beam));
+    } else if (era === 10) {
+      for (const gt of L.gates) for (let i = 0; i < 2; i++) setTimeout(() => ripple(L.world(gt).setY(3), '#b48cff'), i * 400);
+    } else if (era === 11) {
+      pillars[city].userData.flash = 1;
+    }
+  }
+  function updateMoments(now, night) {
+    for (let i = moments.length - 1; i >= 0; i--) { const m = moments[i], u = Math.min(1, (now - m.t0) / m.dur); try { m.update(u); } catch (err) { /* hiệu ứng lỗi thì bỏ */ } if (u >= 1) { moments.splice(i, 1); try { m.end(); } catch (err) { /* bỏ */ } } }
+    let maxEra = 0; for (const c of W.cities) if (c.settled) maxEra = Math.max(maxEra, c.era);
+    const sunOn = maxEra >= 9;
+    artSun.visible = sunOn; if (sunOn) artGlow.visible = true; else if (!moments.length) artGlow.visible = false;
+    artLight.intensity = sunOn ? 0.45 + 0.9 * night : 0;
+    if (sunOn) { artSun.scale.setScalar(1 + Math.sin(now * 0.0014) * 0.05); if (artGlow.scale.x <= 65) artGlow.material.opacity = 0.45 + 0.15 * Math.sin(now * 0.002); }
+    W.cities.forEach((c, i) => { const p = pillars[i], on = c.settled && c.era >= 11; p.userData.flash = Math.max(0, (p.userData.flash || 0) - 0.004); p.visible = on || p.userData.flash > 0; p.material.opacity = (on ? 0.07 + 0.02 * Math.sin(now * 0.001 + i) : 0) + p.userData.flash * 0.45; });
+  }
+  const god3d = God3D.create({ THREE, scene, Sim, W, lands3d, war3d, glowTex, puff, label3d, reduce, audio, shake, dome: DOME, doRain, dayMs: () => 1000 / tps, shot: war3d.shotRaw });
+  // bốn mươi bốn kịch bản hỗn loạn mỗi năm, không chiến, đổ quân qua cổng
+  const chaos3d = Chaos3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, fauna, puff, reduce, glowTex, shake, audio, ripple, camera, setDim, factionColor });
+  const streets3d = Streets3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, factionColor, audio, shake });
+  /* ----- Quyền năng của thần: hình ảnh của mười lăm phép ----- */
+  const powers3d = Powers3D.create({ THREE, scene, Sim, W, lands3d, war3d, god3d, chaos3d, puff, reduce, glowTex, shake, audio, camera, dome: DOME, doRain });
+  // bầu trời chiến tranh: đại bác, máy bay ném bom, tên lửa, tia năng lượng; đảo bị đẩy lùi; máy bay theo thời đại
+  const sky3d = Sky3D.create({ THREE, scene, Sim, W, lands3d, war3d, chaos3d, puff, reduce, glowTex, shake, audio, factionColor });
+  const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: DOME, reduce, glowTex, audio, flash: (k) => { lightFlash = Math.max(lightFlash, k); }, dayOfYear: () => ((W.day % 360) + 360) % 360, speed: () => tps / 0.75 });
+  /* ----- Bay tự do: phím mũi tên để lướt qua lại, Page Up / Page Down để lên xuống ----- */
+  // Như mắt chim mà không có con chim nào: vị thần lướt tới, lùi, sang trái, sang phải, lên cao, sà thấp để ngắm thành phố.
+  const FLY = { keys: new Set(), pad: new Set(), v: new THREE.Vector3(), on: false, padOn: false, near: 0 };
+  const FLY_KEYS = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', PageUp: 'up', KeyE: 'up', Space: 'up', PageDown: 'down', KeyQ: 'down', ShiftLeft: 'down', ShiftRight: 'down' };
+  const typing = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+  const touchUi = () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
+  document.addEventListener('keydown', (e) => {
+    const k = FLY_KEYS[e.code];
+    if (!k || e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || document.body.classList.contains('intro') || !$('pwConfirm').hidden) return;
+    if (e.code === 'Space' && e.target && e.target.closest && e.target.closest('button, a, [role="tab"]')) return; // Space trên nút là bấm nút
+    if (e.target && e.target.closest && e.target.closest('[role="tablist"]') && /^Arrow/.test(e.code)) return;
+    e.preventDefault(); FLY.keys.add(k);
+  });
+  document.addEventListener('keyup', (e) => { const k = FLY_KEYS[e.code]; if (k) FLY.keys.delete(k); });
+  window.addEventListener('blur', () => { FLY.keys.clear(); FLY.pad.clear(); });
+  for (const b of document.querySelectorAll('#flyPad button')) {
+    const k = b.dataset.k, on = (v) => (e) => { e.preventDefault(); if (v) FLY.pad.add(k); else FLY.pad.delete(k); b.classList.toggle('on', v); };
+    b.addEventListener('pointerdown', on(true)); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, on(false));
+    b.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+  function flyPadUi(on) { FLY.padOn = on; $('flyPad').hidden = !on; $('flyBtn').setAttribute('aria-pressed', String(on)); }
+  $('flyBtn').onclick = () => { flyPadUi(!FLY.padOn); toggleMore(false); };
+  flyPadUi(touchUi());
+  const _ff = new THREE.Vector3(), _frt = new THREE.Vector3(), _fm = new THREE.Vector3(), _fo = new THREE.Vector3();
+  function flyStep(dt) {
+    const has = (k) => FLY.keys.has(k) || FLY.pad.has(k);
+    _fm.set((has('right') ? 1 : 0) - (has('left') ? 1 : 0), (has('up') ? 1 : 0) - (has('down') ? 1 : 0), (has('fwd') ? 1 : 0) - (has('back') ? 1 : 0));
+    FLY.v.lerp(_fm, Math.min(1, dt / (_fm.lengthSq() ? 180 : 260))); // tăng tốc êm, hãm dần
+    if (FLY.v.lengthSq() < 4e-6) { FLY.v.set(0, 0, 0); FLY.on = false; return false; }
+    if (!FLY.on) { FLY.on = true; focusTween = null; stopOrbit(); if (story) story.userMoved(); }
+    const off = _fo.copy(camera.position).sub(controls.target), dist = off.length();
+    const sp = clamp(dist * 0.85, 10, 230) * dt / 1000;
+    _ff.copy(off).setY(0); if (_ff.lengthSq() < 1e-6) _ff.set(0, 0, -1); else _ff.normalize().negate();
+    _frt.set(-_ff.z, 0, _ff.x);
+    const mx = _ff.x * FLY.v.z * sp + _frt.x * FLY.v.x * sp, mz = _ff.z * FLY.v.z * sp + _frt.z * FLY.v.x * sp;
+    controls.target.x += mx; controls.target.z += mz; camera.position.x += mx; camera.position.z += mz;
+    if (Math.abs(FLY.v.y) > 1e-3) { const nd = clamp(dist * (1 + FLY.v.y * 1.1 * dt / 1000), controls.minDistance, controls.maxDistance); off.setLength(nd); camera.position.copy(controls.target).add(off); }
+    const r = Math.hypot(controls.target.x, controls.target.z), lim = DOME - 14;
+    if (r > lim) { const k = lim / r - 1, dx = controls.target.x * k, dz = controls.target.z * k; controls.target.x += dx; controls.target.z += dz; camera.position.x += dx; camera.position.z += dz; }
+    // bay tới trên đảo nào thì đảo đó thành đảo đang xem
+    const t = performance.now();
+    if (t > FLY.near) {
+      FLY.near = t + 400; let best = -1, bd = 1e9;
+      for (const L of lands3d.lands) { const d = Math.hypot(controls.target.x - L.center.x, controls.target.z - L.center.z); if (d < bd) { bd = d; best = L.i; } }
+      if (best >= 0 && bd < Lands3D.LAND_R && best !== focus) setFocus(best);
+    }
+    return true;
+  }
+  const lands = lands3d.lands;
+  // dòng tiền của thành phố đang xem: đốm sáng bay giữa nhà, xưởng, ngân hàng
+  function keyPos(L, key) {
+    if (key === 'bank') return L.world(L.bankPos).setY(6);
+    if (key === 'gov') return L.world(new THREE.Vector3(0, 6, 0));
+    if (key[0] === 'h') { const H = L.houses[Math.floor(+key.slice(1) / 4)]; return H ? L.world(L.houseLots[H.idx].p).setY(3) : null; }
+    const o = L.firmObj.get(+key.slice(1)); return o ? L.world(o.g.position).setY(3) : null;
+  }
+  function spawnMotes() {
+    if (!showMoney) return;
+    const w = wOf(focus), L = lands[focus]; if (!w) return;
+    const fl = w.flows; if (!fl.length) return;
+    for (let k = 0; k < (reduce ? 4 : 12); k++) {
+      const f = fl[Math.floor(Math.random() * fl.length)];
+      const a = keyPos(L, f.from), b = keyPos(L, f.to); if (!a || !b) continue;
+      const m = motes[moteIdx++ % motes.length];
+      m.a = a; m.b = b; m.t0 = performance.now() + Math.random() * 700; m.dur = 1600 + Math.random() * 800; m.force = false;
+      m.s.material.color.set(f.kind === 'buy' ? '#ffd36b' : f.kind === 'wage' || f.kind === 'dividend' ? '#9df0c4' : f.kind === 'loan' || f.kind === 'interest' || f.kind === 'repay' ? '#ff9db8' : '#c8b6ff');
+      m.s.visible = true;
+    }
+  }
+
+  /* =============== Chu kỳ ngày đêm =============== */
+  let tod = 0.3, cycleOn = true;
+  const DAY_MS = 90000;
+  const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
+  const wx = { rain: 0, snow: 0, drought: 0, festival: 0, panic: 0 };
+  let lightFlash = 0, stormK = 0; // chớp và độ sầm trời của các cơn mưa trong bể
+  const sunDir = new THREE.Vector3();
+  const _moonP = new THREE.Vector3();
+  function applyTime() {
+    const ang = (tod - 0.25) * Math.PI * 2, e = Math.sin(ang);
+    const day = clamp(e * 2.2 + 0.25, 0, 1), night = 1 - clamp(e * 3 + 0.6, 0, 1), gold = clamp(1 - Math.abs(e) * 3.2, 0, 1) * (e > -0.25 ? 1 : 0);
+    sunDir.set(Math.cos(ang) * 0.85, Math.max(0.05, e), 0.55).normalize();
+    // bóng đổ theo vùng camera đang nhìn, để sáu miền rộng vẫn có bóng sắc nét ở chỗ gần
+    sun.target.position.copy(controls.target).setY(0);
+    sun.position.copy(sun.target.position).addScaledVector(sunDir, 200);
+    sun.intensity = 1.0 * day;
+    document.body.classList.toggle('day', day > 0.55);
+    sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8);
+    moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.52 * night; // trăng sáng hơn: đêm không tối mịt
+    hemi.intensity = 0.22 + 0.3 * day + 0.24 * night;
+    hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night);
+    { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = night > 0.02; }
+    const top = SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
+    const bot = SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
+    const overcast = Math.max(wx.rain, wx.snow, stormK * 0.55) * 0.6; // giông trong bể cũng làm trời sầm lại
+    if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
+    if (wx.drought > 0.001) { top.lerp(C('#c9b98f'), wx.drought * 0.3 * day); bot.lerp(C('#f2d39a'), wx.drought * 0.6 * day); }
+    const M = moodNow();
+    // nhật thực và những cơn tối sầm của kịch bản hỗn loạn
+    if (chaosDim > 0.001) { top.multiplyScalar(1 - 0.8 * chaosDim); bot.multiplyScalar(1 - 0.8 * chaosDim); }
+    if (M.k > 0.001) { top.lerp(M.top, M.k * (0.55 + 0.45 * day)); bot.lerp(M.bot, M.k * (0.55 + 0.45 * day)); sun.color.lerp(M.sunCol, M.k * 0.5); }
+    sun.intensity *= M.sun * (1 - 0.9 * chaosDim); hemi.intensity *= M.hemi * (1 - 0.7 * chaosDim);
+    if (lightFlash > 0.001) { hemi.intensity += lightFlash * 1.3; } // chớp loé sáng cả bể
+    skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
+    skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);
+    scene.fog.color.copy(bot);
+    starMat.opacity = Math.max(night * 0.9, M.stars, chaosDim * 0.8);
+    const hours = tod * 24, hh = Math.floor(hours), mm = Math.floor((hours - hh) * 60 / 10) * 10;
+    $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+    return { day, night };
+  }
+
+  /* =============== Không khí của mười hai thời đại =============== */
+  // Bầu trời theo thời đại trung bình của cả bể kính: bốn thời vượt người đi từ bình minh ngọc trai, hoàng hôn vàng,
+  // chạng vạng tím tới đêm của những thành phố ánh sáng. Ngày đêm vẫn trôi, chỉ có màu trời và nắng đổi theo thời.
+  const MOOD_N = { top: C('#4c9fe0'), bot: C('#d4ecf7'), k: 0, sun: 1, hemi: 1, stars: 0, sunCol: C('#fff1d6') };
+  const MOODS = Array.from({ length: 12 }, () => MOOD_N);
+  MOODS[4] = Object.assign({}, MOOD_N, { top: C('#8a96a6'), bot: C('#d8d0c0'), k: 0.22 });
+  MOODS[8] = Object.assign({}, MOOD_N, { top: C('#6a86b0'), bot: C('#f6e9ea'), k: 0.5, sun: 0.95, hemi: 1.05, sunCol: C('#fff0f0') });
+  MOODS[9] = Object.assign({}, MOOD_N, { top: C('#2b3a78'), bot: C('#ffcf8a'), k: 0.6, sun: 0.78, hemi: 0.95, sunCol: C('#ffb36b'), stars: 0.1 });
+  MOODS[10] = Object.assign({}, MOOD_N, { top: C('#140c34'), bot: C('#a87ac8'), k: 0.72, sun: 0.62, hemi: 0.88, sunCol: C('#d9c4ff'), stars: 0.45 });
+  MOODS[11] = Object.assign({}, MOOD_N, { top: C('#03040d'), bot: C('#2a2350'), k: 0.86, sun: 0.38, hemi: 0.7, sunCol: C('#cfd8ff'), stars: 0.95 });
+  let moodEra = -1, chaosDim = 0;
+  function setDim(v) { chaosDim = Math.max(0, Math.min(1, v)); }
+  const moodOut = { top: new THREE.Color(), bot: new THREE.Color(), sunCol: new THREE.Color(), k: 0, sun: 1, hemi: 1, stars: 0 };
+  function moodNow() {
+    const live = W.cities.filter((c) => c.settled), avg = live.length ? live.reduce((t, c) => t + c.era, 0) / live.length : 0;
+    moodEra = moodEra < 0 ? avg : moodEra + (avg - moodEra) * 0.01;
+    const lo = Math.max(0, Math.min(11, Math.floor(moodEra))), hi = Math.min(11, lo + 1), f = moodEra - lo, A = MOODS[lo], B = MOODS[hi];
+    moodOut.top.copy(A.top).lerp(B.top, f); moodOut.bot.copy(A.bot).lerp(B.bot, f); moodOut.sunCol.copy(A.sunCol).lerp(B.sunCol, f);
+    for (const k of ['k', 'sun', 'hemi', 'stars']) moodOut[k] = A[k] + (B[k] - A[k]) * f;
+    return moodOut;
+  }
+
+  /* =============== Nhịp đập và thanh sáu thành phố =============== */
+  function pulse() {
+    const c = cityOf(focus), w = wOf(focus), el = $('pulse');
+    const d0 = Math.max(0, W.day - 1); // ngày 360 là ngày cuối của năm 1, ngày 3240 là ngày cuối của năm 9
+    // cấp của bể kính: thời đại cao nhất mà một thành đã tới (1 đến 12), rồi mùa và ngày
+    const dayLine = 'Cấp ' + worldLevel() + '/12 · Mùa ' + Sim.SEASONS[Math.floor((d0 % 360) / 90)] + ' · Ngày ' + W.day;
+    $('day').textContent = dayLine;
+    $('pop').textContent = W.cities.reduce((t, x) => t + (x.settled ? x.w.households.length : 0), 0);
+    if (!w) {
+      const left = c.terrain.settle - W.day;
+      el.innerHTML = '<div class="era">' + c.terrain.land.toUpperCase() + ' · CÒN HOANG SƠ</div><div><i style="background:#9cc3ff;color:#9cc3ff"></i><span>' + (left > 0 ? 'Chưa có người. Còn khoảng ' + left + ' ngày nữa sẽ có người tìm đến.' : 'Những người đầu tiên đang đến.') + '</span></div>';
+      return;
+    }
+    const s = w.stats[w.stats.length - 1], s30 = w.stats[Math.max(0, w.stats.length - 31)];
+    const infl = (s.cpi / s30.cpi - 1) * 100, era = ERAS[c.era], next = ERAS[c.era + 1];
+    const rows = [
+      [Math.abs(infl) < 4 ? 'good' : Math.abs(infl) < 10 ? 'warn' : 'bad', Math.abs(infl) < 4 ? 'Giá cả ổn định' : infl > 0 ? 'Giá cả đang tăng ' + infl.toFixed(0) + '% mỗi tháng' : 'Giá cả đang giảm'],
+      [s.unemployment < 5 ? 'good' : s.unemployment < 12 ? 'warn' : 'bad', s.unemployment < 0.5 ? 'Ai cũng có việc làm' : Math.round(s.unemployment * w.households.length / 100) + (c.era === 0 ? ' người đi hái lượm một mình' : ' người đang tìm việc')],
+      [s.hungry <= 2 ? 'good' : s.hungry <= 8 ? 'warn' : 'bad', s.hungry === 0 ? 'Nhà nào cũng có cơm ăn' : s.hungry + ' gia đình thiếu ăn hôm nay'],
+    ];
+    const col = { good: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)' };
+    el.innerHTML = '<div class="era">' + c.name.toUpperCase() + ' · THỜI ' + era.name.toUpperCase() + (next ? ' · TRI THỨC ' + Sim.knowledgeOf(c) + '/' + next.know + ' · DÂN ' + w.households.length + '/' + next.pop : '') + '</div>' + rows.map(([k, t]) => '<div><i style="background:' + col[k] + ';color:' + col[k] + '"></i><span>' + t + '</span></div>').join('');
+    const ph = Sim.phenomena(w);
+    const pl = ph.panic > 0 ? ['bad', 'Khủng hoảng niềm tin: ' + era.bank + ' siết cho vay'] : ph.drought > 0 ? ['bad', 'Hạn hán: còn ' + ph.drought + ' ngày'] : ph.festival ? ['good', era.fest] : ph.snow ? ['info', 'Tuyết đang rơi'] : ph.rain ? ['info', 'Trời đang mưa'] : null;
+    if (pl) { const cc = { good: 'var(--good)', bad: 'var(--bad)', info: '#9cc3ff' }[pl[0]]; el.insertAdjacentHTML('beforeend', '<div class="ph-line"><i style="background:' + cc + ';color:' + cc + '"></i><span>' + pl[1] + '</span></div>'); }
+    const fadP = Sim.activeFad(w), foodS = (w.foodRumorN || 0) / w.households.length, sickS = (w.sickN || 0) / w.households.length;
+    const G = w.gold && !w.gold.closed ? w.firms.find((f) => f.id === w.gold.firmId) : null, P = w.ponzi && w.ponzi.state === 'open' ? w.ponzi : null;
+    const striking = w.firms.filter((f) => f.alive && f.strike > 0);
+    const sl = (w.fearShare || 0) > 0.08 ? ['var(--bad)', 'Nỗi sợ lan trong ' + Math.round(w.fearShare * 100) + '% dân'] : sickS > 0.04 ? ['#8fdc9a', 'Dịch sốt: ' + Math.round(sickS * 100) + '% dân đang nằm nhà'] : P && P.investors.length >= 3 ? ['#c3a6ff', P.investors.length + ' gia đình đã góp tiền cho ' + P.name] : striking.length ? ['#ff7b6b', 'Đình công ở ' + striking.map((f) => f.name).join(', ')] : G && G.workers.length ? ['#ffd36b', 'Cơn sốt vàng: ' + G.workers.length + ' người đang đào'] : foodS > 0.05 ? ['#f0b85a', 'Tin đồn mất mùa: ' + Math.round(foodS * 100) + '% dân đang tích trữ'] : fadP && fadP.share > 0.03 ? [fadP.color, 'Cơn sốt ' + fadP.item.toLowerCase() + ': ' + Math.round(fadP.share * 100) + '% dân mê'] : null;
+    if (sl) el.insertAdjacentHTML('beforeend', '<div' + (pl ? '' : ' class="ph-line"') + '><i style="background:' + sl[0] + ';color:' + sl[0] + '"></i><span>' + sl[1] + '</span></div>');
+    if (warOn()) {
+      const X = W.war, foes = X.factions.filter((f) => f.alive && Sim.atWarF(W, c.owner, f.id)).map((f) => f.name);
+      const line = (mine(focus) ? 'Thành của bạn' : 'Cờ ' + X.factions[c.owner].name) + ' · ' + (foes.length ? 'giao chiến với ' + foes.join(', ') : 'hoà bình') + ' · sức chịu ' + Math.round((c.hp / c.hpMax) * 100) + '%';
+      const cc = foes.length ? 'var(--bad)' : 'var(--good)';
+      el.insertAdjacentHTML('beforeend', '<div class="ph-line"><i style="background:' + factionColor(c.owner) + ';color:' + cc + '"></i><span>' + line + '</span></div>');
+    }
+  }
+  let barSig = '';
+  function landBar() {
+    const foe = (c) => (isWar() ? c.settled && Sim.atWarF(W, PL(), c.owner) : fighting(c));
+    const sig = focus + '|' + W.cities.map((c) => (c.settled ? c.era + ':' + c.owner + ':' + foe(c) : 'w')).join(',');
+    if (sig === barSig) return;
+    barSig = sig;
+    $('landBar').innerHTML = W.cities.map((c, i) => {
+      const cls = [c.settled ? '' : 'wild', mine(i) ? 'mine' : '', foe(c) ? 'foe' : ''].filter(Boolean).join(' ');
+      const sub = !c.settled ? c.terrain.land + ' hoang sơ' : 'Thời ' + ERAS[c.era].name.toLowerCase() + (warOn() && c.owner !== c.id ? ' · cờ ' + W.war.factions[c.owner].name : '') + (foe(c) ? ' · giao chiến' : '');
+      return '<button data-i="' + i + '" aria-pressed="' + (i === focus) + '"' + (cls ? ' class="' + cls + '"' : '') + '><i style="background:' + (warOn() ? factionColor(c.owner) : TER_DOT[c.terrain.key]) + '"></i><b>' + c.name + '</b><span>' + sub + '</span></button>';
+    }).join('');
+  }
+  $('landBar').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    if (aiming) { aimAt(+b.dataset.i, 0, 0); return; }
+    setFocus(+b.dataset.i); flyTo(lands[focus].center, 82); stopOrbit(); if (story) story.userMoved();
+  });
+  function setFocus(i) {
+    if (i == null || i < 0 || i > 5 || i === focus) return;
+    focus = i; landBar(); pulse(); if (story) story.updateToolUi(); renderWorld(true);
+    if (!$('policy').hidden) openPolicy(true);
+  }
+
+  /* =============== Bấm chọn =============== */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let sel = null, focusTween = null, downAt = null;
+  canvas.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; stopOrbit(); if (story) story.userMoved(); });
+  canvas.addEventListener('wheel', () => { if (story) story.userMoved(); }, { passive: true });
+  canvas.addEventListener('pointerup', (e) => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    if (aiming) { const L = landAtRay(); if (L) aimAt(L.i, _hitP.x - L.center.x, _hitP.z - L.center.z); else toast('Hãy chạm vào một hòn đảo, hoặc bấm tên đảo ở thanh trên.', 2600); return; }
+    const hit = ray.intersectObjects(clickables, false)[0];
+    const s = hit ? hit.object.userData.sel : null;
+    if (story && story.handlePick(s, ray)) return;
+    select(s);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const over = ray.intersectObjects(clickables, false)[0];
+    canvas.style.cursor = story && story.mode ? (story.wants(over && over.object.userData.sel) ? 'pointer' : 'crosshair') : over ? 'pointer' : 'grab';
+  });
+  function selPos(s) {
+    if (!s) return null;
+    const L = lands[s.land]; if (!L) return null;
+    if (s.type === 'house') { const H = L.houses[s.i]; return H ? L.world(L.houseLots[H.idx].p) : null; }
+    if (s.type === 'firm') { const o = L.firmObj.get(s.id); return o ? L.world(o.g.position) : null; }
+    if (s.type === 'bank') return L.world(L.bankPos);
+    if (s.type === 'gov') return L.center.clone();
+    if (s.type === 'school') return L.world(L.schoolPos);
+    if (s.type === 'landmark') return L.world(L.slots[s.pillar]);
+    if (s.type === 'sight') return sights3d.posOf(s.land, s.idx);
+    if (s.type === 'bld') return L.world(s.bld === 'port' ? L.portPos : s.bld === 'wonder' ? L.wonderPos : s.bld === 'silo' ? L.siloPos : s.bld === 'tower' ? L.towerPos[0] : s.bld === 'wall' ? L.gates[0] : L.milLot[s.bld] || L.gates[0]);
+    return story ? story.customPos(s) : null;
+  }
+  function select(s) {
+    sel = s;
+    if (s && s.land != null) setFocus(s.land);
+    const p = selPos(s);
+    if (p) focusTween = { target: p.clone().setY(2), t0: performance.now(), from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: Math.min(camera.position.distanceTo(controls.target), 40) };
+    card();
+  }
+  function flyTo(p, dist, dir, y) { const k = camera.aspect < 0.8 ? 1.4 : 1; focusTween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(), from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: (dist || 30) * k, dirFrom: dir ? camera.position.clone().sub(controls.target).normalize() : null, dirTo: dir ? dir.clone().normalize() : null, dur: dir ? 1700 : 1200 }; }
+  function setAutoRotate() { controls.autoRotate = false; } // không còn tự xoay
+  $('close').onclick = () => select(null);
+  function card() {
+    if (!sel) { $('card').hidden = true; return; }
+    const fmt = (v) => Math.round(v).toLocaleString('vi-VN');
+    const c = cityOf(sel.land), w = wOf(sel.land), L = lands[sel.land];
+    if (!w) { sel = null; $('card').hidden = true; return; }
+    const era = ERAS[c.era];
+    let kind = '', title = '', text = '', list = [];
+    if (sel.type === 'house') {
+      const H = L.houses[sel.i];
+      const ms = [0, 1, 2, 3].map((k) => w.households[(H ? H.idx : sel.i) * 4 + k]).filter(Boolean);
+      if (!ms.length) { sel = null; return card(); }
+      const hungry = ms.filter((m) => !m.ateToday).length, jobless = ms.filter((m) => m.employer === null).length;
+      kind = c.name + ' · ngôi nhà số ' + (sel.i + 1); title = 'Nhà của ' + nameOf(ms[0].id);
+      text = hungry ? hungry + ' gia đình trong nhà hôm nay không đủ tiền mua cơm.' : jobless ? 'Bếp vẫn đỏ lửa, nhưng có người đang ở nhà tìm việc.' : 'Mọi người đều đi làm và có bữa tối.';
+      const fadNow = Sim.activeFad(w);
+      list = ms.map((m) => { const wf = m.employer !== null && w.firms.find((x) => x.id === m.employer); const mood = m.sick > 0 ? ' · đang ốm' : m.fear > 0 ? ' · đang lo sợ' : fadNow && m.hype === fadNow.id ? ' · mê ' + fadNow.item.toLowerCase() : ''; return [nameOf(m.id), (wf ? wf.name : 'đang tìm việc') + ' · ' + fmt(m.cash) + ' xu' + mood]; });
+    } else if (sel.type === 'firm') {
+      const f = w.firms.find((x) => x.id === sel.id), o = L.firmObj.get(sel.id);
+      if (!f || !o) { sel = null; return card(); }
+      kind = c.name + ' · ' + (f.sector === 'food' ? 'làm ra lương thực' : 'làm ra hàng hoá');
+      title = f.name;
+      const fadF = f.fadId && Sim.activeFad(w);
+      text = (!f.alive ? 'Đã đóng cửa.' : f.strike > 0 ? 'Thợ đang đình công, lò nguội.' : f.downUntil > w.day ? 'Đang dựng lại sau hoả hoạn.' : f.workers.length > 8 ? 'Đang rất bận rộn, ' + f.workers.length + ' người làm việc.' : f.workers.length ? f.workers.length + ' người đang làm việc ở đây.' : 'Vắng vẻ, chưa ai làm việc.')
+        + (f.inventions ? ' Có ' + f.inventions + ' phát minh, gần nhất: ' + f.lastInvention.toLowerCase() + '.' : '') + (fadF ? ' Cả thành phố đang sốt ' + fadF.item.toLowerCase() + ' của nơi này.' : '') + (f.monopoly ? ' Nơi này đang độc quyền.' : '');
+      list = [['Giá bán', f.price.toFixed(1).replace('.', ',') + ' xu'], ['Lương mỗi ngày', f.wage.toFixed(1).replace('.', ',') + ' xu'], ['Hàng trong kho', fmt(f.inv)], ['Nợ', fmt(f.debt) + ' xu']];
+    } else if (sel.type === 'bank') {
+      kind = c.name + ' · nơi giữ tiền'; title = era.bank;
+      text = 'Mỗi khoản vay tạo ra tiền mới cho thành phố, mỗi khoản trả nợ làm tiền biến mất.';
+      list = [['Đang cho vay', fmt(w.bank.loansOut) + ' xu'], ['Lãi suất', Math.round(w.policy.interestRate * 100) + '% mỗi năm'], ['Nợ đã xoá', fmt(w.bank.writtenOff) + ' xu']];
+    } else if (sel.type === 'gov') {
+      kind = c.name + ' · thời ' + era.name.toLowerCase(); title = era.hall;
+      text = 'Nơi thu thuế và trả trợ cấp cho người chưa có việc. ' + c.terrain.land + ', ' + w.households.length + ' gia đình.';
+      const next = ERAS[c.era + 1];
+      list = [['Tri thức', Sim.knowledgeOf(c) + (next ? ' / ' + next.know + ' để sang thời ' + next.name.toLowerCase() : '')], ['Dân số', w.households.length + (next ? ' / ' + next.pop : '')], ['Thuế thu nhập', Math.round(w.policy.taxRate * 100) + '%'], ['Quỹ thành phố', fmt(w.gov.cash) + ' xu']];
+    } else if (sel.type === 'sight') {
+      const S = sights3d.infoOf(sel.land, sel.idx);
+      if (!S) { sel = null; return card(); }
+      kind = c.name + ' · công trình kỳ lạ'; title = S.name; text = S.info;
+      list = [['Thời đại', era.name], ['Đảo', c.terrain.land]];
+    } else if (sel.type === 'landmark') {
+      const P = Sim.PILLARS.find((x) => x.key === sel.pillar), pr = Sim.pillarProgress(c), need = Sim.PILLAR_NEED[c.terrain.key], key = Sim.PILLAR_KEY[c.terrain.key];
+      kind = c.name + ' · trụ cột ' + P.name.toLowerCase(); title = Sim.landmarkName(c.terrain.key, sel.pillar, c.era);
+      const dmg = (c.dmg || []).find((d) => d.kind === 'land' && d.ref === sel.pillar);
+      text = (dmg ? (dmg.state === 'fire' ? 'Đang bốc cháy. ' : dmg.state === 'ruin' ? 'Chỉ còn đống đổ nát. ' : dmg.state === 'rebuild' ? 'Đang dựng lại. ' : '') : '') + (sel.pillar === key ? Sim.PILLAR_WHY[c.terrain.key] : P.name + ' của ' + c.name + ' cần đạt ' + Math.round(need[sel.pillar] * 100) + '% mức chung để lên đời.');
+      list = [['Tới thời sau', c.era >= Sim.LAST ? 'đã ở thời cuối' : Math.round(pr[sel.pillar] * 100) + '%'], ['Đang lớn', c.pilDrv && c.pilDrv[sel.pillar] ? (c.pilDrv[sel.pillar] >= 1 ? 'nhanh' : c.pilDrv[sel.pillar] >= 0.8 ? 'vừa' : 'chậm') : '—'], ['Miền coi trọng', sel.pillar === key ? 'nhất' : need[sel.pillar] >= 1 ? 'nhiều' : 'vừa']];
+    } else if (sel.type === 'school') {
+      kind = c.name + ' · nơi giữ tri thức'; title = SCHOOL_NAMES[c.era];
+      text = 'Mỗi phát minh, mỗi điều học được từ láng giềng qua cầu đều được ghi lại ở đây. Đủ tri thức, thành phố sang thời đại mới.';
+      list = [['Phát minh', w.inventions.length], ['Học từ láng giềng', c.learned]];
+    } else if (sel.type === 'bld') {
+      const b = c.bld && c.bld[sel.bld], D = Sim.BUILDINGS[sel.bld];
+      if (!b) { sel = null; return card(); }
+      kind = c.name + ' · ' + (D.group === 'mil' ? 'công trình quân sự' : D.group === 'def' ? 'phòng thủ' : D.group === 'win' ? 'đại cuộc' : 'công trình kinh tế');
+      title = Sim.bName(c, sel.bld);
+      text = D.info + '.' + (b.done ? '' : ' Đang xây, còn ' + b.left + ' ngày' + (b.stalled ? ', kho bạc cạn nên công trường đang nghỉ.' : '.'));
+      list = [['Thời đại', ERAS[c.era].name], ['Hoàn thành', b.done ? 'ngày ' + b.day : Math.round((1 - b.left / b.total) * 100) + '%']];
+      if (warOn()) list.unshift(['Thuộc phe', W.war.factions[c.owner].name]);
+      const U = Object.keys(Sim.UNITS).filter((k) => Sim.UNITS[k].bld === sel.bld);
+      for (const k of U) { const n = W.war.units.filter((u) => u.city === c.id && u.cls === k).length; if (n || Sim.UNITS[k].era <= c.era) list.push([Sim.UNITS[k].names[Math.max(Sim.UNITS[k].era, c.era)], n + ' người']); }
+    } else {
+      const m = story && story.customCard(sel);
+      if (!m) { sel = null; return card(); }
+      ({ kind, title, text, list } = m);
+    }
+    $('cKind').textContent = kind; $('cTitle').textContent = title; $('cText').textContent = text;
+    $('cList').innerHTML = list.map(([a, b]) => '<li><span>' + a + '</span><span>' + b + '</span></li>').join('');
+    $('card').hidden = false;
+  }
+
+  /* =============== Hiệu ứng: sóng, chữ nổi, mưa vàng =============== */
+  const rings = [];
+  function ripple(pos, color) {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.82, 1, 72), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(pos.x, 0.4, pos.z); scene.add(m);
+    rings.push({ m, t0: performance.now() });
+  }
+  const floatLabels = [];
+  function label3d(text, pos, color) {
+    const c = document.createElement('canvas'); c.width = 640; c.height = 128;
+    const x = c.getContext('2d');
+    x.font = '600 50px Outfit, "Segoe UI", system-ui, sans-serif';
+    const w = Math.min(620, x.measureText(text).width + 70), x0 = (640 - w) / 2, r = 48;
+    x.beginPath(); x.moveTo(x0 + r, 16); x.arcTo(x0 + w, 16, x0 + w, 112, r); x.arcTo(x0 + w, 112, x0, 112, r); x.arcTo(x0, 112, x0, 16, r); x.arcTo(x0, 16, x0 + w, 16, r); x.closePath();
+    x.fillStyle = 'rgba(14,22,38,0.78)'; x.fill();
+    x.fillStyle = color; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, 320, 66);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, depthWrite: false, opacity: 0 }));
+    // nhãn to theo khoảng cách nhìn, để ở toàn cảnh vẫn đọc được
+    sp.renderOrder = 20; sp.position.copy(pos); scene.add(sp);
+    // không để nhãn nổi chồng chất: tối đa năm nhãn, nhãn cũ nhất nhường chỗ
+    while (floatLabels.length >= 5) { const o = floatLabels.shift(); scene.remove(o.sp); if (o.sp.material.map) o.sp.material.map.dispose(); o.sp.material.dispose(); }
+    floatLabels.push({ sp, t0: performance.now(), y: pos.y });
+  }
+  const COINS = 260;
+  const coinMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.34, 0.34, 0.08, 14), new THREE.MeshStandardMaterial({ color: '#ffcf4d', metalness: 0.35, roughness: 0.3, emissive: '#a87400', emissiveIntensity: 0.55 }), COINS);
+  coinMesh.castShadow = true; coinMesh.frustumCulled = false; scene.add(coinMesh);
+  const coins = Array.from({ length: COINS }, () => ({ alive: false })), cDummy = new THREE.Object3D();
+  function hideCoin(i) { cDummy.position.set(0, -200, 0); cDummy.scale.setScalar(0.001); cDummy.updateMatrix(); coinMesh.setMatrixAt(i, cDummy.matrix); }
+  for (let i = 0; i < COINS; i++) hideCoin(i);
+  function coinRain(L) {
+    const now = performance.now();
+    coins.forEach((c) => { const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (Lands3D.LAND_R - 4); Object.assign(c, { alive: true, x: L.center.x + Math.cos(a) * r, z: L.center.z + Math.sin(a) * r, y: 24 + Math.random() * 14, vy: -Math.random() * 2, t0: now + Math.random() * 1800, landed: 0, rx: Math.random() * 6, rz: Math.random() * 6, spin: 5 + Math.random() * 7 }); });
+  }
+  function updateCoins(dt, now) {
+    let any = false;
+    for (let i = 0; i < COINS; i++) {
+      const c = coins[i]; if (!c.alive) continue; any = true;
+      if (now < c.t0) { hideCoin(i); continue; }
+      const s = dt / 1000;
+      if (!c.landed) { c.vy -= 30 * s; c.y += c.vy * s; c.rx += c.spin * s; c.rz += c.spin * 0.7 * s; if (c.y <= 0.14) { c.y = 0.14; c.landed = now; c.rx = 0; c.rz = 0; } }
+      const fade = c.landed ? 1 - clamp((now - c.landed - 1000) / 900, 0, 1) : 1;
+      if (fade <= 0) { c.alive = false; hideCoin(i); continue; }
+      cDummy.position.set(c.x, c.y, c.z); cDummy.rotation.set(c.rx, 0, c.rz); cDummy.scale.setScalar(fade); cDummy.updateMatrix(); coinMesh.setMatrixAt(i, cDummy.matrix);
+    }
+    if (any) coinMesh.instanceMatrix.needsUpdate = true;
+  }
+  function updateFxGlobal(now, dt) {
+    for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (now - r.t0) / 2600; if (k >= 1) { scene.remove(r.m); r.m.geometry.dispose(); r.m.material.dispose(); rings.splice(i, 1); continue; } r.m.scale.setScalar(1 + k * 34); r.m.material.opacity = 0.9 * (1 - k); }
+    for (let i = floatLabels.length - 1; i >= 0; i--) { const L = floatLabels[i], k = (now - L.t0) / 4200; if (k >= 1) { scene.remove(L.sp); L.sp.material.map.dispose(); L.sp.material.dispose(); floatLabels.splice(i, 1); continue; } L.sp.position.y = L.y + k * 2.5; L.sp.material.opacity = Math.min(1, k * 6) * (1 - Math.max(0, (k - 0.75) / 0.25)); const sz = clamp(camera.aspect * 0.85, 0.5, 1) * clamp(camera.position.distanceTo(L.sp.position) / 3.2, 6, 60); L.sp.scale.set(sz, sz / 5, 1); }
+    for (const p of puffs) { if (!p.m.visible) continue; const k = (now - p.t0) / 3200; if (k > 1) { p.m.visible = false; continue; } p.m.position.y += dt * 0.0012; p.m.position.x += dt * 0.0004; p.m.scale.setScalar(0.6 + k * 1.8); p.m.material.opacity = 0.55 * (1 - k); }
+    for (const m of motes) { if (!m.s.visible) continue; const k = (now - m.t0) / m.dur; if (k < 0) { m.s.material.opacity = 0; continue; } if (k > 1 || (!showMoney && !m.force)) { m.s.visible = false; continue; } const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; m.s.position.lerpVectors(m.a, m.b, e); m.s.position.y += Math.sin(k * Math.PI) * 6; m.s.material.opacity = Math.sin(k * Math.PI) * 0.95; }
+  }
+
+  /* =============== Thông báo và theo dõi hệ quả (theo từng thành phố) =============== */
+  const toastQ = [];
+  let toastBusy = false;
+  function toast(html, ms) { toastQ.push([html, ms || 4200]); if (!toastBusy) nextToast(); }
+  function nextToast() { const t = toastQ.shift(); if (!t) { toastBusy = false; $('toast').hidden = true; return; } toastBusy = true; const el = $('toast'); el.hidden = true; void el.offsetWidth; el.innerHTML = t[0]; el.hidden = false; setTimeout(nextToast, t[1]); }
+  const fmtPct = (v) => (Math.abs(v) < 1.5 ? 'gần như không đổi' : (v > 0 ? 'tăng ' : 'giảm ') + Math.abs(v).toFixed(0) + '%');
+  const pp = (v) => v.toFixed(1).replace('.', ',') + '%';
+  function snap(i) {
+    const w = wOf(i), st = w.stats, s = st[st.length - 1], recent = st.slice(-10);
+    return { day: w.day, cpi: s.cpi, ue: s.unemployment, loans: w.bank.loansOut, hungry: recent.reduce((a, x) => a + x.hungry, 0) / recent.length, gov: w.gov.cash, wageAvg: w.firms.filter((f) => f.alive).reduce((a, f, _, arr) => a + f.wage / arr.length, 0) };
+  }
+  const watches = [];
+  function watch(i, days, fn) { if (wOf(i)) watches.push({ city: i, at: W.day + days, before: snap(i), fn }); }
+  function checkWatches() { for (let k = watches.length - 1; k >= 0; k--) { if (W.day < watches[k].at) continue; const w = watches.splice(k, 1)[0], msg = w.fn(w.before, snap(w.city)); if (msg) toast(msg, 6500); } }
+
+  /* =============== Chính sách: tác động lên thành phố đang xem =============== */
+  const NOTES = {
+    rRate: (v) => v <= 2 ? 'Rất thấp: vay gần như miễn phí. Kinh tế dễ nóng lên và nợ phình to.' : v <= 7 ? 'Vừa phải: doanh nghiệp vay để mở rộng khi cần.' : v <= 13 ? 'Cao: vay đắt, doanh nghiệp ngại mở rộng và có thể sa thải.' : 'Rất cao: tín dụng gần như đóng băng. Coi chừng suy thoái.',
+    rTax: (v) => v <= 4 ? 'Gần như không thu thuế: quỹ cạn, người mất việc không có trợ cấp.' : v <= 20 ? 'Vừa phải: đủ trợ cấp cho người chưa có việc.' : v <= 35 ? 'Cao: trợ cấp hào phóng, người đi làm giữ lại ít hơn.' : 'Rất cao: tiền chảy mạnh từ người đi làm sang quỹ thành phố.',
+    rWage: (v) => v <= 4 ? 'Thấp: dễ thuê người, nhưng lương có thể rất bèo.' : v <= 9 ? 'Vừa phải: gần với mức lương thị trường.' : v <= 13 ? 'Cao: người đi làm sống tốt hơn, giá cả sẽ nhích lên.' : 'Rất cao: nhiều nơi khó trả nổi, giá cả tăng mạnh.',
+  };
+  function refreshNotes() {
+    $('oRate').textContent = $('rRate').value + '%'; $('nRate').textContent = NOTES.rRate(+$('rRate').value);
+    $('oTax').textContent = $('rTax').value + '%'; $('nTax').textContent = NOTES.rTax(+$('rTax').value);
+    $('oWage').textContent = $('rWage').value + ' xu'; $('nWage').textContent = NOTES.rWage(+$('rWage').value);
+  }
+  function openPolicy(open) {
+    const w = wOf(focus);
+    if (open && !w) { toast('Hãy chọn một thành phố đã có người ở thanh phía trên.', 3200); open = false; }
+    if (open && isWar() && !mine(focus)) { toast('Chỉ đặt chính sách được cho thành của bạn.', 3200); open = false; }
+    $('policy').hidden = !open; $('policyBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openHelp(false); openChron(false); $('pTitle').textContent = 'Chính sách của ' + cityOf(focus).name; }
+    document.body.classList.toggle('panel-open', open || !$('help').hidden);
+    if (open) { $('rRate').value = Math.round(w.policy.interestRate * 100); $('rTax').value = Math.round(w.policy.taxRate * 100); $('rWage').value = Math.round(w.policy.minWage); refreshNotes(); }
+  }
+  $('policyBtn').onclick = () => openPolicy($('policy').hidden);
+  $('pClose').onclick = () => openPolicy(false);
+  for (const id of ['rRate', 'rTax', 'rWage']) $(id).addEventListener('input', refreshNotes);
+  function doRain() {
+    const w = wOf(focus), L = lands[focus]; if (!w) return;
+    const amt = Math.round(70 * w.households.length / 10) * 10;
+    Sim.printMoney(w, amt);
+    coinRain(L);
+    for (const H of L.houses) { const b = L.world(L.houseLots[H.idx].p); spawnMote(b.clone().setY(26), b.clone().setY(3), '#ffd36b', 1900); }
+    if (audio) audio.coin();
+    label3d('+' + amt.toLocaleString('vi-VN') + ' xu cho ' + cityOf(focus).name, L.center.clone().setY(22), '#ffd27a');
+    toast('Vàng đang rơi xuống ' + cityOf(focus).name + '. Mỗi gia đình nhận khoảng <b>70 xu</b>.');
+    watch(focus, 30, (a, b) => 'Một tháng sau trận mưa vàng ở ' + cityOf(focus).name + ': giá cả <b>' + fmtPct((b.cpi / a.cpi - 1) * 100) + '</b>, thất nghiệp ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.');
+  }
+  $('pRain').onclick = doRain;
+  $('rRate').addEventListener('change', () => {
+    const w = wOf(focus), L = lands[focus]; if (!w) return;
+    const v = +$('rRate').value / 100;
+    Sim.setPolicy(w, 'interestRate', v);
+    ripple(L.world(L.bankPos), '#ffd36b'); if (audio) audio.whoosh();
+    label3d('Lãi suất ' + Math.round(v * 100) + '% mỗi năm', L.world(L.bankPos).setY(14), '#ffd27a');
+    toast(ERAS[cityOf(focus).era].bank + ' ở ' + cityOf(focus).name + ' đặt lãi suất mới: <b>' + Math.round(v * 100) + '% mỗi năm</b>.');
+    watch(focus, 60, (a, b) => 'Hai tháng sau khi đổi lãi suất: dư nợ <b>' + fmtPct((b.loans / Math.max(1, a.loans) - 1) * 100) + '</b>, thất nghiệp ' + pp(a.ue) + ' → <b>' + pp(b.ue) + '</b>.');
+  });
+  $('rTax').addEventListener('change', () => {
+    const w = wOf(focus), L = lands[focus]; if (!w) return;
+    const v = +$('rTax').value / 100;
+    Sim.setPolicy(w, 'taxRate', v);
+    ripple(L.center, '#c8b6ff'); if (audio) audio.whoosh();
+    label3d('Thuế thu nhập ' + Math.round(v * 100) + '%', L.center.clone().setY(21), '#d9ccff');
+    toast(ERAS[cityOf(focus).era].hall + ' thu thuế mới: <b>' + Math.round(v * 100) + '%</b> thu nhập.');
+    watch(focus, 45, (a, b) => 'Sau khi đổi thuế: quỹ thành phố ' + Math.round(a.gov).toLocaleString('vi-VN') + ' → <b>' + Math.round(b.gov).toLocaleString('vi-VN') + ' xu</b>, số nhà thiếu ăn ' + a.hungry.toFixed(0) + ' → <b>' + b.hungry.toFixed(0) + '</b>.');
+  });
+  $('rWage').addEventListener('change', () => {
+    const w = wOf(focus), L = lands[focus]; if (!w) return;
+    const v = +$('rWage').value;
+    Sim.setPolicy(w, 'minWage', v);
+    ripple(L.center, '#9df0c4'); if (audio) audio.whoosh();
+    label3d('Lương tối thiểu ' + v + ' xu', L.center.clone().setY(19), '#9df0c4');
+    toast('Lương tối thiểu mới ở ' + cityOf(focus).name + ': <b>' + v + ' xu mỗi ngày</b>.');
+    watch(focus, 45, (a, b) => 'Sau khi đổi lương tối thiểu: lương trung bình ' + a.wageAvg.toFixed(1).replace('.', ',') + ' → <b>' + b.wageAvg.toFixed(1).replace('.', ',') + ' xu</b>, giá cả <b>' + fmtPct((b.cpi / a.cpi - 1) * 100) + '</b>, thất nghiệp <b>' + pp(b.ue) + '</b>.');
+  });
+
+  /* =============== Thời tiết của miền đang xem, mùa của cả bể =============== */
+  const seasonW = [1, 0, 0, 0];
+  function updateSeasons(force) {
+    const doy = W.day % 360 + clamp(acc, 0, 1), s = Math.floor(doy / 90) % 4, into = doy - s * 90;
+    const k = clamp(into / 18, 0, 1), sm = k * k * (3 - 2 * k), prev = (s + 3) % 4;
+    const before = seasonW.join();
+    for (let i = 0; i < 4; i++) seasonW[i] = 0;
+    seasonW[s] = sm; seasonW[prev] += 1 - sm;
+    if (W.day < 90) { for (let i = 0; i < 4; i++) seasonW[i] = 0; seasonW[0] = 1; }
+    if (force || before !== seasonW.join()) lands3d.seasons(seasonW, wx.drought);
+  }
+  const RAIN_N = 1200, rainPos = new Float32Array(RAIN_N * 6), rainSeed = [];
+  for (let i = 0; i < RAIN_N; i++) { const a = hash(i * 3) * Math.PI * 2, r = Math.sqrt(hash(i * 3 + 1)) * 34; rainSeed.push([Math.cos(a) * r, hash(i * 3 + 2) * 44, Math.sin(a) * r]); }
+  const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+  const rainMat = new THREE.LineBasicMaterial({ color: '#d4e6f5', transparent: true, opacity: 0, depthWrite: false });
+  const rain = new THREE.LineSegments(rainGeo, rainMat); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+  const SNOW_N = 1400, snowPos = new Float32Array(SNOW_N * 3);
+  for (let i = 0; i < SNOW_N; i++) { const a = hash(i * 5) * Math.PI * 2, r = Math.sqrt(hash(i * 5 + 1)) * 34; snowPos[i * 3] = Math.cos(a) * r; snowPos[i * 3 + 1] = hash(i * 5 + 2) * 44; snowPos[i * 3 + 2] = Math.sin(a) * r; }
+  const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+  const snowMat = new THREE.PointsMaterial({ color: '#ffffff', size: 0.95, map: glowTex, transparent: true, opacity: 0, depthWrite: false });
+  const snow = new THREE.Points(snowGeo, snowMat); snow.frustumCulled = false; snow.visible = false; scene.add(snow);
+  function updateWeather(dt, t) {
+    const w = wOf(focus), L = lands[focus], ph = w ? Sim.phenomena(w) : null, k = Math.min(1, dt / 1600);
+    const tundraSnow = L.ter === 'tundra' && ph && ph.season === 3;
+    wx.rain += (0 - wx.rain) * k; // mưa chỉ rơi từ các cụm mây trong bể (clouds3d.js), không còn màn mưa trùm cả đảo
+    wx.snow += ((ph && (ph.snow || (ph.rain && L.ter === 'tundra') || tundraSnow) ? 1 : 0) - wx.snow) * k;
+    wx.drought += ((ph && ph.drought > 0 ? 1 : 0) - wx.drought) * Math.min(1, dt / 4000);
+    wx.festival += ((ph && ph.festival ? 1 : 0) - wx.festival) * k;
+    rain.position.copy(L.center); snow.position.copy(L.center);
+    const sdt = dt / 1000;
+    rain.visible = wx.rain > 0.02; rainMat.opacity = 0.55 * wx.rain;
+    if (rain.visible) { for (let i = 0; i < RAIN_N; i++) { const d = rainSeed[i]; d[1] -= (reduce ? 10 : 38) * sdt; if (d[1] < 0) d[1] += 44; const o = i * 6; rainPos[o] = d[0]; rainPos[o + 1] = d[1]; rainPos[o + 2] = d[2]; rainPos[o + 3] = d[0] + 0.12; rainPos[o + 4] = d[1] - 1.1; rainPos[o + 5] = d[2]; } rainGeo.attributes.position.needsUpdate = true; }
+    snow.visible = wx.snow > 0.02; snowMat.opacity = 0.95 * wx.snow;
+    if (snow.visible) { for (let i = 0; i < SNOW_N; i++) { const o = i * 3; snowPos[o + 1] -= (reduce ? 1 : 2.6) * sdt * (0.7 + hash(i) * 0.6); snowPos[o] += Math.sin(t * 0.0008 + i) * 0.4 * sdt; if (snowPos[o + 1] < 0) snowPos[o + 1] += 44; } snowGeo.attributes.position.needsUpdate = true; }
+  }
+  // lễ hội cuối năm: đèn trời bay lên từ những mái nhà của thành phố đang xem
+  const LANTERNS = 110;
+  const lanternMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.4, 0.3, 0.8, 8), new THREE.MeshStandardMaterial({ color: '#ff9c55', emissive: '#e8541e', emissiveIntensity: 0.85, flatShading: true, roughness: 0.9 }), LANTERNS);
+  lanternMesh.frustumCulled = false; scene.add(lanternMesh);
+  const lanterns = [], lDummy = new THREE.Object3D();
+  for (let i = 0; i < LANTERNS; i++) { const g = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ff9a45', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); g.scale.set(3.4, 3.4, 1); scene.add(g); lanterns.push({ on: false, g }); }
+  let lanternIdx = 0, lanternAcc = 0, festWasOn = false;
+  function launchLantern(y) {
+    const L = lands[focus]; if (!L.houses.length) return;
+    const H = L.houses[Math.floor(Math.random() * L.houses.length)], p = L.world(L.houseLots[H.idx].p), Lt = lanterns[lanternIdx++ % LANTERNS];
+    Object.assign(Lt, { on: true, x: p.x + (Math.random() - 0.5) * 1.5, y: y || 5.5, z: p.z + (Math.random() - 0.5) * 1.5, vy: 0.9 + Math.random() * 0.6, ph: Math.random() * 6 });
+  }
+  function updateFestival(dt, t, night) {
+    const on = wx.festival > 0.05, dusk = night > 0.15;
+    if (on && dusk && !festWasOn && !reduce) for (let i = 0; i < 40; i++) launchLantern(6 + Math.random() * 30);
+    festWasOn = on && dusk;
+    lanternAcc += on && dusk && !reduce ? (dt / 1000) * night * 4 : 0;
+    while (lanternAcc >= 1) { lanternAcc -= 1; launchLantern(); }
+    let any = false;
+    for (let i = 0; i < LANTERNS; i++) {
+      const L = lanterns[i];
+      if (!L.on) { if (L.g.material.opacity) { L.g.material.opacity = 0; lDummy.position.set(0, -200, 0); lDummy.scale.setScalar(0.001); lDummy.updateMatrix(); lanternMesh.setMatrixAt(i, lDummy.matrix); any = true; } continue; }
+      any = true;
+      L.y += L.vy * dt / 1000; L.x += Math.sin(t * 0.001 + L.ph) * 0.004 * dt / 16;
+      const fade = (L.y < 7 ? (L.y - 5.5) / 1.5 : L.y > 38 ? Math.max(0, 1 - (L.y - 38) / 6) : 1) * (dusk ? 1 : Math.max(0, 1 - (0.15 - night) * 10));
+      if (L.y > 44) L.on = false;
+      lDummy.position.set(L.x, L.y, L.z); lDummy.scale.setScalar(Math.max(0.001, fade)); lDummy.rotation.y = t * 0.0005 + L.ph; lDummy.updateMatrix(); lanternMesh.setMatrixAt(i, lDummy.matrix);
+      L.g.position.set(L.x, L.y, L.z); L.g.material.opacity = fade * (0.35 + night * 0.6);
+    }
+    if (any) lanternMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /* =============== Chú giải, màn chào, phím tắt =============== */
+  function openHelp(open) {
+    $('help').hidden = !open; $('helpBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openPolicy(false); openChron(false); }
+    document.body.classList.toggle('panel-open', open || !$('policy').hidden);
+  }
+  $('helpBtn').onclick = () => openHelp($('help').hidden);
+  $('fpsBtn').onclick = () => { fpsOn = !fpsOn; $('fps').hidden = !fpsOn; $('fpsBtn').setAttribute('aria-pressed', String(fpsOn)); };
+  $('hClose').onclick = () => openHelp(false);
+  function setSound(on) {
+    if (!audio) return;
+    if (on) on = audio.enable(); else audio.disable();
+    $('soundBtn').setAttribute('aria-pressed', String(!!on));
+    $('soundBtn').textContent = on ? 'Âm thanh: bật' : 'Âm thanh';
+  }
+  $('soundBtn').onclick = () => setSound(!(audio && audio.on));
+  if (!audio) $('soundBtn').hidden = true;
+  function enter(withSound) {
+    if (!document.body.classList.contains('intro')) return;
+    document.body.classList.remove('intro');
+    $('intro').classList.add('out');
+    setTimeout(() => { $('intro').hidden = true; }, 850);
+    if (withSound) setSound(true);
+  }
+  $('enterSound').onclick = () => enter(true);
+  $('enterQuiet').onclick = () => enter(false);
+  // vị thần: đổi thế giới ngay tại chỗ (lúc này chưa ai đặt chân lên đất), giữ nguyên cảnh 3D
+  function startGod(war, sound, seed) {
+    Object.assign(W, Sim.createWorld({ mode: 'god', war: war !== false, seed: seed == null ? 1 + Math.floor(Math.random() * 99999) : seed }));
+    lands3d.bridges.forEach((B, i) => { B.sim = W.bridges[i]; });
+    document.body.classList.add('god');
+    $('powBtn').hidden = false; $('cmdBtn').hidden = false;
+    barSig = '';
+    enter(sound);
+    manaUi();
+  }
+  $('enterGod').onclick = () => startGod($('warOn').checked, $('sndOn').checked);
+  requestAnimationFrame(() => $('enterGod').focus({ preventScroll: true }));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (document.body.classList.contains('intro')) return startGod($('warOn').checked, false);
+    if (!$('pwConfirm').hidden) return $('pcNo').click();
+    if (aiming) return setAiming(null);
+    if (!$('more').hidden) return toggleMore(false);
+    if (story && story.chapterOpen) return story.hideChapter();
+    if (story && story.mode) return story.setMode(null);
+    if (!$('whisperMenu').hidden) return story.setMode(null);
+    if (!$('policy').hidden || !$('help').hidden || !$('chron').hidden || !$('app').hidden) { closePanels(); return; }
+    if (sel) select(null);
+  });
+  document.addEventListener('visibilitychange', () => { if (audio) (document.hidden ? audio.suspend() : audio.resume()); });
+
+  /* =============== Mượt và nét: độ phân giải động nhắm 60 khung hình mỗi giây =============== */
+  // Bắt đầu ở độ nét cao nhất màn hình cho phép (tối đa 2 điểm ảnh thật mỗi điểm ảnh CSS). Khung hình chậm quá 19 ms
+  // trong hơn một giây thì hạ độ phân giải từng bậc nhỏ, rồi mới tới bóng đổ; máy dư sức thì nâng dần lên lại.
+  // Bóng đổ không vẽ lại mỗi khung: hai khung một lần, hoặc ngay khi camera dời chỗ; vùng bóng co lại khi nhìn gần cho sắc nét.
+  const lowEnd = window.innerWidth < 720 || (navigator.hardwareConcurrency || 8) <= 4;
+  const PERF = { prMax: Math.min(2, window.devicePixelRatio || 1), prMin: 0.75, pr: 1, shadow: lowEnd ? 1024 : 2048, shadowEvery: 2, frame: 0, ema: 16.7, slow: 0, good: 0, ceiling: 9, cool: 0, half: 70, force: true, lastT: new THREE.Vector3(1e9, 0, 0), fps: 60, fpsN: 0, fpsT: 0 };
+  PERF.pr = PERF.prMax; // cảnh đã nhẹ: máy nào cũng bắt đầu ở độ nét cao nhất, chậm thì bộ điều tốc tự hạ
+  const PRESETS = [{ pr: 2, shadow: 2048 }, { pr: 1.5, shadow: 1024 }, { pr: 1, shadow: 0 }, { pr: 0.75, shadow: 0 }];
+  let quality = 0, qLocked = false;
+  function applyQuality() {
+    renderer.setPixelRatio(Math.min(PERF.pr, window.devicePixelRatio || 1));
+    const shadows = PERF.shadow > 0;
+    if (shadows && sun.shadow.mapSize.x !== PERF.shadow) { sun.shadow.mapSize.set(PERF.shadow, PERF.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+    if (renderer.shadowMap.enabled !== shadows) { renderer.shadowMap.enabled = shadows; scene.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true)); }); }
+    PERF.force = true;
+    resize();
+  }
+  applyQuality();
+  function governQuality(dt) {
+    if (qLocked || document.hidden || dt > 250) return;
+    const t = performance.now();
+    PERF.fpsN++; if (t - PERF.fpsT > 500) { PERF.fps = (PERF.fpsN * 1000) / (t - PERF.fpsT); PERF.fpsN = 0; PERF.fpsT = t; if (fpsOn) $('fps').textContent = Math.round(PERF.fps) + ' khung/giây · nét ' + renderer.getPixelRatio().toFixed(2) + '×' + (PERF.shadow ? '' : ' · tắt bóng'); }
+    PERF.ema = PERF.ema * 0.92 + dt * 0.08;
+    if (PERF.ema > 19.5) { PERF.slow += dt; PERF.good = 0; }
+    else { PERF.slow = Math.max(0, PERF.slow - dt * 0.5); PERF.good = PERF.ema < 17.8 ? PERF.good + dt : 0; }
+    if (PERF.slow > 1200) {
+      PERF.slow = 0; PERF.ceiling = Math.min(PERF.ceiling, PERF.pr); PERF.cool = t + 45000;
+      if (PERF.pr > PERF.prMin + 0.01) PERF.pr = Math.max(PERF.prMin, +(PERF.pr - 0.15).toFixed(2));
+      else if (PERF.shadowEvery < 3) PERF.shadowEvery = 3;
+      else if (PERF.shadow > 1024) PERF.shadow = 1024;
+      else if (PERF.shadow > 0) PERF.shadow = 0;
+      else return;
+      applyQuality(); PERF.ema = 16.7;
+    } else if (PERF.good > 4000) {
+      PERF.good = 0;
+      if (PERF.shadow === 0) PERF.shadow = 1024;
+      else if (PERF.shadow < (lowEnd ? 1024 : 2048)) PERF.shadow = 2048;
+      else if (PERF.shadowEvery > 2) PERF.shadowEvery = 2;
+      else if (PERF.pr < PERF.prMax - 0.01 && (t > PERF.cool || PERF.pr + 0.1 < PERF.ceiling - 0.01)) { PERF.pr = Math.min(PERF.prMax, +(PERF.pr + 0.1).toFixed(2)); if (t > PERF.cool) PERF.ceiling = 9; }
+      else return;
+      applyQuality();
+    }
+  }
+  // bóng đổ: vùng bóng theo khoảng cách camera, vẽ lại hai khung một lần hoặc khi chỗ nhìn đổi
+  function shadowTick() {
+    PERF.frame++;
+    if (!renderer.shadowMap.enabled) return;
+    const moved = controls.target.distanceToSquared(PERF.lastT) > 0.0004;
+    if (moved) PERF.lastT.copy(controls.target);
+    const half = clamp(camera.position.distanceTo(controls.target) * 0.62, 26, 80);
+    if (Math.abs(half - PERF.half) > 3) { PERF.half = half; const sc = sun.shadow.camera; sc.left = -half; sc.right = half; sc.top = half; sc.bottom = -half; sc.updateProjectionMatrix(); PERF.force = true; }
+    renderer.shadowMap.needsUpdate = PERF.force || moved || PERF.frame % PERF.shadowEvery === 0;
+    PERF.force = false;
+  }
+  // những ánh sáng, sương khói đã mờ hẳn thì khỏi vẽ (trước đây vẫn tốn một lượt vẽ mỗi cái)
+  const faded = []; let fadedScan = 0;
+  function hideFaded(t) {
+    if (t > fadedScan) { fadedScan = t + 1500; faded.length = 0; scene.traverse((o) => { if (o.userData.noFade) return; if (o.isSprite || (o.isMesh && !o.isInstancedMesh && o.material && !Array.isArray(o.material) && o.material.transparent)) faded.push(o); }); }
+    for (const o of faded) {
+      if (o.material.opacity < 0.012) { if (o.visible) { o.visible = false; o.userData.fadeHid = true; } }
+      else if (o.userData.fadeHid) { o.userData.fadeHid = false; o.visible = true; }
+    }
+  }
+  // đảo nào nằm ngoài khung nhìn thì khỏi tính lại người đi lại trên đảo đó
+  const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
+  function viewTick() { _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm); }
+  const inView = (i) => { const L = lands3d.lands[i]; if (!L) return true; _sph.center.copy(L.center); _sph.radius = lands3d.LAND_R + 10; return _fr.intersectsSphere(_sph); };
+  let fpsOn = false;
+
+  /* =============== Điều khiển =============== */
+  // Ba tốc độ, không có tạm dừng. 1× chậm để nhìn rõ từng người (ván chín năm khoảng 73 phút, một vòng ngày đêm 3 phút);
+  // 2× (36 phút); 4× (18 phút). Bỏ 16× vì quá nặng.
+  let running = true, tps = 0.75, acc = 0;
+  const speeds = [[0.75, '1×'], [1.5, '2×'], [3, '4×']];
+  function stopOrbit() { if (controls.autoRotate) { controls.autoRotate = false; $('orbit').setAttribute('aria-pressed', 'false'); } $('hint').style.opacity = 0; }
+  // một nút tốc độ: chạm để đi 1×, 2×, 4× rồi quay lại 1×
+  $('speed').onclick = () => {
+    running = true;
+    const i = (speeds.findIndex((x) => x[0] === tps) + 1) % speeds.length; // 1× → 2× → 4× → 1×
+    tps = speeds[i][0]; $('speed').textContent = speeds[i][1] + ' ▸';
+  };
+  $('cycle').onclick = () => { cycleOn = !cycleOn; if (!cycleOn) tod = 0.42; $('cycle').setAttribute('aria-pressed', String(cycleOn)); $('cycle').textContent = cycleOn ? 'Ngày và đêm' : 'Luôn ban ngày'; };
+  $('money').onclick = () => { showMoney = !showMoney; $('money').setAttribute('aria-pressed', String(showMoney)); };
+
+  /* =============== Biên niên sử, thanh phụ, người dẫn chuyện =============== */
+  function openChron(open) {
+    $('chron').hidden = !open; $('chronBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openPolicy(false); openHelp(false); story.renderChron(); }
+    document.body.classList.toggle('panel-open', open || !$('policy').hidden || !$('help').hidden);
+  }
+  function closePanels() { openPolicy(false); openHelp(false); openChron(false); openApp(false); toggleMore(false); }
+  /* ----- Đóng gói: tải về máy tính, cài lên điện thoại ----- */
+  // Trong trang Bể Kính trên claude.ai: tải gói qua quyền tải tệp của trang. Bản web đặt trên máy chủ: tải thẳng tệp zip
+  // nằm cạnh trang. Bản đã tải về máy (mở từ ổ đĩa): đã có cả bể kính rồi nên không hiện mục tải.
+  const ZIP = 'BeKinh-ban-may-tinh.zip';
+  let dlWay = null, installEvt = null;
+  function openApp(open) {
+    $('app').hidden = !open; $('appBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openPolicy(false); openHelp(false); openChron(false); }
+    document.body.classList.toggle('panel-open', open || !$('policy').hidden || !$('help').hidden);
+  }
+  $('appBtn').onclick = () => { toggleMore(false); openApp($('app').hidden); };
+  $('aClose').onclick = () => openApp(false);
+  (async () => {
+    try {
+      if (window.claude && typeof window.claude.use === 'function') {
+        const dl = await window.claude.use('downloads');
+        if (dl) { dlWay = { kind: 'claude', dl }; $('dlBtn').hidden = false; }
+      } else if (/^https?:$/.test(location.protocol) && navigator.onLine !== false) {
+        const r = await fetch(ZIP, { method: 'HEAD' });
+        if (r.ok) { dlWay = { kind: 'link' }; $('dlBtn').hidden = false; }
+      }
+    } catch (err) { /* không tải được thì không hiện mục tải */ }
+  })();
+  $('dlBtn').onclick = async () => {
+    toggleMore(false);
+    if (!dlWay) return;
+    if (dlWay.kind === 'link') { const a = document.createElement('a'); a.href = ZIP; a.download = ZIP; document.body.appendChild(a); a.click(); a.remove(); return; }
+    toast('Đang đóng gói Bể Kính…', 3000);
+    try {
+      // trang trên claude.ai tự nén gói từ các tệp của bản không cần mạng (đăng kèm trong thư mục goi/)
+      const list = await (await fetch('goi/goi-files.json')).json(), entries = [];
+      for (const f of list) { const r = await fetch('goi/' + f.src); if (!r.ok) throw new Error('thiếu ' + f.src); entries.push({ name: f.path, data: new Uint8Array(await r.arrayBuffer()), mode: f.mode }); }
+      await dlWay.dl.save({ filename: ZIP, data: await makeZip(entries) });
+      toast('Đã lưu <b>' + ZIP + '</b>. Giải nén rồi mở <b>Choi Be Kinh</b> hoặc <b>index.html</b> để chơi không cần mạng.', 7000);
+    } catch (err) {
+      if (err && err.code === 'declined') return;
+      toast('Chưa tải được gói Bể Kính' + (err && err.message ? ': ' + err.message : '') + '.', 4200);
+    }
+  };
+  // tệp zip dựng ngay trong trình duyệt: nén deflate bằng CompressionStream nếu có, không thì lưu nguyên
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = (u8) => { let c = 0xffffffff; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  async function deflateRaw(u8) {
+    if (typeof CompressionStream === 'undefined') return null;
+    try { return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); } catch (err) { return null; }
+  }
+  async function makeZip(entries) {
+    const enc = new TextEncoder(), parts = [], central = [], d = new Date();
+    const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let off = 0;
+    for (const e of entries) {
+      const name = enc.encode(e.name), crc = crc32(e.data), packed = await deflateRaw(e.data), method = packed && packed.length < e.data.length ? 8 : 0, body = method ? packed : e.data;
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, method, true); h.setUint16(10, time, true); h.setUint16(12, date, true);
+      h.setUint32(14, crc, true); h.setUint32(18, body.length, true); h.setUint32(22, e.data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, body);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, (3 << 8) | 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, method, true); c.setUint16(12, time, true); c.setUint16(14, date, true);
+      c.setUint32(16, crc, true); c.setUint32(20, body.length, true); c.setUint32(24, e.data.length, true); c.setUint16(28, name.length, true);
+      c.setUint32(38, ((0o100000 | (e.mode || 0o644)) * 65536) >>> 0, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + body.length;
+    }
+    const size = central.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/zip' });
+  }
+  window.__bekinhZip = makeZip; // để kiểm thử gói tự nén
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('appInstall').hidden = false; });
+  $('appInstall').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (err) { /* bỏ qua */ } installEvt = null; $('appInstall').hidden = true; };
+  // bản web đặt trên máy chủ: lưu cả game vào máy để chơi không cần mạng (không chạy trong khung của claude.ai hay khi mở từ ổ đĩa)
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.claude && window.top === window.self) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+  $('chronBtn').onclick = () => openChron($('chron').hidden);
+  $('chClose').onclick = () => openChron(false);
+  function toggleMore(open) {
+    $('more').hidden = !open; $('moreBtn').setAttribute('aria-expanded', String(open));
+    if (open) { const r = $('moreBtn').getBoundingClientRect(); $('more').style.left = Math.max(12, Math.min(window.innerWidth - 202, r.right - 190)) + 'px'; }
+  }
+  $('moreBtn').onclick = (e) => { e.stopPropagation(); toggleMore($('more').hidden); };
+  document.addEventListener('click', (e) => { if (!$('more').hidden && !e.target.closest('#more') && e.target !== $('moreBtn')) toggleMore(false); });
+  const story = Story3D.create({
+    THREE, W, Sim, lands3d, $, reduce, audio, glowTex, mat, mesh, box, C, dome: DOME, overviewDist: OVERVIEW,
+    label3d, toast, puff, ripple, spawnMote, flyTo, select, watch, setAutoRotate, closePanels, clickable, unclickable, eraMoment,
+    people: lands3d.people, tod: () => tod, focus: () => focus, setFocus,
+    seaPos: (z) => war3d.zoneC(z).setY(1),
+    lanePos: (key, x) => { const p = new THREE.Vector3(), d = new THREE.Vector3(); return war3d.lanePos(key, x == null ? 0.5 : x, 0, p, d) ? p : new THREE.Vector3(); },
+  });
+
+  /* =============== Vị thần: quyền năng, thần lực, sáu nền văn minh, chiến sự =============== */
+  let aiming = null, cmdTab = 'civ', cmdLast = 0, watchLane = null, watchEnd = 0;
+  const fmtN = (v) => Math.round(v).toLocaleString('vi-VN');
+  // năm nhóm quyền năng: vách kính, nước, đèn và nắp, thả đồ vào bể, cả chiếc bể
+  const PW_GROUPS = [
+    { name: 'Vách kính', note: 'chạm vào một đảo', keys: ['tap', 'vent', 'crack', 'shatter', 'patch'] },
+    { name: 'Nước trong bể', note: 'cả bể · nghiêng thì chạm đảo', keys: ['pour', 'drain', 'tilt'] },
+    { name: 'Đèn và nắp bể', note: 'che, kéo đèn: chạm đảo', keys: ['shade', 'lamp', 'lid'] },
+    { name: 'Thả vào bể', note: 'rơi đúng chỗ chạm', keys: ['coin', 'seed', 'pebble'] },
+    { name: 'Cả chiếc bể', note: '', keys: ['shake'] },
+  ];
+  const ICON = {
+    tap: '<circle cx="12" cy="12" r="2.2"/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
+    vent: '<path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/>',
+    crack: '<path d="M12 2l-2 6 4 3-3 5 2 6M10 8L5 7M14 11l5-1M11 16l-4 2"/>',
+    shatter: '<path d="M12 12L4.5 4.5M12 12l7.5-7.5M12 12l-9 3M12 12l9 4M12 12l-3 9M12 12l4 9M12 12l1-10"/><circle cx="12" cy="12" r="2.4"/>',
+    patch: '<rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="M10.6 11.3v.01M13.4 12.7v.01M12 10.5v.01M12 13.5v.01"/>',
+    pour: '<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/><path d="M12 11v6M9 14h6"/>',
+    drain: '<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/><path d="M9 14h6"/>',
+    tilt: '<path d="M4 9l15-4 2 9-15 4z"/><path d="M5.5 14.5c3-1 5 .5 8-.5s4-1.5 6.5-2"/>',
+    shade: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    lamp: '<path d="M8 3h8l3 7H5z"/><path d="M12 10v3M9 16a3 3 0 0 0 6 0M12 20v1.5M7.5 18.5L6 20M16.5 18.5L18 20"/>',
+    lid: '<path d="M4 12h16v7.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5z"/><path d="M3 9.5l15-5 1 3M10 7.2l-.6-1.8"/>',
+    coin: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/>',
+    seed: '<path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6zM12 15c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/>',
+    pebble: '<path d="M5 17l2-7 5-4 6 2 2 7-4 4H8z"/><path d="M9 11l3 2 4-2"/>',
+    shake: '<rect x="7" y="6" width="10" height="12" rx="2"/><path d="M3 8v8M21 8v8M5 10v4M19 10v4"/>',
+  };
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), _hitP = new THREE.Vector3();
+  function landAtRay() {
+    if (!ray.ray.intersectPlane(groundPlane, _hitP)) return null;
+    let best = null, bd = 1e9;
+    for (const L of lands) { const d = Math.hypot(_hitP.x - L.center.x, _hitP.z - L.center.z); if (d < bd) { bd = d; best = L; } }
+    return bd < Lands3D.LAND_R + 20 ? best : null;
+  }
+  function manaUi() {
+    const G = W.god, f = Math.round((G.power / G.max) * 100) + '%';
+    $('manaFill').style.width = f; $('manaTxt').textContent = 'Quyền năng · ' + Math.floor(G.power);
+    $('pwFill').style.width = f; $('pwVal').textContent = Math.floor(G.power) + ' / ' + G.max + ' thần lực';
+  }
+  function setAiming(k) {
+    aiming = k;
+    document.body.classList.toggle('aiming', !!k);
+    if (k) toast('<b>' + Sim.POWERS[k].name + '</b>: chạm đúng chỗ trên một hòn đảo, hoặc bấm tên đảo ở thanh trên. Esc để thôi.', 3600);
+    renderPowers();
+  }
+  // thần ra tay: camera lùi ra thấy cả hòn đảo lẫn vách kính phía sau; tới lúc phép chạm mới hiện hậu quả rồi bay lại gần
+  const HIGH_SHOT = { shade: 1, lamp: 1, coin: 1, seed: 1, pebble: 1 };
+  function powerShot(i, k) {
+    if (i == null || k === 'tilt') {
+      // việc cho cả bể: nhìn gần ngang từ xa, thấy cả đỉnh vòm lẫn mặt biển
+      const L = i == null ? null : lands[i], a = L ? Math.atan2(L.center.z, L.center.x) + Math.PI / 2 : Math.atan2(camera.position.z - controls.target.z, camera.position.x - controls.target.x);
+      const top = k === 'pour' || k === 'lid'; // thác nước và nắp vòm ở trên cao; xoáy nước nhìn từ thấp
+      return a;
+    }
+    // việc cho một đảo: camera ở phía giữa bể nhìn ra, thấp, thấy đảo phía trước và vách kính ngay sau mép đảo
+    const L = lands[i], a = Math.atan2(L.center.z, L.center.x), hi = HIGH_SHOT[k], R = Math.hypot(L.center.x, L.center.z) + 18;
+    return a + Math.PI;
+  }
+  function castPower(k, i, spot) {
+    const r = Sim.godAct(W, k, i, spot);
+    if (!r.ok) { toast(r.reason, 3400); return r; }
+    const tank = Sim.POWERS[k].target === 'tank';
+    setAiming(null); stopOrbit(); if (story) story.userMoved();
+    if (!tank) setFocus(i);
+    r.fx.view = powerShot(tank ? null : i, k);
+    powers3d.play(r.fx, () => {
+      lands3d.syncDay(false); marks.syncDay(false); war3d.syncDay(false, 0); powers3d.syncDay();
+      story.onDay(); pulse(); landBar(); manaUi(); renderPowers(); renderWorld(true);
+      // camera đứng yên ở chỗ người chơi đang nhìn; không tự bay tới nơi vừa dùng quyền năng
+    });
+    manaUi(); renderPowers();
+    return r;
+  }
+  // chạm vào một đảo khi đang nhắm: kiểm tra trước, đập vỡ kính thì hỏi lại một lần
+  let pendingShatter = null;
+  function aimAt(i, x, z) {
+    const L = lands[i], k = aiming; if (!L || !k) return;
+    const o = Sim.godOffer(W, k, i);
+    if (!o.ok) { toast(o.reason, 3000); return; }
+    const spot = powers3d.spotAt(L, x, z, 10);
+    if (k !== 'shatter') { castPower(k, i, spot); return; }
+    const c = W.cities[i];
+    $('pcTitle').textContent = 'Đập vỡ kính trên ' + c.name + '?';
+    $('pcText').textContent = 'Bầu khí quyển trên đảo sẽ sụp. Nếu không vá kịp trong hai mươi ngày, cả ' + c.name + ' chết, đảo trống trơn, rồi một bộ lạc mới đến bắt đầu lại từ thời nguyên thuỷ.';
+    pendingShatter = { i, spot }; $('pwConfirm').hidden = false; $('pcNo').focus({ preventScroll: true });
+  }
+  $('pcYes').onclick = () => { const q = pendingShatter; pendingShatter = null; $('pwConfirm').hidden = true; if (q) castPower('shatter', q.i, q.spot); };
+  $('pcNo').onclick = () => { pendingShatter = null; $('pwConfirm').hidden = true; setAiming(null); };
+  // tình trạng chiếc bể: kính nứt, vỡ, lỗ thở, mực nước, bóng tay, đèn sát đảo, đảo hoang
+  function tankState() {
+    const out = [], T = W.tank, d = W.day;
+    for (const c of W.cities) {
+      const gl = (c.settled && c.glass) || {};
+      if (gl.broken) out.push('<div class="warn">Kính vỡ trên <b>' + c.name + '</b>: còn ' + Math.max(0, gl.broken.collapse - d) + ' ngày để vá, không thì cả thành chết.</div>');
+      else if ((gl.crack || 0) > d) out.push('<div class="warn">Kính nứt trên <b>' + c.name + '</b>: rò khí thêm ' + (gl.crack - d) + ' ngày nếu không vá.</div>');
+      if ((gl.vent || 0) > d) out.push('<div>Lỗ thở trên <b>' + c.name + '</b>: còn ' + (gl.vent - d) + ' ngày khí trời.</div>');
+      if (c.settled && (c.dark || 0) > d) out.push('<div>Thần đang che đèn trên <b>' + c.name + '</b>: ' + (c.dark - d) + ' ngày nữa.</div>');
+      if (c.settled && (c.heat || 0) > d) out.push('<div>Đèn kéo sát <b>' + c.name + '</b>: nóng thêm ' + (c.heat - d) + ' ngày.</div>');
+      if (c.settled && c.tree) out.push('<div>Cây khổng lồ đang toả bóng trên <b>' + c.name + '</b>.</div>');
+      if (!c.settled && c.resets) out.push('<div class="warn"><b>' + c.name + '</b> là đảo hoang' + (c.resettle != null ? ': bộ lạc mới đến sau ' + Math.max(0, c.resettle - d) + ' ngày' : '') + '.</div>');
+    }
+    if (T && T.level > 0) out.push('<div>Mực biển đang dâng: còn ' + Math.max(0, T.until - d) + ' ngày.</div>');
+    if (T && T.level < 0) out.push('<div class="warn">Biển đang cạn: còn ' + Math.max(0, T.until - d) + ' ngày, thuyền nằm trên bùn.</div>');
+    return out.join('');
+  }
+  function renderPowers() {
+    if ($('powers').hidden) return;
+    const G = W.god, d = W.day, live = W.cities.filter((c) => c.settled);
+    const urgent = live.some((c) => c.glass && c.glass.broken), cracked = live.some((c) => c.glass && (c.glass.broken || (c.glass.crack || 0) > d));
+    const cell = (k) => {
+      const P = Sim.POWERS[k], cd = Math.max(0, (G.cool[k] || 0) - d);
+      let ok = G.power >= P.cost && !cd;
+      if (k === 'patch' && !cracked) ok = false;
+      const hot = k === 'patch' && urgent && ok;
+      const sub = cd ? 'chờ ' + cd + ' ngày' : P.cost + ' thần lực' + (P.target === 'tank' ? ' · cả bể' : '');
+      return '<button class="pw ' + P.kind + (aiming === k ? ' on' : '') + (hot ? ' hot' : '') + '" data-k="' + k + '"' + (ok || aiming === k ? '' : ' disabled') + ' title="' + P.info + '"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICON[k] + '</svg></span><b>' + P.name + '</b><span>' + sub + '</span></button>';
+    };
+    $('pwGroups').innerHTML = PW_GROUPS.map((g) => '<div class="pwg"><h4>' + g.name + (g.note ? '<small>' + g.note + '</small>' : '') + '</h4><div class="pwgrid">' + g.keys.map(cell).join('') + '</div></div>').join('');
+    $('pwState').innerHTML = tankState();
+    $('pwInfo').textContent = aiming ? Sim.POWERS[aiming].info + ' Chạm đúng chỗ trên một hòn đảo.' : 'Bạn là vị thần bên ngoài chiếc bể. Chọn một việc: việc cho cả bể làm ngay, việc cho một đảo thì chạm vào đảo đó.';
+    $('pwFaith').innerHTML = live.length ? 'Đức tin: ' + live.map((c) => c.name + ' ' + Math.round((c.faith || 0) * 100) + '%').join(' · ') : 'Chưa có ai để tin vào bạn.';
+    manaUi();
+  }
+  function openPowers(open) {
+    $('powers').hidden = !open; $('powBtn').setAttribute('aria-pressed', String(open));
+    if (open) { openCmd(false); openPolicy(false); openHelp(false); openChron(false); renderPowers(); }
+    document.body.classList.toggle('cmd-open', open || !$('cmd').hidden);
+  }
+  $('powBtn').onclick = () => openPowers($('powers').hidden);
+  $('pwClose').onclick = () => { openPowers(false); setAiming(null); };
+  $('powers').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return;
+    const k = b.dataset.k;
+    if (Sim.POWERS[k].target === 'tank') { setAiming(null); castPower(k, null); return; } // việc cho cả bể: làm ngay
+    setAiming(aiming === k ? null : k);
+  });
+  function openCmd(open) {
+    $('cmd').hidden = !open; $('cmdBtn').setAttribute('aria-pressed', String(open));
+    if (open) { if (!$('powers').hidden) openPowers(false); openPolicy(false); openHelp(false); openChron(false); renderWorld(true); }
+    document.body.classList.toggle('cmd-open', open || !$('powers').hidden);
+  }
+  $('cmdBtn').onclick = () => openCmd($('cmd').hidden);
+  $('cmdClose').onclick = () => openCmd(false);
+  document.querySelector('#cmd .tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tab]'); if (!b) return;
+    cmdTab = b.dataset.tab;
+    for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x === b));
+    renderWorld(true);
+  });
+  // sáu trụ cột của một thành: phần đã đi tới thời sau, trụ cột yếu nhất được tô cam, trụ cột chính của miền có sao
+  const PILL_SHORT = { eco: 'Kinh tế', mil: 'Quân sự', edu: 'Học', hea: 'Y tế', rel: 'Tôn giáo', tra: 'Buôn' };
+  function pillarBars(c) {
+    if (!c.pil || c.era >= Sim.LAST) return '';
+    const pr = Sim.pillarProgress(c), wk = Sim.weakestPillar(c), key = Sim.PILLAR_KEY[c.terrain.key];
+    return '<div class="pills" title="Sáu trụ cột tới thời ' + ERAS[c.era + 1].name.toLowerCase() + ' · đang chờ ' + wk.name.toLowerCase() + '">' + Sim.PILLARS.map((P) => '<span class="' + (P.key === wk.key && wk.pct < 1 ? 'low ' : '') + (P.key === key ? 'key' : '') + '"><b>' + PILL_SHORT[P.key] + '</b><i><em style="width:' + Math.round(pr[P.key] * 100) + '%"></em></i></span>').join('') + '</div>';
+  }
+  // những tai hoạ đã giáng xuống thành này trong năm nay
+  function chaosLine(c) {
+    if (!W.chaos) return '';
+    const y = Math.floor((W.day - 1) / 360), seen = W.chaos.log.filter((x) => x.city === c.id && x.year === y).map((x) => (Sim.CHAOS.find((k) => k.key === x.key) || {}).name).filter(Boolean);
+    return seen.length ? '<small class="chaos">Năm nay: ' + seen.join(', ') + '</small>' : '';
+  }
+  const row = (title, small, act, extra) => '<div class="row"><b>' + title + '</b>' + (small ? '<small>' + small + '</small>' : '') + (extra || '') + (act ? '<div class="act">' + act + '</div>' : '') + '</div>';
+  const laneName = (L) => (L.kind === 'bridge' ? 'cầu ' : 'eo biển ') + W.cities[L.a].name + ' – ' + W.cities[L.b].name;
+  const UNIT_ORDER = ['melee', 'ranged', 'mounted', 'siege', 'ship', 'sub'];
+  function sideText(units, owner) {
+    const mineU = units.filter((u) => u.owner === owner), out = [];
+    for (const k of UNIT_ORDER) { const us = mineU.filter((u) => u.cls === k); if (!us.length) continue; const e = Math.max(...us.map((u) => u.era)); out.push(us.length + ' ' + Sim.UNITS[k].names[e].toLowerCase()); }
+    return out.length ? out.join(', ') : 'không còn ai trên chiến tuyến';
+  }
+  function renderWorld(force) {
+    if ($('cmd').hidden) return;
+    const t = performance.now();
+    if (!force && t - cmdLast < 500) return;
+    cmdLast = t;
+    const X = W.war, live = W.cities.filter((c) => c.settled);
+    const wars = []; for (const f of X.factions) for (const g of X.factions) if (f.id < g.id && f.alive && g.alive && Sim.atWarF(W, f.id, g.id)) wars.push([f, g]);
+    $('cmdStats').innerHTML = '<span>Cấp <b>' + worldLevel() + '/12</b></span><span>Dân <b>' + fmtN(live.reduce((s2, c) => s2 + c.w.households.length, 0)) + ' hộ</b></span><span>Thần lực <b>' + Math.floor(W.god.power) + '</b></span>' + (warOn() ? '<span>Chiến tranh <b>' + wars.length + '</b></span>' : '<span><b>Thế giới hoà bình</b></span>');
+    let h = '';
+    if (cmdTab === 'civ') {
+      for (const c of W.cities) {
+        if (!c.settled) { h += row('<span class="dot" style="background:' + TER_DOT[c.terrain.key] + '"></span>' + c.name, c.terrain.land + ' còn hoang sơ', ''); continue; }
+        const army = warOn() ? X.units.filter((u) => u.city === c.id).length : 0, foes = warOn() ? X.factions.filter((f) => f.alive && Sim.atWarF(W, c.owner, f.id)).map((f) => f.name) : [];
+        const hp = warOn() ? '<div class="prog"><i style="width:' + Math.round((c.hp / c.hpMax) * 100) + '%;background:' + (c.hp / c.hpMax > 0.5 ? '#7bd389' : '#ef6f6c') + '"></i></div>' : '';
+        h += row('<span class="dot" style="background:' + (warOn() ? factionColor(c.owner) : TER_DOT[c.terrain.key]) + '"></span>' + c.name + (warOn() && c.owner !== c.id ? ' · cờ ' + X.factions[c.owner].name : ''),
+          'Thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ' + (c.era < Sim.LAST && c.pil ? ' · chờ ' + Sim.weakestPillar(c).name.toLowerCase() : '') + (warOn() ? ' · ' + army + ' quân' : '') + (foes.length ? ' · đánh ' + foes.join(', ') : ''),
+          '<button data-act="fly" data-arg="' + c.id + '">Bay tới</button>', hp + pillarBars(c) + chaosLine(c));
+      }
+    } else {
+      if (!warOn()) h += '<p class="note">Bạn đã chọn một thế giới không có chiến tranh. Loài người chỉ đối mặt với trời đất, và với bạn.</p>';
+      else {
+        h += '<h4>Các cuộc chiến</h4>';
+        if (!wars.length) h += '<p class="note">Lúc này không ai đánh ai. Đình chiến của thần giữ được một năm.</p>';
+        for (const [f, g] of wars) { const R = X.rel[f.id][g.id]; h += row('<span class="dot" style="background:' + f.color + '"></span>' + f.name + ' – <span class="dot" style="background:' + g.color + ';margin-left:6px"></span>' + g.name, 'Từ ngày ' + R.since + ' · ' + (R.by === f.id ? f.name : g.name) + ' tuyên chiến', ''); }
+        h += '<h4>Trận đang diễn ra</h4>';
+        const battles = Object.values(X.lanes).filter((L) => L.battle);
+        if (!battles.length) h += '<p class="note">Chưa có trận nào. Các phe còn đang luyện quân.</p>';
+        for (const L of battles) {
+          const us = Sim.laneUnits(W, L.key), B = L.battle;
+          h += row(laneName(L), 'Ngày thứ ' + (W.day - B.start + 1) + ' · ' + B.sides.map((o) => X.factions[o].name + ' mất ' + (B.lost[o] || 0)).join(', ') + ' · ' + us.length + ' đơn vị trên tuyến', '<button data-act="watch" data-arg="' + L.key + '">Xem</button>');
+        }
+        const reports = W.stories.filter((st) => st.type === 'battle-end').slice(-6).reverse();
+        if (reports.length) { h += '<h4>Trận đã qua</h4>'; for (const st of reports) h += row(st.title.replace(' khép lại', ''), 'Ngày ' + st.day + ' · ' + st.text, st.lane ? '<button data-act="watch" data-arg="' + st.lane + '">Tới nơi</button>' : ''); }
+      }
+    }
+    $('cmdBody').innerHTML = h;
+  }
+  $('cmdBody').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    if (b.dataset.act === 'fly') { const i = +b.dataset.arg; setFocus(i); flyTo(lands[i].center, 82); stopOrbit(); story.userMoved(); }
+    if (b.dataset.act === 'watch') watch(b.dataset.arg);
+  });
+  // theo dõi một trận: camera bay tới, bảng nhỏ cập nhật mỗi ngày
+  function watch(key) {
+    const L = W.war.lanes[key]; if (!L) return;
+    watchLane = key; watchEnd = 0;
+    const p = new THREE.Vector3(), d = new THREE.Vector3();
+    if (war3d.lanePos(key, 0.5, 0, p, d)) flyTo(p, L.kind === 'sea' ? 60 : 40);
+    stopOrbit(); story.userMoved(); if (window.innerWidth < 720) openCmd(false);
+    renderBattle();
+  }
+  function renderBattle() {
+    if (!watchLane) { $('bhud').hidden = true; return; }
+    const L = W.war.lanes[watchLane], X = W.war;
+    if (!L) { watchLane = null; $('bhud').hidden = true; return; }
+    const us = Sim.laneUnits(W, L.key), A = W.cities[L.a], Z = W.cities[L.b], B = L.battle;
+    if (!B && !us.length) { watchEnd = watchEnd || W.day; if (W.day - watchEnd > 6) { watchLane = null; $('bhud').hidden = true; return; } }
+    $('bhKind').textContent = (B ? 'Đang giao tranh · ngày thứ ' + (W.day - B.start + 1) : 'Chiến tuyến yên ắng') + ' · ' + (L.kind === 'bridge' ? 'trên cầu' : 'trên biển');
+    $('bhTitle').textContent = 'Trận ' + laneName(L);
+    const side = (c) => {
+      const o = c.owner, lost = B ? B.lost[o] || 0 : 0;
+      return '<div><b><i style="background:' + factionColor(o) + '"></i>' + X.factions[o].name + (o !== c.id ? ' (giữ ' + c.name + ')' : '') + '</b><span>' + sideText(us, o) + '</span><span>Tử trận ' + lost + ' · thành ' + c.name + ' còn ' + Math.round((c.hp / c.hpMax) * 100) + '%</span><div class="hp"><i style="width:' + Math.round((c.hp / c.hpMax) * 100) + '%;background:' + factionColor(o) + '"></i></div></div>';
+    };
+    $('bhSides').innerHTML = side(A) + side(Z);
+    $('bhud').hidden = false;
+  }
+  $('bhClose').onclick = () => { watchLane = null; $('bhud').hidden = true; };
+  function godTick() { manaUi(); renderPowers(); renderWorld(false); renderBattle(); }
+  // Năm thứ chín khép lại: thế giới dừng, vị thần nhìn lại những gì mình đã làm
+  let finaleShown = false;
+  function finale() {
+    if (finaleShown) return;
+    finaleShown = true;
+    const G = W.god, X = W.war, used = G.used || {}, bad = Object.keys(used).filter((k) => Sim.POWERS[k].kind === 'bad').reduce((t, k) => t + used[k], 0), good = Object.keys(used).filter((k) => Sim.POWERS[k].kind === 'good').reduce((t, k) => t + used[k], 0);
+    const lit = W.cities.filter((c) => c.settled && c.era >= Sim.LAST).length;
+    const title = lit === 6 ? 'Sáu thành phố ánh sáng' : lit ? lit + ' thành phố đã hoá ánh sáng' : G.awakened ? 'Những cỗ máy đã nhìn thấy bạn' : 'Chín năm trong bể kính';
+    const godName = !bad && !good ? 'vị thần im lặng' : good > bad * 2 ? 'vị thần nhân từ' : bad > good * 2 ? 'vị thần thịnh nộ' : 'vị thần công bằng';
+    const fallen = W.cities.reduce((t, c) => t + (c.casualties || 0), 0), battles = W.stories.filter((s) => s.type === 'battle-end').length;
+    const conquests = W.stories.filter((s) => s.type === 'conquer').length, revolts = W.stories.filter((s) => (s.type === 'uprising' && !s.failed) || s.type === 'revolt').length;
+    const pop = W.cities.reduce((t, c) => t + (c.settled ? c.w.households.length : 0), 0);
+    $('goKind').textContent = 'Năm thứ chín khép lại · Ngày ' + W.day;
+    $('goTitle').textContent = title;
+    $('goText').textContent = 'Người trong bể sẽ nhớ bạn là ' + godName + ': ' + bad + ' lần giáng thiên tai, ' + good + ' lần ban phước.' + (G.awakened ? ' Ở ' + W.cities[G.awakeCity].name + ', những cỗ máy vẫn đang gõ lên kính từ bên trong.' : '');
+    const items = W.cities.filter((c) => c.settled).map((c) => '<li><i style="background:' + factionColor(c.owner) + '"></i><b>' + c.name + '</b> · thời ' + ERAS[c.era].name.toLowerCase() + ' · ' + c.w.households.length + ' hộ · đức tin ' + Math.round((c.faith || 0) * 100) + '%' + (c.owner !== c.id ? ' · dưới cờ ' + X.factions[c.owner].name : '') + '</li>');
+    if (X.on) items.push('<li><b>Chiến tranh</b>: ' + battles + ' trận, ' + fallen + ' người lính tử trận, ' + conquests + ' lần chiếm thành, ' + revolts + ' cuộc nổi dậy.</li>');
+    items.push('<li><b>Cả bể kính</b>: ' + pop + ' gia đình, ' + Math.round(W.tradeTotal).toLocaleString('vi-VN') + ' món hàng đã qua cầu và qua biển.</li>');
+    $('goList').innerHTML = items.join('');
+    $('gameover').hidden = false;
+    if (audio && audio.on && audio.chime) audio.chime();
+  }
+  $('goNew').onclick = () => location.reload();
+  $('goWatch').onclick = () => { $('gameover').hidden = true; setAutoRotate(true); };
+
+  /* =============== Một ngày trôi qua =============== */
+  function dayTick(animate) {
+    if (W.ended) return; // ván đã khép lại ở cuối năm thứ chín
+    Sim.stepWorld(W);
+    lands3d.syncDay(animate);
+    war3d.syncDay(animate, 1000 / tps);
+    marks.syncDay(animate); fauna.syncDay(animate); sights3d.syncDay(); powers3d.syncDay();
+    story.onDay();
+    if (animate) for (const fx of W.god.fx) powers3d.play(fx);
+    if (animate && W.chaos) for (const fx of W.chaos.fx) (fx.street ? streets3d.play(fx) : fx.key === 'strike' || fx.key === 'setback' ? sky3d.play(fx) : chaos3d.play(fx));
+    sky3d.syncDay();
+    godTick();
+    if (W.ended && !finaleShown) setTimeout(finale, 1200);
+    checkWatches();
+    if (animate) spawnMotes();
+  }
+  window.__glass = {
+    W, lands3d, war3d, god3d, camera, controls, select, finale, story: () => story, setFocus, focus: () => focus, wx, enter, openHelp, openPolicy, audio, doRain, startGod, castPower, watch, openPowers: (o) => openPowers(o), openCmd: (o) => openCmd(o), cmdTab: (t) => { cmdTab = t; for (const x of document.querySelectorAll('#cmd .tabs button')) x.setAttribute('aria-selected', String(x.dataset.tab === t)); renderWorld(true); },
+    setTime: (v) => { tod = v; cycleOn = false; },
+    ff: (n) => { for (let i = 0; i < n; i++) dayTick(false); pulse(); landBar(); updateSeasons(true); },
+    marks, fauna, eraMoment, moodSet: (e) => { moodEra = e; }, chaos3d, streets3d, sights3d, powers3d, sky3d, clouds3d, fly: FLY, flyStep, aimAt,
+    lockQuality: (q) => { quality = q; qLocked = true; PERF.pr = Math.min(PRESETS[q].pr, PERF.prMax); PERF.shadow = PRESETS[q].shadow; applyQuality(); }, quality: () => quality, perf: PERF,
+    renderer, scene,
+  };
+
+  /* =============== Vòng lặp =============== */
+  lands3d.syncDay(false);
+  war3d.syncDay(false, 0);
+  marks.syncDay(false); fauna.syncDay(false);
+  pulse(); landBar(); updateSeasons(true);
+  let last = performance.now(), lastSlow = 0;
+  function frame(t) {
+    const dt = Math.min(100, t - last); last = t;
+    governQuality(dt);
+    if (running && !document.body.classList.contains('intro') && !W.ended && performance.now() > powers3d.holdUntil) { // phép đang chạm tới bể thì thời gian đứng lại một nhịp
+      if (cycleOn) tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút; 2×: 90 giây
+      acc += (dt * tps) / 1000;
+      let steps = 0;
+      while (acc >= 1 && steps < 4) { dayTick(true); acc -= 1; steps++; }
+      if (steps) { pulse(); landBar(); if (sel) card(); }
+    }
+    const { night } = applyTime();
+    updateMoments(performance.now(), night);
+    chaos3d.update();
+    if (t - lastSlow > 1000) { lastSlow = t; updateSeasons(false); if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: Math.max(wx.rain, stormK), snow: wx.snow, festival: wx.festival, panic: 0, drought: wx.drought, winter: seasonW[3] }); }
+    viewTick();
+    streets3d.animate(dt, t, night, inView);
+    lands3d.animate(dt, t, night, tod, (i) => { const w = wOf(i); return w ? Sim.activeFad(w) : null; }, inView);
+    war3d.animate(dt, t, acc, night);
+    marks.animate(dt); fauna.animate(dt, t);
+    god3d.update(dt, t); powers3d.update(dt, t); sky3d.update(dt, t);
+    story.update(dt, t);
+    const now = performance.now();
+    updateFxGlobal(now, dt);
+    updateCoins(dt, now);
+    updateWeather(dt, t);
+    updateFestival(dt, t, night);
+    for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
+    clouds3d.update(dt, t, night); lightFlash = Math.max(0, lightFlash - dt / 200); stormK += (Math.min(1, clouds3d.storms) - stormK) * Math.min(1, dt / 4000);
+    if (flyStep(dt)) focusTween = null;
+    else if (focusTween) {
+      const k = clamp((now - focusTween.t0) / (focusTween.dur || 1200), 0, 1), e = 1 - Math.pow(1 - k, 3);
+      const off = camera.position.clone().sub(controls.target);
+      controls.target.lerpVectors(focusTween.from, focusTween.target, e);
+      if (focusTween.dirTo) off.copy(focusTween.dirFrom).lerp(focusTween.dirTo, e).normalize();
+      off.setLength(lerp(focusTween.dist, focusTween.toDist || focusTween.dist, e));
+      camera.position.copy(controls.target).add(off);
+      if (k >= 1) focusTween = null;
+    }
+    controls.update();
+    const sk = shakeUntil > now ? (shakeUntil - now) / 1400 : 0, saved = sk > 0 ? camera.position.clone() : null;
+    if (saved) { camera.position.x += (Math.random() - 0.5) * sk * 1.8; camera.position.y += (Math.random() - 0.5) * sk * 1.8; }
+    hideFaded(now); shadowTick();
+    renderer.render(scene, camera);
+    if (saved) camera.position.copy(saved);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

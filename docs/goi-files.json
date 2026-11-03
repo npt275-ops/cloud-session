@@ -10,23 +10,8 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/chaos3d.js",
-  "src": "chaos3d.js",
-  "mode": 420
- },
- {
   "path": "BeKinh/clouds3d.js",
   "src": "clouds3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/fauna3d.js",
-  "src": "fauna3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/god3d.js",
-  "src": "god3d.js",
   "mode": 420
  },
  {
@@ -75,33 +60,13 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/powers3d.js",
-  "src": "powers3d.js",
+  "path": "BeKinh/sea3d.js",
+  "src": "sea3d.js",
   "mode": 420
  },
  {
   "path": "BeKinh/sights3d.js",
   "src": "sights3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/sim.js",
-  "src": "sim.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/sky3d.js",
-  "src": "sky3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/story3d.js",
-  "src": "story3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/streets3d.js",
-  "src": "streets3d.js",
   "mode": 420
  },
  {
@@ -152,11 +117,6 @@
  {
   "path": "BeKinh/vendor/three.min.js",
   "src": "vendor/three.min.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/war3d.js",
-  "src": "war3d.js",
   "mode": 420
  },
  {
