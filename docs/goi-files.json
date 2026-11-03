@@ -50,6 +50,16 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/eras.js",
+  "src": "logic/eras.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/rules.js",
+  "src": "logic/rules.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/manifest.webmanifest",
   "src": "manifest.webmanifest",
   "mode": 420
@@ -60,8 +70,68 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/render/build/plains3d.js",
-  "src": "render/build/plains3d.js",
+  "path": "BeKinh/render/build/plains/common.js",
+  "src": "render/build/plains/common.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e01.js",
+  "src": "render/build/plains/e01.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e02.js",
+  "src": "render/build/plains/e02.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e03.js",
+  "src": "render/build/plains/e03.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e04.js",
+  "src": "render/build/plains/e04.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e05.js",
+  "src": "render/build/plains/e05.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e06.js",
+  "src": "render/build/plains/e06.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e07.js",
+  "src": "render/build/plains/e07.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e08.js",
+  "src": "render/build/plains/e08.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e09.js",
+  "src": "render/build/plains/e09.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e10.js",
+  "src": "render/build/plains/e10.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e11.js",
+  "src": "render/build/plains/e11.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/e12.js",
+  "src": "render/build/plains/e12.js",
   "mode": 420
  },
  {

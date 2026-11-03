@@ -44,7 +44,10 @@
   function disc(r, seg) { const THREE = T(); return new THREE.CircleGeometry(r, seg || 12).rotateX(-Math.PI / 2); }
 
   /* ---------- Gom mảnh và gộp ---------- */
-  function Kit() { this.parts = []; this.glow = []; }
+  function Kit() { this.parts = []; this.glow = []; this.subs = []; }
+  // phần chuyển động (cánh quạt, khí cầu, nhà lơ lửng...): một Kit con, dựng thành khối riêng đặt ở điểm xoay pivot;
+  // các mảnh vẽ vào Kit con theo toạ độ tính từ pivot. render/buildings3d.js làm nó quay hoặc nhấp nhô theo BUILD trả về.
+  Kit.prototype.sub = function (name, pivot) { const k = new Kit(); k.name = name; k.pivot = pivot || [0, 0, 0]; this.subs.push(k); return k; };
   // thêm một mảnh: geo, màu, vị trí; o.rot [x,y,z], o.sc [x,y,z]; o.glow: mảnh phát sáng (lửa, đèn) vẽ riêng, không đổ bóng
   Kit.prototype.add = function (geo, color, x, y, z, o) {
     const THREE = T(); o = o || {};
@@ -72,7 +75,9 @@
   Kit.prototype.bake = function (aoH) {
     const THREE = T(), g = new THREE.Group();
     if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.tris = m.geometry.attributes.position.count / 3; }
-    if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
+    if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
+    g.userData.subs = {};
+    for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c; g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0); if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
     return g;
   };
   function dispose(g) { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }

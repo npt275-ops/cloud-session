@@ -21,19 +21,34 @@ Bước 1 của kế hoạch là dọn sạch. Mở game là thấy bể kính y
 
 Ván chín năm ở tốc độ 1× hết khoảng 72 phút; đồng hồ góc phải ghi năm, mùa và ngày.
 
-## Bản chính: công trình bắt đầu từ cấp 1
+## Bản chính: chín năm, mười hai thời kỳ trên Lúa Vàng
 
-NPC mẫu đã ra khỏi bể (code vẫn giữ trong `render/`, `ui/`, `logic/` để dùng lại). Công trình cũ (toà thị chính, nhà,
-chợ, kho bạc, đèn, sáu công trình trụ cột, mười công trình kỳ lạ) đã bỏ hẳn; code cũ còn trong lịch sử git.
+NPC mẫu đã ra khỏi bể (code vẫn giữ trong `render/`, `ui/`, `logic/` để dùng lại). Công trình cũ đã bỏ hẳn; code cũ còn
+trong lịch sử git. Một trận dài **9 năm**, đi qua **12 thời kỳ** (`logic/eras.js`). Bây giờ mỗi thời dài 270 ngày
+(9 tháng trong game; ở tốc độ 1× khoảng 6 phút), sau này logic của đảo sẽ quyết định khi nào lên cấp. Thanh dưới màn hình
+ghi cấp và tên thời, có nút ‹ › để nhảy tới đầu thời trước hoặc sau (thời gian vẫn chạy, không tạm dừng).
+Mở với `?cap=5` để vào thẳng cấp 5.
 
-Công trình làm lại từ **cấp 1**, đảo Lúa Vàng trước, vẽ theo cách của đảo (mặt phẳng, góc vát, chân sẫm dần lên mái),
-cỡ theo người cao 1,4. Mở game là nhìn vào làng cấp 1:
-- **Nhà dài của tù trưởng** (nhà chính, giữa làng): nhà sàn thấp, mái rơm trùm gần chạm sàn, hai cột chạm có sừng trâu, cầu thang gỗ.
-- Năm **lều tròn** mái rơm quay cửa về bếp lửa, có chum nước hoặc khúc gỗ ngồi trước cửa.
-- **Bếp lửa chung** có vòng đá và lửa bập bùng, **cột vật tổ** có chim trên đỉnh, **kho lương** trên cột có đĩa chặn chuột.
-- **Giàn phơi lúa**, **thửa ruộng đầu tiên** có rào, hai **đống rơm**, **bãi đá thờ**, sân đất quanh làng.
+Lên cấp thì làng cũ lún xuống, làng mới mọc lên từ nhà chính ra ngoài. Công trình vẽ theo cách của đảo (mặt phẳng, góc
+vát, chân sẫm dần lên mái), cỡ theo người cao 1,4, mỗi công trình gộp thành một khối.
 
-Năm đảo còn lại chưa có công trình. Mỗi công trình gộp thành một khối (một lượt vẽ); cả làng cấp 1 khoảng 11 nghìn tam giác.
+| Cấp | Thời kỳ | Nhà chính | Công trình khác trên Lúa Vàng |
+|---|---|---|---|
+| 1 | Thời đồ đá | Lều lớn của tù trưởng | Lều nón cành lá, lều da thú, bếp lửa chung, bãi ghè đá, giàn phơi da, bãi lúa dại, cột vật tổ có sọ thú, đá dựng, vách đá vẽ |
+| 2 | Cổ đại | Cung Đất Nung | Lều tròn vách đất, kho lương trên cột, ruộng có rào, lò gốm và chum vại, giàn phơi lúa, cột vật tổ, đống rơm, bãi đá thờ |
+| 3 | Trung đại | Đình làng | Nhà ba gian mái rơm, kho thóc nhà sàn, giếng, cổng làng, cây đa, lò rèn, cối xay gió (cánh quay), ruộng |
+| 4 | Cận đại | Tháp Đồng Hồ | Nhà gạch hai tầng, chợ có mái, nhà in, bãi khí cầu (nhấp nhô), đèn dầu, đường lát đá |
+| 5 | Công nghiệp | Toà Thị Chính | Dãy nhà gạch đỏ có ống khói, xưởng xay lúa mái răng cưa, ga tàu với đầu máy hơi nước (chạy qua lại), đèn khí, máy cày hơi nước |
+| 6 | Hiện đại | Trung Tâm Hành Chính | Chung cư, trường học, siêu thị và xe hơi, tuabin gió (quay), cột điện, đường nhựa, nhà kính trồng lúa |
+| 7 | Tên lửa | Tháp Điều Hành | Bệ phóng và tên lửa, chảo vệ tinh (quay chậm), nhà máy điện hạt nhân, tháp chung cư |
+| 8 | Robot AI | Lõi Trí Tuệ (vòng sáng quay) | Nhà mô-đun, trung tâm dữ liệu, bãi drone (bay nhấp nhô), robot làm ruộng, đường sáng |
+| 9 | Vật Chất Sống | Lõi San Hô | Nhà búp tự mọc, đèn nấm, ruộng trên lá sen khổng lồ |
+| 10 | Mặt Trời Nhân Tạo | Tháp Lơ Lửng (các tầng trôi) | Mặt trời nhỏ trên làng, nhà lơ lửng, cột dẫn nắng |
+| 11 | Bẻ Cong Không Gian | Cổng Trung Tâm (lòng cổng xoáy) | Nhà gấp khúc, cổng nhỏ, mảnh không gian trôi |
+| 12 | Siêu Việt | Cột Sáng | Nhà pha lê, đốm sáng trôi |
+
+Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Vàng. NPC theo thời (người đứng đầu, 2 tướng, lính, dân
+thường nam và nữ) là bước tiếp theo.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -173,12 +188,12 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | File | Vai trò |
 |---|---|
 | `index.html` | Ghép các phần: bể kính, bầu trời, ngày đêm, mùa, tuyết, camera và bay, tốc độ, thanh sáu đảo, công trình |
-| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo |
+| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp (game đang nạp `rules.js` và `eras.js`) |
 | `render/` | **Vẽ người** (chưa nạp vào game): `rig3d.js` khung khớp và bộ phận; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` đặt người trong làng; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) |
-| `render/build/` | `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm); `plains3d.js` kiểu công trình và bố cục làng Lúa Vàng theo từng cấp (`LEVELS`, `BUILD`). Đảo khác thêm tệp riêng cùng kiểu |
+| `render/build/` | `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên). Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
 | `ui/` | **Bảng trên màn hình** (chưa nạp): `model-ui.js` thẻ nhỏ của NPC mẫu; `village-ui.js` thẻ người và bảng làng |
-| `test/island.test.js` | 7 bài kiểm thử logic ngầm (`node --test` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
+| `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `lands3d.js` | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông, cây, đổi màu theo mùa, sáu cây cầu thô |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |
 | `clouds3d.js` | Mây trong bể kính: đợt mây theo gió, mây dính thành cụm, mây đen, sấm sét, mưa theo mùa |
