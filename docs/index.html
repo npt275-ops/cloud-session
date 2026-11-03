@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-6ee4327">
+<meta name="bekinh-version" content="2026.11.03-2292523">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -71,6 +71,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <nav class="lands glass" id="landBar" aria-label="Sáu vùng đất"></nav>
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
   <button id="speed" title="Đổi tốc độ: 1×, 2×, 4×">1× ▸</button>
+  <span class="sep"></span>
+  <button id="toModel" title="Bay tới NPC mẫu">NPC mẫu</button>
   <span class="sep"></span>
   <button id="sound" aria-pressed="false">Âm thanh</button>
   <button id="flyBtn" aria-pressed="false" title="Nút bay trên màn hình (phím mũi tên, W A S D, Q E)">Bay</button>
@@ -287,8 +289,10 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   const modelPerson = isle.people.get(isle.seats.king);
   const model = BK.Model3D.create({ THREE, scene, L: lands[0], person: modelPerson, clearTrees: K3.clearTrees });
   const modelUi = BK.ModelUI.create({ model });
+  const lookAtModel = () => { const sp = model.worldPos(); flyTo(sp, 13, lands[0].inw.clone().setY(0.35), 1.8); };
+  $('toModel').onclick = lookAtModel;
   // mở game là nhìn vào sân diễn trước nhà chính (cuộn ra để thấy cả bể)
-  { const sp = model.worldPos(); controls.target.copy(sp).setY(1.4); camera.position.copy(sp).addScaledVector(lands[0].inw, 9).add(new THREE.Vector3(3, 4.5, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
+  { const sp = model.worldPos(); controls.target.copy(sp).setY(1.8); camera.position.copy(sp).addScaledVector(lands[0].inw, 11).add(new THREE.Vector3(3, 5, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
   // bấm vào NPC (chạm nhẹ, không kéo) để mở thẻ nhỏ; bấm chỗ khác để đóng
   { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
     canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });

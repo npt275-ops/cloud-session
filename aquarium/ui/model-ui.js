@@ -30,7 +30,8 @@
     const tag = document.createElement('section'); tag.className = 'mtag glass'; tag.hidden = true; tag.setAttribute('aria-label', 'Thông số NPC mẫu'); document.body.appendChild(tag);
     let lastCap = '', lastTag = '';
 
-    function capText() { const g = model.current; return 'Cử chỉ ' + (model.index + 1) + '/' + Gs.LIST.length + ' · <b>' + g.n + '</b> · ' + g.g + (model.auto ? '' : ' · đang giữ'); }
+    const ver = (document.querySelector('meta[name="bekinh-version"]') || {}).content || 'phát triển';
+    function capText() { const g = model.current; return 'Bản ' + ver + ' · Cử chỉ ' + (model.index + 1) + '/' + Gs.LIST.length + ' · <b>' + g.n + '</b> · ' + g.g + (model.auto ? '' : ' · đang giữ'); }
     function tagHtml() {
       const t = p.genome.traits, g = p.genome.gait, cur = model.current;
       const traits = G.TRAITS.map((x) => '<span>' + x.name + ' <i>' + Math.round(t[x.key] * 100) + '</i></span>').join('');
