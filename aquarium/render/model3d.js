@@ -46,7 +46,7 @@
     /* ---------- Mỗi khung hình ---------- */
     const _m = new THREE.Matrix4();
     function update(dt, t) {
-      const sec = Math.min(0.1, dt / 1000), ts = t * 0.001;
+      dt = Math.max(0, dt || 0); const sec = Math.min(0.1, dt / 1000), ts = t * 0.001;
       if (startT < 0) { startT = ts; showProps(current()); }
       let G = current(), el = ts - startT;
       const span = G.loop ? LOOP_SEC : G.dur + HOLD_SEC;

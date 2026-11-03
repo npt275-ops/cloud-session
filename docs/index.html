@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.03-49dcf72">
+<meta name="bekinh-version" content="2026.11.03-a7e9378">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -458,7 +458,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   let last = performance.now(), lastSlow = 0, lastDate = '';
   updateSeasons(true);
   function frame(t) {
-    const dt = Math.min(100, t - last); last = t;
+    const dt = Math.max(0, Math.min(100, t - last)); last = t; // khung hình đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
     governQuality(dt);
     tod = (tod + (dt * (tps / 1.5)) / DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút
     W.day += (dt * tps) / 1000; // logic làng tạm dừng: NPC mẫu không già đi trong lúc huấn luyện cử chỉ

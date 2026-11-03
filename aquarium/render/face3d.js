@@ -58,7 +58,7 @@
     function setClosed(on) { closed = !!on; }
     set('neutral');
     function update(dt, t) {
-      const k = 1 - Math.exp(-dt / 0.12);
+      dt = Math.max(0, dt || 0); const k = 1 - Math.exp(-dt / 0.12);
       for (const i of [0, 1]) { cur.eye[i] += (target.eye[i] - cur.eye[i]) * k; cur.brow[i] += (target.brow[i] - cur.brow[i]) * k; cur.tilt[i] += (target.tilt[i] - cur.tilt[i]) * k; }
       cur.pupil += (target.pupil - cur.pupil) * k; cur.mw += (target.mw - cur.mw) * k; cur.mx += (target.mx - cur.mx) * k; cur.cheek += (target.cheek - cur.cheek) * k;
       // chớp mắt vài giây một lần

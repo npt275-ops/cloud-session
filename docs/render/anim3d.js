@@ -104,8 +104,8 @@
 
   /* ---------- Trượt tư thế hiện có về tư thế đích, rồi xoay các nút ---------- */
   function apply(rig, cur, tgt, dt) {
-    const k = 1 - Math.exp(-dt / 0.11);
-    for (const key of KEYS) cur[key] += (tgt[key] - cur[key]) * k;
+    const k = 1 - Math.exp(-Math.max(0, dt) / 0.11); // thời gian âm hay hỏng thì không trượt
+    for (const key of KEYS) { const v = cur[key] + (tgt[key] - cur[key]) * k; cur[key] = Number.isFinite(v) ? v : tgt[key] || 0; }
     const n = rig.nodes, P = cur;
     n.pelvis.position.y = 0.78 + P.py; n.pelvis.rotation.set(0, P.pry, P.prz);
     n.chest.rotation.set(P.cx, P.cy, 0);

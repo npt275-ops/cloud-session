@@ -89,7 +89,7 @@
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.7, 32), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
     function update(dt, t, camera) {
-      const sec = Math.min(0.1, dt / 1000), alive = new Set();
+      dt = Math.max(0, dt || 0); const sec = Math.min(0.1, dt / 1000), alive = new Set();
       for (const p of S.people.values()) {
         if (!p.alive) continue;
         alive.add(p.id);
