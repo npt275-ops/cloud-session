@@ -27,6 +27,13 @@
   const armR = (p, sx, sz, ex, sy) => { p.sxR = sx; p.szR = sz; p.exR = ex; p.syR = sy || 0; };
   const kneel = (p) => { p.ty = -0.36; p.hxL = p.hxR = 0.05; p.kxL = p.kxR = 1.55; p.cx += 0.05; };
   const sit = (p) => { p.ty = -0.42; p.hxL = p.hxR = 1.5; p.kxL = p.kxR = 1.5; };
+  // điểm chạm cho tay (render/ik3d.js). side: 1 tay trái (phía +x), -1 tay phải. Toạ độ theo khung ở render/rig3d.js
+  const IK = (s, p, pole) => ({ s, p, pole });
+  const onHip = (side) => IK('pelvis', [side * 0.215, 0.06, 0.01], [1, -0.1, -0.75]);            // chống nạnh: lòng bàn tay áp eo, khuỷu chĩa ra sau
+  const onChin = () => IK('head', [-0.015, -0.035, 0.155], [0.25, -1, 0.35]);                     // chống cằm (tay phải)
+  const prayL = IK('chest', [0.022, 0.2, 0.235], [1, -0.7, -0.1]), prayR = IK('chest', [-0.022, 0.2, 0.235], [1, -0.7, -0.1]); // chắp tay trước ngực
+  const crossL = IK('chest', [-0.16, 0.14, 0.215], [0.45, -1, 0.6]), crossR = IK('chest', [0.16, 0.11, 0.245], [0.45, -1, 0.6]); // khoanh tay: bàn tay tới bắp tay bên kia
+  const belly = (side) => IK('pelvis', [side * 0.075, 0.13, 0.165], [0.8, -1, 0]);                // ôm bụng
   const crouch = (p, k) => { p.py = -0.12 * k; p.hxL = p.hxR = 0.5 * k; p.kxL = p.kxR = 0.9 * k; p.cx += 0.25 * k; };
 
   /* ---------- Danh sách cử chỉ ---------- */
@@ -46,24 +53,24 @@
   add('backAway', 'Di chuyển', 'Lùi lại', { move: -0.7, gene: 'sợ hãi, nhu nhược' }, (p, ph, u, t, K) => { legsWalk(p, -ph, 0.25, K); p.cx -= 0.2; armL(p, 0.9, 0.2, 0.4); armR(p, 0.9, 0.2, 0.4); p.hx = -0.1; });
 
   // ===== Đứng chờ (thói quen thừa hưởng từ cha mẹ) =====
-  add('crossArms', 'Đứng chờ', 'Khoanh tay', { gene: 'thói quen' }, (p) => { armL(p, 0.75, -0.45, 1.95, 0.4); armR(p, 0.85, -0.45, 1.85, -0.4); });
-  add('handsOnHips', 'Đứng chờ', 'Chống nạnh', { gene: 'thói quen, tham vọng' }, (p) => { armL(p, -0.1, 0.65, 1.7, -0.6); armR(p, -0.1, 0.65, 1.7, 0.6); p.cx -= 0.05; });
-  add('handsBehind', 'Đứng chờ', 'Chắp tay sau lưng', { gene: 'thói quen, trí tuệ' }, (p) => { armL(p, -0.45, 0.05, 1.0, 0.5); armR(p, -0.45, 0.05, 1.0, -0.5); p.cx -= 0.04; });
-  add('scratchHead', 'Đứng chờ', 'Gãi đầu', { gene: 'thói quen, nhu nhược' }, (p, ph, u, t) => { armR(p, 2.5, 0.55, 2.0 + S(t * 9) * 0.25); p.hz = 0.12; });
-  add('rubHands', 'Đứng chờ', 'Xoa tay', { gene: 'thói quen, mưu mô' }, (p, ph, u, t) => { const r = S(t * 6) * 0.14; armL(p, 0.65, -0.28, 1.35, 0.3 + r); armR(p, 0.65, -0.28, 1.35, -0.3 + r); });
+  add('crossArms', 'Đứng chờ', 'Khoanh tay', { gene: 'thói quen' }, (p) => { armL(p, 0.75, -0.45, 1.95, 0.4); armR(p, 0.85, -0.45, 1.85, -0.4); p.ikL = crossL; p.ikR = crossR; });
+  add('handsOnHips', 'Đứng chờ', 'Chống nạnh', { gene: 'thói quen, tham vọng' }, (p) => { p.cx -= 0.05; p.ikL = onHip(1); p.ikR = onHip(-1); });
+  add('handsBehind', 'Đứng chờ', 'Chắp tay sau lưng', { gene: 'thói quen, trí tuệ' }, (p) => { p.cx -= 0.04; p.ikL = IK('pelvis', [0.045, 0.06, -0.2], [1, -0.3, -0.5]); p.ikR = IK('pelvis', [-0.045, 0.06, -0.2], [1, -0.3, -0.5]); });
+  add('scratchHead', 'Đứng chờ', 'Gãi đầu', { gene: 'thói quen, nhu nhược' }, (p, ph, u, t) => { p.hz = 0.12; p.ikR = IK('head', [-0.13 + S(t * 9) * 0.015, 0.31, 0.02 + C(t * 9) * 0.015], [1, 0.5, 0.2]); });
+  add('rubHands', 'Đứng chờ', 'Xoa tay', { gene: 'thói quen, mưu mô' }, (p, ph, u, t) => { const r = S(t * 6) * 0.025; p.ikL = IK('chest', [0.03 + r, 0.03, 0.24], [0.8, -1, 0]); p.ikR = IK('chest', [-0.03 + r, 0.03, 0.24], [0.8, -1, 0]); });
   add('sway', 'Đứng chờ', 'Đung đưa người', { gene: 'thói quen' }, (p, ph, u, t) => { p.prz = S(t * 1.2) * 0.07; p.pry = S(t * 0.6) * 0.1; p.hzL += 0.03; p.hzR += 0.03; });
   add('lookAround', 'Đứng chờ', 'Nhìn quanh', { gene: 'đa nghi' }, (p, ph, u, t) => { p.hy = S(t * 0.9) * 1.0; p.cy = S(t * 0.9) * 0.25; armL(p, 0.1, 0.1, 0.4); });
-  add('tapFoot', 'Đứng chờ', 'Gõ chân sốt ruột', { gene: 'hiếu chiến, tham vọng' }, (p, ph, u, t) => { p.hxR = 0.15 + Math.max(0, S(t * 7)) * 0.2; p.kxR = 0.1; armL(p, 0.75, -0.45, 1.95, 0.4); armR(p, 0.85, -0.45, 1.85, -0.4); });
+  add('tapFoot', 'Đứng chờ', 'Gõ chân sốt ruột', { gene: 'hiếu chiến, tham vọng' }, (p, ph, u, t) => { p.hxR = 0.15 + Math.max(0, S(t * 7)) * 0.2; p.kxR = 0.1; p.ikL = crossL; p.ikR = crossR; });
 
   // ===== Giao tiếp =====
   add('talk', 'Giao tiếp', 'Nói chuyện', { gene: 'mọi người' }, (p, ph, u, t, K) => { p.hx = S(t * 2.2) * 0.08; armR(p, 0.45 + S(t * 1.8) * 0.3 * (0.4 + K.amplitude), 0.15, 1.0 + S(t * 2.6) * 0.35); });
   add('nod', 'Giao tiếp', 'Gật đầu', { gene: 'nhu nhược' }, (p, ph, u, t) => { p.hx = Math.max(0, S(t * 5)) * 0.35; });
-  add('shakeHead', 'Giao tiếp', 'Lắc đầu', { gene: 'đa nghi' }, (p, ph, u, t) => { p.hy = S(t * 7) * 0.45; armL(p, 0.75, -0.45, 1.95, 0.4); armR(p, 0.85, -0.45, 1.85, -0.4); });
+  add('shakeHead', 'Giao tiếp', 'Lắc đầu', { gene: 'đa nghi' }, (p, ph, u, t) => { p.hy = S(t * 7) * 0.45; p.ikL = crossL; p.ikR = crossR; });
   add('wave', 'Giao tiếp', 'Vẫy tay chào', { gene: 'mọi người' }, (p, ph, u, t) => { armR(p, 1.3, 1.1, 0.6 + S(t * 7) * 0.5); p.hz = -0.08; });
   add('point', 'Giao tiếp', 'Chỉ tay', { gene: 'tham vọng' }, (p, ph, u, t) => { armR(p, 1.5, 0.05, 0.05); p.cx += 0.05; p.hx = -0.05; });
   add('argue', 'Giao tiếp', 'Tranh cãi', { gene: 'hiếu chiến, đa nghi' }, (p, ph, u, t, K) => { p.cx += 0.14 + K.lean * 0.12; armR(p, 0.7 + S(t * 6) * 0.6 * (0.5 + K.amplitude), 0.25, 0.5 + 0.5 * S(t * 6 + 1)); armL(p, 0.4 + S(t * 4.5 + 2) * 0.5, 0.4, 0.9 + 0.4 * S(t * 5)); p.hx = -0.08 + S(t * 6) * 0.1; });
-  add('laugh', 'Giao tiếp', 'Cười lớn', { gene: 'lễ hội' }, (p, ph, u, t) => { const b = Math.abs(S(t * 9)) * 0.12; p.cx = 0.15 + b; p.hx = -0.3; armL(p, 0.6, -0.2, 1.4); armR(p, 0.6, -0.2, 1.4); p.py = -b * 0.2; });
-  add('whisper', 'Giao tiếp', 'Thì thầm', { gene: 'mưu mô' }, (p, ph, u, t) => { p.cx += 0.2; p.cy = 0.3; p.hz = 0.25; p.hy = 0.3; armR(p, 1.1, 0.4, 2.1, -0.4); });
+  add('laugh', 'Giao tiếp', 'Cười lớn, ôm bụng', { gene: 'lễ hội' }, (p, ph, u, t) => { const b = Math.abs(S(t * 9)) * 0.12; p.cx = 0.15 + b; p.hx = -0.3; p.py = -b * 0.2; p.ikL = belly(1); p.ikR = belly(-1); });
+  add('whisper', 'Giao tiếp', 'Thì thầm', { gene: 'mưu mô' }, (p, ph, u, t) => { p.cx += 0.2; p.cy = 0.3; p.hz = 0.25; p.hy = 0.3; p.ikR = IK('head', [-0.11, 0.1, 0.17], [0.8, -1, 0.3]); });
   add('bow', 'Giao tiếp', 'Cúi chào', { loop: false, dur: 2.4, gene: 'nhu nhược, sùng đạo' }, (p, ph, u) => { const k = bump(u, 0, 1); p.cx = 0.9 * k; p.hx = 0.3 * k; armL(p, 0.2 * k, 0, 0.2); armR(p, 0.2 * k, 0, 0.2); });
 
   // ===== Cảm xúc =====
@@ -71,9 +78,9 @@
   add('stomp', 'Cảm xúc', 'Giận dậm chân', { gene: 'hiếu chiến' }, (p, ph, u, t) => { const s = Math.max(0, S(t * 5)); p.hxR = s * 0.5; p.kxR = s * 0.8; armL(p, 0.4, 0.3, 1.6); armR(p, 0.4, 0.3, 1.6); p.cx += 0.12; p.hx = -0.1; });
   add('cower', 'Cảm xúc', 'Sợ co rúm', { gene: 'sợ hãi' }, (p, ph, u, t, K) => { crouch(p, 0.9); armL(p, 1.6, -0.1, 2.1); armR(p, 1.6, -0.1, 2.1); p.hx = 0.4; p.cx += S(t * 25) * 0.02 * (0.5 + K.jitter); });
   add('sad', 'Cảm xúc', 'Buồn cúi đầu', { gene: 'tang' }, (p) => { p.cx = 0.25; p.hx = 0.55; armL(p, 0.05, 0.02, 0.1); armR(p, 0.05, 0.02, 0.1); p.py = -0.02; });
-  add('cry', 'Cảm xúc', 'Khóc, che mặt', { gene: 'tang, sợ hãi' }, (p, ph, u, t) => { p.cx = 0.3 + S(t * 6) * 0.04; p.hx = 0.45; armL(p, 1.6, -0.25, 2.2, 0.2); armR(p, 1.6, -0.25, 2.2, -0.2); });
+  add('cry', 'Cảm xúc', 'Khóc, che mặt', { gene: 'tang, sợ hãi' }, (p, ph, u, t) => { p.cx = 0.3 + S(t * 6) * 0.04; p.hx = 0.45; p.ikL = IK('head', [0.065, 0.16, 0.205], [0.6, -1, 0.3]); p.ikR = IK('head', [-0.065, 0.16, 0.205], [0.6, -1, 0.3]); });
   add('startle', 'Cảm xúc', 'Giật mình', { loop: false, dur: 1.6, gene: 'sợ hãi' }, (p, ph, u) => { const k = bump(u, 0, 0.6) + ramp(u, 0.3, 0.6) * 0.3; p.cx = -0.25 * k; p.hx = -0.3 * k; armL(p, 1.2 * k, 0.6 * k, 1.2 * k); armR(p, 1.2 * k, 0.6 * k, 1.2 * k); p.ty = bump(u, 0, 0.25) * 0.1; });
-  add('think', 'Cảm xúc', 'Suy nghĩ, chống cằm', { gene: 'trí tuệ' }, (p, ph, u, t) => { armR(p, 1.15, -0.1, 2.35, -0.3); armL(p, 0.65, -0.45, 1.7, 0.5); p.hx = 0.1; p.hz = 0.15; p.hy = S(t * 0.4) * 0.2; });
+  add('think', 'Cảm xúc', 'Suy nghĩ, chống cằm', { gene: 'trí tuệ' }, (p, ph, u, t) => { p.hx = 0.12; p.hz = 0.1; p.hy = S(t * 0.4) * 0.12; p.ikR = onChin(); p.ikL = IK('chest', [-0.13, 0.04, 0.23], [0.6, -1, 0.2]); }); // tay trái đỡ khuỷu tay phải
 
   // ===== Lao động =====
   add('hoe', 'Lao động', 'Cuốc đất', { prop: 'hoe', gene: 'nông dân' }, (p, ph, u, t) => { const c = (t * 1.3) % 1, up = c < 0.6 ? ease(c / 0.6) : 1 - ease((c - 0.6) / 0.4); p.cx = 0.35 - up * 0.3; armR(p, 0.4 + up * 2.0, 0.1, 0.3); armL(p, 0.5 + up * 1.8, 0.05, 0.4); p.hxL = 0.3; p.kxL = 0.3; p.kxR = 0.2; });
@@ -85,8 +92,8 @@
   add('build', 'Lao động', 'Đóng búa xây nhà', { prop: 'hammer', gene: 'thợ cả' }, (p, ph, u, t) => { const h = Math.max(0, S(t * 8)); armR(p, 1.1 + h * 0.7, 0.2, 1.1 - h * 0.5); armL(p, 1.0, -0.15, 0.6); p.cx = 0.25; p.hx = 0.25; });
 
   // ===== Tôn giáo =====
-  add('pray', 'Tôn giáo', 'Cầu nguyện', { gene: 'sùng đạo' }, (p, ph, u, t) => { p.cx = 0.28; p.hx = 0.45 + S(t * 1.2) * 0.04; armL(p, 0.85, -0.32, 1.75, 0.3); armR(p, 0.85, -0.32, 1.75, -0.3); p.kxL = p.kxR = 0.2; p.py = -0.03; });
-  add('kneelPray', 'Tôn giáo', 'Quỳ lạy', { gene: 'sùng đạo' }, (p, ph, u, t) => { kneel(p); const b = Math.max(0, S(t * 1.4)); p.cx = 0.3 + b * 0.6; p.hx = 0.3; armL(p, 0.6 + b * 1.0, -0.3, 1.2); armR(p, 0.6 + b * 1.0, -0.3, 1.2); });
+  add('pray', 'Tôn giáo', 'Cầu nguyện', { gene: 'sùng đạo' }, (p, ph, u, t) => { p.cx = 0.22; p.hx = 0.45 + S(t * 1.2) * 0.04; p.kxL = p.kxR = 0.2; p.py = -0.03; p.ikL = prayL; p.ikR = prayR; });
+  add('kneelPray', 'Tôn giáo', 'Quỳ lạy', { gene: 'sùng đạo' }, (p, ph, u, t) => { kneel(p); const b = Math.max(0, S(t * 1.4)); p.cx = 0.3 + b * 0.6; p.hx = 0.3; p.ikL = prayL; p.ikR = prayR; }); // chắp tay, cúi lạy
   add('rainDance', 'Tôn giáo', 'Giơ tay cầu mưa', { gene: 'sùng đạo (hạn hán)' }, (p, ph, u, t) => { armL(p, 2.8, 0.6 + S(t * 2) * 0.2, 0.2); armR(p, 2.8, 0.6 + S(t * 2 + 1) * 0.2, 0.2); p.hx = -0.45; p.cx = -0.1; p.prz = S(t * 1.5) * 0.06; });
 
   // ===== Chính trị =====
@@ -111,12 +118,12 @@
   add('eat', 'Đời sống', 'Ăn', { prop: 'bowl', gene: 'mọi người' }, (p, ph, u, t) => { sit(p); armL(p, 0.9, -0.2, 1.4); const s = Math.max(0, S(t * 3)); armR(p, 0.8 + s * 0.5, -0.25, 1.4 + s * 0.8); p.hx = 0.2 - s * 0.1; p.cx = 0.15; });
   add('drink', 'Đời sống', 'Uống', { prop: 'cup', loop: false, dur: 3, gene: 'lễ hội' }, (p, ph, u) => { const k = bump(u, 0.1, 0.9); armR(p, 0.7 + k * 0.8, -0.1, 1.5 + k * 0.6); p.hx = -0.45 * k; p.cx = -0.12 * k; });
   add('sleep', 'Đời sống', 'Ngủ', { gene: 'ban đêm' }, (p, ph, u, t) => { p.rx = -1.52; p.ty = 0.12; armL(p, 0.15, 0.25, 0.2); armR(p, 0.15, 0.25, 0.2); p.cx = S(t * 1.1) * 0.03; p.hz = 0.3; });
-  add('holdBaby', 'Đời sống', 'Bế con', { prop: 'baby', gene: 'cha mẹ' }, (p, ph, u, t) => { armL(p, 0.7, -0.3, 1.7, 0.3); armR(p, 0.75, -0.3, 1.55, -0.3); p.pry = S(t * 1.2) * 0.12; p.hx = 0.35; p.hy = -0.15; });
+  add('holdBaby', 'Đời sống', 'Bế con', { prop: 'baby', gene: 'cha mẹ' }, (p, ph, u, t) => { p.pry = S(t * 1.2) * 0.12; p.hx = 0.35; p.hy = -0.15; p.ikL = IK('chest', [0.1, 0.08, 0.27], [0.7, -1, 0]); p.ikR = IK('chest', [-0.12, 0.15, 0.3], [0.7, -1, 0]); }); // hai tay đỡ dưới em bé
   add('dance', 'Đời sống', 'Nhảy múa lễ hội', { gene: 'lễ hội' }, (p, ph, u, t) => { const s = S(t * 4); p.pry = s * 0.35; p.prz = S(t * 8) * 0.06; armL(p, 1.5 + s * 0.8, 1.0, 0.8 + C(t * 4) * 0.5); armR(p, 1.5 - s * 0.8, 1.0, 0.8 - C(t * 4) * 0.5); p.hxL = Math.max(0, s) * 0.4; p.hxR = Math.max(0, -s) * 0.4; p.kxL = Math.max(0, s) * 0.5; p.kxR = Math.max(0, -s) * 0.5; p.ty = Math.abs(S(t * 4)) * 0.05; });
 
   // ===== Sinh tử =====
   add('elder', 'Sinh tử', 'Già yếu chống gậy', { prop: 'cane', move: 0.35, gene: 'tuổi già' }, (p, ph, u, t, K) => { legsWalk(p, ph * 0.7, 0.15, K); p.cx = 0.45; p.hx = -0.3; armR(p, 0.6 + S(ph * 0.7) * 0.15, 0.25, 0.3); armL(p, -0.3, 0.1, 0.8); p.kxL += 0.15; p.kxR += 0.15; });
-  add('sick', 'Sinh tử', 'Ốm, ôm bụng', { gene: 'dịch bệnh, đói' }, (p, ph, u, t) => { crouch(p, 0.4); p.cx += 0.35; armL(p, 0.7, -0.4, 1.6); armR(p, 0.7, -0.4, 1.6); p.prz = S(t * 1.3) * 0.05; p.hx = 0.3; });
+  add('sick', 'Sinh tử', 'Ốm, ôm bụng', { gene: 'dịch bệnh, đói' }, (p, ph, u, t) => { crouch(p, 0.4); p.cx += 0.35; p.prz = S(t * 1.3) * 0.05; p.hx = 0.3; p.ikL = belly(1); p.ikR = belly(-1); });
   add('die', 'Sinh tử', 'Qua đời', { loop: false, dur: 4.5, gene: 'tuổi già, chiến tranh' }, (p, ph, u) => { const a = ramp(u, 0, 0.35), b = ramp(u, 0.35, 0.75); p.kxL = p.kxR = 1.55 * a * (1 - b); p.ty = -0.36 * a * (1 - b) + 0.12 * b; p.rx = 1.5 * b; p.cx = 0.3 * a; p.hx = 0.4 * a; armL(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); armR(p, 0.3 * (1 - b), 0.2 + 0.4 * b, 0.4); });
 
   /* ---------- Biểu cảm khuôn mặt đi kèm mỗi cử chỉ (render/face3d.js); 'closed': nhắm mắt ---------- */

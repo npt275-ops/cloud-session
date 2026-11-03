@@ -7,8 +7,8 @@
  * Chỉ xoay các nút của khung (render/rig3d.js), không biết gì về logic hay cách vẽ. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
-  BK.Anim3D = factory();
-})(typeof self !== 'undefined' ? self : globalThis, function () {
+  BK.Anim3D = factory(BK);
+})(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const S = Math.sin, C = Math.cos, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -114,6 +114,13 @@
     n.elL.rotation.set(-P.exL, 0, 0); n.elR.rotation.set(-P.exR, 0, 0);
     n.hipL.rotation.set(-P.hxL, 0, P.hzL); n.hipR.rotation.set(-P.hxR, 0, -P.hzR);
     n.knL.rotation.set(P.kxL, 0, 0); n.knR.rotation.set(P.kxR, 0, 0);
+    // tay chạm đúng chỗ trên cơ thể (render/ik3d.js): tư thế đích ghi ikL / ikR = { s: mốc, p: điểm, pole: hướng khuỷu }
+    for (const side of ['L', 'R']) {
+      const want = tgt['ik' + side] ? 1 : 0, wk = 'ikw' + side;
+      cur[wk] = (cur[wk] || 0) + (want - (cur[wk] || 0)) * k;
+      if (tgt['ik' + side]) cur['ik' + side] = tgt['ik' + side];
+      if (cur[wk] > 0.001 && cur['ik' + side] && BK.IK3D) BK.IK3D.solveArm(rig, side, cur['ik' + side], cur[wk]);
+    }
   }
 
   return { KEYS, blank, basePose, addLife, target, apply };

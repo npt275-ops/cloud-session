@@ -120,6 +120,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/ik3d.js",
+  "src": "render/ik3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/model3d.js",
   "src": "render/model3d.js",
   "mode": 420

@@ -82,7 +82,7 @@
     function hit(raycaster) { return raycaster.intersectObjects(meshes.map((x) => x.m)).length > 0; }
     const worldPos = () => L.center.clone().add(pos); // dùng được ngay cả trước khung hình đầu tiên
     const setFace = (key) => { pinnedFace = key || null; };
-    return { update, play, setAuto, setFace, hit, worldPos, person, knobs: K, get face() { return face.key; }, get pinnedFace() { return pinnedFace; }, get current() { return current(); }, get index() { return idx; }, get auto() { return auto; } };
+    return { _rig: rig, _cur: cur, update, play, setAuto, setFace, hit, worldPos, person, knobs: K, get face() { return face.key; }, get pinnedFace() { return pinnedFace; }, get current() { return current(); }, get index() { return idx; }, get auto() { return auto; } };
   }
 
   return { create };
