@@ -3,14 +3,16 @@
  * hạn hán mùa hạ, bộ não của từng người, và các tình huống thử (lệnh chiến tranh, cãi nhau, lễ hội).
  * Không vẽ gì: phần vẽ đọc S.people, S.minds, S.seats, S.log. Chạy được bằng Node (xem test/island.test.js).
  * Thời kỳ (logic/eras.js) lên theo ngày; việc của dân (logic/jobs.js) gán lại mỗi ngày.
- * Cần: logic/rng.js, rules.js, genes.js, people.js, family.js, council.js, jobs.js, eras.js, brain.js. */
+ * Buổi trong ngày (S.tod, phần chạy game ghi vào) quyết định việc ngày thường (logic/schedule.js, logic/tasks.js); công trình của
+ * mỗi thời được dựng dần (logic/construction.js, danh sách lấy từ o.buildPlan(cấp)).
+ * Cần: logic/rng.js, rules.js, genes.js, people.js, family.js, council.js, jobs.js, eras.js, schedule.js, tasks.js, construction.js, brain.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Island = factory(BK);
   if (typeof module === 'object' && module.exports) module.exports = BK.Island;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const R = BK.Rules, G = BK.Genes, P = BK.People, F = BK.Family, CO = BK.Council, B = BK.Brain, J = BK.Jobs, E = BK.Eras;
+  const R = BK.Rules, G = BK.Genes, P = BK.People, F = BK.Family, CO = BK.Council, B = BK.Brain, J = BK.Jobs, E = BK.Eras, K = BK.Construction;
 
   // nét chung của từng đảo (bộ gen của người đầu tiên và người dân thường lệch theo đây)
   const ISLANDS = {
@@ -22,7 +24,7 @@
     const key = o.key || 'plains', def = ISLANDS[key], rng = BK.Rng.create(o.seed || 1);
     const S = {
       key, name: def.name, bias: def.bias, clans: P.CLANS[key], rng,
-      day: 0, lastDay: 0, nextGenDay: R.GEN_DAYS, gen: 0, nextId: 1, level: 1, births: 0, deaths: 0,
+      day: 0, lastDay: 0, nextGenDay: R.GEN_DAYS, gen: 0, nextId: 1, level: 1, births: 0, deaths: 0, tod: 0.3, buildPlan: o.buildPlan || null, build: null,
       people: new Map(), usedNames: new Set(), seats: {}, minds: new Map(), log: [],
       food: 1, situ: { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null }, situChanged: false, thinkAcc: 0,
     };
@@ -36,6 +38,7 @@
     S.log.push({ day: 0, kind: 'start', ids: [], text: 'Tám người đầu tiên dựng làng ' + S.name + '.' });
     F.generation(S, rng); // lập làng: tám người kết đôi và sinh lứa con đầu tiên
     S.births = S.people.size - 8; if (J) J.assign(S);
+    if (K) K.setEra(S, 1);
     B.think(S, rng);
     return S;
   }
@@ -61,8 +64,9 @@
     // mốc thế hệ
     if (day >= S.nextGenDay) { S.gen++; S.nextGenDay += R.GEN_DAYS; S.log.push({ day, kind: 'gen', ids: [], text: 'Thế hệ thứ ' + (S.gen + 1) + ' bắt đầu.' }); const n0 = S.people.size; F.generation(S, rng); S.births += S.people.size - n0; S.situChanged = true; }
     // thời kỳ văn minh: lên cấp theo lịch của logic/eras.js
-    if (E) { const l = E.levelOfDay(day); if (l !== S.level) { S.level = l; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); S.situChanged = true; } }
+    if (E) { const l = E.levelOfDay(day); if (l !== S.level) { S.level = l; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); S.situChanged = true; } }
     if (J) J.assign(S);
+    if (K) K.dayTick(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;
   }

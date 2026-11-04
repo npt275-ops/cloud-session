@@ -3,7 +3,8 @@
  * cử động bằng render/anim3d.js theo việc mà bộ não (logic/brain.js) đã chọn. Người đi tới chỗ cần đến theo công trình
  * của thời đang có (render/buildings3d.js places: nhà chính, sân, ruộng, nhà ở, chỗ tuần tra, cầu) hay tới gần người
  * mình nói chuyện, cãi nhau, đánh nhau. Nét mặt đổi theo việc (vui khi trò chuyện, giận khi cãi, sợ khi chạy, nhắm mắt
- * khi cầu nguyện), mắt tự chớp. Không có tên trên đầu: bấm vào người để mở thẻ nhỏ.
+ * khi cầu nguyện), mắt tự chớp. Tới nơi làm việc thì dùng cử chỉ trong thư viện (render/work3d.js: cuốc, gặt, đóng búa, canh
+ * gác, diễn thuyết, ăn, ngồi...) và cầm đúng đồ; đêm thì vào nhà ngủ (không vẽ). Không có tên trên đầu: bấm vào người để mở thẻ.
  * Bộ phận cùng loại của mọi người là một khối lặp: khoảng 40 lượt vẽ cho cả làng dù đông bao nhiêu.
  * Cần: three.js, logic/brain.js, logic/people.js, logic/island.js, render/rig3d.js, render/anim3d.js. Không sửa logic. */
 (function (root, factory) {
@@ -20,7 +21,7 @@
   };
 
   function create(o) {
-    const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People;
+    const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People, Work = BK.Work3D;
     const SCALE = Rig.PERSON_SCALE;
     let level = o.level || 1, PL = o.places || null;
 
@@ -37,6 +38,7 @@
       if (place === 'field') return pickOf(PL.field, k);
       if (place === 'guard') return pickOf(PL.guard, p.id);
       if (place === 'bridge') return bridge;
+      if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : [PL.hall], p.id);
       return null;
     }
     const setPlaces = (pl) => { PL = pl; };
@@ -115,33 +117,49 @@
         if (goal) {
           _v.copy(goal.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
-          const speed = (run ? 3.4 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride);
+          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride); // tối muộn về ngủ thì rảo bước
           if (d > 0.25) { moving = true; const step = Math.min(d, speed * sec); f.pos.addScaledVector(_v.normalize(), step); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), sec); }
           else if (goal.face) { _v.copy(goal.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), sec); }
         }
         if (!moving) f.ph += sec * 3 * f.knobs.tempo;
-        const tgt = Anim.target(mind.state, f.ph, ts, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving });
+        // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
+        const verb = mind.verb, working = !moving && verb && verb !== 'sleep' && (mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
+        f.inside = !moving && verb === 'sleep'; // ngủ: vào trong nhà (không vẽ)
+        let tgt, gface = null;
+        if (working && Work) {
+          if (f.verb !== verb || ts > f.gEnd) { // đổi việc, hay hết một lượt cử chỉ: sang cử chỉ khác của việc đó
+            f.turn = f.verb === verb ? (f.turn || 0) + 1 : 0; f.verb = verb;
+            f.work = Work.gestureOf(verb, level, p.id, f.turn); f.gStart = ts;
+            f.gEnd = ts + (f.work && !f.work.G.loop ? f.work.G.dur + 0.8 : 6 + (p.id % 4));
+          }
+          if (f.work) { const G = f.work.G, u = G.loop ? 0 : Math.min(1, (ts - f.gStart) / G.dur); tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, u, ts, f.knobs); Anim.addLife(tgt, ts, f.knobs); gface = G.face; f.tool = f.work.tool; }
+        }
+        if (!tgt) { f.verb = null; f.tool = null; tgt = Anim.target(mind.state, f.ph, ts, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
-        f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.rotation.y = f.yaw; f.rig.root.scale.setScalar(sc * SCALE);
+        f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE; // ngồi, quỳ thì hạ người
+        f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ'); f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
         // chớp mắt vài giây một lần
         if (ts > f.blinkAt) { f.blink = 0.14; f.blinkAt = ts + 2.2 + Math.random() * 3; }
         f.blink = Math.max(0, f.blink - sec);
-        f.expr = EXPR[exprOf(mind, X, p)]; f.closed = f.expr === EXPR.closed || f.blink > 0;
+        const ek = gface && EXPR[gface] && !X.war && !X.mourning ? gface : exprOf(mind, X, p);
+        f.expr = EXPR[ek] || EXPR.neutral; f.closed = f.expr === EXPR.closed || f.blink > 0;
       }
       for (const [id] of folks) if (!alive.has(id)) { folks.delete(id); if (selected === id) selected = null; }
       // đếm chỗ cần cho từng loại bộ phận, rồi đổ vào các khối lặp
       for (const k in need) need[k] = 0;
-      for (const [, f] of folks) for (const part of f.rig.parts) need[part.type] = (need[part.type] || 0) + 1;
+      for (const [, f] of folks) if (!f.inside) for (const part of f.rig.parts) need[part.type] = (need[part.type] || 0) + 1;
       for (const type in need) { const m = im(type, need[type]); m.count = 0; m.userData.owner.length = 0; }
       for (const [id, f] of folks) {
+        if (f.inside) continue;
         const E = f.expr || EXPR.neutral;
         for (const part of f.rig.parts) {
           let local = part.local;
           if (part.face) {
             const F = part.face, D = part.dec;
-            if (F.startsWith('mouth:') && F.slice(6) !== E.mouth) continue;
+            if (F.startsWith('tool:')) { if (F.slice(5) !== f.tool) continue; }
+            else if (F.startsWith('mouth:') && F.slice(6) !== E.mouth) continue;
             if (F === 'cheek' && !E.cheek) continue;
             if (F === 'shine' && f.closed) continue;
             if (F === 'eye') { _s.copy(D.s); _s.y *= f.closed ? 0.12 : E.eye; local = _f.compose(D.p, D.q, _s); }
@@ -171,7 +189,7 @@
     const select = (id) => { selected = id; };
     const worldPos = (id) => { const f = folks.get(id); return f ? f.rig.root.position.clone() : null; };
     const drawCalls = () => Object.values(IM).filter((m) => m.count).length;
-    return { update, pick, select, worldPos, setPlaces, setLevel, drawCalls, get selected() { return selected; }, get count() { return folks.size; } };
+    return { update, pick, select, worldPos, setPlaces, setLevel, drawCalls, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

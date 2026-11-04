@@ -75,6 +75,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/construction.js",
+  "src": "logic/construction.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/council.js",
   "src": "logic/council.js",
   "mode": 420
@@ -117,6 +122,16 @@
  {
   "path": "BeKinh/logic/rules.js",
   "src": "logic/rules.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/schedule.js",
+  "src": "logic/schedule.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/tasks.js",
+  "src": "logic/tasks.js",
   "mode": 420
  },
  {
@@ -210,6 +225,16 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/gestures3d.js",
+  "src": "render/gestures3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/ik3d.js",
+  "src": "render/ik3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/map/map3d.js",
   "src": "render/map/map3d.js",
   "mode": 420
@@ -282,6 +307,11 @@
  {
   "path": "BeKinh/render/village3d.js",
   "src": "render/village3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/work3d.js",
+  "src": "render/work3d.js",
   "mode": 420
  },
  {

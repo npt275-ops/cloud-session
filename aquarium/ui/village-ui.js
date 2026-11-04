@@ -45,7 +45,7 @@
     let sel = null, lastKey = '';
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
-    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần' };
+    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', site: 'ở chỗ đang dựng' };
     const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
 
     function renderPanel() {
@@ -66,7 +66,7 @@
       const p = sel != null && S.people.get(sel);
       if (!p) { card.hidden = true; return; }
       const g = p.genome, mind = S.minds.get(p.id), age = P.ageOf(p, S.day);
-      const doing = !p.alive ? 'Đã mất (' + when(p.died) + ')' : mind ? (B.STATE_NAME[mind.mood || mind.state] || mind.state) + (mind.place ? ' · ' + (PLACE_NAME[mind.place] || mind.place) : '') + (mind.target != null && S.people.get(mind.target) ? ' với ' + P.fullName(S.people.get(mind.target)) : '') : '';
+      const doing = !p.alive ? 'Đã mất (' + when(p.died) + ')' : mind ? (mind.verb && !mind.mood && BK.Tasks && BK.Tasks.VERB_NAME[mind.verb] ? BK.Tasks.VERB_NAME[mind.verb].replace(/^./, (c) => c.toUpperCase()) : B.STATE_NAME[mind.mood || mind.state] || mind.state) + (mind.place ? ' · ' + (PLACE_NAME[mind.place] || mind.place) : '') + (mind.target != null && S.people.get(mind.target) ? ' với ' + P.fullName(S.people.get(mind.target)) : '') + (mind.reason ? ' — ' + mind.reason : '') : '';
       const bars = G.TRAITS.map((t) => { const v = g.traits[t.key], mut = g.mutations && g.mutations.some((m) => m.key === t.key); return '<div class="row"><span class="k">' + t.name + (mut ? ' ✦' : '') + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + Math.round(v * 100) + '</span></div>'; }).join('');
       const gait = G.GAIT.map((x) => { const v = g.gait[x.key]; return '<div class="row"><span class="k">' + x.name + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + (v < 0.4 ? x.low.split(',')[0] : v > 0.6 ? x.high.split(',')[0] : 'vừa') + '</span></div>'; }).join('');
       const kids = p.children.map(name).join(', ') || 'chưa có';

@@ -11,10 +11,10 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const R = BK.Rules, P = BK.People;
-  const STATES = ['idle', 'walk', 'talk', 'attack', 'panic'];
-  const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện' };
+  const STATES = ['idle', 'walk', 'talk', 'attack', 'panic', 'work']; // work: làm một việc (verb) ở chỗ của nó (logic/tasks.js)
+  const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện', work: 'Làm việc' };
   // những chỗ trong làng (vị trí cụ thể do phần vẽ đặt, logic chỉ biết tên chỗ)
-  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard']; // guard: chỗ lính đi tuần (cổng, mép làng)
+  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site']; // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
   function knobs(genome, stress) {
@@ -36,7 +36,11 @@
     const t = p.genome.traits, X = S.situ, day = S.day, age = P.ageOf(p, day);
     const d = (state, o) => Object.assign({ state, mood: null, target: null, place: null, intensity: 0.5, until: day + rng.range(0.15, 0.6) }, o);
     const king = S.seats.king != null ? S.seats.king : null;
-    if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3 }); // trẻ nhỏ quanh quẩn gần nhà
+    const ph = BK.Schedule ? BK.Schedule.phase(S.tod) : null, night = ph === 'night';
+    // đêm (trừ lúc có cãi nhau hay chiến tranh): mọi người về nhà ngủ, lính thay nhau gác (logic/tasks.js)
+    const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
+    if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
+    if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà
 
     // cãi nhau giữa hai người
     if (X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) {
@@ -61,20 +65,15 @@
       return d('walk', { place: 'field', intensity: 0.4 });
     }
     // tang: đứng lặng quanh nhà chính
-    if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: 'hall', intensity: 0.3 });
+    if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: 'hall', intensity: 0.3, phase: ph });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa
-    if (X.festival > day) return rng.chance(0.55) ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7 }) : d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'square', intensity: 0.7 });
-    // ngày thường: lính đi tuần, nông dân ra ruộng, người già ngồi ở nhà hay ra sân làng, tướng ra chỗ lính
+    if (X.festival > day) return rng.chance(0.55) ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7, phase: ph }) : d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'square', intensity: 0.7, phase: ph });
+    // ngày thường: việc theo vai và theo buổi (logic/tasks.js); người đa nghi, hiếu chiến đôi khi gây sự
     const r = rng.next();
-    if (p.job === 'soldier' && r < 0.5) return d(r < 0.3 ? 'walk' : 'idle', { place: 'guard', intensity: 0.5 });
-    if ((p.role === 'general1' || p.role === 'general2') && r < 0.35) return d('walk', { place: 'guard', intensity: 0.5 });
-    if (p.job === 'farmer' && r < 0.45) return d(r < 0.25 ? 'walk' : 'idle', { place: 'field', intensity: 0.4 });
-    if (p.job === 'elder' && r < 0.5) return d('idle', { place: r < 0.25 ? 'home' : 'square', intensity: 0.2 });
-    if (p.role === 'king' && r < 0.3) return d('idle', { place: 'hall', intensity: 0.4 });
+    if (r > 0.993 && t.paranoia + t.aggression > 1.25) { const other = friendOf(S, p, rng, true); if (other != null) startQuarrel(S, p.id, other, rng); }
+    if (BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     if (r < 0.38) return d('walk', { place: rng.pick(['home', 'field', 'hall', 'square', 'field']), intensity: 0.4 });
     if (r < 0.66) { const f = friendOf(S, p, rng); if (f != null) return d('talk', { target: f, intensity: 0.4 }); }
-    // người đa nghi, hiếu chiến đôi khi gây sự
-    if (r > 0.993 && t.paranoia + t.aggression > 1.25) { const other = friendOf(S, p, rng, true); if (other != null) startQuarrel(S, p.id, other, rng); }
     return d('idle', { place: rng.chance(0.5) ? 'home' : 'square', intensity: 0.3 });
   }
   // bạn để nói chuyện: người hợp tính nhất trong vài người ngẫu nhiên (enemy: người khác tính nhất)
@@ -98,7 +97,8 @@
     for (const p of S.people.values()) {
       if (!p.alive) { S.minds.delete(p.id); continue; }
       const m = S.minds.get(p.id);
-      if (m && m.until > S.day && !S.situChanged) continue;
+      const ph = BK.Schedule ? BK.Schedule.phase(S.tod) : null;
+      if (m && m.until > S.day && !S.situChanged && (!m.phase || m.phase === ph)) continue;
       const n = decide(S, p, rng);
       n.stress = stressOf(S, p);
       S.minds.set(p.id, n);

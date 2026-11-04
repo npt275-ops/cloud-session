@@ -39,5 +39,6 @@
     DROUGHT_CHANCE: 0.35,                // xác suất có hạn hán vào mỗi mùa hạ
     DROUGHT_DAYS: [18, 40],
     SOLDIER_SHARE: 0.3,                  // phần người lớn ngoài hội đồng làm lính (logic/jobs.js)
+    BUILDER_SHARE: 0.2,                  // phần người lớn còn lại làm thợ, dựng công trình (logic/construction.js)
   };
 });

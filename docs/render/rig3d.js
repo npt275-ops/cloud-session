@@ -128,6 +128,7 @@
     if (look.glow) { put('gTor', nodes.pelvis, M(0, 0.06, 0, 0.17, 0.17, 0.126, Math.PI / 2, 0, 0), look.glow); put('gBox', nodes.chest, M(0, 0.18, 0.15, 0.03, 0.3, 0.02), look.glow); }
     if (look.halo) put('gTor', nodes.head, M(0, 0.5, -0.02, 0.24, 0.24, 0.24, Math.PI / 2, 0, 0), look.halo);
     prop(put, M, nodes, look.prop);
+    tools(put, M, nodes, lv);
     return { root, nodes, parts, look };
   }
 
@@ -146,6 +147,18 @@
     else if (kind === 'topHat') { put('cyl', H, M(0, 0.47, 0, 0.16, 0.32, 0.16), c); put('cyl', H, M(0, 0.31, 0, 0.27, 0.02, 0.27), c); }
     else if (kind === 'beret') put('ball', H, M(0.02, 0.33, -0.01, 0.23, 0.08, 0.23, 0, 0, 0.18), c);
     else if (kind === 'visor') put('gBox', H, M(0, 0.27, 0.175, 0.3, 0.045, 0.03), c);
+  }
+  /* ---------- Đồ làm việc (ẩn sẵn; phần vẽ chỉ hiện món của việc đang làm, render/work3d.js) ---------- */
+  // trục -y của nút cổ tay là hướng từ khuỷu ra bàn tay; thời đồ đá: lưỡi bằng đá
+  function tools(put, M, n, lv) {
+    const wood = '#8a5a32', blade = lv <= 1 ? '#8f8a80' : '#a8adb3';
+    put('cyl', n.wrR, M(0, -0.4, 0, 0.02, 1.1, 0.02), wood, 'tool:hoe'); put('box', n.wrR, M(0, -0.95, 0.1, 0.06, 0.04, 0.22), blade, 'tool:hoe');
+    put('cyl', n.wrR, M(0, -0.1, 0, 0.02, 0.22, 0.02), wood, 'tool:sickle'); put('box', n.wrR, M(0, -0.28, 0.09, 0.02, 0.05, 0.2, 0.5, 0, 0), blade, 'tool:sickle');
+    put('cyl', n.wrR, M(0, -0.12, 0, 0.02, 0.38, 0.02), wood, 'tool:hammer'); put('box', n.wrR, M(0, -0.3, 0, 0.16, 0.08, 0.08), blade, 'tool:hammer');
+    put('cyl', n.wrR, M(0, -0.25, 0, 0.02, 0.75, 0.02), wood, 'tool:axe'); put('box', n.wrR, M(0, -0.58, 0.1, 0.05, 0.16, 0.2), blade, 'tool:axe');
+    put('ball', n.chest, M(-0.24, 0.52, -0.06, 0.22, 0.2, 0.2), '#c9a46e', 'tool:sack');
+    put('cyl', n.wrR, M(0, -0.07, 0.04, 0.05, 0.015, 0.05, Math.PI / 2, 0, 0), '#e8c24a', 'tool:coin');
+    put('half', n.wrL, M(0, -0.06, 0.06, 0.1, 0.07, 0.1, Math.PI, 0, 0), '#a8603e', 'tool:bowl');
   }
   /* ---------- Món cầm tay theo vai trò ---------- */
   function prop(put, M, n, kind) {

@@ -54,8 +54,18 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - Logic của đảo (`logic/island.js`) chạy cùng đồng hồ của bể. 8 người lập làng (4 nam, 4 nữ), hội đồng 8 ghế; mỗi ngày
   người già đi và có thể mất; cứ 1,5 năm một mốc thế hệ: ai đủ tuổi thì kết đôi (lẻ bóng thì cưới người dân thường), mỗi
   cặp sinh 2 tới 4 con (làng gần đầy thì 2 tới 3). Tối đa 200 người một đảo. Hạn hán mùa hạ, tang, cãi nhau tự xảy ra.
-- Việc của dân (`logic/jobs.js`): 30% người lớn ngoài hội đồng làm lính (người máu chiến nhất), còn lại là nông dân;
-  người già, trẻ em. Lính đi tuần, nông dân ra ruộng, người già ngồi ở nhà hoặc sân làng.
+- Việc của dân (`logic/jobs.js`): 30% người lớn ngoài hội đồng làm lính (người máu chiến nhất), 20% số còn lại làm thợ
+  dựng (người khéo và có chí nhất), còn lại là nông dân; người già, trẻ em.
+- Kịch bản một ngày (`logic/schedule.js`, `logic/tasks.js`; ý tưởng đầy đủ trong `design/kich-ban-npc.md`): mỗi người có
+  một việc rõ ràng (đến đâu, làm gì, vì sao), đổi buổi thì chọn lại. Sáng và chiều: nông dân ra ruộng, thợ ra chỗ đang
+  dựng, lính tuần và luyện, người đứng đầu điều hành, người già trông trẻ, trẻ đi học. Trưa về nhà ăn. Tối tụ ở sân làng
+  (trò chuyện, kể chuyện, chơi). Đêm ai cũng về nhà ngủ (vào trong nhà, không vẽ), một nửa số lính thay nhau gác.
+  Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`: thời đồ đá hái lượm, cầu mưa; thời sau cuốc, liềm,
+  búa, bao; thời máy thì chỉ tay, điều khiển). Thẻ người ghi việc đang làm và lý do.
+- **Công trình dựng dần trong mỗi thời** (`logic/construction.js`, `render/buildings3d.js` `setProgress`): đầu thời làng
+  cũ vẫn đứng; thợ dựng nhà chính mới trước rồi lần lượt từng công trình của thời (có giàn giáo, mọc dần lên). Xong chỗ
+  nào thì dỡ công trình cũ ở chỗ đó; xong cả thì làng cũ không còn. Tốc độ theo số thợ, cả danh sách xong vào khoảng 80%
+  của thời; nhật ký ghi “Dựng xong …”. Thời đồ đá mở đầu với nhà chính, bếp lửa và hai lều, phần còn lại dân tự dựng.
 - Người vẽ theo nét đã chốt (`render/rig3d.js`), trang phục theo thời và theo nhóm (`render/outfits3d.js`: người đứng
   đầu, tướng, lính, dân thường nam, dân thường nữ; nữ luôn có tóc dài và ngực). Nét mặt đổi theo việc, mắt tự chớp.
   Người đi giữa các công trình thật của thời đang có (nhà chính, sân, ruộng, nhà ở, chỗ tuần tra). Không có tên trên đầu:
@@ -207,8 +217,8 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `game/` | **Ghép game**: `world.js` bộ nhớ chung G (hàm tiện dụng, sáu vùng đất, ngày trong trận, tốc độ, thời tiết); `nature.js` dựng bản đồ, cầu, biển, mây; `seasons.js` bốn mùa và độ đông; `village.js` Lúa Vàng chạy theo thời gian thực (logic đảo, công trình, người, bảng làng, bấm chọn người); `loop.js` thứ tự khởi động và nhịp mỗi khung hình |
 | `render/scene3d.js`, `sky3d.js`, `perf3d.js`, `tank3d.js`, `snow3d.js` | Bộ vẽ, camera, khói; bầu trời, sao, trăng, nắng, ngày đêm, bóng nắng không rung; bộ điều tốc 60 khung hình và vùng bóng; vòm kính, vòng đồng, đá trôi; tuyết rơi mùa đông |
 | `ui/hud.js`, `landbar.js`, `camera-fly.js` | Nút tốc độ, âm thanh, dòng ngày; thanh sáu đảo; camera bay tới và bay tự do |
-| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` lính, nông dân, người già |
-| `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) |
+| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` lính, thợ, nông dân, người già; `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời |
+| `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `work3d.js` cử chỉ và đồ cầm tay cho từng việc theo thời; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) và dựng dần theo tiến độ (`setProgress`) |
 | `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên). Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
 | `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người và bảng làng (nút Làng); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |

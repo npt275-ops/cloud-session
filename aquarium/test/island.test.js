@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'schedule', 'tasks', 'construction', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -100,4 +100,20 @@ test('chín năm: lên đủ 12 thời kỳ, có lính và nông dân, ghi sinh 
   assert.ok(BK.Jobs.count(S, 'soldier') >= 1 && BK.Jobs.count(S, 'farmer') >= 1, 'có lính và nông dân');
   assert.ok(S.births > 8 && S.deaths > 0, 'có sinh và mất: ' + S.births + '/' + S.deaths);
   assert.ok(live.length > 8 && live.length <= BK.Rules.POP_CAP);
+});
+
+test('công trình mỗi thời được dựng dần và xong hết; việc ngày thường theo buổi', () => {
+  const plan = (lv) => Array.from({ length: 6 + lv }, (_, i) => ({ name: 'Công trình ' + lv + '.' + i, size: i === 0 ? 3 : 1, done: lv === 1 && i < 2 }));
+  const S = BK.Island.create({ key: 'plains', seed: 5, buildPlan: plan });
+  assert.ok(S.build && S.build.list[0].done && !S.build.list[3].done, 'thời 1 có sẵn 2 công trình');
+  let built = 0; const seenVerbs = new Set();
+  for (let d = 0; d < 9 * 360; d++) {
+    S.tod = (d % 6) / 6; BK.Island.step(S, 1);
+    for (const m of S.minds.values()) if (m.verb) seenVerbs.add(m.verb);
+    // giữa thời: phải có công trình đang dựng hoặc đã xong một phần
+    if (d % 270 === 200) { const B = S.build, doneN = B.list.filter((x) => x.done).length; assert.ok(doneN >= B.list.length * 0.6, 'cấp ' + S.level + ': dựng được ' + doneN + '/' + B.list.length + ' ở 75% thời'); }
+  }
+  for (const e of S.log) if (e.kind === 'built') built++;
+  assert.ok(built > 50, 'nhật ký có ' + built + ' lần dựng xong');
+  for (const v of ['farm', 'build', 'guard', 'sleep', 'eat', 'chat']) assert.ok(seenVerbs.has(v), 'có việc ' + v);
 });
