@@ -52,16 +52,17 @@
       const at = (x, z) => new THREE.Vector2(r.x * x + f.x * z, r.y * x + f.y * z);
       let yard = null; if (lay.yard) { yard = yardOf(lay, at); group.add(yard); group.userData.yard = yard; if (standing.length) yard.visible = false; }
       // chỗ của các công trình không phải nhà riêng, để nhà riêng tránh ra
-      const fixed = lay.pieces.filter((P) => P.home == null && !P.outer && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear }; });
+      const fixed = lay.pieces.filter((P) => P.home == null && !P.nudge && !P.outer && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear }; });
       for (const P of lay.pieces) {
         const build = lay.BUILD[P.kind]; if (!build) continue;
         // chỉ đặt chỗ; hình dựng lúc công trình hiện ra lần đầu (bakeOf), để sang thời không phải dựng cả làng một lúc
         const g = new THREE.Group();
         let p, dir = f, dead = false; // dead: không có chỗ trên đảo, giữ chỗ trong danh sách (khớp thứ tự với logic) nhưng không hiện
-        if (P.outer) { const q = PL.outerSpot(L, P, at); if (q) { p = q.p; dir = q.dir; } else { p = at(0, 0); dead = true; } }
+        if (P.outer) { const q = PL.outerSpot(L, P, at); if (q) { p = q.p; dir = q.dir; fixed.push({ x: p.x, y: p.y, r: q.r }); } else { p = at(0, 0); dead = true; } }
         else {
           p = at(P.x, P.z);
-          if (P.home != null) p = PL.homeSpot(L, p, P.clear, fixed);
+          if (P.home != null || P.nudge) p = PL.homeSpot(L, p, P.clear, fixed); // nhà riêng, công trình công cộng: dịch tránh chỗ vướng
+          if (P.nudge) fixed.push({ x: p.x, y: p.y, r: P.clear });
           if (Array.isArray(P.face)) { const d = at(P.face[0], P.face[1]).sub(p); if (d.lengthSq() > 1e-6) dir = d.normalize(); }
         }
         g.position.set(p.x, P.outer === 'sea' ? SEA_Y : 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
@@ -195,12 +196,12 @@
         if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         out.all.push(door);
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
-        else if (HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && (!out.homeSlots[P.home] || isNew)) out.homeSlots[P.home] = dv; }
+        else if (P.home != null || HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && (!out.homeSlots[P.home] || isNew)) out.homeSlots[P.home] = dv; }
         else if (FIELD.has(k)) out.field.push(pos.clone().addScaledVector(fwd, 0.5));
         else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, 2.2));
         else if (MARKET.has(k)) out.market.push(door);
         else if (SHRINE.has(k)) out.shrine.push(pos.clone().addScaledVector(fwd, 2));
-        else if (SCHOOL.has(k)) out.school.push(door);
+        else if (SCHOOL.has(k) || P.spec.civic === 'school' || P.spec.civic === 'library') out.school.push(door);
         else if (k === 'gate' || k === 'pad' || k === 'station') out.guard.push(pos.clone().addScaledVector(fwd, 3));
       }
       const r = sh.yardR || 12;

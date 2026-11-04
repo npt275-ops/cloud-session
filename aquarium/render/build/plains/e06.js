@@ -2,7 +2,8 @@
  * Điện, máy tính, tuabin gió: Trung Tâm Hành Chính (nhà chính, bê tông và kính, cột cờ), khu chung cư nhiều tầng,
  * trường học, siêu thị, tuabin gió (cánh quay), cột điện, đường nhựa có vạch, xe hơi, nhà kính trồng lúa. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, archHome, COMMON } = P;
+  const PAL = { a: '#e8e6e0', b: '#5a6068', c: '#d98a5a', d: '#2a3038', g: '#ffe0a0', w: '#ffe0a0' }; // màu của nhà nhỏ, toà dáng lạ mượn từ bộ kiểu chung
   const band = (k, w, d, y, z0) => { k.add(Bc(w + 0.02, 0.7, d + 0.02, 0.02), C.glass, 0, y, z0 || 0, { ao: false }); };
 
   function hall(k) {
@@ -57,13 +58,13 @@
     pieces: [
       { kind: 'hall', x: 0, z: -9, clear: 9 },
       { kind: 'asphalt', x: 0, z: 9, d: 22, clear: 0 }, { kind: 'asphalt', x: 0, z: 4, d: 34, face: [30, 4], clear: 0 },
-      ...homes('flats'),
+      ...homes('flats', null, { small: 'villa', odd: 'cantilever' }),
       { kind: 'school', x: -11, z: 11, face: [0, 9], clear: 7 }, { kind: 'shop', x: 11, z: 11, face: [0, 9], clear: 6.5 },
       { kind: 'turbine', x: -20, z: 20, clear: 3 }, { kind: 'turbine', x: 22, z: 19, clear: 3 },
       { kind: 'pole', x: -3.6, z: 15, clear: 0.6 }, { kind: 'pole', x: 3.6, z: 15, clear: 0.6 },
       { kind: 'greenhouse', x: -17, z: -6, face: [0, 6], clear: 5.5 }, { kind: 'banyan', x: 14, z: -15, clear: 4 },
     ],
-    BUILD: { hall, flats, school, shop, turbine, pole, greenhouse, asphalt, banyan: COMMON.banyan },
-    NAME: { hall: 'Trung Tâm Hành Chính', flats: 'Chung cư', school: 'Trường học', shop: 'Siêu thị', turbine: 'Tuabin gió', pole: 'Cột điện', greenhouse: 'Nhà kính trồng lúa', asphalt: 'Đường nhựa', banyan: 'Cây đa' },
+    BUILD: { villa: archHome('villa', PAL), cantilever: archHome('cantilever', PAL), hall, flats, school, shop, turbine, pole, greenhouse, asphalt, banyan: COMMON.banyan },
+    NAME: { villa: 'Biệt thự mái bằng', cantilever: 'Cao ốc cánh hẫng', hall: 'Trung Tâm Hành Chính', flats: 'Chung cư', school: 'Trường học', shop: 'Siêu thị', turbine: 'Tuabin gió', pole: 'Cột điện', greenhouse: 'Nhà kính trồng lúa', asphalt: 'Đường nhựa', banyan: 'Cây đa' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

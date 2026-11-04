@@ -7,6 +7,11 @@ Nguyên tắc (chốt):
   xong. Kỳ quan cũng thay bằng kỳ quan của thời mới ngay tại chỗ đó. Trang phục đổi ngay khi sang thời.
 - **Tường chạy sát mép đảo**, theo đúng dáng mép, ngắt ở chỗ núi, hồ, sông, có cổng ở đầu các đường toả ra.
 - **Càng về sau càng cao**: từ thời Hiện đại là chung cư, cao ốc; từ thời Robot AI trở đi là tháp cao 20 đến 30, mỗi đảo một kiểu.
+- **Cao thấp xen kẽ, dáng lạ**: từ thời 3 có nhà nhỏ đứng xen giữa nhà chính của thời; từ thời 6 có thêm toà dáng lạ (cao ốc
+  cánh hẫng, tháp đôi cầu nối, tháp nghiêng, tháp nấm, kim tự tháp ngược, tháp vòng, tháp xoắn ốc), mỗi thời một dáng khác,
+  không hai đảo trùng trong một thời (render/build/isles/compose.js SMALL, ODD).
+- **Công trình công cộng** (render/build/civic.js): trường học, thư viện, bảo tàng, bệnh viện, nhà hát, sân vận động, nhà tắm,
+  đài thiên văn; mỗi loại bốn dáng theo giai đoạn, mỗi thời một bộ khác thời trước, ở cả sáu đảo.
 - **Sáu đảo khác nhau ở mọi thời**: trong cùng một thời, không có hai đảo dùng chung kiểu nhà hay kiểu nhà chính; mỗi đảo một bảng
   màu theo bốn giai đoạn (xưa, cận đại, hiện đại, tương lai).
 
@@ -79,7 +84,7 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 6 | Hiện đại | Tháp ban công sóng biển | Siêu Tháp Biển | Xưởng Tàu Khổng Lồ |
 | 7 | Tên lửa | Tháp buồm biển | Quả Cầu Biển | Tháp Ngắm Biển |
 | 8 | Robot AI | Cao ốc kính biển | Ngọn Pha Lê Biển | Bệ Phóng Trên Biển |
-| 9 | Vật Chất Sống | Tháp bậc thang biển | Trụ Sở Kính Biển | Vòm Đại Dương |
+| 9 | Vật Chất Sống | Tháp bậc thang biển | Siêu Tháp Sóng | Vòm Đại Dương |
 | 10 | Mặt Trời Nhân Tạo | Tòa xoắn biển | Quả Cầu Sóng | Mặt Trời Biển |
 | 11 | Bẻ Cong Không Gian | Tháp pha lê biển | Nhà Vòng Nổi Biển | Cổng Sóng |
 | 12 | Siêu Việt | Tháp mặt trời biển | Kim Tự Tháp Kính Biển | Vành Sóng |
@@ -98,5 +103,5 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 8 | Robot AI | Tháp vòm chồng cát hồng | Quả Cầu Cát | Bệ Phóng Sa Mạc |
 | 9 | Vật Chất Sống | Tháp mặt trời cát hồng | Ngọn Pha Lê Cát | Vòm Ốc Đảo |
 | 10 | Mặt Trời Nhân Tạo | Cao ốc kính cát hồng | Nhà Cây Sống Cát | Mặt Trời Sa Mạc |
-| 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Trụ Sở Kính Cát | Thang Lên Sao |
+| 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Kim Tự Tháp Kính Hồng | Thang Lên Sao |
 | 12 | Siêu Việt | Tòa xoắn cát hồng | Nhà Cây Sống Cát | Thành Phố Cát Bay |

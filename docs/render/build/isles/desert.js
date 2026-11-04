@@ -24,7 +24,7 @@
       R('domeTower', 'Tháp vòm chồng cát hồng', 'orb', 'Quả Cầu Cát', 7, 'Bệ Phóng Sa Mạc'),
       R('sun', 'Tháp mặt trời cát hồng', 'spireHall', 'Ngọn Pha Lê Cát', 'megaDome', 'Vòm Ốc Đảo'),
       R('glass', 'Cao ốc kính cát hồng', 'bioHall', 'Nhà Cây Sống Cát', 10, 'Mặt Trời Sa Mạc'),
-      R('spire', 'Tháp kim cát hồng', 'hq', 'Trụ Sở Kính Cát', 'elevator', 'Thang Lên Sao'),
+      R('spire', 'Tháp kim cát hồng', 'glassPyramid', 'Kim Tự Tháp Kính Hồng', 'elevator', 'Thang Lên Sao'),
       R('twist', 'Tòa xoắn cát hồng', 'bioHall', 'Nhà Cây Sống Cát', 12, 'Thành Phố Cát Bay'),
     ],
   });

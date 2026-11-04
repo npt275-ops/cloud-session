@@ -2,7 +2,8 @@
  * Robot, trí tuệ nhân tạo, máy tính lượng tử: Lõi Trí Tuệ (nhà chính, quả cầu tối trên bệ, vòng sáng quay), nhà mô-đun
  * xếp chồng có vạch sáng, trung tâm dữ liệu, bãi đỗ drone (drone bay nhấp nhô), robot làm ruộng, đường sáng. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, archHome, COMMON } = P;
+  const PAL = { a: '#d0d8e2', b: '#363a48', c: '#5fe8ff', d: '#2a3a4a', g: '#5fe8ff', w: '#bff0ff' }; // màu của nhà nhỏ, toà dáng lạ mượn từ bộ kiểu chung
   const T = () => window.THREE, CY = '#5fe8ff';
   const torus = (R, t) => new (T().TorusGeometry)(R, t, 4, 24);
 
@@ -17,7 +18,13 @@
   }
   // nhà mô-đun: các khối xếp lệch, vạch sáng ở mép, ô cửa tối
   // tòa nhà thông minh (cao ốc của thời Robot AI): các khối kính chồng so le hơn chục tầng, vạch sáng xanh từng tầng,
-  // cửa kính sáng về đêm, mái có bãi drone và ăng-ten
+  // nhà nhỏ của thời này (kiểu nhà cũ giữ lại, đứng xen giữa các cao ốc)
+  function podSmall(k, o) {
+    const n = 3 + (o.v % 3), base = pick(['#e8ecf0', '#d0d8e2', '#f2f4f6'], o.v * 0.3);
+    for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(B(w, 2.0, 3.0, 0.2), base, x, y, 0); k.add(Bc(w * 0.7, 0.9, 0.08, 0.04), '#2a3a4a', x, y + 1.1, 1.52, { ao: false }); k.add(Bc(w + 0.04, 0.08, 0.08, 0.02), CY, x, y + 2.0, 1.5, { glow: true }); }
+    k.add(Bc(0.9, 1.8, 0.08, 0.04), '#2a3a4a', -0.3, 0.9, 1.53, { ao: false });
+    for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(Bc(w * 0.62, 0.78, 0.04, 0.01), '#bff0ff', x, y + 1.1, 1.6, { lit: true }); } // ô cửa sáng về đêm
+  }  // cửa kính sáng về đêm, mái có bãi drone và ăng-ten
   function pods(k, o) {
     const n = 11 + (o.v % 5), base = pick(['#e8ecf0', '#d0d8e2', '#f2f4f6'], o.v * 0.3), H = 1.8;
     for (let i = 0; i < n; i++) {
@@ -59,12 +66,12 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'glowRoad', x: 0, z: 10, d: 22, clear: 0 }, { kind: 'glowRoad', x: 0, z: 4, d: 36, face: [30, 4], clear: 0 },
-      ...homes('pods'),
+      ...homes('pods', null, { small: 'podSmall', odd: 'tilt' }),
       { kind: 'datacenter', x: -16, z: -14, face: [0, 6], clear: 6 },
       { kind: 'dronePad', x: 10, z: 12, clear: 2.6 }, { kind: 'dronePad', x: 14, z: 16, clear: 2.6 },
       { kind: 'field', x: -15, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'robot', x: -13, z: 15, face: [-30, 15], clear: 0.6 }, { kind: 'robot', x: -17, z: 13.5, face: [0, 13.5], clear: 0.6 },
     ],
-    BUILD: { hall, pods, datacenter, dronePad, robot, glowRoad, field: COMMON.field },
-    NAME: { hall: 'Lõi Trí Tuệ', pods: 'Tòa nhà thông minh', datacenter: 'Trung tâm dữ liệu', dronePad: 'Bãi drone', robot: 'Robot làm ruộng', glowRoad: 'Đường sáng', field: 'Ruộng lúa' },
+    BUILD: { podSmall: podSmall, tilt: archHome('tilt', PAL), hall, pods, datacenter, dronePad, robot, glowRoad, field: COMMON.field },
+    NAME: { podSmall: 'Nhà mô-đun nhỏ', tilt: 'Tháp nghiêng', hall: 'Lõi Trí Tuệ', pods: 'Tòa nhà thông minh', datacenter: 'Trung tâm dữ liệu', dronePad: 'Bãi drone', robot: 'Robot làm ruộng', glowRoad: 'Đường sáng', field: 'Ruộng lúa' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

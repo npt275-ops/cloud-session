@@ -31,11 +31,16 @@
   // thời: vòng trong 8 nhà, vòng ngoài 12 nhà, chia đều hai bên làng, chừa phía trước (ruộng, đường) và phía sau (nhà chính).
   // Sang thời mới nhà số i của thời mới mọc lên đúng chỗ nhà số i cũ (render/buildings3d.js); fit: nhà to quá thì thu cho vừa.
   const HOME_SLOTS = 20;
-  function homes(kind, extra) {
+  // mix: { small, odd } cho các thời có cao ốc: nhà cao, nhà nhỏ và một vài toà dáng lạ đứng xen kẽ (cao thấp không đều)
+  const mixKind = (i, kind, mix) => (!mix ? kind : mix.odd && i % 6 === 4 ? mix.odd : mix.small && i % 3 === 1 ? mix.small : kind);
+  function homes(kind, extra, mix) {
     const out = [], rows = [[20, 4, 1.0, 2.3], [27.5, 6, 0.95, 2.45]];
-    for (const [r, m, a0, a1] of rows) for (let i = 0; i < m; i++) { const a = a0 + ((a1 - a0) * i) / (m - 1); for (const sx of [1, -1]) out.push(Object.assign({ kind, x: sx * Math.sin(a) * r, z: Math.cos(a) * r, face: [0, 2], v: out.length, clear: 2.8, slot: 'home' + out.length, home: out.length, fit: 5.4 }, extra || {})); }
+    for (const [r, m, a0, a1] of rows) for (let i = 0; i < m; i++) { const a = a0 + ((a1 - a0) * i) / (m - 1); for (const sx of [1, -1]) { const n = out.length; out.push(Object.assign({ kind: mixKind(n, kind, mix), x: sx * Math.sin(a) * r, z: Math.cos(a) * r, face: [0, 2], v: n, clear: 2.8, slot: 'home' + n, home: n, fit: 5.4 }, extra || {})); } }
     return out.slice(0, HOME_SLOTS);
   }
+
+  // dùng một kiểu nhà của bộ kiểu chung (render/build/isles/arch.js, tải sau tệp này) với bảng màu của Lúa Vàng
+  const archHome = (name, pal) => (k, o) => BK.IslesArch.HOME[name](k, Object.assign(Object.create(o), { pal }));
 
   /* ---------- Những món dùng lại qua nhiều thời ---------- */
   function fire(k, o) {
@@ -72,5 +77,5 @@
   // đường lát: dải phẳng trên mặt đất (màu theo thời)
   function road(k, o) { k.add(B(o.w || 2.4, 0.06, o.d || 12, 0.02), o.color || '#b8ad99', 0, 0, 0, { ao: false }); }
 
-  return { ERA: {}, C, pick, B, Bc, ring, homes, HOME_SLOTS, COMMON: { fire, field, hay, stones, well, banyan, road } };
+  return { ERA: {}, C, pick, B, Bc, ring, homes, archHome, HOME_SLOTS, COMMON: { fire, field, hay, stones, well, banyan, road } };
 });

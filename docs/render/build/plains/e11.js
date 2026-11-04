@@ -2,7 +2,8 @@
  * Gấp không gian để đi xuyên qua nó: Cổng Trung Tâm (nhà chính, vòng cổng khổng lồ, lòng cổng xoáy sáng), nhà gấp khúc
  * (các tầng xoay lệch nhau), cổng nhỏ nối các nhà, mảnh không gian trôi quanh. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, archHome, COMMON } = P;
+  const PAL = { a: '#d8d0ee', b: '#4a4a6a', c: '#b48cff', d: '#2e2e48', g: '#ff6ad8', w: '#ffe9ff' }; // màu của nhà nhỏ, toà dáng lạ mượn từ bộ kiểu chung
   const VIO = '#b48cff', MAG = '#ff6ad8', CY = '#7ff0ff';
   const torus = (R, t, s) => new (window.THREE.TorusGeometry)(R, t, 6, s || 28);
   function hall(k) {
@@ -15,7 +16,14 @@
     return { spin: [['portal', 'z', 0.8]] };
   }
   // tòa xoắn (cao ốc thời Bẻ Cong Không Gian): mười mấy tấm sàn xoay lệch dần quanh trục, viền sáng tím, cửa sáng về đêm,
-  // cổng nhỏ ở chân, khối pha lê quay trên đỉnh
+  // nhà nhỏ của thời này (kiểu nhà cũ giữ lại, đứng xen giữa các cao ốc)
+  function foldSmall(k, o) {
+    const n = 4 + (o.v % 3), c = pick(['#d8d0ee', '#c8c0e0', '#e8e0f6'], o.v * 0.3);
+    for (let i = 0; i < n; i++) { const y = i * 1.9, rot = (i * 0.45 + o.v) % (Math.PI * 2); k.add(B(3.4 - i * 0.2, 1.8, 3.0 - i * 0.15, 0.2), c, Math.sin(i) * 0.4, y, Math.cos(i) * 0.3, { rot: [0, rot, 0] }); k.add(Bc(1.4, 0.6, 3.1, 0.04), VIO, Math.sin(i) * 0.4, y + 0.9, Math.cos(i) * 0.3, { rot: [0, rot, 0], glow: true }); k.add(Bc(0.7, 0.6, 0.06, 0.02), '#ffe9ff', Math.sin(i) * 0.4, y + 0.9, Math.cos(i) * 0.3 + 1.55 - i * 0.08, { rot: [0, rot, 0], lit: true }); }
+    k.add(torus(0.9, 0.12, 14), MAG, 0, 1.1, 1.75, { glow: true }); // cửa cổng nhỏ
+    const s = k.sub('orb', [0, n * 1.9 + 1, 0]); s.add(new (window.THREE.OctahedronGeometry)(0.6, 0), pick([VIO, CY, MAG], o.v * 0.4), 0, 0, 0, { glow: true });
+    return { spin: [['orb', 'y', 1.2]] };
+  }  // cổng nhỏ ở chân, khối pha lê quay trên đỉnh
   function folded(k, o) {
     const n = 12 + (o.v % 4), c = pick(['#d8d0ee', '#c8c0e0', '#e8e0f6'], o.v * 0.3), tw = 0.16 + (o.v % 3) * 0.05;
     for (let i = 0; i < n; i++) {
@@ -36,11 +44,11 @@
     yard: { x: 0, z: 2, r: 22, color: '#6a6a88' },
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
-      ...homes('folded'),
+      ...homes('folded', null, { small: 'foldSmall', odd: 'ringTower' }),
       ...[[-6, 10], [6, 10], [0, 16]].map(([x, z]) => ({ kind: 'miniPortal', x, z, face: 'front', clear: 1.6 })),
       ...[[-10, 4], [10, 4], [-13, 18], [13, 18], [-3, 20], [3, 20]].map(([x, z], i) => ({ kind: 'shard', x, z, v: i, clear: 0 })),
     ],
-    BUILD: { hall, folded, miniPortal, shard },
-    NAME: { hall: 'Cổng Trung Tâm', folded: 'Tòa xoắn', miniPortal: 'Cổng nhỏ', shard: 'Mảnh không gian' },
+    BUILD: { foldSmall: foldSmall, ringTower: archHome('ringTower', PAL), hall, folded, miniPortal, shard },
+    NAME: { foldSmall: 'Nhà gấp khúc', ringTower: 'Tháp vòng', hall: 'Cổng Trung Tâm', folded: 'Tòa xoắn', miniPortal: 'Cổng nhỏ', shard: 'Mảnh không gian' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

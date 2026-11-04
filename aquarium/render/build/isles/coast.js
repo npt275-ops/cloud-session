@@ -22,7 +22,7 @@
       R('wave', 'Tháp ban công sóng biển', 'arcology', 'Siêu Tháp Biển', 5, 'Xưởng Tàu Khổng Lồ'),
       R('sail', 'Tháp buồm biển', 'orb', 'Quả Cầu Biển', 6, 'Tháp Ngắm Biển'),
       R('glass', 'Cao ốc kính biển', 'spireHall', 'Ngọn Pha Lê Biển', 7, 'Bệ Phóng Trên Biển'),
-      R('stepped', 'Tháp bậc thang biển', 'hq', 'Trụ Sở Kính Biển', 'megaDome', 'Vòm Đại Dương'),
+      R('stepped', 'Tháp bậc thang biển', 'arcology', 'Siêu Tháp Sóng', 'megaDome', 'Vòm Đại Dương'),
       R('twist', 'Tòa xoắn biển', 'orb', 'Quả Cầu Sóng', 10, 'Mặt Trời Biển'),
       R('crystal', 'Tháp pha lê biển', 'ringHall', 'Nhà Vòng Nổi Biển', 11, 'Cổng Sóng'),
       R('sun', 'Tháp mặt trời biển', 'glassPyramid', 'Kim Tự Tháp Kính Biển', 'orbitRing', 'Vành Sóng'),

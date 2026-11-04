@@ -165,6 +165,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/civic.js",
+  "src": "render/build/civic.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/isles/arch.js",
   "src": "render/build/isles/arch.js",
   "mode": 420

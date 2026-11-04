@@ -3,7 +3,8 @@
  * tên lửa, chảo vệ tinh (quay chậm), nhà máy điện hạt nhân (hai tháp làm mát, lò tròn), tháp chung cư cao,
  * đường nhựa, nhà kính lúa. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, archHome, COMMON } = P;
+  const PAL = { a: '#eef0f2', b: '#3f7fb8', c: '#7fb2cc', d: '#2a3440', g: '#ff5a4f', w: '#fff0c8' }; // màu của nhà nhỏ, toà dáng lạ mượn từ bộ kiểu chung
   const T = () => window.THREE;
 
   function hall(k) {
@@ -53,12 +54,12 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'asphalt', x: 0, z: 10, d: 22, clear: 0 }, { kind: 'asphalt', x: 0, z: 4, d: 36, face: [30, 4], clear: 0 },
-      ...homes('tower'),
+      ...homes('tower', null, { small: 'capsule', odd: 'twin' }),
       { kind: 'pad', x: 20, z: 14, clear: 7 },
       { kind: 'dish', x: -11, z: 12, clear: 3 }, { kind: 'dish', x: -15, z: 16, clear: 3 },
       { kind: 'nuclear', x: -20, z: -12, face: [0, 6], clear: 8 },
     ],
-    BUILD: { hall, pad, dish, nuclear, tower, asphalt },
-    NAME: { hall: 'Tháp Điều Hành', pad: 'Bệ phóng tên lửa', dish: 'Chảo vệ tinh', nuclear: 'Nhà máy điện hạt nhân', tower: 'Tháp chung cư', asphalt: 'Đường nhựa' },
+    BUILD: { capsule: archHome('capsule', PAL), twin: archHome('twin', PAL), hall, pad, dish, nuclear, tower, asphalt },
+    NAME: { capsule: 'Nhà con nhộng', twin: 'Tháp đôi cầu nối', hall: 'Tháp Điều Hành', pad: 'Bệ phóng tên lửa', dish: 'Chảo vệ tinh', nuclear: 'Nhà máy điện hạt nhân', tower: 'Tháp chung cư', asphalt: 'Đường nhựa' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

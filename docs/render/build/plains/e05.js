@@ -3,7 +3,8 @@
  * ống khói, xưởng xay lúa mái răng cưa và ống khói cao, ga tàu với đường ray và đầu máy hơi nước, đèn khí,
  * ruộng có máy cày hơi nước. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, archHome, COMMON } = P;
+  const PAL = { a: '#b5654a', b: '#4f555c', c: '#e6d6b8', d: '#3e2c20', g: '#ffd27a', w: '#ffd89a' }; // màu của nhà nhỏ, toà dáng lạ mượn từ bộ kiểu chung
   const T = () => window.THREE;
   const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#34404c', x, y, z, { ao: false }); k.add(Bc(w * 0.9, h * 0.9, 0.04, 0.01), '#ffd88a', x, y, z + 0.06, { lit: true }); k.add(Bc(w + 0.12, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
 
@@ -68,14 +69,14 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'road', x: 0, z: 7.5, d: 16, w: 3.4, color: '#8e887c', clear: 0 },
-      ...homes('row'),
+      ...homes('row', null, { small: 'cottage' }),
       { kind: 'factory', x: -14, z: 8, face: [0, 8], clear: 6.5 },
       { kind: 'station', x: 6, z: 20, face: 'front', clear: 7 },
       { kind: 'lamp', x: -2.4, z: 4, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 4, face: [-10, 4], clear: 0.5 }, { kind: 'lamp', x: -2.4, z: 11, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 11, face: [-10, 11], clear: 0.5 },
       { kind: 'well', x: 4.2, z: 2.2, clear: 1.6 }, { kind: 'banyan', x: 12, z: -14, clear: 4 },
       { kind: 'field', x: 16, z: 8, w: 9, d: 6, clear: 6 }, { kind: 'tractor', x: 15, z: 12, face: [30, 12], clear: 1.5 },
     ],
-    BUILD: { hall, row, factory, station, lamp, tractor, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, road: COMMON.road },
-    NAME: { hall: 'Toà Thị Chính', row: 'Dãy nhà gạch', factory: 'Xưởng xay lúa', station: 'Ga tàu', lamp: 'Đèn khí', tractor: 'Máy cày hơi nước', well: 'Giếng', banyan: 'Cây đa', field: 'Ruộng lúa', road: 'Đường lát đá' },
+    BUILD: { cottage: archHome('timber', PAL), hall, row, factory, station, lamp, tractor, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, road: COMMON.road },
+    NAME: { cottage: 'Nhà khung gỗ', hall: 'Toà Thị Chính', row: 'Dãy nhà gạch', factory: 'Xưởng xay lúa', station: 'Ga tàu', lamp: 'Đèn khí', tractor: 'Máy cày hơi nước', well: 'Giếng', banyan: 'Cây đa', field: 'Ruộng lúa', road: 'Đường lát đá' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

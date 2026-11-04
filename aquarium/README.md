@@ -62,7 +62,7 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - Kịch bản một ngày (`logic/schedule.js`, `logic/tasks.js`): mỗi người có một việc rõ ràng (đến đâu, làm gì, vì sao), đổi
   buổi thì chọn lại. Trưa về nhà ăn, tối tụ ở sân làng, đêm về nhà ngủ (không vẽ), một nửa số lính thay nhau gác.
   **Nhà chính chỉ đông khi biểu tình**: hạn hán kéo dài thì người đa nghi, hiếu chiến kéo tới đối mặt người đứng đầu, lính
-  ra giữ trật tự (nút thử “Biểu tình” trong bảng Làng). Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`).
+  ra giữ trật tự. Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`).
   Thẻ người ghi việc đang làm và lý do.
 - **Công trình lên đời ngay lập tức** (`logic/construction.js`, `render/buildings3d.js` `setProgress`): công trình các
   thời trước không biến mất. Sang thời mới, thợ làm lần lượt từ nhà chính; chỗ nào làm xong thì công trình ở đó đổi ngay
@@ -94,6 +94,12 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   trình nhỏ, đường và tường sát mép, công trình ngoài làng, kỳ quan), mỗi đảo một tệp chọn kiểu, tên và bảng màu cho từng thời
   (`forest.js`, `mountain.js`, `tundra.js`, `coast.js`, `desert.js`). Trong cùng một thời không có hai đảo chung kiểu nhà hay
   kiểu nhà chính. Bảng đầy đủ: `design/kien-truc-12-thoi.md`. Năm đảo này chưa có dân, công trình lên đời đều theo thời gian.
+- **Cao thấp xen kẽ, dáng lạ, công trình công cộng**: 20 nhà riêng mỗi thời không còn một kiểu. Từ thời 3 có nhà nhỏ đứng
+  xen; từ thời 6 có thêm toà dáng lạ, mỗi thời một dáng khác, không hai đảo trùng trong một thời: cao ốc cánh hẫng, tháp đôi
+  cầu nối, tháp nghiêng, tháp nấm, kim tự tháp ngược, tháp vòng, tháp xoắn ốc. Nhà nhỏ của Lúa Vàng thời 8 đến 12 là các kiểu
+  nhà cũ giữ lại (nhà mô-đun, nhà búp, nhà lơ lửng, nhà gấp, nhà pha lê); các đảo dùng biệt thự, nhà con nhộng, nhà khối
+  chồng, nhà cầu tròn. Công trình công cộng (`render/build/civic.js`): trường học, thư viện, bảo tàng, bệnh viện, nhà hát,
+  sân vận động, nhà tắm, đài thiên văn, mỗi loại bốn dáng theo giai đoạn, mỗi thời một bộ khác thời trước, ở cả sáu đảo.
 - **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng
   công trình; khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
   ray, rô-bốt giao hàng và drone, hạt giống bay, xe bay, quả cầu sáng.
@@ -110,8 +116,9 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   đầu, tướng, lính, dân thường nam, dân thường nữ; nữ luôn có tóc dài và ngực). Nét mặt đổi theo việc, mắt tự chớp.
   Người đi giữa các công trình thật của thời đang có (nhà chính, sân, ruộng, nhà ở, chỗ tuần tra). Không có tên trên đầu:
   bấm vào một người để mở thẻ (tính cách, dáng, cha mẹ, vợ chồng, con, việc đang làm).
-- Nút **Làng** trên thanh dưới mở bảng theo dõi: cấp và năm, số người, đã sinh, đã mất, số lính, nông dân, người già,
-  hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh chiến tranh, biểu tình, cãi nhau, lễ hội, yên ổn, sang thế hệ mới).
+- Thanh dưới có **◀ Thời trước / Thời sau ▶** để rà soát: tới thẳng một thời lúc công trình của thời đó đã dựng xong (90%
+  thời). Đi tới thì logic chạy tới đó; lùi lại thì dựng lại logic Lúa Vàng từ đầu (cùng hạt giống) rồi chạy tới thời đó, nên
+  dân, nhà, công trình và trang phục khớp đúng thời. Bảng làng cũ (nút Làng) đã bỏ khỏi thanh dưới; bấm vào một người vẫn mở thẻ.
 - Mở với `?seed=7` để thử một làng khác.
 - Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 40 tới 50 người vào năm 2 rồi giữ 45 tới 50 tới hết trận; hội
   đồng gần như luôn đủ ghế, luôn đủ 4 thợ xây và 2 thương nhân.
@@ -259,9 +266,9 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `ui/hud.js`, `landbar.js`, `camera-fly.js` | Nút tốc độ, âm thanh, dòng ngày; thanh sáu đảo; camera bay tới và bay tự do |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế (có thầy thuốc) và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` dàn vai theo tính cách (thợ xây, thương nhân, lính, người đi đường, nông dân); `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời; `homes.js` nhà riêng của từng hộ |
 | `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `work3d.js` cử chỉ và đồ cầm tay cho từng việc theo thời; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) và dựng dần theo tiến độ (`setProgress`) |
-| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo; `place3d.js` tìm chỗ đặt trên địa hình thật; `batch3d.js` khối gộp cho đảo ở xa. `isles/` kiến trúc năm đảo còn lại. Đảo khác thêm thư mục riêng cùng kiểu |
+| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo; `place3d.js` tìm chỗ đặt trên địa hình thật; `batch3d.js` khối gộp cho đảo ở xa. `isles/` kiến trúc năm đảo còn lại; `civic.js` công trình công cộng của sáu đảo. Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
-| `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người và bảng làng (nút Làng); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
+| `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người (bảng làng cũ không còn nút mở); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
 | `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
 | `render/map/` | **Bản đồ** (chỉ thiên nhiên), mỗi phần một tệp: `shared3d.js` hình gốc, bộ gom mảnh, màu đất đá sáu miền; `mountains3d.js` năm dáng núi và khối núi nhiều mặt riêng từng đảo (`MASSIF`); `terrain3d.js` mép đảo, phần đất đá dưới đảo, hồ và sông sẵn có; `water3d.js` gộp mặt nước và bờ; `relief3d.js` sông, hồ, ao thêm (`WATERS`), đá và nét riêng từng miền; `trees3d.js` cây (`FLORA`); `map3d.js` ghép lại cho từng đảo (tên `Lands3D`). Chi tiết: | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông; khối núi nhiều mặt riêng từng đảo (`MASSIF`: Lúa Vàng dãy núi hồng tím đỉnh tuyết, Thông Xanh núi đôi phủ rừng, Tuyết Trắng núi băng lởm chởm, Cửa Sóng mũi đá đầu bằng, Cát Hồng núi bậc thang đá đỏ; Đá Mây giữ dãy 7 ngọn năm dáng); sông vào hồ, ao (`WATERS`); cụm đá và nét riêng từng miền; không còn đồi tròn. Cây (`FLORA`): tán tròn ít mặt mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng; cây không đổ bóng thật mà có vệt bóng dưới gốc. Nhẹ máy: mặt nước và bờ của mỗi đảo gộp thành một khối; ở xa một đảo thì ẩn bụi cây, vệt bóng và chi tiết nhỏ. Cách dựng cầu vẫn giữ nhưng cầu đang tạm bỏ (`W.bridges` rỗng trong index.html) |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |
