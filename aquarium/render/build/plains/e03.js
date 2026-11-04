@@ -44,12 +44,7 @@
     k.add(rc(3.3, 1.5, 3.3, 0.38, 0.5, 0.5), C.thatch[0], 0, 3.58, 0);
     for (const sx of [-0.28, 0.28]) k.add(Bc(0.07, 1.6, 0.07, 0.02), C.woodL, sx, 0.72, 1.75, { rot: [-0.45, 0, 0] });
   }
-  function gate(k) {
-    for (const sx of [-1, 1]) { k.add(Bc(0.7, 2.9, 0.7, 0.1), '#dcb98c', sx * 1.35, 1.45, 0); k.add(Bc(0.86, 0.22, 0.86, 0.05), C.stone[0], sx * 1.35, 0.11, 0); }
-    k.add(Bc(3.5, 0.4, 0.8, 0.1), '#dcb98c', 0, 2.75, 0);
-    k.add(rc(4.2, 0.75, 1.5, 0.2, 3.4, 0.3, 0.3), C.tile, 0, 3.37, 0);
-    k.add(Bc(1.4, 0.36, 0.08, 0.03), C.tileD, 0, 2.75, 0.42, { ao: false });
-  }
+
   // lò rèn: mái che trên bốn cột, đe sắt, lò than đỏ, ống khói gạch
   function forge(k) {
     for (const [x, z] of [[-1.6, -1.2], [1.6, -1.2], [-1.6, 1.2], [1.6, 1.2]]) k.add(K.post(0.1, 2.1), C.wood, x, 0, z);
@@ -79,13 +74,13 @@
       { kind: 'granary', x: 11.5, z: -12.5, face: F, clear: 2.8 },
       { kind: 'well', x: 3.6, z: 4.5, clear: 1.6 },
       { kind: 'banyan', x: -10.5, z: -12.5, clear: 4 },
-      { kind: 'gate', x: -5.5, z: 16, face: 'front', clear: 2.8 },
+      // (cổng làng cũ đã bỏ: cổng thành của đảo nay ở giữa mép trước, render/build/gates.js)
       { kind: 'forge', x: 14.5, z: 3, face: F, clear: 3 },
       { kind: 'windmill', x: 17, z: 13, face: 'front', clear: 3 },
       { kind: 'field', x: -15, z: 12, w: 8, d: 6, clear: 5.5 }, { kind: 'field', x: 6, z: 19, w: 8, d: 4.5, clear: 5 },
       { kind: 'hay', x: -9.5, z: 16, s: 1, clear: 1.3 }, { kind: 'hay', x: 11.5, z: 18.5, s: 0.85, clear: 1.1 },
     ],
-    BUILD: { hall, house, granary, gate, forge, windmill, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, hay: COMMON.hay },
-    NAME: { hall: 'Đình làng', house: 'Nhà ba gian', granary: 'Kho thóc', gate: 'Cổng làng', forge: 'Lò rèn', windmill: 'Cối xay gió', well: 'Giếng làng', banyan: 'Cây đa', field: 'Ruộng lúa', hay: 'Đống rơm' },
+    BUILD: { hall, house, granary, forge, windmill, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, hay: COMMON.hay },
+    NAME: { hall: 'Đình làng', house: 'Nhà ba gian', granary: 'Kho thóc', forge: 'Lò rèn', windmill: 'Cối xay gió', well: 'Giếng làng', banyan: 'Cây đa', field: 'Ruộng lúa', hay: 'Đống rơm' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

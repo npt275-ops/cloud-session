@@ -102,7 +102,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - **Nhà chính của năm đảo lên cấp đều** (`render/build/isles/halls.js`): mỗi đảo một dòng nhà chính riêng, không dùng chung
   với đảo khác; thời sau luôn cao hơn, nhiều tầng hơn, nhiều tháp hơn (thời 6 có dải kính, thời 9 vạch sáng và tháp sáng, thời
   11 vòng quay quanh đỉnh, thời 12 vương miện lơ lửng). Hoa văn riêng: Thông Xanh mái chùa và tán lá, Đá Mây lục giác và đá
-  bay, Tuyết Trắng mái vòm và mũi băng, Cửa Sóng vây buồm và vòng sóng, Cát Hồng bậc thang và mái củ hành.
+  bay, Tuyết Trắng mái vòm và mũi băng, Cửa Sóng vây buồm và vòng sóng, Cát Hồng bậc thang và mái củ hành. Từ thời Tên lửa
+  (7) mỗi đảo một công trình biểu tượng riêng cho từng thời (`render/build/isles/halls-future.js`, 30 công trình): bệ phóng,
+  bộ não, công trình sống, công trình mặt trời, vật lơ lửng, thành phố bay, mỗi đảo một dáng (ví dụ Thông Xanh: tháp phóng
+  quả thông, bộ não rừng, cây mẹ, hoa mặt trời, thân cây xoắn, rừng bay).
 - **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`, `game/isles.js`): bộ kiểu chung `arch.js` (27
   kiểu nhà, 21 kiểu nhà chính, công trình nhỏ, 11 kỳ quan riêng), `compose.js` ghép bố cục (nhà chính, 20 nhà riêng, công
   trình nhỏ, đường và tường sát mép, công trình ngoài làng, kỳ quan), mỗi đảo một tệp chọn kiểu, tên và bảng màu cho từng thời

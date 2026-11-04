@@ -8,6 +8,7 @@
  *   tundra   Tuyết Trắng: thân tròn, mái vòm, mũi băng quanh tầng, vòng cực quang nghiêng
  *   coast    Cửa Sóng: thân tròn, vây buồm hai bên, vòng sóng quay, vỏ ốc trên đỉnh
  *   desert   Cát Hồng: thân vuông bậc thang, mái củ hành, đĩa mặt trời quay, mũi kim tự tháp nổi
+ * Từ thời 7 (Tên lửa) mỗi đảo một công trình biểu tượng riêng cho từng thời: render/build/isles/halls-future.js.
  * Thời 1 và 2 dùng nhà chính sơ khai của từng đảo (arch.js: cave, snowHall, boatHall, stoneHut, lodge...).
  * BK.IslesHalls.build(đảo) trả hàm dựng (k, o) theo o.lv; NAME[đảo][cấp] là tên. Cần: kit3d, common, isles/arch.js. */
 (function (root) {
@@ -75,7 +76,9 @@
     };
   }
   const EARLY = { forest: ['greatTent', 'longhall'], mountain: ['cave', 'stoneHut'], tundra: ['snowHall', 'greatTent'], coast: ['boatHall', 'lodge'], desert: ['stoneHut', 'ziggurat'] };
-  function build(key) { const P = progressive(key); return (k, o) => (o.lv <= 2 ? A.HALL[EARLY[key][o.lv - 1]](k, o) : P(k, o)); }
+  // thời 1-2 sơ khai, thời 3-6 tháp tầng theo hoa văn đảo, thời 7-12 công trình biểu tượng riêng (halls-future.js)
+  function build(key) { const P = progressive(key); return (k, o) => { if (o.lv <= 2) return A.HALL[EARLY[key][o.lv - 1]](k, o); const Fu = o.lv >= 7 && BK.IslesHallsFuture && BK.IslesHallsFuture.of(key, o.lv); return Fu ? Fu(k, o) : P(k, o); }; }
+  const nameOf = (key, lv) => (BK.IslesHallsFuture && BK.IslesHallsFuture.nameOf(key, lv)) || NAME[key][lv];
   const NAME = {
     forest: [null, 'Lều Tù Trưởng', 'Nhà Rông', 'Đình Gỗ Ba Tầng', 'Đình Gỗ Có Tháp', 'Toà Gỗ Năm Tầng', 'Toà Gỗ Kính', 'Tháp Gỗ Lớn', 'Tháp Rừng Kính', 'Tháp Tán Sáng', 'Tháp Lá Mặt Trời', 'Tháp Rừng Quay', 'Vương Miện Rừng'],
     mountain: [null, 'Hang Tổ Tiên', 'Nhà Đá Tròn', 'Đền Đá Lục Giác', 'Pháo Đài Núi', 'Toà Đá Năm Tầng', 'Toà Đá Kính', 'Tháp Đá Lớn', 'Tháp Núi Kính', 'Tháp Thạch Anh', 'Tháp Mây Sáng', 'Tháp Đá Bay', 'Đỉnh Núi Lơ Lửng'],
@@ -83,5 +86,5 @@
     coast: [null, 'Nhà Thuyền Úp', 'Nhà Vỏ Cây', 'Đền Sóng Ba Tầng', 'Toà Cảng Có Tháp', 'Toà Cảng Năm Tầng', 'Toà Buồm Kính', 'Tháp Cảng Lớn', 'Tháp Biển Kính', 'Tháp Sóng Sáng', 'Tháp Ngọc Biển', 'Tháp Sóng Quay', 'Cung Điện Ngọc Trai'],
     desert: [null, 'Nhà Đá Tròn', 'Đền Bậc Thang', 'Đền Bậc Ba Tầng', 'Thành Cát Có Tháp', 'Cung Điện Năm Tầng', 'Cung Điện Kính', 'Tháp Bậc Lớn', 'Tháp Cát Kính', 'Tháp Mặt Trời', 'Tháp Nắng Vàng', 'Tháp Cát Quay', 'Kim Tự Tháp Bay'],
   };
-  BK.IslesHalls = { build, NAME, H, MOTIF };
+  BK.IslesHalls = { build, NAME, nameOf, H, MOTIF };
 })(typeof self !== 'undefined' ? self : globalThis);
