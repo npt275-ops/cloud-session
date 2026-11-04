@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.04-f06940a">
+<meta name="bekinh-version" content="2026.11.04-cc2ec07">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -125,6 +125,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="ui/village-ui.js"></script>
 <script src="render/build/kit3d.js"></script>
 <script src="render/build/life3d.js"></script>
+<script src="render/build/place3d.js"></script>
+<script src="render/build/batch3d.js"></script>
 <script src="render/build/bridges3d.js"></script>
 <!-- Lúa Vàng: phần chung, mỗi thời một tệp (cấp 1 Thời đồ đá … cấp 12 Siêu Việt), rồi công trình ngoài làng (rừng, bờ, biển), mười hai kỳ quan, đường và xe của làng theo thời -->
 <script src="render/build/plains/common.js"></script>
@@ -143,6 +145,14 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="render/build/plains/outer.js"></script>
 <script src="render/build/plains/wonders.js"></script>
 <script src="render/build/plains/town.js"></script>
+<!-- năm đảo còn lại: bộ kiểu kiến trúc chung, cách ghép bố cục, rồi mỗi đảo một tệp chọn kiểu cho 12 thời -->
+<script src="render/build/isles/arch.js"></script>
+<script src="render/build/isles/compose.js"></script>
+<script src="render/build/isles/forest.js"></script>
+<script src="render/build/isles/mountain.js"></script>
+<script src="render/build/isles/tundra.js"></script>
+<script src="render/build/isles/coast.js"></script>
+<script src="render/build/isles/desert.js"></script>
 <script src="render/buildings3d.js"></script>
 <!-- game: bộ nhớ chung, cảnh, bầu trời, độ mượt, bể kính, thiên nhiên, mùa, tuyết, Lúa Vàng, camera, thanh đảo, màn hình, vòng lặp -->
 <script src="game/world.js"></script>
@@ -156,6 +166,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="ui/camera-fly.js"></script>
 <script src="ui/landbar.js"></script>
 <script src="game/village.js"></script>
+<script src="game/isles.js"></script>
 <script src="ui/hud.js"></script>
 <script src="game/loop.js"></script>
 <script>BK.GameLoop.start();</script>

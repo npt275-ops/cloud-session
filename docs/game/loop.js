@@ -1,6 +1,6 @@
 /* Bể Kính · game/loop.js
  * Khởi động game và nhịp mỗi khung hình. start() dựng bộ nhớ chung G theo thứ tự (thế giới, cảnh, bầu trời, độ mượt,
- * bể kính, thiên nhiên, mùa, tuyết, Lúa Vàng, camera, thanh đảo, màn hình), rồi chạy vòng lặp:
+ * bể kính, thiên nhiên, mùa, tuyết, camera, thanh đảo, Lúa Vàng, năm đảo còn lại, màn hình), rồi chạy vòng lặp:
  *   đồng hồ trận đi theo thời gian thật (tới 1 giây mỗi khung: máy chậm vẫn đúng nhịp 1×, 2×, 4×), logic đảo chạy theo;
  *   chuyển động dùng thời gian khung (tối đa 0,1 giây); mỗi giây đổi mùa, ghi ngày, đồng bộ thời kỳ và bảng làng.
  * window.__glass: móc cho các bài kiểm tra chạy trình duyệt không giao diện. */
@@ -23,6 +23,7 @@
     BK.CameraFly.setup(G);   // ui/camera-fly.js
     BK.LandBar.setup(G);     // ui/landbar.js
     BK.GameVillage.setup(G); // game/village.js
+    BK.GameIsles.setup(G);   // game/isles.js (công trình năm đảo còn lại)
     BK.Hud.setup(G);         // ui/hud.js
 
     const { W, renderer, scene, camera, controls } = G, T = G.time;
@@ -38,6 +39,7 @@
       if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.villageRun.slow(); }
       G.nature.animate(dt, t, night);
       G.villageRun.animate(dt, t, night);
+      G.islesRun.update();
       G.snow.update(dt, t, G.weather.winter);
       const now = performance.now();
       G.updatePuffs(now, dt);

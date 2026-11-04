@@ -192,16 +192,17 @@
     { kind: 'offshore', outer: 'sea', a: 0.95, slot: 'offshore', from: 6, clear: 4 },
     { kind: 'offshore', outer: 'sea', a: -1.3, slot: 'offshore2', from: 7, clear: 4 },
   ];
-  for (let lv = 1; lv <= 12; lv++) {
-    const E = P.ERA[lv]; if (!E) continue;
-    // xen giữa danh sách (sau nhà chính, cứ vài công trình làng lại một món ngoài làng) để thợ dựng dần ra khắp đảo
+  // thêm các món ngoài làng vào bố cục của một thời: xen giữa danh sách (sau nhà chính, cứ vài công trình làng lại một món)
+  // để thợ dựng dần ra khắp đảo; tint: bảng màu riêng của đảo (các đảo khác dùng lại, render/build/isles/compose.js)
+  function addTo(E, lv, tint) {
     let at = Math.max(1, E.pieces.findIndex((x) => x.kind === 'hall') + 2);
     for (const S of SPOTS) {
       if (lv < S.from) continue;
-      E.pieces.splice(Math.min(at, E.pieces.length), 0, Object.assign({ x: 0, z: 0, lv }, S)); at += 4;
+      E.pieces.splice(Math.min(at, E.pieces.length), 0, Object.assign({ x: 0, z: 0, lv, tint: tint || null }, S)); at += 4;
       if (!E.BUILD[S.kind]) E.BUILD[S.kind] = BUILD[S.kind];
       E.NAME[S.kind] = NAMES[S.kind][tier(lv, CUTS[S.kind])];
     }
   }
-  P.OUTER = { SPOTS, BUILD, NAMES };
+  for (let lv = 1; lv <= 12; lv++) if (P.ERA[lv]) addTo(P.ERA[lv], lv);
+  P.OUTER = { SPOTS, BUILD, NAMES, addTo };
 })(typeof self !== 'undefined' ? self : globalThis);

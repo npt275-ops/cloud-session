@@ -1,8 +1,8 @@
 /* Bể Kính · render/build/plains/wonders.js · Mười hai kỳ quan của Lúa Vàng (mỗi thời một)
- * Mỗi thời có một công trình cao gấp hai ba lần nhà thường, nhìn từ xa biết ngay là thời nào. Dựng xong thì giữ lại qua mọi
- * thời sau như di tích (keep), nên tới cuối trận quanh làng có đủ mười hai kỳ quan kể lại lịch sử của đảo.
- * Đặt ở vòng ngoài làng, mỗi thời một góc (outer: 'forest', render/buildings3d.js tìm chỗ trống thật), mặt trước quay về làng.
- * Tệp này chạy sau e01..e12 và outer.js, thêm món 'wonder' vào ERA[cấp]. Cần: common.js. */
+ * Mỗi thời có một công trình cao gấp hai ba lần nhà thường, nhìn từ xa biết ngay là thời nào. Kỳ quan đứng ở một chỗ cố
+ * định bên cạnh làng (slot 'wonder'); sang thời mới, kỳ quan của thời mới thay kỳ quan cũ ngay tại chỗ đó.
+ * Tệp này chạy sau e01..e12 và outer.js. P.WONDERS.addTo(E, cấp, hàm dựng, tên, tint) thêm kỳ quan vào một bố cục (các đảo
+ * khác dùng lại, render/build/isles/compose.js). Cần: common.js. */
 (function (root) {
   const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc } = P;
   const THREE = () => window.THREE;
@@ -128,15 +128,14 @@
 
   const BUILD = [null, w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12];
   const NAME = [null, 'Vòng Đá Mặt Trời', 'Tháp Lúa', 'Thành Lũy', 'Đại Tháp Chuông', 'Nhà Máy Ống Khói', 'Tháp Truyền Hình', 'Bệ Phóng', 'Tháp Dữ Liệu', 'Cây Sống Khổng Lồ', 'Mặt Trời Nhân Tạo', 'Cổng Không Gian', 'Thành Phố Lơ Lửng'];
-  // góc quanh làng của từng kỳ quan: hai bên và phía sau (phía trước để trống cho máy quay nhìn vào làng)
-  const ANGLE = [0, 1.15, -1.15, 1.55, -1.55, 1.95, -1.95, 2.35, -2.35, 2.75, -2.75, 3.1, -3.1];
-  for (let lv = 1; lv <= 12; lv++) {
-    const E = P.ERA[lv]; if (!E) continue;
-    const kind = 'wonder' + lv;
-    // kỳ quan dựng ngay sau nhà chính
-    const at = Math.max(1, E.pieces.findIndex((x) => x.kind === 'hall') + 1);
-    E.pieces.splice(at, 0, { kind, x: 0, z: 0, outer: 'forest', a: ANGLE[lv], slot: kind, keep: true, solo: true, wonder: true, clear: 7 });
-    E.BUILD[kind] = BUILD[lv]; E.NAME[kind] = NAME[lv];
+  // chỗ kỳ quan: một bên làng, hơi lùi về sau (phía trước để trống cho máy quay nhìn vào làng)
+  const ANGLE = 1.75;
+  // thêm kỳ quan vào bố cục của một thời, dựng ngay sau nhà chính
+  function addTo(E, lv, build, name, tint) {
+    const kind = 'wonder' + lv, at = Math.max(1, E.pieces.findIndex((x) => x.kind === 'hall') + 1);
+    E.pieces.splice(at, 0, { kind, x: 0, z: 0, outer: 'forest', a: ANGLE, slot: 'wonder', solo: true, wonder: true, clear: 7, tint: tint || null });
+    E.BUILD[kind] = build; E.NAME[kind] = name;
   }
-  P.WONDERS = { BUILD, NAME, ANGLE };
+  for (let lv = 1; lv <= 12; lv++) if (P.ERA[lv]) addTo(P.ERA[lv], lv, BUILD[lv], NAME[lv]);
+  P.WONDERS = { BUILD, NAME, ANGLE, addTo };
 })(typeof self !== 'undefined' ? self : globalThis);

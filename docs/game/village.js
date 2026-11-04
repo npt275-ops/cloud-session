@@ -54,7 +54,7 @@
     // giờ trong ngày đi vào logic để người biết sáng đi làm, trưa về ăn, tối ra quảng trường, đêm về ngủ (logic/schedule.js)
     const step = (dDays) => { isle.tod = G.time.tod; Island.step(isle, dDays); };
     // logic sang thời ở khung hình nào thì công trình đổi thời ngay khung hình đó (không chờ nhịp chậm, tránh nhấp nháy)
-    function animate(dt, t, night) { if (isle.level !== G.level) syncEra(true); buildings.setProgress(0, isle.build && isle.build.list, isle.build && isle.build.level); buildings.animate(dt, t, night); village.update(dt, t); }
+    function animate(dt, t, night) { if (isle.level !== G.level) syncEra(true); buildings.setProgress(0, isle.build && isle.build.list, isle.build && isle.build.level); buildings.animate(dt, t, night, G.camera.position); village.update(dt, t); } // buildings.animate vẽ cả sáu đảo (đảo xa máy quay vẽ khối gộp)
     // mỗi giây: đồng bộ thời kỳ, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
     function slow() { syncEra(true); village.setPlaces(buildings.places(0)); villageUi.render(); }
     Object.assign(G, { isle, buildings, village, villageUi, jumpEra, villageRun: { step, animate, slow } });

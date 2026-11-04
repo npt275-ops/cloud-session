@@ -16,12 +16,21 @@
     return { spin: [['rings', 'y', 0.6]] };
   }
   // nhà mô-đun: các khối xếp lệch, vạch sáng ở mép, ô cửa tối
+  // tòa nhà thông minh (cao ốc của thời Robot AI): các khối kính chồng so le hơn chục tầng, vạch sáng xanh từng tầng,
+  // cửa kính sáng về đêm, mái có bãi drone và ăng-ten
   function pods(k, o) {
-    const n = 3 + (o.v % 3), base = pick(['#e8ecf0', '#d0d8e2', '#f2f4f6'], o.v * 0.3);
-    for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(B(w, 2.0, 3.0, 0.2), base, x, y, 0); k.add(Bc(w * 0.7, 0.9, 0.08, 0.04), '#2a3a4a', x, y + 1.1, 1.52, { ao: false }); k.add(Bc(w + 0.04, 0.08, 0.08, 0.02), CY, x, y + 2.0, 1.5, { glow: true }); }
-    k.add(Bc(0.9, 1.8, 0.08, 0.04), '#2a3a4a', -0.3, 0.9, 1.53, { ao: false });
-    for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(Bc(w * 0.62, 0.78, 0.04, 0.01), '#bff0ff', x, y + 1.1, 1.6, { lit: true }); } // ô cửa sáng về đêm
+    const n = 11 + (o.v % 5), base = pick(['#e8ecf0', '#d0d8e2', '#f2f4f6'], o.v * 0.3), H = 1.8;
+    for (let i = 0; i < n; i++) {
+      const w = 3.8 - (i % 3) * 0.35, x = ((i % 4) - 1.5) * 0.18, y = i * H, rot = (i % 2) * 0.12;
+      k.add(B(w, H - 0.1, 3.4, 0.15), base, x, y, 0, { rot: [0, rot, 0] });
+      k.add(Bc(w * 0.82, 0.9, 0.06, 0.02), '#2a3a4a', x, y + 0.9, 1.72, { rot: [0, rot, 0], ao: false });
+      if ((i + o.v) % 3) k.add(Bc(w * 0.7, 0.7, 0.04, 0.01), '#bff0ff', x, y + 0.9, 1.77, { rot: [0, rot, 0], lit: true });
+      if (i % 3 === 0) k.add(Bc(w + 0.04, 0.08, 3.44, 0.02), CY, x, y + H - 0.1, 0, { rot: [0, rot, 0], glow: true });
+    }
+    k.add(B(2.6, 0.3, 2.6, 0.08), '#363a48', 0, n * H, 0); k.add(K.disc(0.9, 10), CY, 0, n * H + 0.32, 0, { glow: true });
+    k.add(K.post(0.06, 3, 4), C.steel, 1.1, n * H, -1.1); k.add(K.ball(0.14), '#ff4a8a', 1.1, n * H + 3, -1.1, { glow: true });
   }
+
   function datacenter(k) {
     k.add(B(10, 3, 5, 0.1), '#2e343e', 0, 0, 0);
     for (let i = 0; i < 8; i++) k.add(Bc(0.1, 2.2, 0.06, 0.02), i % 2 ? CY : '#b48cff', -4.2 + i * 1.2, 1.5, 2.52, { glow: true });
@@ -56,6 +65,6 @@
       { kind: 'field', x: -15, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'robot', x: -13, z: 15, face: [-30, 15], clear: 0.6 }, { kind: 'robot', x: -17, z: 13.5, face: [0, 13.5], clear: 0.6 },
     ],
     BUILD: { hall, pods, datacenter, dronePad, robot, glowRoad, field: COMMON.field },
-    NAME: { hall: 'Lõi Trí Tuệ', pods: 'Nhà mô-đun', datacenter: 'Trung tâm dữ liệu', dronePad: 'Bãi drone', robot: 'Robot làm ruộng', glowRoad: 'Đường sáng', field: 'Ruộng lúa' },
+    NAME: { hall: 'Lõi Trí Tuệ', pods: 'Tòa nhà thông minh', datacenter: 'Trung tâm dữ liệu', dronePad: 'Bãi drone', robot: 'Robot làm ruộng', glowRoad: 'Đường sáng', field: 'Ruộng lúa' },
   };
 })(typeof self !== 'undefined' ? self : globalThis);

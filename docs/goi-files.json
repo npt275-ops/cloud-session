@@ -15,6 +15,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/isles.js",
+  "src": "game/isles.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/loop.js",
   "src": "game/loop.js",
   "mode": 420
@@ -150,8 +155,48 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/batch3d.js",
+  "src": "render/build/batch3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/bridges3d.js",
   "src": "render/build/bridges3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/arch.js",
+  "src": "render/build/isles/arch.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/coast.js",
+  "src": "render/build/isles/coast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/compose.js",
+  "src": "render/build/isles/compose.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/desert.js",
+  "src": "render/build/isles/desert.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/forest.js",
+  "src": "render/build/isles/forest.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/mountain.js",
+  "src": "render/build/isles/mountain.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/isles/tundra.js",
+  "src": "render/build/isles/tundra.js",
   "mode": 420
  },
  {
@@ -162,6 +207,11 @@
  {
   "path": "BeKinh/render/build/life3d.js",
   "src": "render/build/life3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/place3d.js",
+  "src": "render/build/place3d.js",
   "mode": 420
  },
  {

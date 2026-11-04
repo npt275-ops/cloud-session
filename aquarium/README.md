@@ -73,14 +73,29 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   ngoài 12 nhà, cùng chỗ ở mọi thời (nhà số i thời mới thay ngay nhà số i thời cũ). Vợ chồng và con nhỏ ở chung; lớn
   mà chưa cưới thì ra ở riêng nếu còn nhà; cả hộ không còn ai thì nhà trống cho hộ mới. Đêm, trưa ai về đúng nhà mình;
   thẻ người ghi “Nhà số …”. Nhà cao tầng của thời sau được thu cho vừa chỗ một hộ.
-- **Mười hai kỳ quan** (`render/build/plains/wonders.js`): mỗi thời một công trình cao gấp hai ba lần nhà thường, dựng
-  ngay sau nhà chính và giữ lại mãi như di tích (cuối trận quanh làng có đủ 12 kỳ quan): Vòng Đá Mặt Trời, Tháp Lúa,
-  Thành Lũy, Đại Tháp Chuông, Nhà Máy Ống Khói, Tháp Truyền Hình, Bệ Phóng, Tháp Dữ Liệu, Cây Sống Khổng Lồ, Mặt Trời
-  Nhân Tạo, Cổng Không Gian, Thành Phố Lơ Lửng. Đặt hai bên và phía sau làng (phía trước để trống cho máy quay).
+- **Mười hai kỳ quan** (`render/build/plains/wonders.js`): mỗi thời một công trình cao gấp hai ba lần nhà thường (Vòng Đá
+  Mặt Trời, Tháp Lúa, Thành Lũy, Đại Tháp Chuông, Nhà Máy Ống Khói, Tháp Truyền Hình, Bệ Phóng, Tháp Dữ Liệu, Cây Sống Khổng
+  Lồ, Mặt Trời Nhân Tạo, Cổng Không Gian, Thành Phố Lơ Lửng), đứng ở một chỗ cố định bên làng; sang thời mới kỳ quan mới
+  thay kỳ quan cũ ngay tại chỗ đó.
+- **Hết thời nào thì mọi công trình của thời đó đều được thay** (`render/buildings3d.js`): không giữ lại công trình cũ nào;
+  cái cũ chưa có gì thay thì mất khi công trình mới gần nó xong. Trang phục đổi ngay khi sang thời.
+- **Tường sát mép đảo** (`render/build/plains/town.js` `edgeWall`, đất thật từ `render/build/place3d.js`): mỗi thời một
+  kiểu tường chạy theo dáng mép đảo, ngắt ở chỗ núi, hồ, sông, có cổng ở đầu đường toả ra: bụi gai, lũy tre, tường thành có
+  tháp, tường gạch có pháo đài, rào sắt, kè bê tông có đèn, tường trắng có vòm ra-đa, rào năng lượng, tường cây sống, tấm chắn
+  nắng, cột trường lực, rèm ánh sáng.
 - **Làng lớn dần theo thời** (`render/build/plains/town.js`): vòng đường giữa hai vòng nhà và các đường toả ra, đổi theo
   thời (lối mòn, lối đất, đường đá, phố lát đá, đường ray, đường nhựa có vạch, đường lớn, đường sáng, lối dây leo, đường
   vàng, sàn nổi, vòng sáng), kèm lũy tre (thời 2), tường thành có cổng tháp (thời 3), đèn dầu (thời 4), cây hai bên đường
-  (thời 6), tàu một ray trên cao (thời 7). Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
+  (thời 6), tàu một ray trên cao (thời 7).
+- **Cao ốc cho các thời sau**: Lúa Vàng thời 8 tòa nhà thông minh, thời 9 tòa sinh học, thời 10 tòa mặt trời, thời 11 tòa
+  xoắn, thời 12 tháp pha lê (cao 15 đến 30).
+- **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`, `game/isles.js`): bộ kiểu chung `arch.js` (27
+  kiểu nhà, 21 kiểu nhà chính, công trình nhỏ, 11 kỳ quan riêng), `compose.js` ghép bố cục (nhà chính, 20 nhà riêng, công
+  trình nhỏ, đường và tường sát mép, công trình ngoài làng, kỳ quan), mỗi đảo một tệp chọn kiểu, tên và bảng màu cho từng thời
+  (`forest.js`, `mountain.js`, `tundra.js`, `coast.js`, `desert.js`). Trong cùng một thời không có hai đảo chung kiểu nhà hay
+  kiểu nhà chính. Bảng đầy đủ: `design/kien-truc-12-thoi.md`. Năm đảo này chưa có dân, công trình lên đời đều theo thời gian.
+- **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng
+  công trình; khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
   ray, rô-bốt giao hàng và drone, hạt giống bay, xe bay, quả cầu sáng.
 - **Công trình sống động**: khói bốc từ bếp lửa, lò gốm, lò rèn, ống khói nhà, nhà máy (`render/build/life3d.js`, một lượt
   vẽ cho cả đảo); cửa sổ sáng đèn về đêm (mảnh `lit` trong `kit3d.js`); cờ bay, chuông đung đưa (`sway`).
@@ -239,12 +254,12 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | File | Vai trò |
 |---|---|
 | `index.html` | Chỉ còn khung trang (thanh trên, thanh dưới, nút bay), kiểu dáng, và danh sách tệp cần nạp theo thứ tự; dòng cuối gọi `BK.GameLoop.start()` |
-| `game/` | **Ghép game**: `world.js` bộ nhớ chung G (hàm tiện dụng, sáu vùng đất, ngày trong trận, tốc độ, thời tiết); `nature.js` dựng bản đồ, cầu, biển, mây; `seasons.js` bốn mùa và độ đông; `village.js` Lúa Vàng chạy theo thời gian thực (logic đảo, công trình, người, bảng làng, bấm chọn người); `loop.js` thứ tự khởi động và nhịp mỗi khung hình |
+| `game/` | **Ghép game**: `world.js` bộ nhớ chung G (hàm tiện dụng, sáu vùng đất, ngày trong trận, tốc độ, thời tiết); `nature.js` dựng bản đồ, cầu, biển, mây; `seasons.js` bốn mùa và độ đông; `isles.js` công trình năm đảo còn lại theo thời gian; `village.js` Lúa Vàng chạy theo thời gian thực (logic đảo, công trình, người, bảng làng, bấm chọn người); `loop.js` thứ tự khởi động và nhịp mỗi khung hình |
 | `render/scene3d.js`, `sky3d.js`, `perf3d.js`, `tank3d.js`, `snow3d.js` | Bộ vẽ, camera, khói; bầu trời, sao, trăng, nắng, ngày đêm, bóng nắng không rung; bộ điều tốc 60 khung hình và vùng bóng; vòm kính, vòng đồng, đá trôi; tuyết rơi mùa đông |
 | `ui/hud.js`, `landbar.js`, `camera-fly.js` | Nút tốc độ, âm thanh, dòng ngày; thanh sáu đảo; camera bay tới và bay tự do |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế (có thầy thuốc) và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` dàn vai theo tính cách (thợ xây, thương nhân, lính, người đi đường, nông dân); `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời; `homes.js` nhà riêng của từng hộ |
 | `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `work3d.js` cử chỉ và đồ cầm tay cho từng việc theo thời; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) và dựng dần theo tiến độ (`setProgress`) |
-| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo. Đảo khác thêm thư mục riêng cùng kiểu |
+| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo; `place3d.js` tìm chỗ đặt trên địa hình thật; `batch3d.js` khối gộp cho đảo ở xa. `isles/` kiến trúc năm đảo còn lại. Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
 | `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người và bảng làng (nút Làng); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
 | `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
