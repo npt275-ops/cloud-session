@@ -51,8 +51,17 @@
       const f = new THREE.Vector2(L.inw.x, L.inw.z).normalize(), r = new THREE.Vector2(-f.y, f.x);
       const at = (x, z) => new THREE.Vector2(r.x * x + f.x * z, r.y * x + f.y * z);
       let yard = null; if (lay.yard) { yard = yardOf(lay, at); group.add(yard); group.userData.yard = yard; if (standing.length) yard.visible = false; }
-      // chỗ của các công trình không phải nhà riêng, để nhà riêng tránh ra
-      const fixed = lay.pieces.filter((P) => P.home == null && !P.nudge && !P.outer && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear }; });
+      // mạng đường của đảo (render/build/roads.js) theo toạ độ đảo: công trình không đặt chắn đường, xe chạy trên đường
+      const townSpec = lay.pieces.find((P) => P.town);
+      if (townSpec && BK.Roads3D) {
+        const land = PL.landFor(L, at(0, 0), Math.atan2(f.x, f.y)), N = BK.Roads3D.net(townSpec.net || 'plains', land.edge);
+        // cùng phép xoay với lớp đường (công trình đặt ở tâm, rotation.y = góc hướng ra biển trong), để chỗ tránh khớp chỗ vẽ
+        const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th), rot = (x, z) => [x * c + z * sn, -x * sn + z * c];
+        L.roadSegs = BK.Roads3D.segs(N).map(([x0, z0, x1, z1]) => [...rot(x0, z0), ...rot(x1, z1)]);
+        L.roadW = (townSpec.roadW || 3) / 2 + 0.4;
+      }
+      // chỗ của các công trình có chỗ cố định trong bố cục, để công trình khác tránh ra (mỗi cái cũng tự tránh đường)
+      const fixed = lay.pieces.filter((P) => P.home == null && !P.nudge && !P.outer && !P.town && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear, P }; });
       for (const P of lay.pieces) {
         const build = lay.BUILD[P.kind]; if (!build) continue;
         // chỉ đặt chỗ; hình dựng lúc công trình hiện ra lần đầu (bakeOf), để sang thời không phải dựng cả làng một lúc
@@ -61,8 +70,11 @@
         if (P.outer) { const q = PL.outerSpot(L, P, at); if (q) { p = q.p; dir = q.dir; fixed.push({ x: p.x, y: p.y, r: q.r }); } else { p = at(0, 0); dead = true; } }
         else {
           p = at(P.x, P.z);
-          if (P.home != null || P.nudge) p = PL.homeSpot(L, p, P.clear, fixed); // nhà riêng, công trình công cộng: dịch tránh chỗ vướng
-          if (P.nudge) fixed.push({ x: p.x, y: p.y, r: P.clear });
+          // mọi công trình trong làng (trừ nhà chính và lớp đường): dịch tránh đường, núi, hồ và công trình khác
+          if (P.kind !== 'hall' && !P.town && (P.clear || 0) > 0.3) {
+            p = PL.homeSpot(L, p, P.clear, fixed, P);
+            const F = fixed.find((x) => x.P === P); if (F) { F.x = p.x; F.y = p.y; } else fixed.push({ x: p.x, y: p.y, r: P.clear, P });
+          }
           if (Array.isArray(P.face)) { const d = at(P.face[0], P.face[1]).sub(p); if (d.lengthSq() > 1e-6) dir = d.normalize(); }
         }
         g.position.set(p.x, P.outer === 'sea' ? SEA_Y : 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
@@ -88,10 +100,9 @@
     // dọn cây chỗ đặt; lớp đường của cả làng (clearRing: [bán kính, rộng, các góc đường toả ra]) dọn dọc đường
     function clearAround(sh, P) {
       lands3d.clearTrees(sh.L, P.x, P.z, P.clear);
-      const R = P.spec.clearRing; if (!R) return;
-      const [rr, w, spokes] = R, c = Math.cos(P.g.rotation.y), s = Math.sin(P.g.rotation.y), put = (lx, lz) => lands3d.clearTrees(sh.L, P.x + lx * c + lz * s, P.z - lx * s + lz * c, w);
-      for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; put(Math.sin(a) * rr, Math.cos(a) * rr); }
-      for (const a of spokes || []) for (let d = 13; d <= 34; d += 2) put(Math.sin(a) * d, Math.cos(a) * d);
+      if (!P.spec.town) return;
+      // lớp đường của cả làng: dọn cây dọc mạng đường của đảo
+      for (const [x0, z0, x1, z1] of sh.L.roadSegs || []) { const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 1.5)); for (let i = 0; i <= n; i++) lands3d.clearTrees(sh.L, x0 + ((x1 - x0) * i) / n, z0 + ((z1 - z0) * i) / n, 2.2); }
       // tường sát mép đảo (render/build/plains/town.js edgeWall): dọn cây dọc mép
       for (let i = 0; i < 120; i++) { const th = (i / 120) * Math.PI * 2, R = sh.L.rOf(th) - 3.5; lands3d.clearTrees(sh.L, Math.cos(th) * R, Math.sin(th) * R, 1.6); }
     }
@@ -151,6 +162,18 @@
       for (const P of list) for (const k in P.parts) if (P.parts[k]) P.parts[k].visible = false;
       sh.inBatch = list; sh.batch.show(true);
     }
+    // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe ở quãng đường (thời gian × tốc độ +
+    // khoảng lệch), đầu xe quay theo hướng đoạn đường đang đi
+    function drive(A, p, ts) {
+      if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
+      for (const [n, speed, off, y] of A.path) {
+        const sub = p.subs[n]; if (!sub) continue;
+        let d = (ts * speed + off) % A.len; if (d < 0) d += A.len;
+        let i = 0; while (i < A.loop.length - 1 && A.cum[i + 1] < d) i++;
+        const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length], u = (d - A.cum[i]) / Math.max(1e-6, A.cum[i + 1] - A.cum[i]);
+        sub.position.set(a[0] + (b[0] - a[0]) * u, y, a[1] + (b[1] - a[1]) * u); sub.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]);
+      }
+    }
     function animate(dt, t, night, cam) {
       const ts = t * 0.001; batchedThisFrame = false;
       if (LIT) { LIT.opacity = Math.max(0, Math.min(0.95, ((night || 0) - 0.15) * 1.4)); LIT.visible = LIT.opacity > 0.01; }
@@ -167,6 +190,7 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
+          if (A.path) drive(A, p, ts); // xe chạy dọc vòng đường (render/build/vehicles.js)
           }
           if (!far) for (const G of p.glows) {
             const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);
@@ -187,12 +211,14 @@
     const NOT_A_PLACE = new Set(['town', 'road', 'asphalt', 'glowRoad', 'lamp', 'pole']);
     function places(i) {
       const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
-      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], site: [], market: [], shrine: [], school: [], outer: [], all: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], site: [], market: [], shrine: [], school: [], outer: [], all: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
         if (!g.visible || P.gone || NOT_A_PLACE.has(k)) continue;
         const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
+        // cổng thành: bốn chốt gác, hai chốt phía ngoài hai bên lối đi, hai chốt phía trong
+        if (P.spec.gate) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x); for (const [d, s2] of [[1.8, 2.9], [1.8, -2.9], [-2.6, 2.9], [-2.6, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
         if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         out.all.push(door);
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }

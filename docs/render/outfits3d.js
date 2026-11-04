@@ -107,7 +107,7 @@
   function groupOf(p) {
     if (p.role === 'king') return 'leader';
     if (p.role === 'general1' || p.role === 'general2') return 'general';
-    if (p.job === 'soldier') return 'soldier';
+    if (p.job === 'soldier' || p.job === 'gatekeeper') return 'soldier'; // lính gác cổng mặc như lính
     return p.sex === 'f' ? 'f' : 'm';
   }
   function look(p, level) {

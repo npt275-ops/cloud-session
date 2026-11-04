@@ -1,6 +1,7 @@
 /* Bể Kính · render/build/place3d.js
  * Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ, sông, mép đảo và các công trình khác):
- *   homeSpot   nhà riêng: giữ đúng chỗ đã định nếu trống, không thì dịch dần ra xung quanh
+ *   homeSpot   công trình trong làng: giữ đúng chỗ đã định nếu trống, không thì dịch dần ra xung quanh; tránh núi, hồ, mép đảo,
+ *              công trình khác và mặt đường (L.roadSegs: các đoạn đường của đảo, đặt bởi render/buildings3d.js)
  *   outerSpot  công trình ngoài làng: coast (mép đảo, mặt trước quay ra biển), sea (ngoài khơi), forest (vòng ngoài làng),
  *              kỳ quan (wonder: tìm rộng hơn vì to). Tìm một lần cho mỗi slot (địa hình không đổi) và nhớ trong L.outerSpots
  *   landFor    cho hàm dựng của một công trình biết đất quanh nó, theo toạ độ của chính công trình: edge(góc) bán kính
@@ -12,10 +13,13 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
   function create(THREE) {
-    function homeSpot(L, p, r, fixed) {
-      const ok = (q) => L.inside(q.x, q.y, r + 2) && !L.blockedWild(q.x, q.y, r) && !fixed.some((F) => (F.x - q.x) ** 2 + (F.y - q.y) ** 2 < (F.r + r) ** 2);
+    // khoảng cách từ một điểm tới đoạn thẳng
+    const segDist = (x, z, [x0, z0, x1, z1]) => { const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2)); return Math.hypot(x - x0 - dx * t, z - z0 - dz * t); };
+    const onRoad = (L, x, z, r) => !!L.roadSegs && L.roadSegs.some((S) => segDist(x, z, S) < r + (L.roadW || 1.5));
+    function homeSpot(L, p, r, fixed, self) {
+      const ok = (q) => L.inside(q.x, q.y, r + 2) && !L.blockedWild(q.x, q.y, r) && !onRoad(L, q.x, q.y, r * 0.85) && !fixed.some((F) => F.P !== self && (F.x - q.x) ** 2 + (F.y - q.y) ** 2 < (F.r + r) ** 2);
       if (ok(p)) return p;
-      for (const [ks, da] of [[1.12, 0], [0.9, 0], [1, 0.1], [1, -0.1], [1.22, 0.06], [1.22, -0.06], [0.82, 0.1], [1.34, 0], [1, 0.2], [1, -0.2], [1.45, 0.1], [0.75, -0.15]]) {
+      for (const [ks, da] of [[1.12, 0], [0.9, 0], [1, 0.1], [1, -0.1], [1.22, 0.06], [1.22, -0.06], [0.82, 0.1], [1.34, 0], [1, 0.2], [1, -0.2], [1.45, 0.1], [0.75, -0.15], [1.08, 0.16], [1.08, -0.16], [0.92, 0.22], [0.92, -0.22], [1.3, 0.2], [1.3, -0.2]]) {
         const a = Math.atan2(p.y, p.x) + da, R = p.length() * ks, q = new THREE.Vector2(Math.cos(a) * R, Math.sin(a) * R); if (ok(q)) return q;
       }
       return p;
@@ -35,8 +39,8 @@
           const q = u.clone().multiplyScalar(R);
           if (P.outer === 'sea') { if (!L.inside(q.x, q.y, -4) && free(q, r, 3)) { found = { p: q, dir: new THREE.Vector2(-u.y, u.x), r }; break; } continue; }
           if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && free(q, r, 3)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
-          if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && free(q, r, 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
-          if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && free(q, r, 3)) { found = { p: q, dir: u.clone().negate(), r }; break; }
+          if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && !onRoad(L, q.x, q.y, r * 0.7) && free(q, r, 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
+          if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && !onRoad(L, q.x, q.y, r * 0.7) && free(q, r, 3)) { found = { p: q, dir: u.clone().negate(), r }; break; }
         }
       }
       cache[key] = found; return found;
@@ -50,7 +54,7 @@
         free(x, z, r) { const [X, Z] = toIsle(x, z); return L.inside(X, Z, r || 0) && !L.blockedWild(X, Z, r || 0); },
       };
     }
-    return { homeSpot, outerSpot, landFor };
+    return { homeSpot, outerSpot, landFor, onRoad, segDist };
   }
   return { create };
 });

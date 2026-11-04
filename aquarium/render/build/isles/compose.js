@@ -53,8 +53,9 @@
       if (odd) { BUILD.homeO = A.HOME[odd]; NAME.homeO = HNAME[odd]; }
       EXTRAS[lv].forEach((x, i) => { const kind = 'x_' + x + i; pieces.push({ kind, x: SPOTS[i][0], z: SPOTS[i][1], clear: 3, v: i, pal, face: [0, 2] }); BUILD[kind] = A.EXTRA[x]; NAME[kind] = EXTRA_NAME[x]; });
       const L = { yard, pieces, BUILD, NAME };
-      P.TOWN.addTo(L, lv, tintTo(theme.accent, 0.22));
+      P.TOWN.addTo(L, lv, tintTo(theme.accent, 0.22), theme.key); // đường riêng của đảo
       P.OUTER.addTo(L, lv, tintTo(theme.accent, 0.25));
+      if (BK.Gates3D) BK.Gates3D.addTo(L, lv, theme.key); // cổng thành riêng của đảo, giữa mép trước
       if (BK.Civic3D) BK.Civic3D.addTo(L, lv, pal, ORDER.indexOf(theme.key) + 1); // trường, thư viện, bảo tàng, bệnh viện…
       const w = E.wonder, wb = typeof w[0] === 'number' ? P.WONDERS.BUILD[w[0]] : A.WONDER[w[0]];
       const wpal = Object.assign({}, pal, theme.wonderPal || {});

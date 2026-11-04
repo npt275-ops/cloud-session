@@ -39,6 +39,7 @@
       if (place === 'field') return pickOf(PL.field, k);
       if (place === 'guard') return pickOf(PL.guard, p.id);
       if (place === 'bridge') return bridge;
+      if (place === 'gate') return PL.gate && PL.gate.length ? PL.gate[(p.post || 0) % PL.gate.length] : pickOf(PL.guard, p.id); // bốn chốt gác cổng thành
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);

@@ -45,7 +45,7 @@
     let sel = null, lastKey = '';
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
-    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', site: 'ở chỗ đang dựng' };
+    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', gate: 'ở cổng thành', site: 'ở chỗ đang dựng' };
     const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
 
     function renderPanel() {

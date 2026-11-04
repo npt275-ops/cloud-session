@@ -50,7 +50,7 @@
       { kind: 'hall', x: 0, z: -8, clear: 8 }, { kind: 'sun', x: 0, z: 4, clear: 0 },
       ...homes('floatHouse', null, { small: 'floatSmall', odd: 'inverted' }),
       ...[[-5, 9], [5, 9], [-9, 15], [9, 15]].map(([x, z]) => ({ kind: 'pylon', x, z, clear: 0.6 })),
-      { kind: 'field', x: -17, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'field', x: 17, z: 15, w: 9, d: 6, fence: false, clear: 6 },
+      // (đã bỏ ruộng lúa: sau thời trung đại Lúa Vàng không còn ruộng)
     ],
     BUILD: { floatSmall: floatSmall, inverted: archHome('inverted', PAL), hall, sun, floatHouse, pylon, field: COMMON.field },
     NAME: { floatSmall: 'Nhà lơ lửng', inverted: 'Kim tự tháp ngược', hall: 'Tháp Lơ Lửng', sun: 'Mặt trời nhân tạo', floatHouse: 'Tòa mặt trời', pylon: 'Cột dẫn nắng', field: 'Ruộng lúa' },

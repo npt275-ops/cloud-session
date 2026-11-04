@@ -45,7 +45,7 @@
       { kind: 'hall', x: 0, z: -8, clear: 9 },
       ...homes('bud', null, { small: 'budSmall', odd: 'mushroom' }),
       ...[[-4, 8], [4, 8], [-7, 13], [7, 13], [0, 15]].map(([x, z]) => ({ kind: 'shroom', x, z, clear: 0.8 })),
-      { kind: 'lily', x: -17, z: 15, clear: 5 }, { kind: 'lily', x: 17, z: 15, clear: 5 },
+      // (đã bỏ ruộng lúa: sau thời trung đại Lúa Vàng không còn ruộng)
     ],
     BUILD: { budSmall: budSmall, mushroom: archHome('mushroom', PAL), hall, bud, shroom, lily },
     NAME: { budSmall: 'Nhà búp', mushroom: 'Tháp nấm', hall: 'Lõi San Hô', bud: 'Tòa sinh học', shroom: 'Đèn nấm', lily: 'Ruộng trên lá sen' },

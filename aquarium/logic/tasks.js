@@ -12,7 +12,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   // tên động từ (cho thẻ người)
-  const VERB_NAME = { farm: 'làm ruộng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', patrol: 'đi tuần', drill: 'luyện quân',
+  const VERB_NAME = { farm: 'làm ruộng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', gatekeep: 'gác cổng', patrol: 'đi tuần', drill: 'luyện quân',
     direct: 'chỉ đạo', rule: 'nói với dân', advise: 'bàn việc làng', pray: 'cầu nguyện', heal: 'chữa bệnh', trade: 'bán hàng', shop: 'mua hàng',
     stroll: 'đi đường', learn: 'học', tell: 'kể chuyện', play: 'chơi đùa', help: 'phụ việc', eat: 'ăn', chat: 'trò chuyện', rest: 'nghỉ', sleep: 'ngủ' };
 
@@ -26,6 +26,8 @@
     const chat = (why, place) => { const f = friendOf(S, p, rng); return f != null ? d('talk', { verb: 'chat', target: f, place, reason: why + ' (' + when + ')', until: span(), phase: ph }) : job('rest', place || 'square', why); };
     const role = p.role, j = p.job;
     const building = S.build && S.build.active != null ? S.build.list[S.build.active] : null;
+    // lính gác cổng thành: ngày đêm đứng ở cổng (bữa ăn mang ra cổng), canh người ra vào
+    if (j === 'gatekeeper') return job('guard', 'gate', ph === 'night' ? 'gác cổng thành ban đêm' : 'canh gác cổng thành');
     // đêm: ai cũng về nhà ngủ, trừ một nửa số lính thay nhau gác
     if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return job('guard', 'guard', 'gác đêm cho làng'); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)

@@ -69,7 +69,7 @@
       ...homes('pods', null, { small: 'podSmall', odd: 'tilt' }),
       { kind: 'datacenter', x: -16, z: -14, face: [0, 6], clear: 6 },
       { kind: 'dronePad', x: 10, z: 12, clear: 2.6 }, { kind: 'dronePad', x: 14, z: 16, clear: 2.6 },
-      { kind: 'field', x: -15, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'robot', x: -13, z: 15, face: [-30, 15], clear: 0.6 }, { kind: 'robot', x: -17, z: 13.5, face: [0, 13.5], clear: 0.6 },
+      // (đã bỏ ruộng lúa: sau thời trung đại Lúa Vàng không còn ruộng)
     ],
     BUILD: { podSmall: podSmall, tilt: archHome('tilt', PAL), hall, pods, datacenter, dronePad, robot, glowRoad, field: COMMON.field },
     NAME: { podSmall: 'Nhà mô-đun nhỏ', tilt: 'Tháp nghiêng', hall: 'Lõi Trí Tuệ', pods: 'Tòa nhà thông minh', datacenter: 'Trung tâm dữ liệu', dronePad: 'Bãi drone', robot: 'Robot làm ruộng', glowRoad: 'Đường sáng', field: 'Ruộng lúa' },

@@ -147,3 +147,19 @@ test('mỗi hộ một nhà riêng trong 20 nhà; vợ chồng ở chung, trẻ 
   for (const p of live) if (BK.People.ageOf(p, S.day) < BK.Rules.ADULT_AGE) { const par = p.parents.map((id) => S.people.get(id)).filter((q) => q && q.alive); if (par.length) assert.ok(par.some((q) => q.home === p.home), 'trẻ ở với bố mẹ'); }
   assert.ok(occ.filter((n) => n > 0).length >= 12, 'dân ở rải trong nhiều nhà: ' + occ.join(' '));
 });
+
+test('cổng thành luôn có đủ 4 lính gác, mỗi người một chốt, qua mọi thế hệ', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 21 });
+  let checked = 0;
+  for (let d = 0; d < 9 * 360; d++) {
+    S.tod = (d % 4) / 4; BK.Island.step(S, 1);
+    if (d > 720 && d % 30 === 0) {
+      const g = BK.Island.living(S).filter((p) => p.job === 'gatekeeper');
+      assert.strictEqual(g.length, BK.Rules.GATEKEEPERS, 'ngày ' + d + ': ' + g.length + ' lính gác');
+      assert.deepStrictEqual(g.map((p) => p.post).sort(), [0, 1, 2, 3], 'mỗi người một chốt');
+      for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb) assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); }
+      checked++;
+    }
+  }
+  assert.ok(checked > 70);
+});

@@ -44,6 +44,7 @@
     // thêm thợ cho đủ 4 người dựng và sửa nhà, thêm 1 người bán hàng cho đủ 2 thương nhân, một phần người lớn làm lính,
     // còn lại là dân: người làm ruộng và người đi đường (đi lại, mua bán, trò chuyện)
     HOME_SLOTS: 20,                      // số nhà riêng trong làng: mỗi hộ (bố mẹ và con) một nhà (logic/homes.js)
+    GATEKEEPERS: 4,                      // lính gác cổng thành: luôn đủ 4 người, thế hệ này qua thế hệ khác (logic/jobs.js)
     BUILDERS: 4,                         // tổng số thợ xây kể cả thợ cả
     TRADERS: 2,                          // tổng số thương nhân kể cả thương chủ
     SOLDIER_SHARE: 0.3,                  // phần người lớn ngoài hội đồng làm lính

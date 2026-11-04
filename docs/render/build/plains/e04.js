@@ -68,7 +68,7 @@
       { kind: 'balloon', x: 16, z: 14, clear: 3 },
       { kind: 'well', x: 3.4, z: 2.6, clear: 1.6 }, { kind: 'banyan', x: -12, z: -13, clear: 4 },
       { kind: 'lamp', x: -2, z: 6, clear: 0.5 }, { kind: 'lamp', x: 2, z: 6, clear: 0.5 }, { kind: 'lamp', x: -2, z: 12, clear: 0.5 }, { kind: 'lamp', x: 2, z: 12, clear: 0.5 },
-      { kind: 'field', x: -16, z: 14, w: 8, d: 6, clear: 5.5 }, { kind: 'hay', x: -10.5, z: 17.5, s: 1, clear: 1.3 },
+      // (đã bỏ ruộng lúa: sau thời trung đại Lúa Vàng không còn ruộng)
     ],
     BUILD: { hall, house, market, press, balloon, lamp, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, hay: COMMON.hay, road: COMMON.road },
     NAME: { hall: 'Tháp Đồng Hồ', house: 'Nhà gạch hai tầng', market: 'Chợ có mái', press: 'Nhà in', balloon: 'Bãi khí cầu', lamp: 'Đèn dầu', well: 'Giếng', banyan: 'Cây đa', field: 'Ruộng lúa', hay: 'Đống rơm', road: 'Đường lát đá' },

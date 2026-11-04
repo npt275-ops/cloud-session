@@ -83,10 +83,19 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   kiểu tường chạy theo dáng mép đảo, ngắt ở chỗ núi, hồ, sông, có cổng ở đầu đường toả ra: bụi gai, lũy tre, tường thành có
   tháp, tường gạch có pháo đài, rào sắt, kè bê tông có đèn, tường trắng có vòm ra-đa, rào năng lượng, tường cây sống, tấm chắn
   nắng, cột trường lực, rèm ánh sáng.
-- **Làng lớn dần theo thời** (`render/build/plains/town.js`): vòng đường giữa hai vòng nhà và các đường toả ra, đổi theo
-  thời (lối mòn, lối đất, đường đá, phố lát đá, đường ray, đường nhựa có vạch, đường lớn, đường sáng, lối dây leo, đường
-  vàng, sàn nổi, vòng sáng), kèm lũy tre (thời 2), tường thành có cổng tháp (thời 3), đèn dầu (thời 4), cây hai bên đường
-  (thời 6), tàu một ray trên cao (thời 7).
+- **Mỗi đảo một mạng đường riêng** (`render/build/roads.js`), giữ qua mọi thời, chỉ đổi mặt đường, đèn, cây theo thời:
+  Lúa Vàng vòng tròn và bốn đường toả; Thông Xanh vòng lượn sóng, lối rừng uốn khúc; Đá Mây vòng ngoài rộng, đường trước đi
+  chữ chi; Tuyết Trắng vòng vuông bo góc, đại lộ trước sau; Cửa Sóng vòng bầu dục dọc bờ; Cát Hồng vòng vuông, bốn đại lộ chữ
+  thập. Công trình không đặt chắn đường (`render/build/place3d.js` tránh mặt đường); đèn, cây đứng bên lề.
+- **Xe chạy theo đường** (`render/build/vehicles.js`): mỗi xe chạy dọc vòng đường của đảo, đầu xe luôn quay theo hướng đi,
+  toa tàu nối đuôi nhau: xe trâu, người cưỡi ngựa, xe ngựa kéo, tàu hơi nước ba toa, ô tô, tàu một ray trên cao, rô-bốt giao
+  hàng, hạt giống bay, xe bay, quả cầu sáng, thoi ánh sáng.
+- **Cổng thành** (`render/build/gates.js`): ở chính giữa mép trước mỗi đảo, nơi đường lớn ra biển; 12 dáng theo thời (đá
+  dựng, cổng gỗ có chòi, cổng thành đá hai tháp, cổng gạch đồng hồ, cổng vòm sắt, cổng bê tông, cột ra-đa, khung quét an ninh,
+  vòm cây sống, vòm mặt trời, cổng không gian, cổng ánh sáng) × 6 biến thể theo đảo (dáng tháp, mái, màu, vật trên đỉnh):
+  72 cổng khác nhau. Bốn lính gác cổng của Lúa Vàng (`logic/jobs.js` gatekeeper, `GATEKEEPERS: 4`) ngày đêm đứng ở bốn
+  chốt, người cũ già đi thì người mới vào thay, thế hệ nào cũng đủ 4.
+- Lúa Vàng sau thời Trung đại không còn ruộng lúa (thời 4 trở đi bỏ ruộng, đống rơm, máy cày, rô-bốt làm ruộng).
 - **Cao ốc cho các thời sau**: Lúa Vàng thời 8 tòa nhà thông minh, thời 9 tòa sinh học, thời 10 tòa mặt trời, thời 11 tòa
   xoắn, thời 12 tháp pha lê (cao 15 đến 30).
 - **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`, `game/isles.js`): bộ kiểu chung `arch.js` (27
@@ -266,7 +275,7 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `ui/hud.js`, `landbar.js`, `camera-fly.js` | Nút tốc độ, âm thanh, dòng ngày; thanh sáu đảo; camera bay tới và bay tự do |
 | `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế (có thầy thuốc) và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` dàn vai theo tính cách (thợ xây, thương nhân, lính, người đi đường, nông dân); `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời; `homes.js` nhà riêng của từng hộ |
 | `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `work3d.js` cử chỉ và đồ cầm tay cho từng việc theo thời; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) và dựng dần theo tiến độ (`setProgress`) |
-| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo; `place3d.js` tìm chỗ đặt trên địa hình thật; `batch3d.js` khối gộp cho đảo ở xa. `isles/` kiến trúc năm đảo còn lại; `civic.js` công trình công cộng của sáu đảo. Đảo khác thêm thư mục riêng cùng kiểu |
+| `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, 20 nhà riêng của dân, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên); `outer.js` công trình ngoài làng (bờ biển, ngoài khơi, trong rừng) đổi dáng theo thời; `wonders.js` mười hai kỳ quan; `town.js` đường, tường, đường ray và xe của làng theo thời. `life3d.js` (cạnh `kit3d.js`) khói của cả đảo; `roads.js` mạng đường từng đảo; `vehicles.js` xe; `gates.js` cổng thành; `place3d.js` tìm chỗ đặt trên địa hình thật; `batch3d.js` khối gộp cho đảo ở xa. `isles/` kiến trúc năm đảo còn lại; `civic.js` công trình công cộng của sáu đảo. Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
 | `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người (bảng làng cũ không còn nút mở); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
 | `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |

@@ -170,6 +170,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/gates.js",
+  "src": "render/build/gates.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/isles/arch.js",
   "src": "render/build/isles/arch.js",
   "mode": 420
@@ -297,6 +302,16 @@
  {
   "path": "BeKinh/render/build/plains/wonders.js",
   "src": "render/build/plains/wonders.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/roads.js",
+  "src": "render/build/roads.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/vehicles.js",
+  "src": "render/build/vehicles.js",
   "mode": 420
  },
  {

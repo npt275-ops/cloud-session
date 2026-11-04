@@ -74,7 +74,7 @@
       { kind: 'station', x: 6, z: 20, face: 'front', clear: 7 },
       { kind: 'lamp', x: -2.4, z: 4, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 4, face: [-10, 4], clear: 0.5 }, { kind: 'lamp', x: -2.4, z: 11, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 11, face: [-10, 11], clear: 0.5 },
       { kind: 'well', x: 4.2, z: 2.2, clear: 1.6 }, { kind: 'banyan', x: 12, z: -14, clear: 4 },
-      { kind: 'field', x: 16, z: 8, w: 9, d: 6, clear: 6 }, { kind: 'tractor', x: 15, z: 12, face: [30, 12], clear: 1.5 },
+      // (đã bỏ ruộng lúa: sau thời trung đại Lúa Vàng không còn ruộng)
     ],
     BUILD: { cottage: archHome('timber', PAL), hall, row, factory, station, lamp, tractor, well: COMMON.well, banyan: COMMON.banyan, field: COMMON.field, road: COMMON.road },
     NAME: { cottage: 'Nhà khung gỗ', hall: 'Toà Thị Chính', row: 'Dãy nhà gạch', factory: 'Xưởng xay lúa', station: 'Ga tàu', lamp: 'Đèn khí', tractor: 'Máy cày hơi nước', well: 'Giếng', banyan: 'Cây đa', field: 'Ruộng lúa', road: 'Đường lát đá' },
