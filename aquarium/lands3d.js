@@ -181,6 +181,23 @@
     const BEY_LAMP = ['#7ff0ff', '#7ff0ff', '#ffb347', '#b48cff', '#ff3ec8'];
 
     /* =============== Địa hình sáu miền =============== */
+    // một ngọn núi với dáng ngẫu nhiên trong sáu kiểu, để các dãy núi không giống nhau:
+    // spire đỉnh nhọn, ridge sống núi dài ba đỉnh, twin núi đôi, dome núi tròn thoải, mesa núi đầu bằng hai bậc, crag núi đá lởm chởm
+    const MOUNTAIN_STYLES = ['spire', 'ridge', 'twin', 'dome', 'mesa', 'crag'];
+    function mountainOn(k, x, z, rad, h, cols, cap, rng, style) {
+      const st = style || MOUNTAIN_STYLES[Math.floor(rng() * MOUNTAIN_STYLES.length)], c = () => pick(cols, rng()), ry = rng() * TAU;
+      const peak = (px, pz, r, hh, seg) => { k.cone(c(), px, 0, pz, r, hh, seg || 7, rng() * 3); if (cap) k.cone(cap, px, hh * 0.62, pz, r * 0.38, hh * 0.38 + 0.05, seg || 7, rng() * 3); };
+      if (st === 'spire') peak(x, z, rad * 0.85, h * 1.1);
+      else if (st === 'ridge') { for (let i = -1; i <= 1; i++) { const d = i * rad * 0.9; peak(x + Math.cos(ry) * d, z + Math.sin(ry) * d, rad * (i ? 0.7 : 0.9), h * (i ? 0.6 + rng() * 0.15 : 0.95), 6); } }
+      else if (st === 'twin') { const d = rad * 0.55; peak(x + Math.cos(ry) * d, z + Math.sin(ry) * d, rad * 0.75, h); peak(x - Math.cos(ry) * d, z - Math.sin(ry) * d, rad * 0.65, h * 0.7); }
+      else if (st === 'dome') { k.add(SPHG(), c(), x, 0, z, rad * 1.2, h * 0.55, rad * 1.05, ry); if (cap) k.add(SPHG(), cap, x, h * 0.4, z, rad * 0.5, h * 0.16, rad * 0.45, ry); for (let i = 0; i < 3; i++) { const a = rng() * TAU; k.blob(DOD(), c(), x + Math.cos(a) * rad, 0.5, z + Math.sin(a) * rad, rad * 0.28, 0.7); } }
+      else if (st === 'mesa') { k.tcyl(c(), x, 0, z, rad * 1.1, rad * 0.85, h * 0.32, 8); k.tcyl(c(), x, h * 0.32, z, rad * 0.75, rad * 0.55, h * 0.26, 8); k.cyl(cap || '#8fa274', x, h * 0.58, z, rad * 0.56, 0.12, 8); }
+      else { // núi đá lởm chởm: chân rộng nhiều tảng, lên cao nhỏ dần, nghiêng lệch
+        for (let i = 0; i < 4; i++) { const a = (i / 4) * TAU + ry; k.blob(DOD(), c(), x + Math.cos(a) * rad * 0.7, rad * 0.35, z + Math.sin(a) * rad * 0.7, rad * 0.55, 0.8); }
+        let y = rad * 0.5; for (let i = 0; i < 3; i++) { const r2 = rad * (0.75 - i * 0.2); k.blob(DOD(), c(), x + Math.cos(ry) * i * rad * 0.18, y + r2 * 0.5, z + Math.sin(ry) * i * rad * 0.18, r2, 0.85); y += r2 * 0.8; }
+        if (cap) k.blob(ICO(), cap, x + Math.cos(ry) * rad * 0.4, y, z + Math.sin(ry) * rad * 0.4, rad * 0.22, 0.5); }
+      return st;
+    }
     const TSTYLE = {
       plains: { ground: '#86bb63', rock: ['#8a6a4c', '#7b5d45', '#6d6359', '#5b5248', '#4b4741'], season: true },
       forest: { ground: '#5f9a4f', rock: ['#6e5a44', '#5f4e3d', '#585048', '#4a443e', '#3f3b37'], season: true },
@@ -329,11 +346,11 @@
       }
       if (L.ter === 'mountain') {
         // núi: dãy đỉnh tuyết phía ngoài, một cao nguyên có bậc đá, hồ núi, đá lở
-        for (let m = 0; m < 11; m++) {
-          const d = -95 + m * 19 + (rng() - 0.5) * 8, r = Math.min(edge(d, 4), 29 + rng() * 6), [x, z] = at(d, r), hgt = 13 + rng() * 13 - Math.abs(d) * 0.04, rad = 4.6 + rng() * 2.8;
-          k.cone(pick(['#8b8577', '#7f7a6e', '#948d7e'], rng()), x, 0, z, rad, hgt, 7, rng() * 3);
-          k.cone('#f4f7f9', x, hgt * 0.62, z, rad * 0.38, hgt * 0.38 + 0.05, 7, rng() * 3);
-          prop(x, z, rad * 0.9);
+        // dãy núi phía ngoài: 7 ngọn, mỗi ngọn một dáng (nhọn, sống dài, đôi, tròn, đầu bằng, đá lởm chởm), cao thấp khác nhau
+        for (let m = 0; m < 7; m++) {
+          const d = -95 + m * 31 + (rng() - 0.5) * 10, r = Math.min(edge(d, 4), 29 + rng() * 7), [x, z] = at(d, r), hgt = 10 + rng() * 16 - Math.abs(d) * 0.04, rad = 4.6 + rng() * 3;
+          mountainOn(k, x, z, rad, hgt, ['#8b8577', '#7f7a6e', '#948d7e', '#857f72'], m % 3 === 1 ? null : '#f4f7f9', rng, MOUNTAIN_STYLES[(m * 2 + Math.floor(rng() * 2)) % 6]);
+          prop(x, z, rad * 1.1);
         }
         { const [x, z] = at(-28, 24); k.tcyl('#8f8a7c', x, 0, z, 6.2, 5.8, 4.2, 9); k.cyl('#8fa274', x, 4.2, z, 5.8, 0.12, 9); prop(x, z, 6.4); L.plateau = [x, z, 4.3]; }
         // hồ núi hình giọt nước, xanh thẫm, viền đá cuội và một hòn đảo đá nhỏ giữa hồ
@@ -411,12 +428,12 @@
     };
     // núi, sông, hồ thêm cho từng miền: số đỉnh núi, độ cao, màu; số sông, bề rộng, màu nước, màu bờ; số ao
     const WATERS = {
-      plains: { peaks: 3, peakH: [7, 11], peakC: ['#7fa064', '#8aa86a'], cap: '#9a9080', rivers: 1, riverW: 2.4, water: '#4aa3c7', bank: '#c9b48a', shore: '#c9b48a', ponds: 3 },
-      forest: { peaks: 4, peakH: [10, 15], peakC: ['#4f7f3f', '#46733a'], cap: '#6e5a44', rivers: 2, riverW: 2.2, water: '#3f9cc6', bank: '#6b5a3a', shore: '#6b5a3a', ponds: 3 },
-      mountain: { peaks: 5, peakH: [14, 22], peakC: ['#8b8577', '#7f7a6e', '#948d7e'], cap: '#f4f7f9', rivers: 2, riverW: 2.0, water: '#3a86b0', bank: '#9d9589', shore: '#9d9589', ponds: 2 },
-      tundra: { peaks: 5, peakH: [10, 18], peakC: ['#dfeaf0', '#cfdde6'], cap: '#ffffff', rivers: 1, riverW: 2.6, water: '#bfe3f2', bank: '#eef6fa', shore: '#eef6fa', ponds: 3 },
-      coast: { peaks: 2, peakH: [7, 10], peakC: ['#7fae5a', '#8aa86a'], cap: '#a08a6a', rivers: 2, riverW: 2.2, water: '#3fb8c8', bank: '#ecd9a8', shore: '#ecd9a8', ponds: 3 },
-      desert: { peaks: 3, peakH: [8, 13], peakC: ['#c98a5a', '#b87b4f', '#a56d46'], cap: null, rivers: 1, riverW: 1.6, water: '#3fb0b8', bank: '#b98a55', shore: '#b98a55', ponds: 1 },
+      plains: { peaks: 2, styles: ['dome', 'mesa', 'ridge'], peakH: [7, 11], peakC: ['#7fa064', '#8aa86a'], cap: '#9a9080', rivers: 1, riverW: 2.4, water: '#4aa3c7', bank: '#c9b48a', shore: '#c9b48a', ponds: 3 },
+      forest: { peaks: 3, styles: ['dome', 'twin', 'ridge'], peakH: [10, 15], peakC: ['#4f7f3f', '#46733a'], cap: '#6e5a44', rivers: 2, riverW: 2.2, water: '#3f9cc6', bank: '#6b5a3a', shore: '#6b5a3a', ponds: 3 },
+      mountain: { peaks: 2, styles: ['crag', 'mesa'], peakH: [12, 18], peakC: ['#8b8577', '#7f7a6e', '#948d7e'], cap: '#f4f7f9', rivers: 2, riverW: 2.0, water: '#3a86b0', bank: '#9d9589', shore: '#9d9589', ponds: 2 },
+      tundra: { peaks: 3, styles: ['spire', 'twin', 'crag'], peakH: [10, 18], peakC: ['#dfeaf0', '#cfdde6'], cap: '#ffffff', rivers: 1, riverW: 2.6, water: '#bfe3f2', bank: '#eef6fa', shore: '#eef6fa', ponds: 3 },
+      coast: { peaks: 2, styles: ['dome', 'crag'], peakH: [7, 10], peakC: ['#7fae5a', '#8aa86a'], cap: '#a08a6a', rivers: 2, riverW: 2.2, water: '#3fb8c8', bank: '#ecd9a8', shore: '#ecd9a8', ponds: 3 },
+      desert: { peaks: 3, styles: ['mesa', 'crag', 'ridge'], peakH: [8, 13], peakC: ['#c98a5a', '#b87b4f', '#a56d46'], cap: null, rivers: 1, riverW: 1.6, water: '#3fb0b8', bank: '#b98a55', shore: '#b98a55', ponds: 1 },
     };
     function relief(L) {
       const rng = landRng(L.i + 500), st = TSTYLE[L.ter], R = RELIEF[L.ter], k = new Kit(), oa = L.oa;
@@ -443,9 +460,7 @@
       for (let i = 0, made = 0; made < W.peaks && i < W.peaks * 6; i++) {
         const a = oa + (rng() - 0.5) * 3.2, rr = L.rOf(a) - 9 - rng() * 8, x = Math.cos(a) * rr, z = Math.sin(a) * rr, rad = 4 + rng() * 3, h = W.peakH[0] + rng() * (W.peakH[1] - W.peakH[0]);
         if (!free(x, z, rad * 0.8)) continue;
-        k.cone(pick(W.peakC, rng()), x, 0, z, rad, h, 7, rng() * 3);
-        if (W.cap) k.cone(W.cap, x, h * 0.6, z, rad * 0.42, h * 0.4 + 0.05, 7, rng() * 3);
-        k.blob(DOD(), pick(rockC, rng()), x + rad * 0.7, 0.5, z, rad * 0.35, 0.6);
+        mountainOn(k, x, z, rad, h, W.peakC, W.cap, rng, W.styles ? W.styles[i % W.styles.length] : null);
         prop(x, z, rad * 0.95); L.reliefStats.peaks++; made++;
       }
       // sông: uốn khúc quanh phía ngoài làng, đổ vào một hồ hoặc ra mép đảo; hồ có bờ và cây cỏ
