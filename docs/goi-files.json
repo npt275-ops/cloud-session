@@ -15,6 +15,31 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/loop.js",
+  "src": "game/loop.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/game/nature.js",
+  "src": "game/nature.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/game/seasons.js",
+  "src": "game/seasons.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/game/village.js",
+  "src": "game/village.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/game/world.js",
+  "src": "game/world.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/icons/apple-touch-icon.png",
   "src": "icons/apple-touch-icon.png",
   "mode": 420
@@ -225,8 +250,33 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/perf3d.js",
+  "src": "render/perf3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/rig3d.js",
   "src": "render/rig3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/scene3d.js",
+  "src": "render/scene3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/sky3d.js",
+  "src": "render/sky3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/snow3d.js",
+  "src": "render/snow3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/tank3d.js",
+  "src": "render/tank3d.js",
   "mode": 420
  },
  {
@@ -237,6 +287,21 @@
  {
   "path": "BeKinh/sea3d.js",
   "src": "sea3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/camera-fly.js",
+  "src": "ui/camera-fly.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/hud.js",
+  "src": "ui/hud.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/landbar.js",
+  "src": "ui/landbar.js",
   "mode": 420
  },
  {
