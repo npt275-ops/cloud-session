@@ -59,7 +59,7 @@
         g.add(new THREE.Mesh(new THREE.SphereGeometry(4.6, 24, 16), basic(c.sun)));
         const r1 = new THREE.Mesh(new THREE.RingGeometry(7, 10, 64), add({ color: c.a, opacity: 0.75, side: THREE.DoubleSide })), r2 = new THREE.Mesh(new THREE.RingGeometry(11, 12.5, 64), add({ color: c.b, opacity: 0.6, side: THREE.DoubleSide }));
         g.add(r1, r2);
-        const frame = new THREE.Mesh(new THREE.OctahedronGeometry(9, 0), add({ color: c.b, opacity: 0.6, wireframe: true })); frame.scale.y = 1.5; g.add(frame);
+        const frame = new THREE.Mesh(new THREE.OctahedronGeometry(9, 0), add({ color: c.b, opacity: 0.32, wireframe: true })); frame.scale.y = 1.5; g.add(frame);
         return (ts) => { r1.rotation.set(-Math.PI / 2 + 0.5, ts * 0.25, 0); r2.rotation.set(-Math.PI / 2 - 0.45, -ts * 0.2, 0.3); frame.rotation.y = -ts * 0.3; };
       },
     };

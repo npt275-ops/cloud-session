@@ -111,5 +111,5 @@ mỗi đảo một tệp chọn kiểu theo thời:
 ## Đèn đường và thành phố neon
 
 - Thời 1 tới 9: đèn đường bên lề mọi con đường của cả sáu đảo, mỗi thời một kiểu (`render/build/lamps.js`), tối bật sáng tắt.
-- Thời 10 tới 12: mặt trời thật đã tắt; trời tím cố định, cực quang; thành phố tự sáng (mép đường, vòm sáng, viền chân
+- Thời 10 tới 12: mặt trời thật đã tắt; trời tím cố định, cực quang; thành phố tự sáng (mép đường, vòm sáng, đường viền neon dọc cạnh
   công trình, `render/build/neon.js`); mỗi đảo một mặt trời nhân tạo riêng treo trên thành phố (`render/neon3d.js`).

@@ -3,8 +3,7 @@
  *   PAL      màu neon của từng đảo: a (màu chính, viền chân công trình, mép đường), b (màu phụ, viền chân toà cao, vòm
  *            sáng), sun (màu mặt trời nhân tạo của đảo, render/neon3d.js dùng)
  *   of(key)  bảng màu neon của một đảo (key là kiểu đất: plains, forest, mountain, tundra, coast, desert)
- *   outline(k, key, lv)  viền neon mảnh sát chân cho một công trình (dịu, không chói), theo khung bao của các
- *            mảnh đã vẽ trong Kit (render/buildings3d.js gọi trước khi dựng hình, công trình thời 10 tới 12)
+ *   edges(geo, key, lv)  đường viền neon chạy dọc các cạnh thật của công trình (không có khung vuông lơ lửng), từ thời 10
  *   street(k, N, lv, key, w)  lớp neon trên đường của làng: hai mép đường sáng, vòm sáng bắc ngang đường cho xe bay xuyên qua
  *            (render/build/plains/town.js, thời 10 tới 12)
  * Cần: render/build/kit3d.js, render/build/plains/common.js (Bc), render/build/roads.js. */
@@ -22,24 +21,19 @@
   };
   const of = (key) => PAL[key] || PAL.plains;
   const on = (lv) => lv >= LV;
-  // khung bao các mảnh của Kit (không tính Kit con đang chuyển động)
-  function boxOf(k) {
-    const T = THREE(), bb = new T.Box3(), b = new T.Box3();
-    for (const P of [...k.parts, ...k.glow, ...k.lit]) { if (!P.geo.boundingBox) P.geo.computeBoundingBox(); b.copy(P.geo.boundingBox).applyMatrix4(P.m); bb.union(b); }
-    return bb;
-  }
-  // vòng chữ nhật bằng bốn thanh sáng quanh khung (x0..x1, z0..z1) ở độ cao y
-  function rect(k, x0, x1, z0, z1, y, t, col) {
-    const Bc = BK.Plains3D.Bc, w = x1 - x0, d = z1 - z0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
-    k.add(Bc(w + t, t, t, 0.01), col, cx, y, z0, { glow: true }); k.add(Bc(w + t, t, t, 0.01), col, cx, y, z1, { glow: true });
-    k.add(Bc(t, t, d, 0.01), col, x0, y, cz, { glow: true }); k.add(Bc(t, t, d, 0.01), col, x1, y, cz, { glow: true });
-  }
-  function outline(k, key, lv) {
-    if (!on(lv)) return;
-    const bb = boxOf(k); if (bb.isEmpty()) return;
-    const c = of(key), m = 0.35, h = bb.max.y - Math.max(0, bb.min.y);
-    if (bb.max.x - bb.min.x < 0.6 || h < 0.4) return; // vật nhỏ (cột, ghế): không viền
-    rect(k, bb.min.x - m, bb.max.x + m, bb.min.z - m, bb.max.z + m, 0.1, 0.12, h > 6 ? c.b : c.a); // vòng sáng mảnh sát chân (toà cao màu phụ)
+  // đường viền neon chạy dọc chính các cạnh của công trình (cạnh gãy giữa hai mặt lệch nhau hơn ANGLE độ): lấy từ khối chính
+  // đã dựng, tô màu theo độ cao (chân màu chính a, lên cao ngả dần sang màu phụ b). Trả về BufferGeometry dạng đoạn thẳng
+  // (render/buildings3d.js vẽ bằng LineSegments với vật liệu neon chung của kit3d), null nếu không phải thời neon.
+  const ANGLE = 32;
+  function edges(geo, key, lv) {
+    if (!on(lv) || !geo) return null;
+    const T = THREE(), e = new T.EdgesGeometry(geo, ANGLE), P = e.attributes.position; if (!P.count) { e.dispose(); return null; }
+    if (!geo.boundingBox) geo.computeBoundingBox();
+    const y0 = Math.max(0, geo.boundingBox.min.y), h = Math.max(1, geo.boundingBox.max.y - y0), c = of(key), A = new T.Color(c.a), B = new T.Color(c.b), x = new T.Color();
+    const col = new Float32Array(P.count * 3);
+    for (let i = 0; i < P.count; i++) { x.copy(A).lerp(B, Math.min(1, Math.max(0, (P.getY(i) - y0) / h))); col[i * 3] = x.r; col[i * 3 + 1] = x.g; col[i * 3 + 2] = x.b; }
+    e.setAttribute('color', new T.BufferAttribute(col, 3));
+    return e;
   }
   // lớp neon trên đường: mép đường sáng hai bên, vòm sáng bắc ngang vòng đường (mỗi thời dày hơn)
   function street(k, N, lv, key, w) {
@@ -56,5 +50,5 @@
       for (const s of [-1, 1]) k.add(K.post(0.2, 0.35, 6), '#2a2440', q.x + q.n[0] * s * R, 0, q.z + q.n[1] * s * R);
     });
   }
-  BK.Neon3D = { LV, PAL, of, on, outline, street };
+  BK.Neon3D = { LV, PAL, of, on, edges, street };
 })(typeof self !== 'undefined' ? self : globalThis);

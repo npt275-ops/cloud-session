@@ -1,6 +1,6 @@
 /* Bể Kính · render/build/batch3d.js
  * Gộp công trình của một đảo thành ít khối để máy nhẹ khi nhìn từ xa: mọi phần đứng yên của các công trình đang hiện gộp
- * thành ba khối (khối chính đổ bóng, khối sáng, khối cửa sổ sáng về đêm). Phần chuyển động (cánh quạt, xe, thuyền...) vẫn
+ * thành ba khối (khối chính đổ bóng, khối sáng, khối cửa sổ sáng về đêm) và các đường viền neon (thời 10 trở đi). Phần chuyển động (cánh quạt, xe, thuyền...) vẫn
  * để riêng. render/buildings3d.js dùng khối gộp cho đảo ở xa máy quay, đảo ở gần thì vẽ từng công trình như thường.
  * Dùng: const b = BK.Batch3D.create(THREE, parent, mats); b.rebuild(pieces, shadow); b.show(true|false); b.dispose().
  * shadow = false: khối gộp không đổ bóng (đảo ở xa, bóng nhỏ không thấy rõ mà tốn gấp đôi công vẽ).
@@ -32,12 +32,12 @@
     // ma trận của một khối so với parent: đi ngược lên tới parent
     function rel(mesh) { tmp.identity(); let q = mesh; const chain = []; while (q && q !== parent) { q.updateMatrix(); chain.push(q.matrix); q = q.parent; } for (let i = chain.length - 1; i >= 0; i--) tmp.multiply(chain[i]); return tmp.clone(); }
     function rebuild(pieces, shadow) {
-      const lists = { main: [], glow: [], lit: [] };
-      for (const P of pieces) for (const kind of ['main', 'glow', 'lit']) { const m = P.parts[kind]; if (m) lists[kind].push([m.geometry, rel(m)]); }
-      for (const kind of ['main', 'glow', 'lit']) {
+      const lists = { main: [], glow: [], lit: [], neon: [] };
+      for (const P of pieces) for (const kind of ['main', 'glow', 'lit', 'neon']) { const m = P.parts[kind]; if (m) lists[kind].push([m.geometry, rel(m)]); }
+      for (const kind of ['main', 'glow', 'lit', 'neon']) {
         if (meshes[kind]) { parent.remove(meshes[kind]); meshes[kind].geometry.dispose(); meshes[kind] = null; }
         const geo = mergeOf(lists[kind]); if (!geo) continue;
-        const m = new THREE.Mesh(geo, mats[kind]); if (kind === 'main') { m.castShadow = shadow !== false; m.receiveShadow = true; } else m.renderOrder = 2;
+        if (!mats[kind]) continue; const m = kind === 'neon' ? new THREE.LineSegments(geo, mats[kind]) : new THREE.Mesh(geo, mats[kind]); if (kind === 'main') { m.castShadow = shadow !== false; m.receiveShadow = true; } else m.renderOrder = 2;
         parent.add(m); meshes[kind] = m;
       }
     }

@@ -5,8 +5,8 @@
  * render/build/kit3d.js, tìm chỗ đặt (render/build/place3d.js), dọn cây, trải sân, và làm phần chuyển động:
  *   spin [tên, trục, tốc độ] quay · bob [tên, biên độ, nhịp] nhấp nhô · slide [tên, trục, tốc độ, quãng] chạy qua lại
  *   sway [tên, trục, biên độ, nhịp] đung đưa · pulse khối sáng phập phồng · smoke [[x, y, z, cỡ]] khói (render/build/life3d.js)
- * Mảnh { lit: true } là ô cửa sổ sáng đèn về đêm (và đèn đường, render/build/lamps.js). Từ thời 10 mỗi công trình có viền neon
- * (render/build/neon.js outline).
+ * Mảnh { lit: true } là ô cửa sổ sáng đèn về đêm (và đèn đường, render/build/lamps.js). Từ thời 10 mỗi công trình có đường viền neon
+ * chạy dọc các cạnh (render/build/neon.js edges).
  *
  * Lên đời: sang thời mới, mọi công trình của thời trước đều được thay trong thời đó, không giữ lại cái nào. Thợ làm lần lượt
  * từng chỗ (logic/construction.js với Lúa Vàng; năm đảo kia theo thời gian, setProgressByTime); chỗ nào xong thì công trình
@@ -117,12 +117,14 @@
       const land = PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y); land.gaps = sh.L.wallGaps; // chỗ hở của tường bao
       const opt = Object.assign(Object.create(P.spec), { lv: P.spec.lv || sh.level, land });
       P.anim = P.build(k, opt) || null;
-      if (BK.Neon3D && !P.spec.town) BK.Neon3D.outline(k, sh.L.ter, opt.lv); // thành phố neon (thời 10 tới 12): viền sáng chân và nóc
       const m = k.bake(3); P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (P.spec.fit) { const bb = new THREE.Box3().setFromObject(m), w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (w > P.spec.fit) P.fitS = P.spec.fit / w; }
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
       P.subs = m.userData.subs || {}; for (const n in P.subs) P.subs[n].userData.base = P.subs[n].position.clone();
-      P.parts = { main: m.userData.main || null, glow: m.userData.glow || null, lit: m.userData.lit || null };
+      // thành phố neon (thời 10 tới 12): đường viền sáng chạy dọc các cạnh của công trình (render/build/neon.js edges)
+      let neon = null; const eg = BK.Neon3D && !P.spec.town && m.userData.main ? BK.Neon3D.edges(m.userData.main.geometry, sh.L.ter, opt.lv) : null;
+      if (eg) { neon = new THREE.LineSegments(eg, K.neonMat()); neon.renderOrder = 2; m.add(neon); }
+      P.parts = { main: m.userData.main || null, glow: m.userData.glow || null, lit: m.userData.lit || null, neon };
     }
     // xong một công trình: cái cũ nó thay mất ngay, cái mới đứng đủ cỡ
     function finish(sh, P) {

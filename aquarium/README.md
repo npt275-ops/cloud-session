@@ -127,7 +127,7 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   khi trời tối, ban ngày chỉ còn cột và kính đèn. Công trình không đặt trên đường (kiểm tra 12 thời × 6 đảo).
 - **Thành phố neon từ thời 10** (`render/build/neon.js`, `render/neon3d.js`): mặt trời đã mất (đĩa đen viền hồng thay trăng),
   trời chỉ còn tím (tím chiều tối ↔ tím tối, `mood3d.js` NEON), có rèm cực quang, không còn ngày đêm; không còn đèn đường,
-  mép đường và vòm sáng trên đường phát neon, mỗi công trình một viền sáng mảnh sát chân, cửa sổ sáng suốt. Mỗi đảo treo một
+  mép đường và vòm sáng trên đường phát neon, đường viền neon chạy dọc các cạnh của từng công trình, cửa sổ sáng suốt. Mỗi đảo treo một
   mặt trời nhân tạo rọi xuống thành phố (lõi, quầng, cột sáng, đèn điểm màu riêng): Hồn Lúa (vòng con quay), Hạt Giống (cánh lá
   khép mở), Lò Rèn (mảnh đá bay quanh), Băng Lăng Trụ (vầng hào quang, mặt trời giả), Sứa (xúc tu đung đưa), Hai Vành.
 - **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng

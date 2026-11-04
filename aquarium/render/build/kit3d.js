@@ -71,9 +71,11 @@
     const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.computeBoundingSphere();
     return out;
   }
-  let MAT = null, GLOW = null, LIT = null;
+  let MAT = null, GLOW = null, LIT = null, NEON = null;
   const mat = () => MAT || (MAT = new (T().MeshStandardMaterial)({ vertexColors: true, flatShading: true, roughness: 0.88, metalness: 0.02 }));
   const glowMat = () => GLOW || (GLOW = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.92, depthWrite: false }));
+  // đường viền neon của thành phố neon (render/build/neon.js edges): màu theo đỉnh, dịu, không ghi độ sâu
+  const neonMat = () => NEON || (NEON = new (T().LineBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
   const litMat = () => LIT || (LIT = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false }));
   // dựng một công trình thành nhóm: khối chính (đổ bóng) và khối sáng (nếu có)
   Kit.prototype.bake = function (aoH) {
@@ -85,9 +87,9 @@
     for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c; g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0); if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
     return g;
   };
-  function dispose(g) { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }
+  function dispose(g) { g.traverse((o) => { if (o.isMesh || o.isLine) o.geometry.dispose(); }); }
 
   // vật liệu chung (render/build/batch3d.js gộp nhiều công trình dùng lại đúng các vật liệu này)
-  const mats = () => ({ main: mat(), glow: glowMat(), lit: litMat() });
-  return { box, roof, lathe, post, cone, ball, disc, Kit, dispose, litMat, mats };
+  const mats = () => ({ main: mat(), glow: glowMat(), lit: litMat(), neon: neonMat() });
+  return { box, roof, lathe, post, cone, ball, disc, Kit, dispose, litMat, neonMat, mats };
 });
