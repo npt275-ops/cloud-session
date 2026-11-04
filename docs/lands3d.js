@@ -518,19 +518,19 @@
         const [ex, ez] = pts[pts.length - 1], R = 3.6 + rng() * 2.4, rf = (t) => 1 + 0.18 * Math.sin(2 * t + rv) + 0.08 * Math.sin(5 * t);
         const lakeOk = L.inside(ex, ez, R + 1) && !L.blockedWild(ex, ez, R * 0.7) && Math.hypot(ex, ez) > 26 + R;
         rv++; L.reliefStats.rivers++;
-        ribbon(pts, W.riverW + 2.2, 0.03, W.bank);
-        ribbon(pts, W.riverW, 0.08, waterMat(W.water));
+        ribbon(pts, W.riverW + 2.2, 0.05, W.bank);
+        ribbon(pts, W.riverW, 0.12, waterMat(W.water));
         (L.rivers || (L.rivers = [])).push(pts);
         if (lakeOk) {
-          flatMesh(lakeG(R + 1, rf), ex, ez, 0.035, W.shore);
-          waterMesh(lakeG(R, rf), ex, ez, 0.085, W.water);
+          flatMesh(lakeG(R + 1, rf), ex, ez, 0.05, W.shore);
+          waterMesh(lakeG(R, rf), ex, ez, 0.12, W.water);
           for (let t = 0; t < 10; t++) { const q = rng() * TAU, rr = R * rf(q) * (0.95 + rng() * 0.15); kD.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), ex + Math.cos(q) * rr, 0, ez + Math.sin(q) * rr, 0.05, 0.6 + rng() * 0.5, 0.05); }
           prop(ex, ez, R + 1); L.reliefStats.lakes++;
         }
         for (let sI = 0; sI < pts.length; sI += 2) prop(pts[sI][0], pts[sI][1], W.riverW / 2 + 1.2);
       }
       // ao nhỏ rải rác
-      for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.035, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.085, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; kD.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }
+      for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.05, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.12, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; kD.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }
       // cụm đá: vài tảng to nhỏ chụm lại
       const rockCluster = (x, z, n, sz, cap) => { for (let j = 0; j < n; j++) { const a = rng() * TAU, rr = rng() * sz * 1.2, s2 = sz * (0.45 + rng() * 0.6); k.blob(j % 2 ? DOD() : ICO(), pick(rockC, rng()), x + Math.cos(a) * rr, s2 * 0.35, z + Math.sin(a) * rr, s2, 0.75); if (cap) k.blob(ICO(), cap, x + Math.cos(a) * rr, s2 * 0.9, z + Math.sin(a) * rr, s2 * 0.6, 0.35); } prop(x, z, sz * 1.5); };
       for (let i = 0; i < R.rocks; i++) { const p = spot(2.5); if (p) rockCluster(p[0], p[1], 3 + Math.floor(rng() * 3), 1.0 + rng() * 0.9, L.ter === 'forest' ? '#5f8f45' : L.ter === 'tundra' ? '#f4f8fb' : null); }
