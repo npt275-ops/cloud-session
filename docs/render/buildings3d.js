@@ -59,6 +59,8 @@
         const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th), rot = (x, z) => [x * c + z * sn, -x * sn + z * c];
         L.roadSegs = BK.Roads3D.segs(N).map(([x0, z0, x1, z1]) => [...rot(x0, z0), ...rot(x1, z1)]);
         L.roadW = (townSpec.roadW || 3) / 2 + 0.4;
+        // chỗ hở của tường (theo trục của lớp đường): cổng chính góc 0, hai chỗ bắc cầu sang hai đảo bên cạnh (L.landing)
+        L.wallGaps = [0, ...(L.landing || []).map((v) => { const lx = v.x * c - v.z * sn, lz = v.x * sn + v.z * c; return Math.atan2(lx, lz); })];
       }
       // chỗ của các công trình có chỗ cố định trong bố cục, để công trình khác tránh ra (mỗi cái cũng tự tránh đường)
       const fixed = lay.pieces.filter((P) => P.home == null && !P.nudge && !P.outer && !P.town && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear, P }; });
@@ -111,7 +113,8 @@
     function bakeOf(P, sh) {
       if (P.baked) return; P.baked = true;
       const k = new K.Kit(); if (P.tint) k.tint = P.tint;
-      const opt = Object.assign(Object.create(P.spec), { lv: P.spec.lv || sh.level, land: PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y) });
+      const land = PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y); land.gaps = sh.L.wallGaps; // chỗ hở của tường bao
+      const opt = Object.assign(Object.create(P.spec), { lv: P.spec.lv || sh.level, land });
       P.anim = P.build(k, opt) || null;
       const m = k.bake(3); P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (P.spec.fit) { const bb = new THREE.Box3().setFromObject(m), w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (w > P.spec.fit) P.fitS = P.spec.fit / w; }

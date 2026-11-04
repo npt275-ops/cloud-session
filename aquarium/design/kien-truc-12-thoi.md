@@ -12,6 +12,8 @@ Nguyên tắc (chốt):
   không hai đảo trùng trong một thời (render/build/isles/compose.js SMALL, ODD).
 - **Công trình công cộng** (render/build/civic.js): trường học, thư viện, bảo tàng, bệnh viện, nhà hát, sân vận động, nhà tắm,
   đài thiên văn; mỗi loại bốn dáng theo giai đoạn, mỗi thời một bộ khác thời trước, ở cả sáu đảo.
+- **Nhà chính lên cấp đều**: mỗi đảo một dòng nhà chính riêng (render/build/isles/halls.js), thời sau luôn to và hiện đại
+  hơn thời trước, không dùng chung với đảo khác.
 - **Sáu đảo khác nhau ở mọi thời**: trong cùng một thời, không có hai đảo dùng chung kiểu nhà hay kiểu nhà chính; mỗi đảo một bảng
   màu theo bốn giai đoạn (xưa, cận đại, hiện đại, tương lai).
 
@@ -27,33 +29,33 @@ mỗi đảo một tệp chọn kiểu theo thời:
 |---|---|---|---|---|
 | 1 | Thời đồ đá | Lều lá | Lều Tù Trưởng | Cây Thiêng |
 | 2 | Cổ đại | Nhà sàn gỗ | Nhà Rông | Tượng Thần Rừng |
-| 3 | Trung đại | Nhà dài mái cong | Đình Gỗ Bốn Tầng | Tháp Hạt Thông |
-| 4 | Cận đại | Nhà khung gỗ | Lũy Gỗ Lớn | Chùa Trên Cây |
-| 5 | Công nghiệp | Nhà phố gỗ | Toà Đồng Hồ Gỗ | Xưởng Cưa Khổng Lồ |
-| 6 | Hiện đại | Cao ốc vườn mái xanh | Xưởng Giấy | Tháp Kiểm Lâm |
-| 7 | Tên lửa | Cao ốc kính xanh | Trụ Sở Rừng | Vòm Rừng Kính |
-| 8 | Robot AI | Tháp gỗ công nghệ | Kim Tự Tháp Kính Rừng | Tháp Dữ Liệu Rừng |
-| 9 | Vật Chất Sống | Tòa cây sống | Nhà Cây Sống Rừng | Cây Mẹ |
-| 10 | Mặt Trời Nhân Tạo | Tháp lá hứng nắng | Siêu Tháp Lá | Mặt Trời Lá |
-| 11 | Bẻ Cong Không Gian | Tòa xoắn dây leo | Ngọn Rừng Pha Lê | Vành Lá Xanh |
-| 12 | Siêu Việt | Tháp đĩa nổi xanh | Nhà Vòng Nổi Rừng | Rừng Lơ Lửng |
+| 3 | Trung đại | Nhà dài mái cong | Đình Gỗ Ba Tầng | Tháp Hạt Thông |
+| 4 | Cận đại | Nhà khung gỗ | Đình Gỗ Có Tháp | Chùa Trên Cây |
+| 5 | Công nghiệp | Nhà phố gỗ | Toà Gỗ Năm Tầng | Xưởng Cưa Khổng Lồ |
+| 6 | Hiện đại | Cao ốc vườn mái xanh | Toà Gỗ Kính | Tháp Kiểm Lâm |
+| 7 | Tên lửa | Cao ốc kính xanh | Tháp Gỗ Lớn | Vòm Rừng Kính |
+| 8 | Robot AI | Tháp gỗ công nghệ | Tháp Rừng Kính | Tháp Dữ Liệu Rừng |
+| 9 | Vật Chất Sống | Tòa cây sống | Tháp Tán Sáng | Cây Mẹ |
+| 10 | Mặt Trời Nhân Tạo | Tháp lá hứng nắng | Tháp Lá Mặt Trời | Mặt Trời Lá |
+| 11 | Bẻ Cong Không Gian | Tòa xoắn dây leo | Tháp Rừng Quay | Vành Lá Xanh |
+| 12 | Siêu Việt | Tháp đĩa nổi xanh | Vương Miện Rừng | Rừng Lơ Lửng |
 
 ## Đá Mây
 
 | Cấp | Thời | Nhà riêng | Nhà chính | Kỳ quan |
 |---|---|---|---|---|
 | 1 | Thời đồ đá | Lều da | Hang Tổ Tiên | Vòng Đá Đỉnh Núi |
-| 2 | Cổ đại | Nhà vòm đá | Nhà Đá Tròn Núi | Cột Đá Khắc |
-| 3 | Trung đại | Nhà đá bám vách | Thành Đá | Tu Viện Vách Đá |
-| 4 | Cận đại | Nhà mái chùa | Chùa Mây Bốn Tầng | Pháo Đài Núi |
-| 5 | Công nghiệp | Nhà gỗ đá | Nhà Vòm Núi | Cổng Đá Mây |
-| 6 | Hiện đại | Tháp bám đá núi | Toà Đồng Hồ Núi | Mỏ Lớn Ống Khói |
-| 7 | Tên lửa | Tháp kim núi | Siêu Tháp Núi | Đài Phát Sóng Đỉnh Núi |
-| 8 | Robot AI | Tháp bậc thang núi | Trụ Sở Kính Núi | Bệ Phóng Núi |
-| 9 | Vật Chất Sống | Tháp vòm chồng núi | Nhà Vòng Nổi Núi | Lõi Dữ Liệu Trong Núi |
-| 10 | Mặt Trời Nhân Tạo | Tháp đĩa nổi núi | Kim Tự Tháp Kính Núi | Người Đá Thức Tỉnh |
-| 11 | Bẻ Cong Không Gian | Tháp mặt trời núi | Quả Cầu Mây | Thang Lên Trời |
-| 12 | Siêu Việt | Tháp thạch anh | Ngọn Thạch Anh | Vành Mây Đá |
+| 2 | Cổ đại | Nhà vòm đá | Nhà Đá Tròn | Cột Đá Khắc |
+| 3 | Trung đại | Nhà đá bám vách | Đền Đá Lục Giác | Tu Viện Vách Đá |
+| 4 | Cận đại | Nhà mái chùa | Pháo Đài Núi | Pháo Đài Núi |
+| 5 | Công nghiệp | Nhà gỗ đá | Toà Đá Năm Tầng | Cổng Đá Mây |
+| 6 | Hiện đại | Tháp bám đá núi | Toà Đá Kính | Mỏ Lớn Ống Khói |
+| 7 | Tên lửa | Tháp kim núi | Tháp Đá Lớn | Đài Phát Sóng Đỉnh Núi |
+| 8 | Robot AI | Tháp bậc thang núi | Tháp Núi Kính | Bệ Phóng Núi |
+| 9 | Vật Chất Sống | Tháp vòm chồng núi | Tháp Thạch Anh | Lõi Dữ Liệu Trong Núi |
+| 10 | Mặt Trời Nhân Tạo | Tháp đĩa nổi núi | Tháp Mây Sáng | Người Đá Thức Tỉnh |
+| 11 | Bẻ Cong Không Gian | Tháp mặt trời núi | Tháp Đá Bay | Thang Lên Trời |
+| 12 | Siêu Việt | Tháp thạch anh | Đỉnh Núi Lơ Lửng | Vành Mây Đá |
 
 ## Tuyết Trắng
 
@@ -61,47 +63,47 @@ mỗi đảo một tệp chọn kiểu theo thời:
 |---|---|---|---|---|
 | 1 | Thời đồ đá | Nhà băng tròn | Nhà Băng Lớn | Mũi Băng Thiêng |
 | 2 | Cổ đại | Lều da tuần lộc | Lều Da Lớn | Vòng Đá Băng |
-| 3 | Trung đại | Nhà vòm tuyết | Nhà Rông Băng | Tượng Băng |
-| 4 | Cận đại | Nhà dài mái cong tuyết | Vòm Sưởi | Pháo Đài Tuyết |
-| 5 | Công nghiệp | Chung cư tuyết | Xưởng Lớn Băng | Tháp Chuông Tuyết |
-| 6 | Hiện đại | Cao ốc kính tuyết | Nhà Vòm Băng | Lò Hơi Lớn |
-| 7 | Tên lửa | Tháp vòm chồng tuyết | Kim Tự Tháp Kính Băng | Tháp Cực Quang |
-| 8 | Robot AI | Tháp băng | Siêu Tháp Băng | Vòm Băng Ấm |
-| 9 | Vật Chất Sống | Tòa xoắn tuyết | Quả Cầu Cực Quang | Tháp Dữ Liệu Lạnh |
-| 10 | Mặt Trời Nhân Tạo | Tháp kim tuyết | Nhà Vòng Nổi Băng | Mặt Trời Băng |
-| 11 | Bẻ Cong Không Gian | Tháp đĩa cực quang | Nhà Cây Sống Băng | Vành Cực Quang |
-| 12 | Siêu Việt | Tòa sinh học tuyết | Lõi Tuyết Sáng | Thành Băng Lơ Lửng |
+| 3 | Trung đại | Nhà vòm tuyết | Đền Vòm Băng | Tượng Băng |
+| 4 | Cận đại | Nhà dài mái cong tuyết | Thành Vòm Băng | Pháo Đài Tuyết |
+| 5 | Công nghiệp | Chung cư tuyết | Toà Vòm Năm Tầng | Tháp Chuông Tuyết |
+| 6 | Hiện đại | Cao ốc kính tuyết | Toà Vòm Kính | Lò Hơi Lớn |
+| 7 | Tên lửa | Tháp vòm chồng tuyết | Tháp Băng Lớn | Tháp Cực Quang |
+| 8 | Robot AI | Tháp băng | Tháp Tuyết Kính | Vòm Băng Ấm |
+| 9 | Vật Chất Sống | Tòa xoắn tuyết | Tháp Cực Quang | Tháp Dữ Liệu Lạnh |
+| 10 | Mặt Trời Nhân Tạo | Tháp kim tuyết | Tháp Băng Sáng | Mặt Trời Băng |
+| 11 | Bẻ Cong Không Gian | Tháp đĩa cực quang | Tháp Cực Quang Quay | Vành Cực Quang |
+| 12 | Siêu Việt | Tòa sinh học tuyết | Cung Điện Băng Bay | Thành Băng Lơ Lửng |
 
 ## Cửa Sóng
 
 | Cấp | Thời | Nhà riêng | Nhà chính | Kỳ quan |
 |---|---|---|---|---|
 | 1 | Thời đồ đá | Nhà sàn biển | Nhà Thuyền Úp | Vòng Đá Ven Biển |
-| 2 | Cổ đại | Nhà dài mái cong biển | Nhà Vỏ Cây Ven Biển | Tượng Thần Biển |
-| 3 | Trung đại | Nhà mái chùa biển | Đền Sóng | Hải Đăng Lớn |
-| 4 | Cận đại | Nhà phố biển | Nhà Kho Cảng | Cổng Biển |
-| 5 | Công nghiệp | Nhà dài mái cong biển | Trụ Sở Kính Biển | Tháp Chuông Cảng |
-| 6 | Hiện đại | Tháp ban công sóng biển | Siêu Tháp Biển | Xưởng Tàu Khổng Lồ |
-| 7 | Tên lửa | Tháp buồm biển | Quả Cầu Biển | Tháp Ngắm Biển |
-| 8 | Robot AI | Cao ốc kính biển | Ngọn Pha Lê Biển | Bệ Phóng Trên Biển |
-| 9 | Vật Chất Sống | Tháp bậc thang biển | Siêu Tháp Sóng | Vòm Đại Dương |
-| 10 | Mặt Trời Nhân Tạo | Tòa xoắn biển | Quả Cầu Sóng | Mặt Trời Biển |
-| 11 | Bẻ Cong Không Gian | Tháp pha lê biển | Nhà Vòng Nổi Biển | Cổng Sóng |
-| 12 | Siêu Việt | Tháp mặt trời biển | Kim Tự Tháp Kính Biển | Vành Sóng |
+| 2 | Cổ đại | Nhà dài mái cong biển | Nhà Vỏ Cây | Tượng Thần Biển |
+| 3 | Trung đại | Nhà mái chùa biển | Đền Sóng Ba Tầng | Hải Đăng Lớn |
+| 4 | Cận đại | Nhà phố biển | Toà Cảng Có Tháp | Cổng Biển |
+| 5 | Công nghiệp | Nhà dài mái cong biển | Toà Cảng Năm Tầng | Tháp Chuông Cảng |
+| 6 | Hiện đại | Tháp ban công sóng biển | Toà Buồm Kính | Xưởng Tàu Khổng Lồ |
+| 7 | Tên lửa | Tháp buồm biển | Tháp Cảng Lớn | Tháp Ngắm Biển |
+| 8 | Robot AI | Cao ốc kính biển | Tháp Biển Kính | Bệ Phóng Trên Biển |
+| 9 | Vật Chất Sống | Tháp bậc thang biển | Tháp Sóng Sáng | Vòm Đại Dương |
+| 10 | Mặt Trời Nhân Tạo | Tòa xoắn biển | Tháp Ngọc Biển | Mặt Trời Biển |
+| 11 | Bẻ Cong Không Gian | Tháp pha lê biển | Tháp Sóng Quay | Cổng Sóng |
+| 12 | Siêu Việt | Tháp mặt trời biển | Cung Điện Ngọc Trai | Vành Sóng |
 
 ## Cát Hồng
 
 | Cấp | Thời | Nhà riêng | Nhà chính | Kỳ quan |
 |---|---|---|---|---|
 | 1 | Thời đồ đá | Nhà vòm cát hồng | Nhà Đá Tròn | Cột Đá Mặt Trời |
-| 2 | Cổ đại | Nhà gạch đất cát hồng | Đền Bậc Thang Cát | Kim Tự Tháp Hồng |
-| 3 | Trung đại | Lều vải lớn cát hồng | Lều Lớn Cát | Tượng Người Gác Cát |
-| 4 | Cận đại | Nhà đá mái bằng | Toà Đồng Hồ Cát | Cổng Sa Mạc |
-| 5 | Công nghiệp | Nhà gạch đất cát hồng | Thành Cát | Tháp Chuông Cát |
-| 6 | Hiện đại | Toà sân trong tháp gió cát hồng | Trụ Sở Kính Cát | Tháp Nước Lớn |
-| 7 | Tên lửa | Tháp bậc vườn treo | Toà Thị Chính | Tháp Gió |
-| 8 | Robot AI | Tháp vòm chồng cát hồng | Quả Cầu Cát | Bệ Phóng Sa Mạc |
-| 9 | Vật Chất Sống | Tháp mặt trời cát hồng | Ngọn Pha Lê Cát | Vòm Ốc Đảo |
-| 10 | Mặt Trời Nhân Tạo | Cao ốc kính cát hồng | Nhà Cây Sống Cát | Mặt Trời Sa Mạc |
-| 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Kim Tự Tháp Kính Hồng | Thang Lên Sao |
-| 12 | Siêu Việt | Tòa xoắn cát hồng | Nhà Cây Sống Cát | Thành Phố Cát Bay |
+| 2 | Cổ đại | Nhà gạch đất cát hồng | Đền Bậc Thang | Kim Tự Tháp Hồng |
+| 3 | Trung đại | Lều vải lớn cát hồng | Đền Bậc Ba Tầng | Tượng Người Gác Cát |
+| 4 | Cận đại | Nhà đá mái bằng | Thành Cát Có Tháp | Cổng Sa Mạc |
+| 5 | Công nghiệp | Nhà gạch đất cát hồng | Cung Điện Năm Tầng | Tháp Chuông Cát |
+| 6 | Hiện đại | Toà sân trong tháp gió cát hồng | Cung Điện Kính | Tháp Nước Lớn |
+| 7 | Tên lửa | Tháp bậc vườn treo | Tháp Bậc Lớn | Tháp Gió |
+| 8 | Robot AI | Tháp vòm chồng cát hồng | Tháp Cát Kính | Bệ Phóng Sa Mạc |
+| 9 | Vật Chất Sống | Tháp mặt trời cát hồng | Tháp Mặt Trời | Vòm Ốc Đảo |
+| 10 | Mặt Trời Nhân Tạo | Cao ốc kính cát hồng | Tháp Nắng Vàng | Mặt Trời Sa Mạc |
+| 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Tháp Cát Quay | Thang Lên Sao |
+| 12 | Siêu Việt | Tòa xoắn cát hồng | Kim Tự Tháp Bay | Thành Phố Cát Bay |

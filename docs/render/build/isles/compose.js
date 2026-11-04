@@ -48,7 +48,8 @@
       const homes = P.homes('home', { pal }, small || odd ? { small: small ? 'homeS' : null, odd: odd ? 'homeO' : null } : null);
       homes.forEach((h, i) => { if (lv === 1 && i < 4) h.pre = true; });
       pieces.push(...homes);
-      const BUILD = { hall: A.HALL[E.hall], home: A.HOME[E.home] }, NAME = { hall: E.hallName, home: E.homeName };
+      // nhà chính: dòng nhà chính riêng của đảo, lên cấp đều qua 12 thời (render/build/isles/halls.js)
+      const BUILD = { hall: BK.IslesHalls.build(theme.key), home: A.HOME[E.home] }, NAME = { hall: BK.IslesHalls.NAME[theme.key][lv], home: E.homeName };
       if (small) { BUILD.homeS = A.HOME[small]; NAME.homeS = HNAME[small] || E.homeName; }
       if (odd) { BUILD.homeO = A.HOME[odd]; NAME.homeO = HNAME[odd]; }
       EXTRAS[lv].forEach((x, i) => { const kind = 'x_' + x + i; pieces.push({ kind, x: SPOTS[i][0], z: SPOTS[i][1], clear: 3, v: i, pal, face: [0, 2] }); BUILD[kind] = A.EXTRA[x]; NAME[kind] = EXTRA_NAME[x]; });

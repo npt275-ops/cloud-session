@@ -4,8 +4,8 @@
  *   1 lối mòn · 2 lối đất, lũy tre, xe trâu · 3 đường đá, tường thành có cổng, xe ngựa · 4 phố lát đá, đèn dầu, xe ngựa kéo
  *   5 đường ray vòng, tàu hơi nước · 6 đường nhựa, cây xanh, ô tô · 7 đường lớn, tàu một ray trên cao · 8 đường sáng, rô-bốt
  *   giao hàng, drone · 9 lối dây leo phát sáng, hạt giống bay · 10 đường vàng, xe bay · 11 sàn nổi, cầu sáng · 12 vòng sáng
- * Tường của mỗi thời chạy sát mép đảo (theo dáng mép thật, ngắt ở chỗ núi, hồ, sông; o.land từ render/build/place3d.js), có
- * cổng ở đầu các đường toả ra. Món 'town' đặt ở giữa làng, solo (chỉ thay món town của thời trước).
+ * Từ thời 2, tường bao kín sát mép đảo (theo dáng mép thật), chỉ hở ở cổng thành chính và hai chỗ bắc cầu sang hai đảo bên
+ * cạnh (o.land từ render/build/place3d.js). Món 'town' đặt ở giữa làng, solo (chỉ thay món town của thời trước).
  * P.TOWN.addTo(E, cấp, tint) thêm lớp này vào bố cục của một thời (các đảo khác dùng lại). Tệp này chạy sau e01..e12.
  * Cần: common.js. */
 (function (root) {
@@ -20,25 +20,22 @@
   function beside(N, step, side, fn) { for (const q of R3().along(N.loop, step, true)) fn(q.a, q.x + q.n[0] * side, q.z + q.n[1] * side, q); }
   // xe của thời chạy theo vòng đường (render/build/vehicles.js); gộp với phần chuyển động khác của lớp làng
   function withTraffic(k, lv, N, anim) { const F = V3().fleet(k, lv, N.loop); return Object.assign(anim || {}, F || {}); }
-  // tường sát mép đảo: mỗi đoạn (seg) đặt theo mép thật, chỗ nào vướng núi, hồ, sông thì để trống; cổng (gate) ở đầu đường toả ra
+  // tường bao kín sát mép đảo (từ thời 2), chỉ hở ba chỗ: cổng thành chính giữa mép trước (góc 0) và hai chỗ sau này bắc cầu
+  // sang hai đảo bên cạnh (o.land.gaps, render/buildings3d.js tính từ L.landing). Tường chạy liền qua cả chỗ núi, hồ, sông;
+  // hai đầu mỗi lỗ hở có trụ (gateEnd). Mỗi đoạn (seg) đặt theo mép thật của đảo.
   function edgeWall(k, o, st) {
     const L = o.land; if (!L) return;
-    const n = st.n || 120, inset = st.inset || 3.5;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2, R = L.edge(a) - inset, x = Math.sin(a) * R, z = Math.cos(a) * R;
-      if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.13) continue; // phía trước giữa: cổng thành (render/build/gates.js)
-      if (SPOKES.some((s) => Math.abs(Math.atan2(Math.sin(a - s), Math.cos(a - s))) < 0.05)) continue; // chừa lối ra cổng phụ
-      if (L.free(x, z, 0.8)) st.seg(k, a, x, z, i);
-    }
-    if (st.gate) for (const a of SPOKES.slice(1)) { const R = L.edge(a) - inset, x = Math.sin(a) * R, z = Math.cos(a) * R; if (L.free(x, z, 1.5)) st.gate(k, a, x, z); }
+    const n = st.n || 120, inset = st.inset || 3.5, gaps = L.gaps || [0], half = (a) => (a === gaps[0] ? 0.13 : 0.085);
+    const gapAt = (a) => gaps.some((g) => Math.abs(Math.atan2(Math.sin(a - g), Math.cos(a - g))) < half(g));
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; if (gapAt(a)) continue; const R = L.edge(a) - inset; st.seg(k, a, Math.sin(a) * R, Math.cos(a) * R, i); }
+    // trụ hai đầu chỗ hở cầu (cổng chính có cổng thành riêng, render/build/gates.js)
+    if (st.gate) for (const g of gaps.slice(1)) for (const s of [-1, 1]) { const a = g + s * (half(g) + 0.01), R = L.edge(a) - inset; st.gate(k, a, Math.sin(a) * R, Math.cos(a) * R); }
   }
-  const gateTowers = (h, col, cap, capH) => (k, a, x, z) => { for (const d of [-2.4, 2.4]) { const gx = x + Math.cos(a) * d, gz = z - Math.sin(a) * d; k.add(K.post(1.1, h, 8), col, gx, 0, gz); if (cap) k.add(K.cone(1.4, capH || 2.2, 8), cap, gx, h, gz); } };
+  const gateTowers = (h, col, cap, capH) => (k, a, x, z) => { k.add(K.post(1.1, h, 8), col, x, 0, z); if (cap) k.add(K.cone(1.4, capH || 2.2, 8), cap, x, h, z); }; // trụ một đầu chỗ hở
   const T = [];
-  // 1 · lối mòn giữa các lều
-  T[1] = (k, o) => {
-    const N = roads(k, { net: o.net, color: '#b49a70', w: 1.4, land: o.land }); void N;
-    edgeWall(k, o, { n: 90, seg: (k, a, x, z, i) => { k.add(K.ball(0.8, 0), i % 2 ? '#6a8a40' : '#7a9a48', x, 0.5, z, { sc: [1.4, 0.8, 1] }); if (i % 3 === 0) k.add(K.post(0.08, 1.6, 4), C.woodL, x, 0, z); } });
-  };
+  // 1 · lối mòn giữa các lều (thời đồ đá chưa có tường)
+  T[1] = (k, o) => { roads(k, { net: o.net, color: '#b49a70', w: 1.4, land: o.land }); };
+
   // 2 · lối đất, lũy tre bao quanh làng, xe trâu
   T[2] = (k, o) => {
     const N = roads(k, { net: o.net, color: '#b8a074', w: 1.8, land: o.land });

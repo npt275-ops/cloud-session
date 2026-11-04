@@ -200,6 +200,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/isles/halls.js",
+  "src": "render/build/isles/halls.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/isles/mountain.js",
   "src": "render/build/isles/mountain.js",
   "mode": 420

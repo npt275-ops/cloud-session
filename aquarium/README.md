@@ -79,10 +79,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   thay kỳ quan cũ ngay tại chỗ đó.
 - **Hết thời nào thì mọi công trình của thời đó đều được thay** (`render/buildings3d.js`): không giữ lại công trình cũ nào;
   cái cũ chưa có gì thay thì mất khi công trình mới gần nó xong. Trang phục đổi ngay khi sang thời.
-- **Tường sát mép đảo** (`render/build/plains/town.js` `edgeWall`, đất thật từ `render/build/place3d.js`): mỗi thời một
-  kiểu tường chạy theo dáng mép đảo, ngắt ở chỗ núi, hồ, sông, có cổng ở đầu đường toả ra: bụi gai, lũy tre, tường thành có
-  tháp, tường gạch có pháo đài, rào sắt, kè bê tông có đèn, tường trắng có vòm ra-đa, rào năng lượng, tường cây sống, tấm chắn
-  nắng, cột trường lực, rèm ánh sáng.
+- **Tường bao kín sát mép đảo** (`render/build/plains/town.js` `edgeWall`): thời đồ đá chưa có tường; từ thời 2 tường chạy
+  liền quanh cả đảo theo dáng mép thật (qua cả chỗ núi, hồ, sông), chỉ hở đúng ba chỗ: cổng thành chính giữa mép trước, và
+  hai chỗ sau này bắc cầu sang hai đảo bên cạnh (hai đầu chỗ hở có trụ). Mỗi thời một kiểu tường: lũy tre, tường thành có tháp,
+  tường gạch có pháo đài, rào sắt, kè bê tông có đèn, tường trắng, rào năng lượng, tường cây sống, tấm chắn nắng, cột trường
+  lực, rèm ánh sáng.
 - **Mỗi đảo một mạng đường riêng** (`render/build/roads.js`), giữ qua mọi thời, chỉ đổi mặt đường, đèn, cây theo thời:
   Lúa Vàng vòng tròn và bốn đường toả; Thông Xanh vòng lượn sóng, lối rừng uốn khúc; Đá Mây vòng ngoài rộng, đường trước đi
   chữ chi; Tuyết Trắng vòng vuông bo góc, đại lộ trước sau; Cửa Sóng vòng bầu dục dọc bờ; Cát Hồng vòng vuông, bốn đại lộ chữ
@@ -98,6 +99,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - Lúa Vàng sau thời Trung đại không còn ruộng lúa (thời 4 trở đi bỏ ruộng, đống rơm, máy cày, rô-bốt làm ruộng).
 - **Cao ốc cho các thời sau**: Lúa Vàng thời 8 tòa nhà thông minh, thời 9 tòa sinh học, thời 10 tòa mặt trời, thời 11 tòa
   xoắn, thời 12 tháp pha lê (cao 15 đến 30).
+- **Nhà chính của năm đảo lên cấp đều** (`render/build/isles/halls.js`): mỗi đảo một dòng nhà chính riêng, không dùng chung
+  với đảo khác; thời sau luôn cao hơn, nhiều tầng hơn, nhiều tháp hơn (thời 6 có dải kính, thời 9 vạch sáng và tháp sáng, thời
+  11 vòng quay quanh đỉnh, thời 12 vương miện lơ lửng). Hoa văn riêng: Thông Xanh mái chùa và tán lá, Đá Mây lục giác và đá
+  bay, Tuyết Trắng mái vòm và mũi băng, Cửa Sóng vây buồm và vòng sóng, Cát Hồng bậc thang và mái củ hành.
 - **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`, `game/isles.js`): bộ kiểu chung `arch.js` (27
   kiểu nhà, 21 kiểu nhà chính, công trình nhỏ, 11 kỳ quan riêng), `compose.js` ghép bố cục (nhà chính, 20 nhà riêng, công
   trình nhỏ, đường và tường sát mép, công trình ngoài làng, kỳ quan), mỗi đảo một tệp chọn kiểu, tên và bảng màu cho từng thời
