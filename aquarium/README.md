@@ -210,7 +210,7 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |
 | `ui/` | **Bảng trên màn hình**: `village-ui.js` thẻ người và bảng làng (nút Làng); `model-ui.js` thẻ của NPC mẫu (chưa nạp) |
 | `test/` | `island.test.js` 7 bài kiểm thử logic ngầm, `eras.test.js` 2 bài về mười hai thời kỳ (`node --test test/island.test.js test/eras.test.js` trong thư mục `aquarium`): tám người đầu tiên, chín năm đủ 6 thế hệ, không cưới người cấm, lai tạo và đột biến, cùng hạt giống ra cùng trận, bộ não theo gen, hạn hán |
-| `lands3d.js` | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông, cây, đổi màu theo mùa, sáu cây cầu thô |
+| `lands3d.js` | Chỉ thiên nhiên: dáng đất sáu miền, hồ, sông; địa hình thêm (`relief`: đồi thoải, cụm đá, và nét riêng từng miền: hoa dại, thân cây đổ và vòng nấm, cột đá và khe núi, vách băng và gai băng, đụn cát và cột đá ven biển, vòm đá đỏ và trụ đá ở sa mạc); cây (`FLORA`: cây tán tròn kiểu mới mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng; bụi cây), đổi màu theo mùa; sáu cây cầu thô |
 | `sea3d.js` | Biển: mặt nước phủ kín đáy bể, sóng, chậu kính trong suốt chứa nước |
 | `clouds3d.js` | Mây trong bể kính: đợt mây theo gió, mây dính thành cụm, mây đen, sấm sét, mưa theo mùa |
 | `audio.js` | Âm thanh tự sinh bằng Web Audio |
