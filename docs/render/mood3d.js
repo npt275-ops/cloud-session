@@ -3,7 +3,7 @@
  *   KEYS  các mốc trong ngày (tod 0..1): màu trời trên, màu chân trời, màu và độ mạnh của nắng, màu ánh trời (trên) và ánh
  *         đất (dưới) của đèn trời, độ mạnh đèn trời, độ mạnh đèn hắt. Bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều
  *         vàng mật ong, hoàng hôn cam tím, chạng vạng tím, đêm tím xanh. Giữa hai mốc thì pha dần.
- *   TONE  tông màu kiểu điện ảnh (ACES) và độ phơi sáng: màu dịu, chỗ sáng không cháy trắng (render/scene3d.js dùng).
+ *   TONE  cách nén màu (linear giữ màu đậm như gốc, aces dịu hơn nhưng nhạt màu) và độ phơi sáng (render/scene3d.js dùng).
  *   SOFT  bóng đổ dịu: đèn trời sáng hơn một chút và một đèn hắt nhẹ phía ngược nắng (không đổ bóng) để mặt khuất nắng
  *         không tối đen (render/sky3d.js dùng).
  * at(tod) trả màu của lúc đó (các đối tượng Color dùng lại, không tạo mới mỗi khung hình). Cần: three.js. */
@@ -23,8 +23,9 @@
     [0.86, '#121a3c', '#2e2c62', '#8a8ad8', 0.00, '#7080c8', '#2a2f48', 0.44, 0.10],
     [1.00, '#0d1733', '#262a5e', '#7a8ad8', 0.00, '#6f7fc8', '#2a2f48', 0.44, 0.10],
   ];
-  const TONE = { exposure: 1.06 };
-  const SOFT = { hemiBoost: 0.92, fillColor: '#cfe0ff' };
+  // map: 'linear' giữ đúng độ đậm của màu gốc (ACES làm màu nhạt đi); exposure: độ phơi sáng
+  const TONE = { map: 'linear', exposure: 1.0 };
+  const SOFT = { hemiBoost: 0.82, fillBoost: 0.7, fillColor: '#cfe0ff' };
   function create(THREE) {
     const C = (h) => new THREE.Color(h), K = KEYS.map((k) => ({ t: k[0], top: C(k[1]), bot: C(k[2]), sun: C(k[3]), sunI: k[4], hemiSky: C(k[5]), hemiGround: C(k[6]), hemiI: k[7], fillI: k[8] }));
     const out = { top: C('#000'), bot: C('#000'), sun: C('#000'), sunI: 0, hemiSky: C('#000'), hemiGround: C('#000'), hemiI: 0, fillI: 0, fog: C('#000') };
@@ -34,7 +35,7 @@
       const a = K[i], b = K[i + 1], u = Math.max(0, Math.min(1, (tod - a.t) / Math.max(1e-6, b.t - a.t))), s = u * u * (3 - 2 * u); // pha mềm
       out.top.copy(a.top).lerp(b.top, s); out.bot.copy(a.bot).lerp(b.bot, s); out.sun.copy(a.sun).lerp(b.sun, s);
       out.hemiSky.copy(a.hemiSky).lerp(b.hemiSky, s); out.hemiGround.copy(a.hemiGround).lerp(b.hemiGround, s);
-      out.sunI = a.sunI + (b.sunI - a.sunI) * s; out.hemiI = (a.hemiI + (b.hemiI - a.hemiI) * s) * SOFT.hemiBoost; out.fillI = a.fillI + (b.fillI - a.fillI) * s;
+      out.sunI = a.sunI + (b.sunI - a.sunI) * s; out.hemiI = (a.hemiI + (b.hemiI - a.hemiI) * s) * SOFT.hemiBoost; out.fillI = (a.fillI + (b.fillI - a.fillI) * s) * (SOFT.fillBoost || 1);
       out.fog.copy(out.bot).lerp(out.top, 0.12); // sương ngả theo chân trời
       return out;
     }
