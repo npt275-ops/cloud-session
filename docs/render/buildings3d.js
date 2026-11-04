@@ -52,8 +52,8 @@
       const fixed = lay.pieces.filter((P) => P.home == null && !P.outer && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear }; });
       for (const P of lay.pieces) {
         const build = lay.BUILD[P.kind]; if (!build) continue;
-        const k = new K.Kit(), anim = build(k, P) || null;
-        const g = k.bake(3);
+        // chỉ đặt chỗ; hình của công trình dựng lúc nó hiện ra lần đầu (bakeOf), để sang thời không phải dựng cả làng một lúc
+        const g = new THREE.Group();
         let p, dir = f;
         let dead = false; // không tìm được chỗ trên đảo: giữ chỗ trong danh sách (khớp thứ tự với logic) nhưng không hiện
         if (P.outer) { const o = outerSpot(L, P, at); if (o) { p = o.p; dir = o.dir; } else { p = at(0, 0); dead = true; } }
@@ -63,20 +63,15 @@
           if (Array.isArray(P.face)) { const d = at(P.face[0], P.face[1]).sub(p); if (d.lengthSq() > 1e-6) dir = d.normalize(); }
         }
         g.position.set(p.x, P.outer === 'sea' ? SEA_Y : 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
-        // nhà riêng to quá (thời cao tầng) thì thu lại cho vừa chỗ của một hộ
-        let fitS = 1; if (P.fit) { const bb = new THREE.Box3().setFromObject(g), m = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (m > P.fit) fitS = P.fit / m; }
         g.userData.kind = P.kind; g.userData.name = lay.NAME[P.kind];
-        group.add(g); tris += g.userData.tris || 0;
-        const glows = []; if (g.userData.glow) glows.push(g.userData.glow); if (g.userData.subGlows) glows.push(...g.userData.subGlows);
-        const subs = g.userData.subs || {}; for (const n in subs) subs[n].userData.base = subs[n].position.clone();
-        const box = new THREE.Box3().setFromObject(g);
-        const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, fitS, anim, glows, subs, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, box, progress: -1, started: false, dead };
+        group.add(g);
+        const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, fitS: 1, anim: null, glows: [], subs: {}, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, progress: -1, started: false, dead, spec: P, build, baked: false };
         // thay cái cũ: cùng chỗ (slot) hoặc đè lên chỗ cái cũ
         piece.replaces = standing.filter((Q) => (piece.slot && Q.slot === piece.slot) || (near(piece, Q) && !(Q.home != null && piece.home != null)));
         pieces.push(piece);
       }
       L.g.add(group); groups = [...groups, group];
-      shown[i] = { level, pieces, standing, groups, yard, tris: Math.round(tris), count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L };
+      shown[i] = { level, pieces, standing, groups, yard, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L };
     }
     // chỗ cho nhà riêng: giữ đúng chỗ đã định nếu trống; đè lên núi, hồ, công trình khác hay ra ngoài mép đảo thì dịch dần
     function homeSpot(L, p, r, fixed) {
@@ -108,9 +103,18 @@
       cache[key] = found; return found;
     }
     const setS = (P, xz, y) => P.g.scale.set(P.fitS * xz, P.fitS * y, P.fitS * xz);
+    // dựng hình một công trình (một lần): gộp mảnh thành một khối, nhà riêng to quá (thời cao tầng) thì thu cho vừa một hộ
+    function bakeOf(P, sh) {
+      if (P.baked) return; P.baked = true;
+      const k = new K.Kit(); P.anim = P.build(k, P.spec) || null;
+      const m = k.bake(3); P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
+      if (P.spec.fit) { const bb = new THREE.Box3().setFromObject(m), w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (w > P.spec.fit) P.fitS = P.spec.fit / w; }
+      if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
+      P.subs = m.userData.subs || {}; for (const n in P.subs) P.subs[n].userData.base = P.subs[n].position.clone();
+    }
     // xong một công trình: cái cũ ở đúng chỗ đó đã lún hẳn, cái mới đứng đủ cỡ
     function finish(sh, P) {
-      P.progress = 1; if (P.dead) return; P.g.visible = true; setS(P, 1, 1);
+      P.progress = 1; if (P.dead) return; bakeOf(P, sh); P.g.visible = true; setS(P, 1, 1);
       for (const Q of P.replaces) { Q.g.visible = false; Q.gone = true; }
       if (P.kind === 'hall' && sh.yard) { sh.yard.visible = true; for (const g of sh.groups) if (g !== P.grp && g.userData.yard) g.userData.yard.visible = false; } // sân mới trải ra khi nhà chính xong
       // nhóm của thời cũ nào không còn công trình nào đứng thì bỏ hẳn
@@ -118,8 +122,9 @@
     }
     // tiến độ từ logic (S.build.list[j].progress, 0..1): đang làm thì cái cũ vẫn đứng nguyên (thợ làm ở đó); làm xong là lên
     // đời ngay lập tức: cái cũ biến mất, cái mới hiện đủ cỡ đúng chỗ đó. Không mọc dần, không giàn giáo.
-    function setProgress(i, list) {
+    function setProgress(i, list, level) {
       const sh = shown[i]; if (!sh) return;
+      if (level != null && level !== sh.level) return; // tiến độ của thời khác (logic vừa sang thời, phần vẽ chưa kịp): bỏ qua
       sh.pieces.forEach((P, j) => {
         const pr = list && list[j] ? list[j].progress : 1;
         if (pr === P.progress || P.dead) return;
@@ -189,7 +194,7 @@
       if (!out.all.length) out.all.push(...out.homes);
       return out;
     }
-    const stats = (i) => shown[i] && { level: shown[i].level, tris: shown[i].tris, count: shown[i].count, hall: shown[i].name };
+    const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name };
     return { show, setProgress, animate, stats, places };
   }
   return { create };

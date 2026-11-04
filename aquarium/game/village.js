@@ -27,7 +27,7 @@
     const isle = Island.create({ key: 'plains', seed: +q.get('seed') || 42, buildPlan });
     { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) { W.day = Eras.startOf(cap) + 0.01; Island.step(isle, W.day); } }
     G.level = isle.level;
-    buildings.show(0, G.level, false); buildings.setProgress(0, isle.build && isle.build.list);
+    buildings.show(0, G.level, false); buildings.setProgress(0, isle.build && isle.build.list, isle.build && isle.build.level);
     const village = BK.Village3D.create({ THREE, scene, L: lands[0], S: isle, level: G.level, places: buildings.places(0) });
     const villageUi = BK.VillageUI.create({ S: isle, Island, panel: false, onFly: () => G.flyTo(lands[0].center, 34, lands[0].inw.clone().setY(0.55), 1.5) });
     // thời kỳ đang có và phần đã đi được tới thời sau (giống bể kính cũ: xem từng thời trôi qua ở 1×, 2×, 4×)
@@ -53,7 +53,8 @@
     // logic đi theo đồng hồ của trận; mỗi khung hình vẽ người và công trình; mỗi giây đồng bộ thời kỳ và bảng làng
     // giờ trong ngày đi vào logic để người biết sáng đi làm, trưa về ăn, tối ra quảng trường, đêm về ngủ (logic/schedule.js)
     const step = (dDays) => { isle.tod = G.time.tod; Island.step(isle, dDays); };
-    function animate(dt, t, night) { buildings.setProgress(0, isle.build && isle.build.list); buildings.animate(dt, t, night); village.update(dt, t); }
+    // logic sang thời ở khung hình nào thì công trình đổi thời ngay khung hình đó (không chờ nhịp chậm, tránh nhấp nháy)
+    function animate(dt, t, night) { if (isle.level !== G.level) syncEra(true); buildings.setProgress(0, isle.build && isle.build.list, isle.build && isle.build.level); buildings.animate(dt, t, night); village.update(dt, t); }
     // mỗi giây: đồng bộ thời kỳ, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
     function slow() { syncEra(true); village.setPlaces(buildings.places(0)); villageUi.render(); }
     Object.assign(G, { isle, buildings, village, villageUi, jumpEra, villageRun: { step, animate, slow } });
