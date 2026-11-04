@@ -182,8 +182,8 @@
 
     /* =============== Địa hình sáu miền =============== */
     // một ngọn núi với dáng ngẫu nhiên trong sáu kiểu, để các dãy núi không giống nhau:
-    // spire đỉnh nhọn, ridge sống núi dài ba đỉnh, twin núi đôi, dome núi tròn thoải, mesa núi đầu bằng hai bậc, crag núi đá lởm chởm
-    const MOUNTAIN_STYLES = ['spire', 'ridge', 'twin', 'dome', 'mesa', 'crag'];
+    // spire đỉnh nhọn, ridge sống núi dài ba đỉnh, twin núi đôi, mesa núi đầu bằng hai bậc, crag núi đá lởm chởm
+    const MOUNTAIN_STYLES = ['spire', 'ridge', 'twin', 'mesa', 'crag']; // núi tròn thoải (dome) đã bỏ: trông như ụ đất
     function mountainOn(k, x, z, rad, h, cols, cap, rng, style) {
       const st = style || MOUNTAIN_STYLES[Math.floor(rng() * MOUNTAIN_STYLES.length)], c = () => pick(cols, rng()), ry = rng() * TAU;
       const peak = (px, pz, r, hh, seg) => { k.cone(c(), px, 0, pz, r, hh, seg || 7, rng() * 3); if (cap) k.cone(cap, px, hh * 0.62, pz, r * 0.38, hh * 0.38 + 0.05, seg || 7, rng() * 3); };
@@ -281,9 +281,9 @@
       L.waterMats = [];
       const water = (geo, x, z, ry, y, col, op) => {
         const m = new THREE.MeshStandardMaterial({ color: col || '#4aa3c7', roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, flatShading: true, transparent: op != null, opacity: op == null ? 1 : op });
-        const me = new THREE.Mesh(geo, m); me.rotation.x = -Math.PI / 2; me.rotation.z = ry || 0; me.position.set(x, y || 0.06, z); me.receiveShadow = true; L.g.add(me); L.waterMats.push(m); return me;
+        const me = new THREE.Mesh(geo, m); me.rotation.x = -Math.PI / 2; me.rotation.z = ry || 0; me.position.set(x, y || 0.06, z); me.receiveShadow = true; L.g.add(me); L.waterMats.push(m); if (op == null) me.userData.flatPart = 'water'; return me;
       };
-      const flat = (geo, x, z, y, col, rough) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: rough == null ? 0.95 : rough, flatShading: true })); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
+      const flat = (geo, x, z, y, col, rough) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: rough == null ? 0.95 : rough, flatShading: true })); me.userData.flatPart = 'shore'; me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
       // hồ: mặt nước theo một đường viền riêng r(góc), mỗi miền một dáng
       const lakeGeo = (R, rf, n) => { const sh = new THREE.Shape(); for (let i = 0; i <= (n || 48); i++) { const t = (i / (n || 48)) * TAU, r = R * rf(t); if (i === 0) sh.moveTo(Math.cos(t) * r, Math.sin(t) * r); else sh.lineTo(Math.cos(t) * r, Math.sin(t) * r); } return new THREE.ShapeGeometry(sh); };
       const setLake = (x, z, R) => { L.lake = [x, z]; L.lakeR = R; prop(x, z, R + 0.4); };
@@ -301,13 +301,12 @@
           if (s) { const b = s * 2; idx.push(b - 2, b - 1, b, b - 1, b + 1, b); }
         }
         const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setIndex(idx); gg.computeVertexNormals();
-        const me = new THREE.Mesh(gg, mat); me.receiveShadow = true; L.g.add(me); return me;
+        const me = new THREE.Mesh(gg, mat); me.receiveShadow = true; me.userData.flatPart = L.waterMats.includes(mat) ? 'water' : 'shore'; L.g.add(me); return me;
       };
       const waterMat = (col) => { const m = new THREE.MeshStandardMaterial({ color: col || '#4aa3c7', roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide }); L.waterMats.push(m); return m; };
       if (L.ter === 'plains') {
         // đồng bằng: đồng cỏ hoa dại ở hai cánh, đồng cỏ ở giữa, sông uốn khúc đổ vào hồ sen
         // đồng cỏ hoa dại ở hai cánh (trước đây là ruộng bậc; đảo thô chưa có người cày cấy)
-        for (let i = 0; i < 26; i++) { const deg = (i % 2 ? 1 : -1) * (48 + rng() * 64), r = 34 + rng() * 9; if (r > edge(deg, 2.4)) continue; const [x, z] = at(deg, r); k.add(SPHG(), pick(['#9fcf62', '#b5d86a', '#86bf5c'], rng()), x, -0.02, z, 1.6 + rng() * 1.8, 0.12, 1.4 + rng() * 1.6, rng() * 3); for (let f = 0; f < 4; f++) k.blob(ICO(), pick(['#f4e07a', '#f2a0b8', '#ffffff', '#c9a0f0'], rng()), x + (rng() - 0.5) * 2.4, 0.12, z + (rng() - 0.5) * 2.4, 0.12, 0.4); }
         const pts = [];
         for (let s = 0; s <= 40; s++) { const u = s / 40, d = -36 + u * 72, r = 24 + 5 * Math.sin(u * Math.PI * 2.5) + u * 10; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
         ribbon(pts, 6.2, 0.03, new THREE.MeshStandardMaterial({ color: '#c9b48a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
@@ -322,13 +321,7 @@
         for (let i = 0; i < 26; i++) { const [x, z] = at((rng() - 0.5) * 70, 25 + rng() * 8); if (L.inside(x, z, 1)) k.cone(pick(['#b7c46a', '#a7b85e', '#c9cf74'], rng()), x, 0, z, 0.35, 0.7 + rng() * 0.6, 5); }
       }
       if (L.ter === 'forest') {
-        // rừng: đồi thấp phủ cây, cây mẹ ngàn năm, suối và thác
-        for (let i = 0; i < 7; i++) {
-          const deg = -70 + i * 23 + (rng() - 0.5) * 10, r = 26 + rng() * 6, [x, z] = at(deg, Math.min(edge(deg, 5), r)), R = 3.6 + rng() * 2.2, h = 2 + rng() * 2.2;
-          k.add(SPHG(), pick(['#4f7f3f', '#5a8a45', '#46733a'], rng()), x, -0.2, z, R, h, R * 0.9, rng() * 3);
-          for (let t = 0; t < 7; t++) { const a = rng() * TAU, rr = rng() * R * 0.8, tx = x + Math.cos(a) * rr, tz = z + Math.sin(a) * rr, yy = h * Math.sqrt(Math.max(0, 1 - (rr / R) ** 2)) - 0.3; k.cone(pick(['#2f6b3f', '#3f7a4c', '#356b43'], rng()), tx, yy, tz, 0.9 + rng() * 0.5, 2.4 + rng() * 1.4, 7); }
-          prop(x, z, R);
-        }
+        // rừng: cây mẹ ngàn năm, suối và hồ (đồi tròn đã bỏ)
         { const [x, z] = at(4, Math.min(edge(4, 6), 29)); k.tcyl('#5b4630', x, 0, z, 2.0, 1.2, 15, 9); for (let b = 0; b < 4; b++) { const a = b * 1.57 + 0.4; k.add(UCYL(6), '#5b4630', x + Math.cos(a) * 1.6, 0, z + Math.sin(a) * 1.6, 0.5, 3, 0.5, 0, Math.sin(a) * 0.6, -Math.cos(a) * 0.6); } for (let c2 = 0; c2 < 6; c2++) { const a = c2 * 1.05; k.blob(ICO(), pick(['#3f7a4c', '#4a8a55', '#2f6b3f'], c2 * 0.17), x + Math.cos(a) * 3.2, 15 + (c2 % 2) * 1.6, z + Math.sin(a) * 3.2, 3.6, 0.8); } k.blob(ICO(), '#4a8a55', x, 17.5, z, 3.4, 0.9); prop(x, z, 3.2); L.motherTree = [x, z]; }
         const pts = [];
         for (let s = 0; s <= 30; s++) { const u = s / 30, d = 40 + u * 40, r = 18 + u * 18 + Math.sin(u * 9) * 1.2; pts.push(at(d, Math.min(edge(d, 0.6), r))); }
@@ -349,7 +342,7 @@
         // dãy núi phía ngoài: 7 ngọn, mỗi ngọn một dáng (nhọn, sống dài, đôi, tròn, đầu bằng, đá lởm chởm), cao thấp khác nhau
         for (let m = 0; m < 7; m++) {
           const d = -95 + m * 31 + (rng() - 0.5) * 10, r = Math.min(edge(d, 4), 29 + rng() * 7), [x, z] = at(d, r), hgt = 10 + rng() * 16 - Math.abs(d) * 0.04, rad = 4.6 + rng() * 3;
-          mountainOn(k, x, z, rad, hgt, ['#8b8577', '#7f7a6e', '#948d7e', '#857f72'], m % 3 === 1 ? null : '#f4f7f9', rng, MOUNTAIN_STYLES[(m * 2 + Math.floor(rng() * 2)) % 6]);
+          mountainOn(k, x, z, rad, hgt, ['#8b8577', '#7f7a6e', '#948d7e', '#857f72'], m % 3 === 1 ? null : '#f4f7f9', rng, MOUNTAIN_STYLES[(m * 2 + Math.floor(rng() * 2)) % MOUNTAIN_STYLES.length]);
           prop(x, z, rad * 1.1);
         }
         { const [x, z] = at(-28, 24); k.tcyl('#8f8a7c', x, 0, z, 6.2, 5.8, 4.2, 9); k.cyl('#8fa274', x, 4.2, z, 5.8, 0.12, 9); prop(x, z, 6.4); L.plateau = [x, z, 4.3]; }
@@ -374,7 +367,6 @@
         { const [x, z] = at(8, Math.min(edge(8, 4), 32)); for (let i = 0; i < 9; i++) k.add(OCT(), pick(['#cfeaf5', '#e6f6fb', '#b9e0ef'], rng()), x + (i - 4) * 1.8, 0, z + (rng() - 0.5) * 2, 1.6 + rng(), 4 + rng() * 5, 1.4, -(oa + 0.14) + rng() * 0.4); prop(x, z, 8); }
         for (let i = 0; i < 16; i++) { const d = (rng() - 0.5) * 180, [x, z] = at(d, 18 + rng() * 14); if (L.inside(x, z, 1) && !L.blockedWild(x, z, 1)) { k.blob(OCT(), pick(['#bfe3f2', '#d6eef7', '#a9d6ea'], rng()), x, 0.3, z, 0.7 + rng() * 1.1, 1.6); } }
         for (let i = 0; i < 10; i++) { const d = (rng() - 0.5) * 220, r0 = 14 + rng() * 8, [x0, z0] = at(d, r0), [x1, z1] = at(d + (rng() - 0.5) * 20, Math.min(edge(d, 0.5), r0 + 8 + rng() * 8)); const len = Math.hypot(x1 - x0, z1 - z0); k.box('#7fa7c0', (x0 + x1) / 2, 0.015, (z0 + z1) / 2, 0.18, 0.03, len, Math.atan2(x1 - x0, z1 - z0)); }
-        for (let i = 0; i < 12; i++) { const [x, z] = at((rng() - 0.5) * 240, 10 + rng() * 26); if (L.inside(x, z, 1)) k.add(SPHG(), '#f4f8fb', x, -0.05, z, 1.6 + rng() * 1.6, 0.5 + rng() * 0.5, 1.2 + rng(), rng() * 3); }
         // mảng băng trôi bên ngoài mép đảo
         L.floes = [];
         for (let i = 0; i < 4; i++) { const d = -60 + i * 40 + (rng() - 0.5) * 10, r = edge(d) + 4 + rng() * 4, [x, z] = at(d, r), R = 2 + rng() * 2.2; k.cyl('#e9f3f8', x, -0.8, z, R, 0.8, 7); k.cone('#cfe6f1', x, -0.8, z, R * 0.95, -3 - rng() * 3, 7); if (rng() < 0.6) k.add(OCT(), '#d6eef7', x, -0.1, z, 0.8, 1.6, 0.8); L.floes.push([x, z, R]); }
@@ -418,7 +410,65 @@
     }
     const SPHG = () => base('sphg', () => new THREE.SphereGeometry(1, 10, 6, 0, TAU, 0, Math.PI / 2));
 
-    /* =============== Địa hình thêm: đồi, đá, và nét riêng của từng miền =============== */
+
+    /* =============== Khối núi nhiều mặt: mỗi đảo một dáng riêng =============== */
+    // Một tấm lưới nâng lên theo vài đỉnh, mỗi mặt tô một màu theo độ cao (chân xanh, sườn đá, đỉnh tuyết...), như núi
+    // low-poly. kind: range dãy nhiều đỉnh nhọn, rounded núi tròn phủ rừng, jagged núi băng lởm chởm, cliff mũi đá đầu bằng
+    // sát biển, terrace núi bậc thang nhiều lớp đá. bands: [độ cao tương đối, màu] từ chân lên đỉnh.
+    const MASSIF = {
+      // Lúa Vàng: dãy núi hồng tím, chân cỏ xanh, đỉnh tuyết (theo ảnh mẫu)
+      plains: [{ kind: 'range', W: 36, D: 19, H: 21, peaks: [[-0.32, 0.05, 0.72, 0.18], [0.06, -0.05, 1, 0.17], [0.38, 0.1, 0.8, 0.16], [-0.05, 0.3, 0.42, 0.2]], pines: 14,
+        bands: [[0.1, '#8cc05a'], [0.2, '#b4d070'], [0.32, '#e2d488'], [0.46, '#ec8ab8'], [0.6, '#d478b4'], [0.72, '#bc68ac'], [1.01, '#fbf4f8']] }],
+      // Thông Xanh: núi đôi phủ rừng, đỉnh đá xám, không tuyết
+      forest: [{ kind: 'range', W: 30, D: 18, H: 17, peaks: [[-0.2, 0, 1, 0.2], [0.24, 0.06, 0.82, 0.19]], pines: 22, bands: [[0.3, '#4f9a48'], [0.55, '#5aa850'], [0.78, '#6f9a58'], [1.01, '#a09a88']] }],
+      // Tuyết Trắng: núi băng lởm chởm, sườn xanh băng, đỉnh trắng
+      tundra: [{ kind: 'jagged', W: 32, D: 18, H: 24, peaks: [[-0.34, 0, 0.7, 0.12], [-0.08, 0.06, 1, 0.11], [0.18, -0.04, 0.85, 0.1], [0.4, 0.08, 0.62, 0.11]], pines: 0,
+        bands: [[0.2, '#f2f8fb'], [0.38, '#d4e8f2'], [0.54, '#a8c8dc'], [0.68, '#8eaec6'], [1.01, '#ffffff']] }],
+      // Cửa Sóng: mũi đá đầu bằng, vách cát kết, đỉnh cỏ
+      coast: [{ kind: 'cliff', W: 22, D: 13, H: 11, peaks: [[0, 0, 1, 0.3]], pines: 8, bands: [[0.18, '#f0dca8'], [0.5, '#dca46a'], [0.85, '#c48a56'], [1.01, '#8cc068']] }],
+      // Cát Hồng: núi bậc thang nhiều lớp đá đỏ và kem
+      desert: [{ kind: 'terrace', W: 32, D: 15, H: 15, peaks: [[-0.2, 0, 1, 0.22], [0.25, 0.05, 0.8, 0.2]], pines: 0,
+        bands: [[0.2, '#f0d09a'], [0.36, '#e8aa72'], [0.52, '#d4844c'], [0.68, '#f0c08a'], [0.84, '#c4703e'], [1.01, '#e89a62']] }],
+    };
+    const massifMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9, emissive: '#202020', emissiveIntensity: 0.25 }); // hơi tự sáng: mặt khuất nắng không tối đen
+    function massif(L, k, M, rng, free, prop) {
+      // chỗ đặt: phía ngoài đảo, lùi vào trong mép; mũi đá ven biển thì sát mép
+      let cx = 0, cz = 0, ang = 0, ok = false;
+      for (let t = 0; t < 30 && !ok; t++) {
+        ang = L.oa + (rng() - 0.5) * 2.8; const rr = L.rOf(ang) - M.D * (M.edge ? 0.32 : 0.62) - 2;
+        cx = Math.cos(ang) * rr; cz = Math.sin(ang) * rr;
+        const tx = -Math.sin(ang), tz = Math.cos(ang);
+        ok = [-0.45, -0.2, 0, 0.2, 0.45].every((u) => free(cx + tx * u * M.W, cz + tz * u * M.W, M.D * 0.4));
+      }
+      if (!ok) return false;
+      const NU = 26, NV = 14, tx = -Math.sin(ang), tz = Math.cos(ang), rx = Math.cos(ang), rz = Math.sin(ang);
+      const jit = Array.from({ length: (NU + 1) * (NV + 1) }, () => rng() - 0.5);
+      const H = (i, j) => {
+        const u = i / NU - 0.5, v = j / NV - 0.5, edgeF = Math.min(1, Math.min(0.5 - Math.abs(u), 0.5 - Math.abs(v)) * 5.5);
+        let h = 0;
+        for (const [pu, pv, ph, sg] of M.peaks) { const d2 = ((u - pu) ** 2 + ((v - pv) * 1.6) ** 2) / (2 * sg * sg); let e = Math.exp(-d2); if (M.kind === 'jagged' || M.kind === 'range') e = Math.pow(e, 0.8) * (1 - 0.15 * Math.sqrt(d2)); h = Math.max(h, ph * Math.max(0, e)); }
+        if (M.kind === 'cliff') h = Math.min(1, h * 2.2);
+        if (M.kind === 'terrace') h = Math.round(h * 6) / 6;
+        h = h * Math.max(0, edgeF) + jit[j * (NU + 1) + i] * (M.kind === 'rounded' ? 0.03 : 0.07);
+        return Math.max(-0.03, h) * M.H;
+      };
+      const P = (i, j) => { const u = (i / NU - 0.5) * M.W, v = (j / NV - 0.5) * M.D; return [cx + tx * u + rx * v, H(i, j), cz + tz * u + rz * v]; };
+      const pos = [], col = [], c = new THREE.Color();
+      const band = (t) => { for (const [lim, hex] of M.bands) if (t < lim) return hex; return M.bands[M.bands.length - 1][1]; };
+      const tri = (a, b, d) => { const t = (a[1] + b[1] + d[1]) / 3 / M.H; c.set(band(t + (rng() - 0.5) * 0.06)); const f = 0.9 + rng() * 0.12; for (const q of [a, b, d]) { pos.push(q[0], q[1] - 0.25, q[2]); col.push(c.r * f, c.g * f, c.b * f); } };
+      for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = P(i, j), b = P(i + 1, j), d = P(i, j + 1), e = P(i + 1, j + 1); if ((i + j) % 2) { tri(a, d, b); tri(b, d, e); } else { tri(a, d, e); tri(a, e, b); } }
+      // chiều quấn của tam giác phụ thuộc hướng đặt núi: lật lại nếu mặt đang quay xuống (để thấy mặt ngoài, không thấy lòng núi)
+      { const ax = pos[3] - pos[0], ay = pos[4] - pos[1], az = pos[5] - pos[2], bx = pos[6] - pos[0], by = pos[7] - pos[1], bz = pos[8] - pos[2];
+        if (az * bx - ax * bz < 0) for (let q = 0; q < pos.length; q += 9) for (let w = 0; w < 3; w++) { const t1 = pos[q + 3 + w]; pos[q + 3 + w] = pos[q + 6 + w]; pos[q + 6 + w] = t1; const t2 = col[q + 3 + w]; col[q + 3 + w] = col[q + 6 + w]; col[q + 6 + w] = t2; } }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, massifMat); m.castShadow = true; m.receiveShadow = false; L.g.add(m); // không nhận bóng của chính nó: sườn núi không tối đen
+      // thông mọc ở chân núi
+      for (let q = 0, placed = 0; q < (M.pines || 0) * 6 && placed < (M.pines || 0); q++) { const i = 1 + Math.floor(rng() * (NU - 1)), j = 1 + Math.floor(rng() * (NV - 1)), p0 = P(i, j), t = p0[1] / M.H; if (t < 0.06 || t > 0.32) continue; const s2 = 0.7 + rng() * 0.5; k.cone(pick(['#3f7a4c', '#4a8a55', '#356b43'], rng()), p0[0], p0[1] + 0.4 * s2, p0[2], 0.9 * s2, 2.4 * s2, 7); k.cyl('#6b4b32', p0[0], p0[1] - 0.2, p0[2], 0.12 * s2, 0.7 * s2, 5); placed++; }
+      for (const u of [-0.42, -0.21, 0, 0.21, 0.42]) prop(cx + tx * u * M.W, cz + tz * u * M.W, M.D * 0.5);
+      (L.massifs || (L.massifs = [])).push({ x: cx, z: cz, ang, W: M.W, D: M.D, H: M.H });
+      return true;
+    }
+    /* =============== Địa hình thêm: núi, sông, hồ, đá, và nét riêng của từng miền =============== */
     // Đặt ngoài vùng làng ở giữa đảo (bán kính 26), tránh sông, hồ và những khối lớn đã có; mỗi món ghi vào L.props để
     // cây và người tránh. Đồi dùng chung vật liệu mặt đất nên đổi màu theo mùa cùng đảo; đá và các món khác gộp một khối.
     const hillGeo = new THREE.SphereGeometry(1, 18, 5, 0, TAU, 0, Math.PI / 2); // đồi thoải: nhiều cạnh hơn để không thành khối góc
@@ -426,17 +476,17 @@
       plains: { hills: 7, rocks: 5 }, forest: { hills: 8, rocks: 7 }, mountain: { hills: 12, rocks: 12 },
       tundra: { hills: 12, rocks: 8 }, coast: { hills: 0, rocks: 5 }, desert: { hills: 0, rocks: 10 },
     };
-    // núi, sông, hồ thêm cho từng miền: số đỉnh núi, độ cao, màu; số sông, bề rộng, màu nước, màu bờ; số ao
+    // sông, hồ thêm cho từng miền: số sông, bề rộng, màu nước, màu bờ; số ao (núi thêm nằm ở MASSIF)
     const WATERS = {
-      plains: { peaks: 2, styles: ['dome', 'mesa', 'ridge'], peakH: [7, 11], peakC: ['#7fa064', '#8aa86a'], cap: '#9a9080', rivers: 1, riverW: 2.4, water: '#4aa3c7', bank: '#c9b48a', shore: '#c9b48a', ponds: 3 },
-      forest: { peaks: 3, styles: ['dome', 'twin', 'ridge'], peakH: [10, 15], peakC: ['#4f7f3f', '#46733a'], cap: '#6e5a44', rivers: 2, riverW: 2.2, water: '#3f9cc6', bank: '#6b5a3a', shore: '#6b5a3a', ponds: 3 },
-      mountain: { peaks: 2, styles: ['crag', 'mesa'], peakH: [12, 18], peakC: ['#8b8577', '#7f7a6e', '#948d7e'], cap: '#f4f7f9', rivers: 2, riverW: 2.0, water: '#3a86b0', bank: '#9d9589', shore: '#9d9589', ponds: 2 },
-      tundra: { peaks: 3, styles: ['spire', 'twin', 'crag'], peakH: [10, 18], peakC: ['#dfeaf0', '#cfdde6'], cap: '#ffffff', rivers: 1, riverW: 2.6, water: '#bfe3f2', bank: '#eef6fa', shore: '#eef6fa', ponds: 3 },
-      coast: { peaks: 2, styles: ['dome', 'crag'], peakH: [7, 10], peakC: ['#7fae5a', '#8aa86a'], cap: '#a08a6a', rivers: 2, riverW: 2.2, water: '#3fb8c8', bank: '#ecd9a8', shore: '#ecd9a8', ponds: 3 },
-      desert: { peaks: 3, styles: ['mesa', 'crag', 'ridge'], peakH: [8, 13], peakC: ['#c98a5a', '#b87b4f', '#a56d46'], cap: null, rivers: 1, riverW: 1.6, water: '#3fb0b8', bank: '#b98a55', shore: '#b98a55', ponds: 1 },
+      plains: { rivers: 1, riverW: 2.4, water: '#4aa3c7', bank: '#c9b48a', shore: '#c9b48a', ponds: 3 },
+      forest: { rivers: 2, riverW: 2.2, water: '#3f9cc6', bank: '#6b5a3a', shore: '#6b5a3a', ponds: 3 },
+      mountain: { rivers: 2, riverW: 2.0, water: '#3a86b0', bank: '#9d9589', shore: '#9d9589', ponds: 2 },
+      tundra: { rivers: 1, riverW: 2.6, water: '#bfe3f2', bank: '#eef6fa', shore: '#eef6fa', ponds: 3 },
+      coast: { rivers: 2, riverW: 2.2, water: '#3fb8c8', bank: '#ecd9a8', shore: '#ecd9a8', ponds: 3 },
+      desert: { rivers: 1, riverW: 1.6, water: '#3fb0b8', bank: '#b98a55', shore: '#b98a55', ponds: 1 },
     };
     function relief(L) {
-      const rng = landRng(L.i + 500), st = TSTYLE[L.ter], R = RELIEF[L.ter], k = new Kit(), oa = L.oa;
+      const rng = landRng(L.i + 500), st = TSTYLE[L.ter], R = RELIEF[L.ter], k = new Kit(), kD = new Kit(), oa = L.oa; // kD: chi tiết nhỏ, ẩn khi nhìn xa
       const nearRiver = (x, z, r) => L.river && L.river.some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < (r + 3.5) ** 2);
       const free = (x, z, r) => L.inside(x, z, r + 1.5) && Math.hypot(x, z) > 26 + r && !L.blockedWild(x, z, r) && !nearRiver(x, z, r);
       const spot = (r, tries, inner) => { for (let t = 0; t < (tries || 40); t++) { const a = rng() * TAU, rr = (inner || 28) + Math.sqrt(rng()) * (LAND_R - (inner || 28)), x = Math.cos(a) * rr, z = Math.sin(a) * rr; if (free(x, z, r)) return [x, z]; } return null; };
@@ -445,24 +495,19 @@
       // nước và bờ (giống phần hồ, sông ở terrain): mặt phẳng nằm ngang theo một đường viền, dải cong theo dãy điểm
       const lakeG = (Rr, rf) => { const sh = new THREE.Shape(); for (let i = 0; i <= 36; i++) { const t = (i / 36) * TAU, r = Rr * rf(t); if (i === 0) sh.moveTo(Math.cos(t) * r, Math.sin(t) * r); else sh.lineTo(Math.cos(t) * r, Math.sin(t) * r); } return new THREE.ShapeGeometry(sh); };
       const waterMat = (col) => { const m = new THREE.MeshStandardMaterial({ color: col, roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide }); L.waterMats.push(m); return m; };
-      const waterMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, waterMat(col)); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
-      const flatMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: 0.95, flatShading: true })); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
+      const waterMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, waterMat(col)); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; me.userData.flatPart = 'water'; L.g.add(me); return me; };
+      const flatMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: 0.95, flatShading: true })); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; me.userData.flatPart = 'shore'; L.g.add(me); return me; };
       const ribbon = (pts, wid, y, mat) => {
         const pos = [], idx = [];
         for (let q = 0; q < pts.length; q++) { const [x, z] = pts[q], [x2, z2] = pts[Math.min(pts.length - 1, q + 1)], [x0, z0] = pts[Math.max(0, q - 1)], tx = x2 - x0, tz = z2 - z0, l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l; pos.push(x + (nx * wid) / 2, y, z + (nz * wid) / 2, x - (nx * wid) / 2, y, z - (nz * wid) / 2); if (q) { const b = q * 2; idx.push(b - 2, b - 1, b, b - 1, b + 1, b); } }
         const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setIndex(idx); gg.computeVertexNormals();
-        const me = new THREE.Mesh(gg, typeof mat === 'string' ? new THREE.MeshStandardMaterial({ color: mat, roughness: 0.9, flatShading: true, side: THREE.DoubleSide }) : mat); me.receiveShadow = true; L.g.add(me); return me;
+        const me = new THREE.Mesh(gg, typeof mat === 'string' ? new THREE.MeshStandardMaterial({ color: mat, roughness: 0.9, flatShading: true, side: THREE.DoubleSide }) : mat); me.receiveShadow = true; me.userData.flatPart = typeof mat === 'string' ? 'shore' : 'water'; L.g.add(me); return me;
       };
       /* ----- núi, sông, hồ thêm (đặt trước đồi và đá để có chỗ) ----- */
       L.reliefStats = { peaks: 0, rivers: 0, lakes: 0, ponds: 0 };
       const W = WATERS[L.ter];
-      // núi: dãy đỉnh ở phía ngoài đảo (đỉnh nhọn ít mặt, chân loe, có mũ tuyết hay mũ cây tuỳ miền)
-      for (let i = 0, made = 0; made < W.peaks && i < W.peaks * 6; i++) {
-        const a = oa + (rng() - 0.5) * 3.2, rr = L.rOf(a) - 9 - rng() * 8, x = Math.cos(a) * rr, z = Math.sin(a) * rr, rad = 4 + rng() * 3, h = W.peakH[0] + rng() * (W.peakH[1] - W.peakH[0]);
-        if (!free(x, z, rad * 0.8)) continue;
-        mountainOn(k, x, z, rad, h, W.peakC, W.cap, rng, W.styles ? W.styles[i % W.styles.length] : null);
-        prop(x, z, rad * 0.95); L.reliefStats.peaks++; made++;
-      }
+      // khối núi nhiều mặt riêng của từng đảo (Đá Mây đã có dãy núi riêng ở terrain nên không thêm)
+      for (const M of MASSIF[L.ter] || []) massif(L, k, M, rng, free, prop);
       // sông: uốn khúc quanh phía ngoài làng, đổ vào một hồ hoặc ra mép đảo; hồ có bờ và cây cỏ
       for (let rv = 0, tries = 0; rv < W.rivers && tries < 16; tries++) {
         // sông chảy từ gần mép đảo vào trong, đổ vào một hồ ở phía ngoài làng
@@ -479,28 +524,24 @@
         if (lakeOk) {
           flatMesh(lakeG(R + 1, rf), ex, ez, 0.035, W.shore);
           waterMesh(lakeG(R, rf), ex, ez, 0.085, W.water);
-          for (let t = 0; t < 10; t++) { const q = rng() * TAU, rr = R * rf(q) * (0.95 + rng() * 0.15); k.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), ex + Math.cos(q) * rr, 0, ez + Math.sin(q) * rr, 0.05, 0.6 + rng() * 0.5, 0.05); }
+          for (let t = 0; t < 10; t++) { const q = rng() * TAU, rr = R * rf(q) * (0.95 + rng() * 0.15); kD.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), ex + Math.cos(q) * rr, 0, ez + Math.sin(q) * rr, 0.05, 0.6 + rng() * 0.5, 0.05); }
           prop(ex, ez, R + 1); L.reliefStats.lakes++;
         }
         for (let sI = 0; sI < pts.length; sI += 2) prop(pts[sI][0], pts[sI][1], W.riverW / 2 + 1.2);
       }
       // ao nhỏ rải rác
-      for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.035, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.085, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; k.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }
-      // đồi thấp: khối lặp dùng vật liệu mặt đất
-      const hills = [];
-      for (let i = 0; i < R.hills; i++) { const r = 5 + rng() * 5, p = spot(r); if (!p) continue; hills.push([p[0], p[1], r * (L.ter === 'mountain' ? 1.3 : 1), (L.ter === 'tundra' ? 0.9 : 1.0) + rng() * (L.ter === 'forest' || L.ter === 'mountain' ? 2.6 : 1.5), rng() * TAU]); prop(p[0], p[1], r * 0.85); }
-      if (hills.length) { const m = new THREE.InstancedMesh(hillGeo, L.groundMat, hills.length); hills.forEach(([x, z, r, h, ry], i) => { _o.position.set(x, -0.05, z); _o.rotation.set(0, ry, 0); _o.scale.set(r, h, r * (L.ter === 'mountain' ? 0.55 : 0.8)); _o.updateMatrix(); m.setMatrixAt(i, _o.matrix); }); m.receiveShadow = true; m.castShadow = true; L.g.add(m); }
+      for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.035, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.085, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; kD.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }
       // cụm đá: vài tảng to nhỏ chụm lại
       const rockCluster = (x, z, n, sz, cap) => { for (let j = 0; j < n; j++) { const a = rng() * TAU, rr = rng() * sz * 1.2, s2 = sz * (0.45 + rng() * 0.6); k.blob(j % 2 ? DOD() : ICO(), pick(rockC, rng()), x + Math.cos(a) * rr, s2 * 0.35, z + Math.sin(a) * rr, s2, 0.75); if (cap) k.blob(ICO(), cap, x + Math.cos(a) * rr, s2 * 0.9, z + Math.sin(a) * rr, s2 * 0.6, 0.35); } prop(x, z, sz * 1.5); };
       for (let i = 0; i < R.rocks; i++) { const p = spot(2.5); if (p) rockCluster(p[0], p[1], 3 + Math.floor(rng() * 3), 1.0 + rng() * 0.9, L.ter === 'forest' ? '#5f8f45' : L.ter === 'tundra' ? '#f4f8fb' : null); }
       if (L.ter === 'plains') {
         // khóm hoa dại nhiều màu trên đồng
-        for (let i = 0; i < 14; i++) { const p = spot(2, 30, 26); if (!p) continue; const c = pick(['#f2d04a', '#e86a6a', '#f2f0e8', '#c88ae0', '#f0a050'], rng()); for (let j = 0; j < 9; j++) { const a = rng() * TAU, rr = rng() * 1.8; k.blob(ICO(), c, p[0] + Math.cos(a) * rr, 0.22, p[1] + Math.sin(a) * rr, 0.16 + rng() * 0.08, 0.8); } }
+        for (let i = 0; i < 14; i++) { const p = spot(2, 30, 26); if (!p) continue; const c = pick(['#f2d04a', '#e86a6a', '#f2f0e8', '#c88ae0', '#f0a050'], rng()); for (let j = 0; j < 9; j++) { const a = rng() * TAU, rr = rng() * 1.8; kD.blob(ICO(), c, p[0] + Math.cos(a) * rr, 0.22, p[1] + Math.sin(a) * rr, 0.16 + rng() * 0.08, 0.8); } }
       }
       if (L.ter === 'forest') {
         // thân cây đổ phủ rêu, vòng nấm
         for (let i = 0; i < 7; i++) { const p = spot(2.5); if (!p) continue; const ry = rng() * Math.PI; k.add(UCYL(7), '#6b4b32', p[0], 0.35, p[1], 0.35, 3.6 + rng() * 2, 0.35, ry, Math.PI / 2, 0); k.blob(ICO(), '#5f8f45', p[0], 0.62, p[1], 0.45, 0.4); prop(p[0], p[1], 2.4); }
-        for (let i = 0; i < 6; i++) { const p = spot(1.6); if (!p) continue; for (let j = 0; j < 7; j++) { const a = (j / 7) * TAU, rr = 1.1; const x = p[0] + Math.cos(a) * rr, z = p[1] + Math.sin(a) * rr; k.cyl('#f2ece0', x, 0, z, 0.07, 0.35, 5); k.add(SPHG(), j % 3 ? '#d24a3a' : '#e8b44a', x, 0.33, z, 0.24, 0.18, 0.24); } }
+        for (let i = 0; i < 6; i++) { const p = spot(1.6); if (!p) continue; for (let j = 0; j < 7; j++) { const a = (j / 7) * TAU, rr = 1.1; const x = p[0] + Math.cos(a) * rr, z = p[1] + Math.sin(a) * rr; kD.cyl('#f2ece0', x, 0, z, 0.07, 0.35, 5); kD.add(SPHG(), j % 3 ? '#d24a3a' : '#e8b44a', x, 0.33, z, 0.24, 0.18, 0.24); } }
       }
       if (L.ter === 'mountain') {
         // cột đá cao chồng tầng, bãi đá lở
@@ -518,28 +559,49 @@
         for (let i = 0; i < 6; i++) { const p = spot(2); if (p) rockCluster(p[0], p[1], 3, 1.1, '#f4f8fb'); }
       }
       if (L.ter === 'desert') {
-        // trụ đá đỏ mảnh, bãi đá rải rác, bụi khô
+        // trụ đá đỏ mảnh
         for (let i = 0; i < 6; i++) { const p = spot(2); if (!p) continue; let y = 0; const h = 3 + Math.floor(rng() * 4); for (let j = 0; j < h; j++) { const r2 = 1.1 + rng() * 0.4; k.add(UCYL(7), pick(['#c98a5a', '#b87b4f', '#d99a62', '#a56d46'], rng()), p[0], y, p[1], r2, 1.2, r2, rng() * 3); y += 1.2; } k.cyl('#a56d46', p[0], y, p[1], 1.4, 0.3, 7); prop(p[0], p[1], 2); }
-        for (let i = 0; i < 10; i++) { const p = spot(3, 40, 27); if (!p) continue; k.add(SPHG(), pick(['#e3bd7f', '#dcb479', '#e8c48a', '#d8ac70'], rng()), p[0], -0.05, p[1], 4 + rng() * 3, 1.2 + rng() * 1.2, 2.6 + rng() * 1.6, rng() * 3); prop(p[0], p[1], 4); }
       }
       if (L.ter === 'tundra') {
         // rừng gai băng
         for (let i = 0; i < 7; i++) { const p = spot(2); if (!p) continue; for (let j = 0; j < 5; j++) { const a = rng() * TAU, rr = rng() * 1.6; k.add(UCONE(5), pick(['#cfeaf5', '#b9e0ef', '#e6f6fb'], rng()), p[0] + Math.cos(a) * rr, 0, p[1] + Math.sin(a) * rr, 0.3 + rng() * 0.3, 1.6 + rng() * 2.6, 0.3 + rng() * 0.3, rng() * 3, (rng() - 0.5) * 0.3, 0); } prop(p[0], p[1], 2.2); }
       }
       if (L.ter === 'coast') {
-        // đụn cát ven bãi, cột đá giữa sóng sát mép đảo, vũng nước khi thuỷ triều rút
-        for (let i = 0; i < 6; i++) { const a = rng() * TAU, x0 = Math.cos(a) * (L.rOf(a) - 6), z0 = Math.sin(a) * (L.rOf(a) - 6); if (!free(x0, z0, 2)) continue; k.add(SPHG(), pick(['#ecd9a8', '#e4cf98'], rng()), x0, -0.05, z0, 3 + rng() * 2, 1 + rng() * 0.8, 2 + rng(), -a); prop(x0, z0, 3); }
+        // cột đá giữa sóng sát mép đảo, vũng nước khi thuỷ triều rút
         for (let i = 0; i < 3; i++) { const a = oa + (rng() - 0.5) * 2.6, rr = L.rOf(a) - 1, x0 = Math.cos(a) * rr, z0 = Math.sin(a) * rr; let y = 0; for (let j = 0; j < 4; j++) { const r2 = 1.5 - j * 0.22; k.blob(DOD(), pick(['#8f7a5e', '#7d6b54', '#a08a6a'], rng()), x0, y + r2 * 0.7, z0, r2, 0.95); y += r2 * 1.25; } k.blob(ICO(), '#6aa04e', x0, y + 0.2, z0, 0.6, 0.4); }
         for (let i = 0; i < 6; i++) { const a = rng() * TAU, rr = L.rOf(a) - 4, x0 = Math.cos(a) * rr, z0 = Math.sin(a) * rr; if (!free(x0, z0, 1.6)) continue; k.cyl('#4fb8c8', x0, 0.04, z0, 1.1 + rng() * 0.5, 0.04, 9); for (let j = 0; j < 6; j++) { const t = (j / 6) * TAU; k.blob(DOD(), '#8f7a5e', x0 + Math.cos(t) * 1.5, 0.18, z0 + Math.sin(t) * 1.5, 0.35, 0.6); } prop(x0, z0, 1.8); }
       }
       if (L.ter === 'desert') {
-        // vòm đá đỏ, đụn cát nhỏ, lòng suối khô
+        // vòm đá đỏ
         for (let i = 0; i < 2; i++) { const p = spot(4.5); if (!p) continue; const ry = rng() * Math.PI, span = 3.6 + rng() * 1.4; for (let j = 0; j <= 10; j++) { const t = (j / 10) * Math.PI, x = Math.cos(t) * span, y = Math.sin(t) * span * 0.9; k.blob(DOD(), pick(['#c98a5a', '#b87b4f', '#a56d46'], rng()), p[0] + Math.cos(ry) * x, y + 0.5, p[1] + Math.sin(ry) * x, 1.0 + (j % 2) * 0.25, 0.9); } prop(p[0], p[1], span + 1); }
-        for (let i = 0; i < 7; i++) { const p = spot(3); if (!p) continue; k.add(SPHG(), pick(['#e3bd7f', '#dcb479', '#e8c48a'], rng()), p[0], -0.05, p[1], 3 + rng() * 2, 0.9 + rng() * 0.7, 2 + rng(), rng() * 3); prop(p[0], p[1], 3); }
       }
       if (k.b.length) meshOf(k, bodyMat, L.g, 0, 0, 0);
+      L.detail = new THREE.Group(); L.g.add(L.detail); if (kD.b.length) meshOf(kD, bodyMat, L.detail, 0, 0, 0);
+      mergeFlat(L);
     }
 
+
+    /* =============== Gộp mặt nước và bờ của một đảo: mỗi loại một khối, một lượt vẽ =============== */
+    // Sông, hồ, ao vẽ riêng từng khối thì tốn lượt vẽ; gộp lại theo màu từng khối (màu theo đỉnh), giữ nguyên chỗ và dáng.
+    // Mặt nước trong suốt (đầm phá) để riêng vì cần vẽ sau cùng.
+    function mergeFlat(L) {
+      for (const kind of ['water', 'shore']) {
+        const items = L.g.children.filter((m) => m.isMesh && !m.isInstancedMesh && m.userData.flatPart === kind);
+        if (items.length < 2) continue;
+        const pos = [], col = [];
+        for (const m of items) {
+          m.updateMatrix(); const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrix), p = g.attributes.position, c = m.material.color;
+          for (let i = 0; i < p.count; i++) { pos.push(p.getX(i), p.getY(i), p.getZ(i)); col.push(c.r, c.g, c.b); }
+          g.dispose(); m.geometry.dispose(); L.g.remove(m);
+          const wi = L.waterMats.indexOf(m.material); if (wi >= 0) L.waterMats.splice(wi, 1); m.material.dispose();
+        }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+        const mat = kind === 'water' ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide })
+          : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide });
+        if (kind === 'water') L.waterMats.push(mat);
+        const me = new THREE.Mesh(g, mat); me.receiveShadow = true; L.g.add(me);
+      }
+    }
     /* =============== Cây: một bộ instanced cho mỗi miền =============== */
     // Cây tán tròn (kiểu mới): tán ghép từ vài khối tròn ít mặt, chân tán sẫm dần lên ngọn, thân to; mọc thành lùm và rừng,
     // chừa đồng trống. Giữ lại một phần cây cũ: thông, thông tuyết, dừa, xương rồng, cây bụi khô.
@@ -560,15 +622,16 @@
     const roundGeo = blobs([[0, 0.05, 0, 1], [0.66, -0.2, 0.25, 0.74], [-0.6, -0.15, -0.3, 0.76]], 0);
     const tallGeo = blobs([[0, -0.75, 0, 0.8], [0, 0.35, 0, 0.64]], 0);
     const bushGeo = blobs([[0, 0, 0, 0.62], [0.5, -0.1, 0.15, 0.46], [-0.45, -0.12, -0.12, 0.48]], 0); // bụi nhỏ: ít mặt cho nhẹ
+    const shadowGeo = new THREE.CircleGeometry(1, 10).rotateX(-Math.PI / 2), shadowMat = new THREE.MeshBasicMaterial({ color: '#1e2a14', transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     const SEASON_LEAF = [['#a9e07c', 0.4], [null, 0], ['autumn', 1], ['#e8eef2', 0.6]];
     // mỗi miền: số cây, số bụi, tỉ lệ từng loại cây (kiểu mới round/tall, kiểu cũ giữ lại), số lùm cây
     const FLORA = {
-      plains: { n: 150, bush: 90, groves: 9, kinds: [['round', 0.62], ['tall', 0.1], ['blossom', 0.1], ['conifer', 0.18]] },
-      forest: { n: 380, bush: 130, groves: 12, kinds: [['round', 0.45], ['tall', 0.1], ['conifer', 0.45]] },
-      mountain: { n: 300, bush: 70, groves: 11, kinds: [['conifer', 0.7], ['round', 0.3]] },
-      tundra: { n: 230, bush: 40, groves: 10, kinds: [['snowpine', 0.82], ['snowround', 0.18]] },
-      coast: { n: 160, bush: 80, groves: 8, kinds: [['palm', 0.5], ['round', 0.38], ['tall', 0.12]] },
-      desert: { n: 90, bush: 70, groves: 6, kinds: [['cactus', 0.65], ['shrub', 0.35]] },
+      plains: { n: 120, bush: 60, groves: 9, kinds: [['round', 0.62], ['tall', 0.1], ['blossom', 0.1], ['conifer', 0.18]] },
+      forest: { n: 260, bush: 90, groves: 12, kinds: [['round', 0.45], ['tall', 0.1], ['conifer', 0.45]] },
+      mountain: { n: 200, bush: 45, groves: 11, kinds: [['conifer', 0.7], ['round', 0.3]] },
+      tundra: { n: 170, bush: 28, groves: 10, kinds: [['snowpine', 0.82], ['snowround', 0.18]] },
+      coast: { n: 130, bush: 55, groves: 8, kinds: [['palm', 0.5], ['round', 0.38], ['tall', 0.12]] },
+      desert: { n: 80, bush: 50, groves: 6, kinds: [['cactus', 0.65], ['shrub', 0.35]] },
     };
     // khối lặp nào dùng cho loại cây nào (mỗi khối chỉ giữ đúng số cây của nó, không cấp chỗ thừa)
     const USE = { conifer: ['trunks', 'cones'], snowpine: ['trunks', 'cones'], round: ['fat', 'rounds'], blossom: ['fat', 'rounds'], snowround: ['fat', 'rounds'], tall: ['fat', 'talls'], bush: ['bushes'], palm: ['trunks', 'icos'], cactus: ['trunks'], broad: ['trunks', 'icos'], shrub: ['icos'] };
@@ -604,7 +667,10 @@
       const mk = (geo, k, vc) => new THREE.InstancedMesh(geo, std(vc), Math.max(1, cnt[k]));
       const T = { list, trunks: mk(trunkGeo, 'trunks'), fat: mk(trunkFat, 'fat'), cones: mk(coneGeo, 'cones'), icos: mk(icoGeo, 'icos'), rounds: mk(roundGeo, 'rounds', true), talls: mk(tallGeo, 'talls', true), bushes: mk(bushGeo, 'bushes', true) };
       T.all = [T.trunks, T.fat, T.cones, T.icos, T.rounds, T.talls, T.bushes];
-      for (const k of ['trunks', 'fat', 'cones', 'icos', 'rounds', 'talls', 'bushes']) { T[k].count = cnt[k]; T[k].castShadow = true; T[k].receiveShadow = true; L.g.add(T[k]); }
+      // cây không đổ bóng thật (đỡ một lần vẽ cả rừng cây); thay bằng vệt bóng tròn mờ dưới gốc, cùng một lượt vẽ
+      for (const k of ['trunks', 'fat', 'cones', 'icos', 'rounds', 'talls', 'bushes']) { T[k].count = cnt[k]; T[k].castShadow = false; T[k].receiveShadow = true; L.g.add(T[k]); }
+      T.shadow = new THREE.InstancedMesh(shadowGeo, shadowMat, Math.max(1, N)); T.shadow.count = N; T.shadow.renderOrder = 1; L.g.add(T.shadow); T.all.push(T.shadow);
+      list.forEach((t, n) => { t.slot.shadow = n; });
       L.trees = T;
       for (let n = 0; n < N; n++) placeTree(L, n);
       for (const m of T.all) m.instanceMatrix.needsUpdate = true;
@@ -614,6 +680,7 @@
     function placeTree(L, n) {
       const t = L.trees.list[n], T = L.trees, s = t.s;
       if (t.hidden) { for (const k in t.slot) T[k].setMatrixAt(t.slot[k], ZERO); return; }
+      _o.position.set(t.x, 0.05, t.z); _o.rotation.set(0, 0, 0); _o.scale.set(t.r * 1.15, 1, t.r * 1.15); _o.updateMatrix(); T.shadow.setMatrixAt(t.slot.shadow, _o.matrix);
       _o.position.set(t.x, 0, t.z); _o.rotation.set(t.tilt, t.rot, 0);
       const set = (k, sx, sy, sz, y) => { _o.position.y = y; _o.scale.set(sx, sy, sz); _o.updateMatrix(); T[k].setMatrixAt(t.slot[k], _o.matrix); };
       if (t.kind === 'conifer' || t.kind === 'snowpine') { set('trunks', s, 1.1 * s, s, 0); set('cones', 0.95 * s, 2.6 * s, 0.95 * s, 0.85 * s); }
@@ -639,7 +706,7 @@
           tmp.setRGB(0, 0, 0); for (let s = 0; s < 4; s++) if (sw[s]) { tmp.r += cs[s].r * sw[s]; tmp.g += cs[s].g * sw[s]; tmp.b += cs[s].b * sw[s]; }
         } else tmp.copy(leaf);
         const bark = C(t.kind === 'cactus' ? '#5d8f4a' : t.kind === 'palm' ? '#8a6a46' : '#6b4b32');
-        for (const k in t.slot) T[k].setColorAt(t.slot[k], k === 'trunks' || k === 'fat' ? bark : tmp);
+        for (const k in t.slot) if (k !== 'shadow') T[k].setColorAt(t.slot[k], k === 'trunks' || k === 'fat' ? bark : tmp);
       });
       for (const m of T.all) if (m.instanceColor) m.instanceColor.needsUpdate = true;
     }
@@ -994,8 +1061,12 @@
     for (const b of W.bridges) { const B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); buildBridge(B, b.era); }
 
     /* =============== Mỗi khung hình: mặt nước lấp lánh, cầu sáng đèn ban đêm =============== */
-    function animate(dt, t, night) {
-      for (const L of lands) for (const m of L.waterMats) m.emissiveIntensity = 0.25 + Math.sin(t * 0.002 + L.i) * 0.05 + night * 0.15;
+    // cam: vị trí camera; ở xa một đảo (quá 120) thì ẩn bụi cây, vệt bóng cây và chi tiết nhỏ (hoa, nấm, lau, sỏi) của đảo đó
+    function animate(dt, t, night, cam) {
+      for (const L of lands) {
+        for (const m of L.waterMats) m.emissiveIntensity = 0.25 + Math.sin(t * 0.002 + L.i) * 0.05 + night * 0.15;
+        if (cam) { const near = cam.distanceToSquared(L.center) < 120 * 120; if (L.detail) L.detail.visible = near; L.trees.bushes.visible = near; L.trees.shadow.visible = near; }
+      }
       for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2;
     }
     // màu theo mùa cho mặt đất và cây

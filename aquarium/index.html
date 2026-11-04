@@ -479,7 +479,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       syncEra(true); villageUi.render();
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
-    lands3d.animate(dt, t, night, tod, null, null);
+    lands3d.animate(dt, t, night, camera.position);
     buildings.animate(dt, t, night);
     village.update(dt, t);
     sea3d.animate(dt, t, night);

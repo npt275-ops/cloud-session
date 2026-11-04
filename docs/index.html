@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bể Kính">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="bekinh-version" content="2026.11.04-f5b3d61">
+<meta name="bekinh-version" content="2026.11.04-e9bd4a5">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -494,7 +494,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       syncEra(true); villageUi.render();
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
-    lands3d.animate(dt, t, night, tod, null, null);
+    lands3d.animate(dt, t, night, camera.position);
     buildings.animate(dt, t, night);
     village.update(dt, t);
     sea3d.animate(dt, t, night);
