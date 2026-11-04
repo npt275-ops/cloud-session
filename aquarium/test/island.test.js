@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'schedule', 'tasks', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -125,7 +125,7 @@ test('dàn vai cố định tối đa 50 người; nhà chính chỉ đông khi 
   for (let d = 0; d < 9 * 360; d++) {
     S.tod = 0.35; S.situ.drought = 0; S.situ.protest = 0; BK.Island.step(S, 1); // ngày thường, buổi sáng
     maxPop = Math.max(maxPop, BK.Island.living(S).length);
-    if (d > 900) { maxHall = Math.max(maxHall, hallCrowd()); }
+    if (d > 900 && !BK.Dramas.active(S).some((A) => A.key === 'riot')) { maxHall = Math.max(maxHall, hallCrowd()); } // ngày thường: không tính lúc có bạo loạn
   }
   assert.ok(maxPop <= R.POP_CAP, 'dân tối đa ' + maxPop);
   const live = BK.Island.living(S).length; assert.ok(live >= 35, 'cuối trận còn ' + live + ' người');
@@ -162,4 +162,44 @@ test('cổng thành luôn có đủ 4 lính gác, mỗi người một chốt, q
     }
   }
   assert.ok(checked > 70);
+});
+
+test('vị trí cứng: 4 gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, qua mọi thế hệ', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 31 });
+  let checked = 0;
+  for (let d = 0; d < 9 * 360; d++) {
+    S.tod = (d % 4) / 4; BK.Island.step(S, 1);
+    if (d > 720 && d % 45 === 0) {
+      const live = BK.Island.living(S), by = (k) => live.filter((p) => p.postKey === k && BK.Posts.of(p));
+      for (const [k, n] of [['gateMain', 4], ['gateLeft', 2], ['gateRight', 2], ['orator', 1]]) {
+        const g = by(k); assert.strictEqual(g.length, n, 'ngày ' + d + ' ' + k + ': ' + g.length);
+        assert.deepStrictEqual(g.map((p) => p.post).sort(), [...Array(n).keys()], k + ': mỗi người một chỗ');
+      }
+      for (const p of by('gateLeft').concat(by('gateRight'))) { const m = S.minds.get(p.id); if (m && m.verb) assert.ok(m.place === 'gateL' || m.place === 'gateR', 'lính cổng phụ đứng ở cổng phụ: ' + m.place); }
+      checked++;
+    }
+  }
+  assert.ok(checked > 40);
+});
+
+test('drama: gom người cùng tính cách, bỏ việc ra tham gia, tan thì về việc cũ', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 5 });
+  for (let d = 0; d < 3 * 360; d++) { S.tod = 0.35; BK.Island.step(S, 1); }
+  // bạo loạn chỉ thành khi làng có đủ người nóng tính: chạy tiếp tới lúc mở được
+  let A = null; for (let d = 0; d < 4 * 360 && !A; d++) { S.tod = 0.35; BK.Island.step(S, 1); for (const x of [...BK.Dramas.active(S)]) BK.Dramas.end(S, x); A = BK.Dramas.start(S, 'riot', S.rng); }
+  assert.ok(A, 'mở được bạo loạn');
+  BK.Brain.think(S, S.rng);
+  const mob = A.parts.mob.map((id) => S.people.get(id));
+  const hot = mob.filter((p) => ['hothead', 'ambitious'].includes(p.temper) || BK.Temper.fit(p, ['hothead', 'ambitious']) >= 0.52).length;
+  assert.strictEqual(hot, mob.length, 'cả đám đông đều nóng tính hay tham vọng: ' + hot + '/' + mob.length);
+  for (const p of mob) assert.strictEqual(S.minds.get(p.id).drama, 'riot', 'người trong đám làm việc của drama');
+  assert.ok(!mob.some((p) => p.job === 'gatekeeper' || p.job === 'sideguard'), 'lính gác cổng không bỏ chốt');
+  const before = new Map(mob.map((p) => [p.id, p.job]));
+  // hết drama: về việc cũ theo lịch
+  BK.Island.step(S, 3); BK.Brain.think(S, S.rng);
+  assert.ok(!BK.Dramas.active(S).some((x) => x === A), 'bạo loạn đã tan');
+  for (const p of mob) { const m = S.minds.get(p.id); assert.ok(!m.drama || m.drama !== 'riot', 'không còn ở trong bạo loạn'); assert.strictEqual(p.job, before.get(p.id), 'việc không đổi'); }
+  // có đủ các loại drama nổ ra trong một năm
+  const seen = new Set(); for (let d = 0; d < 360; d++) { S.tod = [0.3, 0.6, 0.8][d % 3]; BK.Island.step(S, 1); for (const x of BK.Dramas.active(S)) seen.add(x.key); }
+  for (const k of ['brawl', 'speech', 'gossip']) assert.ok(seen.has(k), 'có drama ' + k + ' (' + [...seen].join(',') + ')');
 });

@@ -121,6 +121,12 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   bảng màu ấm theo giờ (bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều vàng mật ong, hoàng hôn cam tím, chạng vạng
   tím, đêm tím xanh), sương ngả theo chân trời; bóng dịu nhờ đèn trời sáng hơn và một đèn hắt nhẹ phía ngược nắng. Mọi màu
   trời và ánh sáng theo giờ nằm ở một chỗ (KEYS), độ phơi sáng ở TONE.
+- **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
+  - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
+  - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;
+  - drama (`logic/dramas.js`): bạo loạn, ẩu đả ở chợ, diễn thuyết lớn, cầu nguyện tập thể, tranh luận ở trường, buôn chuyện,
+    mừng thời mới. Drama gom người cùng tính cách bỏ việc ra tham gia, tan thì về việc cũ; mỗi drama là một dòng dữ liệu.
+  - Người đi đường đi dạo dọc phố trên vỉa hè, gặp nhau thì dừng lại trò chuyện rồi đi tiếp (`render/village3d.js`).
 - **Đường luôn thông** (mọi thời, mọi năm, cả sáu đảo): mạng đường của đảo tính ngay khi dựng đất (`render/build/roads.js`
   isleSegs), nên núi, cao nguyên, hồ, đầm, ốc đảo dời ra khỏi đường, đá, cỏ, cây nhỏ không mọc trên đường (`render/map/`).
   Sông được chảy qua đường (mặt đường cao hơn mặt nước, như cầu phẳng). Công trình dựng xong thì đo phần sát đất theo cỡ thật

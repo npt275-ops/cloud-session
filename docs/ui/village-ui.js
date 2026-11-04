@@ -45,8 +45,8 @@
     let sel = null, lastKey = '';
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
-    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', gate: 'ở cổng thành', site: 'ở chỗ đang dựng' };
-    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
+    const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', gate: 'ở cổng thành', gateL: 'ở cổng phụ trái', gateR: 'ở cổng phụ phải', podium: 'ở bục diễn thuyết', site: 'ở chỗ đang dựng' };
+    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Bạo loạn'], ['brawl', 'Ẩu đả'], ['speech', 'Diễn thuyết'], ['vigil', 'Cầu nguyện'], ['debate', 'Tranh luận'], ['gossip', 'Buôn chuyện'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']]; // drama: logic/dramas.js
 
     function renderPanel() {
       const X = Island.situNow(S), live = Island.living(S);
@@ -57,7 +57,7 @@
       const jobs = J ? ' · thợ ' + (J.count(S, 'builder') + (S.seats.builder != null ? 1 : 0)) + ' · lính ' + J.count(S, 'soldier') + ' · nông dân ' + J.count(S, 'farmer') + ' · đi đường ' + J.count(S, 'walker') + ' · già ' + J.count(S, 'elder') : '';
       panel.innerHTML = '<h3>Làng ' + S.name + ' <small>thế hệ ' + (S.gen + 1) + ' · ' + live.length + ' người · ' + live.filter((p) => P.ageOf(p, S.day) < R.ADULT_AGE).length + ' trẻ</small></h3>' +
         '<div class="stat">' + (E ? 'Cấp ' + lv + ' · ' + E.of(lv).name + ' · ' : '') + when(S.day) + '<br>Đã sinh ' + (S.births || 0) + ' · đã mất ' + (S.deaths || 0) + jobs + '</div>' +
-        '<div class="chips">' + chips + '</div>' +
+        '<div class="chips">' + chips + (BK.Dramas ? BK.Dramas.active(S).map((A) => '<span class="chip hot">' + A.name + ' · ' + A.who.size + ' người</span>').join('') : '') + '</div>' +
         '<div class="sec">Thử tình huống</div><div class="tests">' + TEST.map(([k, t]) => '<button data-t="' + k + '">' + t + '</button>').join('') + '<button data-fly="1">Xem làng</button></div>' +
         '<div class="sec">Hội đồng</div><div class="seats">' + seats + '</div>' +
         '<div class="sec">Nhật ký</div><ul class="log">' + log + '</ul>';
@@ -73,7 +73,7 @@
       const spouse = p.spouses.map(name).join(', ') || 'chưa có';
       card.hidden = false;
       card.innerHTML = '<button class="x" data-close="1" aria-label="Đóng">✕</button><h2>' + P.fullName(p) + '</h2>' +
-        '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
+        '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.temper && BK.Temper ? 'tính ' + BK.Temper.nameOf(p.temper).toLowerCase() + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
         '<p><span class="k">Đang:</span> ' + doing + '</p>' +
         '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + (p.alive && p.home != null ? '<br><span class="k">Nhà:</span> số ' + (p.home + 1) + (BK.Homes ? ' (' + BK.Homes.occupancy(S)[p.home] + ' người)' : '') : '') + '</p>' +
         '<div class="sec">Tính cách</div>' + bars +

@@ -54,14 +54,17 @@
   // (render/map/terrain3d.js) để núi, hồ, đá, cây không mọc chắn đường; render/buildings3d.js dùng lại cho công trình.
   // HALF: nửa bề rộng chỗ phải để trống (nửa mặt đường rộng nhất 3 cộng lề 0,4).
   const HALF = 1.9;
-  function isleSegs(L, key) {
+  // isleNet: vòng đường và các đường toả theo toạ độ đảo (người đi dạo dọc phố, render/village3d.js); isleSegs: các đoạn thẳng
+  function isleNet(L, key) {
     const fx = L.inw.x, fz = L.inw.z, fl = Math.hypot(fx, fz) || 1, th = Math.atan2(fx / fl, fz / fl), c = Math.cos(th), sn = Math.sin(th);
-    const rot = (x, z) => [x * c + z * sn, -x * sn + z * c];
-    const edge = (a) => { const [X, Z] = rot(Math.sin(a), Math.cos(a)); return L.rOf(Math.atan2(Z, X)); };
-    return segs(net(key || L.ter, edge)).map(([x0, z0, x1, z1]) => [...rot(x0, z0), ...rot(x1, z1)]);
+    const rot = ([x, z]) => [x * c + z * sn, -x * sn + z * c];
+    const edge = (a) => { const [X, Z] = rot([Math.sin(a), Math.cos(a)]); return L.rOf(Math.atan2(Z, X)); };
+    const N = net(key || L.ter, edge);
+    return { loop: N.loop.map(rot), spokes: N.spokes.map((sp) => sp.map(rot)) };
   }
+  function isleSegs(L, key) { const N = isleNet(L, key); return segs({ all: [[...N.loop, N.loop[0]], ...N.spokes] }); }
   const segDist = (x, z, [x0, z0, x1, z1]) => { const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2)); return Math.hypot(x - x0 - dx * t, z - z0 - dz * t); };
   // một vòng tròn (x, z, r) có lấn vào đường không
   const hits = (segList, x, z, r, half) => !!segList && segList.some((S) => segDist(x, z, S) < (r || 0) + (half || HALF));
-  BK.Roads3D = { NETS, net, segs, draw, along, isleSegs, segDist, hits, HALF, Y };
+  BK.Roads3D = { NETS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, HALF, Y };
 })(typeof self !== 'undefined' ? self : globalThis);

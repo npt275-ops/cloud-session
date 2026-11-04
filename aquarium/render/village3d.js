@@ -3,7 +3,8 @@
  * cử động bằng render/anim3d.js theo việc mà bộ não (logic/brain.js) đã chọn. Người đi tới chỗ cần đến theo công trình
  * của thời đang có (render/buildings3d.js places: nhà chính, sân, ruộng, nhà ở, chỗ tuần tra, cầu) hay tới gần người
  * mình nói chuyện, cãi nhau, đánh nhau. Nét mặt đổi theo việc (vui khi trò chuyện, giận khi cãi, sợ khi chạy, nhắm mắt
- * khi cầu nguyện), mắt tự chớp. Tới nơi làm việc thì dùng cử chỉ trong thư viện (render/work3d.js: cuốc, gặt, đóng búa, canh
+ * khi cầu nguyện), mắt tự chớp. Người đi đường đi dạo dọc phố theo mạng đường của đảo, gặp nhau thì dừng lại trò chuyện
+ * rồi đi tiếp; drama (logic/dramas.js) gom người tới chỗ của nó: đám bạo loạn hô hào, người nghe đứng thành vòng quanh người nói. Tới nơi làm việc thì dùng cử chỉ trong thư viện (render/work3d.js: cuốc, gặt, đóng búa, canh
  * gác, diễn thuyết, ăn, ngồi...) và cầm đúng đồ; đêm thì vào nhà ngủ (không vẽ). Không có tên trên đầu: bấm vào người để mở thẻ.
  * Bộ phận cùng loại của mọi người là một khối lặp: khoảng 40 lượt vẽ cho cả làng dù đông bao nhiêu.
  * Cần: three.js, logic/brain.js, logic/people.js, logic/island.js, render/rig3d.js, render/anim3d.js. Không sửa logic. */
@@ -40,6 +41,8 @@
       if (place === 'guard') return pickOf(PL.guard, p.id);
       if (place === 'bridge') return bridge;
       if (place === 'gate') return PL.gate && PL.gate.length ? PL.gate[(p.post || 0) % PL.gate.length] : pickOf(PL.guard, p.id); // bốn chốt gác cổng thành
+      if (place === 'gateL' || place === 'gateR') return PL[place] && PL[place].length ? PL[place][(p.post || 0) % PL[place].length] : pickOf(PL.guard, p.id); // hai chốt mỗi cổng phụ
+      if (place === 'podium') return PL.podium || pickOf(PL.square, k); // bục diễn thuyết giữa sân
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
@@ -93,12 +96,40 @@
     function goalOf(f, mind) {
       const tgt = mind.target != null ? folks.get(mind.target) : null;
       if (tgt && (mind.state === 'talk' || mind.state === 'attack')) {
-        const K = f.knobs, gap = mind.state === 'attack' ? 0.95 - K.lean * 0.2 : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
+        // đứng nghe, đứng xem (drama): toả thành vòng rộng quanh người nói; trò chuyện, cãi, đánh: đứng sát
+        const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? 0.95 - K.lean * 0.2 : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
         _v.copy(f.pos).sub(tgt.pos); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
         return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
+      if (mind.place === 'stroll' && NET) return strollGoal(f);
       const base = spot(mind.place, f.p);
-      return base ? { p: base.clone().add(f.jit), face: null } : null;
+      if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
+      const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
+      return base ? { p: tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit), face: null } : null;
+    }
+    /* ---------- Đi dạo dọc phố ----------
+     * Người đi đường (chỗ 'stroll') đi theo mạng đường của đảo (render/build/roads.js isleNet): dọc vòng đường một quãng, có khi
+     * rẽ ra một đường toả tới gần cổng rồi quay lại; đi lệch về bên phải mặt đường (vỉa hè), không đi giữa đường xe chạy. */
+    const NET = BK.Roads3D && L.rOf && L.inw ? BK.Roads3D.isleNet(L, L.ter) : null;
+    function newRoute(f) {
+      const loop = NET.loop, n = loop.length; let bi = 0, bd = 1e18;
+      for (let i = 0; i < n; i++) { const d = (loop[i][0] - f.pos.x) ** 2 + (loop[i][1] - f.pos.z) ** 2; if (d < bd) { bd = d; bi = i; } }
+      const dir = Math.random() < 0.5 ? 1 : -1, len = 6 + Math.floor(Math.random() * 16), pts = [];
+      for (let k = 0; k <= len; k++) pts.push(loop[(((bi + dir * k) % n) + n) % n]);
+      if (NET.spokes.length && Math.random() < 0.35) { // rẽ ra một đường toả gần chỗ dừng, đi gần tới cổng rồi quay lại
+        const end = pts[pts.length - 1]; let bs = null, bsd = 1e18;
+        for (const sp of NET.spokes) { const d = (sp[0][0] - end[0]) ** 2 + (sp[0][1] - end[1]) ** 2; if (d < bsd) { bsd = d; bs = sp; } }
+        if (bs && bsd < 120) { const out = bs.slice(0, Math.max(2, bs.length - 3)); pts.push(...out, ...out.slice().reverse()); }
+      }
+      f.route = pts; f.ri = 0;
+    }
+    function strollGoal(f) {
+      if (!f.route || f.ri >= f.route.length) newRoute(f);
+      const a = f.route[f.ri], b = f.route[Math.min(f.route.length - 1, f.ri + 1)];
+      let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+      const side = 1.0 + (f.p.id % 3) * 0.15, p = new THREE.Vector3(a[0] + dz * side, 0, a[1] - dx * side); // lệch phải theo hướng đi
+      if ((p.x - f.pos.x) ** 2 + (p.z - f.pos.z) ** 2 < 0.6) { f.ri++; }
+      return { p, face: null, road: true };
     }
     function exprOf(mind, X, p) {
       if (mind.mood === 'pray') return 'closed';
@@ -123,7 +154,16 @@
         alive.add(p.id);
         const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0), { seed: p.id * 1.7 });
-        const goal = goalOf(f, mind);
+        let goal = goalOf(f, mind), meetVerb = null;
+        // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
+        if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
+        else if (mind.place === 'stroll' && goal && goal.road && !(ts < (f.meetCool || 0))) {
+          for (const [oid, o2] of folks) {
+            if (oid === p.id || o2.meet || !o2.strolling || ts < (o2.meetCool || 0)) continue;
+            if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: p.id, until }; goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
+          }
+        }
+        f.strolling = mind.place === 'stroll' && !meetVerb;
         let moving = false;
         if (goal) {
           _v.copy(goal.p).sub(f.pos); _v.y = 0;
@@ -134,7 +174,7 @@
         }
         if (!moving) f.ph += sec * 3 * f.knobs.tempo;
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
-        const verb = mind.verb, working = !moving && verb && verb !== 'sleep' && (mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
+        const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
         f.inside = !moving && verb === 'sleep'; // ngủ: vào trong nhà (không vẽ)
         let tgt, gface = null;
         if (working && Work) {
@@ -154,7 +194,7 @@
         // chớp mắt vài giây một lần
         if (ts > f.blinkAt) { f.blink = 0.14; f.blinkAt = ts + 2.2 + Math.random() * 3; }
         f.blink = Math.max(0, f.blink - sec);
-        const ek = gface && EXPR[gface] && !X.war && !X.mourning ? gface : exprOf(mind, X, p);
+        const ek = meetVerb ? 'happy' : gface && EXPR[gface] && !X.war && !X.mourning && !mind.mood ? gface : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
         f.expr = EXPR[ek] || EXPR.neutral; f.closed = f.expr === EXPR.closed || f.blink > 0;
       }
       for (const [id] of folks) if (!alive.has(id)) { folks.delete(id); if (selected === id) selected = null; }

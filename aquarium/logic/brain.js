@@ -14,7 +14,7 @@
   const STATES = ['idle', 'walk', 'talk', 'attack', 'panic', 'work']; // work: làm một việc (verb) ở chỗ của nó (logic/tasks.js)
   const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện', work: 'Làm việc' };
   // những chỗ trong làng (vị trí cụ thể do phần vẽ đặt, logic chỉ biết tên chỗ)
-  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate']; // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
+  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate', 'gateL', 'gateR', 'podium']; // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
   function knobs(genome, stress) {
@@ -41,6 +41,8 @@
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà
+    // đang ở trong một drama (logic/dramas.js): bỏ việc thường ra tham gia, drama tan thì lịch thường đưa về đúng việc của mình
+    if (BK.Dramas && !(X.war > day)) { const dt = BK.Dramas.taskFor(S, p, d); if (dt) return dt; }
 
     // cãi nhau giữa hai người
     if (X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) {
@@ -65,14 +67,8 @@
       if (t.fear > 0.65 && rng.chance(0.4)) return d('panic', { place: 'home', intensity: t.fear * 0.7, until: day + 0.15 });
       return d('walk', { place: 'field', intensity: 0.4 });
     }
-    // biểu tình: người đa nghi, hiếu chiến, khôn lỏi kéo tới nhà chính đối mặt người đứng đầu; lính và tướng giữ trật tự ở đó;
-    // người nhát ở nhà. Đây là lúc duy nhất nhà chính đông người
-    if (X.protest > day && !p.role) {
-      if (p.job === 'soldier') return d('work', { verb: 'guard', place: 'hall', reason: 'giữ trật tự trước nhà chính', phase: ph, until: day + 8 });
-      if (t.paranoia + t.aggression + t.cunning * 0.5 > 1.05 && king != null) return d('talk', { mood: 'argue', target: king, reason: 'biểu tình đòi người đứng đầu giải quyết', intensity: 0.6 + t.aggression * 0.4, phase: ph, until: day + 8 });
-      if (t.fear > 0.55) return d('idle', { place: 'home', reason: 'sợ, ở trong nhà', phase: ph });
-    }
-    if (X.protest > day && (p.role === 'general1' || p.role === 'general2')) return d('work', { verb: 'drill', place: 'hall', reason: 'chỉ huy lính giữ nhà chính', phase: ph, until: day + 8 });
+    // biểu tình, bạo loạn: nay là drama 'riot' (logic/dramas.js), chỉ người nóng tính bị cuốn vào; người nhút nhát thì ở trong nhà
+    if (X.protest > day && !p.role && p.temper === 'timid' && !(p.job === 'gatekeeper' || p.job === 'sideguard')) return d('idle', { place: 'home', reason: 'sợ đám đông, ở trong nhà', phase: ph });
     // tang: người sùng đạo cầu nguyện ở chỗ thờ, người khác lặng lẽ ở nhà
     if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: t.piety > 0.55 ? 'shrine' : 'home', intensity: 0.3, phase: ph });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa

@@ -4,7 +4,8 @@
  * Không ai đứng không: nghỉ cũng có việc (ăn ở nhà, ngồi bếp lửa, ngủ trong nhà).
  * Vai: người đứng đầu, tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả (ghế hội đồng); thợ xây, thương nhân, lính,
  * nông dân, người đi đường, người già, trẻ em.
- * Cần: logic/schedule.js, logic/people.js. Chạy được bằng Node. */
+ * Vị trí cứng (logic/posts.js) đứng đúng chốt; drama (logic/dramas.js) được bộ não xét trước lịch này.
+ * Cần: logic/schedule.js, logic/people.js, logic/posts.js. Chạy được bằng Node. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Tasks = factory(BK);
@@ -27,7 +28,16 @@
     const role = p.role, j = p.job;
     const building = S.build && S.build.active != null ? S.build.list[S.build.active] : null;
     // lính gác cổng thành: ngày đêm đứng ở cổng (bữa ăn mang ra cổng), canh người ra vào
+    // vị trí cứng (logic/posts.js): lính gác cổng chính, cổng phụ ngày đêm đứng ở chốt của mình (bữa ăn mang ra cổng)
+    const post = BK.Posts && BK.Posts.of(p);
+    if (post && post.night) return job(post.verb, post.place, ph === 'night' ? post.why + ' ban đêm' : post.why);
     if (j === 'gatekeeper') return job('guard', 'gate', ph === 'night' ? 'gác cổng thành ban đêm' : 'canh gác cổng thành');
+    // người diễn thuyết: sáng và tối đứng ở bục giữa sân nói với dân, trưa về ăn, chiều đi gặp dân, đêm ngủ
+    if (post && post.key === 'orator' && ph !== 'night') {
+      if (ph === 'morning' || ph === 'evening') return job('rule', 'podium', ph === 'morning' ? 'diễn thuyết buổi sáng ở bục giữa sân' : 'diễn thuyết buổi tối cho dân nghe');
+      if (ph === 'noon') return job('eat', 'home', 'về nhà ăn trưa');
+      return chat('đi gặp dân, nghe chuyện trong làng', 'stroll');
+    }
     // đêm: ai cũng về nhà ngủ, trừ một nửa số lính thay nhau gác
     if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return job('guard', 'guard', 'gác đêm cho làng'); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)

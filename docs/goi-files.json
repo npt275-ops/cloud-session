@@ -90,6 +90,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/dramas.js",
+  "src": "logic/dramas.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/eras.js",
   "src": "logic/eras.js",
   "mode": 420
@@ -125,6 +130,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/posts.js",
+  "src": "logic/posts.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/rng.js",
   "src": "logic/rng.js",
   "mode": 420
@@ -142,6 +152,11 @@
  {
   "path": "BeKinh/logic/tasks.js",
   "src": "logic/tasks.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/temper.js",
+  "src": "logic/temper.js",
   "mode": 420
  },
  {

@@ -1,38 +1,37 @@
 /* Bể Kính · logic/jobs.js
- * Việc của người không ngồi trong hội đồng, chọn theo tính cách: thợ xây (cho đủ 4 kể cả thợ cả), thương nhân (đủ 2 kể cả
+ * Việc của người không ngồi trong hội đồng, chọn theo tính cách: vị trí cứng (logic/posts.js: gác cổng chính, cổng phụ, diễn
+ * thuyết), thợ xây (cho đủ 4 kể cả thợ cả), thương nhân (đủ 2 kể cả
  * thương chủ), lính (máu chiến nhất), người đi đường (hướng ngoại), nông dân (số còn lại), người già, trẻ em.
  * Gán lại mỗi ngày (người lớn lên, già đi, mất). Không vẽ gì, chạy được bằng Node.
- * Cần: logic/rules.js, logic/people.js. */
+ * Cần: logic/rules.js, logic/people.js, logic/posts.js, logic/temper.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Jobs = factory(BK);
   if (typeof module === 'object' && module.exports) module.exports = BK.Jobs;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const NAME = { gatekeeper: 'Lính gác cổng', soldier: 'Lính', builder: 'Thợ xây', trader: 'Thương nhân', farmer: 'Nông dân', walker: 'Người đi đường', elder: 'Người già', child: 'Trẻ em' };
+  const NAME = { gatekeeper: 'Lính gác cổng chính', sideguard: 'Lính gác cổng phụ', orator: 'Người diễn thuyết', soldier: 'Lính', builder: 'Thợ xây', trader: 'Thương nhân', farmer: 'Nông dân', walker: 'Người đi đường', elder: 'Người già', child: 'Trẻ em' };
   // chọn theo tính cách: lấy n người có điểm cao nhất trong số còn trống, gán việc
   const take = (pool, n, score, job) => { pool.sort((a, b) => score(b.genome.traits, b) - score(a.genome.traits, a)); pool.splice(0, Math.max(0, n)).forEach((p) => { p.job = job; }); };
   function assign(S) {
     const R = BK.Rules, P = BK.People, day = S.day, pool = [];
     for (const p of S.people.values()) {
       if (!p.alive) continue;
+      if (BK.Temper) p.temper = BK.Temper.of(p); // tính cách nổi trội (logic/temper.js), để gom người vào kịch bản
       const age = P.ageOf(p, day);
       if (age < R.ADULT_AGE) p.job = 'child';
       else if (age >= R.OLD_AGE) p.job = 'elder';
       else if (p.role) p.job = null; // người trong hội đồng làm việc của ghế mình
       else pool.push(p);
     }
+    // vị trí cứng (logic/posts.js): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết; người cũ còn
+    // làm được thì giữ đúng chốt của mình, thiếu thì người hợp tính nhất thay vào. Chọn trước mọi việc khác: chốt không bao giờ trống
+    if (BK.Posts) BK.Posts.assign(S, pool);
     // thợ xây: khéo tay, gan, không đa nghi (đủ 4 người kể cả thợ cả); thương nhân: khôn khéo, có chí (đủ 2 kể cả thương chủ)
     const seated = (k) => (S.seats[k] != null ? 1 : 0);
     take(pool, R.BUILDERS - seated('builder'), (t) => t.intellect * 0.4 + (1 - t.fear) * 0.3 + (1 - t.paranoia) * 0.3, 'builder');
     take(pool, R.TRADERS - seated('merchant'), (t) => t.cunning * 0.6 + t.ambition * 0.4, 'trader');
-    // lính gác cổng thành: đa nghi (hay để ý), gan dạ, không nhút nhát; luôn đủ 4 người, mỗi người một chốt (p.post 0..3),
-    // người cũ còn đứng gác thì giữ nguyên chốt của mình
-    const keep = pool.filter((p) => p.wasGate).sort((a, b) => a.post - b.post).slice(0, R.GATEKEEPERS);
-    for (const p of keep) { p.job = 'gatekeeper'; pool.splice(pool.indexOf(p), 1); }
-    const posts = new Set(keep.map((p) => p.post));
-    take(pool, R.GATEKEEPERS - keep.length, (t) => t.paranoia * 0.4 + (1 - t.fear) * 0.4 + t.aggression * 0.2, 'gatekeeper');
-    for (const p of S.people.values()) { if (p.alive && p.job === 'gatekeeper') { if (p.post == null || !p.wasGate) { let k = 0; while (posts.has(k)) k++; p.post = k; posts.add(k); } p.wasGate = true; } else if (p.alive) p.wasGate = false; }
+    for (const p of pool) p.postKey = null; // ai không giữ chốt nào thì bỏ dấu chốt cũ
     // lính: máu chiến nhất (nam trước)
     take(pool, Math.round(pool.length * R.SOLDIER_SHARE), (t, p) => (p.sex === 'm' ? 1 : 0) + t.aggression, 'soldier');
     // dân: người hướng ngoại, ít đa nghi đi đường (đi lại, mua bán, trò chuyện); người chăm, hiền làm ruộng

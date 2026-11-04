@@ -45,6 +45,8 @@
     // còn lại là dân: người làm ruộng và người đi đường (đi lại, mua bán, trò chuyện)
     HOME_SLOTS: 20,                      // số nhà riêng trong làng: mỗi hộ (bố mẹ và con) một nhà (logic/homes.js)
     GATEKEEPERS: 4,                      // lính gác cổng thành: luôn đủ 4 người, thế hệ này qua thế hệ khác (logic/jobs.js)
+    SIDE_GUARDS: 2,                      // lính gác mỗi cổng phụ (trái, phải: chỗ hở tường nơi bắc cầu sang hai đảo bên) (logic/posts.js)
+    ORATORS: 1,                          // người diễn thuyết ở bục giữa sân (logic/posts.js)
     BUILDERS: 4,                         // tổng số thợ xây kể cả thợ cả
     TRADERS: 2,                          // tổng số thương nhân kể cả thương chủ
     SOLDIER_SHARE: 0.3,                  // phần người lớn ngoài hội đồng làm lính

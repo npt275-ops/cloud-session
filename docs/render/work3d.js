@@ -33,6 +33,8 @@
     eat: () => [['eat', 'bowl'], ['drink', null]],
     rest: () => [['sit', null], ['sway', null], ['stand', null]],
     chat: () => [['talk', null], ['laugh', null], ['nod', null], ['whisper', null]],
+    riot: () => [['cheer', null], ['command', null], ['point', null], ['thrust', null]], // bạo loạn: giơ tay hô, chỉ trỏ, vung nắm đấm (logic/dramas.js)
+    listen: () => [['nod', null], ['crossArms', null], ['handsBehind', null], ['stand', null]], // đứng nghe diễn thuyết, đứng xem
   };
   // cử chỉ thứ n của một việc cho một người (đổi lượt thì sang cử chỉ khác)
   function gestureOf(verb, level, pid, turn) {
