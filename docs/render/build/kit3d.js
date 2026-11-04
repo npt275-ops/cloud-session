@@ -44,15 +44,16 @@
   function disc(r, seg) { const THREE = T(); return new THREE.CircleGeometry(r, seg || 12).rotateX(-Math.PI / 2); }
 
   /* ---------- Gom mảnh và gộp ---------- */
-  function Kit() { this.parts = []; this.glow = []; this.subs = []; }
+  function Kit() { this.parts = []; this.glow = []; this.lit = []; this.subs = []; }
   // phần chuyển động (cánh quạt, khí cầu, nhà lơ lửng...): một Kit con, dựng thành khối riêng đặt ở điểm xoay pivot;
   // các mảnh vẽ vào Kit con theo toạ độ tính từ pivot. render/buildings3d.js làm nó quay hoặc nhấp nhô theo BUILD trả về.
   Kit.prototype.sub = function (name, pivot) { const k = new Kit(); k.name = name; k.pivot = pivot || [0, 0, 0]; this.subs.push(k); return k; };
-  // thêm một mảnh: geo, màu, vị trí; o.rot [x,y,z], o.sc [x,y,z]; o.glow: mảnh phát sáng (lửa, đèn) vẽ riêng, không đổ bóng
+  // thêm một mảnh: geo, màu, vị trí; o.rot [x,y,z], o.sc [x,y,z]; o.glow: mảnh phát sáng (lửa, đèn) vẽ riêng, không đổ bóng;
+  // o.lit: ô cửa sổ sáng đèn về đêm (ban ngày trong suốt, tối dần thì sáng lên; độ sáng chung cho mọi công trình, litMat)
   Kit.prototype.add = function (geo, color, x, y, z, o) {
     const THREE = T(); o = o || {};
     const m = new THREE.Matrix4().compose(new THREE.Vector3(x || 0, y || 0, z || 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(...(o.rot || [0, 0, 0]))), new THREE.Vector3(...(o.sc || [1, 1, 1])));
-    (o.glow ? this.glow : this.parts).push({ geo, color: new THREE.Color(color), m, ao: o.ao !== false });
+    (o.lit ? this.lit : o.glow ? this.glow : this.parts).push({ geo, color: new THREE.Color(color), m, ao: o.ao !== false });
     return this;
   };
   // gộp thành một BufferGeometry có màu theo đỉnh; chân sẫm hơn đỉnh (aoH: độ cao hết sẫm)
@@ -68,19 +69,21 @@
     const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.computeBoundingSphere();
     return out;
   }
-  let MAT = null, GLOW = null;
+  let MAT = null, GLOW = null, LIT = null;
   const mat = () => MAT || (MAT = new (T().MeshStandardMaterial)({ vertexColors: true, flatShading: true, roughness: 0.88, metalness: 0.02 }));
   const glowMat = () => GLOW || (GLOW = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.92, depthWrite: false }));
+  const litMat = () => LIT || (LIT = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false }));
   // dựng một công trình thành nhóm: khối chính (đổ bóng) và khối sáng (nếu có)
   Kit.prototype.bake = function (aoH) {
     const THREE = T(), g = new THREE.Group();
     if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.tris = m.geometry.attributes.position.count / 3; }
     if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
+    if (this.lit.length) { const m = new THREE.Mesh(merge(this.lit, 1), litMat()); m.renderOrder = 2; g.add(m); g.userData.lit = m; }
     g.userData.subs = {};
     for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c; g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0); if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
     return g;
   };
   function dispose(g) { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }
 
-  return { box, roof, lathe, post, cone, ball, disc, Kit, dispose };
+  return { box, roof, lathe, post, cone, ball, disc, Kit, dispose, litMat };
 });

@@ -18,7 +18,7 @@
   function flats(k, o) {
     const n = 4 + (o.v % 3), w = 4.6, d = 3.6, wall = pick(C.concrete, o.v * 0.4), acc = pick(['#d98a5a', '#5a9ab8', '#8ab85a', '#c8b05a'], o.v * 0.3);
     k.add(B(w, n * 1.6, d, 0.08), wall, 0, 0, 0);
-    for (let f = 0; f < n; f++) { k.add(Bc(w + 0.02, 0.62, 0.1, 0.02), C.glass, 0, 0.9 + f * 1.6, d / 2, { ao: false }); if (f) k.add(B(w * 0.6, 0.1, 0.5, 0.02), acc, 0, f * 1.6, d / 2 + 0.25); k.add(B(0.45, 0.35, 0.3, 0.03), C.white, w / 2 - 0.4, 1.4 + f * 1.6, d / 2 + 0.15); }
+    for (let f = 0; f < n; f++) { k.add(Bc(w + 0.02, 0.62, 0.1, 0.02), C.glass, 0, 0.9 + f * 1.6, d / 2, { ao: false }); if ((f + o.v) % 3) k.add(Bc(w * 0.8, 0.5, 0.04, 0.01), '#ffe0a0', 0, 0.9 + f * 1.6, d / 2 + 0.07, { lit: true }); if (f) k.add(B(w * 0.6, 0.1, 0.5, 0.02), acc, 0, f * 1.6, d / 2 + 0.25); k.add(B(0.45, 0.35, 0.3, 0.03), C.white, w / 2 - 0.4, 1.4 + f * 1.6, d / 2 + 0.15); }
     k.add(B(1.6, 2.0, 0.1, 0.03), C.glass, -1.0, 0, d / 2 + 0.01, { ao: false });
     k.add(K.post(0.4, 0.9, 8), '#b8bcc0', 1.2, n * 1.6, -0.6);
   }

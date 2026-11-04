@@ -20,6 +20,7 @@
     const n = 3 + (o.v % 3), base = pick(['#e8ecf0', '#d0d8e2', '#f2f4f6'], o.v * 0.3);
     for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(B(w, 2.0, 3.0, 0.2), base, x, y, 0); k.add(Bc(w * 0.7, 0.9, 0.08, 0.04), '#2a3a4a', x, y + 1.1, 1.52, { ao: false }); k.add(Bc(w + 0.04, 0.08, 0.08, 0.02), CY, x, y + 2.0, 1.5, { glow: true }); }
     k.add(Bc(0.9, 1.8, 0.08, 0.04), '#2a3a4a', -0.3, 0.9, 1.53, { ao: false });
+    for (let i = 0; i < n; i++) { const w = 3.6 - (i % 2) * 0.8, x = (i % 2 ? 0.6 : -0.3), y = i * 2.2; k.add(Bc(w * 0.62, 0.78, 0.04, 0.01), '#bff0ff', x, y + 1.1, 1.6, { lit: true }); } // ô cửa sáng về đêm
   }
   function datacenter(k) {
     k.add(B(10, 3, 5, 0.1), '#2e343e', 0, 0, 0);

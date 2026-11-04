@@ -5,7 +5,7 @@
 (function (root) {
   const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const T = () => window.THREE;
-  const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#34404c', x, y, z, { ao: false }); k.add(Bc(w + 0.12, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
+  const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#34404c', x, y, z, { ao: false }); k.add(Bc(w * 0.9, h * 0.9, 0.04, 0.01), '#ffd88a', x, y, z + 0.06, { lit: true }); k.add(Bc(w + 0.12, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
 
   function hall(k) {
     k.add(B(12, 0.8, 7.5, 0.1), C.stone[2], 0, 0, 0);
@@ -28,6 +28,7 @@
       k.add(B(0.5, 1.3, 0.5, 0.03), C.brick[1], x + 0.7, 5.0, -0.8);
     }
     k.add(K.roof(7.5, 1.4, 3.8, 0.1, 7.3, 0.3), '#4f555c', 0, 4.4, 0);
+    return o.v % 2 ? { smoke: [[0.7, 6.4, -0.8, 0.6]] } : null;
   }
   // xưởng xay lúa: mái răng cưa, cửa kính, ống khói gạch cao
   function factory(k) {
@@ -36,6 +37,7 @@
     k.add(B(2.6, 2.6, 0.12, 0.03), '#3a3a3e', 0, 0, 3.02);
     for (const x of [-3.3, 3.3]) win(k, x, 1.8, 3.02, 1.6, 1.4);
     k.add(K.post(0.6, 11, 8, 0.45), C.brick[0], 4.2, 0, -2); k.add(Bc(1.1, 0.3, 1.1, 0.05), '#5a5a5e', 4.2, 11, -2);
+    return { smoke: [[4.2, 11.3, -2, 1.5]] }; // khói nhà máy
   }
   // ga tàu: sân ga, mái che, đường ray, đầu máy hơi nước
   function station(k) {

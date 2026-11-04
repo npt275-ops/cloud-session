@@ -6,6 +6,9 @@
  *   bob  [tên, biên độ, nhịp]  nhấp nhô (khí cầu, drone, nhà lơ lửng)
  *   slide [tên, trục, tốc độ, quãng]  chạy qua lại (đầu máy)
  *   pulse                      khối sáng phập phồng
+ *   sway [tên, trục, biên độ, nhịp]  đung đưa qua lại (cờ, cành, chuông)
+ *   smoke [[x, y, z, cỡ]]      khói bốc lên ở chỗ đó (render/build/life3d.js)
+ * Mảnh { lit: true } trong kit3d là ô cửa sổ sáng đèn về đêm.
  * Lên đời theo logic (logic/construction.js, setProgress): công trình các thời trước không biến mất; sang thời mới, thợ làm
  * lần lượt từng chỗ, chỗ nào làm xong thì công trình ở đó đổi ngay sang kiểu của thời mới (nhà riêng số i thay nhà số i),
  * chỗ trống thì công trình mới hiện ra ngay. Cái cũ không có gì thay thì giữ nguyên. Nhà riêng (home) dịch tránh núi,
@@ -67,7 +70,9 @@
         group.add(g);
         const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, fitS: 1, anim: null, glows: [], subs: {}, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, progress: -1, started: false, dead, spec: P, build, baked: false };
         // thay cái cũ: cùng chỗ (slot) hoặc đè lên chỗ cái cũ
-        piece.replaces = standing.filter((Q) => (piece.slot && Q.slot === piece.slot) || (near(piece, Q) && !(Q.home != null && piece.home != null)));
+        // solo (lớp đường, tường của cả làng; kỳ quan): chỉ thay và chỉ bị thay bởi món cùng slot; keep (kỳ quan): giữ mãi như di tích
+        piece.solo = !!P.solo; piece.keep = !!P.keep;
+        piece.replaces = standing.filter((Q) => !Q.keep && ((piece.slot && Q.slot === piece.slot) || (!piece.solo && !Q.solo && near(piece, Q) && !(Q.home != null && piece.home != null))));
         pieces.push(piece);
       }
       L.g.add(group); groups = [...groups, group];
@@ -90,17 +95,27 @@
       const taken = Object.values(cache).filter(Boolean);
       const free = (q, rr) => !taken.some((o) => o.p.distanceTo(q) < o.r + rr + 3);
       let found = null;
-      for (let k = 0; k < 60 && !found; k++) {
+      const W = !!P.wonder; // kỳ quan: tìm rộng hơn (cả vòng quanh làng, nhiều bán kính), vì to
+      for (let k = 0; k < (W ? 110 : 60) && !found; k++) {
         const th = th0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.06, u = new THREE.Vector2(Math.cos(th), Math.sin(th)), edge = L.rOf(th);
-        const tries = P.outer === 'coast' ? [edge - 3] : P.outer === 'sea' ? [edge + 7, edge + 10] : [38, 34, 42, 46];
+        const tries = P.outer === 'coast' ? [edge - 3] : P.outer === 'sea' ? [edge + 7, edge + 10] : W ? [37, 41, 34, 45, 49] : [38, 34, 42, 46];
         for (const R of tries) {
           const q = u.clone().multiplyScalar(R);
           if (P.outer === 'sea') { if (!L.inside(q.x, q.y, -4) && free(q, r)) { found = { p: q, dir: new THREE.Vector2(-u.y, u.x), r }; break; } continue; }
           if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && free(q, r)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
+          if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && !taken.some((o) => o.p.distanceTo(q) < o.r + r + 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
           if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && free(q, r)) { found = { p: q, dir: u.clone().negate(), r }; break; }
         }
       }
       cache[key] = found; return found;
+    }
+    // dọn cây chỗ đặt; lớp đường của cả làng (clearRing: [bán kính, rộng, các góc đường toả ra]) dọn dọc vòng đường và đường toả
+    function clearAround(sh, P) {
+      lands3d.clearTrees(sh.L, P.x, P.z, P.clear);
+      const R = P.spec.clearRing; if (!R) return;
+      const [r, w, spokes] = R, c = Math.cos(P.g.rotation.y), s = Math.sin(P.g.rotation.y), put = (lx, lz) => lands3d.clearTrees(sh.L, P.x + lx * c + lz * s, P.z - lx * s + lz * c, w);
+      for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; put(Math.sin(a) * r, Math.cos(a) * r); }
+      for (const a of spokes || []) for (let d = 13; d <= 34; d += 2) put(Math.sin(a) * d, Math.cos(a) * d);
     }
     const setS = (P, xz, y) => P.g.scale.set(P.fitS * xz, P.fitS * y, P.fitS * xz);
     // dựng hình một công trình (một lần): gộp mảnh thành một khối, nhà riêng to quá (thời cao tầng) thì thu cho vừa một hộ
@@ -129,17 +144,25 @@
         const pr = list && list[j] ? list[j].progress : 1;
         if (pr === P.progress || P.dead) return;
         P.progress = pr;
-        if (pr >= 1) { if (!P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); } finish(sh, P); P.progress = 1; return; }
+        if (pr >= 1) { if (!P.started) { P.started = true; clearAround(sh, P); } finish(sh, P); P.progress = 1; return; }
         P.g.visible = false;
       });
     }
 
+    // cửa sổ sáng đèn: chung một vật liệu cho mọi công trình (kit3d litMat), sáng dần khi trời tối
+    const LIT = K.litMat ? K.litMat() : null;
+    const _v = new THREE.Vector3(), _Y = new THREE.Vector3(0, 1, 0);
     function animate(dt, t, night) {
       const s = Math.min(0.1, Math.max(0, dt) / 1000); clock += s; const ts = t * 0.001;
-      for (const sh of shown) if (sh) for (const set of [sh.pieces, sh.standing]) for (const p of set) {
+      if (LIT) { LIT.opacity = Math.max(0, Math.min(0.95, ((night || 0) - 0.15) * 1.4)); LIT.visible = LIT.opacity > 0.01; }
+      for (const sh of shown) if (sh) {
+        const emit = sh.emit || (sh.emit = []); emit.length = 0;
+        for (const set of [sh.pieces, sh.standing]) for (const p of set) {
         if (!p.g.visible) continue;
         const A = p.anim;
         if (A) {
+          if (A.sway) for (const [n, axis, amp, v] of A.sway) if (p.subs[n]) p.subs[n].rotation[axis] = Math.sin(ts * v + p.ph) * amp; // cờ bay, cành đung đưa
+          if (A.smoke) for (const [x, y, z, sz] of A.smoke) { _v.set(x, y, z).multiplyScalar(p.fitS).applyAxisAngle(_Y, p.g.rotation.y).add(p.g.position); emit.push({ x: _v.x, y: _v.y, z: _v.z, s: (sz || 1) * p.fitS }); }
           if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
           if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
           if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
@@ -148,6 +171,9 @@
           const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);
           G.material.opacity = Math.min(1, (0.7 + 0.25 * (night || 0)) * fl + 0.1);
         }
+        }
+        // khói của cả đảo: một khối vẽ chung (render/build/life3d.js)
+        if (BK.Life3D) { if (!sh.smoke) sh.smoke = BK.Life3D.create(THREE, sh.L.g); sh.smoke.update(emit, ts); }
       }
     }
     // những chỗ người hay đến, theo các công trình đang đứng (toạ độ trên đảo): nhà chính, sân, ruộng, nhà ở (cửa), chợ,
@@ -166,7 +192,8 @@
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
         if (!g.visible || P.gone) continue;
         const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
-        if (!P.outer && k !== 'road' && k !== 'asphalt' && k !== 'glowRoad' && k !== 'lamp' && k !== 'pole') out.all.push(door);
+        if (!P.outer && k !== 'town' && k !== 'road' && k !== 'asphalt' && k !== 'glowRoad' && k !== 'lamp' && k !== 'pole') out.all.push(door);
+        if (P.spec && P.spec.town) continue; // lớp đường của cả làng: không phải chỗ để đến
         if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
         else if (HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && !out.homeSlots[P.home]) out.homeSlots[P.home] = dv; }

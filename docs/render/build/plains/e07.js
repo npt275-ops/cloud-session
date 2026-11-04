@@ -42,7 +42,7 @@
   function tower(k, o) {
     const n = 7 + (o.v % 4), wall = pick(['#e8eaee', '#d8dee6', '#eef0f2'], o.v * 0.3);
     k.add(B(4, n * 1.6, 4, 0.12), wall, 0, 0, 0);
-    for (let f = 0; f < n; f++) for (const s of [0, 1, 2, 3]) { const a = (s * Math.PI) / 2; k.add(Bc(4.02, 0.6, 0.08, 0.02), C.glass, Math.sin(a) * 2.0, 0.9 + f * 1.6, Math.cos(a) * 2.0, { rot: [0, a, 0], ao: false }); }
+    for (let f = 0; f < n; f++) for (const s of [0, 1, 2, 3]) { const a = (s * Math.PI) / 2; if ((f + s + o.v) % 3) k.add(Bc(3.4, 0.48, 0.04, 0.01), '#fff0c8', Math.sin(a) * 2.06, 0.9 + f * 1.6, Math.cos(a) * 2.06, { rot: [0, a, 0], lit: true }); k.add(Bc(4.02, 0.6, 0.08, 0.02), C.glass, Math.sin(a) * 2.0, 0.9 + f * 1.6, Math.cos(a) * 2.0, { rot: [0, a, 0], ao: false }); }
     k.add(K.post(0.08, 2, 4), C.steel, 1.2, n * 1.6, 1.2); k.add(K.ball(0.12), '#ff5a4f', 1.2, n * 1.6 + 2, 1.2, { glow: true });
   }
   function asphalt(k, o) { const d = o.d || 30, w = o.w || 5; k.add(B(w, 0.05, d, 0.02), '#44464a', 0, 0, 0, { ao: false }); for (let i = 0; i < Math.floor(d / 3); i++) k.add(B(0.18, 0.06, 1.4, 0.01), '#e8e8e0', 0, 0.01, -d / 2 + 1.5 + i * 3, { ao: false }); }

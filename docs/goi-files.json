@@ -160,6 +160,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/life3d.js",
+  "src": "render/build/life3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/plains/common.js",
   "src": "render/build/plains/common.js",
   "mode": 420
@@ -227,6 +232,16 @@
  {
   "path": "BeKinh/render/build/plains/outer.js",
   "src": "render/build/plains/outer.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/town.js",
+  "src": "render/build/plains/town.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/wonders.js",
+  "src": "render/build/plains/wonders.js",
   "mode": 420
  },
  {

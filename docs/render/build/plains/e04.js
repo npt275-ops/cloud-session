@@ -3,7 +3,7 @@
  * bãi khí cầu (khí cầu nhấp nhô), đèn dầu, giếng, cây đa, ruộng, đường lát đá. */
 (function (root) {
   const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
-  const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#3a4a5a', x, y, z, { ao: false }); k.add(Bc(w + 0.14, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
+  const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#3a4a5a', x, y, z, { ao: false }); k.add(Bc(w * 0.9, h * 0.9, 0.04, 0.01), '#ffd88a', x, y, z + 0.06, { lit: true }); k.add(Bc(w + 0.14, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
 
   // Tháp Đồng Hồ: khối gạch hai tầng, tháp vuông có mặt đồng hồ bốn phía, chóp ngói nhọn
   function hall(k) {
@@ -28,6 +28,7 @@
     k.add(B(3.9, 0.12, 0.5, 0.03), C.white, 0, 2.3, 1.6);
     k.add(K.roof(4.5, 1.6, 3.6, 0.15, 4.3, 0.3), pick([C.tile, C.tileD, '#7a4a3a'], o.v * 0.4), 0, 4.2, 0);
     k.add(B(0.45, 1.2, 0.45, 0.04), C.brick[1], 1.2, 4.6, -0.6);
+    return o.v % 3 === 0 ? { smoke: [[1.2, 5.9, -0.6, 0.6]] } : null; // vài nhà đang đỏ lửa bếp
   }
   // chợ có mái: mái dài trên hàng cột, sạp hàng có mái vải nhiều màu
   function market(k) {

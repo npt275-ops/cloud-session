@@ -19,7 +19,7 @@
       const lay = BK.Plains3D && BK.Plains3D.ERA[level]; if (!lay) return [];
       let huts = 0;
       return lay.pieces.filter((P) => lay.BUILD[P.kind]).map((P) => {
-        const size = P.kind === 'hall' ? 4 : P.home != null ? 0.7 : P.outer ? 1.5 : BIG.has(P.kind) ? 2 : SMALL.has(P.kind) ? 0.4 : 1;
+        const size = P.kind === 'hall' ? 4 : P.wonder ? 3 : P.town ? 1.5 : P.home != null ? 0.7 : P.outer ? 1.5 : BIG.has(P.kind) ? 2 : SMALL.has(P.kind) ? 0.4 : 1;
         const done = level === 1 && (P.kind === 'hall' || P.kind === 'fire' || (P.home != null && huts++ < 4));
         return { name: lay.NAME[P.kind] || P.kind, size, done };
       });

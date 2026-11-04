@@ -43,6 +43,7 @@
     for (let i = 0; i < 3; i++) k.add(Bc(1.1, 0.14, 0.14, 0.04), '#5a3a24', 0, 0.12, 0, { rot: [0, (i * Math.PI) / 3, 0.25] });
     k.add(K.cone(0.42, 1.0, 6), '#ff9a2e', 0, 0.1, 0, { glow: true }); k.add(K.cone(0.24, 0.75, 5), '#ffe07a', 0.05, 0.12, 0.04, { glow: true });
     if (o.seats !== false) for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2 + 0.4; k.add(B(1.5, 0.34, 0.4, 0.12), C.woodL, Math.cos(a) * 2.5, 0, Math.sin(a) * 2.5, { rot: [0, -a + Math.PI / 2, 0] }); }
+    return { smoke: [[0, 1.2, 0, 0.8]] }; // khói bếp (render/build/life3d.js)
   }
   function field(k, o) {
     const w = o.w || 7, d = o.d || 5;

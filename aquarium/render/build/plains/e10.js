@@ -22,7 +22,10 @@
     h.add(K.lathe([[0.4, -1.2], [2.0, -0.4], [2.4, 0], [2.4, 1.8], [1.8, 2.8], [0.001, 3.1]], 10), c, 0, 0, 0);
     h.add(K.post(1.2, 0.08, 10, 1.2), WARM, 0, -1.25, 0, { glow: true });
     h.add(Bc(1.0, 1.4, 0.2, 0.08), '#5a4a3a', 0, 0.8, 2.3, { ao: false }); h.add(Bc(2.4, 0.3, 0.2, 0.05), SUN, 0, 1.9, 2.25, { glow: true });
-    k.add(K.disc(1.6, 10), '#d8c890', 0, 0.02, 0, { ao: false });
+    for (const sx of [-1, 1]) h.add(Bc(0.6, 0.7, 0.08, 0.02), WARM, sx * 1.3, 1.0, 2.05, { lit: true, rot: [0, sx * 0.5, 0] }); // cửa sổ sáng về đêm
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + o.v; h.add(Bc(1.3, 0.06, 0.7, 0.02), '#e8b84a', Math.cos(a) * 2.6, 2.4, Math.sin(a) * 2.6, { rot: [0.5 * Math.sin(a), -a, 0.5 * Math.cos(a)] }); } // cánh hứng nắng
+    k.add(K.disc(2.4, 12), '#c8dc90', 0, 0.02, 0, { ao: false });
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(K.ball(0.4, 0), pick(['#f2c46a', '#ffd27a', '#e8a04a'], i * 0.3), Math.cos(a) * 2, 0.3, Math.sin(a) * 2); } // vườn hoa vàng
     return { bob: [['h', 0.3, 0.6 + (o.v % 4) * 0.1]] };
   }
   function pylon(k) { k.add(K.post(0.3, 6, 6, 0.1), '#e8dcc0', 0, 0, 0); k.add(K.ball(0.4), SUN, 0, 6.2, 0, { glow: true }); }

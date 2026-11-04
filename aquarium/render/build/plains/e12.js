@@ -11,11 +11,17 @@
     for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(B(0.6, 2.2 + (i % 3) * 0.6, 0.6, 0.15), '#f2f0ea', Math.sin(a) * 6.2, 0.4, Math.cos(a) * 6.2); }
     return { pulse: true };
   }
+  // nhà pha lê: cụm ba khối pha lê màu rực (vỏ đục, lõi sáng), bệ vòng sáng, cửa sáng về đêm, một mảnh pha lê bay trên mái
+  const HUE = [['#b8a0ff', '#7fe0ff'], ['#ff9ad0', '#ffe08a'], ['#7fe0c0', '#b8a0ff'], ['#ffb08a', '#ff9ad0']];
   function crystal(k, o) {
-    const h = 5 + (o.v % 3) * 1.5;
-    k.add(new (window.THREE.OctahedronGeometry)(1, 0).scale(1.8, h / 2, 1.8).translate(0, h / 2, 0), pick(['#dfe6f6', '#f2e2ee', '#e6f2ec'], o.v * 0.3), 0, 0, 0); // vỏ pha lê đục
-    k.add(new (window.THREE.OctahedronGeometry)(1, 0).scale(0.9, h / 3, 0.9).translate(0, h / 3, 0), pick([L2, L3, L1], o.v * 0.3), 1.8, 0, 0.6, { glow: true });
-    k.add(K.disc(2.2, 10), '#e8e4dc', 0, 0.02, 0, { ao: false });
+    const h = 6 + (o.v % 3) * 1.6, [c1, c2] = HUE[o.v % HUE.length], oct = (sx, sy, sz) => new (window.THREE.OctahedronGeometry)(1, 0).scale(sx, sy, sz).translate(0, sy, 0);
+    k.add(K.post(2.6, 0.4, 14), '#e8e4f0', 0, 0, 0); k.add(K.post(2.62, 0.08, 14), c2, 0, 0.36, 0, { glow: true });
+    k.add(oct(1.7, h / 2, 1.7), c1, 0, 0.4, 0);
+    k.add(oct(0.8, h / 3, 0.8), c2, 1.6, 0.4, 0.7, { rot: [0, 0, -0.25] }); k.add(oct(0.7, h / 3.6, 0.7), c1, -1.5, 0.4, -0.4, { rot: [0.2, 0, 0.3] });
+    k.add(oct(0.7, h / 2.6, 0.7), '#fff8e8', 0, 0.6, 0, { glow: true }); // lõi sáng
+    k.add(Bc(0.9, 1.6, 0.06, 0.02), '#fff0ff', 0, 1.2, 1.55, { lit: true });
+    const s = k.sub('shard', [0, h + 2.2, 0]); s.add(new (window.THREE.OctahedronGeometry)(0.55, 0), c2, 0, 0, 0, { glow: true, sc: [0.7, 1.4, 0.7] });
+    return { bob: [['shard', 0.5, 0.4 + (o.v % 4) * 0.08]], spin: [['shard', 'y', 0.9]] };
   }
   function mote(k, o) { const s = k.sub('m', [0, 2.5 + (o.v % 4) * 1.2, 0]); s.add(K.ball(0.45, 1), pick([L1, L2, L3], o.v * 0.3), 0, 0, 0, { glow: true }); return { bob: [['m', 0.8, 0.4 + (o.v % 5) * 0.08]] }; }
   const F = [0, 6];
