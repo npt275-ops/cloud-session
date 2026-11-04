@@ -3,7 +3,7 @@
  * kho lương trên cột có đĩa chặn chuột, thửa ruộng có bờ và rào, lò gốm và chum vại, giàn phơi lúa, cột vật tổ sơn,
  * đống rơm, đá thờ. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
 
   // Cung Đất Nung: nhà sàn dài vách đất nung, mái rơm trùm gần chạm sàn, hai cột chạm ở lối vào, cầu thang gỗ
   function hall(k) {
@@ -77,7 +77,7 @@
       { kind: 'hall', x: 0, z: -2.5, clear: 6.5 },
       { kind: 'fire', x: 0, z: 6.5, clear: 3 },
       { kind: 'totem', x: -3.4, z: 7.6, clear: 1 },
-      ...ring('hut', 6, 11, 0.95, 1.85, [0, 6.5]),
+      ...homes('hut'),
       { kind: 'hut', x: 0, z: -11.5, face: [0, 6.5], v: 7, clear: 2.6 },
       { kind: 'granary', x: -5.5, z: -9.5, face: [0, 6.5], clear: 2 }, { kind: 'granary', x: 6, z: -9.5, face: [0, 6.5], clear: 2 },
       { kind: 'kiln', x: 13.5, z: 4, face: [0, 6.5], clear: 3.5 },

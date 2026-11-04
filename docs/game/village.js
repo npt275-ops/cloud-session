@@ -11,15 +11,16 @@
     const Eras = BK.Eras, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
     const q = new URLSearchParams(location.search);
     // danh sách công trình phải dựng trong mỗi thời, lấy đúng thứ tự từ bố cục của thời đó (render/build/plains/eNN.js):
-    // nhà chính nặng nhất, công trình lớn gấp đôi, đồ nhỏ (đèn, đường, cột…) nhẹ; thời đồ đá có sẵn nhà chính, bếp lửa, hai lều
+    // nhà chính nặng nhất, công trình lớn gấp đôi, đồ nhỏ (đèn, đường, cột…) nhẹ; thời đồ đá có sẵn nhà chính, bếp lửa, bốn lều
     const BIG = new Set(['field', 'market', 'factory', 'station', 'school', 'shop', 'pad', 'nuclear', 'datacenter']);
     const SMALL = new Set(['lamp', 'hay', 'road', 'asphalt', 'glowRoad', 'pole', 'shroom', 'mote', 'pylon', 'shard', 'totem', 'rack', 'well', 'robot', 'tractor']);
+    // nhà riêng của dân nhẹ hơn một chút (20 nhà mỗi thời); công trình ngoài làng như công trình lớn
     function buildPlan(level) {
       const lay = BK.Plains3D && BK.Plains3D.ERA[level]; if (!lay) return [];
       let huts = 0;
       return lay.pieces.filter((P) => lay.BUILD[P.kind]).map((P) => {
-        const size = P.kind === 'hall' ? 4 : BIG.has(P.kind) ? 2 : SMALL.has(P.kind) ? 0.4 : 1;
-        const done = level === 1 && (P.kind === 'hall' || P.kind === 'fire' || (P.kind === 'hut' && huts++ < 2));
+        const size = P.kind === 'hall' ? 4 : P.home != null ? 0.7 : P.outer ? 1.5 : BIG.has(P.kind) ? 2 : SMALL.has(P.kind) ? 0.4 : 1;
+        const done = level === 1 && (P.kind === 'hall' || P.kind === 'fire' || (P.home != null && huts++ < 4));
         return { name: lay.NAME[P.kind] || P.kind, size, done };
       });
     }

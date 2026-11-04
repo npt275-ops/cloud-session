@@ -2,7 +2,7 @@
  * Gấp không gian để đi xuyên qua nó: Cổng Trung Tâm (nhà chính, vòng cổng khổng lồ, lòng cổng xoáy sáng), nhà gấp khúc
  * (các tầng xoay lệch nhau), cổng nhỏ nối các nhà, mảnh không gian trôi quanh. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const VIO = '#b48cff', MAG = '#ff6ad8', CY = '#7ff0ff';
   const torus = (R, t, s) => new (window.THREE.TorusGeometry)(R, t, 6, s || 28);
   function hall(k) {
@@ -25,7 +25,7 @@
     yard: { x: 0, z: 2, r: 22, color: '#6a6a88' },
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
-      ...ring('folded', 10, 15.5, 0.8, 2.0, F),
+      ...homes('folded'),
       ...[[-6, 10], [6, 10], [0, 16]].map(([x, z]) => ({ kind: 'miniPortal', x, z, face: 'front', clear: 1.6 })),
       ...[[-10, 4], [10, 4], [-13, 18], [13, 18], [-3, 20], [3, 20]].map(([x, z], i) => ({ kind: 'shard', x, z, v: i, clear: 0 })),
     ],

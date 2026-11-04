@@ -6,9 +6,10 @@
  *   bob  [tên, biên độ, nhịp]  nhấp nhô (khí cầu, drone, nhà lơ lửng)
  *   slide [tên, trục, tốc độ, quãng]  chạy qua lại (đầu máy)
  *   pulse                      khối sáng phập phồng
- * Dựng dần theo logic (logic/construction.js, setProgress): công trình các thời trước không biến mất. Sang thời mới, thợ
- * sửa, nâng cấp từng công trình cũ ngay tại chỗ (giàn giáo bao quanh cái cũ, xong thì cái mới thay vào) và dựng mới ở chỗ
- * trống (giàn giáo, mọc dần lên). Cái cũ không ai thay thì giữ nguyên. Đảo nào chưa có kiểu thì để trống.
+ * Dựng dần theo logic (logic/construction.js, setProgress), tự mọc tự đổi như bản cũ (không giàn giáo): công trình các thời
+ * trước không biến mất; sang thời mới, cái cũ ở chỗ nào lún xuống rồi cái mới của thời đó mọc lên đúng chỗ đó (nhà riêng số i
+ * thay nhà số i), chỗ trống thì mọc dần từ mặt đất. Cái cũ không có gì thay thì giữ nguyên. Nhà riêng (home) dịch tránh núi,
+ * hồ, công trình khác; công trình ngoài làng (outer: coast, sea, forest) tìm chỗ trống trên đảo. Đảo nào chưa có kiểu thì để trống.
  * Cần: three.js, render/build/kit3d.js, các tệp render/build/<đảo>/. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
@@ -17,13 +18,13 @@
   'use strict';
   const STYLE_OF = { plains: () => BK.Plains3D }; // thêm đảo khác ở đây khi có tệp kiểu công trình
   const ease = (u) => 1 - Math.pow(1 - Math.max(0, Math.min(1, u)), 3);
+  const SEA_Y = -0.55; // mặt biển (sea3d.js)
 
   function create(o) {
     const { THREE, lands3d } = o, K = BK.BuildKit;
     // mỗi đảo: { level, pieces (công trình của thời đang có), standing (công trình các thời trước còn đứng), groups, yard }
     const shown = lands3d.lands.map(() => null);
     let clock = 0;
-    const scaffoldMat = new THREE.MeshStandardMaterial({ color: '#b89060', roughness: 0.9, flatShading: true });
     const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20), new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true })); yard.position.set(p.x, 0.04, p.y); yard.receiveShadow = true; return yard; };
     const near = (P, Q) => { const rr = P.clear + Q.clear * 0.6 + 0.5; return (Q.x - P.x) ** 2 + (Q.z - P.z) ** 2 < rr * rr || (P.kind === 'hall' && Q.kind === 'hall'); };
     const dropGroup = (L, g) => { L.g.remove(g); K.dispose(g); };
@@ -36,7 +37,7 @@
       const L = lands3d.lands[i], old = shown[i];
       let standing = [], groups = [];
       if (old && animate) {
-        for (const P of old.pieces) finish(old, P); // cái nào thời trước chưa xong thì coi như đã kịp xong
+        for (const P of old.pieces) if (P.progress < 1 || !P.g.visible) finish(old, P); // cái nào thời trước chưa xong thì coi như đã kịp xong
         standing = [...old.standing, ...old.pieces].filter((P) => P.g.visible && !P.gone);
         groups = old.groups;
       } else if (old) for (const g of old.groups) dropGroup(L, g);
@@ -48,56 +49,88 @@
       const at = (x, z) => new THREE.Vector2(r.x * x + f.x * z, r.y * x + f.y * z);
       let yard = null; if (lay.yard) { yard = yardOf(lay, at); group.add(yard); group.userData.yard = yard; if (standing.length) yard.visible = false; }
       let tris = 0;
+      // chỗ của các công trình không phải nhà riêng, để nhà riêng tránh ra
+      const fixed = lay.pieces.filter((P) => P.home == null && !P.outer && lay.BUILD[P.kind] && (P.clear || 0) > 0.6).map((P) => { const q = at(P.x, P.z); return { x: q.x, y: q.y, r: P.clear }; });
       for (const P of lay.pieces) {
         const build = lay.BUILD[P.kind]; if (!build) continue;
         const k = new K.Kit(), anim = build(k, P) || null;
-        const g = k.bake(3), p = at(P.x, P.z);
-        let dir = f; if (Array.isArray(P.face)) { const d = at(P.face[0], P.face[1]).sub(p); if (d.lengthSq() > 1e-6) dir = d.normalize(); }
-        g.position.set(p.x, 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
+        const g = k.bake(3);
+        let p, dir = f;
+        let dead = false; // không tìm được chỗ trên đảo: giữ chỗ trong danh sách (khớp thứ tự với logic) nhưng không hiện
+        if (P.outer) { const o = outerSpot(L, P, at); if (o) { p = o.p; dir = o.dir; } else { p = at(0, 0); dead = true; } }
+        else {
+          p = at(P.x, P.z);
+          if (P.home != null) p = homeSpot(L, p, P.clear, fixed);
+          if (Array.isArray(P.face)) { const d = at(P.face[0], P.face[1]).sub(p); if (d.lengthSq() > 1e-6) dir = d.normalize(); }
+        }
+        g.position.set(p.x, P.outer === 'sea' ? SEA_Y : 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
+        // nhà riêng to quá (thời cao tầng) thì thu lại cho vừa chỗ của một hộ
+        let fitS = 1; if (P.fit) { const bb = new THREE.Box3().setFromObject(g), m = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (m > P.fit) fitS = P.fit / m; }
         g.userData.kind = P.kind; g.userData.name = lay.NAME[P.kind];
         group.add(g); tris += g.userData.tris || 0;
         const glows = []; if (g.userData.glow) glows.push(g.userData.glow); if (g.userData.subGlows) glows.push(...g.userData.subGlows);
         const subs = g.userData.subs || {}; for (const n in subs) subs[n].userData.base = subs[n].position.clone();
         const box = new THREE.Box3().setFromObject(g);
-        const piece = { g, grp: group, kind: P.kind, anim, glows, subs, ph: (P.x * 0.37 + P.z * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, box, progress: -1, scaffold: null, started: false, pop: 0 };
-        piece.replaces = standing.filter((Q) => near(piece, Q));
-        if (piece.replaces.length) for (const Q of piece.replaces) box.union(Q.box); // giàn giáo bao cả công trình cũ đang sửa
+        const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, fitS, anim, glows, subs, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, box, progress: -1, started: false, dead };
+        // thay cái cũ: cùng chỗ (slot) hoặc đè lên chỗ cái cũ
+        piece.replaces = standing.filter((Q) => (piece.slot && Q.slot === piece.slot) || (near(piece, Q) && !(Q.home != null && piece.home != null)));
         pieces.push(piece);
       }
       L.g.add(group); groups = [...groups, group];
       shown[i] = { level, pieces, standing, groups, yard, tris: Math.round(tris), count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L };
     }
-    // giàn giáo quanh chỗ đang dựng hay đang sửa: bốn cột và hai vòng thanh ngang theo khung bao
-    function scaffoldOf(P) {
-      const g = new THREE.Group(), b = P.box, w = Math.max(1, b.max.x - b.min.x) + 0.3, d = Math.max(1, b.max.z - b.min.z) + 0.3, h = Math.max(1.2, Math.min(8, b.max.y + 0.3)), cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2;
-      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, h, 0.12), scaffoldMat); m.position.set(cx + sx * w / 2, h / 2, cz + sz * d / 2); g.add(m); }
-      for (const y of [h * 0.45, h * 0.9]) for (const [dx, dz, lx, lz] of [[0, -d / 2, w, 0.08], [0, d / 2, w, 0.08], [-w / 2, 0, 0.08, d], [w / 2, 0, 0.08, d]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(lx, 0.08, lz), scaffoldMat); m.position.set(cx + dx, y, cz + dz); g.add(m); }
-      return g;
+    // chỗ cho nhà riêng: giữ đúng chỗ đã định nếu trống; đè lên núi, hồ, công trình khác hay ra ngoài mép đảo thì dịch dần
+    function homeSpot(L, p, r, fixed) {
+      const ok = (q) => L.inside(q.x, q.y, r + 2) && !L.blockedWild(q.x, q.y, r) && !fixed.some((F) => (F.x - q.x) ** 2 + (F.y - q.y) ** 2 < (F.r + r) ** 2);
+      if (ok(p)) return p;
+      for (const [ks, da] of [[1.12, 0], [0.9, 0], [1, 0.1], [1, -0.1], [1.22, 0.06], [1.22, -0.06], [0.82, 0.1], [1.34, 0]]) {
+        const a = Math.atan2(p.y, p.x) + da, R = p.length() * ks, q = new THREE.Vector2(Math.cos(a) * R, Math.sin(a) * R); if (ok(q)) return q;
+      }
+      return p;
     }
-    // xong một công trình: dỡ giàn giáo, cái cũ ở đúng chỗ đó nhường chỗ cho cái mới
+    // chỗ cho công trình ngoài làng, tìm một lần cho mỗi slot (địa hình không đổi): coast mép đảo, sea ngoài khơi, forest trong rừng
+    function outerSpot(L, P, at) {
+      const cache = L.outerSpots || (L.outerSpots = {}), key = P.slot + ':' + P.outer;
+      if (key in cache) return cache[key];
+      const d0 = at(Math.sin(P.a || 0), Math.cos(P.a || 0)), th0 = Math.atan2(d0.y, d0.x), r = Math.max(2.5, P.clear || 3);
+      const taken = Object.values(cache).filter(Boolean);
+      const free = (q, rr) => !taken.some((o) => o.p.distanceTo(q) < o.r + rr + 3);
+      let found = null;
+      for (let k = 0; k < 60 && !found; k++) {
+        const th = th0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.06, u = new THREE.Vector2(Math.cos(th), Math.sin(th)), edge = L.rOf(th);
+        const tries = P.outer === 'coast' ? [edge - 3] : P.outer === 'sea' ? [edge + 7, edge + 10] : [38, 34, 42, 46];
+        for (const R of tries) {
+          const q = u.clone().multiplyScalar(R);
+          if (P.outer === 'sea') { if (!L.inside(q.x, q.y, -4) && free(q, r)) { found = { p: q, dir: new THREE.Vector2(-u.y, u.x), r }; break; } continue; }
+          if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && free(q, r)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
+          if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && free(q, r)) { found = { p: q, dir: u.clone().negate(), r }; break; }
+        }
+      }
+      cache[key] = found; return found;
+    }
+    const setS = (P, xz, y) => P.g.scale.set(P.fitS * xz, P.fitS * y, P.fitS * xz);
+    // xong một công trình: cái cũ ở đúng chỗ đó đã lún hẳn, cái mới đứng đủ cỡ
     function finish(sh, P) {
-      if (P.progress >= 1 && !P.scaffold && P.g.visible) return;
-      P.progress = 1; P.g.visible = true; P.g.scale.y = 1;
-      if (P.scaffold) { P.grp.remove(P.scaffold); K.dispose(P.scaffold); P.scaffold = null; }
-      if (P.replaces.length) P.pop = 1; // sửa xong: cái mới hiện lên tại chỗ (nhún nhẹ)
+      P.progress = 1; if (P.dead) return; P.g.visible = true; setS(P, 1, 1);
       for (const Q of P.replaces) { Q.g.visible = false; Q.gone = true; }
       if (P.kind === 'hall' && sh.yard) { sh.yard.visible = true; for (const g of sh.groups) if (g !== P.grp && g.userData.yard) g.userData.yard.visible = false; } // sân mới trải ra khi nhà chính xong
       // nhóm của thời cũ nào không còn công trình nào đứng thì bỏ hẳn
       for (const g of sh.groups) if (g !== P.grp && !sh.standing.some((Q) => Q.grp === g && !Q.gone)) { dropGroup(sh.L, g); sh.groups = sh.groups.filter((x) => x !== g); }
     }
-    // tiến độ từ logic (S.build.list[j].progress, 0..1)
+    // tiến độ từ logic (S.build.list[j].progress, 0..1), như bản cũ: công trình tự mọc, tự đổi. Có cái cũ ở chỗ đó thì cái cũ
+    // lún xuống trước (nửa đầu), cái mới mọc lên sau; chỗ trống thì cái mới mọc dần từ mặt đất. Không có giàn giáo.
     function setProgress(i, list) {
       const sh = shown[i]; if (!sh) return;
       sh.pieces.forEach((P, j) => {
         const pr = list && list[j] ? list[j].progress : 1;
-        if (pr === P.progress) return;
+        if (pr === P.progress || P.dead) return;
         P.progress = pr;
-        if (pr >= 1) { if (!P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); } finish(sh, P); P.progress = 1; return; }
+        if (pr > 0 && !P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); }
+        if (pr >= 1) { finish(sh, P); P.progress = 1; return; }
         if (pr <= 0) { P.g.visible = false; return; }
-        if (!P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); }
-        if (!P.scaffold) { P.scaffold = scaffoldOf(P); P.grp.add(P.scaffold); }
-        if (P.replaces.length) P.g.visible = false; // đang sửa: cái cũ vẫn đứng trong giàn giáo
-        else { P.g.visible = true; P.g.scale.y = Math.max(0.04, ease(pr)); } // dựng mới: mọc dần lên
+        const old = P.replaces.length ? ease(Math.min(1, pr / 0.45)) : 1, u = P.replaces.length ? Math.max(0, (pr - 0.4) / 0.6) : pr;
+        for (const Q of P.replaces) { if (Q.gone) continue; const s = 1 - old; Q.g.visible = s > 0.03; Q.g.scale.set(Q.fitS * (0.85 + 0.15 * s), Q.fitS * Math.max(0.03, s), Q.fitS * (0.85 + 0.15 * s)); }
+        P.g.visible = u > 0; if (u > 0) setS(P, 0.8 + 0.2 * u, Math.max(0.04, ease(u)));
       });
     }
 
@@ -105,7 +138,6 @@
       const s = Math.min(0.1, Math.max(0, dt) / 1000); clock += s; const ts = t * 0.001;
       for (const sh of shown) if (sh) for (const set of [sh.pieces, sh.standing]) for (const p of set) {
         if (!p.g.visible) continue;
-        if (p.pop > 0) { p.pop = Math.max(0, p.pop - s * 2.5); const u = 1 - p.pop; p.g.scale.setScalar(0.86 + 0.14 * u + Math.sin(u * Math.PI) * 0.05); }
         const A = p.anim;
         if (A) {
           if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
@@ -128,15 +160,16 @@
     const SCHOOL = new Set(['school', 'datacenter', 'dish']);
     function places(i) {
       const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
-      const out = { hall: null, square: [], field: [], homes: [], guard: [], site: [], market: [], shrine: [], school: [], all: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], site: [], market: [], shrine: [], school: [], outer: [], all: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
         if (!g.visible || P.gone) continue;
         const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
-        if (k !== 'road' && k !== 'asphalt' && k !== 'glowRoad' && k !== 'lamp' && k !== 'pole') out.all.push(door);
+        if (!P.outer && k !== 'road' && k !== 'asphalt' && k !== 'glowRoad' && k !== 'lamp' && k !== 'pole') out.all.push(door);
+        if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
-        else if (HOME.has(k)) out.homes.push(pos.clone().addScaledVector(fwd, 2.8));
+        else if (HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && !out.homeSlots[P.home]) out.homeSlots[P.home] = dv; }
         else if (FIELD.has(k)) out.field.push(pos.clone().addScaledVector(fwd, 0.5));
         else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, 2.2));
         else if (MARKET.has(k)) out.market.push(door);
@@ -156,6 +189,8 @@
       if (!out.market.length) out.market.push(...[H[1 % H.length], H[Math.floor(H.length / 2)]].map((v) => v.clone().multiplyScalar(0.85)));
       if (!out.shrine.length) out.shrine.push(out.square[out.square.length - 1].clone().add(new THREE.Vector3(-2.5, 0, -1)));
       if (!out.school.length) out.school.push(H[H.length - 1].clone().multiplyScalar(0.9));
+      out.outer = out.outer.filter(Boolean); // người đi đường, thợ đi tu bổ có khi ra tới bến, trại, đền trong rừng
+      out.all.push(...out.outer);
       if (!out.all.length) out.all.push(...out.homes);
       return out;
     }

@@ -1,5 +1,5 @@
 /* Bể Kính · render/build/plains/common.js
- * Phần dùng chung cho công trình đảo Lúa Vàng: bảng màu, chỗ đặt nhà quanh làng, và những món dùng lại qua nhiều thời
+ * Phần dùng chung cho công trình đảo Lúa Vàng: bảng màu, chỗ đặt nhà quanh làng, 20 nhà riêng của dân (homes), và những món dùng lại qua nhiều thời
  * (bếp lửa, ruộng, đống rơm, đá dựng, giếng, cây đa). Mỗi thời có một tệp riêng (e01.js … e12.js) đăng ký vào
  * BK.Plains3D.ERA[cấp] = { yard, pieces, BUILD, NAME }. render/buildings3d.js đọc ERA để dựng làng.
  * Toạ độ trong làng: z dương là phía trước (biển trong, phía camera), x dương là bên phải. Mặt trước công trình là +z.
@@ -25,6 +25,16 @@
     const m = Math.ceil(n / 2); // một nửa bên phải, một nửa bên trái, đối xứng qua trục làng
     for (let i = 0; i < m; i++) { const t = m === 1 ? 0.5 : i / (m - 1), a = a0 + (a1 - a0) * t; for (const s of [1, -1]) if (out.length < n) out.push(Object.assign({ kind, x: s * Math.sin(a) * r, z: Math.cos(a) * r, face, v: out.length, clear: 3 }, extra || {})); }
     return out;
+  }
+
+  // 20 nhà riêng của dân (mỗi hộ một nhà: bố mẹ và con, logic/homes.js giữ nhà nào của hộ nào). Chỗ đặt giống nhau ở mọi
+  // thời: vòng trong 8 nhà, vòng ngoài 12 nhà, chia đều hai bên làng, chừa phía trước (ruộng, đường) và phía sau (nhà chính).
+  // Sang thời mới nhà số i của thời mới mọc lên đúng chỗ nhà số i cũ (render/buildings3d.js); fit: nhà to quá thì thu cho vừa.
+  const HOME_SLOTS = 20;
+  function homes(kind, extra) {
+    const out = [], rows = [[20, 4, 1.0, 2.3], [27.5, 6, 0.95, 2.45]];
+    for (const [r, m, a0, a1] of rows) for (let i = 0; i < m; i++) { const a = a0 + ((a1 - a0) * i) / (m - 1); for (const sx of [1, -1]) out.push(Object.assign({ kind, x: sx * Math.sin(a) * r, z: Math.cos(a) * r, face: [0, 2], v: out.length, clear: 2.8, slot: 'home' + out.length, home: out.length, fit: 5.4 }, extra || {})); }
+    return out.slice(0, HOME_SLOTS);
   }
 
   /* ---------- Những món dùng lại qua nhiều thời ---------- */
@@ -61,5 +71,5 @@
   // đường lát: dải phẳng trên mặt đất (màu theo thời)
   function road(k, o) { k.add(B(o.w || 2.4, 0.06, o.d || 12, 0.02), o.color || '#b8ad99', 0, 0, 0, { ao: false }); }
 
-  return { ERA: {}, C, pick, B, Bc, ring, COMMON: { fire, field, hay, stones, well, banyan, road } };
+  return { ERA: {}, C, pick, B, Bc, ring, homes, HOME_SLOTS, COMMON: { fire, field, hay, stones, well, banyan, road } };
 });

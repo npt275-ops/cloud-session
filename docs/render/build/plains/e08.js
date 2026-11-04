@@ -2,7 +2,7 @@
  * Robot, trí tuệ nhân tạo, máy tính lượng tử: Lõi Trí Tuệ (nhà chính, quả cầu tối trên bệ, vòng sáng quay), nhà mô-đun
  * xếp chồng có vạch sáng, trung tâm dữ liệu, bãi đỗ drone (drone bay nhấp nhô), robot làm ruộng, đường sáng. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const T = () => window.THREE, CY = '#5fe8ff';
   const torus = (R, t) => new (T().TorusGeometry)(R, t, 4, 24);
 
@@ -49,7 +49,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'glowRoad', x: 0, z: 10, d: 22, clear: 0 }, { kind: 'glowRoad', x: 0, z: 4, d: 36, face: [30, 4], clear: 0 },
-      ...ring('pods', 10, 16.5, 0.8, 2.0, F),
+      ...homes('pods'),
       { kind: 'datacenter', x: -16, z: -14, face: [0, 6], clear: 6 },
       { kind: 'dronePad', x: 10, z: 12, clear: 2.6 }, { kind: 'dronePad', x: 14, z: 16, clear: 2.6 },
       { kind: 'field', x: -15, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'robot', x: -13, z: 15, face: [-30, 15], clear: 0.6 }, { kind: 'robot', x: -17, z: 13.5, face: [0, 13.5], clear: 0.6 },

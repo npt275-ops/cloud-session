@@ -2,7 +2,7 @@
  * Điện, máy tính, tuabin gió: Trung Tâm Hành Chính (nhà chính, bê tông và kính, cột cờ), khu chung cư nhiều tầng,
  * trường học, siêu thị, tuabin gió (cánh quay), cột điện, đường nhựa có vạch, xe hơi, nhà kính trồng lúa. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const band = (k, w, d, y, z0) => { k.add(Bc(w + 0.02, 0.7, d + 0.02, 0.02), C.glass, 0, y, z0 || 0, { ao: false }); };
 
   function hall(k) {
@@ -57,7 +57,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -9, clear: 9 },
       { kind: 'asphalt', x: 0, z: 9, d: 22, clear: 0 }, { kind: 'asphalt', x: 0, z: 4, d: 34, face: [30, 4], clear: 0 },
-      ...ring('flats', 8, 16, 0.85, 1.95, F),
+      ...homes('flats'),
       { kind: 'school', x: -11, z: 11, face: [0, 9], clear: 7 }, { kind: 'shop', x: 11, z: 11, face: [0, 9], clear: 6.5 },
       { kind: 'turbine', x: -20, z: 20, clear: 3 }, { kind: 'turbine', x: 22, z: 19, clear: 3 },
       { kind: 'pole', x: -3.6, z: 15, clear: 0.6 }, { kind: 'pole', x: 3.6, z: 15, clear: 0.6 },

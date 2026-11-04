@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'schedule', 'tasks', 'construction', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'jobs', 'eras', 'schedule', 'tasks', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -136,4 +136,14 @@ test('dàn vai cố định tối đa 50 người; nhà chính chỉ đông khi 
   assert.ok(maxHall <= 3, 'ngày thường nhà chính chỉ có người đứng đầu và quân sư: ' + maxHall);
   BK.Island.trigger(S, 'protest');
   assert.ok(hallCrowd() >= 8, 'biểu tình: ' + hallCrowd() + ' người ở nhà chính');
+});
+
+test('mỗi hộ một nhà riêng trong 20 nhà; vợ chồng ở chung, trẻ ở với bố mẹ', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 11 });
+  for (let d = 0; d < 6 * 360; d++) BK.Island.step(S, 1);
+  const live = BK.Island.living(S), occ = BK.Homes.occupancy(S);
+  assert.ok(live.every((p) => p.home != null && p.home >= 0 && p.home < BK.Rules.HOME_SLOTS), 'ai cũng có nhà');
+  for (const p of live) { const q = p.spouse != null && S.people.get(p.spouse); if (q && q.alive) assert.strictEqual(p.home, q.home, 'vợ chồng chung nhà'); }
+  for (const p of live) if (BK.People.ageOf(p, S.day) < BK.Rules.ADULT_AGE) { const par = p.parents.map((id) => S.people.get(id)).filter((q) => q && q.alive); if (par.length) assert.ok(par.some((q) => q.home === p.home), 'trẻ ở với bố mẹ'); }
+  assert.ok(occ.filter((n) => n > 0).length >= 12, 'dân ở rải trong nhiều nhà: ' + occ.join(' '));
 });

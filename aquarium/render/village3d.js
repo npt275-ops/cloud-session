@@ -32,6 +32,7 @@
       if (!PL) return null;
       const k = p.id * 7 + Math.max(0, S.clans.indexOf(p.clan));
       // nhà theo gia đình: vợ chồng, con cái ở chung một nhà (theo người cha hay người mẹ đầu tiên của nhà đó)
+      if (place === 'home' && p.home != null && PL.homeSlots && PL.homeSlots[p.home]) return PL.homeSlots[p.home]; // nhà riêng của hộ (logic/homes.js)
       if (place === 'home') { const fam = p.parents && p.parents.length && P.ageOf(p, S.day) < 18 ? p.parents[0] : Math.min(p.id, p.spouse || p.id); return pickOf(PL.homes, fam * 5 + Math.max(0, S.clans.indexOf(p.clan))); }
       if (place === 'hall') return PL.hall;
       if (place === 'square') return pickOf(PL.square, k);

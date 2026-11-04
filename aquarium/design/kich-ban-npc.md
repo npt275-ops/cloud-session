@@ -51,12 +51,14 @@ Quân lực (lính, tướng) · Của cải (thương chủ, chợ). Lên thờ
 6. Lên thời bằng tài nguyên; nhật ký kể chuyện.
 7. Đo "không đơ" tự động khi chạy 9 năm không giao diện (người đứng yên quá lâu dưới 2%, việc có đầu ra 100%).
 
-## 7. Công trình đi cùng NPC: giữ lại, sửa và nâng cấp tại chỗ
+## 7. Công trình đi cùng NPC: giữ lại, tự mọc tự đổi tại chỗ
 Công trình của các thời trước không biến mất. Mỗi thời có danh sách công trình (render/build/plains/eNN.js); thợ làm lần lượt,
 bắt đầu từ nhà chính (`logic/construction.js`):
-- Công trình mới trùng chỗ một công trình cũ: **sửa, nâng cấp**. Cái cũ vẫn đứng, giàn giáo dựng bao quanh nó, thợ đóng búa,
-  khuân vác; xong thì cái mới hiện lên đúng chỗ đó.
-- Công trình mới ở chỗ trống: **dựng mới**, có giàn giáo, mọc dần lên.
+- Công trình mới trùng chỗ một công trình cũ: **lên đời tại chỗ**. Thợ đứng làm ở đó; cái cũ lún dần xuống, cái mới mọc lên
+  đúng chỗ đó (không giàn giáo, như bản cũ).
+- Công trình mới ở chỗ trống: **dựng mới**, mọc dần từ mặt đất.
+- Mỗi thời có 20 nhà riêng cho dân (mỗi hộ một nhà, bố mẹ và con) và các công trình ngoài làng: bến, thuyền, nhà trong rừng,
+  tháp canh, đền rừng, trại ngoài, hải đăng, công trình ngoài khơi.
 - Cái cũ không có gì thay thì giữ nguyên qua các thời. Khi không còn gì phải dựng, thợ đi vòng tu bổ nhà cửa.
 
 ## 8. Dàn vai cố định: tối đa 50 người, ai cũng có việc chính

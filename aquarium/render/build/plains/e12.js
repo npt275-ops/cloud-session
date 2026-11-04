@@ -2,7 +2,7 @@
  * Sống như ánh sáng, nghĩ chung một ý: Cột Sáng (nhà chính, cột ánh sáng cao vút trên vòng đá trắng), nhà pha lê trong
  * suốt, đốm sáng trôi, vòng đá trắng cũ như dấu vết của làng xưa. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const L1 = '#fff8e8', L2 = '#e8f4ff', L3 = '#ffe8f6';
   function hall(k) {
     k.add(K.lathe([[7, 0], [7, 0.4], [5.5, 0.7], [5.5, 1.0], [3.5, 1.2]], 14), '#f2f0ea', 0, 0, 0);
@@ -23,7 +23,7 @@
     yard: { x: 0, z: 2, r: 22, color: '#d6d2e0' },
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
-      ...ring('crystal', 10, 15.5, 0.8, 2.0, F),
+      ...homes('crystal'),
       ...Array.from({ length: 12 }, (_, i) => ({ kind: 'mote', x: Math.sin(i * 2.4) * (6 + (i % 4) * 3), z: 6 + Math.cos(i * 2.4) * (5 + (i % 3) * 3), v: i, clear: 0 })),
     ],
     BUILD: { hall, crystal, mote },

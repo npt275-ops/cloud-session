@@ -12,7 +12,7 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.Island;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const R = BK.Rules, G = BK.Genes, P = BK.People, F = BK.Family, CO = BK.Council, B = BK.Brain, J = BK.Jobs, E = BK.Eras, K = BK.Construction;
+  const R = BK.Rules, G = BK.Genes, P = BK.People, F = BK.Family, CO = BK.Council, B = BK.Brain, J = BK.Jobs, E = BK.Eras, K = BK.Construction, H = BK.Homes;
 
   // nét chung của từng đảo (bộ gen của người đầu tiên và người dân thường lệch theo đây)
   const ISLANDS = {
@@ -69,6 +69,7 @@
     // thời kỳ văn minh: lên cấp theo lịch của logic/eras.js
     if (E) { const l = E.levelOfDay(day); if (l !== S.level) { S.level = l; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); S.situChanged = true; } }
     if (J) J.assign(S);
+    if (H) H.assign(S);
     if (K) K.dayTick(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;

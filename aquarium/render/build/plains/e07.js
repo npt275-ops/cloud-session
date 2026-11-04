@@ -3,7 +3,7 @@
  * tên lửa, chảo vệ tinh (quay chậm), nhà máy điện hạt nhân (hai tháp làm mát, lò tròn), tháp chung cư cao,
  * đường nhựa, nhà kính lúa. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const T = () => window.THREE;
 
   function hall(k) {
@@ -53,7 +53,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'asphalt', x: 0, z: 10, d: 22, clear: 0 }, { kind: 'asphalt', x: 0, z: 4, d: 36, face: [30, 4], clear: 0 },
-      ...ring('tower', 8, 16.5, 0.85, 1.95, F),
+      ...homes('tower'),
       { kind: 'pad', x: 20, z: 14, clear: 7 },
       { kind: 'dish', x: -11, z: 12, clear: 3 }, { kind: 'dish', x: -15, z: 16, clear: 3 },
       { kind: 'nuclear', x: -20, z: -12, face: [0, 6], clear: 8 },

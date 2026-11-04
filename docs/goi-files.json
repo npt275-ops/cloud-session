@@ -100,6 +100,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/homes.js",
+  "src": "logic/homes.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/island.js",
   "src": "logic/island.js",
   "mode": 420
@@ -217,6 +222,11 @@
  {
   "path": "BeKinh/render/build/plains/e12.js",
   "src": "render/build/plains/e12.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/plains/outer.js",
+  "src": "render/build/plains/outer.js",
   "mode": 420
  },
  {

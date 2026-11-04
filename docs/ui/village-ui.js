@@ -75,7 +75,7 @@
       card.innerHTML = '<button class="x" data-close="1" aria-label="Đóng">✕</button><h2>' + P.fullName(p) + '</h2>' +
         '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
         '<p><span class="k">Đang:</span> ' + doing + '</p>' +
-        '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + '</p>' +
+        '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + (p.alive && p.home != null ? '<br><span class="k">Nhà:</span> số ' + (p.home + 1) + (BK.Homes ? ' (' + BK.Homes.occupancy(S)[p.home] + ' người)' : '') : '') + '</p>' +
         '<div class="sec">Tính cách</div>' + bars +
         '<div class="sec">Dáng đi đứng</div>' + gait +
         '<p><span class="k">Thói quen:</span> ' + G.habitName(g.habit) + (g.habitFrom ? ' (' + (g.habitFrom === 'new' ? 'mới' : g.habitFrom === 'a' ? 'giống cha' : 'giống mẹ') + ')' : '') +

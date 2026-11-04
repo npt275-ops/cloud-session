@@ -2,7 +2,7 @@
  * Vật chất sống, nhà tự mọc: Lõi San Hô (nhà chính, cây san hô khổng lồ nhiều nhánh, đầu nhánh phát sáng), nhà búp mọc
  * từ đất (vách sống, cửa tròn, dây leo), đèn nấm phát sáng, ruộng lúa mọc trên lá sen khổng lồ. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const PINK = '#f29ab8', TEAL = '#5fd8c0', LIME = '#c8f07a';
   function hall(k) {
     k.add(K.lathe([[6, 0], [4.5, 0.8], [2.6, 2.2], [1.8, 6], [2.2, 9]], 9), '#e8a0a8', 0, 0, 0);
@@ -26,7 +26,7 @@
     yard: { x: 0, z: 2, r: 22, color: '#93bf7e' },
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 9 },
-      ...ring('bud', 10, 15.5, 0.8, 2.0, F),
+      ...homes('bud'),
       ...[[-4, 8], [4, 8], [-7, 13], [7, 13], [0, 15]].map(([x, z]) => ({ kind: 'shroom', x, z, clear: 0.8 })),
       { kind: 'lily', x: -17, z: 15, clear: 5 }, { kind: 'lily', x: 17, z: 15, clear: 5 },
     ],

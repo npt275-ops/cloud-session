@@ -3,7 +3,7 @@
  * ống khói, xưởng xay lúa mái răng cưa và ống khói cao, ga tàu với đường ray và đầu máy hơi nước, đèn khí,
  * ruộng có máy cày hơi nước. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const T = () => window.THREE;
   const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#34404c', x, y, z, { ao: false }); k.add(Bc(w + 0.12, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
 
@@ -66,7 +66,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 },
       { kind: 'road', x: 0, z: 7.5, d: 16, w: 3.4, color: '#8e887c', clear: 0 },
-      ...ring('row', 6, 14.5, 0.95, 1.9, F),
+      ...homes('row'),
       { kind: 'factory', x: -14, z: 8, face: [0, 8], clear: 6.5 },
       { kind: 'station', x: 6, z: 20, face: 'front', clear: 7 },
       { kind: 'lamp', x: -2.4, z: 4, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 4, face: [-10, 4], clear: 0.5 }, { kind: 'lamp', x: -2.4, z: 11, clear: 0.5 }, { kind: 'lamp', x: 2.4, z: 11, face: [-10, 11], clear: 0.5 },

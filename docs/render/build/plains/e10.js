@@ -2,7 +2,7 @@
  * Thắp một mặt trời trong vòm kính: Tháp Lơ Lửng (nhà chính, các tầng đĩa trôi lơ lửng không trụ), mặt trời nhỏ treo trên
  * làng, nhà trôi lơ lửng có quầng sáng phía dưới, cột dẫn nắng, ruộng lúa vàng óng. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const SUN = '#ffd27a', WARM = '#ffe9b0';
   function hall(k) {
     k.add(K.lathe([[5, 0], [5, 0.4], [3.6, 0.8]], 12), '#e8dcc0', 0, 0, 0);
@@ -31,7 +31,7 @@
     yard: { x: 0, z: 2, r: 22, color: '#e2d6b4' },
     pieces: [
       { kind: 'hall', x: 0, z: -8, clear: 8 }, { kind: 'sun', x: 0, z: 4, clear: 0 },
-      ...ring('floatHouse', 10, 15.5, 0.8, 2.0, F),
+      ...homes('floatHouse'),
       ...[[-5, 9], [5, 9], [-9, 15], [9, 15]].map(([x, z]) => ({ kind: 'pylon', x, z, clear: 0.6 })),
       { kind: 'field', x: -17, z: 15, w: 9, d: 6, fence: false, clear: 6 }, { kind: 'field', x: 17, z: 15, w: 9, d: 6, fence: false, clear: 6 },
     ],

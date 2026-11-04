@@ -3,7 +3,7 @@
  * mái rơm có hiên, kho thóc nhà sàn, giếng, cổng làng, cây đa, lò rèn, cối xay gió (cánh quay), ruộng, đống rơm.
  * Kiểu dáng theo bản mẫu đã chốt (design/cong-trinh-lang-lua.html). */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const rc = (w, h, d, r, tw, td, lift) => K.roof(w, h, d, r, tw, td, lift).translate(0, -h / 2, 0); // mái, gốc ở giữa
   const torus = (R, t, a, b, arc) => new (window.THREE.TorusGeometry)(R, t, a, b, arc);
 
@@ -74,7 +74,7 @@
     yard: { x: 0, z: 1.5, r: 15, color: '#c9b184' },
     pieces: [
       { kind: 'hall', x: 0, z: -6.5, clear: 7.5 },
-      ...ring('house', 6, 12.5, 0.95, 1.95, F),
+      ...homes('house'),
       { kind: 'granary', x: 11.5, z: -12.5, face: F, clear: 2.8 },
       { kind: 'well', x: 3.6, z: 4.5, clear: 1.6 },
       { kind: 'banyan', x: -10.5, z: -12.5, clear: 4 },

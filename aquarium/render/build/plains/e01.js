@@ -3,7 +3,7 @@
  * lều da thú, bếp lửa chung, bãi ghè đá, giàn phơi da, bãi lúa dại ven sông (chưa có bờ, chưa có rào), cột vật tổ có
  * sọ thú, đá dựng, vách đá vẽ thổ hoàng. Chưa có gạch, gốm, ruộng rào, kho lương, nhà sàn. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const skull = (k, x, y, z, s) => { s = s || 1; k.add(K.ball(0.22 * s), C.bone, x, y, z, { sc: [1, 0.8, 1.2] }); for (const sx of [-1, 1]) k.add(K.cone(0.07 * s, 0.5 * s, 5), C.bone, x + sx * 0.22 * s, y + 0.08 * s, z, { rot: [0, 0, -sx * 1.1] }); };
 
   // lều lớn của tù trưởng: vòm thấp phủ da thú nhiều mảnh, cành chĩa lên đỉnh, đá dựng và sọ trâu ở lối vào
@@ -69,7 +69,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -2.5, clear: 6 },
       { kind: 'fire', x: 0, z: 5.5, clear: 3 },
-      ...ring('hut', 4, 10, 1.05, 1.75, [0, 5.5]),
+      ...homes('hut'),
       { kind: 'tent', x: -5.5, z: -8.5, face: [0, 5.5], v: 1, clear: 2.4 }, { kind: 'tent', x: 6, z: -8.5, face: [0, 5.5], v: 2, clear: 2.4 },
       { kind: 'knap', x: 5.2, z: 9.0, clear: 2.4 }, { kind: 'hideRack', x: -5.0, z: 9.6, clear: 2.2 },
       { kind: 'totem', x: -2.8, z: 7.4, clear: 1 },

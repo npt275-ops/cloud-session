@@ -2,7 +2,7 @@
  * Biết in sách, mài kính, đóng khí cầu: Tháp Đồng Hồ (nhà chính), nhà gạch hai tầng mái ngói, chợ có mái, nhà in,
  * bãi khí cầu (khí cầu nhấp nhô), đèn dầu, giếng, cây đa, ruộng, đường lát đá. */
 (function (root) {
-  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, COMMON } = P;
+  const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc, ring, homes, COMMON } = P;
   const win = (k, x, y, z, w, h) => { k.add(Bc(w, h, 0.08, 0.02), '#3a4a5a', x, y, z, { ao: false }); k.add(Bc(w + 0.14, 0.08, 0.12, 0.02), C.white, x, y - h / 2 - 0.04, z + 0.02, { ao: false }); };
 
   // Tháp Đồng Hồ: khối gạch hai tầng, tháp vuông có mặt đồng hồ bốn phía, chóp ngói nhọn
@@ -61,7 +61,7 @@
     pieces: [
       { kind: 'hall', x: 0, z: -7, clear: 7 },
       { kind: 'road', x: 0, z: 9, d: 14, color: '#a8a092', clear: 0 },
-      ...ring('house', 8, 13.5, 0.85, 1.95, F), ...ring('house', 2, 18, 1.35, 1.35, F, { v: 9 }),
+      ...homes('house'),
       { kind: 'market', x: 9, z: 6.5, face: [0, 6.5], clear: 6 },
       { kind: 'press', x: -9, z: 6.5, face: [0, 6.5], clear: 4 },
       { kind: 'balloon', x: 16, z: 14, clear: 3 },
