@@ -19,6 +19,8 @@
   function roads(k, o, st) {
     const key = o.net || 'plains', N = R3().net(key, o.land ? o.land.edge : null); R3().draw(k, N, st);
     if (BK.Neon3D && BK.Neon3D.on(o.lv)) BK.Neon3D.street(k, N, o.lv, key, st.w || 2.4); else if (BK.Lamps3D) BK.Lamps3D.line(k, N, o.lv, key, st);
+    // vỉa hè cho người đi bộ và vạch qua đường (từ thời 3, khi đường đã lát): người đi trên vỉa hè, sang đường ở vạch, xe dừng nhường
+    const W = WALKS[o.lv]; if (W) R3().dressWalks(k, N, Object.assign({ w: st.w }, W, W.glow && BK.Neon3D ? { cross: BK.Neon3D.of(key).a } : {}));
     return N;
   }
   // đèn, cây… dọc vòng đường, đứng bên lề (lệch ra theo pháp tuyến), không đứng giữa đường
@@ -37,6 +39,13 @@
     if (st.gate) for (const g of gaps.slice(1)) for (const s of [-1, 1]) { const a = g + s * (half(g) + 0.01), R = L.edge(a) - inset; st.gate(k, a, Math.sin(a) * R, Math.cos(a) * R); }
   }
   const gateTowers = (h, col, cap, capH) => (k, a, x, z) => { k.add(K.post(1.1, h, 8), col, x, 0, z); if (cap) k.add(K.cone(1.4, capH || 2.2, 8), cap, x, h, z); }; // trụ một đầu chỗ hở
+  // vỉa hè và vạch qua đường theo thời: lát đá, gạch, bê tông, rồi vạch phát sáng của thành phố neon
+  const WALKS = [null, null, null,
+    { walk: '#bcb3a0', cross: '#e2dccb' }, { walk: '#b8ae9a', cross: '#e6e0d0' }, { walk: '#b4ab98', cross: '#e6e0d0' },
+    { walk: '#c4c4c0', cross: '#f4f4f0' }, { walk: '#c8c8c6', cross: '#f6f6f2' }, { walk: '#8a90a8', cross: '#f0f4ff' }, { walk: '#8fbf7a', cross: '#f2ffe0' },
+    { walk: '#5a4a78', cross: '#fff', glow: true }, { walk: '#4a4a6a', cross: '#fff', glow: true }, { walk: '#6a6488', cross: '#fff', glow: true }];
+  // bề rộng mặt đường của từng thời (người đi bộ, render/village3d.js, đi giữa vỉa hè theo số này)
+  const ROAD_W = [0, 1.4, 1.8, 2.2, 2.6, 2.0, 3, 3.6, 3, 2.4, 3, 2.4, 2.6];
   const T = [];
   // 1 · lối mòn giữa các lều (thời đồ đá chưa có tường)
   T[1] = (k, o) => { roads(k, o, { color: '#b49a70', w: 1.4 }); };
@@ -125,5 +134,5 @@
     E.BUILD.town = T[lv]; E.NAME.town = NAME[lv];
   }
   for (let lv = 1; lv <= 12; lv++) if (P.ERA[lv]) addTo(P.ERA[lv], lv);
-  P.TOWN = { RR, SPOKES, BUILD: T, NAME, addTo };
+  P.TOWN = { RR, SPOKES, BUILD: T, NAME, addTo, ROAD_W, WALKS };
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -26,7 +26,7 @@
     }
     // vị trí cứng (logic/posts.js): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết; người cũ còn
     // làm được thì giữ đúng chốt của mình, thiếu thì người hợp tính nhất thay vào. Chọn trước mọi việc khác: chốt không bao giờ trống
-    if (BK.Posts) BK.Posts.assign(S, pool);
+    if (BK.Posts) BK.Posts.assign(S, pool, [...S.people.values()].filter((p) => p.alive && !p.role && p.job === 'elder'));
     // thợ xây: khéo tay, gan, không đa nghi (đủ 4 người kể cả thợ cả); thương nhân: khôn khéo, có chí (đủ 2 kể cả thương chủ)
     const seated = (k) => (S.seats[k] != null ? 1 : 0);
     take(pool, R.BUILDERS - seated('builder'), (t) => t.intellect * 0.4 + (1 - t.fear) * 0.3 + (1 - t.paranoia) * 0.3, 'builder');

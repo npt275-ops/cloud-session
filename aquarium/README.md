@@ -129,6 +129,8 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   - Người đi đường đi dạo dọc phố trên vỉa hè, gặp nhau thì dừng lại trò chuyện rồi đi tiếp (`render/village3d.js`).
   - Ai làm ở đâu thì ở trước chỗ đó; tối trò chuyện với hàng xóm trước cửa nhà; giữa sân chỉ có vài người đi bộ qua. Đi xa thì theo
     lối đi trên mạng đường (đường ngắn nhất), không ai ra quá vòng tường; 4 lính gác cổng chính đứng phía trong cổng.
+  - Vỉa hè hai bên đường (từ thời 3), vạch qua đường ở ngã giao và dọc vòng đường; người đi bộ đi trên vỉa hè, chỉ sang đường ở vạch;
+    xe dừng nhường người đang ở trên lòng đường phía trước và giữ khoảng cách với xe trước. Vài người đi dạo vòng quanh nhà chính.
 - **Đường luôn thông** (mọi thời, mọi năm, cả sáu đảo): mạng đường của đảo tính ngay khi dựng đất (`render/build/roads.js`
   isleSegs), nên núi, cao nguyên, hồ, đầm, ốc đảo dời ra khỏi đường, đá, cỏ, cây nhỏ không mọc trên đường (`render/map/`).
   Sông được chảy qua đường (mặt đường cao hơn mặt nước, như cầu phẳng). Công trình dựng xong thì đo phần sát đất theo cỡ thật

@@ -76,6 +76,21 @@ Thêm drama mới chỉ cần thêm dòng. Tới đêm drama tự tan. Cùng lú
   không còn nằm trong danh sách chỗ đến.
 - **Cổng chính:** 4 lính gác đều đứng phía trong cổng, hai hàng hai bên lối đi.
 
+### Vỉa hè, vạch qua đường, xe nhường người (`render/build/roads.js`, `plains/town.js`, `buildings3d.js drive`)
+- **Vỉa hè:** từ thời 3 (khi đường đã lát), mọi con đường có vỉa hè rộng 0,6 ở hai bên. Nhà, núi, cây không lấn vỉa hè
+  (`HALF` = nửa mặt đường rộng nhất 1,8 + vỉa hè 0,6).
+- **Vạch qua đường:** đặt hai bên mỗi ngã giao giữa vòng đường và đường toả, và rải đều dọc vòng đường (cứ 9 điểm một vạch,
+  `crossIdx`). Kiểu vạch theo thời: lát đá, sơn trắng, rồi vạch phát sáng ở thành phố neon.
+- **Người đi bộ:** đi giữa vỉa hè và giữ nguyên bên đang đi. Chỉ sang đường ở chỗ có vạch: tại vạch cuối cùng trên đường đi,
+  sang cho đúng bên nơi cần tới. Đi gần thì đi thẳng, trừ khi phải băng qua vòng đường. Chỗ đứng trước cửa hay trước chỗ làm mà
+  rơi vào lòng đường thì lùi ra vỉa hè.
+- **Xe:** có người đứng trên lòng đường ngay phía trước (0,3 tới 4,2 đơn vị) thì dừng chờ; người trên vỉa hè thì không làm xe
+  dừng. Xe giữ khoảng cách với xe phía trước nên không đâm vào nhau. Toa bám theo đầu tàu. Xe bay không phải dừng.
+
+### Đi dạo quanh nhà chính
+- Khoảng một phần ba người đi đường đi vòng quanh nhà chính, cách tường nhà chính khoảng 2,5. Vòng này tính theo khung bao thật
+  của nhà chính đang đứng. Mỗi người đi một chiều; gặp nhau thì dừng lại trò chuyện.
+
 ### Đời thường trên phố (`render/village3d.js`)
 - Người đi đường đi dạo dọc mạng đường của đảo (`roads.js isleNet`). Họ đi dọc vòng đường một quãng, có khi rẽ ra đường toả
   tới gần cổng rồi quay lại. Họ đi lệch về bên phải mặt đường, tức vỉa hè, nhường giữa đường cho xe.

@@ -52,8 +52,8 @@
   }
   // mạng đường của một đảo theo toạ độ của đảo (như lớp đường đặt ở tâm, quay mặt ra biển trong): tính ngay khi dựng đất
   // (render/map/terrain3d.js) để núi, hồ, đá, cây không mọc chắn đường; render/buildings3d.js dùng lại cho công trình.
-  // HALF: nửa bề rộng chỗ phải để trống (nửa mặt đường rộng nhất 3 cộng lề 0,4).
-  const HALF = 1.9;
+  // HALF: nửa bề rộng chỗ phải để trống: nửa mặt đường rộng nhất (3,6 / 2) cộng vỉa hè (WALK) — nhà, núi, cây không lấn vỉa hè.
+  const WALK = 0.6, HALF = 1.8 + WALK;
   // isleNet: vòng đường và các đường toả theo toạ độ đảo (người đi dạo dọc phố, render/village3d.js); isleSegs: các đoạn thẳng
   function isleNet(L, key) {
     const fx = L.inw.x, fz = L.inw.z, fl = Math.hypot(fx, fz) || 1, th = Math.atan2(fx / fl, fz / fl), c = Math.cos(th), sn = Math.sin(th);
@@ -66,5 +66,38 @@
   const segDist = (x, z, [x0, z0, x1, z1]) => { const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2)); return Math.hypot(x - x0 - dx * t, z - z0 - dz * t); };
   // một vòng tròn (x, z, r) có lấn vào đường không
   const hits = (segList, x, z, r, half) => !!segList && segList.some((S) => segDist(x, z, S) < (r || 0) + (half || HALF));
-  BK.Roads3D = { NETS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, HALF, Y };
+  // chỗ qua đường trên vòng đường (chỉ số điểm của vòng): hai bên mỗi ngã giao với đường toả, và rải đều dọc vòng (cứ khoảng
+  // CROSS_EVERY điểm) — người đi bộ chỉ sang đường ở đây (render/village3d.js), xe dừng nhường người (render/buildings3d.js)
+  const CROSS_EVERY = 9;
+  function crossIdx(N) {
+    const n = N.loop.length, out = new Set();
+    for (const sp of N.spokes) { let bj = -1, bd = 1e18; N.loop.forEach(([x, z], j) => { for (const [a, b] of sp) { const d = (a - x) ** 2 + (b - z) ** 2; if (d < bd) { bd = d; bj = j; } } }); if (bd < 3.2 * 3.2) { out.add((bj + 2) % n); out.add((bj - 2 + n) % n); } }
+    for (let j = 0; j < n; j += CROSS_EVERY) if (![...out].some((k) => Math.min(Math.abs(k - j), n - Math.abs(k - j)) < 4)) out.add(j);
+    return [...out].sort((a, b) => a - b);
+  }
+  // vỉa hè hai bên mọi đoạn đường (bỏ chỗ chạm vào đường khác, ở ngã giao) và vạch qua đường ở các chỗ qua đường
+  // st: { w (bề rộng mặt đường), walk (màu vỉa hè), cross (màu vạch), glow (vạch phát sáng) }
+  function dressWalks(k, N, st) {
+    const w = st.w || 2.4, all = segs(N);
+    if (st.walk) {
+      N.all.forEach((pl, pi) => {
+        const others = segs({ all: N.all.filter((_, j) => j !== pi) });
+        for (let i = 0; i + 1 < pl.length; i++) {
+          const [x0, z0] = pl[i], [x1, z1] = pl[i + 1], dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz); if (L < 1e-6) continue;
+          const nx = dz / L, nz = -dx / L, a = Math.atan2(dx, dz);
+          for (const s of [-1, 1]) { const cx = (x0 + x1) / 2 + nx * s * (w / 2 + WALK / 2), cz = (z0 + z1) / 2 + nz * s * (w / 2 + WALK / 2); if (others.some((S) => segDist(cx, cz, S) < w / 2 + WALK * 0.5)) continue; k.add(Bc(WALK, 0.07, L + 0.15, 0.01), st.walk, cx, Y + 0.02, cz, { rot: [0, a, 0], ao: false }); }
+        }
+      });
+    }
+    if (st.cross) {
+      const n = N.loop.length;
+      for (const j of crossIdx(N)) {
+        const [x, z] = N.loop[j], [x2, z2] = N.loop[(j + 1) % n], dx = x2 - x, dz = z2 - z, L = Math.hypot(dx, dz) || 1, nx = dz / L, nz = -dx / L, a = Math.atan2(dx, dz);
+        const bars = Math.max(3, Math.floor(w / 0.5));
+        for (let b = 0; b < bars; b++) { const o = -w / 2 + (b + 0.5) * (w / bars); k.add(Bc(w / bars * 0.55, 0.03, 1.5, 0.005), st.cross, x + nx * o, Y + 0.04, z + nz * o, { rot: [0, a, 0], ao: false, glow: !!st.glow }); }
+      }
+    }
+    return all;
+  }
+  BK.Roads3D = { NETS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, crossIdx, dressWalks, HALF, WALK, Y };
 })(typeof self !== 'undefined' ? self : globalThis);

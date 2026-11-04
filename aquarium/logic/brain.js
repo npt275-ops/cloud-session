@@ -14,7 +14,7 @@
   const STATES = ['idle', 'walk', 'talk', 'attack', 'panic', 'work']; // work: làm một việc (verb) ở chỗ của nó (logic/tasks.js)
   const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện', work: 'Làm việc' };
   // những chỗ trong làng (vị trí cụ thể do phần vẽ đặt, logic chỉ biết tên chỗ)
-  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate', 'gateL', 'gateR', 'podium']; // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
+  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate', 'gateL', 'gateR', 'podium', 'hallLoop']; // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân; hallLoop: vòng đi dạo quanh nhà chính // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
   function knobs(genome, stress) {

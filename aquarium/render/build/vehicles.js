@@ -41,12 +41,12 @@
   function fleet(k, lv, loop) {
     const list = FLEET[lv] || [], path = [];
     let L = 0; for (let i = 0; i < loop.length; i++) { const a = loop[i], b = loop[(i + 1) % loop.length]; L += Math.hypot(b[0] - a[0], b[1] - a[1]); }
-    const heads = list.filter((x) => !x[3]).length || 1; let h = 0, off = 0;
+    const heads = list.filter((x) => !x[3]).length || 1; let h = 0, off = 0, head = null;
     list.forEach(([kind, col, y0, gap], i) => {
       const y = (y0 || 0) < 1 ? (y0 || 0) + 0.07 : y0; // xe chạy trên mặt đường (mặt đường cao 0,13, render/build/roads.js Y); xe bay giữ độ cao
       const name = 'veh' + i, s = k.sub(name, [0, y || 0, 0]); M[kind](s, col);
-      if (gap) off -= gap; else { off = (h * L) / heads; h++; }
-      path.push([name, SPEED[lv], off, y || 0]);
+      if (gap) off -= gap; else { off = (h * L) / heads; h++; head = name; }
+      path.push([name, SPEED[lv], off, y || 0, gap ? head : null, (y || 0) > 2]); // [tên, tốc độ, quãng lệch, độ cao, đầu xe nó bám (toa), bay trên cao]
     });
     return path.length ? { loop: loop.map((p) => p.slice()), path } : null;
   }

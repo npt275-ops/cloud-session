@@ -46,7 +46,7 @@
   function line(k, N, lv, key, st) {
     const S = STYLE[lv]; if (!S) return 0;
     const c = { light: LIGHT[key] || LIGHT.plains, bio: BIO[key] || BIO.plains, pole: POLE[key] || POLE.plains };
-    const w = (st && st.w) || 2.4, side = w / 2 + 0.5, road = darkHex((st && st.color) || '#a8a092', 0.42), glow = lv <= 3 ? FIRE : c.light, pool = [mixHex(road, glow, 0.16), mixHex(road, glow, 0.3)];
+    const w = (st && st.w) || 2.4, side = w / 2 + (BK.Roads3D ? BK.Roads3D.WALK : 0.6) + 0.1, /* đứng ngoài mép vỉa hè, không chắn lối người đi */ road = darkHex((st && st.color) || '#a8a092', 0.42), glow = lv <= 3 ? FIRE : c.light, pool = [mixHex(road, glow, 0.16), mixHex(road, glow, 0.3)];
     let n = 0;
     const put = (q, s) => {
       const x = q.x + q.n[0] * side * s, z = q.z + q.n[1] * side * s, d = [-q.n[0] * s, -q.n[1] * s]; // d: hướng từ đèn ra giữa đường

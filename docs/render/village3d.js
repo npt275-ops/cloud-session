@@ -43,6 +43,7 @@
       if (place === 'gate') return PL.gate && PL.gate.length ? PL.gate[(p.post || 0) % PL.gate.length] : pickOf(PL.guard, p.id); // bốn chốt gác cổng thành
       if (place === 'gateL' || place === 'gateR') return PL[place] && PL[place].length ? PL[place][(p.post || 0) % PL[place].length] : pickOf(PL.guard, p.id); // hai chốt mỗi cổng phụ
       if (place === 'podium') return PL.podium || pickOf(PL.square, k); // bục diễn thuyết giữa sân
+      if (place === 'hallLoop') return PL.hall; // (vòng đi dạo quanh nhà chính: hallGoal)
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
@@ -102,10 +103,11 @@
         return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
       if (mind.place === 'stroll' && NET) return strollGoal(f);
+      if (mind.place === 'hallLoop') { const g = hallGoal(f); if (g) return g; }
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
-      return base ? { p: tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit), face: null } : null;
+      return base ? { p: offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit)), face: null } : null;
     }
     /* ---------- Đi dạo dọc phố ----------
      * Người đi đường (chỗ 'stroll') đi theo mạng đường của đảo (render/build/roads.js isleNet): dọc vòng đường một quãng, có khi
@@ -117,6 +119,8 @@
      * theo đường ngắn nhất trên mạng (Dijkstra), rồi từ điểm đường gần đích vào tận nơi; đi trên vỉa hè bên phải. Thêm vào đó,
      * không ai ra quá vòng tường (mép đảo trừ WALL_IN): tường thành chỉ có thể đi qua ở chỗ hở, mà chẳng ai cần ra ngoài. */
     const NAV_NEAR = 9, WALL_IN = 5.2;
+    // khoảng lệch từ tim đường ra giữa vỉa hè (từ thời 3 có vỉa hè; trước đó đi sát mép lối đất)
+    const sideOff = () => { const T = BK.Plains3D && BK.Plains3D.TOWN, w = T ? T.ROAD_W[level] || 2.4 : 2.4, hasWalk = T && T.WALKS[level]; return w / 2 + (hasWalk ? BK.Roads3D.WALK / 2 : 0.3); };
     let NAV = null;
     function buildNav() {
       const pts = [], adj = [], add = (x, z) => { pts.push([x, z]); adj.push([]); return pts.length - 1; };
@@ -127,7 +131,12 @@
       for (const ids of spokes) for (const id of ids) { const [j, d] = near(id, loop); if (d < 3.2) link(id, j); } // chỗ đường toả cắt vòng đường
       const c0 = PL && PL.podium ? PL.podium : { x: 0, z: 0 }, center = add(c0.x, c0.z);
       for (const ids of spokes) if (Math.hypot(pts[ids[0]][0] - c0.x, pts[ids[0]][1] - c0.z) < 22) link(center, ids[0]); // sân giữa nối đầu trong các đường toả
-      return { pts, adj };
+      // hướng chuẩn của từng điểm (vòng: theo chiều tăng chỉ số; đường toả: hướng ra ngoài) để biết người đang ở vỉa hè bên nào
+      const tan = pts.map(() => null), n = loop.length;
+      loop.forEach((id, i) => { const a = pts[loop[(i + 1) % n]], b = pts[loop[(i - 1 + n) % n]]; tan[id] = [a[0] - b[0], a[1] - b[1]]; });
+      for (const ids of spokes) ids.forEach((id, i) => { const a = pts[ids[Math.min(ids.length - 1, i + 1)]], b = pts[ids[Math.max(0, i - 1)]]; tan[id] = [a[0] - b[0], a[1] - b[1]]; });
+      const cross = new Set(BK.Roads3D.crossIdx({ loop: NET.loop, spokes: NET.spokes }).map((j) => loop[j])); // chỗ có vạch qua đường
+      return { pts, adj, tan, cross, loopSegs: loop.map((id, i) => [...pts[id], ...pts[loop[(i + 1) % n]]]) };
     }
     function nearestNode(x, z) { let b = 0, bd = 1e18; NAV.pts.forEach(([px, pz], i) => { const d = (px - x) ** 2 + (pz - z) ** 2; if (d < bd) { bd = d; b = i; } }); return b; }
     function pathNodes(a, b) {
@@ -139,15 +148,39 @@
     function routeTo(from, to) {
       if (!NET) return [to];
       if (!NAV) NAV = buildNav();
-      if (Math.hypot(to.x - from.x, to.z - from.z) < NAV_NEAR) return [to];
+      // gần mà không phải băng qua vòng đường (chỗ xe chạy) thì đi thẳng
+      if (Math.hypot(to.x - from.x, to.z - from.z) < NAV_NEAR && !NAV.loopSegs.some((S) => cuts(from.x, from.z, to.x, to.z, S))) return [to];
       const a = nearestNode(from.x, from.z), b = nearestNode(to.x, to.z); if (a === b) return [to];
-      const ids = pathNodes(a, b), out = [];
-      for (let k = 0; k < ids.length; k++) {
-        const [x, z] = NAV.pts[ids[k]], [nx, nz] = NAV.pts[ids[Math.min(ids.length - 1, k + 1)]], [px, pz] = NAV.pts[ids[Math.max(0, k - 1)]];
-        let dx = nx - px, dz = nz - pz; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
-        out.push(new THREE.Vector3(x + dz * 1.0, 0, z - dx * 1.0)); // vỉa hè bên phải theo hướng đi
-      }
+      const ids = pathNodes(a, b), out = [], off = sideOff();
+      // đi trên vỉa hè, giữ đúng bên đang đi; chỉ sang đường ở chỗ có vạch (chỗ có vạch cuối cùng trên đường đi, sang cho đúng bên
+      // của nơi cần tới); không có vạch nào thì sang ở điểm cuối
+      let last = -1; ids.forEach((id, k) => { if (NAV.cross.has(id)) last = k; });
+      let cx = from.x, cz = from.z;
+      const sideAt = (id, x, z) => { const t = NAV.tan[id], [px, pz] = NAV.pts[id], l = Math.hypot(t[0], t[1]) || 1, nx = t[1] / l, nz = -t[0] / l; return [Math.sign((x - px) * nx + (z - pz) * nz) || 1, nx, nz]; };
+      ids.forEach((id, k) => {
+        const [px, pz] = NAV.pts[id];
+        if (!NAV.tan[id]) { out.push(new THREE.Vector3(px, 0, pz)); cx = px; cz = pz; return; } // giữa sân
+        let [sd, nx, nz] = sideAt(id, cx, cz);
+        out.push(new THREE.Vector3(px + nx * sd * off, 0, pz + nz * sd * off));
+        if (k === last || (last < 0 && k === ids.length - 1)) { const [want] = sideAt(id, to.x, to.z); if (want !== sd) { sd = want; out.push(new THREE.Vector3(px + nx * sd * off, 0, pz + nz * sd * off)); } } // sang đường ở vạch
+        cx = out[out.length - 1].x; cz = out[out.length - 1].z;
+      });
       out.push(to.clone()); return out;
+    }
+    // đoạn (x0, z0)-(x1, z1) có cắt đoạn S không
+    function cuts(x0, z0, x1, z1, [a0, b0, a1, b1]) { const d = (x1 - x0) * (b1 - b0) - (z1 - z0) * (a1 - a0); if (Math.abs(d) < 1e-9) return false; const u = ((a0 - x0) * (b1 - b0) - (b0 - z0) * (a1 - a0)) / d, v = ((a0 - x0) * (z1 - z0) - (b0 - z0) * (x1 - x0)) / d; return u > 0 && u < 1 && v > 0 && v < 1; }
+    // chỗ đứng (trước cửa, trước chỗ làm) rơi vào lòng đường thì lùi ra vỉa hè phía bên đó: không ai đứng giữa đường xe chạy
+    function offCarriage(v) {
+      if (!L.roadSegs) return v;
+      const R = BK.Roads3D, T = BK.Plains3D && BK.Plains3D.TOWN, half = (T ? T.ROAD_W[level] || 2.4 : 2.4) / 2, need = sideOff();
+      for (let it = 0; it < 3; it++) {
+        let best = null, bd = 1e9; for (const S of L.roadSegs) { const d = R.segDist(v.x, v.z, S); if (d < bd) { bd = d; best = S; } }
+        if (bd >= half + 0.2) break;
+        const [x0, z0, x1, z1] = best, dx = x1 - x0, dz = z1 - z0, t = Math.max(0, Math.min(1, ((v.x - x0) * dx + (v.z - z0) * dz) / (dx * dx + dz * dz || 1))), fx = x0 + dx * t, fz = z0 + dz * t;
+        let nx = v.x - fx, nz = v.z - fz, nl = Math.hypot(nx, nz); if (nl < 1e-3) { nx = -fx; nz = -fz; nl = Math.hypot(nx, nz) || 1; } // đúng tim đường: lùi về phía trong đảo
+        v.set(fx + (nx / nl) * need, 0, fz + (nz / nl) * need);
+      }
+      return v;
     }
     function keepInside(pos) { const a = Math.atan2(pos.z, pos.x), R = L.rOf(a) - WALL_IN, r = Math.hypot(pos.x, pos.z); if (r > R) pos.multiplyScalar(R / r); }
     function newRoute(f) {
@@ -166,9 +199,18 @@
       if (!f.route || f.ri >= f.route.length) newRoute(f);
       const a = f.route[f.ri], b = f.route[Math.min(f.route.length - 1, f.ri + 1)];
       let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
-      const side = 1.0 + (f.p.id % 3) * 0.15, p = new THREE.Vector3(a[0] + dz * side, 0, a[1] - dx * side); // lệch phải theo hướng đi
-      if ((p.x - f.pos.x) ** 2 + (p.z - f.pos.z) ** 2 < 0.6) { f.ri++; }
-      return { p, face: null, road: true };
+      const side = sideOff() + ((f.p.id % 3) - 1) * 0.12, p = new THREE.Vector3(a[0] + dz * side, 0, a[1] - dx * side); // vỉa hè bên phải theo hướng đi
+      const d2 = (p.x - f.pos.x) ** 2 + (p.z - f.pos.z) ** 2; if (d2 < 0.6) { f.ri++; }
+      return { p, face: null, road: d2 < 16 }; // còn xa vòng đi dạo (mới ra khỏi nhà): đi theo lối đi tới đó trước
+    }
+    // vòng đi dạo quanh nhà chính: một vòng cách tường nhà chính khoảng 2,5, chiều đi theo từng người
+    function hallGoal(f) {
+      if (!PL || !PL.hallC) return null;
+      const R = PL.hallR + 2.5, n = 16, dir = f.p.id % 2 ? 1 : -1;
+      if (f.hk == null || f.hkR !== R) { const a0 = Math.atan2(f.pos.z - PL.hallC.z, f.pos.x - PL.hallC.x); f.hk = Math.round((a0 / (Math.PI * 2)) * n); f.hkR = R; }
+      const a = ((f.hk % n) / n) * Math.PI * 2, p = new THREE.Vector3(PL.hallC.x + Math.cos(a) * R, 0, PL.hallC.z + Math.sin(a) * R);
+      const d2 = (p.x - f.pos.x) ** 2 + (p.z - f.pos.z) ** 2; if (d2 < 0.8) f.hk += dir;
+      return { p, face: null, road: d2 < 16 };
     }
     function exprOf(mind, X, p) {
       if (mind.mood === 'pray') return 'closed';
@@ -196,13 +238,13 @@
         let goal = goalOf(f, mind), meetVerb = null;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
         if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
-        else if (mind.place === 'stroll' && goal && goal.road && !(ts < (f.meetCool || 0))) {
+        else if ((mind.place === 'stroll' || mind.place === 'hallLoop') && goal && goal.road && !(ts < (f.meetCool || 0))) {
           for (const [oid, o2] of folks) {
             if (oid === p.id || o2.meet || !o2.strolling || ts < (o2.meetCool || 0)) continue;
             if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: p.id, until }; goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
           }
         }
-        f.strolling = mind.place === 'stroll' && !meetVerb;
+        f.strolling = (mind.place === 'stroll' || mind.place === 'hallLoop') && !meetVerb;
         // đi theo lối đi (không xuyên tường, xuyên nhà): đích đổi thì tìm đường lại, đi lần lượt qua từng điểm
         if (goal && !meetVerb && !goal.road) {
           if (!f.nav || f.nav.dest.distanceToSquared(goal.p) > 2.25) f.nav = { dest: goal.p.clone(), pts: routeTo(f.pos, goal.p), i: 0 };
@@ -286,7 +328,10 @@
     const select = (id) => { selected = id; };
     const worldPos = (id) => { const f = folks.get(id); return f ? f.rig.root.position.clone() : null; };
     const drawCalls = () => Object.values(IM).filter((m) => m.count).length;
-    return { update, pick, select, worldPos, setPlaces, setLevel, drawCalls, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    // vị trí những người đang ở ngoài (toạ độ đảo) để xe nhường người đi bộ (render/buildings3d.js setPeds)
+    const pedList = [];
+    function peds() { pedList.length = 0; for (const [, f] of folks) if (!f.inside) pedList.push(f.pos); return pedList; }
+    return { update, pick, select, worldPos, peds, setPlaces, setLevel, drawCalls, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

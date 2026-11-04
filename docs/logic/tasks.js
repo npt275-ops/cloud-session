@@ -16,7 +16,7 @@
   // tên động từ (cho thẻ người)
   const VERB_NAME = { farm: 'làm ruộng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', gatekeep: 'gác cổng', patrol: 'đi tuần', drill: 'luyện quân',
     direct: 'chỉ đạo', rule: 'nói với dân', advise: 'bàn việc làng', pray: 'cầu nguyện', heal: 'chữa bệnh', trade: 'bán hàng', shop: 'mua hàng',
-    stroll: 'đi đường', learn: 'học', tell: 'kể chuyện', play: 'chơi đùa', help: 'phụ việc', eat: 'ăn', chat: 'trò chuyện', rest: 'nghỉ', sleep: 'ngủ' };
+    stroll: 'đi bộ', learn: 'học', tell: 'kể chuyện', play: 'chơi đùa', help: 'phụ việc', eat: 'ăn', chat: 'trò chuyện', rest: 'nghỉ', sleep: 'ngủ' };
 
   // chọn việc cho một người trong ngày thường; d(state, o) tạo đối tượng việc của logic/brain.js; friendOf: tìm bạn để nói chuyện.
   // Mỗi vai có một việc chính cố định qua mọi thời; tính cách chỉ đổi cách làm (luyện hay gác, đi chợ hay trò chuyện).
@@ -87,6 +87,7 @@
     if (j === 'soldier') { const drillFirst = t.aggression > t.paranoia; return drillFirst === morning ? job('drill', 'guard', 'luyện võ') : rng.chance(0.5) ? job('guard', 'guard', 'canh gác làng') : job('patrol', 'patrol', 'đi tuần quanh làng'); }
     if (j === 'farmer') return job('farm', 'field', morning ? 'ra ruộng làm' : 'làm ruộng nốt buổi chiều');
     // người đi đường: chủ yếu đi bộ dọc phố (gặp ai thì dừng lại nói chuyện, render/village3d.js), có lúc ra chợ, có lúc ngồi trước nhà
+    if (j === 'walker' && p.id % 3 === 0) return job('stroll', 'hallLoop', 'đi bộ quanh nhà chính'); // vài người (khoảng một phần ba người đi đường) đi dạo quanh nhà chính
     if (j === 'walker') { const r = rng.next(); return r < 0.6 ? job('stroll', 'stroll', 'đi bộ dọc phố') : r < 0.85 ? job('shop', 'market', 'ra chợ mua đồ') : job('rest', 'home', 'ngồi nghỉ trước cửa nhà'); }
     return neighborChat('trò chuyện với hàng xóm');
   }

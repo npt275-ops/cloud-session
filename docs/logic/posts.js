@@ -24,20 +24,23 @@
   ];
   const BY_KEY = Object.fromEntries(POSTS.map((X) => [X.key, X]));
   // gán chốt từ những người còn trống (pool: người lớn không ngồi hội đồng); trả lại pool đã bớt người
-  function assign(S, pool) {
+  // elders: người già; làng thiếu người lớn thì người già giữ chốt (người lớn vẫn được chọn trước), để chốt không bao giờ trống
+  function assign(S, pool, elders) {
     for (const X of POSTS) {
       const n = X.count();
+      const src = elders ? pool.concat(elders.filter((p) => p.job === 'elder')) : pool;
       // người đang giữ chốt mà còn trong pool: giữ nguyên
-      const keep = pool.filter((p) => p.postKey === X.key && p.post != null && p.post < n).sort((a, b) => a.post - b.post);
+      const keep = src.filter((p) => p.postKey === X.key && p.post != null && p.post < n).sort((a, b) => a.post - b.post);
       const used = new Set(); const kept = [];
       for (const p of keep) { if (used.has(p.post)) continue; used.add(p.post); kept.push(p); }
-      for (const p of kept) { p.job = X.job; pool.splice(pool.indexOf(p), 1); }
-      // chốt còn trống: người hợp nhất (và chưa giữ chốt khác)
-      pool.sort((a, b) => X.score(b.genome.traits) - X.score(a.genome.traits));
+      const take = (p) => { const i = pool.indexOf(p); if (i >= 0) pool.splice(i, 1); };
+      for (const p of kept) { p.job = X.job; take(p); }
+      // chốt còn trống: người hợp nhất (và chưa giữ chốt khác); thiếu người lớn thì (chốt nhận người già) lấy người già
+      const cand = src.filter((p) => !kept.includes(p) && (pool.includes(p) || p.job === 'elder')).sort((a, b) => (pool.includes(b) ? 1 : 0) - (pool.includes(a) ? 1 : 0) || X.score(b.genome.traits) - X.score(a.genome.traits));
       for (let k = 0; k < n; k++) {
         if (used.has(k)) continue;
-        const p = pool.shift(); if (!p) break;
-        p.job = X.job; p.postKey = X.key; p.post = k; used.add(k);
+        const p = cand.shift(); if (!p) break;
+        p.job = X.job; p.postKey = X.key; p.post = k; used.add(k); take(p);
       }
     }
     return pool;

@@ -110,7 +110,7 @@
         // cùng một mạng đường với lúc dựng đất (render/build/roads.js isleSegs), nên núi, hồ, cây và công trình cùng tránh một đường
         const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th);
         L.roadSegs = BK.Roads3D.isleSegs(L, townSpec.net || 'plains');
-        L.roadW = (townSpec.roadW || 3) / 2 + 0.4;
+        L.roadW = BK.Roads3D.HALF; // nửa mặt đường rộng nhất cộng vỉa hè
         // chỗ hở của tường (theo trục của lớp đường): cổng chính góc 0, hai chỗ bắc cầu sang hai đảo bên cạnh (L.landing)
         L.wallGaps = [0, ...(L.landing || []).map((v) => { const lx = v.x * c - v.z * sn, lz = v.x * sn + v.z * c; return Math.atan2(lx, lz); })];
       }
@@ -291,16 +291,36 @@
       for (const P of list) { P.inBatch = true; for (const k of kinds || Object.keys(P.parts)) if (P.parts[k]) P.parts[k].visible = false; }
       sh.inBatch = list; sh.batchMode = mode; sh.batch.show(true);
     }
-    // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe ở quãng đường (thời gian × tốc độ +
-    // khoảng lệch), đầu xe quay theo hướng đoạn đường đang đi
-    function drive(A, p, ts) {
+    // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe có quãng đường đã đi của riêng nó,
+    // đầu xe quay theo hướng đoạn đường đang đi. Xe chạy dưới đất nhường người đi bộ: có người đang ở trên mặt đường ngay phía
+    // trước (peds: toạ độ đảo, setPeds từ game/village.js) thì dừng chờ; toa bám theo đầu xe của nó; xe bay không phải dừng.
+    const pedsOf = [];
+    function setPeds(i, list) { pedsOf[i] = list; }
+    function blockedAhead(sh, p, x, z, hx, hz) {
+      const list = pedsOf[shown.indexOf(sh)]; if (!list || !list.length) return false;
+      const c = Math.cos(p.g.rotation.y), s = Math.sin(p.g.rotation.y), X = p.g.position.x + x * c + z * s, Z = p.g.position.z - x * s + z * c, HX = hx * c + hz * s, HZ = -hx * s + hz * c;
+      const lane = ((BK.Plains3D.TOWN && BK.Plains3D.TOWN.ROAD_W[sh.level]) || 2.6) / 2 + 0.15; // chỉ người đang ở trên mặt đường (không tính người trên vỉa hè)
+      for (const q of list) { const dx = q.x - X, dz = q.z - Z, fwd = dx * HX + dz * HZ, lat = Math.abs(dx * HZ - dz * HX); if (fwd > 0.3 && fwd < 4.2 && lat < lane) return true; }
+      return false;
+    }
+    function drive(sh, A, p, ts) {
       if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
-      for (const [n, speed, off, y] of A.path) {
-        const sub = p.subs[n]; if (!sub) continue;
-        let d = (ts * speed + off) % A.len; if (d < 0) d += A.len;
+      const st = p.drive || (p.drive = { at: ts, d: {} }), dt = Math.min(0.25, Math.max(0, ts - st.at)); st.at = ts;
+      const place = (sub, d, y) => {
+        d %= A.len; if (d < 0) d += A.len;
         let i = 0; while (i < A.loop.length - 1 && A.cum[i + 1] < d) i++;
         const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length], u = (d - A.cum[i]) / Math.max(1e-6, A.cum[i + 1] - A.cum[i]);
-        sub.position.set(a[0] + (b[0] - a[0]) * u, y, a[1] + (b[1] - a[1]) * u); sub.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]);
+        const x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u, hx = b[0] - a[0], hz = b[1] - a[1];
+        sub.position.set(x, y, z); sub.rotation.y = Math.atan2(hx, hz); return [x, z, hx / (Math.hypot(hx, hz) || 1), hz / (Math.hypot(hx, hz) || 1)];
+      };
+      for (const [n, speed, off, y, head, flying] of A.path) {
+        const sub = p.subs[n]; if (!sub) continue;
+        if (head) { const H = A.path.find((x) => x[0] === head); st.d[n] = (st.d[head] != null ? st.d[head] : 0) + (off - H[2]); place(sub, st.d[n], y); continue; } // toa: bám đầu xe
+        if (st.d[n] == null) st.d[n] = ts * speed + off;
+        const [x, z, hx, hz] = place(sub, st.d[n], y);
+        // giữ khoảng cách với xe (hay toa cuối của đoàn) phía trước: xe trước dừng nhường người thì xe sau cũng dừng, không đâm vào nhau
+        const tooClose = !flying && A.path.some(([m, , , , , fl]) => m !== n && !fl && st.d[m] != null && (((st.d[m] - st.d[n]) % A.len) + A.len) % A.len > 0.1 && (((st.d[m] - st.d[n]) % A.len) + A.len) % A.len < 3.6);
+        if (flying || (!tooClose && !blockedAhead(sh, p, x, z, hx, hz))) st.d[n] += speed * dt; // có người trên đường phía trước: dừng chờ
       }
     }
     function animate(dt, t, night, cam) {
@@ -320,7 +340,7 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-          if (A.path) drive(A, p, ts); // xe chạy dọc vòng đường (render/build/vehicles.js)
+          if (A.path) drive(sh, A, p, ts); // xe chạy dọc vòng đường (render/build/vehicles.js), nhường người đi bộ
           }
           if (!far) for (const G of p.glows) {
             const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);
@@ -366,6 +386,9 @@
         const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th);
         [['gateL', L.wallGaps[1]], ['gateR', L.wallGaps[2]]].forEach(([k, g]) => { const dx = Math.sin(g), dz = Math.cos(g), X = dx * c + dz * sn, Z = -dx * sn + dz * c, R = L.rOf(Math.atan2(Z, X)) - 7.5, base = new THREE.Vector3(X * R, 0, Z * R), tan = new THREE.Vector3(-Z, 0, X); out[k] = [base.clone().addScaledVector(tan, 2.4), base.clone().addScaledVector(tan, -2.4)]; });
       }
+      // vòng đi dạo quanh nhà chính: tâm và bán kính theo khung bao thật của nhà chính đang đứng
+      { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
+        if (H) { const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
       out.podium = new THREE.Vector3(f.x * 4, 0, f.y * 4); out.podiumFace = new THREE.Vector3(f.x * 12, 0, f.y * 12);
       // chốt tuần tra, luyện quân: rải dọc phía trong tường thành (xa sân giữa), không dồn quanh nhà chính
       { const a0 = Math.atan2(f.y, f.x); for (let k = 0; k < 6; k++) { const a = a0 + Math.PI / 6 + (k * Math.PI) / 3, R = L.rOf(a) - 10; out.guard.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R)); } }
@@ -389,7 +412,7 @@
     // bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng)
     const roadCheck = (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = footprint(P, m); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: blocks(sh.L, fp, P.x, P.z), rel: P.relocated || '', fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); };
     const batchInfo = (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) }; // bài kiểm tra
-    return { show, setProgress, setProgressByTime, animate, stats, places, flush, batchInfo, roadCheck, queued: () => queue.length, cacheSize: () => BAKED.size };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setPeds, flush, batchInfo, roadCheck, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });
