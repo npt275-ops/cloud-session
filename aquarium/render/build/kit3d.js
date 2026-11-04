@@ -11,8 +11,8 @@
   const T = () => window.THREE;
 
   /* ---------- Hình cơ bản ---------- */
-  // hộp vát cạnh: mỗi cạnh có một mặt vát rộng r (S = 3 lát mỗi chiều), gốc ở giữa đáy hộp nếu base = true
-  function box(w, h, d, r, base) {
+  // hộp vát cạnh: mỗi cạnh có một mặt vát rộng r (S = 3 lát mỗi chiều, 108 tam giác), gốc ở giữa đáy hộp nếu base = true
+  function bevelBox(w, h, d, r, base) {
     const THREE = T(); r = Math.max(0.001, Math.min(r || 0.06, w / 2 - 0.001, h / 2 - 0.001, d / 2 - 0.001));
     const g = new THREE.BoxGeometry(2, 2, 2, 3, 3, 3), p = g.attributes.position, half = [w / 2, h / 2, d / 2];
     const map = (f, hf) => { const a = Math.abs(f), s = Math.sign(f); return s * (a <= 1 / 3 ? a * 3 * (hf - r) : hf - r + (a - 1 / 3) * 1.5 * r); };
@@ -25,9 +25,21 @@
     }
     g.computeVertexNormals(); return g;
   }
+  // hộp dùng cho mọi công trình. Nhẹ máy mà hình như cũ:
+  //  - vát nhỏ (r < BEVEL_MIN) hay hộp mảnh (cạnh ngắn nhất < BEVEL_SIDE): mặt vát nhỏ hơn một điểm ảnh ở khoảng nhìn của
+  //    game, nên dùng hộp thường 12 tam giác thay cho 108 (đường, tà vẹt, đoạn tường, đèn, ô cửa sổ...)
+  //  - hộp cùng cỡ dùng chung một hình (BOXES): Kit chỉ đọc, khi gộp thì sao ra bản riêng (merge), không ai sửa hình gốc
+  const BEVEL_MIN = 0.15, BEVEL_SIDE = 0.8, BOXES = new Map();
+  function box(w, h, d, r, base) {
+    const key = w + ',' + h + ',' + d + ',' + (r || 0.06) + (base ? 'b' : 'c'); let g = BOXES.get(key); if (g) return g;
+    if ((r || 0.06) >= BEVEL_MIN && Math.min(w, h, d) >= BEVEL_SIDE) g = bevelBox(w, h, d, r, base);
+    else { g = new (T().BoxGeometry)(w, h, d); if (base) g.translate(0, h / 2, 0); }
+    if (BOXES.size < 8000) BOXES.set(key, g);
+    return g;
+  }
   // mái: hộp vát vuốt nhỏ dần lên đỉnh (tw, td: bề ngang, bề sâu ở đỉnh); lift: bốn góc mái cong lên
   function roof(w, h, d, r, tw, td, lift) {
-    const g = box(w, h, d, r, true), p = g.attributes.position;
+    const g = bevelBox(w, h, d, r, true), p = g.attributes.position; // mái cần lưới chia lát để vuốt và cong góc
     for (let i = 0; i < p.count; i++) {
       const y = p.getY(i), t = Math.max(0, Math.min(1, y / h)); const x = p.getX(i) * (1 + (tw / w - 1) * t), z = p.getZ(i) * (1 + (td / d - 1) * t);
       let yy = y; if (lift) { const ax = Math.abs(x) / (w / 2), az = Math.abs(z) / (d / 2); yy += lift * Math.pow(ax, 6) * Math.pow(az, 6) * (1 - t); }
@@ -44,7 +56,7 @@
   function disc(r, seg) { const THREE = T(); return new THREE.CircleGeometry(r, seg || 12).rotateX(-Math.PI / 2); }
 
   /* ---------- Gom mảnh và gộp ---------- */
-  function Kit() { this.parts = []; this.glow = []; this.lit = []; this.subs = []; }
+  function Kit() { this.parts = []; this.flat = []; this.glow = []; this.lit = []; this.subs = []; }
   // phần chuyển động (cánh quạt, khí cầu, nhà lơ lửng...): một Kit con, dựng thành khối riêng đặt ở điểm xoay pivot;
   // các mảnh vẽ vào Kit con theo toạ độ tính từ pivot. render/buildings3d.js làm nó quay hoặc nhấp nhô theo BUILD trả về.
   Kit.prototype.sub = function (name, pivot) { const k = new Kit(); k.name = name; k.pivot = pivot || [0, 0, 0]; k.tint = this.tint; this.subs.push(k); return k; };
@@ -55,9 +67,17 @@
     const THREE = T(); o = o || {};
     const m = new THREE.Matrix4().compose(new THREE.Vector3(x || 0, y || 0, z || 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(...(o.rot || [0, 0, 0]))), new THREE.Vector3(...(o.sc || [1, 1, 1])));
     const c = new THREE.Color(color); if (this.tint) this.tint(c, o);
-    (o.lit ? this.lit : o.glow ? this.glow : this.parts).push({ geo, color: c, m, ao: o.ao !== false });
+    (o.lit ? this.lit : o.glow ? this.glow : isFlat(this, geo, y, o) ? this.flat : this.parts).push({ geo, color: c, m, ao: o.ao !== false });
     return this;
   };
+  // mảnh dẹt sát đất (mặt đường, vạch, tà vẹt, tấm lát): bóng của nó nằm lẫn dưới chính nó, nên vẽ riêng một khối không đổ
+  // bóng (vẫn nhận bóng), để lượt vẽ bóng không phải vẽ lại cả mạng đường. Chỉ xét Kit chính, mảnh không nghiêng.
+  function isFlat(k, geo, y, o) {
+    if (k.name || (o.rot && (o.rot[0] || o.rot[2]))) return false;
+    if (!geo.boundingBox) geo.computeBoundingBox();
+    const b = geo.boundingBox, sy = o.sc ? o.sc[1] : 1;
+    return (b.max.y - b.min.y) * sy < 0.12 && (y || 0) + b.max.y * sy < 0.3;
+  }
   // gộp thành một BufferGeometry có màu theo đỉnh; chân sẫm hơn đỉnh (aoH: độ cao hết sẫm)
   function merge(parts, aoH) {
     const THREE = T(); let n = 0; const gs = [];
@@ -81,6 +101,7 @@
   Kit.prototype.bake = function (aoH) {
     const THREE = T(), g = new THREE.Group();
     if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.main = m; g.userData.tris = m.geometry.attributes.position.count / 3; }
+    if (this.flat.length) { const m = new THREE.Mesh(merge(this.flat, aoH || 3), mat()); m.receiveShadow = true; g.add(m); g.userData.flat = m; g.userData.tris = (g.userData.tris || 0) + m.geometry.attributes.position.count / 3; }
     if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
     if (this.lit.length) { const m = new THREE.Mesh(merge(this.lit, 1), litMat()); m.renderOrder = 2; g.add(m); g.userData.lit = m; }
     g.userData.subs = {};

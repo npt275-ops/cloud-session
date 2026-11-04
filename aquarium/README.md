@@ -130,8 +130,14 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   mép đường và vòm sáng trên đường phát neon, đường viền neon chạy dọc các cạnh của từng công trình, cửa sổ sáng suốt. Mỗi đảo treo một
   mặt trời nhân tạo rọi xuống thành phố (lõi, quầng, cột sáng, đèn điểm màu riêng): Hồn Lúa (vòng con quay), Hạt Giống (cánh lá
   khép mở), Lò Rèn (mảnh đá bay quanh), Băng Lăng Trụ (vầng hào quang, mặt trời giả), Sứa (xúc tu đung đưa), Hai Vành.
-- **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng
-  công trình; khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
+- **Nhẹ máy với sáu đảo** (hình không đổi):
+  - hộp chỉ vát cạnh khi đủ to để thấy vát (`render/build/kit3d.js` box: vát r ≥ 0,15 và cạnh ≥ 0,8), còn lại là hộp thường
+    12 tam giác thay cho 108; hộp cùng cỡ dùng chung một hình. Công trình mỗi đảo nhẹ đi khoảng 4–5 lần (thời 7: 158k → 35k tam giác);
+  - công trình giống nhau (cùng hàm dựng, thông số, thời, đảo, màu) dựng một lần, các cái sau dùng chung hình (`render/buildings3d.js` BAKED);
+  - dựng rải theo khung hình (mỗi khung 6 ms, 14 ms khi vừa sang thời), đảo gần máy quay trước: sang thời không còn khựng lâu;
+  - mảnh dẹt sát đất (mặt đường, vạch, tà vẹt, vũng đèn) không đổ bóng, lượt vẽ bóng nhẹ đi;
+  - gộp khối cả đảo xa (không đổ bóng) lẫn đảo gần (có bóng; phần sáng nhấp nháy vẫn vẽ riêng), gồm cả viền neon; công trình
+    mới xong tạm vẽ riêng, đảo yên vài giây mới gộp lại. Khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
   ray, rô-bốt giao hàng và drone, hạt giống bay, xe bay, quả cầu sáng.
 - **Công trình sống động**: khói bốc từ bếp lửa, lò gốm, lò rèn, ống khói nhà, nhà máy (`render/build/life3d.js`, một lượt
   vẽ cho cả đảo); cửa sổ sáng đèn về đêm (mảnh `lit` trong `kit3d.js`); cờ bay, chuông đung đưa (`sway`).

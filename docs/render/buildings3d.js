@@ -22,7 +22,11 @@
   const STYLE_OF = (ter) => (ter === 'plains' ? BK.Plains3D : BK.Isles3D && BK.Isles3D[ter]);
   const SEA_Y = -0.55;     // mặt biển (sea3d.js)
   const FAR = 95;          // máy quay xa đảo hơn thế này thì vẽ đảo bằng khối gộp
-  const BATCH_GAP = 1.5;   // giây tối thiểu giữa hai lần gộp lại của một đảo
+  const BATCH_GAP = 1.5;   // đảo xa: gộp lại khi đã yên (không có công trình nào xong thêm) ít nhất chừng này giây
+  const NEAR_GAP = 4;      // đảo gần: gộp phần đứng yên khi đã yên chừng này giây (phần sáng nhấp nháy vẫn vẽ riêng)
+  const NEAR_KINDS = ['main', 'flat', 'lit', 'neon'];
+  const BAKE_MS = 6, BAKE_MS_BUSY = 14; // mỗi khung hình dựng hình công trình tối đa chừng này mili giây (dựng rải, sang thời không khựng); hàng đợi dài (vừa sang thời) thì dựng nhanh hơn
+  const SKIP_KEY = new Set(['x', 'z', 'face', 'clear', 'nudge', 'home', 'pre']); // thông số chỉ về chỗ đặt, không đổi hình
 
   function create(o) {
     const { THREE, lands3d } = o, K = BK.BuildKit, PL = BK.Place3D.create(THREE);
@@ -30,22 +34,69 @@
     const shown = lands3d.lands.map(() => null);
     const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20), new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true })); yard.position.set(p.x, 0.04, p.y); yard.receiveShadow = true; return yard; };
     const near = (P, Q) => { const rr = P.clear + Q.clear * 0.6 + 0.5; return (Q.x - P.x) ** 2 + (Q.z - P.z) ** 2 < rr * rr || (P.kind === 'hall' && Q.kind === 'hall'); };
-    const dropGroup = (L, g) => { if (g) { L.g.remove(g); K.dispose(g); } };
+    // bỏ một nhóm công trình: trả bộ nhớ hình, trừ hình dùng chung còn nằm trong kho BAKED
+    const SHARED = new WeakSet();
+    const dropGroup = (L, g) => { if (g) { L.g.remove(g); g.traverse((o) => { if ((o.isMesh || o.isLine) && !SHARED.has(o.geometry)) o.geometry.dispose(); }); } };
+    /* ---------- Kho hình đã dựng (dựng một lần, dùng lại) ----------
+     * Công trình cùng hàm dựng, cùng thông số (trừ chỗ đặt), cùng thời, cùng đảo, cùng cách tô màu cho ra cùng một hình: dựng
+     * một lần, các cái sau sao nhóm khối dùng chung hình (mỗi cái vẫn có vật liệu sáng riêng để nhấp nháy lệch nhau). Hàm dựng
+     * nào hỏi tới đất quanh nó (land: lớp đường, tường, công trình ven bờ) thì hình theo chỗ, không dùng lại. */
+    const BAKED = new Map(), ids = new WeakMap(); let nextId = 1;
+    const idOf = (f) => { if (!f) return 0; if (!ids.has(f)) ids.set(f, nextId++); return ids.get(f); };
+    function keyOf(P, lv, ter) {
+      if (P.spec.town || P.outer) return null;
+      const own = {}; for (const k of Object.keys(P.spec)) if (!SKIP_KEY.has(k) && typeof P.spec[k] !== 'function') own[k] = P.spec[k];
+      try { return idOf(P.build) + '|' + lv + '|' + ter + '|' + idOf(P.tint) + '|' + JSON.stringify(own); } catch (e) { return null; }
+    }
+    function evict(level) { for (const [k, E] of BAKED) if (Math.abs(E.lv - level) > 2) { BAKED.delete(k); E.tpl.traverse((o) => { if (o.isMesh || o.isLine) o.geometry.dispose(); }); } }
+    // sao một nhóm khối đã dựng: dùng chung hình, vai trò (main, flat, glow, lit, subs) gán lại cho bản sao
+    function cloneBaked(src, base) {
+      const dst = new THREE.Group(); dst.name = src.name;
+      for (const c of src.children) {
+        let n;
+        if (c.isMesh || c.isLine) { n = c.isLine ? new THREE.LineSegments(c.geometry, c.material) : new THREE.Mesh(c.geometry, c === src.userData.glow ? c.material.clone() : c.material); n.castShadow = c.castShadow; n.receiveShadow = c.receiveShadow; n.renderOrder = c.renderOrder; n.name = c.name; }
+        else n = cloneBaked(c, base);
+        if (c.isGroup && base && base[c.name]) n.position.copy(base[c.name]); else n.position.copy(c.position);
+        n.rotation.set(0, 0, 0); if (!c.isGroup) n.rotation.copy(c.rotation); n.scale.copy(c.scale);
+        dst.add(n);
+      }
+      for (const k of ['main', 'flat', 'glow', 'lit']) if (src.userData[k]) dst.userData[k] = dst.children[src.children.indexOf(src.userData[k])];
+      dst.userData.tris = src.userData.tris; dst.userData.subs = {};
+      for (const nm in src.userData.subs || {}) { const c = dst.children[src.children.indexOf(src.userData.subs[nm])]; dst.userData.subs[nm] = c; if (c.userData.glow) (dst.userData.subGlows || (dst.userData.subGlows = [])).push(c.userData.glow); }
+      return dst;
+    }
+    /* ---------- Dựng rải theo khung hình ----------
+     * Công trình xong (tiến độ 1) chưa có hình thì xếp hàng; mỗi khung hình dựng vài cái (BAKE_MS), đảo gần máy quay trước.
+     * Cái cũ nó thay vẫn đứng tới khi cái mới có hình, nên không có lúc trống. */
+    const queue = [];
+    function pump(cam) {
+      const t0 = performance.now(); let n = 0;
+      const ms = queue.length > 40 ? BAKE_MS_BUSY : BAKE_MS;
+      while (queue.length && (n === 0 || performance.now() - t0 < ms)) {
+        let bi = 0;
+        if (cam && queue.length > 1) { let bd = 1e18; for (let j = 0; j < queue.length; j++) { const d = cam.distanceToSquared(queue[j][0].L.center); if (d < bd - 1) { bd = d; bi = j; } } }
+        const [sh, P] = queue.splice(bi, 1)[0]; P.queued = false; n++;
+        if (shown.includes(sh) && !P.dead && !P.gone) finish(sh, P);
+      }
+    }
+    // dựng hết hàng đợi ngay (bài kiểm tra, chụp ảnh)
+    function flush() { while (queue.length) { const [sh, P] = queue.shift(); P.queued = false; if (shown.includes(sh) && !P.dead && !P.gone) finish(sh, P); } }
 
     /* ---------- Dựng bố cục một thời ---------- */
     function show(i, level, animate) {
       const L = lands3d.lands[i], old = shown[i];
       let standing = [], prevGroup = null;
       if (old) {
-        if (old.batch) old.batch.dispose();
+        if (old.batch) { if (old.inBatch.length) unbatch(old); old.batch.dispose(); } // trả lại hình riêng cho công trình cũ còn đứng
         dropGroup(L, old.prevGroup); // công trình hai thời trước: bỏ hẳn
         if (animate) {
-          for (const P of old.pieces) if (P.progress < 1 || !P.g.visible) finish(old, P); // cái nào chưa xong thì coi như đã kịp xong
+          for (const P of old.pieces) if (!P.queued && (P.progress < 1 || !P.g.visible)) finish(old, P); // cái nào chưa xong thì coi như đã kịp xong (cái đang chờ dựng hình chưa ai thấy: bỏ qua, thời mới thay luôn)
           standing = old.pieces.filter((P) => P.g.visible && !P.gone && !P.dead);
           prevGroup = old.group;
         } else dropGroup(L, old.group);
       }
       const S = STYLE_OF(L.ter), lay = S && S.ERA && S.ERA[level];
+      evict(level);
       if (!lay) { dropGroup(L, prevGroup); shown[i] = null; return; }
       const group = new THREE.Group(), pieces = [];
       // trục của làng: phía trước là biển trong (hướng camera nhìn vào), bên phải vuông góc
@@ -95,8 +146,9 @@
         best.replaces.push(Q);
       }
       L.g.add(group);
+      for (let j = queue.length - 1; j >= 0; j--) if (queue[j][0] === old) { queue[j][1].queued = false; queue.splice(j, 1); } // việc dựng của thời cũ trên đảo này: bỏ
       const pre = lay.pieces.filter((P) => lay.BUILD[P.kind] && P.pre).length;
-      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, batchAt: -1e9, inBatch: [] };
+      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
     }
 
     /* ---------- Dựng hình và lên đời ---------- */
@@ -113,31 +165,45 @@
     // dựng hình một công trình (một lần): hàm dựng nhận thông số của món, cấp, và đất quanh nó (land: edge, free)
     function bakeOf(P, sh) {
       if (P.baked) return; P.baked = true;
-      const k = new K.Kit(); if (P.tint) k.tint = P.tint;
-      const land = PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y); land.gaps = sh.L.wallGaps; // chỗ hở của tường bao
-      const opt = Object.assign(Object.create(P.spec), { lv: P.spec.lv || sh.level, land });
-      P.anim = P.build(k, opt) || null;
-      const m = k.bake(3); P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
-      if (P.spec.fit) { const bb = new THREE.Box3().setFromObject(m), w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (w > P.spec.fit) P.fitS = P.spec.fit / w; }
+      const lv = P.spec.lv || sh.level, key = keyOf(P, lv, sh.L.ter), E = key && BAKED.get(key);
+      let m;
+      if (E) { m = cloneBaked(E.tpl, E.base); P.anim = E.anim; P.fitS = E.fitS; }
+      else {
+        const k = new K.Kit(); if (P.tint) k.tint = P.tint;
+        // đất quanh công trình; hàm dựng nào hỏi tới thì hình theo chỗ đặt, không cất vào kho
+        const land0 = PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y); let usedLand = false;
+        const land = { edge: (a) => { usedLand = true; return land0.edge(a); }, free: (x, z, r) => { usedLand = true; return land0.free(x, z, r); }, get gaps() { usedLand = true; return sh.L.wallGaps; } }; // chỗ hở của tường bao
+        const opt = Object.assign(Object.create(P.spec), { lv, land });
+        P.anim = P.build(k, opt) || null;
+        const src = k.bake(3);
+        // thành phố neon (thời 10 tới 12): đường viền sáng chạy dọc các cạnh của công trình (render/build/neon.js edges)
+        const eg = BK.Neon3D && !P.spec.town && src.userData.main ? BK.Neon3D.edges(src.userData.main.geometry, sh.L.ter, lv) : null;
+        if (eg) { const ln = new THREE.LineSegments(eg, K.neonMat()); ln.renderOrder = 2; ln.name = 'neon'; src.add(ln); }
+        if (P.spec.fit) { const bb = new THREE.Box3().setFromObject(src), w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z); if (w > P.spec.fit) P.fitS = P.spec.fit / w; }
+        if (key && !usedLand) {
+          const base = {}; for (const n in src.userData.subs || {}) base[n] = src.userData.subs[n].position.clone();
+          src.traverse((o) => { if (o.isMesh || o.isLine) SHARED.add(o.geometry); });
+          BAKED.set(key, { tpl: src, base, anim: P.anim, fitS: P.fitS, lv });
+          m = cloneBaked(src, base);
+        } else m = src;
+      }
+      P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
       P.subs = m.userData.subs || {}; for (const n in P.subs) P.subs[n].userData.base = P.subs[n].position.clone();
-      // thành phố neon (thời 10 tới 12): đường viền sáng chạy dọc các cạnh của công trình (render/build/neon.js edges)
-      let neon = null; const eg = BK.Neon3D && !P.spec.town && m.userData.main ? BK.Neon3D.edges(m.userData.main.geometry, sh.L.ter, opt.lv) : null;
-      if (eg) { neon = new THREE.LineSegments(eg, K.neonMat()); neon.renderOrder = 2; m.add(neon); }
-      P.parts = { main: m.userData.main || null, glow: m.userData.glow || null, lit: m.userData.lit || null, neon };
+      P.parts = { main: m.userData.main || null, flat: m.userData.flat || null, glow: m.userData.glow || null, lit: m.userData.lit || null, neon: m.children.find((c) => c.name === 'neon') || null };
     }
     // xong một công trình: cái cũ nó thay mất ngay, cái mới đứng đủ cỡ
     function finish(sh, P) {
       P.progress = 1; if (P.dead) return; bakeOf(P, sh); P.g.visible = true; setS(P, 1, 1);
-      for (const Q of P.replaces) { Q.g.visible = false; Q.gone = true; }
+      for (const Q of P.replaces) { if (Q.inBatch) sh.unbatch = true; Q.g.visible = false; Q.gone = true; } // cái cũ đang nằm trong khối gộp: tách khối gộp ra ngay
       if (P.kind === 'hall' && sh.yard) { sh.yard.visible = true; if (sh.prevGroup && sh.prevGroup.userData.yard) sh.prevGroup.userData.yard.visible = false; } // sân mới trải ra khi nhà chính xong
       if (sh.prevGroup && sh.standing.every((Q) => Q.gone)) { dropGroup(sh.L, sh.prevGroup); sh.prevGroup = null; } // thời trước đã thay hết
-      sh.dirty = true;
+      sh.dirty = true; sh.changedAt = performance.now() * 0.001;
     }
     function applyProgress(sh, P, pr) {
       if (pr === P.progress || P.dead) return;
       P.progress = pr;
-      if (pr >= 1) { if (!P.started) { P.started = true; clearAround(sh, P); } finish(sh, P); P.progress = 1; return; }
+      if (pr >= 1) { if (!P.started) { P.started = true; clearAround(sh, P); } P.progress = 1; if (P.baked) finish(sh, P); else if (!P.queued) { P.queued = true; queue.push([sh, P]); } return; } // chưa có hình: xếp hàng dựng rải
       P.g.visible = false;
     }
     // Lúa Vàng: tiến độ từ logic (S.build.list[j].progress, 0..1); chỉ nhận tiến độ của đúng thời đang vẽ
@@ -156,18 +222,24 @@
     const LIT = K.litMat ? K.litMat() : null;
     const _v = new THREE.Vector3(), _Y = new THREE.Vector3(0, 1, 0);
     let batchedThisFrame = false;
-    // đảo ở xa: gộp mọi khối đứng yên thành khối chung (gộp lại khi có thay đổi, cách nhau ít nhất BATCH_GAP giây)
+    // gộp phần đứng yên của cả đảo thành ít khối: đảo xa gộp hết, không đổ bóng; đảo gần gộp khối chính, mảnh dẹt, cửa sổ sáng,
+    // viền neon (có đổ bóng), phần sáng nhấp nháy vẫn vẽ riêng. Gộp lại khi đảo đã yên (BATCH_GAP, NEAR_GAP giây không có công
+    // trình nào xong thêm), mỗi khung hình nhiều nhất một đảo. Công trình mới xong thì tạm vẽ riêng; cái cũ trong khối gộp bị
+    // thay, hay máy quay đi gần ra xa, thì tách khối gộp ngay (nhẹ, không phải gộp) rồi chờ yên mới gộp lại.
+    function unbatch(sh) { for (const P of sh.inBatch) { P.inBatch = false; for (const k in P.parts) if (P.parts[k]) P.parts[k].visible = true; } sh.inBatch = []; sh.batch.show(false); }
     function batchIsland(sh, far, ts) {
       if (!sh.batch) return;
-      if (!far) { if (sh.inBatch.length) { for (const P of sh.inBatch) for (const k in P.parts) if (P.parts[k]) P.parts[k].visible = true; sh.inBatch = []; sh.batch.show(false); sh.dirty = true; } return; }
-      if (!sh.dirty || batchedThisFrame || ts - sh.batchAt < BATCH_GAP) return;
-      batchedThisFrame = true; sh.batchAt = ts; sh.dirty = false;
-      for (const P of sh.inBatch) for (const k in P.parts) if (P.parts[k]) P.parts[k].visible = true;
+      const mode = far ? 'far' : 'near';
+      if (sh.unbatch || (sh.batchMode && sh.batchMode !== mode)) { sh.unbatch = false; if (sh.inBatch.length) unbatch(sh); sh.batchMode = null; sh.dirty = true; sh.changedAt = far ? -1e9 : Math.max(sh.changedAt, ts - NEAR_GAP * 0.5); } // ra xa: gộp ngay như trước; vào gần: chờ máy quay yên một chút
+      if (!sh.dirty || batchedThisFrame || ts - sh.changedAt < (far ? BATCH_GAP : NEAR_GAP)) return;
+      batchedThisFrame = true; sh.dirty = false;
+      if (sh.inBatch.length) unbatch(sh);
+      const kinds = far ? null : NEAR_KINDS;
       const list = [...sh.pieces, ...sh.standing].filter((P) => P.baked && P.g.visible && !P.gone);
       for (const P of list) P.g.updateMatrixWorld(true);
-      sh.batch.rebuild(list, false); // đảo ở xa: không đổ bóng
-      for (const P of list) for (const k in P.parts) if (P.parts[k]) P.parts[k].visible = false;
-      sh.inBatch = list; sh.batch.show(true);
+      sh.batch.rebuild(list, !far, kinds);
+      for (const P of list) { P.inBatch = true; for (const k of kinds || Object.keys(P.parts)) if (P.parts[k]) P.parts[k].visible = false; }
+      sh.inBatch = list; sh.batchMode = mode; sh.batch.show(true);
     }
     // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe ở quãng đường (thời gian × tốc độ +
     // khoảng lệch), đầu xe quay theo hướng đoạn đường đang đi
@@ -183,6 +255,7 @@
     }
     function animate(dt, t, night, cam) {
       const ts = t * 0.001; batchedThisFrame = false;
+      if (queue.length) pump(cam);
       if (LIT) { LIT.opacity = Math.max(0, Math.min(0.95, ((night || 0) - 0.15) * 1.4)); LIT.visible = LIT.opacity > 0.01; }
       for (const sh of shown) if (sh) {
         const far = !!cam && cam.distanceToSquared(sh.L.center) > FAR * FAR;
@@ -222,7 +295,7 @@
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
-        if (!g.visible || P.gone || NOT_A_PLACE.has(k)) continue;
+        if ((!g.visible && !P.queued) || P.gone || NOT_A_PLACE.has(k)) continue; // đang chờ dựng hình (P.queued): đã xong, sắp hiện
         const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
         // cổng thành: bốn chốt gác, hai chốt phía ngoài hai bên lối đi, hai chốt phía trong
         if (P.spec.gate) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x); for (const [d, s2] of [[1.8, 2.9], [1.8, -2.9], [-2.6, 2.9], [-2.6, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
@@ -255,7 +328,8 @@
     }
     // số liệu một đảo (bảng làng, bài kiểm tra): old = số công trình của thời trước còn đứng, done = số công trình thời này đã có
     const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name, old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length };
-    return { show, setProgress, setProgressByTime, animate, stats, places };
+    const batchInfo = (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) }; // bài kiểm tra
+    return { show, setProgress, setProgressByTime, animate, stats, places, flush, batchInfo, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });
