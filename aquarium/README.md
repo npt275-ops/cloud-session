@@ -117,6 +117,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   nhà cũ giữ lại (nhà mô-đun, nhà búp, nhà lơ lửng, nhà gấp, nhà pha lê); các đảo dùng biệt thự, nhà con nhộng, nhà khối
   chồng, nhà cầu tròn. Công trình công cộng (`render/build/civic.js`): trường học, thư viện, bảo tàng, bệnh viện, nhà hát,
   sân vận động, nhà tắm, đài thiên văn, mỗi loại bốn dáng theo giai đoạn, mỗi thời một bộ khác thời trước, ở cả sáu đảo.
+- **Ánh sáng dịu (“chill”)** (`render/mood3d.js`): tông màu kiểu điện ảnh (ACES) để màu dịu, chỗ sáng không cháy trắng;
+  bảng màu ấm theo giờ (bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều vàng mật ong, hoàng hôn cam tím, chạng vạng
+  tím, đêm tím xanh), sương ngả theo chân trời; bóng dịu nhờ đèn trời sáng hơn và một đèn hắt nhẹ phía ngược nắng. Mọi màu
+  trời và ánh sáng theo giờ nằm ở một chỗ (KEYS), độ phơi sáng ở TONE.
 - **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng
   công trình; khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
   ray, rô-bốt giao hàng và drone, hạt giống bay, xe bay, quả cầu sáng.

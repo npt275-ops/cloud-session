@@ -12,6 +12,9 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = false;
+    // tông màu kiểu điện ảnh: màu dịu, chỗ sáng không cháy trắng (render/mood3d.js TONE)
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = (BK.Mood3D && BK.Mood3D.TONE.exposure) || 1;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.12, 4200);
     camera.position.set(0, 318, 414);

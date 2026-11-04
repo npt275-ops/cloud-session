@@ -375,6 +375,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/mood3d.js",
+  "src": "render/mood3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/outfits3d.js",
   "src": "render/outfits3d.js",
   "mode": 420

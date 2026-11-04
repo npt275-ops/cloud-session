@@ -1,7 +1,8 @@
 /* Bể Kính · render/sky3d.js
  * Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod),
  * hướng nắng, bóng nắng theo chỗ camera nhìn (nhích từng bước bằng một điểm ảnh của bản đồ bóng để mép bóng không rung),
- * trời sầm lại khi giông, chớp loé sáng; ghi giờ lên đồng hồ. Cần: game/world.js, render/scene3d.js, render/perf3d.js (PERF.half). */
+ * trời sầm lại khi giông, chớp loé sáng; ghi giờ lên đồng hồ. Màu trời và ánh sáng theo giờ lấy từ render/mood3d.js (bảng màu
+ * ấm theo giờ), có thêm một đèn hắt nhẹ phía ngược nắng cho bóng dịu. Cần: game/world.js, render/scene3d.js, render/perf3d.js (PERF.half). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   function setup(G) {
@@ -29,6 +30,10 @@
     scene.add(sun); scene.add(sun.target);
     const moon = new THREE.DirectionalLight(0xb4c3ff, 0.0);
     scene.add(moon);
+    // đèn hắt nhẹ phía ngược nắng, không đổ bóng: mặt khuất nắng không tối đen, bóng dịu hơn
+    const fill = new THREE.DirectionalLight((BK.Mood3D && BK.Mood3D.SOFT.fillColor) || '#cfe0ff', 0);
+    scene.add(fill);
+    const mood = BK.Mood3D ? BK.Mood3D.create(THREE) : null;
     const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(34, 40), new THREE.MeshBasicMaterial({ color: '#f2f5ff', transparent: true, opacity: 0, fog: false, depthWrite: false }));
     const moonHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#c9d6ff', transparent: true, opacity: 0, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }));
     moonHalo.scale.setScalar(260); moonDisc.renderOrder = -1; moonHalo.renderOrder = -1; moonDisc.userData.noFade = moonHalo.userData.noFade = true;
@@ -48,21 +53,20 @@
         const u = Math.round(tg.dot(ax) / tex) * tex, v = Math.round(tg.dot(ay) / tex) * tex, w = tg.dot(sunDir);
         sun.target.position.copy(ax).multiplyScalar(u).addScaledVector(ay, v).addScaledVector(sunDir, w); }
       sun.position.copy(sun.target.position).addScaledVector(sunDir, 200);
-      sun.intensity = 1.0 * day;
+      const M = mood && mood.at(tod);
       document.body.classList.toggle('day', day > 0.55);
-      sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8);
-      moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.52 * night; // trăng sáng hơn: đêm không tối mịt
-      hemi.intensity = 0.22 + 0.3 * day + 0.24 * night;
-      hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night);
+      if (M) { sun.intensity = M.sunI; sun.color.copy(M.sun); hemi.intensity = M.hemiI; hemi.color.copy(M.hemiSky); hemi.groundColor.copy(M.hemiGround); fill.intensity = M.fillI; fill.position.set(-sunDir.x * 100, 60, -sunDir.z * 100); }
+      else { sun.intensity = 1.0 * day; sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8); hemi.intensity = 0.22 + 0.3 * day + 0.24 * night; hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night); }
+      moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.46 * night; // trăng: đêm không tối mịt
       { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = night > 0.02; }
-      const top = SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
-      const bot = SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
+      const top = M ? M.top.clone() : SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
+      const bot = M ? M.bot.clone() : SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
       const overcast = G.weather.stormK * 0.55 * 0.6; // giông trong bể làm trời sầm lại
       if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
       if (G.weather.lightFlash > 0.001) { hemi.intensity += G.weather.lightFlash * 1.3; } // chớp loé sáng cả bể
       skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
       skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);
-      scene.fog.color.copy(bot);
+      scene.fog.color.copy(M ? M.fog : bot);
       starMat.opacity = night * 0.9;
       const hours = tod * 24, hh = Math.floor(hours), mm = Math.floor((hours - hh) * 60 / 10) * 10;
       $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
