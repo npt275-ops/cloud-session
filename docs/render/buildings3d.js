@@ -162,45 +162,8 @@
       for (let i = 0; i < 120; i++) { const th = (i / 120) * Math.PI * 2, R = sh.L.rOf(th) - 3.5; lands3d.clearTrees(sh.L, Math.cos(th) * R, Math.sin(th) * R, 1.6); }
     }
     const setS = (P, xz, y) => P.g.scale.set(P.fitS * xz, P.fitS * y, P.fitS * xz);
-    // dựng hình một công trình (một lần): hàm dựng nhận thông số của món, cấp, và đất quanh nó (land: edge, free)
-    const L_road = (sh) => !!sh.L.roadSegs;
-    /* ---------- Công trình không chắn đường ----------
-     * Dựng xong mới biết cỡ thật: lấy lưới 5×5 điểm trên khung bao phần sát đất của công trình (theo hướng quay và cỡ của nó); điểm nào
-     * gần tim đường hơn nửa mặt đường rộng nhất cộng lề (L.roadW) là lấn đường. Lấn thì dời: nhà chính chỉ tiến lên phía sân;
-     * công trình khác đẩy thẳng ra khỏi đoạn đường gần nhất (hai phía, trượt dọc đường), không được thì tìm chỗ trống gần nhất
-     * trên cả đảo. Chỗ mới phải còn trên đảo, không đè núi, hồ, không đè công trình khác. */
-    // khung bao phần sát đất (đỉnh thấp hơn LOW_Y): phần lơ lửng trên cao (vòng quay, cầu trên không, mái vươn) không chắn lối đi
-    const LOW_Y = 4.5, _w = new THREE.Vector3(); // cao hơn đầu người một chút: phần nhấp nhô, đung đưa xuống thấp cũng được tính
-    function lowBox(m, s) {
-      const top = LOW_Y / (s || 1); // độ cao tính theo cỡ thật (công trình đã thu cho vừa chỗ: fitS)
-      const bb = new THREE.Box3();
-      m.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.position) return; const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { _w.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld); if (_w.y < top) bb.expandByPoint(_w); } });
-      return bb.isEmpty() ? new THREE.Box3().setFromObject(m) : bb;
-    }
-    function footprint(P, m) {
-      const bb = lowBox(m, P.fitS), pts = [], s = P.fitS, c = Math.cos(P.g.rotation.y), sn = Math.sin(P.g.rotation.y);
-      for (const ax of ['x', 'z']) if (bb.max[ax] - bb.min[ax] < 0.8) { const mid = (bb.max[ax] + bb.min[ax]) / 2; bb.min[ax] = mid - 0.4; bb.max[ax] = mid + 0.4; } // vật mảnh (cột, mảnh lơ lửng): coi như rộng ít nhất 0,8
-      for (let a = 0; a <= 4; a++) for (let b = 0; b <= 4; b++) { const x = (bb.min.x + ((bb.max.x - bb.min.x) * a) / 4) * s, z = (bb.min.z + ((bb.max.z - bb.min.z) * b) / 4) * s; pts.push([x * c + z * sn, -x * sn + z * c]); }
-      return { pts, r: Math.max(bb.max.x, -bb.min.x, bb.max.z, -bb.min.z) * s };
-    }
-    const blocks = (L, fp, x, z) => fp.pts.some(([dx, dz]) => BK.Roads3D.hits(L.roadSegs, x + dx, z + dz, 0, L.roadW)); // L.roadW: nửa mặt đường rộng nhất cộng lề (phần lắc lư, đung đưa vẫn không chạm đường)
-    function relocate(sh, P, fp) {
-      const L = sh.L, R = BK.Roads3D, rr = fp.r;
-      const good = (x, z) => !blocks(L, fp, x, z) && L.inside(x, z, rr * 0.5) && !L.blockedWild(x, z, rr * 0.6) && !(sh.fixed || []).some((F) => F.P !== P.spec && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.75 + rr * 0.75) ** 2);
-      if (P.kind === 'hall') { const fx = Math.sin(P.g.rotation.y), fz = Math.cos(P.g.rotation.y); for (let d = 1; d <= 6; d++) { const x = P.x + fx * d, z = P.z + fz * d; if (!blocks(L, fp, x, z)) return new THREE.Vector2(x, z); } return null; }
-      let best = null, bd = 1e9; for (const S of L.roadSegs) { const d = R.segDist(P.x, P.z, S); if (d < bd) { bd = d; best = S; } }
-      const [x0, z0, x1, z1] = best, dx = x1 - x0, dz = z1 - z0, ll = Math.hypot(dx, dz) || 1, t = Math.max(0, Math.min(1, ((P.x - x0) * dx + (P.z - z0) * dz) / (ll * ll)));
-      const fx = x0 + dx * t, fz = z0 + dz * t, tx = dx / ll, tz = dz / ll; let nx = P.x - fx, nz = P.z - fz, nl = Math.hypot(nx, nz); if (nl < 1e-3) { nx = -tz; nz = tx; nl = 1; } nx /= nl; nz /= nl;
-      for (const sl of [0, 3, -3, 6, -6, 9, -9, 12, -12]) for (const side of [1, -1]) for (const out of [0.4, 0.7, 1.0, 1.3]) {
-        const x = fx + tx * sl + nx * side * (L.roadW + rr * out), z = fz + tz * sl + nz * side * (L.roadW + rr * out);
-        if (good(x, z)) return new THREE.Vector2(x, z);
-      }
-      // chỗ trống gần nhất trên cả đảo
-      const cand = []; for (let r = 8; r < 60; r += 2.5) for (let k = 0; k < 64; k++) { const a = (k / 64) * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r; cand.push([(x - P.x) ** 2 + (z - P.z) ** 2, x, z]); }
-      cand.sort((a, b) => a[0] - b[0]);
-      for (const [, x, z] of cand) if (good(x, z)) return new THREE.Vector2(x, z);
-      return null;
-    }
+    // dựng hình một công trình (một lần): hàm dựng nhận thông số của món, cấp, và đất quanh nó (land: edge, free); dựng xong thì
+    // đo cỡ thật, lấn đường thì dời hay thu nhỏ vừa đủ (render/build/place3d.js clearRoad)
     function bakeOf(P, sh) {
       if (P.baked) return; P.baked = true;
       const lv = P.spec.lv || sh.level, key = keyOf(P, lv, sh.L.ter), E = key && BAKED.get(key);
@@ -226,16 +189,10 @@
         } else m = src;
       }
       m.updateMatrixWorld(true);
-      // không chắn đường (footprint, relocate ở trên); trừ lớp đường, cổng thành nằm trên đường chính, công trình ngoài khơi
-      if (L_road(sh) && !P.spec.town && !P.spec.gate && P.outer !== 'sea') {
-        const fp = footprint(P, m);
-        if (fp.r > 0.3 && blocks(sh.L, fp, P.x, P.z)) {
-          // không có chỗ cho đủ cỡ (nhà chính các thời sau rất to, kẹt giữa vòng đường và đường toả): thu nhỏ vừa đủ, ít nhất còn 70%
-          let q = relocate(sh, P, fp);
-          for (const k2 of [0.94, 0.88, 0.82, 0.76, 0.7]) { if (q) break; const f2 = { pts: fp.pts.map(([x, z]) => [x * k2, z * k2]), r: fp.r * k2 }; q = blocks(sh.L, f2, P.x, P.z) ? relocate(sh, P, f2) : new THREE.Vector2(P.x, P.z); if (q) P.fitS *= k2; }
-          sh.moved = (sh.moved || 0) + (q ? 1 : 0); sh.stuck = (sh.stuck || 0) + (q ? 0 : 1); P.relocated = q ? 'moved' : 'stuck';
-          if (q) { P.x = q.x; P.z = q.y; P.g.position.x = q.x; P.g.position.z = q.y; const F = (sh.fixed || []).find((x) => x.P === P.spec); if (F) { F.x = q.x; F.y = q.y; F.r = Math.max(F.r, fp.r); } else if (sh.fixed) sh.fixed.push({ x: q.x, y: q.y, r: fp.r, P: P.spec }); }
-        }
+      // không chắn đường: trừ lớp đường, cổng thành nằm trên đường chính, công trình ngoài khơi
+      if (sh.L.roadSegs && !P.spec.town && !P.spec.gate && P.outer !== 'sea') {
+        const q = PL.clearRoad(sh.L, { x: P.x, z: P.z, rotY: P.g.rotation.y, fitS: P.fitS, hall: P.kind === 'hall', self: P.spec }, m, sh.fixed);
+        if (q) { sh.moved = (sh.moved || 0) + (q.stuck ? 0 : 1); sh.stuck = (sh.stuck || 0) + (q.stuck ? 1 : 0); if (!q.stuck) { P.x = q.x; P.z = q.z; P.fitS = q.fitS; P.g.position.x = q.x; P.g.position.z = q.z; } }
       }
       P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
@@ -291,38 +248,8 @@
       for (const P of list) { P.inBatch = true; for (const k of kinds || Object.keys(P.parts)) if (P.parts[k]) P.parts[k].visible = false; }
       sh.inBatch = list; sh.batchMode = mode; sh.batch.show(true);
     }
-    // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe có quãng đường đã đi của riêng nó,
-    // đầu xe quay theo hướng đoạn đường đang đi. Xe chạy dưới đất nhường người đi bộ: có người đang ở trên mặt đường ngay phía
-    // trước (peds: toạ độ đảo, setPeds từ game/village.js) thì dừng chờ; toa bám theo đầu xe của nó; xe bay không phải dừng.
-    const pedsOf = [];
-    function setPeds(i, list) { pedsOf[i] = list; }
-    function blockedAhead(sh, p, x, z, hx, hz) {
-      const list = pedsOf[shown.indexOf(sh)]; if (!list || !list.length) return false;
-      const c = Math.cos(p.g.rotation.y), s = Math.sin(p.g.rotation.y), X = p.g.position.x + x * c + z * s, Z = p.g.position.z - x * s + z * c, HX = hx * c + hz * s, HZ = -hx * s + hz * c;
-      const lane = ((BK.Plains3D.TOWN && BK.Plains3D.TOWN.ROAD_W[sh.level]) || 2.6) / 2 + 0.15; // chỉ người đang ở trên mặt đường (không tính người trên vỉa hè)
-      for (const q of list) { const dx = q.x - X, dz = q.z - Z, fwd = dx * HX + dz * HZ, lat = Math.abs(dx * HZ - dz * HX); if (fwd > 0.3 && fwd < 4.2 && lat < lane) return true; }
-      return false;
-    }
-    function drive(sh, A, p, ts) {
-      if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
-      const st = p.drive || (p.drive = { at: ts, d: {} }), dt = Math.min(0.25, Math.max(0, ts - st.at)); st.at = ts;
-      const place = (sub, d, y) => {
-        d %= A.len; if (d < 0) d += A.len;
-        let i = 0; while (i < A.loop.length - 1 && A.cum[i + 1] < d) i++;
-        const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length], u = (d - A.cum[i]) / Math.max(1e-6, A.cum[i + 1] - A.cum[i]);
-        const x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u, hx = b[0] - a[0], hz = b[1] - a[1];
-        sub.position.set(x, y, z); sub.rotation.y = Math.atan2(hx, hz); return [x, z, hx / (Math.hypot(hx, hz) || 1), hz / (Math.hypot(hx, hz) || 1)];
-      };
-      for (const [n, speed, off, y, head, flying] of A.path) {
-        const sub = p.subs[n]; if (!sub) continue;
-        if (head) { const H = A.path.find((x) => x[0] === head); st.d[n] = (st.d[head] != null ? st.d[head] : 0) + (off - H[2]); place(sub, st.d[n], y); continue; } // toa: bám đầu xe
-        if (st.d[n] == null) st.d[n] = ts * speed + off;
-        const [x, z, hx, hz] = place(sub, st.d[n], y);
-        // giữ khoảng cách với xe (hay toa cuối của đoàn) phía trước: xe trước dừng nhường người thì xe sau cũng dừng, không đâm vào nhau
-        const tooClose = !flying && A.path.some(([m, , , , , fl]) => m !== n && !fl && st.d[m] != null && (((st.d[m] - st.d[n]) % A.len) + A.len) % A.len > 0.1 && (((st.d[m] - st.d[n]) % A.len) + A.len) % A.len < 3.6);
-        if (flying || (!tooClose && !blockedAhead(sh, p, x, z, hx, hz))) st.d[n] += speed * dt; // có người trên đường phía trước: dừng chờ
-      }
-    }
+    // xe chạy, nhường người đi bộ: render/build/traffic3d.js
+    const traffic = BK.Traffic3D.create();
     function animate(dt, t, night, cam) {
       const ts = t * 0.001; batchedThisFrame = false;
       if (queue.length) pump(cam);
@@ -340,7 +267,7 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-          if (A.path) drive(sh, A, p, ts); // xe chạy dọc vòng đường (render/build/vehicles.js), nhường người đi bộ
+          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, ts); // xe chạy dọc vòng đường, nhường người đi bộ
           }
           if (!far) for (const G of p.glows) {
             const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);
@@ -409,10 +336,12 @@
     }
     // số liệu một đảo (bảng làng, bài kiểm tra): old = số công trình của thời trước còn đứng, done = số công trình thời này đã có
     const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name, old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length, moved: shown[i].moved || 0, stuck: shown[i].stuck || 0 };
-    // bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng)
-    const roadCheck = (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = footprint(P, m); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: blocks(sh.L, fp, P.x, P.z), rel: P.relocated || '', fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); };
-    const batchInfo = (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) }; // bài kiểm tra
-    return { show, setProgress, setProgressByTime, animate, stats, places, setPeds, flush, batchInfo, roadCheck, queued: () => queue.length, cacheSize: () => BAKED.size };
+    // chỉ cho bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng), trạng thái gộp khối của một đảo
+    const debug = {
+      roadCheck: (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); },
+      batchInfo: (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) },
+    };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

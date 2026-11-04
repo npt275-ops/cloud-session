@@ -69,14 +69,14 @@ Thêm drama mới chỉ cần thêm dòng. Tới đêm drama tự tan. Cùng lú
   lớn, mừng thời mới) giữa sân mới đông.
 - Lính tuần và luyện quân ở 6 chốt rải dọc phía trong tường thành, không vòng quanh nhà chính.
 
-### Không đi xuyên tường (`render/village3d.js`)
+### Không đi xuyên tường (`render/nav3d.js`)
 - **Lối đi:** đi xa thì đi theo mạng đường của đảo, tìm đường ngắn nhất. Đường gồm vòng đường, đường toả, chỗ giao nhau và một
   nút giữa sân. Người đi trên vỉa hè bên phải, rồi từ điểm đường gần đích mới vào tận nơi.
 - **Vòng tường:** không ai ra quá mép đảo trừ 5,2 đơn vị (tường ở mép trừ 3,5), dù đi đâu. Chỗ ngoài tường (bến, trại ven biển)
   không còn nằm trong danh sách chỗ đến.
 - **Cổng chính:** 4 lính gác đều đứng phía trong cổng, hai hàng hai bên lối đi.
 
-### Vỉa hè, vạch qua đường, xe nhường người (`render/build/roads.js`, `plains/town.js`, `buildings3d.js drive`)
+### Vỉa hè, vạch qua đường, xe nhường người (`render/build/roads.js`, `plains/town.js`, `render/build/traffic3d.js`)
 - **Vỉa hè:** từ thời 3 (khi đường đã lát), mọi con đường có vỉa hè rộng 0,6 ở hai bên. Nhà, núi, cây không lấn vỉa hè
   (`HALF` = nửa mặt đường rộng nhất 1,8 + vỉa hè 0,6).
 - **Vạch qua đường:** đặt hai bên mỗi ngã giao giữa vòng đường và đường toả, và rải đều dọc vòng đường (cứ 9 điểm một vạch,
@@ -91,7 +91,7 @@ Thêm drama mới chỉ cần thêm dòng. Tới đêm drama tự tan. Cùng lú
 - Khoảng một phần ba người đi đường đi vòng quanh nhà chính, cách tường nhà chính khoảng 2,5. Vòng này tính theo khung bao thật
   của nhà chính đang đứng. Mỗi người đi một chiều; gặp nhau thì dừng lại trò chuyện.
 
-### Đời thường trên phố (`render/village3d.js`)
+### Đời thường trên phố (`render/village3d.js`, lối đi ở `render/nav3d.js`)
 - Người đi đường đi dạo dọc mạng đường của đảo (`roads.js isleNet`). Họ đi dọc vòng đường một quãng, có khi rẽ ra đường toả
   tới gần cổng rồi quay lại. Họ đi lệch về bên phải mặt đường, tức vỉa hè, nhường giữa đường cho xe.
 - Hai người đi dạo gặp nhau thì dừng lại trò chuyện 3–8 giây (mặt vui, cử chỉ nói chuyện), rồi đi tiếp. Mỗi người nghỉ ít nhất
@@ -111,3 +111,18 @@ Thêm drama mới chỉ cần thêm dòng. Tới đêm drama tự tan. Cùng lú
   - drama chỉ gom đúng tính cách;
   - lính gác không bỏ chốt;
   - drama tan thì mọi người về việc cũ.
+
+## Mỗi việc một chỗ (tệp nào lo việc gì)
+
+| Việc | Tệp |
+|---|---|
+| Tính cách nổi trội | `logic/temper.js` |
+| Vị trí cứng (gác cổng, diễn thuyết) | `logic/posts.js` |
+| Drama: bảng dữ liệu và bộ máy, kể cả người tránh drama | `logic/dramas.js` |
+| Lịch thường theo vai, theo buổi | `logic/tasks.js` |
+| Chọn việc (thứ tự ưu tiên) | `logic/brain.js` |
+| Chỗ đến trên đảo (cửa nhà, cổng, bục, vòng quanh nhà chính) | `render/buildings3d.js places` |
+| Lối đi, vỉa hè, sang đường, tường thành, đi dạo | `render/nav3d.js` |
+| Vẽ và cử động người | `render/village3d.js` |
+| Xe chạy, nhường người đi bộ | `render/build/traffic3d.js` |
+| Công trình không chắn đường (đo cỡ thật, dời, thu nhỏ) | `render/build/place3d.js clearRoad` |

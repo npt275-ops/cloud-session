@@ -12,8 +12,6 @@
   const BK = root.BK, P = BK.Plains3D, K = BK.BuildKit, { C, pick, B, Bc } = P;
   const THREE = () => window.THREE;
   const R3 = () => BK.Roads3D, V3 = () => BK.Vehicles3D;
-  const RR = 24;                                     // bán kính vòng đường của Lúa Vàng (để cũ tham chiếu)
-  const SPOKES = [0, Math.PI, 0.6, -0.6];           // các góc có cổng trên tường (đầu đường toả ra)
   // mạng đường của đảo (render/build/roads.js): vẽ mặt đường theo kiểu của thời (st), dựng đèn đường của thời bên lề
   // (render/build/lamps.js, thời 1 tới 9) hoặc lớp neon trên đường (render/build/neon.js, thời 10 tới 12); trả lại mạng để đặt cây, xe
   function roads(k, o, st) {
@@ -134,5 +132,5 @@
     E.BUILD.town = T[lv]; E.NAME.town = NAME[lv];
   }
   for (let lv = 1; lv <= 12; lv++) if (P.ERA[lv]) addTo(P.ERA[lv], lv);
-  P.TOWN = { RR, SPOKES, BUILD: T, NAME, addTo, ROAD_W, WALKS };
+  P.TOWN = { BUILD: T, NAME, addTo, ROAD_W, WALKS };
 })(typeof self !== 'undefined' ? self : globalThis);

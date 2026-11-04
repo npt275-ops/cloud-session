@@ -345,6 +345,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/traffic3d.js",
+  "src": "render/build/traffic3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/vehicles.js",
   "src": "render/build/vehicles.js",
   "mode": 420
@@ -402,6 +407,11 @@
  {
   "path": "BeKinh/render/mood3d.js",
   "src": "render/mood3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/nav3d.js",
+  "src": "render/nav3d.js",
   "mode": 420
  },
  {

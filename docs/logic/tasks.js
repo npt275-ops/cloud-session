@@ -38,7 +38,6 @@
     // vị trí cứng (logic/posts.js): lính gác cổng chính, cổng phụ ngày đêm đứng ở chốt của mình (bữa ăn mang ra cổng)
     const post = BK.Posts && BK.Posts.of(p);
     if (post && post.night) return job(post.verb, post.place, ph === 'night' ? post.why + ' ban đêm' : post.why);
-    if (j === 'gatekeeper') return job('guard', 'gate', ph === 'night' ? 'gác cổng thành ban đêm' : 'canh gác cổng thành');
     // người diễn thuyết: sáng và tối đứng ở bục giữa sân nói với dân, trưa về ăn, chiều đi gặp dân, đêm ngủ
     if (post && post.key === 'orator' && ph !== 'night') {
       if (ph === 'morning' || ph === 'evening') return job('rule', 'podium', ph === 'morning' ? 'diễn thuyết buổi sáng ở bục giữa sân' : 'diễn thuyết buổi tối cho dân nghe');

@@ -13,6 +13,7 @@
  *                    đúng người giữ chốt hay ghế) }. Nhóm đầu là người cầm đầu.
  *   stages           các màn: { dur (ngày), why, act: { [id nhóm]: việc } }; việc = { state, verb, mood, place, target }
  *                    target: 'lead' (người cầm đầu), 'king' (người đứng đầu làng), 'pair' (người cùng nhóm ghép đôi)
+ *   avoid            người ngoài drama mà sợ nó: { temper, why } ở trong nhà tới khi drama tan (lính gác, hội đồng không trốn)
  *   responders       người được gọi tới xử lý (không cùng tính cách): { pick: 'job:soldier' | 'role:general' | 'post:orator', n, act }
  *   say              câu ghi vào nhật ký lúc bắt đầu và lúc tan
  * Bộ máy: update(S, days) mỗi nhịp chạy (logic/island.js): sang màn, tan drama, bốc thăm drama mới; taskFor(S, p, d) cho bộ não
@@ -27,6 +28,7 @@
   const DAY = ['morning', 'afternoon', 'evening'];
   const DRAMAS = [
     { key: 'riot', name: 'Bạo loạn', phases: DAY, chance: 0.005, cooldown: 45, minPeople: 14,
+      avoid: { temper: ['timid'], why: 'sợ đám đông, ở trong nhà' }, // người nhút nhát (không trong drama) trốn trong nhà
       boost: (S) => (S.situ.drought > S.day ? 6 : 1) * (S.food < 1 ? 2 : 1),
       cast: [{ id: 'lead', temper: ['ambitious', 'hothead'], n: [1, 1] }, { id: 'mob', temper: ['hothead', 'ambitious'], n: [3, 8], fitMin: 0.52 }],
       stages: [
@@ -153,7 +155,8 @@
   // việc của một người trong drama (null nếu không ở drama nào); d(state, o) tạo việc của logic/brain.js
   function taskFor(S, p, d) {
     for (const A of state(S).active) {
-      if (!A.who.has(p.id)) continue;
+      const av = BY_KEY[A.key].avoid;
+      if (!A.who.has(p.id)) { if (av && av.temper.includes(p.temper) && !p.role && !fixedPost(p) && adult(S, p)) return d('idle', { place: 'home', reason: av.why + ' (' + A.name.toLowerCase() + ')', until: A.until, drama: A.key, phase: null }); continue; }
       const D = BY_KEY[A.key], stage = D.stages[A.stage], until = Math.min(A.until, A.stageAt + stage.dur);
       const R = A.resp.find(([id]) => id === p.id);
       if (R) return d(R[1].act.state, Object.assign({}, R[1].act, { reason: R[1].why + ' (' + D.name.toLowerCase() + ')', until, drama: A.key, phase: null, intensity: 0.6 }));

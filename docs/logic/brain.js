@@ -41,7 +41,8 @@
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà
-    // đang ở trong một drama (logic/dramas.js): bỏ việc thường ra tham gia, drama tan thì lịch thường đưa về đúng việc của mình
+    // drama (logic/dramas.js): người trong drama bỏ việc thường ra tham gia (tan thì lịch thường đưa về đúng việc của mình);
+    // người ngoài drama mà sợ nó (avoid: người nhút nhát khi có bạo loạn) thì ở trong nhà
     if (BK.Dramas && !(X.war > day)) { const dt = BK.Dramas.taskFor(S, p, d); if (dt) return dt; }
 
     // cãi nhau giữa hai người
@@ -67,8 +68,6 @@
       if (t.fear > 0.65 && rng.chance(0.4)) return d('panic', { place: 'home', intensity: t.fear * 0.7, until: day + 0.15 });
       return d('walk', { place: 'field', intensity: 0.4 });
     }
-    // biểu tình, bạo loạn: nay là drama 'riot' (logic/dramas.js), chỉ người nóng tính bị cuốn vào; người nhút nhát thì ở trong nhà
-    if (X.protest > day && !p.role && p.temper === 'timid' && !(p.job === 'gatekeeper' || p.job === 'sideguard')) return d('idle', { place: 'home', reason: 'sợ đám đông, ở trong nhà', phase: ph });
     // tang: người sùng đạo cầu nguyện ở chỗ thờ, người khác lặng lẽ ở nhà
     if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: t.piety > 0.55 ? 'shrine' : 'home', intensity: 0.3, phase: ph });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa

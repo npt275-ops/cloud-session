@@ -11,6 +11,7 @@
 (function (root) {
   const BK = root.BK, K = BK.BuildKit, { B, Bc } = BK.Plains3D;
   const THREE = () => window.THREE;
+  const R3 = () => BK.Roads3D;
   const LIGHT = { plains: '#ffd27a', forest: '#f0ffb8', mountain: '#ffc890', tundra: '#e0f6ff', coast: '#d0fff2', desert: '#ffc8dc' };
   const BIO = { plains: '#ffe08a', forest: '#c8f07a', mountain: '#ffb08a', tundra: '#9af0ff', coast: '#7affd8', desert: '#ff9ad0' };
   const POLE = { plains: '#3a3a3e', forest: '#3e4a32', mountain: '#4a3e38', tundra: '#4a5a66', coast: '#2f4a52', desert: '#6a4a40' };
@@ -60,6 +61,5 @@
     for (const sp of N.spokes) { const pts = R3().along(sp, STEP[lv], false), last = pts.length - 1; pts.forEach((q, i) => { if (i === 0 || i >= last) return; put(q, i % 2 ? 1 : -1); }); }
     return n;
   }
-  const R3 = () => BK.Roads3D;
   BK.Lamps3D = { STYLE, NAME, LIGHT, BIO, POLE, line };
 })(typeof self !== 'undefined' ? self : globalThis);
