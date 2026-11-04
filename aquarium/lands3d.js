@@ -409,6 +409,15 @@
       plains: { hills: 7, rocks: 5 }, forest: { hills: 8, rocks: 7 }, mountain: { hills: 12, rocks: 12 },
       tundra: { hills: 12, rocks: 8 }, coast: { hills: 0, rocks: 5 }, desert: { hills: 0, rocks: 10 },
     };
+    // núi, sông, hồ thêm cho từng miền: số đỉnh núi, độ cao, màu; số sông, bề rộng, màu nước, màu bờ; số ao
+    const WATERS = {
+      plains: { peaks: 3, peakH: [7, 11], peakC: ['#7fa064', '#8aa86a'], cap: '#9a9080', rivers: 1, riverW: 2.4, water: '#4aa3c7', bank: '#c9b48a', shore: '#c9b48a', ponds: 3 },
+      forest: { peaks: 4, peakH: [10, 15], peakC: ['#4f7f3f', '#46733a'], cap: '#6e5a44', rivers: 2, riverW: 2.2, water: '#3f9cc6', bank: '#6b5a3a', shore: '#6b5a3a', ponds: 3 },
+      mountain: { peaks: 5, peakH: [14, 22], peakC: ['#8b8577', '#7f7a6e', '#948d7e'], cap: '#f4f7f9', rivers: 2, riverW: 2.0, water: '#3a86b0', bank: '#9d9589', shore: '#9d9589', ponds: 2 },
+      tundra: { peaks: 5, peakH: [10, 18], peakC: ['#dfeaf0', '#cfdde6'], cap: '#ffffff', rivers: 1, riverW: 2.6, water: '#bfe3f2', bank: '#eef6fa', shore: '#eef6fa', ponds: 3 },
+      coast: { peaks: 2, peakH: [7, 10], peakC: ['#7fae5a', '#8aa86a'], cap: '#a08a6a', rivers: 2, riverW: 2.2, water: '#3fb8c8', bank: '#ecd9a8', shore: '#ecd9a8', ponds: 3 },
+      desert: { peaks: 3, peakH: [8, 13], peakC: ['#c98a5a', '#b87b4f', '#a56d46'], cap: null, rivers: 1, riverW: 1.6, water: '#3fb0b8', bank: '#b98a55', shore: '#b98a55', ponds: 1 },
+    };
     function relief(L) {
       const rng = landRng(L.i + 500), st = TSTYLE[L.ter], R = RELIEF[L.ter], k = new Kit(), oa = L.oa;
       const nearRiver = (x, z, r) => L.river && L.river.some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < (r + 3.5) ** 2);
@@ -416,6 +425,52 @@
       const spot = (r, tries, inner) => { for (let t = 0; t < (tries || 40); t++) { const a = rng() * TAU, rr = (inner || 28) + Math.sqrt(rng()) * (LAND_R - (inner || 28)), x = Math.cos(a) * rr, z = Math.sin(a) * rr; if (free(x, z, r)) return [x, z]; } return null; };
       const prop = (x, z, r) => L.props.push({ x, z, r });
       const rockC = st.rock.slice(0, 3);
+      // nước và bờ (giống phần hồ, sông ở terrain): mặt phẳng nằm ngang theo một đường viền, dải cong theo dãy điểm
+      const lakeG = (Rr, rf) => { const sh = new THREE.Shape(); for (let i = 0; i <= 36; i++) { const t = (i / 36) * TAU, r = Rr * rf(t); if (i === 0) sh.moveTo(Math.cos(t) * r, Math.sin(t) * r); else sh.lineTo(Math.cos(t) * r, Math.sin(t) * r); } return new THREE.ShapeGeometry(sh); };
+      const waterMat = (col) => { const m = new THREE.MeshStandardMaterial({ color: col, roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide }); L.waterMats.push(m); return m; };
+      const waterMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, waterMat(col)); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
+      const flatMesh = (geo, x, z, y, col) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: 0.95, flatShading: true })); me.rotation.x = -Math.PI / 2; me.position.set(x, y, z); me.receiveShadow = true; L.g.add(me); return me; };
+      const ribbon = (pts, wid, y, mat) => {
+        const pos = [], idx = [];
+        for (let q = 0; q < pts.length; q++) { const [x, z] = pts[q], [x2, z2] = pts[Math.min(pts.length - 1, q + 1)], [x0, z0] = pts[Math.max(0, q - 1)], tx = x2 - x0, tz = z2 - z0, l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l; pos.push(x + (nx * wid) / 2, y, z + (nz * wid) / 2, x - (nx * wid) / 2, y, z - (nz * wid) / 2); if (q) { const b = q * 2; idx.push(b - 2, b - 1, b, b - 1, b + 1, b); } }
+        const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setIndex(idx); gg.computeVertexNormals();
+        const me = new THREE.Mesh(gg, typeof mat === 'string' ? new THREE.MeshStandardMaterial({ color: mat, roughness: 0.9, flatShading: true, side: THREE.DoubleSide }) : mat); me.receiveShadow = true; L.g.add(me); return me;
+      };
+      /* ----- núi, sông, hồ thêm (đặt trước đồi và đá để có chỗ) ----- */
+      L.reliefStats = { peaks: 0, rivers: 0, lakes: 0, ponds: 0 };
+      const W = WATERS[L.ter];
+      // núi: dãy đỉnh ở phía ngoài đảo (đỉnh nhọn ít mặt, chân loe, có mũ tuyết hay mũ cây tuỳ miền)
+      for (let i = 0, made = 0; made < W.peaks && i < W.peaks * 6; i++) {
+        const a = oa + (rng() - 0.5) * 3.2, rr = L.rOf(a) - 9 - rng() * 8, x = Math.cos(a) * rr, z = Math.sin(a) * rr, rad = 4 + rng() * 3, h = W.peakH[0] + rng() * (W.peakH[1] - W.peakH[0]);
+        if (!free(x, z, rad * 0.8)) continue;
+        k.cone(pick(W.peakC, rng()), x, 0, z, rad, h, 7, rng() * 3);
+        if (W.cap) k.cone(W.cap, x, h * 0.6, z, rad * 0.42, h * 0.4 + 0.05, 7, rng() * 3);
+        k.blob(DOD(), pick(rockC, rng()), x + rad * 0.7, 0.5, z, rad * 0.35, 0.6);
+        prop(x, z, rad * 0.95); L.reliefStats.peaks++; made++;
+      }
+      // sông: uốn khúc quanh phía ngoài làng, đổ vào một hồ hoặc ra mép đảo; hồ có bờ và cây cỏ
+      for (let rv = 0, tries = 0; rv < W.rivers && tries < 16; tries++) {
+        // sông chảy từ gần mép đảo vào trong, đổ vào một hồ ở phía ngoài làng
+        const side = rv % 2 ? 1 : -1, a0 = oa + side * (0.9 + rng() * 1.5), a1 = a0 + side * (0.6 + rng() * 0.6), pts = [];
+        const r1 = 31 + rng() * 6;
+        for (let sI = 0; sI <= 30; sI++) { const u = sI / 30, a = a0 + (a1 - a0) * u, r0 = L.rOf(a) - 4, r = Math.min(L.rOf(a) - 3, r0 + (r1 - r0) * u + Math.sin(u * Math.PI * 3 + rv) * 2.5); pts.push([Math.cos(a) * r, Math.sin(a) * r]); }
+        if (pts.some(([x, z], q) => q % 2 === 0 && (L.blockedWild(x, z, 1.2) || nearRiver(x, z, 1) || Math.hypot(x, z) < 27))) continue;
+        const [ex, ez] = pts[pts.length - 1], R = 3.6 + rng() * 2.4, rf = (t) => 1 + 0.18 * Math.sin(2 * t + rv) + 0.08 * Math.sin(5 * t);
+        const lakeOk = L.inside(ex, ez, R + 1) && !L.blockedWild(ex, ez, R * 0.7) && Math.hypot(ex, ez) > 26 + R;
+        rv++; L.reliefStats.rivers++;
+        ribbon(pts, W.riverW + 2.2, 0.03, W.bank);
+        ribbon(pts, W.riverW, 0.08, waterMat(W.water));
+        (L.rivers || (L.rivers = [])).push(pts);
+        if (lakeOk) {
+          flatMesh(lakeG(R + 1, rf), ex, ez, 0.035, W.shore);
+          waterMesh(lakeG(R, rf), ex, ez, 0.085, W.water);
+          for (let t = 0; t < 10; t++) { const q = rng() * TAU, rr = R * rf(q) * (0.95 + rng() * 0.15); k.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), ex + Math.cos(q) * rr, 0, ez + Math.sin(q) * rr, 0.05, 0.6 + rng() * 0.5, 0.05); }
+          prop(ex, ez, R + 1); L.reliefStats.lakes++;
+        }
+        for (let sI = 0; sI < pts.length; sI += 2) prop(pts[sI][0], pts[sI][1], W.riverW / 2 + 1.2);
+      }
+      // ao nhỏ rải rác
+      for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.035, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.085, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; k.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }
       // đồi thấp: khối lặp dùng vật liệu mặt đất
       const hills = [];
       for (let i = 0; i < R.hills; i++) { const r = 5 + rng() * 5, p = spot(r); if (!p) continue; hills.push([p[0], p[1], r * (L.ter === 'mountain' ? 1.3 : 1), (L.ter === 'tundra' ? 0.9 : 1.0) + rng() * (L.ter === 'forest' || L.ter === 'mountain' ? 2.6 : 1.5), rng() * TAU]); prop(p[0], p[1], r * 0.85); }
@@ -486,8 +541,9 @@
       for (const g of parts) { const p = g.attributes.position; pos.set(p.array, o * 3); nor.set(g.attributes.normal.array, o * 3); for (let i = 0; i < p.count; i++) { const f = 0.66 + 0.34 * (p.getY(i) - lo) / (hi - lo); col.set([f, f, f], (o + i) * 3); } o += p.count; g.dispose(); }
       const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.computeBoundingSphere(); return out;
     }
-    const roundGeo = blobs([[0, 0, 0, 1], [0.62, -0.18, 0.22, 0.72], [-0.58, -0.12, -0.3, 0.74], [0.12, 0.48, -0.12, 0.66], [-0.2, -0.3, 0.55, 0.6]]);
-    const tallGeo = blobs([[0, -0.9, 0, 0.78], [0, 0, 0, 0.68], [0, 0.82, 0, 0.5], [0.25, -0.5, 0.2, 0.5]]);
+    // ít mặt cho nhẹ máy: mỗi khối tròn là khối 20 mặt, tán ghép 3 khối (khoảng 60 tam giác một tán)
+    const roundGeo = blobs([[0, 0.05, 0, 1], [0.66, -0.2, 0.25, 0.74], [-0.6, -0.15, -0.3, 0.76]], 0);
+    const tallGeo = blobs([[0, -0.75, 0, 0.8], [0, 0.35, 0, 0.64]], 0);
     const bushGeo = blobs([[0, 0, 0, 0.62], [0.5, -0.1, 0.15, 0.46], [-0.45, -0.12, -0.12, 0.48]], 0); // bụi nhỏ: ít mặt cho nhẹ
     const SEASON_LEAF = [['#a9e07c', 0.4], [null, 0], ['autumn', 1], ['#e8eef2', 0.6]];
     // mỗi miền: số cây, số bụi, tỉ lệ từng loại cây (kiểu mới round/tall, kiểu cũ giữ lại), số lùm cây
