@@ -55,7 +55,7 @@
       if (place === 'patrol') return hop(PL.guard, 3);
       return null;
     }
-    const setPlaces = (pl) => { PL = pl; };
+    const setPlaces = (pl) => { PL = pl; NAV = null; }; // bục giữa sân có thể đổi theo thời: dựng lại mạng lối đi
 
     /* ---------- Khối lặp cho từng loại bộ phận (tự nới chỗ khi làng đông lên) ---------- */
     const shapes = Rig.shapes(), mat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0 }), glowMat = new THREE.MeshBasicMaterial({ toneMapped: false });
@@ -86,8 +86,8 @@
         f = { p, cur: Anim.blank(), pos: start, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0 };
         folks.set(p.id, f);
       }
-      // chỗ đứng lệch quanh điểm đến: làng càng đông càng toả rộng, không dồn một chỗ
-      { const r = 1.4 + Math.sqrt(Math.random()) * (1.6 + Math.min(4, S.people.size / 45)), a = Math.random() * Math.PI * 2; f.jit.set(Math.cos(a) * r, 0, Math.sin(a) * r); }
+      // chỗ đứng lệch một chút quanh điểm đến (trước cửa, trước chỗ làm), không dồn đúng một điểm
+      { const r = 0.7 + Math.sqrt(Math.random()) * 1.5, a = Math.random() * Math.PI * 2; f.jit.set(Math.cos(a) * r, 0, Math.sin(a) * r); } // đứng ngay trước chỗ làm, cửa nhà
       f.rig = rig; f.key = key; return f;
     }
 
@@ -111,6 +111,45 @@
      * Người đi đường (chỗ 'stroll') đi theo mạng đường của đảo (render/build/roads.js isleNet): dọc vòng đường một quãng, có khi
      * rẽ ra một đường toả tới gần cổng rồi quay lại; đi lệch về bên phải mặt đường (vỉa hè), không đi giữa đường xe chạy. */
     const NET = BK.Roads3D && L.rOf && L.inw ? BK.Roads3D.isleNet(L, L.ter) : null;
+    /* ---------- Lối đi: không đi xuyên tường, xuyên nhà ----------
+     * Mạng lối đi của đảo: các điểm của vòng đường và đường toả (render/build/roads.js), nối chỗ giao nhau, thêm một nút giữa
+     * sân trước nhà chính nối với đầu trong các đường toả. Đi xa (hơn NAV_NEAR) thì: từ chỗ đang đứng ra điểm đường gần nhất,
+     * theo đường ngắn nhất trên mạng (Dijkstra), rồi từ điểm đường gần đích vào tận nơi; đi trên vỉa hè bên phải. Thêm vào đó,
+     * không ai ra quá vòng tường (mép đảo trừ WALL_IN): tường thành chỉ có thể đi qua ở chỗ hở, mà chẳng ai cần ra ngoài. */
+    const NAV_NEAR = 9, WALL_IN = 5.2;
+    let NAV = null;
+    function buildNav() {
+      const pts = [], adj = [], add = (x, z) => { pts.push([x, z]); adj.push([]); return pts.length - 1; };
+      const link = (a, b) => { if (a === b) return; const d = Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]); adj[a].push([b, d]); adj[b].push([a, d]); };
+      const loop = NET.loop.map(([x, z]) => add(x, z)); loop.forEach((id, i) => link(id, loop[(i + 1) % loop.length]));
+      const near = (id, list) => { let b = -1, bd = 1e18; for (const j of list) { const d = (pts[j][0] - pts[id][0]) ** 2 + (pts[j][1] - pts[id][1]) ** 2; if (d < bd) { bd = d; b = j; } } return [b, Math.sqrt(bd)]; };
+      const spokes = NET.spokes.map((sp) => { const ids = sp.map(([x, z]) => add(x, z)); for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]); return ids; });
+      for (const ids of spokes) for (const id of ids) { const [j, d] = near(id, loop); if (d < 3.2) link(id, j); } // chỗ đường toả cắt vòng đường
+      const c0 = PL && PL.podium ? PL.podium : { x: 0, z: 0 }, center = add(c0.x, c0.z);
+      for (const ids of spokes) if (Math.hypot(pts[ids[0]][0] - c0.x, pts[ids[0]][1] - c0.z) < 22) link(center, ids[0]); // sân giữa nối đầu trong các đường toả
+      return { pts, adj };
+    }
+    function nearestNode(x, z) { let b = 0, bd = 1e18; NAV.pts.forEach(([px, pz], i) => { const d = (px - x) ** 2 + (pz - z) ** 2; if (d < bd) { bd = d; b = i; } }); return b; }
+    function pathNodes(a, b) {
+      const n = NAV.pts.length, dist = new Float64Array(n).fill(1e18), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n); dist[a] = 0;
+      for (let it = 0; it < n; it++) { let u = -1, ud = 1e18; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < ud) { ud = dist[i]; u = i; } if (u < 0 || u === b) break; done[u] = 1; for (const [v, w] of NAV.adj[u]) if (dist[u] + w < dist[v]) { dist[v] = dist[u] + w; prev[v] = u; } }
+      const out = []; for (let v = b; v >= 0; v = prev[v]) out.push(v); return out.reverse();
+    }
+    // các điểm phải đi qua từ from tới to (Vector3, toạ độ đảo)
+    function routeTo(from, to) {
+      if (!NET) return [to];
+      if (!NAV) NAV = buildNav();
+      if (Math.hypot(to.x - from.x, to.z - from.z) < NAV_NEAR) return [to];
+      const a = nearestNode(from.x, from.z), b = nearestNode(to.x, to.z); if (a === b) return [to];
+      const ids = pathNodes(a, b), out = [];
+      for (let k = 0; k < ids.length; k++) {
+        const [x, z] = NAV.pts[ids[k]], [nx, nz] = NAV.pts[ids[Math.min(ids.length - 1, k + 1)]], [px, pz] = NAV.pts[ids[Math.max(0, k - 1)]];
+        let dx = nx - px, dz = nz - pz; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+        out.push(new THREE.Vector3(x + dz * 1.0, 0, z - dx * 1.0)); // vỉa hè bên phải theo hướng đi
+      }
+      out.push(to.clone()); return out;
+    }
+    function keepInside(pos) { const a = Math.atan2(pos.z, pos.x), R = L.rOf(a) - WALL_IN, r = Math.hypot(pos.x, pos.z); if (r > R) pos.multiplyScalar(R / r); }
     function newRoute(f) {
       const loop = NET.loop, n = loop.length; let bi = 0, bd = 1e18;
       for (let i = 0; i < n; i++) { const d = (loop[i][0] - f.pos.x) ** 2 + (loop[i][1] - f.pos.z) ** 2; if (d < bd) { bd = d; bi = i; } }
@@ -164,12 +203,19 @@
           }
         }
         f.strolling = mind.place === 'stroll' && !meetVerb;
+        // đi theo lối đi (không xuyên tường, xuyên nhà): đích đổi thì tìm đường lại, đi lần lượt qua từng điểm
+        if (goal && !meetVerb && !goal.road) {
+          if (!f.nav || f.nav.dest.distanceToSquared(goal.p) > 2.25) f.nav = { dest: goal.p.clone(), pts: routeTo(f.pos, goal.p), i: 0 };
+          const N = f.nav; while (N.i < N.pts.length - 1 && (N.pts[N.i].x - f.pos.x) ** 2 + (N.pts[N.i].z - f.pos.z) ** 2 < 0.8) N.i++;
+          if (N.i === N.pts.length - 1) N.pts[N.i] = goal.p; // chặng cuối: bám theo đích (người mình đang nói chuyện có thể nhích đi)
+          else goal = { p: N.pts[N.i], face: null };
+        }
         let moving = false;
         if (goal) {
           _v.copy(goal.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride); // tối muộn về ngủ thì rảo bước
-          if (d > 0.25) { moving = true; const step = Math.min(d, speed * sec); f.pos.addScaledVector(_v.normalize(), step); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), sec); }
+          if (d > 0.25) { moving = true; const step = Math.min(d, speed * sec); f.pos.addScaledVector(_v.normalize(), step); keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), sec); }
           else if (goal.face) { _v.copy(goal.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), sec); }
         }
         if (!moving) f.ph += sec * 3 * f.knobs.tempo;

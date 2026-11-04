@@ -61,6 +61,21 @@ Mỗi drama là một dòng trong bảng `DRAMAS`. Một dòng ghi:
 
 Thêm drama mới chỉ cần thêm dòng. Tới đêm drama tự tan. Cùng lúc có tối đa 2 drama. Một người không ở hai drama một lúc.
 
+### Ở đúng chỗ của mình (`logic/tasks.js`, `render/buildings3d.js places`)
+- Ai làm ở đâu thì đứng ngay trước chỗ làm đó (cửa nhà, ruộng, chợ, trường), lệch tối đa khoảng 2 đơn vị, không đi loạn.
+- Buổi tối người lớn trò chuyện với hàng xóm (nhà kề bên) hay vợ chồng ngay trước cửa nhà mình. Người già kể chuyện, trẻ con
+  chơi cũng ở trước cửa nhà. Buôn chuyện tụ trước cửa nhà người kể.
+- Giữa sân chỉ còn người đứng đầu, quân sư, người diễn thuyết và người đi bộ qua lại. Chỉ khi có drama (bạo loạn, diễn thuyết
+  lớn, mừng thời mới) giữa sân mới đông.
+- Lính tuần và luyện quân ở 6 chốt rải dọc phía trong tường thành, không vòng quanh nhà chính.
+
+### Không đi xuyên tường (`render/village3d.js`)
+- **Lối đi:** đi xa thì đi theo mạng đường của đảo, tìm đường ngắn nhất. Đường gồm vòng đường, đường toả, chỗ giao nhau và một
+  nút giữa sân. Người đi trên vỉa hè bên phải, rồi từ điểm đường gần đích mới vào tận nơi.
+- **Vòng tường:** không ai ra quá mép đảo trừ 5,2 đơn vị (tường ở mép trừ 3,5), dù đi đâu. Chỗ ngoài tường (bến, trại ven biển)
+  không còn nằm trong danh sách chỗ đến.
+- **Cổng chính:** 4 lính gác đều đứng phía trong cổng, hai hàng hai bên lối đi.
+
 ### Đời thường trên phố (`render/village3d.js`)
 - Người đi đường đi dạo dọc mạng đường của đảo (`roads.js isleNet`). Họ đi dọc vòng đường một quãng, có khi rẽ ra đường toả
   tới gần cổng rồi quay lại. Họ đi lệch về bên phải mặt đường, tức vỉa hè, nhường giữa đường cho xe.

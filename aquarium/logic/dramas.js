@@ -59,7 +59,7 @@
       say: ['{lead} mở cuộc tranh luận ở trường, {n} người ham học tham gia.', 'Cuộc tranh luận ở trường tạm dừng.'] },
     { key: 'gossip', name: 'Tụ tập buôn chuyện', phases: DAY, chance: 0.1, cooldown: 2, minPeople: 6,
       cast: [{ id: 'lead', temper: ['sociable'], n: [1, 1], fitMin: 0.5 }, { id: 'ring', temper: ['sociable', 'timid', 'devout'], n: [2, 5], fitMin: 0.5 }],
-      stages: [{ dur: 0.35, why: 'tụ lại buôn chuyện', act: { lead: { state: 'work', verb: 'tell', place: 'square' }, ring: { state: 'talk', verb: 'chat', target: 'lead', place: 'square' } } }],
+      stages: [{ dur: 0.35, why: 'tụ lại buôn chuyện trước cửa nhà', act: { lead: { state: 'work', verb: 'tell', place: 'home' }, ring: { state: 'talk', verb: 'chat', target: 'lead', place: 'home' } } }], // trước cửa nhà người kể
       say: ['{lead} và {n} người tụ lại buôn chuyện.', null] },
     { key: 'eraFeast', name: 'Mừng thời mới', phases: DAY, chance: 0, cooldown: 0, minPeople: 4, onEra: true,
       cast: [{ id: 'lead', from: 'post:orator', n: [1, 1] }, { id: 'all', temper: ['sociable', 'ambitious', 'devout', 'scholar'], n: [8, 16] }],

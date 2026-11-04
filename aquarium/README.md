@@ -127,6 +127,8 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   - drama (`logic/dramas.js`): bạo loạn, ẩu đả ở chợ, diễn thuyết lớn, cầu nguyện tập thể, tranh luận ở trường, buôn chuyện,
     mừng thời mới. Drama gom người cùng tính cách bỏ việc ra tham gia, tan thì về việc cũ; mỗi drama là một dòng dữ liệu.
   - Người đi đường đi dạo dọc phố trên vỉa hè, gặp nhau thì dừng lại trò chuyện rồi đi tiếp (`render/village3d.js`).
+  - Ai làm ở đâu thì ở trước chỗ đó; tối trò chuyện với hàng xóm trước cửa nhà; giữa sân chỉ có vài người đi bộ qua. Đi xa thì theo
+    lối đi trên mạng đường (đường ngắn nhất), không ai ra quá vòng tường; 4 lính gác cổng chính đứng phía trong cổng.
 - **Đường luôn thông** (mọi thời, mọi năm, cả sáu đảo): mạng đường của đảo tính ngay khi dựng đất (`render/build/roads.js`
   isleSegs), nên núi, cao nguyên, hồ, đầm, ốc đảo dời ra khỏi đường, đá, cỏ, cây nhỏ không mọc trên đường (`render/map/`).
   Sông được chảy qua đường (mặt đường cao hơn mặt nước, như cầu phẳng). Công trình dựng xong thì đo phần sát đất theo cỡ thật

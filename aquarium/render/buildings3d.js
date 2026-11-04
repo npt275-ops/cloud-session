@@ -347,8 +347,8 @@
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
         if ((!g.visible && !P.queued) || P.gone || NOT_A_PLACE.has(k)) continue; // đang chờ dựng hình (P.queued): đã xong, sắp hiện
         const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
-        // cổng thành: bốn chốt gác, hai chốt phía ngoài hai bên lối đi, hai chốt phía trong
-        if (P.spec.gate) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x); for (const [d, s2] of [[1.8, 2.9], [1.8, -2.9], [-2.6, 2.9], [-2.6, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
+        // cổng thành: bốn chốt gác đều ở PHÍA TRONG cổng (hai hàng, hai bên lối đi), không ai đứng ngoài tường hay ra khỏi đảo
+        if (P.spec.gate) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x); for (const [d, s2] of [[-2.4, 2.9], [-2.4, -2.9], [-4.9, 2.9], [-4.9, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
         if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         out.all.push(door);
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
@@ -367,8 +367,8 @@
         [['gateL', L.wallGaps[1]], ['gateR', L.wallGaps[2]]].forEach(([k, g]) => { const dx = Math.sin(g), dz = Math.cos(g), X = dx * c + dz * sn, Z = -dx * sn + dz * c, R = L.rOf(Math.atan2(Z, X)) - 7.5, base = new THREE.Vector3(X * R, 0, Z * R), tan = new THREE.Vector3(-Z, 0, X); out[k] = [base.clone().addScaledVector(tan, 2.4), base.clone().addScaledVector(tan, -2.4)]; });
       }
       out.podium = new THREE.Vector3(f.x * 4, 0, f.y * 4); out.podiumFace = new THREE.Vector3(f.x * 12, 0, f.y * 12);
-      const r = sh.yardR || 12;
-      for (const a of [-0.9, 0, 0.9]) out.guard.push(new THREE.Vector3(f.x * r * 0.9 * Math.cos(a) - f.y * r * 0.9 * Math.sin(a), 0, f.y * r * 0.9 * Math.cos(a) + f.x * r * 0.9 * Math.sin(a)));
+      // chốt tuần tra, luyện quân: rải dọc phía trong tường thành (xa sân giữa), không dồn quanh nhà chính
+      { const a0 = Math.atan2(f.y, f.x); for (let k = 0; k < 6; k++) { const a = a0 + Math.PI / 6 + (k * Math.PI) / 3, R = L.rOf(a) - 10; out.guard.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R)); } }
       if (!out.hall) out.hall = new THREE.Vector3(f.x * 4, 0, f.y * 4);
       if (!out.square.length) out.square.push(new THREE.Vector3(f.x * 9, 0, f.y * 9));
       if (!out.field.length) out.field.push(new THREE.Vector3(f.x * 14, 0, f.y * 14));
@@ -376,9 +376,10 @@
       // chưa có chợ, chỗ thờ, trường riêng thì dùng chỗ có nghĩa giữa các nhà (không dồn về nhà chính, không dồn giữa sân)
       const H = out.homes;
       if (!out.market.length) out.market.push(...[H[1 % H.length], H[Math.floor(H.length / 2)]].map((v) => v.clone().multiplyScalar(0.85)));
-      if (!out.shrine.length) out.shrine.push(out.square[out.square.length - 1].clone().add(new THREE.Vector3(-2.5, 0, -1)));
+      if (!out.shrine.length) out.shrine.push(H[2 % H.length].clone()); // chưa có chỗ thờ riêng: trước cửa một nhà, không phải giữa sân
       if (!out.school.length) out.school.push(H[H.length - 1].clone().multiplyScalar(0.9));
       out.outer = out.outer.filter(Boolean); // người đi đường, thợ đi tu bổ có khi ra tới bến, trại, đền trong rừng
+      out.outer = out.outer.filter((v) => L.inside(v.x, v.z, 5.5)); // chỉ những chỗ còn trong tường thành (bến, trại ngoài tường thì không tới)
       out.all.push(...out.outer);
       if (!out.all.length) out.all.push(...out.homes);
       return out;
