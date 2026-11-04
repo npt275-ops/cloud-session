@@ -5,7 +5,7 @@
    * Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép
    * đảo vào hồ, ao nhỏ (WATERS), cụm đá (RELIEF), và nét riêng từng miền (hoa dại, thân cây đổ, vòng nấm, cột đá, khe núi,
    * vách băng, gai băng, cột đá ven biển, vũng triều, vòm đá đỏ, trụ đá). Chi tiết nhỏ để riêng (L.detail) để ẩn khi nhìn xa.
-   * Mỗi món ghi vào L.props để cây tránh. Cần: shared3d.js, mountains3d.js, water3d.js. */
+   * Mỗi món ghi vào L.props để cây tránh; không món nào đặt chắn đường của đảo (L.onRoad, render/map/terrain3d.js). Cần: shared3d.js, mountains3d.js, water3d.js. */
   function create(X, MT, W2) {
     const { THREE, TAU, C, clamp, hash, LAND_R, RING, SC, UBOX, UCYL, UCONE, TCYL, DOME, ICO, DOD, OCT, GABLE, TORUS, VAULT, SPHG, Kit, mergeG, bodyMat, metalMat, meshOf, disposeGroup, pick, TSTYLE, landRng } = X;
     /* =============== Địa hình thêm: núi, sông, hồ, đá, và nét riêng của từng miền =============== */
@@ -27,7 +27,8 @@
     function relief(L) {
       const rng = landRng(L.i + 500), st = TSTYLE[L.ter], R = RELIEF[L.ter], k = new Kit(), kD = new Kit(), oa = L.oa; // kD: chi tiết nhỏ, ẩn khi nhìn xa
       const nearRiver = (x, z, r) => L.river && L.river.some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < (r + 3.5) ** 2);
-      const free = (x, z, r) => L.inside(x, z, r + 1.5) && Math.hypot(x, z) > 26 + r && !L.blockedWild(x, z, r) && !nearRiver(x, z, r);
+      const free = (x, z, r) => L.inside(x, z, r + 1.5) && Math.hypot(x, z) > 26 + r && !L.blockedWild(x, z, r) && !nearRiver(x, z, r) && !(L.onRoad && L.onRoad(x, z, r)); // không chắn đường (L.onRoad, terrain3d)
+      if (L.onRoad) k.avoid = kD.avoid = (x, z, s) => L.onRoad(x, z, s * 0.8); // mảnh nhỏ nằm trên đường: bỏ
       const spot = (r, tries, inner) => { for (let t = 0; t < (tries || 40); t++) { const a = rng() * TAU, rr = (inner || 28) + Math.sqrt(rng()) * (LAND_R - (inner || 28)), x = Math.cos(a) * rr, z = Math.sin(a) * rr; if (free(x, z, r)) return [x, z]; } return null; };
       const prop = (x, z, r) => L.props.push({ x, z, r });
       const rockC = st.rock.slice(0, 3);
@@ -55,7 +56,7 @@
         for (let sI = 0; sI <= 30; sI++) { const u = sI / 30, a = a0 + (a1 - a0) * u, r0 = L.rOf(a) - 4, r = Math.min(L.rOf(a) - 3, r0 + (r1 - r0) * u + Math.sin(u * Math.PI * 3 + rv) * 2.5); pts.push([Math.cos(a) * r, Math.sin(a) * r]); }
         if (pts.some(([x, z], q) => q % 2 === 0 && (L.blockedWild(x, z, 1.2) || nearRiver(x, z, 1) || Math.hypot(x, z) < 27))) continue;
         const [ex, ez] = pts[pts.length - 1], R = 3.6 + rng() * 2.4, rf = (t) => 1 + 0.18 * Math.sin(2 * t + rv) + 0.08 * Math.sin(5 * t);
-        const lakeOk = L.inside(ex, ez, R + 1) && !L.blockedWild(ex, ez, R * 0.7) && Math.hypot(ex, ez) > 26 + R;
+        const lakeOk = L.inside(ex, ez, R + 1) && !L.blockedWild(ex, ez, R * 0.7) && Math.hypot(ex, ez) > 26 + R && !(L.onRoad && L.onRoad(ex, ez, R + 1));
         rv++; L.reliefStats.rivers++;
         ribbon(pts, W.riverW + 2.2, 0.05, W.bank);
         ribbon(pts, W.riverW, 0.12, waterMat(W.water));
@@ -66,7 +67,7 @@
           for (let t = 0; t < 10; t++) { const q = rng() * TAU, rr = R * rf(q) * (0.95 + rng() * 0.15); kD.add(UCYL(4), pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()), ex + Math.cos(q) * rr, 0, ez + Math.sin(q) * rr, 0.05, 0.6 + rng() * 0.5, 0.05); }
           prop(ex, ez, R + 1); L.reliefStats.lakes++;
         }
-        for (let sI = 0; sI < pts.length; sI += 2) prop(pts[sI][0], pts[sI][1], W.riverW / 2 + 1.2);
+        for (let sI = 0; sI < pts.length; sI += 2) L.props.push({ x: pts[sI][0], z: pts[sI][1], r: W.riverW / 2 + 1.2, river: true }); // sông được phép chảy qua đường (mặt đường cao hơn mặt nước)
       }
       // ao nhỏ rải rác
       for (let i = 0; i < W.ponds; i++) { const R = 1.8 + rng() * 1.6, p = spot(R + 1); if (!p) continue; const rf = (t) => 1 + 0.12 * Math.sin(3 * t + i); flatMesh(lakeG(R + 0.7, rf), p[0], p[1], 0.05, W.shore); waterMesh(lakeG(R, rf), p[0], p[1], 0.12, W.water); for (let j = 0; j < 5; j++) { const q = (j / 5) * TAU; kD.blob(DOD(), pick(rockC, rng()), p[0] + Math.cos(q) * (R + 0.5), 0.15, p[1] + Math.sin(q) * (R + 0.5), 0.3, 0.6); } prop(p[0], p[1], R + 1); L.reliefStats.ponds++; }

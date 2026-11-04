@@ -106,10 +106,10 @@
       // mạng đường của đảo (render/build/roads.js) theo toạ độ đảo: công trình không đặt chắn đường, xe chạy trên đường
       const townSpec = lay.pieces.find((P) => P.town);
       if (townSpec && BK.Roads3D) {
-        const land = PL.landFor(L, at(0, 0), Math.atan2(f.x, f.y)), N = BK.Roads3D.net(townSpec.net || 'plains', land.edge);
-        // cùng phép xoay với lớp đường (công trình đặt ở tâm, rotation.y = góc hướng ra biển trong), để chỗ tránh khớp chỗ vẽ
-        const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th), rot = (x, z) => [x * c + z * sn, -x * sn + z * c];
-        L.roadSegs = BK.Roads3D.segs(N).map(([x0, z0, x1, z1]) => [...rot(x0, z0), ...rot(x1, z1)]);
+        // cùng phép xoay với lớp đường (công trình đặt ở tâm, rotation.y = góc hướng ra biển trong), để chỗ tránh khớp chỗ vẽ;
+        // cùng một mạng đường với lúc dựng đất (render/build/roads.js isleSegs), nên núi, hồ, cây và công trình cùng tránh một đường
+        const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th);
+        L.roadSegs = BK.Roads3D.isleSegs(L, townSpec.net || 'plains');
         L.roadW = (townSpec.roadW || 3) / 2 + 0.4;
         // chỗ hở của tường (theo trục của lớp đường): cổng chính góc 0, hai chỗ bắc cầu sang hai đảo bên cạnh (L.landing)
         L.wallGaps = [0, ...(L.landing || []).map((v) => { const lx = v.x * c - v.z * sn, lz = v.x * sn + v.z * c; return Math.atan2(lx, lz); })];
@@ -148,7 +148,7 @@
       L.g.add(group);
       for (let j = queue.length - 1; j >= 0; j--) if (queue[j][0] === old) { queue[j][1].queued = false; queue.splice(j, 1); } // việc dựng của thời cũ trên đảo này: bỏ
       const pre = lay.pieces.filter((P) => lay.BUILD[P.kind] && P.pre).length;
-      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
+      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, fixed, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
     }
 
     /* ---------- Dựng hình và lên đời ---------- */
@@ -163,6 +163,44 @@
     }
     const setS = (P, xz, y) => P.g.scale.set(P.fitS * xz, P.fitS * y, P.fitS * xz);
     // dựng hình một công trình (một lần): hàm dựng nhận thông số của món, cấp, và đất quanh nó (land: edge, free)
+    const L_road = (sh) => !!sh.L.roadSegs;
+    /* ---------- Công trình không chắn đường ----------
+     * Dựng xong mới biết cỡ thật: lấy lưới 5×5 điểm trên khung bao phần sát đất của công trình (theo hướng quay và cỡ của nó); điểm nào
+     * gần tim đường hơn nửa mặt đường rộng nhất cộng lề (L.roadW) là lấn đường. Lấn thì dời: nhà chính chỉ tiến lên phía sân;
+     * công trình khác đẩy thẳng ra khỏi đoạn đường gần nhất (hai phía, trượt dọc đường), không được thì tìm chỗ trống gần nhất
+     * trên cả đảo. Chỗ mới phải còn trên đảo, không đè núi, hồ, không đè công trình khác. */
+    // khung bao phần sát đất (đỉnh thấp hơn LOW_Y): phần lơ lửng trên cao (vòng quay, cầu trên không, mái vươn) không chắn lối đi
+    const LOW_Y = 4.5, _w = new THREE.Vector3(); // cao hơn đầu người một chút: phần nhấp nhô, đung đưa xuống thấp cũng được tính
+    function lowBox(m, s) {
+      const top = LOW_Y / (s || 1); // độ cao tính theo cỡ thật (công trình đã thu cho vừa chỗ: fitS)
+      const bb = new THREE.Box3();
+      m.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.position) return; const P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { _w.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld); if (_w.y < top) bb.expandByPoint(_w); } });
+      return bb.isEmpty() ? new THREE.Box3().setFromObject(m) : bb;
+    }
+    function footprint(P, m) {
+      const bb = lowBox(m, P.fitS), pts = [], s = P.fitS, c = Math.cos(P.g.rotation.y), sn = Math.sin(P.g.rotation.y);
+      for (const ax of ['x', 'z']) if (bb.max[ax] - bb.min[ax] < 0.8) { const mid = (bb.max[ax] + bb.min[ax]) / 2; bb.min[ax] = mid - 0.4; bb.max[ax] = mid + 0.4; } // vật mảnh (cột, mảnh lơ lửng): coi như rộng ít nhất 0,8
+      for (let a = 0; a <= 4; a++) for (let b = 0; b <= 4; b++) { const x = (bb.min.x + ((bb.max.x - bb.min.x) * a) / 4) * s, z = (bb.min.z + ((bb.max.z - bb.min.z) * b) / 4) * s; pts.push([x * c + z * sn, -x * sn + z * c]); }
+      return { pts, r: Math.max(bb.max.x, -bb.min.x, bb.max.z, -bb.min.z) * s };
+    }
+    const blocks = (L, fp, x, z) => fp.pts.some(([dx, dz]) => BK.Roads3D.hits(L.roadSegs, x + dx, z + dz, 0, L.roadW)); // L.roadW: nửa mặt đường rộng nhất cộng lề (phần lắc lư, đung đưa vẫn không chạm đường)
+    function relocate(sh, P, fp) {
+      const L = sh.L, R = BK.Roads3D, rr = fp.r;
+      const good = (x, z) => !blocks(L, fp, x, z) && L.inside(x, z, rr * 0.5) && !L.blockedWild(x, z, rr * 0.6) && !(sh.fixed || []).some((F) => F.P !== P.spec && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.75 + rr * 0.75) ** 2);
+      if (P.kind === 'hall') { const fx = Math.sin(P.g.rotation.y), fz = Math.cos(P.g.rotation.y); for (let d = 1; d <= 6; d++) { const x = P.x + fx * d, z = P.z + fz * d; if (!blocks(L, fp, x, z)) return new THREE.Vector2(x, z); } return null; }
+      let best = null, bd = 1e9; for (const S of L.roadSegs) { const d = R.segDist(P.x, P.z, S); if (d < bd) { bd = d; best = S; } }
+      const [x0, z0, x1, z1] = best, dx = x1 - x0, dz = z1 - z0, ll = Math.hypot(dx, dz) || 1, t = Math.max(0, Math.min(1, ((P.x - x0) * dx + (P.z - z0) * dz) / (ll * ll)));
+      const fx = x0 + dx * t, fz = z0 + dz * t, tx = dx / ll, tz = dz / ll; let nx = P.x - fx, nz = P.z - fz, nl = Math.hypot(nx, nz); if (nl < 1e-3) { nx = -tz; nz = tx; nl = 1; } nx /= nl; nz /= nl;
+      for (const sl of [0, 3, -3, 6, -6, 9, -9, 12, -12]) for (const side of [1, -1]) for (const out of [0.4, 0.7, 1.0, 1.3]) {
+        const x = fx + tx * sl + nx * side * (L.roadW + rr * out), z = fz + tz * sl + nz * side * (L.roadW + rr * out);
+        if (good(x, z)) return new THREE.Vector2(x, z);
+      }
+      // chỗ trống gần nhất trên cả đảo
+      const cand = []; for (let r = 8; r < 60; r += 2.5) for (let k = 0; k < 64; k++) { const a = (k / 64) * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r; cand.push([(x - P.x) ** 2 + (z - P.z) ** 2, x, z]); }
+      cand.sort((a, b) => a[0] - b[0]);
+      for (const [, x, z] of cand) if (good(x, z)) return new THREE.Vector2(x, z);
+      return null;
+    }
     function bakeOf(P, sh) {
       if (P.baked) return; P.baked = true;
       const lv = P.spec.lv || sh.level, key = keyOf(P, lv, sh.L.ter), E = key && BAKED.get(key);
@@ -186,6 +224,18 @@
           BAKED.set(key, { tpl: src, base, anim: P.anim, fitS: P.fitS, lv });
           m = cloneBaked(src, base);
         } else m = src;
+      }
+      m.updateMatrixWorld(true);
+      // không chắn đường (footprint, relocate ở trên); trừ lớp đường, cổng thành nằm trên đường chính, công trình ngoài khơi
+      if (L_road(sh) && !P.spec.town && !P.spec.gate && P.outer !== 'sea') {
+        const fp = footprint(P, m);
+        if (fp.r > 0.3 && blocks(sh.L, fp, P.x, P.z)) {
+          // không có chỗ cho đủ cỡ (nhà chính các thời sau rất to, kẹt giữa vòng đường và đường toả): thu nhỏ vừa đủ, ít nhất còn 70%
+          let q = relocate(sh, P, fp);
+          for (const k2 of [0.94, 0.88, 0.82, 0.76, 0.7]) { if (q) break; const f2 = { pts: fp.pts.map(([x, z]) => [x * k2, z * k2]), r: fp.r * k2 }; q = blocks(sh.L, f2, P.x, P.z) ? relocate(sh, P, f2) : new THREE.Vector2(P.x, P.z); if (q) P.fitS *= k2; }
+          sh.moved = (sh.moved || 0) + (q ? 1 : 0); sh.stuck = (sh.stuck || 0) + (q ? 0 : 1); P.relocated = q ? 'moved' : 'stuck';
+          if (q) { P.x = q.x; P.z = q.y; P.g.position.x = q.x; P.g.position.z = q.y; const F = (sh.fixed || []).find((x) => x.P === P.spec); if (F) { F.x = q.x; F.y = q.y; F.r = Math.max(F.r, fp.r); } else if (sh.fixed) sh.fixed.push({ x: q.x, y: q.y, r: fp.r, P: P.spec }); }
+        }
       }
       P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
@@ -327,9 +377,11 @@
       return out;
     }
     // số liệu một đảo (bảng làng, bài kiểm tra): old = số công trình của thời trước còn đứng, done = số công trình thời này đã có
-    const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name, old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length };
+    const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name, old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length, moved: shown[i].moved || 0, stuck: shown[i].stuck || 0 };
+    // bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng)
+    const roadCheck = (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = footprint(P, m); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: blocks(sh.L, fp, P.x, P.z), rel: P.relocated || '', fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); };
     const batchInfo = (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) }; // bài kiểm tra
-    return { show, setProgress, setProgressByTime, animate, stats, places, flush, batchInfo, queued: () => queue.length, cacheSize: () => BAKED.size };
+    return { show, setProgress, setProgressByTime, animate, stats, places, flush, batchInfo, roadCheck, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

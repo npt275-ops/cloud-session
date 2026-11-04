@@ -29,6 +29,7 @@
     function Kit() { this.b = []; this.l = []; this.gl = []; this.gh = []; }
     // một khối: hình gốc, màu, vị trí, tỉ lệ, góc xoay (y, x, z); lit = phần sáng lên về đêm (cửa sổ)
     Kit.prototype.add = function (g0, color, x, y, z, sx, sy, sz, ry, rx, rz, lit) {
+      if (this.avoid && y > -0.5 && Math.max(sx || 0, sz || 0) < 2.6 && this.avoid(x, z, Math.max(sx || 0, sz || 0))) return this; // mảnh nhỏ nằm trên đường: bỏ (terrain3d, relief3d)
       const g = g0.index ? g0.toNonIndexed() : g0.clone();
       if (g.attributes.uv) g.deleteAttribute('uv');
       if (g.attributes.uv2) g.deleteAttribute('uv2');

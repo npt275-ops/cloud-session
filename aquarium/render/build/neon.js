@@ -41,7 +41,7 @@
     const R3 = BK.Roads3D, Bc = BK.Plains3D.Bc, c = of(key), T = THREE();
     for (const [x0, z0, x1, z1] of R3.segs(N)) {
       const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz), a = Math.atan2(dx, dz), nx = dz / (L || 1), nz = -dx / (L || 1);
-      for (const s of [-1, 1]) k.add(Bc(0.16, 0.06, L + 0.2, 0.01), s > 0 ? c.a : c.b, (x0 + x1) / 2 + nx * s * (w / 2 - 0.1), 0.12, (z0 + z1) / 2 + nz * s * (w / 2 - 0.1), { rot: [0, a, 0], glow: true });
+      for (const s of [-1, 1]) k.add(Bc(0.16, 0.06, L + 0.2, 0.01), s > 0 ? c.a : c.b, (x0 + x1) / 2 + nx * s * (w / 2 - 0.1), R3.Y + 0.07, (z0 + z1) / 2 + nz * s * (w / 2 - 0.1), { rot: [0, a, 0], glow: true });
     }
     const step = { 10: 20, 11: 15, 12: 11 }[lv] || 18, R = w / 2 + 1.2;
     R3.along(N.loop, step, true).forEach((q, i) => {

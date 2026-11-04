@@ -121,6 +121,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   bảng màu ấm theo giờ (bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều vàng mật ong, hoàng hôn cam tím, chạng vạng
   tím, đêm tím xanh), sương ngả theo chân trời; bóng dịu nhờ đèn trời sáng hơn và một đèn hắt nhẹ phía ngược nắng. Mọi màu
   trời và ánh sáng theo giờ nằm ở một chỗ (KEYS), độ phơi sáng ở TONE.
+- **Đường luôn thông** (mọi thời, mọi năm, cả sáu đảo): mạng đường của đảo tính ngay khi dựng đất (`render/build/roads.js`
+  isleSegs), nên núi, cao nguyên, hồ, đầm, ốc đảo dời ra khỏi đường, đá, cỏ, cây nhỏ không mọc trên đường (`render/map/`).
+  Sông được chảy qua đường (mặt đường cao hơn mặt nước, như cầu phẳng). Công trình dựng xong thì đo phần sát đất theo cỡ thật
+  (`render/buildings3d.js` footprint): lấn đường thì đẩy ra khỏi đường, hoặc tìm chỗ trống gần nhất; nhà chính chỉ tiến lên phía
+  sân, không có chỗ thì thu nhỏ vừa đủ (ít nhất 70%). Đường toả ra phía sau bắt đầu sau lưng nhà chính.
 - **Đèn đường qua các thời** (`render/build/lamps.js`, thời 1 tới 9, cả sáu đảo): đứng bên lề vòng đường và các đường toả,
   so le hai bên; mỗi thời một kiểu (đuốc cắm, đuốc tre, đèn đá, đèn dầu, đèn khí, đèn điện, đèn cao áp, cột LED, đèn sinh
   học), mỗi đảo một màu ánh đèn. Tối bật, sáng tắt: phần sáng (lửa, bóng đèn, vũng sáng dưới chân) là mảnh `lit`, sáng dần

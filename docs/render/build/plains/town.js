@@ -63,7 +63,7 @@
   T[5] = (k, o) => {
     const N = roads(k, o, { color: '#9a9488', w: 2.0, r0: 14 });
     edgeWall(k, o, { n: 140, seg: (k, a, x, z, i) => { if (i % 4 === 0) k.add(B(0.7, 2.2, 0.7, 0.06), C.brick[1], x, 0, z); else { k.add(Bc(2.6, 0.08, 0.08, 0.02), '#2e2e32', x, 1.7, z, { rot: [0, a, 0] }); for (let j = -2; j <= 2; j++) k.add(K.post(0.03, 1.8, 3), '#2e2e32', x + Math.cos(a) * j * 0.5, 0, z - Math.sin(a) * j * 0.5); } }, gate: gateTowers(3.2, C.brick[0], '#3a3a3e', 1) });
-    for (const q of R3().along(N.loop, 0.7, true)) { k.add(Bc(1.8, 0.08, 0.25, 0.01), '#5a4636', q.x, 0.1, q.z, { rot: [0, q.a, 0], ao: false }); for (const d of [-0.55, 0.55]) k.add(Bc(0.1, 0.08, 0.75, 0.01), '#6a6a70', q.x + q.n[0] * d, 0.18, q.z + q.n[1] * d, { rot: [0, q.a, 0], ao: false }); }
+    for (const q of R3().along(N.loop, 0.7, true)) { k.add(Bc(1.8, 0.08, 0.25, 0.01), '#5a4636', q.x, R3().Y + 0.06, q.z, { rot: [0, q.a, 0], ao: false }); for (const d of [-0.55, 0.55]) k.add(Bc(0.1, 0.08, 0.75, 0.01), '#6a6a70', q.x + q.n[0] * d, R3().Y + 0.14, q.z + q.n[1] * d, { rot: [0, q.a, 0], ao: false }); }
     return withTraffic(k, 5, N);
   };
   // 6 · đường nhựa có vạch, cây xanh hai bên, ô tô chạy vòng

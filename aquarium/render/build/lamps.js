@@ -53,7 +53,7 @@
       S(k, x, z, d, q.a, c);
       // vũng sáng trên mặt đường: vòng ngoài mờ, lõi trong sáng hơn một chút
       const px = x + d[0] * (side - 0.6), pz = z + d[1] * (side - 0.6);
-      k.add(K.disc(POOL[lv], 16), pool[0], px, 0.14, pz, { lit: true, ao: false }); k.add(K.disc(POOL[lv] * 0.5, 12), pool[1], px, 0.15, pz, { lit: true, ao: false });
+      const py = R3().Y + 0.07; k.add(K.disc(POOL[lv], 16), pool[0], px, py, pz, { lit: true, ao: false }); k.add(K.disc(POOL[lv] * 0.5, 12), pool[1], px, py + 0.01, pz, { lit: true, ao: false });
       n++;
     };
     R3().along(N.loop, STEP[lv], true).forEach((q, i) => put(q, i % 2 ? 1 : -1));

@@ -46,6 +46,7 @@
         const d = Math.hypot(x, z);
         if (!L.inside(x, z, 1.2) || d < 7.5) return false;
         if (L.blocked(x, z, r) || L.blockedWild(x, z, r * 0.6)) return false;
+        if (L.onRoad && L.onRoad(x, z, r * 0.6)) return false; // cây không mọc trên đường của đảo
         for (const t of list) if ((t.x - x) ** 2 + (t.z - z) ** 2 < (t.r + r) ** 2) return false;
         return true;
       };

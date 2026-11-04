@@ -13,23 +13,25 @@
 (function (root) {
   const BK = root.BK, K = BK.BuildKit, { Bc } = BK.Plains3D;
   const TAU = Math.PI * 2;
+  const Y = 0.13; // độ cao mặt đường (render/build/lamps.js, neon.js, plains/town.js đặt đồ trên mặt đường theo mốc này)
   const polar = (a, r) => [Math.sin(a) * r, Math.cos(a) * r];
   const loopOf = (rOf, n) => Array.from({ length: n || 72 }, (_, i) => { const a = (i / (n || 72)) * TAU; return polar(a, rOf(a)); });
   const spoke = (a, r0, edge, wob) => { const r1 = Math.max(r0 + 6, (edge ? edge(a) : 52) - 4), pts = []; for (let r = r0; r <= r1 + 0.01; r += 2) { const w = wob ? wob(r) : 0; pts.push([Math.sin(a) * r + Math.cos(a) * w, Math.cos(a) * r - Math.sin(a) * w]); } return pts; };
+  const BACK = 20; // đường toả ra phía sau bắt đầu từ đây (sau lưng nhà chính, nhà chính các thời sau to tới bán kính ~18)
   const NETS = {
-    plains: (edge) => ({ loop: loopOf(() => 24), spokes: [0, Math.PI, 0.6, -0.6].map((a) => spoke(a, a === Math.PI ? 15 : 12, edge)) }),
-    forest: (edge) => ({ loop: loopOf((a) => 24 + 2.2 * Math.sin(3 * a + 0.7)), spokes: [0, 2.7, -2.7].map((a) => spoke(a, a ? 15 : 12, edge, (r) => Math.sin(r * 0.25) * 1.6)) }),
-    mountain: (edge) => ({ loop: loopOf(() => 32), spokes: [spoke(0, 12, edge, (r) => ((Math.floor(r / 6) % 2) ? 2.6 : -2.6) * Math.min(1, (r - 12) / 6)), spoke(Math.PI, 15, edge), spoke(0.7, 12, edge), spoke(-0.7, 12, edge)] }),
-    tundra: (edge) => ({ loop: loopOf((a) => { const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)); return 23 / Math.pow(Math.pow(c, 4) + Math.pow(s, 4), 0.25); }, 96), spokes: [spoke(0, 12, edge), spoke(Math.PI, 15, edge), spoke(2.5, 16, edge), spoke(-2.5, 16, edge)] }),
-    coast: (edge) => ({ loop: loopOf((a) => { const rx = 31, rz = 21; return 1 / Math.sqrt(Math.pow(Math.sin(a) / rx, 2) + Math.pow(Math.cos(a) / rz, 2)); }, 80), spokes: [0, 0.95, -0.95, Math.PI].map((a) => spoke(a, a === Math.PI ? 15 : 12, edge)) }),
-    desert: (edge) => ({ loop: loopOf((a) => { const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)); return 22 / Math.max(c, s); }, 96), spokes: [0, Math.PI / 2, Math.PI, -Math.PI / 2].map((a) => spoke(a, a === Math.PI ? 15 : 12, edge)) }),
+    plains: (edge) => ({ loop: loopOf(() => 24), spokes: [0, Math.PI, 0.6, -0.6].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),
+    forest: (edge) => ({ loop: loopOf((a) => 24 + 2.2 * Math.sin(3 * a + 0.7)), spokes: [0, 2.7, -2.7].map((a) => spoke(a, a ? BACK : 12, edge, (r) => Math.sin(r * 0.25) * 1.6)) }),
+    mountain: (edge) => ({ loop: loopOf(() => 32), spokes: [spoke(0, 12, edge, (r) => ((Math.floor(r / 6) % 2) ? 2.6 : -2.6) * Math.min(1, (r - 12) / 6)), spoke(Math.PI, BACK, edge), spoke(0.7, 12, edge), spoke(-0.7, 12, edge)] }),
+    tundra: (edge) => ({ loop: loopOf((a) => { const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)); return 23 / Math.pow(Math.pow(c, 4) + Math.pow(s, 4), 0.25); }, 96), spokes: [spoke(0, 12, edge), spoke(Math.PI, BACK, edge), spoke(2.5, BACK + 2, edge), spoke(-2.5, BACK + 2, edge)] }),
+    coast: (edge) => ({ loop: loopOf((a) => { const rx = 31, rz = 21; return 1 / Math.sqrt(Math.pow(Math.sin(a) / rx, 2) + Math.pow(Math.cos(a) / rz, 2)); }, 80), spokes: [0, 0.95, -0.95, Math.PI].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),
+    desert: (edge) => ({ loop: loopOf((a) => { const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)); return 22 / Math.max(c, s); }, 96), spokes: [0, Math.PI / 2, Math.PI, -Math.PI / 2].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),
   };
   function net(key, edge) { const N = (NETS[key] || NETS.plains)(edge); N.all = [[...N.loop, N.loop[0]], ...N.spokes]; return N; }
   // các đoạn thẳng của mạng đường: [[x0, z0, x1, z1], ...]
   function segs(N) { const out = []; for (const pl of N.all) for (let i = 0; i + 1 < pl.length; i++) out.push([pl[i][0], pl[i][1], pl[i + 1][0], pl[i + 1][1]]); return out; }
   // vẽ mạng đường: mỗi đoạn một tấm phẳng (dài hơn một chút để nối liền), vạch giữa nếu có
   function draw(k, N, st) {
-    const w = st.w || 2.2, y = st.y || 0.06;
+    const w = st.w || 2.2, y = st.y || Y; // mặt đường cao hơn mặt sông, hồ (0,12): đường đi qua sông như cầu phẳng
     for (const [x0, z0, x1, z1] of segs(N)) {
       const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz), a = Math.atan2(dx, dz);
       k.add(Bc(w, 0.05, L + w * 0.6, 0.01), st.color, (x0 + x1) / 2, y, (z0 + z1) / 2, { rot: [0, a, 0], ao: false });
@@ -48,5 +50,18 @@
     }
     return out;
   }
-  BK.Roads3D = { NETS, net, segs, draw, along };
+  // mạng đường của một đảo theo toạ độ của đảo (như lớp đường đặt ở tâm, quay mặt ra biển trong): tính ngay khi dựng đất
+  // (render/map/terrain3d.js) để núi, hồ, đá, cây không mọc chắn đường; render/buildings3d.js dùng lại cho công trình.
+  // HALF: nửa bề rộng chỗ phải để trống (nửa mặt đường rộng nhất 3 cộng lề 0,4).
+  const HALF = 1.9;
+  function isleSegs(L, key) {
+    const fx = L.inw.x, fz = L.inw.z, fl = Math.hypot(fx, fz) || 1, th = Math.atan2(fx / fl, fz / fl), c = Math.cos(th), sn = Math.sin(th);
+    const rot = (x, z) => [x * c + z * sn, -x * sn + z * c];
+    const edge = (a) => { const [X, Z] = rot(Math.sin(a), Math.cos(a)); return L.rOf(Math.atan2(Z, X)); };
+    return segs(net(key || L.ter, edge)).map(([x0, z0, x1, z1]) => [...rot(x0, z0), ...rot(x1, z1)]);
+  }
+  const segDist = (x, z, [x0, z0, x1, z1]) => { const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2)); return Math.hypot(x - x0 - dx * t, z - z0 - dz * t); };
+  // một vòng tròn (x, z, r) có lấn vào đường không
+  const hits = (segList, x, z, r, half) => !!segList && segList.some((S) => segDist(x, z, S) < (r || 0) + (half || HALF));
+  BK.Roads3D = { NETS, net, segs, draw, along, isleSegs, segDist, hits, HALF, Y };
 })(typeof self !== 'undefined' ? self : globalThis);
