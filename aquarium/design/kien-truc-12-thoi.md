@@ -38,7 +38,7 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 9 | Vật Chất Sống | Tòa cây sống | Cây Mẹ Sống | Cây Mẹ |
 | 10 | Mặt Trời Nhân Tạo | Tháp lá hứng nắng | Hoa Mặt Trời | Mặt Trời Lá |
 | 11 | Bẻ Cong Không Gian | Tòa xoắn dây leo | Thân Cây Xoắn Kép | Vành Lá Xanh |
-| 12 | Siêu Việt | Tháp đĩa nổi xanh | Rừng Bay | Rừng Lơ Lửng |
+| 12 | Siêu Việt | Tháp đĩa nổi xanh | Cây Thế Giới | Rừng Lơ Lửng |
 
 ## Đá Mây
 
@@ -89,7 +89,7 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 9 | Vật Chất Sống | Tháp bậc thang biển | Sứa Khổng Lồ | Vòm Đại Dương |
 | 10 | Mặt Trời Nhân Tạo | Tòa xoắn biển | Hải Đăng Mặt Trời | Mặt Trời Biển |
 | 11 | Bẻ Cong Không Gian | Tháp pha lê biển | Cổng Xoáy Nước | Cổng Sóng |
-| 12 | Siêu Việt | Tháp mặt trời biển | Thành Phố Vỏ Ốc | Vành Sóng |
+| 12 | Siêu Việt | Tháp mặt trời biển | Tháp Ốc Ngọc | Vành Sóng |
 
 ## Cát Hồng
 
@@ -106,4 +106,4 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 9 | Vật Chất Sống | Tháp mặt trời cát hồng | Xương Rồng Khổng Lồ | Vòm Ốc Đảo |
 | 10 | Mặt Trời Nhân Tạo | Cao ốc kính cát hồng | Tháp Gương Mặt Trời | Mặt Trời Sa Mạc |
 | 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Kim Tự Tháp Ngược | Thang Lên Sao |
-| 12 | Siêu Việt | Tòa xoắn cát hồng | Thành Cát Bay | Thành Phố Cát Bay |
+| 12 | Siêu Việt | Tòa xoắn cát hồng | Kim Cương Mặt Trời Hồng | Thành Phố Cát Bay |

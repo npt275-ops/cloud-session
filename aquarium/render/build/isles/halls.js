@@ -44,7 +44,7 @@
       if (lv >= 6) { k.add(Bc(w * 0.5, h * 0.55, 0.06, 0.02), p.c, x, y + h * 0.5, z, { rot: [0, a, 0], ao: false }); if ((i + v) % 3) k.add(Bc(w * 0.42, h * 0.45, 0.04, 0.01), p.w, x * 1.01, y + h * 0.5, z * 1.01, { rot: [0, a, 0], lit: true }); }
       else { k.add(Bc(0.6, 0.9, 0.06, 0.02), p.d, x, y + h * 0.55, z, { rot: [0, a, 0], ao: false }); if ((i + v) % 2) k.add(Bc(0.5, 0.75, 0.04, 0.01), p.w, x * 1.01, y + h * 0.55, z * 1.01, { rot: [0, a, 0], lit: true }); }
     }
-    if (lv >= 9) k.add(K.post(w / 2 + 0.06, 0.18, M.seg, w / 2 + 0.06), p.g, 0, y, 0, { rot: [0, M.rot, 0], glow: true });
+    if (lv >= 9) k.add(K.post(w / 2 + 0.3, 0.16, M.seg, w / 2 + 0.3), p.g, 0, y + 0.35, 0, { rot: [0, M.rot, 0], glow: true }); // tách khỏi mặt khối để không nhấp nháy
   }
   function progressive(key) {
     const M = MOTIF[key];
