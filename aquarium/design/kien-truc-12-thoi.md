@@ -50,7 +50,7 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 4 | Cận đại | Nhà mái chùa | Pháo Đài Núi | Pháo Đài Núi |
 | 5 | Công nghiệp | Nhà gỗ đá | Toà Đá Năm Tầng | Cổng Đá Mây |
 | 6 | Hiện đại | Tháp bám đá núi | Toà Đá Kính | Mỏ Lớn Ống Khói |
-| 7 | Tên lửa | Tháp kim núi | Bệ Phóng Vách Đá | Đài Phát Sóng Đỉnh Núi |
+| 7 | Tên lửa | Tháp kim núi | Đài Thiên Văn Đỉnh Núi | Đài Phát Sóng Đỉnh Núi |
 | 8 | Robot AI | Tháp bậc thang núi | Lõi Đá Tư Duy | Bệ Phóng Núi |
 | 9 | Vật Chất Sống | Tháp vòm chồng núi | Núi Sống | Lõi Dữ Liệu Trong Núi |
 | 10 | Mặt Trời Nhân Tạo | Tháp đĩa nổi núi | Lò Mặt Trời | Người Đá Thức Tỉnh |
@@ -67,7 +67,7 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 4 | Cận đại | Nhà dài mái cong tuyết | Thành Vòm Băng | Pháo Đài Tuyết |
 | 5 | Công nghiệp | Chung cư tuyết | Toà Vòm Năm Tầng | Tháp Chuông Tuyết |
 | 6 | Hiện đại | Cao ốc kính tuyết | Toà Vòm Kính | Lò Hơi Lớn |
-| 7 | Tên lửa | Tháp vòm chồng tuyết | Trạm Phóng Cực | Tháp Cực Quang |
+| 7 | Tên lửa | Tháp vòm chồng tuyết | Trạm Vệ Tinh Cực | Tháp Cực Quang |
 | 8 | Robot AI | Tháp băng | Bộ Óc Băng | Vòm Băng Ấm |
 | 9 | Vật Chất Sống | Tòa xoắn tuyết | Hoa Băng Sống | Tháp Dữ Liệu Lạnh |
 | 10 | Mặt Trời Nhân Tạo | Tháp kim tuyết | Lăng Kính Mặt Trời | Mặt Trời Băng |
@@ -84,8 +84,8 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 4 | Cận đại | Nhà phố biển | Toà Cảng Có Tháp | Cổng Biển |
 | 5 | Công nghiệp | Nhà dài mái cong biển | Toà Cảng Năm Tầng | Tháp Chuông Cảng |
 | 6 | Hiện đại | Tháp ban công sóng biển | Toà Buồm Kính | Xưởng Tàu Khổng Lồ |
-| 7 | Tên lửa | Tháp buồm biển | Bệ Phóng Trên Biển | Tháp Ngắm Biển |
-| 8 | Robot AI | Cao ốc kính biển | Ngọc Trai Trí Tuệ | Bệ Phóng Trên Biển |
+| 7 | Tên lửa | Tháp buồm biển | Cảng Phi Thuyền | Tháp Ngắm Biển |
+| 8 | Robot AI | Cao ốc kính biển | Ngọc Trai Trí Tuệ | Cảng Phi Thuyền |
 | 9 | Vật Chất Sống | Tháp bậc thang biển | Sứa Khổng Lồ | Vòm Đại Dương |
 | 10 | Mặt Trời Nhân Tạo | Tòa xoắn biển | Hải Đăng Mặt Trời | Mặt Trời Biển |
 | 11 | Bẻ Cong Không Gian | Tháp pha lê biển | Cổng Xoáy Nước | Cổng Sóng |
