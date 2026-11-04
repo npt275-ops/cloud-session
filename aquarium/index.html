@@ -73,7 +73,14 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="audio.js"></script>
-<script src="lands3d.js"></script>
+<!-- bản đồ sáu đảo (chỉ thiên nhiên): phần chung, núi, dáng đất, mặt nước, địa hình thêm, cây, rồi ghép lại -->
+<script src="render/map/shared3d.js"></script>
+<script src="render/map/mountains3d.js"></script>
+<script src="render/map/terrain3d.js"></script>
+<script src="render/map/water3d.js"></script>
+<script src="render/map/relief3d.js"></script>
+<script src="render/map/trees3d.js"></script>
+<script src="render/map/map3d.js"></script>
 <script src="sea3d.js"></script>
 <script src="clouds3d.js"></script>
 <!-- công trình: bộ dựng hình chung, kiểu nhà từng đảo theo cấp, rồi phần đặt công trình lên đảo -->
@@ -95,6 +102,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="render/village3d.js"></script>
 <script src="ui/village-ui.js"></script>
 <script src="render/build/kit3d.js"></script>
+<script src="render/build/bridges3d.js"></script>
 <!-- Lúa Vàng: phần chung rồi mỗi thời một tệp (cấp 1 Thời đồ đá … cấp 12 Siêu Việt) -->
 <script src="render/build/plains/common.js"></script>
 <script src="render/build/plains/e01.js"></script>
@@ -135,7 +143,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     day: 0,
     // các lớp dựng hình cũ đọc trạng thái mỗi đảo từ đây; w: null nghĩa là chưa có người
     cities: TERRAINS.map((terrain, i) => ({ id: i, terrain, settled: true, era: 0, w: null, dmg: [] })),
-    bridges: [], // tạm bỏ sáu cây cầu nối các đảo (lands3d.js vẫn giữ cách dựng cầu để bật lại sau)
+    bridges: [], // tạm bỏ sáu cây cầu nối các đảo (cách dựng cầu ở render/build/bridges3d.js, bật lại bằng cách ghi các cặp đảo vào đây)
     trade: [],
   };
   const Sim = { TERRAINS };
@@ -243,6 +251,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   /* =============== Sáu vùng đất, biển, mây =============== */
   const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable, unclickable, noPeople: true });
   const lands = lands3d.lands;
+  const bridges3d = BK.Bridges3D.create({ scene, W, lands3d }); // cầu nối các đảo (đang tạm bỏ: W.bridges rỗng)
   const sea3d = Sea3D.create({ THREE, scene, lands3d, C, clamp, reduce });
   let lightFlash = 0, stormK = 0;
   const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: DOME, reduce, glowTex, audio, flash: (k) => { lightFlash = Math.max(lightFlash, k); }, dayOfYear: () => ((W.day % 360) + 360) % 360, speed: () => tps / 0.75 });
@@ -487,6 +496,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
       if (audio && audio.on) audio.setState({ day: 1 - night, night, rain: stormK, snow: winter, festival: 0, panic: 0, drought: 0, winter });
     }
     lands3d.animate(dt, t, night, camera.position);
+    bridges3d.animate(night);
     buildings.animate(dt, t, night);
     village.update(dt, t);
     sea3d.animate(dt, t, night);

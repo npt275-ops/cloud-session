@@ -45,11 +45,6 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/lands3d.js",
-  "src": "lands3d.js",
-  "mode": 420
- },
- {
   "path": "BeKinh/logic/brain.js",
   "src": "logic/brain.js",
   "mode": 420
@@ -107,6 +102,11 @@
  {
   "path": "BeKinh/render/anim3d.js",
   "src": "render/anim3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/bridges3d.js",
+  "src": "render/build/bridges3d.js",
   "mode": 420
  },
  {
@@ -182,6 +182,41 @@
  {
   "path": "BeKinh/render/buildings3d.js",
   "src": "render/buildings3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/map3d.js",
+  "src": "render/map/map3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/mountains3d.js",
+  "src": "render/map/mountains3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/relief3d.js",
+  "src": "render/map/relief3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/shared3d.js",
+  "src": "render/map/shared3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/terrain3d.js",
+  "src": "render/map/terrain3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/trees3d.js",
+  "src": "render/map/trees3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/map/water3d.js",
+  "src": "render/map/water3d.js",
   "mode": 420
  },
  {
