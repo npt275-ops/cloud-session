@@ -52,29 +52,31 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 
 ### Người và logic ngầm chạy theo thời gian thực
 - Logic của đảo (`logic/island.js`) chạy cùng đồng hồ của bể. 8 người lập làng (4 nam, 4 nữ), hội đồng 8 ghế; mỗi ngày
-  người già đi và có thể mất; cứ 1,5 năm một mốc thế hệ: ai đủ tuổi thì kết đôi (lẻ bóng thì cưới người dân thường), mỗi
-  cặp sinh 2 tới 4 con (làng gần đầy thì 2 tới 3). Tối đa 200 người một đảo. Hạn hán mùa hạ, tang, cãi nhau tự xảy ra.
-- Việc của dân (`logic/jobs.js`): 30% người lớn ngoài hội đồng làm lính (người máu chiến nhất), 20% số còn lại làm thợ
-  dựng (người khéo và có chí nhất), còn lại là nông dân; người già, trẻ em.
-- Kịch bản một ngày (`logic/schedule.js`, `logic/tasks.js`; ý tưởng đầy đủ trong `design/kich-ban-npc.md`): mỗi người có
-  một việc rõ ràng (đến đâu, làm gì, vì sao), đổi buổi thì chọn lại. Sáng và chiều: nông dân ra ruộng, thợ ra chỗ đang
-  dựng, lính tuần và luyện, người đứng đầu điều hành, người già trông trẻ, trẻ đi học. Trưa về nhà ăn. Tối tụ ở sân làng
-  (trò chuyện, kể chuyện, chơi). Đêm ai cũng về nhà ngủ (vào trong nhà, không vẽ), một nửa số lính thay nhau gác.
-  Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`: thời đồ đá hái lượm, cầu mưa; thời sau cuốc, liềm,
-  búa, bao; thời máy thì chỉ tay, điều khiển). Thẻ người ghi việc đang làm và lý do.
-- **Công trình dựng dần trong mỗi thời** (`logic/construction.js`, `render/buildings3d.js` `setProgress`): đầu thời làng
-  cũ vẫn đứng; thợ dựng nhà chính mới trước rồi lần lượt từng công trình của thời (có giàn giáo, mọc dần lên). Xong chỗ
-  nào thì dỡ công trình cũ ở chỗ đó; xong cả thì làng cũ không còn. Tốc độ theo số thợ, cả danh sách xong vào khoảng 80%
-  của thời; nhật ký ghi “Dựng xong …”. Thời đồ đá mở đầu với nhà chính, bếp lửa và hai lều, phần còn lại dân tự dựng.
+  người già đi và có thể mất; cứ 1,5 năm một mốc thế hệ thì ai đủ tuổi kết đôi; con sinh rải đều (trẻ em tối đa khoảng 28%
+  để các lứa tuổi đều nhau). **Tối đa 50 người một đảo**, làng giữ khoảng 45 tới 50 người suốt 9 năm. Hạn hán mùa hạ, tang,
+  cãi nhau, biểu tình tự xảy ra.
+- **Dàn vai cố định, ai cũng có việc chính** (`logic/council.js`, `logic/jobs.js`, chọn theo tính cách; bảng đầy đủ trong
+  `design/kich-ban-npc.md` mục 8): 1 người đứng đầu (đứng chỉ đạo trước nhà chính), 1 quân sư, 2 tướng (luyện quân, kiểm
+  tra chốt gác), 1 tư tế (cầu nguyện ở chỗ thờ), 1 thầy thuốc (đi thăm bệnh từng nhà), 4 thợ xây, 2 thương nhân (bán ở
+  chợ), lính (gác, tuần, luyện), người đi đường (đi qua lại, ra chợ, trò chuyện), nông dân, người già, trẻ em.
+- Kịch bản một ngày (`logic/schedule.js`, `logic/tasks.js`): mỗi người có một việc rõ ràng (đến đâu, làm gì, vì sao), đổi
+  buổi thì chọn lại. Trưa về nhà ăn, tối tụ ở sân làng, đêm về nhà ngủ (không vẽ), một nửa số lính thay nhau gác.
+  **Nhà chính chỉ đông khi biểu tình**: hạn hán kéo dài thì người đa nghi, hiếu chiến kéo tới đối mặt người đứng đầu, lính
+  ra giữ trật tự (nút thử “Biểu tình” trong bảng Làng). Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`).
+  Thẻ người ghi việc đang làm và lý do.
+- **Công trình giữ lại, thợ sửa và nâng cấp tại chỗ** (`logic/construction.js`, `render/buildings3d.js` `setProgress`):
+  công trình các thời trước không biến mất. Sang thời mới, thợ làm lần lượt từ nhà chính: công trình mới trùng chỗ một cái
+  cũ thì giàn giáo bao quanh cái cũ, xong thì cái mới thay vào đúng chỗ đó; ở chỗ trống thì dựng mới (mọc dần lên). Cái cũ
+  không có gì thay thì giữ nguyên. Hết việc dựng thì thợ đi tu bổ. Nhật ký ghi “Dựng xong …”.
 - Người vẽ theo nét đã chốt (`render/rig3d.js`), trang phục theo thời và theo nhóm (`render/outfits3d.js`: người đứng
   đầu, tướng, lính, dân thường nam, dân thường nữ; nữ luôn có tóc dài và ngực). Nét mặt đổi theo việc, mắt tự chớp.
   Người đi giữa các công trình thật của thời đang có (nhà chính, sân, ruộng, nhà ở, chỗ tuần tra). Không có tên trên đầu:
   bấm vào một người để mở thẻ (tính cách, dáng, cha mẹ, vợ chồng, con, việc đang làm).
 - Nút **Làng** trên thanh dưới mở bảng theo dõi: cấp và năm, số người, đã sinh, đã mất, số lính, nông dân, người già,
-  hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh chiến tranh, cãi nhau, lễ hội, yên ổn, sang thế hệ mới).
+  hội đồng, nhật ký, và các nút thử tình huống (hạn hán, lệnh chiến tranh, biểu tình, cãi nhau, lễ hội, yên ổn, sang thế hệ mới).
 - Mở với `?seed=7` để thử một làng khác.
-- Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 200 người vào năm 5 đến 6 rồi giữ quanh 180 đến 200; khoảng
-  250 đến 300 lượt sinh, 60 đến 125 lượt mất; hội đồng gần như luôn đủ ghế. Cả làng 200 người: khoảng 26 lượt vẽ.
+- Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 40 tới 50 người vào năm 2 rồi giữ 45 tới 50 tới hết trận; hội
+  đồng gần như luôn đủ ghế, luôn đủ 4 thợ xây và 2 thương nhân.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -160,7 +162,7 @@ Bản mẫu: `design/npc-tinh-chinh.html`; mẫu các thời đại khác (cổ 
 
 1. ~~Làm sạch: sáu đảo trống, giữ thời tiết và thiên nhiên.~~
 2. Logic ngầm: ~~8 người cốt lõi của Lúa Vàng, gen, di truyền mỗi 1,5 năm, hội đồng, bộ não, cử động, kiểm thử 9 năm~~;
-   còn lại: tài nguyên và đặc sản, dân tối đa 200 người, hội đồng bỏ phiếu chính sách, rồi nhân lên 6 đảo (48 người).
+   còn lại: tài nguyên và đặc sản, dân tối đa 50 người, hội đồng bỏ phiếu chính sách, rồi nhân lên 6 đảo (48 người).
 3. Hiển thị đảo: nhà chính ở giữa, bãi tài nguyên xung quanh, công trình theo cấp, nhân vật cốt lõi.
 4. Chiến tranh qua cầu và thôn tính.
 5. Nối quyền năng của thần, viện trợ, cấm vận và thì thầm vào logic mới.
@@ -217,7 +219,7 @@ Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), ho�
 | `game/` | **Ghép game**: `world.js` bộ nhớ chung G (hàm tiện dụng, sáu vùng đất, ngày trong trận, tốc độ, thời tiết); `nature.js` dựng bản đồ, cầu, biển, mây; `seasons.js` bốn mùa và độ đông; `village.js` Lúa Vàng chạy theo thời gian thực (logic đảo, công trình, người, bảng làng, bấm chọn người); `loop.js` thứ tự khởi động và nhịp mỗi khung hình |
 | `render/scene3d.js`, `sky3d.js`, `perf3d.js`, `tank3d.js`, `snow3d.js` | Bộ vẽ, camera, khói; bầu trời, sao, trăng, nắng, ngày đêm, bóng nắng không rung; bộ điều tốc 60 khung hình và vùng bóng; vòm kính, vòng đồng, đá trôi; tuyết rơi mùa đông |
 | `ui/hud.js`, `landbar.js`, `camera-fly.js` | Nút tốc độ, âm thanh, dòng ngày; thanh sáu đảo; camera bay tới và bay tự do |
-| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` lính, thợ, nông dân, người già; `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời |
+| `logic/` | **Logic ngầm**, không vẽ gì, chạy được bằng Node. `rules.js` mọi con số luật chơi (sửa nhịp trận ở đây); `rng.js` số ngẫu nhiên có hạt giống; `genes.js` định nghĩa gen và phép lai; `people.js` một người, tuổi, họ hàng; `family.js` ghép đôi, kết hôn, sinh con; `council.js` hội đồng 8 ghế (có thầy thuốc) và kế vị; `brain.js` bộ não tình huống và núm vặn cử động; `island.js` trạng thái và nhịp chạy của một đảo; `eras.js` mười hai thời kỳ và lịch lên cấp; `jobs.js` dàn vai theo tính cách (thợ xây, thương nhân, lính, người đi đường, nông dân); `schedule.js` buổi trong ngày; `tasks.js` việc theo vai và buổi; `construction.js` dựng công trình trong mỗi thời |
 | `render/` | **Vẽ người**: `outfits3d.js` trang phục 5 nhóm × 12 thời; `rig3d.js` khung khớp và bộ phận theo nét đã chốt; `anim3d.js` 5 trạng thái cử động, cầu nguyện, 6 thói quen; `village3d.js` người trong làng đi lại theo bộ não, nét mặt, bấm chọn; `gestures3d.js` thư viện 65 cử chỉ; `face3d.js` 7 biểu cảm khuôn mặt; `ik3d.js` tay chạm đúng chỗ trên cơ thể; `work3d.js` cử chỉ và đồ cầm tay cho từng việc theo thời; `model3d.js` NPC mẫu diễn thư viện. **Công trình**: `buildings3d.js` đặt công trình của một đảo theo cấp (`show(đảo, cấp)`) và dựng dần theo tiến độ (`setProgress`) |
 | `render/build/` | `bridges3d.js` cầu nối hai đảo theo thời (đang tạm bỏ); `kit3d.js` bộ dựng hình chung theo cách vẽ của đảo (hộp vát, mái, gộp một khối, chân sẫm, phần chuyển động); `plains/` công trình Lúa Vàng: `common.js` bảng màu, chỗ đặt nhà, món dùng chung; `e01.js` … `e12.js` mỗi thời một tệp (kiểu công trình, bố cục, tên). Đảo khác thêm thư mục riêng cùng kiểu |
 | `design/` | Bản mẫu xem trước đã chốt: nét vẽ NPC, NPC các thời đại, công trình Làng lúa (game không nạp) |

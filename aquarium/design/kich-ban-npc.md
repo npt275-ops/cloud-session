@@ -51,7 +51,36 @@ Quân lực (lính, tướng) · Của cải (thương chủ, chợ). Lên thờ
 6. Lên thời bằng tài nguyên; nhật ký kể chuyện.
 7. Đo "không đơ" tự động khi chạy 9 năm không giao diện (người đứng yên quá lâu dưới 2%, việc có đầu ra 100%).
 
-## 7. Công trình đi cùng NPC (đã có)
-Mỗi thời có danh sách công trình (render/build/plains/eNN.js). Đầu thời, thợ bắt đầu dựng nhà chính của thời mới, rồi lần lượt
-các công trình khác (`logic/construction.js`): chỗ đang dựng có giàn giáo, thợ đứng đóng búa, công trình mọc dần lên; dựng xong
-thì công trình cũ của thời trước ở chỗ đó được dỡ đi, nhật ký ghi "dựng xong". Hết thời thì mọi công trình của thời đã xong.
+## 7. Công trình đi cùng NPC: giữ lại, sửa và nâng cấp tại chỗ
+Công trình của các thời trước không biến mất. Mỗi thời có danh sách công trình (render/build/plains/eNN.js); thợ làm lần lượt,
+bắt đầu từ nhà chính (`logic/construction.js`):
+- Công trình mới trùng chỗ một công trình cũ: **sửa, nâng cấp**. Cái cũ vẫn đứng, giàn giáo dựng bao quanh nó, thợ đóng búa,
+  khuân vác; xong thì cái mới hiện lên đúng chỗ đó.
+- Công trình mới ở chỗ trống: **dựng mới**, có giàn giáo, mọc dần lên.
+- Cái cũ không có gì thay thì giữ nguyên qua các thời. Khi không còn gì phải dựng, thợ đi vòng tu bổ nhà cửa.
+
+## 8. Dàn vai cố định: tối đa 50 người, ai cũng có việc chính
+Chỉ những NPC có mục đích. Vai chọn theo tính cách (gen), việc chính giữ nguyên qua mọi thời, chỉ cách làm đổi theo thời.
+
+| Vai | Số người | Chọn theo tính cách | Việc chính (sáng, chiều) | Ở đâu |
+|---|---|---|---|---|
+| Người đứng đầu | 1 | tham vọng, trí tuệ, không nhu mì | đứng chỉ đạo cả làng (ra lệnh, chỉ tay, khoanh tay) | trước nhà chính |
+| Quân sư | 1 | khôn khéo, trí tuệ | bàn việc với người đứng đầu | trước nhà chính |
+| Tướng | 2 | hiếu chiến, gan dạ | luyện quân, đi kiểm tra chốt gác | bãi tập, chốt gác |
+| Tư tế (tôn giáo) | 1 | sùng đạo, hiền | cầu nguyện, làm lễ | chỗ thờ (cột tô tem, cây đa, đá vẽ…) |
+| Thầy thuốc (y tế) | 1 | trí tuệ, nhu mì, không hiếu chiến | đi thăm bệnh từng nhà | lần lượt các nhà |
+| Thợ xây | 4 (kể cả thợ cả) | khéo, gan, không đa nghi | dựng mới, sửa, nâng cấp; hết việc thì tu bổ | chỗ đang dựng |
+| Thương nhân | 2 (kể cả thương chủ) | khôn khéo, có chí | bán hàng | chợ, kho, quầy |
+| Lính | khoảng 30% người lớn còn lại | máu chiến nhất | gác, đi tuần, luyện võ (hiếu chiến luyện trước, đa nghi gác trước) | chốt gác, mép làng |
+| Người đi đường | khoảng 40% dân còn lại | hướng ngoại, ít đa nghi | đi qua lại, ra chợ mua đồ, gặp người quen trò chuyện | đường, chợ, cửa nhà |
+| Nông dân | số dân còn lại | chăm, hiền | làm ruộng | ruộng |
+| Người già, trẻ em | theo tuổi | | người già ngồi trước nhà, kể chuyện; trẻ đi học, phụ ruộng | nhà, trường, sân |
+
+Trưa về nhà ăn (người đứng đầu, người bán hàng, một phần lính vẫn ở chỗ mình). Tối tụ ở sân làng, không ở nhà chính. Đêm về ngủ.
+
+**Nhà chính chỉ đông khi biểu tình, bạo loạn.** Hạn hán kéo dài thì dân bất bình: người đa nghi, hiếu chiến, khôn lỏi kéo tới
+nhà chính đối mặt người đứng đầu, lính và tướng ra giữ trật tự, người nhát ở trong nhà. Tang thì ở nhà hay ra chỗ thờ, chiến
+tranh thì người không đánh về nhà, không ai tụ ở nhà chính.
+
+Dân số: các lứa tuổi giữ đều nhau (trẻ em tối đa khoảng 28% của 50), sinh rải đều giữa hai mốc thế hệ, làng đủ 50 người thì
+không đón người ngoài vào. Làng giữ khoảng 45 tới 50 người suốt 9 năm.

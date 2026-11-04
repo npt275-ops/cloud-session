@@ -26,7 +26,7 @@
       key, name: def.name, bias: def.bias, clans: P.CLANS[key], rng,
       day: 0, lastDay: 0, nextGenDay: R.GEN_DAYS, gen: 0, nextId: 1, level: 1, births: 0, deaths: 0, tod: 0.3, buildPlan: o.buildPlan || null, build: null,
       people: new Map(), usedNames: new Set(), seats: {}, minds: new Map(), log: [],
-      food: 1, situ: { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null }, situChanged: false, thinkAcc: 0,
+      food: 1, situ: { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }, situChanged: false, thinkAcc: 0,
     };
     const sexes = ['m', 'f', 'm', 'f', 'm', 'f', 'm', 'f'];
     sexes.forEach((sex, i) => {
@@ -61,8 +61,11 @@
     const doy = day % R.YEAR_DAYS;
     if (doy === 100 && rng.chance(R.DROUGHT_CHANCE)) startDrought(S, rng.int(R.DROUGHT_DAYS[0], R.DROUGHT_DAYS[1]));
     S.food = S.situ.drought > day ? 0.4 : 1;
+    // hạn hán kéo dài thì dân bất bình kéo tới nhà chính biểu tình (người đa nghi, hiếu chiến dẫn đầu)
+    if (S.situ.drought > day && !(S.situ.protest > day) && rng.chance(0.04)) startProtest(S, rng.int(30, 50));
     // mốc thế hệ
     if (day >= S.nextGenDay) { S.gen++; S.nextGenDay += R.GEN_DAYS; S.log.push({ day, kind: 'gen', ids: [], text: 'Thế hệ thứ ' + (S.gen + 1) + ' bắt đầu.' }); const n0 = S.people.size; F.generation(S, rng); S.births += S.people.size - n0; S.situChanged = true; }
+    else if (F.trickle) { const kids = F.trickle(S, rng); if (kids && kids.length) { S.births += kids.length; S.situChanged = true; } }
     // thời kỳ văn minh: lên cấp theo lịch của logic/eras.js
     if (E) { const l = E.levelOfDay(day); if (l !== S.level) { S.level = l; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); S.situChanged = true; } }
     if (J) J.assign(S);
@@ -73,20 +76,22 @@
 
   /* ---------- Tình huống (dùng cho thời tiết thật và cho nút thử) ---------- */
   function startDrought(S, days) { S.situ.drought = S.day + days; S.situChanged = true; S.log.push({ day: Math.floor(S.day), kind: 'drought', ids: [], text: 'Hạn hán kéo đến ' + S.name + ', ruộng nứt nẻ.' }); }
+  function startProtest(S, days) { S.situ.protest = S.day + days; S.situChanged = true; S.log.push({ day: Math.floor(S.day), kind: 'protest', ids: [], text: 'Dân kéo tới nhà chính biểu tình, đòi người đứng đầu giải quyết.' }); }
   function trigger(S, kind) {
     const rng = S.rng, day = S.day;
     if (kind === 'drought') startDrought(S, 20);
     else if (kind === 'war') { S.situ.war = day + 6; S.log.push({ day: Math.floor(day), kind: 'war', ids: [], text: 'Lệnh chiến tranh được ban ra.' }); }
+    else if (kind === 'protest') startProtest(S, 40); // khoảng 50 giây ở 1×
     else if (kind === 'festival') { S.situ.festival = day + 4; S.log.push({ day: Math.floor(day), kind: 'festival', ids: [], text: 'Làng mở hội.' }); }
     else if (kind === 'quarrel') { const adults = [...S.people.values()].filter((p) => p.alive && P.ageOf(p, day) >= R.ADULT_AGE); if (adults.length > 1) { const a = rng.pick(adults); let b = rng.pick(adults); while (b === a) b = rng.pick(adults); S.situ.quarrel = null; B.startQuarrel(S, a.id, b.id, rng); } }
-    else if (kind === 'calm') { S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [], text: 'Mọi chuyện lắng xuống.' }); }
+    else if (kind === 'calm') { S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [], text: 'Mọi chuyện lắng xuống.' }); }
     else if (kind === 'nextGen') { const d = Math.max(0, S.nextGenDay - S.day); step(S, d + 0.01); return; }
     S.situChanged = true; B.think(S, rng);
   }
 
   /* ---------- Đọc nhanh cho phần vẽ và bảng ---------- */
   const living = (S) => [...S.people.values()].filter((p) => p.alive);
-  function situNow(S) { const X = S.situ, d = S.day; return { war: X.war > d, drought: X.drought > d, festival: X.festival > d, mourning: X.mourning > d, quarrel: !!(X.quarrel && X.quarrel.until > d) }; }
+  function situNow(S) { const X = S.situ, d = S.day; return { war: X.war > d, drought: X.drought > d, festival: X.festival > d, mourning: X.mourning > d, protest: X.protest > d, quarrel: !!(X.quarrel && X.quarrel.until > d) }; }
 
   return { ISLANDS, create, step, trigger, living, situNow };
 });

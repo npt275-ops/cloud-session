@@ -12,7 +12,13 @@
   const V = {
     farm: (lv) => (lv <= 1 ? [['harvest', null], ['carry', 'sack']] : lv <= 6 ? [['hoe', 'hoe'], ['harvest', 'sickle'], ['carry', 'sack']] : [['point', null], ['crossArms', null], ['carry', 'sack']]),
     build: (lv) => (lv <= 1 ? [['mine', 'hammer'], ['carry', 'sack']] : lv <= 7 ? [['build', 'hammer'], ['carry', 'sack'], ['mine', 'hammer']] : [['point', null], ['build', 'hammer']]),
+    repair: (lv) => (lv <= 7 ? [['build', 'hammer'], ['mine', 'hammer'], ['carry', 'sack']] : [['point', null], ['build', 'hammer']]),
     craft: () => [['mine', 'hammer'], ['chop', 'axe']],
+    direct: () => [['command', null], ['point', null], ['crossArms', null], ['handsBehind', null]],
+    patrol: () => [['lookAround', null], ['guard', null]],
+    heal: () => [['kneelPray', null], ['nod', null], ['talk', null]],
+    shop: () => [['trade', 'coin'], ['point', null], ['nod', null]],
+    stroll: () => [['lookAround', null], ['wave', null], ['stand', null]],
     guard: () => [['guard', null], ['lookAround', null], ['handsBehind', null]],
     drill: () => [['thrust', null], ['block', null], ['command', null]],
     rule: () => [['speech', null], ['command', null], ['handsBehind', null]],

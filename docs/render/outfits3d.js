@@ -102,7 +102,7 @@
     },
   };
   // món theo nghề của các ghế khác trong hội đồng
-  const SEAT_PROP = { advisor: 'staff', priest: 'staff', merchant: 'basket', scholar: 'staff', builder: 'staff' };
+  const SEAT_PROP = { advisor: 'staff', priest: 'staff', merchant: 'basket', healer: 'basket', builder: 'staff' };
   // nhóm của một người: người đứng đầu, tướng, lính, dân thường nam hay nữ
   function groupOf(p) {
     if (p.role === 'king') return 'leader';

@@ -117,3 +117,23 @@ test('công trình mỗi thời được dựng dần và xong hết; việc ng�
   assert.ok(built > 50, 'nhật ký có ' + built + ' lần dựng xong');
   for (const v of ['farm', 'build', 'guard', 'sleep', 'eat', 'chat']) assert.ok(seenVerbs.has(v), 'có việc ' + v);
 });
+
+test('dàn vai cố định tối đa 50 người; nhà chính chỉ đông khi biểu tình', () => {
+  const S = BK.Island.create({ key: 'plains', seed: 9 });
+  const R = BK.Rules, hallCrowd = () => { let n = 0; for (const m of S.minds.values()) if (m.place === 'hall' || (m.mood === 'argue' && m.target === S.seats.king)) n++; return n; };
+  let maxPop = 0, maxHall = 0;
+  for (let d = 0; d < 9 * 360; d++) {
+    S.tod = 0.35; S.situ.drought = 0; S.situ.protest = 0; BK.Island.step(S, 1); // ngày thường, buổi sáng
+    maxPop = Math.max(maxPop, BK.Island.living(S).length);
+    if (d > 900) { maxHall = Math.max(maxHall, hallCrowd()); }
+  }
+  assert.ok(maxPop <= R.POP_CAP, 'dân tối đa ' + maxPop);
+  const live = BK.Island.living(S).length; assert.ok(live >= 35, 'cuối trận còn ' + live + ' người');
+  const count = (job, seat) => BK.Jobs.count(S, job) + (S.seats[seat] != null ? 1 : 0);
+  assert.strictEqual(count('builder', 'builder'), R.BUILDERS, 'đủ thợ xây');
+  assert.strictEqual(count('trader', 'merchant'), R.TRADERS, 'đủ thương nhân');
+  for (const k of ['king', 'general1', 'general2', 'priest', 'healer']) assert.ok(S.seats[k] != null, 'có ghế ' + k);
+  assert.ok(maxHall <= 3, 'ngày thường nhà chính chỉ có người đứng đầu và quân sư: ' + maxHall);
+  BK.Island.trigger(S, 'protest');
+  assert.ok(hallCrowd() >= 8, 'biểu tình: ' + hallCrowd() + ' người ở nhà chính');
+});

@@ -38,7 +38,16 @@
       if (place === 'field') return pickOf(PL.field, k);
       if (place === 'guard') return pickOf(PL.guard, p.id);
       if (place === 'bridge') return bridge;
-      if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : [PL.hall], p.id);
+      if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
+      if (place === 'market') return pickOf(PL.market, k);
+      if (place === 'shrine') return pickOf(PL.shrine, k);
+      if (place === 'school') return pickOf(PL.school, k);
+      // đi vòng: người đi đường, thợ đi tu bổ, thầy thuốc đi thăm từng nhà, lính đi tuần đổi chỗ theo thời gian
+      const hop = (arr, every) => pickOf(arr, p.id * 3 + Math.floor(S.day * every + (p.id % 7) * 0.13));
+      if (place === 'stroll') return hop(PL.all, 5);
+      if (place === 'repair') return hop(PL.all, 1.5);
+      if (place === 'visit') return hop(PL.homes, 2);
+      if (place === 'patrol') return hop(PL.guard, 3);
       return null;
     }
     const setPlaces = (pl) => { PL = pl; };

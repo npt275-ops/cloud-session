@@ -1,5 +1,5 @@
 /* Bể Kính · logic/council.js
- * Hội đồng 8 ghế của một đảo: vua, hai tướng, quân sư, tư tế, thương chủ, học giả, thợ cả.
+ * Hội đồng 8 ghế của một đảo: vua, hai tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả.
  * Xếp người vào ghế theo độ hợp gen; ghế trống (mất, già quá) thì người cùng gia tộc giỏi nhất vào thay,
  * ưu tiên giữ 4 nam 4 nữ. Cần: logic/rules.js, logic/people.js. */
 (function (root, factory) {
@@ -18,7 +18,7 @@
     { key: 'advisor', name: 'Quân sư', fit: (t) => t.cunning * 0.5 + t.intellect * 0.4 + t.paranoia * 0.1 },
     { key: 'priest', name: 'Tư tế', fit: (t) => t.piety * 0.8 + (1 - t.aggression) * 0.2 },
     { key: 'merchant', name: 'Thương chủ', fit: (t) => t.cunning * 0.4 + t.ambition * 0.4 + t.intellect * 0.2 },
-    { key: 'scholar', name: 'Học giả', fit: (t) => t.intellect * 0.8 + (1 - t.aggression) * 0.2 },
+    { key: 'healer', name: 'Thầy thuốc', fit: (t) => t.intellect * 0.5 + t.meekness * 0.3 + (1 - t.aggression) * 0.2 },
     { key: 'builder', name: 'Thợ cả', fit: (t) => (1 - t.fear) * 0.3 + t.intellect * 0.3 + (1 - t.paranoia) * 0.4 },
   ];
   const seatName = (key, sex) => { const s = SEATS.find((x) => x.key === key); return s ? (sex === 'f' && s.nameF ? s.nameF : s.name) : ''; };

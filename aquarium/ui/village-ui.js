@@ -46,15 +46,15 @@
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
     const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', site: 'ở chỗ đang dựng' };
-    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
+    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']];
 
     function renderPanel() {
       const X = Island.situNow(S), live = Island.living(S);
-      const chips = [['war', 'Chiến tranh'], ['drought', 'Hạn hán'], ['quarrel', 'Đang cãi nhau'], ['festival', 'Lễ hội'], ['mourning', 'Để tang']].filter(([k]) => X[k]).map(([, t]) => '<span class="chip hot">' + t + '</span>').join('') || '<span class="chip">Ngày thường</span>';
+      const chips = [['war', 'Chiến tranh'], ['drought', 'Hạn hán'], ['protest', 'Biểu tình'], ['quarrel', 'Đang cãi nhau'], ['festival', 'Lễ hội'], ['mourning', 'Để tang']].filter(([k]) => X[k]).map(([, t]) => '<span class="chip hot">' + t + '</span>').join('') || '<span class="chip">Ngày thường</span>';
       const seats = CO.SEATS.map((s) => { const id = S.seats[s.key], p = id != null && S.people.get(id); return '<span>' + (p ? CO.seatName(s.key, p.sex) : s.name) + '</span><div>' + (p ? name(id) + ' · ' + Math.floor(P.ageOf(p, S.day)) + ' tuổi' : '<i>trống</i>') + '</div>'; }).join('');
       const log = S.log.slice(-7).reverse().map((e) => '<li><b>' + when(e.day) + '</b> ' + e.text + '</li>').join('');
       const J = BK.Jobs, E = BK.Eras, lv = S.level || 1;
-      const jobs = J ? ' · lính ' + J.count(S, 'soldier') + ' · nông dân ' + J.count(S, 'farmer') + ' · già ' + J.count(S, 'elder') : '';
+      const jobs = J ? ' · thợ ' + (J.count(S, 'builder') + (S.seats.builder != null ? 1 : 0)) + ' · lính ' + J.count(S, 'soldier') + ' · nông dân ' + J.count(S, 'farmer') + ' · đi đường ' + J.count(S, 'walker') + ' · già ' + J.count(S, 'elder') : '';
       panel.innerHTML = '<h3>Làng ' + S.name + ' <small>thế hệ ' + (S.gen + 1) + ' · ' + live.length + ' người · ' + live.filter((p) => P.ageOf(p, S.day) < R.ADULT_AGE).length + ' trẻ</small></h3>' +
         '<div class="stat">' + (E ? 'Cấp ' + lv + ' · ' + E.of(lv).name + ' · ' : '') + when(S.day) + '<br>Đã sinh ' + (S.births || 0) + ' · đã mất ' + (S.deaths || 0) + jobs + '</div>' +
         '<div class="chips">' + chips + '</div>' +
