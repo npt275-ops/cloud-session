@@ -6,9 +6,9 @@
  *   bob  [tên, biên độ, nhịp]  nhấp nhô (khí cầu, drone, nhà lơ lửng)
  *   slide [tên, trục, tốc độ, quãng]  chạy qua lại (đầu máy)
  *   pulse                      khối sáng phập phồng
- * Dựng dần theo logic (logic/construction.js, setProgress), tự mọc tự đổi như bản cũ (không giàn giáo): công trình các thời
- * trước không biến mất; sang thời mới, cái cũ ở chỗ nào lún xuống rồi cái mới của thời đó mọc lên đúng chỗ đó (nhà riêng số i
- * thay nhà số i), chỗ trống thì mọc dần từ mặt đất. Cái cũ không có gì thay thì giữ nguyên. Nhà riêng (home) dịch tránh núi,
+ * Lên đời theo logic (logic/construction.js, setProgress): công trình các thời trước không biến mất; sang thời mới, thợ làm
+ * lần lượt từng chỗ, chỗ nào làm xong thì công trình ở đó đổi ngay sang kiểu của thời mới (nhà riêng số i thay nhà số i),
+ * chỗ trống thì công trình mới hiện ra ngay. Cái cũ không có gì thay thì giữ nguyên. Nhà riêng (home) dịch tránh núi,
  * hồ, công trình khác; công trình ngoài làng (outer: coast, sea, forest) tìm chỗ trống trên đảo. Đảo nào chưa có kiểu thì để trống.
  * Cần: three.js, render/build/kit3d.js, các tệp render/build/<đảo>/. */
 (function (root, factory) {
@@ -17,7 +17,6 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const STYLE_OF = { plains: () => BK.Plains3D }; // thêm đảo khác ở đây khi có tệp kiểu công trình
-  const ease = (u) => 1 - Math.pow(1 - Math.max(0, Math.min(1, u)), 3);
   const SEA_Y = -0.55; // mặt biển (sea3d.js)
 
   function create(o) {
@@ -117,20 +116,16 @@
       // nhóm của thời cũ nào không còn công trình nào đứng thì bỏ hẳn
       for (const g of sh.groups) if (g !== P.grp && !sh.standing.some((Q) => Q.grp === g && !Q.gone)) { dropGroup(sh.L, g); sh.groups = sh.groups.filter((x) => x !== g); }
     }
-    // tiến độ từ logic (S.build.list[j].progress, 0..1), như bản cũ: công trình tự mọc, tự đổi. Có cái cũ ở chỗ đó thì cái cũ
-    // lún xuống trước (nửa đầu), cái mới mọc lên sau; chỗ trống thì cái mới mọc dần từ mặt đất. Không có giàn giáo.
+    // tiến độ từ logic (S.build.list[j].progress, 0..1): đang làm thì cái cũ vẫn đứng nguyên (thợ làm ở đó); làm xong là lên
+    // đời ngay lập tức: cái cũ biến mất, cái mới hiện đủ cỡ đúng chỗ đó. Không mọc dần, không giàn giáo.
     function setProgress(i, list) {
       const sh = shown[i]; if (!sh) return;
       sh.pieces.forEach((P, j) => {
         const pr = list && list[j] ? list[j].progress : 1;
         if (pr === P.progress || P.dead) return;
         P.progress = pr;
-        if (pr > 0 && !P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); }
-        if (pr >= 1) { finish(sh, P); P.progress = 1; return; }
-        if (pr <= 0) { P.g.visible = false; return; }
-        const old = P.replaces.length ? ease(Math.min(1, pr / 0.45)) : 1, u = P.replaces.length ? Math.max(0, (pr - 0.4) / 0.6) : pr;
-        for (const Q of P.replaces) { if (Q.gone) continue; const s = 1 - old; Q.g.visible = s > 0.03; Q.g.scale.set(Q.fitS * (0.85 + 0.15 * s), Q.fitS * Math.max(0.03, s), Q.fitS * (0.85 + 0.15 * s)); }
-        P.g.visible = u > 0; if (u > 0) setS(P, 0.8 + 0.2 * u, Math.max(0.04, ease(u)));
+        if (pr >= 1) { if (!P.started) { P.started = true; lands3d.clearTrees(sh.L, P.x, P.z, P.clear); } finish(sh, P); P.progress = 1; return; }
+        P.g.visible = false;
       });
     }
 

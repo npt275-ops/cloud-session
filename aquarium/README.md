@@ -30,7 +30,7 @@ nhanh nhất), không có tạm dừng, không có nút tua; mỗi thời trôi 
 (cả trận 72, 36, 18 phút). Đồng hồ ghi cấp x/12 · mùa · ngày; thanh dưới ghi tên thời và phần đã đi tới thời sau.
 Mở với `?cap=5` để vào thẳng cấp 5 khi phát triển.
 
-Lên cấp thì làng cũ lún xuống, làng mới mọc lên từ nhà chính ra ngoài. Công trình vẽ theo cách của đảo (mặt phẳng, góc
+Lên cấp thì công trình đổi ngay sang kiểu của thời mới, lần lượt từng chỗ khi thợ làm xong. Công trình vẽ theo cách của đảo (mặt phẳng, góc
 vát, chân sẫm dần lên mái), cỡ theo người cao 1,4, mỗi công trình gộp thành một khối.
 
 | Cấp | Thời kỳ | Nhà chính | Công trình khác trên Lúa Vàng |
@@ -64,12 +64,13 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   **Nhà chính chỉ đông khi biểu tình**: hạn hán kéo dài thì người đa nghi, hiếu chiến kéo tới đối mặt người đứng đầu, lính
   ra giữ trật tự (nút thử “Biểu tình” trong bảng Làng). Mỗi việc có cử chỉ và đồ cầm tay theo thời (`render/work3d.js`).
   Thẻ người ghi việc đang làm và lý do.
-- **Công trình tự mọc, tự đổi như bản cũ** (`logic/construction.js`, `render/buildings3d.js` `setProgress`, không giàn
-  giáo): công trình các thời trước không biến mất. Sang thời mới, thợ làm lần lượt từ nhà chính: cái cũ ở chỗ nào lún xuống
-  rồi cái mới của thời đó mọc lên đúng chỗ đó; chỗ trống thì mọc dần từ mặt đất. Cái cũ không có gì thay thì giữ nguyên.
+- **Công trình lên đời ngay lập tức** (`logic/construction.js`, `render/buildings3d.js` `setProgress`): công trình các
+  thời trước không biến mất. Sang thời mới, thợ làm lần lượt từ nhà chính; chỗ nào làm xong thì công trình ở đó đổi ngay
+  sang kiểu của thời mới (không mọc dần, không giàn giáo); chỗ trống thì công trình mới hiện ra ngay. Cái cũ không có gì
+  thay thì giữ nguyên.
   Hết việc dựng thì thợ đi tu bổ. Nhật ký ghi “Dựng xong …”.
 - **20 nhà riêng, mỗi hộ một nhà** (`render/build/plains/common.js` `homes`, `logic/homes.js`): vòng trong 8 nhà, vòng
-  ngoài 12 nhà, cùng chỗ ở mọi thời (nhà số i thời mới mọc lên thay nhà số i thời cũ). Vợ chồng và con nhỏ ở chung; lớn
+  ngoài 12 nhà, cùng chỗ ở mọi thời (nhà số i thời mới thay ngay nhà số i thời cũ). Vợ chồng và con nhỏ ở chung; lớn
   mà chưa cưới thì ra ở riêng nếu còn nhà; cả hộ không còn ai thì nhà trống cho hộ mới. Đêm, trưa ai về đúng nhà mình;
   thẻ người ghi “Nhà số …”. Nhà cao tầng của thời sau được thu cho vừa chỗ một hộ.
 - **Công trình ngoài làng** (`render/build/plains/outer.js`): bến và thuyền ở bờ biển, nhà trong rừng, tháp canh, đền
