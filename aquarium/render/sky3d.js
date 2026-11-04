@@ -2,15 +2,20 @@
  * Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod),
  * hướng nắng, bóng nắng theo chỗ camera nhìn (nhích từng bước bằng một điểm ảnh của bản đồ bóng để mép bóng không rung),
  * trời sầm lại khi giông, chớp loé sáng; ghi giờ lên đồng hồ. Màu trời và ánh sáng theo giờ lấy từ render/mood3d.js (bảng màu
- * ấm theo giờ), có thêm một đèn hắt nhẹ phía ngược nắng cho bóng dịu. Cần: game/world.js, render/scene3d.js, render/perf3d.js (PERF.half). */
+ * ấm theo giờ), có thêm một đèn hắt nhẹ phía ngược nắng cho bóng dịu. Từ thời 10 (thành phố neon) trời chỉ còn tím, có rèm cực
+ * quang, không còn ngày đêm (mood3d NEON); applyTime trả night = 1 để mọi đèn, cửa sổ sáng suốt. Cần: game/world.js, render/scene3d.js, render/perf3d.js (PERF.half). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   function setup(G) {
     const { THREE, scene, camera, controls, C, clamp, hash, glowTex, $ } = G;
     const skyMat = new THREE.ShaderMaterial({
-      uniforms: { top: { value: C('#5aa9e6') }, bottom: { value: C('#cfe8f5') }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: C('#fff3d0') } },
+      uniforms: { top: { value: C('#5aa9e6') }, bottom: { value: C('#cfe8f5') }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: C('#fff3d0') }, neon: { value: 0 }, time: { value: 0 } },
       vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: 'uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vW; void main(){ vec3 d = normalize(vW); float h = clamp(d.y * 1.4 + 0.25, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.8)); float s = max(dot(d, normalize(sunDir)), 0.0); c += sunCol * (pow(s, 600.0) * 1.2 + pow(s, 12.0) * 0.18); gl_FragColor = vec4(c, 1.0); }',
+      // trời neon (thời 10 trở đi): rèm cực quang xanh ngọc hồng trôi chậm và ánh thành phố hắt lên chân trời
+      fragmentShader: 'uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; uniform float neon; uniform float time; varying vec3 vW; void main(){ vec3 d = normalize(vW); float h = clamp(d.y * 1.4 + 0.25, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.8)); float s = max(dot(d, normalize(sunDir)), 0.0); c += sunCol * (pow(s, 600.0) * 1.2 + pow(s, 12.0) * 0.18);'
+        + ' if (neon > 0.0) { float az = atan(d.z, d.x); float band = sin(az * 3.0 + time * 0.05 + sin(az * 7.0 - time * 0.08) * 0.7); float hgt = smoothstep(0.06, 0.28, d.y) * (1.0 - smoothstep(0.34, 0.8, d.y)); float cur = pow(max(band, 0.0), 3.0) * hgt * (0.75 + 0.25 * sin(az * 23.0 + time * 0.4));'
+        + ' vec3 ac = mix(vec3(0.2, 1.0, 0.85), vec3(1.0, 0.3, 0.85), 0.5 + 0.5 * sin(az * 2.0 + time * 0.03)); c += ac * cur * 0.38 * neon; c += vec3(0.7, 0.22, 0.55) * pow(1.0 - abs(d.y), 10.0) * 0.3 * neon; }'
+        + ' gl_FragColor = vec4(c, 1.0); }',
       side: THREE.BackSide, depthWrite: false, depthTest: false,
     });
     { const sky = new THREE.Mesh(new THREE.SphereGeometry(1900, 32, 16), skyMat); sky.renderOrder = -10; scene.add(sky); } // vẽ trước tiên, không so độ sâu (đi cùng độ sâu lôgarit)
@@ -43,9 +48,13 @@
     const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
     const sunDir = new THREE.Vector3(), _moonP = new THREE.Vector3(), _sx = new THREE.Vector3(), _su = new THREE.Vector3(), _sv = new THREE.Vector3();
     function applyTime() {
+      // thành phố neon (thời 10 trở đi, render/neon3d.js): mất mặt trời, không còn ngày đêm, đèn sáng suốt; ánh sáng rọi từ trên
+      // cao (các mặt trời nhân tạo trên mỗi đảo) nên bóng đổ gần như thẳng xuống
+      const neon = (G.level || 0) >= ((BK.Neon3D && BK.Neon3D.LV) || 10);
       const tod = G.time.tod, ang = (tod - 0.25) * Math.PI * 2, e = Math.sin(ang);
-      const day = clamp(e * 2.2 + 0.25, 0, 1), night = 1 - clamp(e * 3 + 0.6, 0, 1), gold = clamp(1 - Math.abs(e) * 3.2, 0, 1) * (e > -0.25 ? 1 : 0);
-      sunDir.set(Math.cos(ang) * 0.85, Math.max(0.05, e), 0.55).normalize();
+      const day = neon ? 0 : clamp(e * 2.2 + 0.25, 0, 1), night = neon ? 1 : 1 - clamp(e * 3 + 0.6, 0, 1), gold = neon ? 0 : clamp(1 - Math.abs(e) * 3.2, 0, 1) * (e > -0.25 ? 1 : 0);
+      if (neon) sunDir.set(0.22, 1, 0.3).normalize(); else sunDir.set(Math.cos(ang) * 0.85, Math.max(0.05, e), 0.55).normalize();
+      skyMat.uniforms.neon.value = neon ? 1 : 0; skyMat.uniforms.time.value = performance.now() * 0.001;
       // khung bóng theo camera nhưng chỉ nhích từng bước bằng một điểm ảnh của bản đồ bóng (tính trong hệ toạ độ của nắng),
       // nên khi kéo camera, mép bóng trên núi tuyết và mặt đất không bị rung, lấp lánh
       { const tex = (2 * G.perf.half) / Math.max(256, sun.shadow.mapSize.x), up = Math.abs(sunDir.y) > 0.99 ? _sx.set(1, 0, 0) : _sx.set(0, 1, 0);
@@ -53,12 +62,12 @@
         const u = Math.round(tg.dot(ax) / tex) * tex, v = Math.round(tg.dot(ay) / tex) * tex, w = tg.dot(sunDir);
         sun.target.position.copy(ax).multiplyScalar(u).addScaledVector(ay, v).addScaledVector(sunDir, w); }
       sun.position.copy(sun.target.position).addScaledVector(sunDir, 200);
-      const M = mood && mood.at(tod);
+      const M = mood && (neon ? mood.neonAt(tod) : mood.at(tod));
       document.body.classList.toggle('day', day > 0.55);
       if (M) { sun.intensity = M.sunI; sun.color.copy(M.sun); hemi.intensity = M.hemiI; hemi.color.copy(M.hemiSky); hemi.groundColor.copy(M.hemiGround); fill.intensity = M.fillI; fill.position.set(-sunDir.x * 100, 60, -sunDir.z * 100); }
       else { sun.intensity = 1.0 * day; sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8); hemi.intensity = 0.22 + 0.3 * day + 0.24 * night; hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night); }
-      moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = 0.46 * night; // trăng: đêm không tối mịt
-      { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = night > 0.02; }
+      moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = neon ? 0 : 0.46 * night; // trăng: đêm không tối mịt
+      { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = !neon && night > 0.02; } // thời neon: thay trăng bằng mặt trời đã tắt (render/neon3d.js)
       const top = M ? M.top.clone() : SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
       const bot = M ? M.bot.clone() : SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
       const overcast = G.weather.stormK * 0.55 * 0.6; // giông trong bể làm trời sầm lại
@@ -70,7 +79,7 @@
       starMat.opacity = night * 0.9;
       const hours = tod * 24, hh = Math.floor(hours), mm = Math.floor((hours - hh) * 60 / 10) * 10;
       $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
-      return { day, night };
+      return { day, night, neon };
     }
     Object.assign(G, { sun, sky: { applyTime } });
   }

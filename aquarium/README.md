@@ -121,6 +121,15 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   bảng màu ấm theo giờ (bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều vàng mật ong, hoàng hôn cam tím, chạng vạng
   tím, đêm tím xanh), sương ngả theo chân trời; bóng dịu nhờ đèn trời sáng hơn và một đèn hắt nhẹ phía ngược nắng. Mọi màu
   trời và ánh sáng theo giờ nằm ở một chỗ (KEYS), độ phơi sáng ở TONE.
+- **Đèn đường qua các thời** (`render/build/lamps.js`, thời 1 tới 9, cả sáu đảo): đứng bên lề vòng đường và các đường toả,
+  so le hai bên; mỗi thời một kiểu (đuốc cắm, đuốc tre, đèn đá, đèn dầu, đèn khí, đèn điện, đèn cao áp, cột LED, đèn sinh
+  học), mỗi đảo một màu ánh đèn. Tối bật, sáng tắt: phần sáng (lửa, bóng đèn, vũng sáng dưới chân) là mảnh `lit`, sáng dần
+  khi trời tối, ban ngày chỉ còn cột và kính đèn. Công trình không đặt trên đường (kiểm tra 12 thời × 6 đảo).
+- **Thành phố neon từ thời 10** (`render/build/neon.js`, `render/neon3d.js`): mặt trời đã mất (đĩa đen viền hồng thay trăng),
+  trời chỉ còn tím (tím chiều tối ↔ tím tối, `mood3d.js` NEON), có rèm cực quang, không còn ngày đêm; không còn đèn đường,
+  mép đường và vòm sáng trên đường phát neon, mỗi công trình một viền sáng mảnh sát chân, cửa sổ sáng suốt. Mỗi đảo treo một
+  mặt trời nhân tạo rọi xuống thành phố (lõi, quầng, cột sáng, đèn điểm màu riêng): Hồn Lúa (vòng con quay), Hạt Giống (cánh lá
+  khép mở), Lò Rèn (mảnh đá bay quanh), Băng Lăng Trụ (vầng hào quang, mặt trời giả), Sứa (xúc tu đung đưa), Hai Vành.
 - **Nhẹ máy với sáu đảo**: đảo ở xa máy quay vẽ bằng khối gộp không đổ bóng (`render/build/batch3d.js`), đảo ở gần vẽ từng
   công trình; khói và đèn chập chờn chỉ tính cho đảo ở gần. Xe của thời chạy vòng quanh làng: xe trâu, xe ngựa, tàu hơi nước, ô tô, tàu một
   ray, rô-bốt giao hàng và drone, hạt giống bay, xe bay, quả cầu sáng.

@@ -24,6 +24,7 @@
     BK.LandBar.setup(G);     // ui/landbar.js
     BK.GameVillage.setup(G); // game/village.js
     BK.GameIsles.setup(G);   // game/isles.js (công trình năm đảo còn lại)
+    if (BK.NeonCity3D) BK.NeonCity3D.setup(G); // render/neon3d.js (mặt trời nhân tạo của thành phố neon, thời 10 trở đi)
     BK.Hud.setup(G);         // ui/hud.js
 
     const { W, renderer, scene, camera, controls } = G, T = G.time;
@@ -40,6 +41,7 @@
       G.nature.animate(dt, t, night);
       G.villageRun.animate(dt, t, night);
       G.islesRun.update();
+      if (G.neonCity) G.neonCity.update(dt, t);
       G.snow.update(dt, t, G.weather.winter);
       const now = performance.now();
       G.updatePuffs(now, dt);

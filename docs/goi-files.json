@@ -225,8 +225,18 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/build/lamps.js",
+  "src": "render/build/lamps.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/life3d.js",
   "src": "render/build/life3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/neon.js",
+  "src": "render/build/neon.js",
   "mode": 420
  },
  {
@@ -377,6 +387,11 @@
  {
   "path": "BeKinh/render/mood3d.js",
   "src": "render/mood3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/neon3d.js",
+  "src": "render/neon3d.js",
   "mode": 420
  },
  {

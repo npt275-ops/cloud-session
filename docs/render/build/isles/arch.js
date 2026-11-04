@@ -147,7 +147,7 @@
     beacon(k, o) { const p = pal(o); k.add(K.post(0.3, 6, 6, 0.15), p.a, 0, 0, 0); k.add(K.ball(0.6, 1), p.g, 0, 6.3, 0, { glow: true }); const s = k.sub('ring', [0, 4, 0]); s.add(torus(1.3, 0.08), p.c, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); return { bob: [['ring', 0.6, 0.5]], pulse: true }; },
     shard(k, o) { const p = pal(o); const s = k.sub('s', [0, 3 + (o.v % 3), 0]); s.add(new (THREE().OctahedronGeometry)(0.9, 0), p.g, 0, 0, 0, { glow: true, sc: [0.6, 1.5, 0.6] }); k.add(K.disc(1.4, 10), p.b, 0, 0.03, 0); return { spin: [['s', 'y', 0.9]], bob: [['s', 0.4, 0.4]] }; },
     fountain(k, o) { const p = pal(o); k.add(K.lathe([[1.8, 0], [2, 0], [2, 0.6], [1.8, 0.6]], 14), p.a, 0, 0, 0); k.add(K.disc(1.8, 14), '#4aa3c7', 0, 0.5, 0, { ao: false }); k.add(K.post(0.25, 1.8, 8), p.a, 0, 0, 0); k.add(K.cone(0.5, 0.9, 8), '#bfe3f2', 0, 1.8, 0, { glow: true }); },
-    lamp(k, o) { const p = pal(o); k.add(K.post(0.07, 2.8, 5), p.d, 0, 0, 0); k.add(B(0.4, 0.45, 0.4, 0.04), p.d, 0, 2.8, 0); k.add(B(0.28, 0.3, 0.28, 0.02), p.g, 0, 2.86, 0, { glow: true }); },
+    lamp(k, o) { const p = pal(o); k.add(K.post(0.07, 2.8, 5), p.d, 0, 0, 0); k.add(B(0.4, 0.45, 0.4, 0.04), p.d, 0, 2.8, 0); k.add(B(0.28, 0.3, 0.28, 0.02), '#e8e2c8', 0, 2.86, 0); k.add(B(0.3, 0.32, 0.3, 0.02), p.g, 0, 2.85, 0, { lit: true }); },
   };
 
   /* ---------- Kỳ quan thêm ---------- */

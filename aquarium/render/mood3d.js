@@ -6,7 +6,9 @@
  *   TONE  cách nén màu (linear giữ màu đậm như gốc, aces dịu hơn nhưng nhạt màu) và độ phơi sáng (render/scene3d.js dùng).
  *   SOFT  bóng đổ dịu: đèn trời sáng hơn một chút và một đèn hắt nhẹ phía ngược nắng (không đổ bóng) để mặt khuất nắng
  *         không tối đen (render/sky3d.js dùng).
- * at(tod) trả màu của lúc đó (các đối tượng Color dùng lại, không tạo mới mỗi khung hình). Cần: three.js. */
+ *   NEON  trời tím của thành phố neon (từ thời 10, mặt trời đã mất): không còn ngày đêm, chỉ trôi rất chậm giữa tím chiều
+ *         tối (dusk) và tím tối (dark) theo giờ; nắng thay bằng ánh tím nhạt từ trên cao (các mặt trời nhân tạo, render/neon3d.js).
+ * at(tod) trả màu của lúc đó, neonAt(tod) trả màu trời tím (các đối tượng Color dùng lại, không tạo mới mỗi khung hình). Cần: three.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   // [tod, trời trên, chân trời, nắng, độ nắng, ánh trời, ánh đất, độ đèn trời, độ đèn hắt]
@@ -26,6 +28,11 @@
   // map: 'linear' giữ đúng độ đậm của màu gốc (ACES làm màu nhạt đi); exposure: độ phơi sáng
   const TONE = { map: 'linear', exposure: 1.0 };
   const SOFT = { hemiBoost: 0.82, fillBoost: 0.7, fillColor: '#cfe0ff' };
+  // [trời trên, chân trời, ánh tím trên cao, độ, ánh trời, ánh đất, độ đèn trời, độ đèn hắt]
+  const NEON = {
+    dusk: ['#1e1046', '#7e3488', '#d8a8ff', 0.22, '#a68ae8', '#2e1a3c', 0.44, 0.1],
+    dark: ['#0e0828', '#4a2276', '#b890ff', 0.17, '#8a70d0', '#22142e', 0.38, 0.08],
+  };
   function create(THREE) {
     const C = (h) => new THREE.Color(h), K = KEYS.map((k) => ({ t: k[0], top: C(k[1]), bot: C(k[2]), sun: C(k[3]), sunI: k[4], hemiSky: C(k[5]), hemiGround: C(k[6]), hemiI: k[7], fillI: k[8] }));
     const out = { top: C('#000'), bot: C('#000'), sun: C('#000'), sunI: 0, hemiSky: C('#000'), hemiGround: C('#000'), hemiI: 0, fillI: 0, fog: C('#000') };
@@ -39,7 +46,17 @@
       out.fog.copy(out.bot).lerp(out.top, 0.12); // sương ngả theo chân trời
       return out;
     }
-    return { at };
+    const N = [NEON.dusk, NEON.dark].map((k) => ({ top: C(k[0]), bot: C(k[1]), sun: C(k[2]), sunI: k[3], hemiSky: C(k[4]), hemiGround: C(k[5]), hemiI: k[6], fillI: k[7] }));
+    // trời tím: tím chiều tối lúc "ngày", tím tối lúc "đêm", pha rất mềm (không có lúc nào sáng như ngày)
+    function neonAt(tod) {
+      const u = 0.5 - 0.5 * Math.cos(((tod % 1) + 1) % 1 * Math.PI * 2), a = N[1], b = N[0]; // u: 0 nửa đêm, 1 giữa trưa
+      out.top.copy(a.top).lerp(b.top, u); out.bot.copy(a.bot).lerp(b.bot, u); out.sun.copy(a.sun).lerp(b.sun, u);
+      out.hemiSky.copy(a.hemiSky).lerp(b.hemiSky, u); out.hemiGround.copy(a.hemiGround).lerp(b.hemiGround, u);
+      out.sunI = a.sunI + (b.sunI - a.sunI) * u; out.hemiI = (a.hemiI + (b.hemiI - a.hemiI) * u) * SOFT.hemiBoost; out.fillI = (a.fillI + (b.fillI - a.fillI) * u) * (SOFT.fillBoost || 1);
+      out.fog.copy(out.bot).lerp(out.top, 0.25);
+      return out;
+    }
+    return { at, neonAt };
   }
-  BK.Mood3D = { KEYS, TONE, SOFT, create };
+  BK.Mood3D = { KEYS, TONE, SOFT, NEON, create };
 })(typeof self !== 'undefined' ? self : globalThis);

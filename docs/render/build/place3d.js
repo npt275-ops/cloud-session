@@ -38,8 +38,8 @@
         for (const R of tries) {
           const q = u.clone().multiplyScalar(R);
           if (P.outer === 'sea') { if (!L.inside(q.x, q.y, -4) && free(q, r, 3)) { found = { p: q, dir: new THREE.Vector2(-u.y, u.x), r }; break; } continue; }
-          if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && free(q, r, 3)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
-          if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && !onRoad(L, q.x, q.y, r * 0.7) && free(q, r, 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
+          if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && (P.slot === 'gate' || !onRoad(L, q.x, q.y, r * 0.6)) && free(q, r, 3)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
+          if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && !onRoad(L, q.x, q.y, r * 0.85) && free(q, r, 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
           if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && !onRoad(L, q.x, q.y, r * 0.7) && free(q, r, 3)) { found = { p: q, dir: u.clone().negate(), r }; break; }
         }
       }

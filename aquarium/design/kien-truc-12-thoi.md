@@ -107,3 +107,9 @@ mỗi đảo một tệp chọn kiểu theo thời:
 | 10 | Mặt Trời Nhân Tạo | Cao ốc kính cát hồng | Tháp Gương Mặt Trời | Mặt Trời Sa Mạc |
 | 11 | Bẻ Cong Không Gian | Tháp kim cát hồng | Kim Tự Tháp Ngược | Thang Lên Sao |
 | 12 | Siêu Việt | Tòa xoắn cát hồng | Kim Cương Mặt Trời Hồng | Thành Phố Cát Bay |
+
+## Đèn đường và thành phố neon
+
+- Thời 1 tới 9: đèn đường bên lề mọi con đường của cả sáu đảo, mỗi thời một kiểu (`render/build/lamps.js`), tối bật sáng tắt.
+- Thời 10 tới 12: mặt trời thật đã tắt; trời tím cố định, cực quang; thành phố tự sáng (mép đường, vòm sáng, viền chân
+  công trình, `render/build/neon.js`); mỗi đảo một mặt trời nhân tạo riêng treo trên thành phố (`render/neon3d.js`).
