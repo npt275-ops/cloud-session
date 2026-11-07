@@ -191,6 +191,37 @@ Mỗi cặp đảo lưu các chỉ số sau. Chúng thay đổi theo từng vi�
 - **Sợ:** tăng khi bên kia mạnh lên hoặc vừa thắng trận.
 - **Thù hằn:** tăng khi bị đột kích, bị phản bội, có người thân chết trong chiến tranh. Thù hằn truyền sang đời sau qua "chuyện kể" của người già.
 
+### 6.5 Đã làm ở bước 4
+- **Ai quyết** (`logic/strategy.js`): tính cách của người đứng đầu pha với quân sư và hai tướng. Mức nghe theo là 0,35 + 0,3·nhu nhược − 0,3·đa nghi, giới hạn trong 0,1–0,6. Mọi chỗ đều đọc tính cách biểu hiện.
+- **Xét tình hình mỗi 10 ngày**, các đảo lệch nhau 2 ngày. Có ba nước đi:
+  - **Thế quân:** phần dân làm lính trong khoảng 12–50%. Tăng khi hiếu chiến, đa nghi hay sợ đảo khác mạnh hơn; giảm khi hiền lành hay đang đói. `logic/jobs.js` đọc con số này.
+  - **Giao thương:** tìm thứ đang thiếu nhất, chọn đảo có dư, đưa ra thứ mình dư mà bên kia quý nhất. Giá theo giá trị của hai bên; người mưu mô hơn mặc cả được giá tốt hơn, tin cậy làm giá mềm hơn. Bên kia có thể từ chối.
+  - **Hiệp ước:** không xâm phạm (360 ngày) hay liên minh (540 ngày, khi hai bên đã tin nhau). Bên kia phải đồng ý.
+- **Mua lương thực gấp:** kho còn dưới 20 ngày ăn hoặc đang đói thì ngày nào còn thương nhân rảnh cũng cho đoàn đi mua, không đợi kỳ xét. Người đa nghi vẫn có thể chần chừ.
+- **Đói thì dồn người làm** (`logic/jobs.js`): chỉ giữ một thợ xây, không ai đi đường; chốt gác và người diễn thuyết vẫn giữ.
+- **Đặc sản làm thêm để xuất khẩu** (`logic/economy.js`): kho dự trữ luôn chứa đủ giỏ của thời sau.
+- **Quan hệ** (`logic/diplomacy.js`): mỗi chuyến buôn trọn vẹn tăng tin cậy 0,06; ký hiệp ước tăng 0,08, ký liên minh tăng 0,15. Tin cậy phai 0,3% mỗi ngày. Sợ tính theo sức mạnh quân (số lính × công nghệ). Thù hằn có chỗ lưu nhưng chưa có việc nào làm tăng (bước 5 sẽ có).
+- **Đoàn buôn đi thật:** hàng rời kho lúc lên đường và tới nơi mới vào kho. Thời gian đi:
+  - qua cầu 3 ngày;
+  - đi thuyền sang đảo kề 6 ngày;
+  - mỗi đảo xa hơn thêm 4 ngày.
+
+  Chở được 60 đơn vị cho mỗi thương nhân, cộng thêm 10% cho mỗi thời. Mỗi đảo đi cùng lúc tối đa bằng số thương nhân của mình.
+- **Cầu:** hai đảo kề nhau đã buôn trọn vẹn 3 chuyến, cùng từ thời 3, hai kho gộp lại đủ 80 gỗ và 80 đá. Mỗi bên góp một nửa, bên thiếu thì bên kia bù. Xét mỗi ngày.
+- **Vẽ:**
+  - Cầu do logic bắc thì hiện ra, dáng theo thời thấp hơn của hai đảo, lên thời thì đổi dáng (`render/build/bridges3d.js sync`).
+  - Đoàn buôn: thuyền buồm, từ thời 7 là thuyền máy; qua cầu là xe hàng, hai chiều đi hai làn. Hàng tô màu theo thứ chở nhiều nhất (`render/travel3d.js`).
+  - Tin giữa các đảo, ba dòng mới nhất, hiện ở góc dưới (dev).
+- **Kết quả chạy 9 năm** (seed 1, 2, 3; có giao thương so với sáu đảo sống riêng):
+  - Chết đói: **13 / 16 / 5** khi có giao thương, so với **57 / 69 / 46** khi sống riêng.
+  - Mỗi trận có 4–5 cầu và 5–14 hiệp ước.
+  - Phần lính 17–28%.
+  - Đoàn buôn có mặt trên biển khoảng 35% số ngày.
+  - Cấp cuối: 9,4,8,11,9,4 / 9,4,4,12,9,4 / 9,4,8,12,9,4.
+  - Tuyết Trắng có thể chạm thời 12 nhờ mua được thứ mình thiếu.
+  - Thông Xanh và Cát Hồng vẫn thường kẹt ở thời 4: thiếu người, đất nuôi ít. Đây là chỗ để bước 5 (chiến tranh) và bước 6 (cân chỉnh) xem lại.
+- **Chưa làm** (để bước 5): cướp đoàn buôn, cầu quân sự, cứu trợ quân sự, phản bội hiệp ước. Đoàn buôn chưa đi qua đường trong đảo; thuyền cập bờ, xe chạy trên cầu.
+
 ---
 
 ## 7. Đường sang đảo khác, giao thương và chiến tranh
@@ -320,7 +351,7 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 | 1 ✅ | Dân cho 6 đảo: `logic/world.js` (đồng hồ chung, bước cố định), gia tộc và nét gen riêng, hiển thị dân ở đảo gần camera (`game/cities.js`); người đi, xe chạy theo giờ game | Cả 6 đảo có dân, đủ vị trí cứng; cùng seed chạy 1×, 2×, 4× ra cùng lịch sử (`test/world.test.js`) |
 | 2 ✅ | Kinh tế và lên cấp theo tài nguyên (`logic/economy.js`, giỏ ở `logic/eras.js`); mỗi đảo một cấp riêng | Các đảo lên cấp khác nhau; khi chưa có giao thương, đảo nào cũng dừng ở thời bắt đầu cần thứ mình gần như không có (`test/economy.test.js`) |
 | 3 ✅ | Khí hậu và ngoại gen (`logic/climate.js`, `logic/epigen.js`); mọi chỗ ra quyết định đọc tính cách biểu hiện | Mỗi đảo đúng thiên tai của mình; đói lâu làm dân đa nghi, hiếu chiến; con sinh lúc khổ đột biến nhiều hơn (`test/climate.test.js`) |
-| 4 | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu) | Có giao thương và hiệp ước; quan hệ có trí nhớ |
+| 4 ✅ | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu): `logic/strategy.js`, `logic/diplomacy.js`, `render/travel3d.js` | Có giao thương và hiệp ước; quan hệ có trí nhớ; giao thương làm số người chết đói giảm hơn một nửa (`test/strategy.test.js`) |
 | 5 | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính) | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy |
 | 6 | Bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
 | (sau) | Vai trò người chơi: thêm vào lớp Môi trường hay lớp khác khi chốt | – |

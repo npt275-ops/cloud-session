@@ -25,8 +25,6 @@
     G.W = {
       day: 0, // ngày trong trận (9 năm = 3240 ngày)
       cities: G.TERRAINS.map((terrain, i) => ({ id: i, terrain, settled: true, era: 0, w: null, dmg: [] })),
-      bridges: [], // tạm bỏ sáu cây cầu nối các đảo (cách dựng cầu ở render/build/bridges3d.js, bật lại bằng cách ghi các cặp đảo vào đây)
-      trade: [],
     };
     G.Sim = { TERRAINS: G.TERRAINS };
     G.focus = 0; // đảo đang xem

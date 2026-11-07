@@ -3,6 +3,8 @@
  * thuyết), thợ xây (cho đủ 4 kể cả thợ cả), thương nhân (đủ 2 kể cả
  * thương chủ), lính (máu chiến nhất), người đi đường (hướng ngoại), người làm ra tài nguyên (số còn lại: ruộng, rừng, mỏ...,
  * logic/economy.js), người già, trẻ em.
+ * Khi đảo đang đói (logic/economy.js hunger): chỉ giữ một thợ xây, không ai đi đường, ai rảnh tay đều ra làm (xây chậm lại
+ * để có cái ăn); chốt gác và diễn thuyết vẫn giữ (logic/posts.js).
  * Gán lại mỗi ngày (người lớn lên, già đi, mất). Không vẽ gì, chạy được bằng Node.
  * Cần: logic/rules.js, logic/people.js, logic/posts.js, logic/temper.js. */
 (function (root, factory) {
@@ -29,14 +31,14 @@
     // làm được thì giữ đúng chốt của mình, thiếu thì người hợp tính nhất thay vào. Chọn trước mọi việc khác: chốt không bao giờ trống
     if (BK.Posts) BK.Posts.assign(S, pool, [...S.people.values()].filter((p) => p.alive && !p.role && p.job === 'elder'));
     // thợ xây: khéo tay, gan, không đa nghi (đủ 4 người kể cả thợ cả); thương nhân: khôn khéo, có chí (đủ 2 kể cả thương chủ)
-    const seated = (k) => (S.seats[k] != null ? 1 : 0);
-    take(pool, R.BUILDERS - seated('builder'), (t) => t.intellect * 0.4 + (1 - t.fear) * 0.3 + (1 - t.paranoia) * 0.3, 'builder');
+    const seated = (k) => (S.seats[k] != null ? 1 : 0), lean = !!(S.eco && S.eco.hunger);
+    take(pool, (lean ? 1 : R.BUILDERS) - seated('builder'), (t) => t.intellect * 0.4 + (1 - t.fear) * 0.3 + (1 - t.paranoia) * 0.3, 'builder');
     take(pool, R.TRADERS - seated('merchant'), (t) => t.cunning * 0.6 + t.ambition * 0.4, 'trader');
     for (const p of pool) p.postKey = null; // ai không giữ chốt nào thì bỏ dấu chốt cũ
-    // lính: máu chiến nhất (nam trước)
-    take(pool, Math.round(pool.length * R.SOLDIER_SHARE), (t, p) => (p.sex === 'm' ? 1 : 0) + t.aggression, 'soldier');
+    // lính: máu chiến nhất (nam trước); bao nhiêu lính do người đứng đầu quyết (S.policy.soldierShare, logic/strategy.js)
+    take(pool, Math.round(pool.length * (S.policy ? S.policy.soldierShare : R.SOLDIER_SHARE)), (t, p) => (p.sex === 'm' ? 1 : 0) + t.aggression, 'soldier');
     // dân: người hướng ngoại, ít đa nghi đi đường (đi lại, mua bán, trò chuyện); người chăm, hiền làm ruộng
-    take(pool, Math.round(pool.length * R.WALKER_SHARE), (t) => (1 - t.paranoia) * 0.5 + t.cunning * 0.2 + (1 - t.meekness) * 0.3, 'walker');
+    take(pool, lean ? 0 : Math.round(pool.length * R.WALKER_SHARE), (t) => (1 - t.paranoia) * 0.5 + t.cunning * 0.2 + (1 - t.meekness) * 0.3, 'walker');
     // còn lại là người làm ra tài nguyên; làm thứ gì (p.res) do kinh tế chia theo nhu cầu (logic/economy.js)
     pool.forEach((p) => { p.job = 'worker'; });
   }

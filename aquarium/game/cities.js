@@ -2,15 +2,18 @@
  * Nối logic của cả bể (logic/world.js: sáu đảo, một đồng hồ, bước cố định) với phần vẽ:
  *   công trình của từng đảo dựng dần theo danh sách xây dựng của logic (render/buildings3d.js setProgress), mỗi đảo theo cấp
  *   của chính nó; người của đảo nào thì vẽ ở đảo đó (render/village3d.js), chỉ những đảo gần máy quay (NEAR) mới vẽ người;
- *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó.
+ *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó;
+ *   giữa các đảo (logic/diplomacy.js): cầu logic bắc thì hiện ra (render/build/bridges3d.js, dáng theo thời thấp hơn của hai
+ *   đảo), đoàn buôn đi thuyền, đi xe qua cầu (render/travel3d.js), tin mới nhất ở góc dưới (dev).
  * Đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): mỗi khung hình đưa thêm số ngày lịch (tps × thời gian thật) vào logic; giờ
  * trong ngày lấy từ logic (G.time.tod) cho bầu trời; người đi, xe chạy theo giờ game (speed: 1, 2, 4).
  * Mở với ?seed= để thử trận khác, ?cap= để vào thẳng một cấp khi phát triển. Nút ◀ ▶ (dev): đặt thẳng cả sáu đảo vào một thời.
  * Cần: game/world.js, game/nature.js, game/seasons.js, logic/ (world.js và các tệp nó cần), render/ của người và công trình,
- * ui/village-ui.js. */
+ * render/travel3d.js, ui/village-ui.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const NEAR = 120, FAR = 150; // vẽ người khi máy quay cách tâm đảo dưới NEAR, thôi vẽ khi xa hơn FAR
+  const NEWS = 3;              // số tin giữa các đảo hiện ở góc dưới
   // khối lượng mỗi công trình trong danh sách xây dựng: nhà chính nặng nhất, kỳ quan, công trình lớn, ngoài làng nặng hơn; nhà
   // riêng, đồ nhỏ (đèn, đường, cột…) nhẹ. Thời đồ đá có sẵn nhà chính, bếp lửa, bốn lều.
   const BIG = new Set(['field', 'market', 'factory', 'station', 'school', 'shop', 'pad', 'nuclear', 'datacenter']);
@@ -27,7 +30,7 @@
   }
 
   function setup(G) {
-    const { THREE, W, lands, lands3d, scene, camera, controls, canvas, $ } = G;
+    const { THREE, W, lands, lands3d, bridges3d, scene, camera, controls, canvas, $ } = G;
     const Eras = BK.Eras, World = BK.World, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
     const q = new URLSearchParams(location.search), seed = +q.get('seed') || 42;
     const world = World.create({ seed, buildPlan });
@@ -56,7 +59,6 @@
       shownLv[i] = S.level; buildings.show(i, S.level, animate);
       if (villages[i]) { villages[i].setLevel(S.level); villages[i].setPlaces(buildings.places(i)); }
     }
-    // nhãn thời kỳ của đảo đang xem
     // nhãn thời kỳ của đảo đang xem: phần giỏ tài nguyên của thời sau đã gom được (logic/economy.js), thiên tai đang có
     // (logic/climate.js), đang đói
     function eraLabel() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S, S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối') + (dis ? ' · ' + dis : '') + hungry; }
@@ -89,6 +91,18 @@
         villages.forEach((v, i) => { if (v) v.select(i === hit ? id : null); });
         uis.forEach((u, i) => { if (u) u.select(i === hit ? id : null); });
       }); }
+    // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, tin mới nhất
+    const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d });
+    const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, Math.min(isle(b.a).level, isle(b.b).level)) - 1);
+    const news = $('worldNews');
+    function syncWorld() {
+      if (!world.diplomacy) return;
+      bridges3d.sync(world.bridges, bridgeStyle);
+      const last = world.log.slice(-NEWS).reverse();
+      news.hidden = !last.length;
+      news.innerHTML = last.map((e) => '<div><b>Ngày ' + (e.day + 1) + '</b> · ' + e.text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]) + '</div>').join('');
+    }
+    syncWorld();
     // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
     function step(dDays) { World.advance(world, dDays); syncLevels(); }
     // mỗi khung hình: công trình theo tiến độ xây của logic, người của các đảo gần máy quay, xe nhường người
@@ -96,14 +110,15 @@
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
       buildings.animate(dt, t, night, camera.position, speed);
+      if (world.diplomacy) travel.update(world.caravans, world.day + world.acc / World.TICKS_PER_DAY, t, G.levelOf);
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }
         else if (v) { v.setVisible(false); buildings.setPeds(i, []); }
       }
     }
-    // mỗi giây: nhãn thời kỳ, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
-    function slow() { $('eraName').textContent = eraLabel(); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
+    // mỗi giây: nhãn thời kỳ, cầu và tin giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
+    function slow() { $('eraName').textContent = eraLabel(); syncWorld(); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
     Object.assign(G, { world, isle: isle(0), buildings, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
   }
   BK.GameCities = { setup, buildPlan };

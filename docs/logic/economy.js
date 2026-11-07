@@ -39,7 +39,8 @@
   const BASE = 3;                                           // một người làm một ngày, đảo thường, thời đầu
   const COUNCIL_WORK = (lv) => (lv <= 3 ? 1 : 0.5);         // người trong hội đồng cũng làm ra lương thực: thời đầu làm đủ sức
                                                             // như mọi người (tù trưởng, bô lão cùng đi làm), về sau nửa sức
-  const CAP = (lv, r) => (400 + 80 * lv) * (r === 'food' ? 3 : 1); // sức chứa kho mỗi thứ (lương thực gấp ba: kho thóc)
+  // sức chứa kho mỗi thứ (lương thực gấp ba: kho thóc); luôn chứa đủ giỏ của thời sau, dư thêm 25%
+  const CAP = (lv, r) => { const next = lv < BK.Eras.COUNT ? BK.Eras.of(lv + 1).cost[r] || 0 : 0; return Math.max((400 + 80 * lv) * (r === 'food' ? 3 : 1), next * 1.25); };
   const MIN_DAYS = 120;                                       // ở một thời ít nhất chừng này ngày mới lên được thời sau
   const POP_NEED = (lv) => 12 + lv;                          // dân tối thiểu để lên thời lv
 
@@ -59,7 +60,7 @@
   const tech = (lv) => 1 + 0.1 * (lv - 1); // công nghệ của thời: mỗi thời làm ra nhiều hơn 10%
   const nextCost = (S) => (S.level < BK.Eras.COUNT ? BK.Eras.of(S.level + 1).cost : null);
   // chia người làm: trước hết đủ người làm lương thực để ăn dư ~15% (thêm người khi kho cạn); số còn lại chia cho những thứ
-  // giỏ thời sau còn thiếu, nghiêng về thứ đảo mình giàu
+  // giỏ thời sau còn thiếu, nghiêng về thứ đảo mình giàu, và một phần làm đặc sản để bán
   function allocate(S, workers, day, eat, councilFood) {
     const st = state(S), cost = nextCost(S) || {}, per = BASE * 0.9 * richOf(S, 'food') * 0.92 * tech(S.level);
     const foodDays = st.stock.food / Math.max(1, eat);
@@ -68,6 +69,9 @@
     const want = {};
     for (const r of RES) { if (r === 'food' || !can(S, r)) continue; const lack = Math.max(0, (cost[r] || 0) - st.stock[r]) / Math.max(1, cost[r] || 1); if (cost[r] && lack > 0) want[r] = lack * Math.sqrt(richOf(S, r)); }
     if (cost.food && st.stock.food < cost.food + eat * 30) want.food = 0.5; // giỏ thời sau cũng đòi lương thực: dành thêm
+    // hàng xuất khẩu: đặc sản của đảo (độ giàu cao nhất) làm thêm khi kho còn vơi, để đem đổi lấy thứ mình thiếu (logic/diplomacy.js)
+    { const best = RES.filter((r) => r !== 'food' && can(S, r)).sort((x, y) => richOf(S, y) - richOf(S, x))[0];
+      if (best && richOf(S, best) >= 1.5 && st.stock[best] < CAP(S.level, best) * 0.6) want[best] = (want[best] || 0) + 0.35 * Math.sqrt(richOf(S, best)); }
     let rest = workers.length - quota.food; const sum = Object.values(want).reduce((a, b) => a + b, 0);
     if (sum > 0) { const order = Object.keys(want).sort((a, b) => want[b] - want[a]); let given = 0; for (const r of order) { const k = Math.floor((want[r] / sum) * rest); quota[r] = (quota[r] || 0) + k; given += k; } for (let k = 0; given < rest; k++, given++) quota[order[k % order.length]] = (quota[order[k % order.length]] || 0) + 1; }
     else quota.food += rest; // giỏ đã đủ: làm thêm lương thực để dành

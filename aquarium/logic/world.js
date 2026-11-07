@@ -9,7 +9,8 @@
  * Bước cố định: thời gian đưa vào (advance, tuỳ khung hình và tốc độ 1×, 2×, 4×) chỉ được chạy theo từng bước TICK nguyên;
  * phần lẻ để dành cho lần sau. Vì vậy cùng một seed thì ở tốc độ nào, máy nhanh hay chậm, cũng ra cùng một lịch sử.
  * jump(W, ngày): tua nhanh theo bước 1 ngày (chỉ cho dev rà soát các thời, không bảo đảm trùng với chạy thường).
- * Cần: logic/island.js và các tệp nó cần. */
+ * Giữa các đảo: logic/diplomacy.js (quan hệ, đoàn buôn, hiệp ước, cầu), logic/strategy.js (người đứng đầu chọn nước đi).
+ * Cần: logic/island.js và các tệp nó cần, logic/diplomacy.js, logic/strategy.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.World = factory(BK);
@@ -30,12 +31,23 @@
     const W = { seed, ticks: 0, day: 0, tod: START_TOD, acc: 0, keys: KEYS.slice(), islands: [] };
     W.islands = KEYS.map((key, i) => BK.Island.create({ key, seed: seedOf(seed, i), buildPlan: o.buildPlan ? (lv) => o.buildPlan(key, lv) : null }));
     for (const S of W.islands) S.tod = W.tod;
+    // giữa các đảo (logic/diplomacy.js, logic/strategy.js): quan hệ, đoàn buôn, hiệp ước, cầu; o.diplomacy === false thì sáu đảo
+    // sống riêng (để so sánh trong kiểm thử)
+    W.diplomacy = o.diplomacy !== false && !!BK.Diplomacy; W.rng = BK.Rng.create(seed * 31 + 7);
+    if (W.diplomacy) BK.Diplomacy.init(W);
     return W;
+  }
+  // sang ngày mới: việc giữa các đảo (đoàn buôn tới nơi, quan hệ phai dần, người đứng đầu xét tình hình)
+  function worldDay(W, day) {
+    if (!W.diplomacy) return;
+    BK.Diplomacy.dayTick(W, day);
+    BK.Strategy.dayTick(W, day, W.rng);
   }
   // một bước cố định: lịch và giờ trong ngày đi trước, rồi sáu đảo lần lượt theo thứ tự
   function tick(W) {
     W.ticks++; W.day = W.ticks / TICKS_PER_DAY; W.tod = todOf(W.day);
     for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1 / TICKS_PER_DAY); }
+    if (W.ticks % TICKS_PER_DAY === 0) worldDay(W, W.day);
   }
   // đưa thêm days ngày lịch vào (phần chạy game gọi mỗi khung hình); chạy hết các bước nguyên, trả về số bước đã chạy
   function advance(W, days) {
@@ -45,7 +57,7 @@
   }
   // tua nhanh tới ngày toDay (dev rà soát): bước 1 ngày, giờ trong ngày đặt giữa buổi sáng cho mỗi ngày
   function jump(W, toDay) {
-    while (W.day + 1 <= toDay) { W.day += 1; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1); } }
+    while (W.day + 1 <= toDay) { W.day += 1; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1); } worldDay(W, W.day); }
     const rest = toDay - W.day; if (rest > 0) { W.day = toDay; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, rest); } }
     W.acc = 0;
   }

@@ -1,6 +1,6 @@
 /* Bể Kính · game/nature.js
- * Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, đang tạm bỏ), biển
- * (sea3d.js), mây và mưa (clouds3d.js). Mây báo chớp vào G.weather.lightFlash; tốc độ mây theo tốc độ trận.
+ * Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì
+ * game/cities.js đưa vào), biển (sea3d.js), mây và mưa (clouds3d.js). Mây báo chớp vào G.weather.lightFlash; tốc độ mây theo tốc độ trận.
  * Cần: game/world.js, render/scene3d.js, render/tank3d.js (bán kính vòm), các tệp bản đồ, sea3d.js, clouds3d.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -8,7 +8,7 @@
     const { THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, audio } = G;
     const noop = () => {};
     const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable: noop, unclickable: noop });
-    const bridges3d = BK.Bridges3D.create({ scene, W, lands3d });
+    const bridges3d = BK.Bridges3D.create({ scene, lands3d });
     const sea3d = Sea3D.create({ THREE, scene, lands3d, C, clamp, reduce });
     const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: G.DOME, reduce, glowTex, audio,
       flash: (k) => { G.weather.lightFlash = Math.max(G.weather.lightFlash, k); },

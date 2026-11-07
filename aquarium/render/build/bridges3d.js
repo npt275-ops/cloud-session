@@ -2,11 +2,12 @@
   'use strict';
   const BK = root.BK || (root.BK = {});
   /* Bể Kính · render/build/bridges3d.js
-   * Cầu nối hai đảo kề nhau, dáng đổi theo thời (gỗ, đá, sắt, dây văng, cầu ánh sáng...). Bây giờ đang tạm bỏ:
-   * index.html để W.bridges rỗng; muốn bật lại thì ghi các cặp đảo vào W.bridges. Dùng bộ gom mảnh của bản đồ
-   * (lands3d.shared: Kit, meshOf). Cần: three.js, render/map/map3d.js (đối tượng lands3d). */
+   * Cầu nối hai đảo kề nhau, dáng đổi theo thời (cầu treo, gỗ, đá, sắt, dây văng, cầu ánh sáng...). Cầu do logic bắc
+   * (logic/diplomacy.js: hai đảo buôn bán đủ nhiều, cùng góp gỗ đá); phần chạy game gọi sync(danh sách cầu, dáng) mỗi giây:
+   * cầu mới mọc ra, cầu cũ đổi dáng khi hai đảo lên thời. Cầu i nối điểm đổ bộ landing[1] của đảo i tới landing[0] của đảo
+   * i+1. Dùng bộ gom mảnh của bản đồ (lands3d.shared: Kit, meshOf). Cần: three.js, render/map/map3d.js (đối tượng lands3d). */
   function create(o) {
-    const { scene, W, lands3d } = o, X = lands3d.shared, lands = lands3d.lands;
+    const { scene, lands3d } = o, X = lands3d.shared, lands = lands3d.lands;
     const { THREE, TAU, C, clamp, hash, LAND_R, RING, SC, UBOX, UCYL, UCONE, TCYL, DOME, ICO, DOD, OCT, GABLE, TORUS, VAULT, SPHG, Kit, mergeG, bodyMat, metalMat, meshOf, disposeGroup, pick, TSTYLE, landRng } = X;
     /* =============== Cầu nối hai miền =============== */
     const bridges = [];
@@ -77,29 +78,18 @@
       B.g = g; B.era = e; B.len = len; B.pa = pa; B.pb = pb;
     }
     function bridgePoint(B, u, out) { return out.copy(B.pa).lerp(B.pb, u).setY(deckY(Math.max(0, B.era), u) + 0.12); }
-    // giàn giáo: cột và ván mọc dần từ phía người bắc cầu
-    function syncScaffold(B) {
-      const b = B.sim.build, step = b ? Math.floor((1 - b.left / b.total) * 10) : -1;
-      if (step === B.scStep) return;
-      B.scStep = step;
-      if (B.sg) { scene.remove(B.sg); disposeGroup(B.sg); B.sg = null; }
-      if (!b) return;
-      const fromA = b.by === B.a, p = (step + 1) / 10, k = new Kit(), len = B.len, N = Math.max(1, Math.round(len * p / 1.1));
-      for (let s = 0; s < N; s++) {
-        const u = (s + 0.5) / Math.round(len / 1.1), x = (fromA ? u : 1 - u) * len;
-        k.box('#9b7653', x, -0.1, 0, 1.0, 0.1, 1.9);
-        if (s % 2 === 0) for (const sz of [-0.9, 0.9]) { k.cyl('#c8b07a', x, -6, sz, 0.07, 8.2, 5); k.add(UBOX(), '#c8b07a', x, 1.6, sz, 0.06, 0.06, 1.0); }
+    // theo danh sách cầu của logic: cầu mới thì dựng, dáng đổi (style(cầu) → 0..11, theo thời của hai đảo) thì dựng lại
+    function sync(list, style) {
+      for (const b of list) {
+        let B = bridges.find((x) => x.sim === b);
+        if (!B) { B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); }
+        const e = style(b); if (e !== B.era) buildBridge(B, e);
       }
-      k.cyl('#c8b07a', (fromA ? 0.02 : 0.98) * len, 0, 0, 0.12, 3.4, 5);
-      const g = meshOf(k, B.litMat, scene, 0, 0, 0), d = B.pb.clone().sub(B.pa);
-      g.position.copy(B.pa).addScaledVector(d.clone().normalize(), -0.6); g.rotation.y = -Math.atan2(d.z, d.x);
-      B.sg = g;
     }
-
-    for (const b of W.bridges) { const B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); buildBridge(B, b.era); }
+    const bridgeOf = (a, b) => bridges.find((B) => (B.a === a && B.b === b) || (B.a === b && B.b === a)) || null;
     // ban đêm cầu sáng đèn
     function animate(night) { for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2; }
-    return { bridges, buildBridge, bridgePoint, deckY, syncScaffold, animate };
+    return { bridges, sync, bridgeOf, bridgePoint, animate };
   }
   BK.Bridges3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);
