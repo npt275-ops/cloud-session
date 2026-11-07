@@ -80,6 +80,8 @@
     if (K) K.dayTick(S, day);
     // ngoại gen (logic/epigen.js): nghịch cảnh hôm nay để lại dấu lên tính cách, yên ổn thì phai dần
     BK.Epigen.dayTick(S, day);
+    // cảnh theo sự kiện (logic/scenes.js): người mới mất thì có đám tang
+    if (BK.Scenes) BK.Scenes.dayTick(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;
   }

@@ -154,7 +154,8 @@
 
   /* ---------- Người ngã xuống ---------- */
   function fall(W, day, x, enemy, rng) {
-    const p = x.p, S = W.islands[x.i]; p.alive = false; p.died = day; p.cause = 'chiến tranh'; p.away = null; S.deaths++;
+    // p.abroad: ngã xuống ở đảo khác (đang đi đánh, đóng giữ): đảo nhà làm lễ tưởng niệm, không có thi thể (logic/scenes.js)
+    const p = x.p, S = W.islands[x.i]; p.alive = false; p.died = day; p.cause = 'chiến tranh'; p.abroad = !!p.away; p.away = null; S.deaths++;
     if (p.role) S.situ.mourning = day + 4;
     note(S, day, 'death', P().fullName(p) + ' ngã xuống trong trận với ' + W.islands[enemy].name + '.', [p.id]);
     // người thân của người chết thù bên kia (truyền đời qua quan hệ hai đảo)

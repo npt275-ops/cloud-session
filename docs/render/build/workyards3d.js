@@ -7,20 +7,25 @@
  *   power     chỗ làm năng lượng (từ thời 4): lò hơi, cối gió, rồi tấm pin, lõi phát sáng
  *   craft     xưởng thủ công: bàn thợ, đe (thời sau: bàn máy, lò in)
  *   drill     bãi tập: hình nộm, giá giáo
+ *   grave     bãi mộ: hàng rào; số mộ theo số người đã chôn trên đảo (logic/scenes.js S.graves, setGraves), lớn dần theo lịch sử
  *   farm      mảnh ruộng trồng: luôn có (lương thực là việc sống còn; ruộng lớn trong bố cục dựng xong thì dùng thêm)
  * Kiểu dáng theo ba giai đoạn: thời 1–3 (gỗ, đá), 4–7 (sắt, máy), 8–12 (vật liệu tương lai, phát sáng).
- * Chỗ đặt: một vòng giữa làng và tường thành, tránh cổng chính và hai cổng phụ, tránh đường, núi, hồ và công trình đã có
+ * Chỗ đặt: một vòng giữa làng và tường thành, tránh cổng chính và hai cổng phụ, tránh đường, núi (cả khung khối núi lớn
+ * L.massifs, render/map/mountains3d.js: vùng chiếm chỗ của khối núi chỉ là vài vòng tròn dọc sống núi, hở ở hai bên), hồ và công trình đã có
  * (render/build/place3d.js homeSpot, danh sách fixed của render/buildings3d.js). Chỗ làm (spots) ở phía trước mỗi bãi,
  * hướng về giữa làng, vài chỗ cho vài người. Toạ độ của đảo (L.g).
  * Cần: three.js, render/map/shared3d.js (Kit, meshOf), render/build/place3d.js. */
 (function (root) {
   'use strict';
   const BK = root.BK || (root.BK = {});
-  const KINDS = ['store', 'farm', 'wood', 'stone', 'craft', 'drill', 'power']; // thứ tự ưu tiên chỗ đặt
+  const KINDS = ['store', 'farm', 'wood', 'stone', 'craft', 'drill', 'grave', 'power']; // thứ tự ưu tiên chỗ đặt
+  const GRAVES_MAX = 60;
   const RES = ['food', 'wood', 'stone', 'metal', 'energy', 'luxury'];
   const PILE = { food: '#d8b04a', wood: '#8a5a33', stone: '#9b978f', metal: '#7d8fa3', energy: '#4fd1e8', luxury: '#c9558f' };
   const PILE_MAX = 8;            // mỗi đống tối đa chừng này khối (đầy kho)
   const tierOf = (lv) => (lv <= 3 ? 0 : lv <= 7 ? 1 : 2);
+  // chỗ (x, z) cộng bán kính pad có lấn vào khung một khối núi lớn không (dài W theo hướng tiếp tuyến, sâu D theo bán kính)
+  const inMassif = (L, x, z, pad) => (L.massifs || []).some((M) => { const dx = x - M.x, dz = z - M.z, ut = -dx * Math.sin(M.ang) + dz * Math.cos(M.ang), ur = dx * Math.cos(M.ang) + dz * Math.sin(M.ang); return Math.abs(ut) < M.W / 2 + pad && Math.abs(ur) < M.D / 2 + pad; });
 
   function create(o) {
     const { THREE, lands3d } = o, X = lands3d.shared, { Kit, meshOf, UBOX, UCYL, ICO, DOD } = X, PL = BK.Place3D.create(THREE);
@@ -66,6 +71,12 @@
         k.box('#a89a78', 0, 0.04, 0, 7, 0.08, 5);
         for (const x of [-2.4, 0, 2.4]) { k.cyl('#6d5139', x, 0.8, -1.6, 0.08, 1.6, 5); k.add(UCYL(8), tier === 2 ? '#c8d0dc' : '#c9a86a', x, 1.4, -1.6, 0.35, 0.8, 0.35); k.add(ICO(), '#c9a86a', x, 2, -1.6, 0.22, 0.22, 0.22); }
         k.box('#6d5139', 3.2, 0.9, 1.4, 0.15, 1.8, 1.4); for (let i = 0; i < 4; i++) k.cyl('#7a6a55', 3.2, 1.2, 0.9 + i * 0.3, 0.03, 2.2, 4); // giá giáo
+      } else if (kind === 'grave') {
+        k.box(tier === 2 ? '#7f9a8a' : '#6f8a52', 0, 0.03, 0, 7, 0.06, 5.2);
+        // hàng rào quanh bãi, chừa lối vào phía trước
+        for (let i = 0; i <= 10; i++) { const x = -3.5 + i * 0.7; k.box('#6d5139', x, 0.4, -2.6, 0.08, 0.8, 0.08); if (Math.abs(x) > 0.8) k.box('#6d5139', x, 0.4, 2.6, 0.08, 0.8, 0.08); }
+        for (const z of [-2.6, 2.6]) k.box('#6d5139', 0, 0.62, z, 7, 0.06, 0.06);
+        for (let i = 0; i <= 7; i++) for (const x of [-3.5, 3.5]) k.box('#6d5139', x, 0.4, -2.6 + i * 0.74, 0.08, 0.8, 0.08);
       } else if (kind === 'farm') {
         k.box('#6b4f33', 0, 0.04, 0, 6, 0.08, 4.4);
         for (let r = 0; r < 5; r++) for (let c = 0; c < 8; c++) k.cone(tier === 2 ? '#8be0a0' : '#6aa84f', -2.6 + c * 0.75, 0.3, -1.6 + r * 0.8, 0.2, 0.5, 5);
@@ -88,7 +99,7 @@
           if (best) break;
           if (yards.some((Y) => Math.abs(Math.atan2(Math.sin(a - Y.a), Math.cos(a - Y.a))) < (back === 17 ? 0.36 : 0.2) && Math.abs(L.rOf(Y.a) - Math.hypot(Y.x, Y.z) - back) < 6)) continue;
           const rad = L.rOf(a) - back, p0 = new THREE.Vector2(Math.cos(a) * rad, Math.sin(a) * rad), p = PL.homeSpot(L, p0, R, fixed, null);
-          if (!L.inside(p.x, p.y, 9)) continue;
+          if (!L.inside(p.x, p.y, 9) || inMassif(L, p.x, p.y, R + 1.5)) continue;
           if (fixed.some((F) => (F.x - p.x) ** 2 + (F.y - p.y) ** 2 < (F.r + R) ** 2)) continue;
           best = { a, p };
         }
@@ -111,11 +122,24 @@
           store.g.add(im); piles[r] = im;
         });
       }
-      return { yards, piles };
+      // mộ trong bãi mộ: khối lặp, hiện đúng số người đã chôn (setGraves); thời đầu cọc gỗ, rồi bia đá, rồi trụ sáng
+      const grave = yards.find((Y) => Y.kind === 'grave'); let graves = null;
+      if (grave) {
+        const geo = tier === 0 ? new THREE.BoxGeometry(0.12, 0.7, 0.12) : tier === 1 ? new THREE.BoxGeometry(0.5, 0.6, 0.14) : new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8);
+        geo.translate(0, 0.35, 0);
+        const mat = new THREE.MeshStandardMaterial({ color: ['#7a5838', '#a7a39b', '#cfe6f2'][tier], roughness: 0.8, flatShading: true, emissive: tier === 2 ? '#7fe7ff' : '#000000', emissiveIntensity: tier === 2 ? 0.4 : 0 });
+        graves = new THREE.InstancedMesh(geo, mat, GRAVES_MAX); graves.count = 0;
+        const M = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), v = new THREE.Vector3();
+        for (let n = 0; n < GRAVES_MAX; n++) { v.set(-3 + (n % 10) * 0.66, 0, -2 + Math.floor(n / 10) * 0.75); M.compose(v, q, s); graves.setMatrixAt(n, M); }
+        grave.g.add(graves);
+      }
+      return { yards, piles, graves };
     }
     // lượng hàng trong kho (0..1 mỗi thứ, so với sức chứa): đống hàng cao thấp theo đó
     function setStock(piles, ratio) { if (!piles) return; for (const r of RES) piles[r].count = Math.round(Math.max(0, Math.min(1, ratio[r] || 0)) * PILE_MAX); }
-    return { KINDS, build, setStock };
+    // số mộ trong bãi mộ (người đã chôn trên đảo; đầy bãi thì giữ GRAVES_MAX)
+    function setGraves(graves, n) { if (graves) graves.count = Math.min(GRAVES_MAX, n); }
+    return { KINDS, build, setStock, setGraves };
   }
   BK.WorkYards3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

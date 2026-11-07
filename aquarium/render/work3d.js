@@ -45,6 +45,13 @@
     rest: () => [['sit', null], ['sway', null], ['stand', null]],
     chat: () => [['talk', null], ['laugh', null], ['nod', null], ['whisper', null]],
     riot: () => [['cheer', null], ['command', null], ['point', null], ['thrust', null]], // bạo loạn: giơ tay hô, chỉ trỏ, vung nắm đấm (logic/dramas.js)
+    // đám tang (logic/scenes.js): người nhà khóc, quỳ; người khiêng quan tài đứng chờ
+    mourn: () => [['cry', null], ['sad', null], ['kneelPray', null]],
+    // đói: xếp hàng nhận khẩu phần, trẻ khóc; lễ hội: nhảy múa
+    ration: () => [['stand', null], ['sad', null], ['tapFoot', null]],
+    cry: () => [['cry', null]],
+    dance: () => [['dance', null], ['cheer', null], ['laugh', null]],
+    bear: () => [['stand', null], ['sad', null]],
     listen: () => [['nod', null], ['crossArms', null], ['handsBehind', null], ['stand', null]], // đứng nghe diễn thuyết, đứng xem
     // người đứng đầu (logic/leader.js)
     command: () => [['command', null], ['point', null]],                     // ra lệnh sau khi nghe tin
@@ -71,7 +78,7 @@
     return G ? { G, tool } : null;
   }
   // cách mang một thứ hàng khi đi: [cử chỉ đi, đồ mang]
-  const CARRY = { food: ['carry', 'sack'], wood: ['carry', 'log'], stone: ['carryFront', 'basket'], metal: ['carryFront', 'basket'], luxury: ['carryFront', 'crate'] };
+  const CARRY = { coffin: ['carryFront', 'crate'], food: ['carry', 'sack'], wood: ['carry', 'log'], stone: ['carryFront', 'basket'], metal: ['carryFront', 'basket'], luxury: ['carryFront', 'crate'] };
   function carryOf(item) { const c = CARRY[item]; const G = c && BK.Gestures3D && BK.Gestures3D.BY_KEY[c[0]]; return G ? { G, tool: c[1] } : null; }
   const PUT = 'harvest'; // cúi xuống đặt, nhặt hàng
   // mọi cử chỉ được phép theo động từ (kiểm thử "không vô nghĩa")

@@ -56,6 +56,7 @@
       if (place === 'craft') return pickOf(PL.craft, p.id);
       if (place === 'store') return pickOf(PL.store, p.id);
       if (place === 'drill') return pickOf(PL.drill, p.id);
+      if (place === 'grave') return pickOf(PL.grave, p.id);
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
@@ -118,6 +119,9 @@
       if (mind.follow != null) { const tg = folks.get(mind.follow); if (tg) return { p: tg.pos.clone().add(new THREE.Vector3(-Math.sin(tg.yaw) * 1.5 + Math.cos(tg.yaw) * 0.6, 0, -Math.cos(tg.yaw) * 1.5 - Math.sin(tg.yaw) * 0.6)), face: null }; }
       if (mind.place === 'stroll') { const g = Nav.strollGoal(f); if (g) return g; }
       if (mind.place === 'hallLoop') { const g = Nav.hallGoal(f); if (g) return g; }
+      // trước cửa nhà người mất (đám tang, logic/scenes.js); hàng người nhận khẩu phần trước kho lúc đói (thứ tự trong hàng: qRank)
+      if (mind.place === 'homeSlot' && PL && PL.homeSlots && PL.homeSlots[mind.slot]) return { p: Nav.offCarriage(PL.homeSlots[mind.slot].clone().add(f.jit)), face: PL.homeSlots[mind.slot] };
+      if (mind.place === 'queue' && PL && PL.store && PL.store.length) { const s1 = PL.store[Math.min(1, PL.store.length - 1)], dir = s1.clone().negate().setY(0).normalize(); return { p: s1.clone().addScaledVector(dir, 0.9 * ((f.qRank || 0) + 1)), face: s1 }; }
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
@@ -146,6 +150,7 @@
     const carrying = (f) => !!f.cyc && (f.cyc.stage === 'carry' || f.cyc.stage === 'drop' || (f.cyc.stage === 'pick' && f.cyc.at));
     function exprOf(mind, X, p) {
       if (mind.mood === 'pray') return 'closed';
+      if (mind.verb === 'mourn' || mind.verb === 'bear' || mind.verb === 'ration' || mind.verb === 'cry') return 'sad'; // tang, đói
       if (mind.state === 'attack' || mind.mood === 'argue') return 'angry';
       if (mind.state === 'panic') return 'fear';
       if (X.mourning || (X.drought && (mind.stress || 0) > 0.4)) return 'sad';
@@ -168,6 +173,9 @@
     function update(dt, t, speed) {
       dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
       gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001;
+      // hàng nhận khẩu phần: thứ tự theo người tới trước (giữ thứ tự cũ, người mới đứng cuối)
+      { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a, b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id); if (!f.qSince) f.qSince = ts + n * 1e-3; f.qRank = n; }); for (const [, f] of folks) if (f.qSince && !q.includes(f.p.id)) f.qSince = 0; }
+      const kingF = S.seats.king != null ? folks.get(S.seats.king) : null, hungry = S.food < 0.5;
       for (const p of S.people.values()) {
         if (!p.alive || p.away) continue; // đi đánh trận, đóng giữ đảo khác (logic/war.js): không có ở đảo
         alive.add(p.id);
@@ -194,7 +202,7 @@
           if (!g) break;
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
-          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) ? 0.85 : 1); // tối muộn về ngủ thì rảo bước; mang hàng thì chậm lại
+          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) || mind.carryItem ? 0.85 : 1) * (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
           if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
@@ -219,6 +227,12 @@
           if (c && moving && cyc.stage === 'carry') { tgt = Anim.basePose(f.knobs); c.G.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'mang:' + c.G.key; }
           else if (c && put && !moving) { tgt = Anim.basePose(f.knobs); put.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'đặt nhặt'; }
         }
+        // khiêng quan tài (đám tang): ôm trước ngực mà đi
+        f.carryNow = false;
+        if (!tgt && mind.carryItem && Work && moving) { const c = Work.carryOf(mind.carryItem); if (c) { tgt = Anim.basePose(f.knobs); c.G.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'mang:' + c.G.key; f.carryNow = true; } }
+        // lính gác cúi chào khi người đứng đầu đi ngang qua chốt (mỗi lần đi ngang chào một lần)
+        if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
+        if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
         f.moving = moving; f.meetVerb = meetVerb;
         Anim.apply(f.rig, f.cur, tgt, dt);
@@ -229,7 +243,7 @@
         // chớp mắt vài giây một lần
         if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
         f.blink = Math.max(0, f.blink - real);
-        const ek = meetVerb ? 'happy' : gface && EXPR[gface] && !X.war && !X.mourning && !mind.mood ? gface : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
+        const ek = meetVerb ? 'happy' : gface && EXPR[gface] && !X.war && !X.mourning && !mind.mood && !hungry ? gface : exprOf(mind, X, p) === 'neutral' && hungry ? 'sad' : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
         f.expr = EXPR[ek] || EXPR.neutral; f.closed = f.expr === EXPR.closed || f.blink > 0;
       }
       for (const [id] of folks) if (!alive.has(id)) { folks.delete(id); if (selected === id) selected = null; }
@@ -298,7 +312,7 @@
           if (Work && !Work.allowed(f.verb, level).has(f.gk)) why('cử chỉ ' + f.gk + ' không thuộc việc ' + f.verb);
           if (f.cyc && f.cyc.stage !== 'work') why('làm việc ở bước ' + f.cyc.stage + ' (không ở chỗ làm)');
         }
-        if (LOAD.has(f.tool) && !carrying(f)) why('mang ' + f.tool + ' khi không chở hàng');
+        if (LOAD.has(f.tool) && !carrying(f) && !f.carryNow) why('mang ' + f.tool + ' khi không chở hàng');
       }
       return bad;
     }

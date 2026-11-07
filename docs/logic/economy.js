@@ -100,9 +100,12 @@
     st.eaten = eat;
     for (const r of RES) st.stock[r] = Math.min(CAP(S.level, r), st.stock[r] + (st.made[r] || 0) - (r === 'food' ? eat : 0));
     // đói: hết lương thực thì đói (kéo dài thì người yếu có thể mất), bất bình dễ thành bạo loạn (logic/dramas.js riot.boost)
-    if (st.stock.food < 0) { st.stock.food = 0; if (!st.hunger) S.log.push({ day: Math.floor(day), kind: 'hunger', ids: [], text: S.name + ' hết lương thực, dân bắt đầu đói.' }); st.hunger++; }
-    else if (st.hunger) { st.hunger = 0; S.log.push({ day: Math.floor(day), kind: 'hunger', ids: [], text: S.name + ' đã có lại lương thực.' }); }
+    // bắt đầu đói, hết đói: cả đảo xét lại việc (logic/brain.js; trưa ra kho xếp hàng nhận khẩu phần, logic/tasks.js)
+    if (st.stock.food < 0) { st.stock.food = 0; if (!st.hunger) { S.log.push({ day: Math.floor(day), kind: 'hunger', ids: [], text: S.name + ' hết lương thực, dân bắt đầu đói.' }); S.situChanged = true; } st.hunger++; }
+    else if (st.hunger) { st.hunger = 0; S.log.push({ day: Math.floor(day), kind: 'hunger', ids: [], text: S.name + ' đã có lại lương thực.' }); S.situChanged = true; }
     S.food = st.hunger ? 0.4 : S.situ.drought > day ? 0.6 : 1;
+    // kho lương thực xuống dưới 3 ngày ăn (bắt đầu phát khẩu phần, logic/tasks.js) hay có lại: cả đảo xét lại việc
+    const scarce = st.stock.food < eat * 3; if (scarce !== !!st.scarce) { st.scarce = scarce; S.situChanged = true; }
     if (st.hunger > 20 && rng.chance(0.03)) { const weak = live.filter((p) => P.ageOf(p, day) >= R.OLD_AGE || P.ageOf(p, day) < 4); if (weak.length) { const v = rng.pick(weak); v.alive = false; v.died = day; v.cause = 'đói'; S.deaths++; S.log.push({ day: Math.floor(day), kind: 'death', ids: [v.id], text: P.fullName(v) + ' chết đói.' }); S.situChanged = true; } }
     // lên cấp
     st.since++;

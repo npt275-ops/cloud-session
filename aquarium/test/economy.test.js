@@ -1,15 +1,18 @@
 // Bể Kính · test/economy.test.js · Tài nguyên và lên cấp: mỗi đảo một nhịp, thiếu thứ gì thì kẹt ở đó (khi chưa có giao thương)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const runs = [1, 2, 3].map((seed) => { const W = BK.World.create({ seed, diplomacy: false }); BK.World.jump(W, 9 * 360); return W; });
 
-test('mỗi đảo lên cấp theo nhịp riêng: các đảo không cùng cấp, không đảo nào chạm thời 12 khi chưa có giao thương', () => {
+// đảo 100 dân và công nghệ các thời sau làm ra được cả thứ gần như không có, nên sống riêng 9 năm vẫn có đảo chạm thời 12;
+// nhưng đảo thiếu hẳn một thứ (Cát Hồng: gỗ) thì kẹt, và các đảo lên cấp khác hẳn nhau
+test('mỗi đảo lên cấp theo nhịp riêng khi chưa có giao thương: các đảo không cùng cấp, ít đảo chạm thời 12, Cát Hồng (không có gỗ) kẹt lại', () => {
   for (const W of runs) {
     const lv = W.islands.map((S) => S.level);
     assert.ok(new Set(lv).size >= 2, 'cấp cuối: ' + lv.join(','));
-    assert.ok(Math.max(...lv) < 12 && Math.max(...lv) >= 5, 'đảo cao nhất: ' + Math.max(...lv));
+    assert.ok(lv.filter((l) => l === 12).length <= 2, 'số đảo chạm thời 12: ' + lv.join(','));
+    assert.ok(BK.World.island(W, 'desert').level <= 9, 'Cát Hồng: ' + BK.World.island(W, 'desert').level);
   }
 });
 

@@ -50,6 +50,10 @@
     // người đứng đầu, lính giữ chốt cổng: kịch bản riêng
     if (role === 'king' && BK.Leader) return BK.Leader.pick(ctx);
     if (post && post.night && BK.Guards) return BK.Guards.pick(ctx, post);
+    // đói (logic/economy.js): trưa ra kho xếp hàng nhận khẩu phần; trẻ con đói thì khóc ở nhà
+    const eco = S.eco, hungry = !!(eco && (eco.hunger || eco.scarce)); // logic/economy.js: đang đói, hay kho dưới 3 ngày ăn
+    if (hungry && ph === 'noon' && age >= 6 && !p.away) return job('ration', 'queue', 'xếp hàng nhận khẩu phần ở kho (đảo đang đói)', { until: S.day + 0.3 });
+    if (hungry && j === 'child' && ph !== 'night' && rng.chance(0.3)) return job('cry', 'home', 'đói, khóc đòi ăn', { until: S.day + 0.2 });
     // người diễn thuyết: sáng và tối đứng ở bục giữa sân nói với dân, trưa về ăn, chiều đi gặp dân, đêm ngủ
     if (post && post.key === 'orator' && ph !== 'night') {
       if (ph === 'morning' || ph === 'evening') return job('rule', 'podium', ph === 'morning' ? 'diễn thuyết buổi sáng ở bục giữa sân' : 'diễn thuyết buổi tối cho dân nghe');

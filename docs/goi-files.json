@@ -170,6 +170,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/scenes.js",
+  "src": "logic/scenes.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/schedule.js",
   "src": "logic/schedule.js",
   "mode": 420

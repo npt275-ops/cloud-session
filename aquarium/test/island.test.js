@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -161,7 +161,7 @@ test('cổng thành đã mở thì luôn có đủ 4 lính gác, mỗi người 
       assert.strictEqual(g.length, BK.Rules.GATEKEEPERS, 'ngày ' + d + ': ' + g.length + ' lính gác');
       assert.deepStrictEqual(g.map((p) => p.post).sort(), [0, 1, 2, 3], 'mỗi người một chốt');
       // ca ngày: lính gác đứng ở cổng (trừ lúc chạy vào báo tin); ca đêm về nhà ngủ, lính thường ra gác thay (logic/guards.js)
-      for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report') assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); }
+      for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report' && !m.scene) assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); } // !m.scene: đi đám tang người nhà
       if (BK.Schedule.phase(S.tod) === 'night') assert.ok([...S.minds.values()].some((m) => m.place === 'nightGate'), 'đêm có lính thường gác ở cổng');
       checked++;
     }
@@ -181,7 +181,7 @@ test('vị trí cứng: chốt đã mở thì luôn đủ người (4 gác cổn
         const g = by(k); assert.strictEqual(g.length, n, 'ngày ' + d + ' ' + k + ': ' + g.length);
         assert.deepStrictEqual(g.map((p) => p.post).sort(), [...Array(n).keys()], k + ': mỗi người một chỗ');
       }
-      for (const p of by('gateLeft').concat(by('gateRight'))) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report' && m.state !== 'talk') assert.ok(m.place === 'gateL' || m.place === 'gateR', 'lính cổng phụ đứng ở cổng phụ: ' + m.place); }
+      for (const p of by('gateLeft').concat(by('gateRight'))) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report' && m.state !== 'talk' && !m.scene) assert.ok(m.place === 'gateL' || m.place === 'gateR', 'lính cổng phụ đứng ở cổng phụ: ' + m.place); }
       checked++;
     }
   }

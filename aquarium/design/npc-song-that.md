@@ -328,3 +328,24 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
 - `p.loc` (người ở đâu, cho khách trên đảo khác): làm ở 7b, cùng lúc vẽ khách trên đảo.
 - Đổi ca có chào nhau, chào người đứng đầu khi đi ngang (phản xạ trên phần vẽ): làm ở 7b.
 - Đống hàng trong kho đôi khi có bụi cây thấp mọc lên giữa sàn (bụi cây không nằm trong phần dọn cây). Sửa ở 7b.
+
+## 10. Đã làm ở 7b
+
+| Việc | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Đám tang** | `logic/scenes.js`: người mới mất được phát hiện mỗi ngày (mất vì già, bệnh, đói, thiên tai, chiến tranh đều có), nên không phải móc vào từng chỗ gây ra cái chết. Ba chặng: <ul><li>người nhà và tư tế khóc trước cửa nhà người mất;</li><li>đưa tang: hai người khiêng quan tài ôm trước ngực đi trước, tư tế dẫn, người nhà theo sau;</li><li>chôn cất ở bãi mộ.</li></ul> Người chết trận ở đảo khác (`p.abroad`): lễ tưởng niệm ở chỗ thờ, không có quan tài. | `test/scenes.test.js`; một năm ở Lúa Vàng có 27 đám tang. |
+| **Bãi mộ** | Thêm vào các bãi làm việc (`render/build/workyards3d.js`): hàng rào; số mộ đúng số người đã chôn (`S.graves`), lớn dần theo lịch sử của đảo; cọc gỗ, rồi bia đá, rồi trụ sáng theo thời. | Ảnh: bãi mộ thời Công nghiệp hơn 40 bia. |
+| **Nạn đói** | <ul><li>Kho lương thực dưới 3 ngày ăn thì cả đảo xét lại việc (`logic/economy.js` scarce).</li><li>Trưa ra kho xếp hàng nhận khẩu phần (`logic/tasks.js`), hàng một trước cửa kho theo thứ tự tới (`render/village3d.js`). Lính giữ chốt cổng ăn tại chốt.</li><li>Trẻ con đói khóc ở nhà.</li><li>Ai cũng đi chậm lại, mặt buồn.</li></ul> | `test/scenes.test.js`; trình duyệt: 59–81 người xếp hàng; đống lương thực trong kho trống. |
+| **Lễ hội** | Một phần dân nhảy múa, reo hò ở sân (`logic/brain.js`), người khác trò chuyện, đi dạo. | Trình duyệt: 32–39 người nhảy múa. |
+| **Lính gác cúi chào người đứng đầu** | Phản xạ ở phần vẽ: người đứng đầu đi ngang qua chốt (dưới 5 m) thì lính gác quay lại cúi chào, mỗi lần đi ngang chào một lần. | – |
+| **Bãi làm việc lẫn vào chân núi** | Vùng chiếm chỗ của khối núi lớn chỉ là vài vòng tròn dọc sống núi, hở ở hai bên. Nay bãi tránh cả khung khối núi (`L.massifs`). | Ảnh kho không còn lẫn vào núi; kiểm kê vẫn đủ chỗ mọi đảo, mọi thời. |
+| **Không vô nghĩa** | Thêm luật cho người khiêng quan tài. | `audit()`: 0 vi phạm, chạy theo giờ thật tới ngày 1613, có đủ cảnh mới. |
+
+**Thay đổi phát sinh, cần ghi lại:**
+- Kiểm thử bước 2 "sống riêng thì không đảo nào chạm thời 12" không còn đúng. Đảo 100 dân và công nghệ các thời sau làm ra được cả thứ gần như không có, nên Đá Mây hay Tuyết Trắng có khi tự chạm thời 12.
+- Thử hạ mức "gần như không có" từ 0,08 xuống 0,03 thì Đá Mây áp đảo cả bể (đứng đầu 15 trên 20 trận), nên giữ 0,08.
+- Bài kiểm thử nay kiểm điều vẫn đúng: các đảo lên cấp khác nhau, ít đảo chạm thời 12, Cát Hồng (không có gỗ) luôn kẹt.
+
+**Dời sang phần sau:**
+- Khách trên đảo (quân giặc, người cai quản bằng người thật, `p.loc`): làm ở 7d, cùng cảnh chiến tranh.
+- Chào nhau lúc đổi ca gác; cháy rừng có người xách nước thành hàng: làm ở 7f, cùng các vòng môi trường.

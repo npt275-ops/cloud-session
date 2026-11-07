@@ -296,7 +296,7 @@
     const NOT_A_PLACE = new Set(['town', 'road', 'asphalt', 'glowRoad', 'lamp', 'pole']);
     function places(i) {
       const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
-      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [], shrine: [], school: [], outer: [], all: [], store: [], wood: [], stone: [], power: [], craft: [], drill: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [], shrine: [], school: [], outer: [], all: [], store: [], wood: [], stone: [], power: [], craft: [], drill: [], grave: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
@@ -354,7 +354,9 @@
     };
     // đống hàng trong kho của đảo i theo lượng hàng thật (ratio: 0..1 mỗi thứ, game/cities.js mỗi giây)
     const setStock = (i, ratio) => { if (shown[i] && shown[i].wy) WY.setStock(shown[i].wy.piles, ratio); };
-    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
+    // số mộ trong bãi mộ của đảo i (logic/scenes.js S.graves)
+    const setGraves = (i, n) => { if (shown[i] && shown[i].wy) WY.setGraves(shown[i].wy.graves, n); };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setGraves, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

@@ -1,7 +1,7 @@
 // Bể Kính · test/war.test.js · Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
@@ -56,7 +56,10 @@ test('đột kích: cướp kho rồi về, chiến lợi phẩm vào kho đảo
 
 test('người chết trận có thật, bên mất người thù bên kia', () => {
   const W = BK.World.create({ seed: 9, war: false }); BK.World.jump(W, 500);
+  // Cửa Sóng có đủ quân (thêm 10 người làm lính), Tuyết Trắng giữ cổng thật: chắc chắn có trận
+  living(W.islands[4]).filter((p) => p.job === 'worker').slice(0, 10).forEach((p) => { p.job = 'soldier'; });
   const w = War.launch(W, W.day, 4, 3, 'conquer', 1, W.rng);
+  assert.ok(w, 'có quân xuất trận');
   run(W, 40);
   const deadOf = (i) => [...W.islands[i].people.values()].filter((p) => p.cause === 'chiến tranh').length;
   assert.ok(deadOf(3) + deadOf(4) > 0, 'có người ngã xuống');

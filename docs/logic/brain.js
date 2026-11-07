@@ -63,6 +63,8 @@
       if (t.paranoia > 0.6 && king != null && king !== p.id) return d('talk', { mood: 'argue', target: king, intensity: t.paranoia });
       return d('walk', { place: 'home', intensity: 0.6 });
     }
+    // cảnh theo sự kiện (logic/scenes.js): người có vai trong cảnh (đám tang…) làm việc của cảnh
+    if (BK.Scenes) { const sc = BK.Scenes.roleOf(S, p, d, ph); if (sc) return sc; }
     // hạn hán: cầu mưa, đổ lỗi cho người cầm quyền, lo lắng, hoặc ra đồng
     if (X.drought > day) {
       if (t.piety > 0.6 && rng.chance(0.7)) return d('idle', { mood: 'pray', place: 'shrine', intensity: t.piety });
@@ -74,7 +76,7 @@
     // tang: người sùng đạo cầu nguyện ở chỗ thờ, người khác lặng lẽ ở nhà
     if (X.mourning > day && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: t.piety > 0.55 ? 'shrine' : 'home', intensity: 0.3, phase: ph });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa
-    if (X.festival > day) return rng.chance(0.55) ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7, phase: ph }) : d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'square', intensity: 0.7, phase: ph });
+    if (X.festival > day) { const r0 = rng.next(); return r0 < 0.4 ? d('work', { verb: 'dance', place: 'square', reason: 'nhảy múa ngày hội', intensity: 0.8, phase: ph }) : r0 < 0.75 ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7, phase: ph }) : d('walk', { place: 'square', intensity: 0.7, phase: ph }); }
     // ngày thường: việc theo vai và theo buổi (logic/tasks.js); người đa nghi, hiếu chiến đôi khi gây sự
     const r = rng.next();
     if (r > 0.993 && t.paranoia + t.aggression > 1.25) { const other = friendOf(S, p, rng, true); if (other != null) startQuarrel(S, p.id, other, rng); }
