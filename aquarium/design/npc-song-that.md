@@ -120,3 +120,145 @@ Mục tiêu: nhìn vào là thấy 6 đảo đang sống. Mỗi việc trong log
   - Đếm khung hình có người "đứng làm việc ở chỗ không phải chỗ làm" phải bằng 0.
   - Chụp chuỗi ảnh theo thứ tự: gọi quân → xuống thuyền → đánh ở cổng → cổng vỡ → kéo cờ → nổi dậy → đám tang → xếp hàng lúc đói.
 - **Đo khung hình trên máy giả lập điện thoại** trước và sau khi có trận đánh.
+
+---
+
+## 7. Bổ sung đã chốt
+
+### 7.1 Không có hành động vô nghĩa, suốt vòng đời
+
+**"Có nghĩa" được định nghĩa để máy kiểm được.** Ở mọi khung hình, mỗi người trả lời được ba câu:
+- đang ở **bước nào** của hoạt động hay cảnh nào;
+- ở **chỗ nào**;
+- **cầm gì**.
+
+Cử chỉ phải nằm trong danh sách cho phép của bộ ba đó. Ví dụ: cuốc chỉ ở ruộng, khi đang ở bước làm; bao gánh chỉ khi đang đi giữa chỗ làm và kho.
+
+**Vòng đời, mỗi tuổi có việc riêng:**
+
+| Tuổi | Việc |
+|---|---|
+| Trẻ nhỏ | Được bế, hoặc chơi ngay trước cửa nhà. |
+| Trẻ con | Đi học, chơi ở sân, theo cha mẹ ra đồng phụ việc. |
+| Người lớn | Đi làm theo hoạt động có đầu vào, đầu ra (mục 3). |
+| Người già | Đi chậm, ngồi trước cửa, kể chuyện cho trẻ con, tới chỗ thờ. |
+| Chết | Có cảnh. Chỗ trống trong nhà và trong việc làm được người khác thay. |
+
+**Đứng chờ cũng phải có lý do:** chờ bạn, xếp hàng ở kho, đứng gác, nghe diễn thuyết. Không ai đứng không ở chỗ bất kỳ.
+
+**Kiểm thử trên trình duyệt** ghi lại mọi trường hợp cử chỉ không nằm trong danh sách cho phép. Phải bằng 0 mới xong bước.
+
+### 7.2 Cầu do người đứng đầu quyết, cầu là lối đi và là chiến tuyến
+
+**Bỏ luật tự bắc cầu của bước 4** (buôn đủ 3 chuyến là bắc). Thay bằng quyết định ngoại giao trong `logic/strategy.js`:
+1. Người đứng đầu muốn gần một đảo bên cạnh thì **đề nghị bắc cầu**. Người muốn gần là người có tin cậy cao, buôn bán nhiều, mưu mô hay trí tuệ, hoặc cần đồng minh vì đang sợ đảo khác.
+2. Người đứng đầu bên kia đồng ý hay từ chối theo tính cách và quan hệ.
+3. Đồng ý thì hai bên góp gỗ, đá, kim loại theo thời. Thợ xây của hai đảo **dựng cầu thật** từ hai đầu, mất nhiều ngày; có giàn giáo; người đứng xem.
+4. **Lên thời thì người đứng đầu quyết có xây lại cầu theo kiểu thời mới hay không** (tốn tài nguyên). Vì vậy mỗi thời một kiểu cầu. Cầu cũ vẫn dùng được cho tới khi xây lại.
+
+**Cầu là lối đi của người thật.** Qua lại trên cầu có:
+- thương nhân, người khuân hàng;
+- sứ giả;
+- người thăm họ hàng (từ bước 7 có lấy vợ lấy chồng khác đảo);
+- người chạy nạn (mục 7.6).
+
+**Đầu cầu có cổng phụ, có lính gác** (đã có chốt cổng phụ).
+
+**Cầu cũng là chiến tuyến:**
+- Xô xát ở đầu cầu: người hai đảo cãi nhau, ẩu đả; lính gác can, hay bắt người.
+- Quân lính tràn sang bằng đường cầu: nhanh hơn đi thuyền, nhưng hẹp, nên đánh ở đầu cầu là chiến trường tự nhiên.
+- Người đứng đầu đa nghi, khi chiến tranh nổ ra, có thể **đóng cổng cầu** hay **phá cầu** để chặn đường. Người hiếu chiến có thể bắc **cầu quân sự** một mình để đánh (mục 12.1 bước 6 chuyển sang đây).
+
+Cầu thành một quyết định có cái giá: gần nhau để buôn bán, nhưng cũng mở đường cho giặc.
+
+### 7.3 Đánh thành: cổng → các công trình xung quanh → nhà chính
+
+**Quân tới bằng đường nào thì đánh cổng đó:**
+- qua cầu thì đánh cổng phụ ở đầu cầu;
+- đi thuyền thì đổ bộ ở bãi và đánh cổng chính.
+
+**Giữ cổng:**
+- lính và tướng ở nhà;
+- lính gác cổng đó (lính gác các cổng khác giữ chốt);
+- dân tự nguyện: người nóng nảy, trai tráng, cầm đồ nghề làm vũ khí.
+
+Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía nhà chính.
+
+**Mất cổng thì địch đánh các công trình xung quanh trước,** rồi mới vào nhà chính:
+- **Mỗi công trình có độ bền** (logic: `S.build` mỗi công trình thêm hp; tệp `logic/siege.js` mới hay trong `logic/war.js`). Đánh trúng thì cháy, sụp một phần; hư hẳn thì thành đống đổ.
+- **Công trình hư thì kinh tế mất phần đó:** xưởng cháy thì không làm ra hàng, kho cháy thì mất hàng, nhà dân cháy thì dân phải ở nhờ.
+- **Sau chiến tranh thợ xây sửa lại thật,** có giàn giáo và mất thời gian.
+
+**Nhà chính có đội giữ thành riêng:** lính còn lại, người trong hội đồng, dân tự nguyện vào trong. Địch vây quanh rồi đánh vào.
+- **Mất thành khi đội giữ thành chết hết hay đầu hàng.** Đầu hàng do người đứng đầu quyết theo tính cách: sợ hãi, nhu nhược thì đầu hàng sớm để cứu dân; hiếu chiến, kiêu thì đánh tới người cuối cùng.
+- **Sáp nhập** theo đúng luật đã chốt.
+- **Dân thấy được từng bước:** cổng đổ, nhà quanh sân bốc cháy, nhà chính bị vây, cờ hạ xuống.
+
+### 7.4 Thời tên lửa trở đi: bộ binh và vũ khí bắn từ xa
+
+**Tên lửa, từ thời 7 (Tên lửa):**
+- Đảo làm tên lửa ở một công trình riêng (bãi phóng, đã có trong kiến trúc thời 7). Mỗi quả tốn kim loại và năng lượng.
+- **Số tên lửa trong kho theo kinh tế:** đảo giàu có nhiều, đảo nghèo có ít hay không có. Người đứng đầu quyết dồn bao nhiêu vào tên lửa, vì đó là phần không dùng để lên thời.
+- **Khi đánh:** tên lửa bắn trước hoặc cùng lúc bộ binh. Đường bay vòng qua biển, trúng thì nổ.
+  - Nhắm vào cổng, tường, công trình, kho. Trúng thì công trình mất độ bền như mục 7.3, có người chết nếu đang ở đó.
+  - Dân chạy vào hầm hay vào nhà khi nghe báo động.
+- **Bộ binh vẫn phải vào chiếm nhà chính.** Tên lửa chỉ phá, không chiếm được thành.
+
+**Hạt nhân, từ thời 8 (Robot AI):**
+- **Rất đắt:** mỗi quả cần nhiều năng lượng, kim loại và thời gian chế tạo.
+- **Chỉ người đứng đầu hiếu chiến, tham vọng, ít sùng đạo, ít nhu nhược mới dùng,** và thường khi đang thua hay thù rất sâu.
+- **Mỗi quả làm đảo bị bắn mất 1/4:**
+  - công trình trong vùng nổ thành đống đổ;
+  - người trong vùng chết;
+  - đất nhiễm xạ lâu ngày, sản xuất kém.
+- **Đủ 4 quả thì cả đảo bị san phẳng:** nhà chính sụp, đảo bắt buộc đầu hàng và bị sáp nhập, dù còn quân hay không.
+- **Hậu quả cho cả bể:**
+  - Mọi đảo sợ và thù đảo dùng hạt nhân.
+  - Đảo bị bắn mà cũng có hạt nhân có thể bắn trả, nếu còn bệ phóng.
+  - Trời của cả bể xám đi vài tháng (bụi), mọi đảo mất mùa một thời gian.
+
+**Có thể thêm (gợi ý, chưa chốt):** từ thời 9 có lá chắn đánh chặn một phần tên lửa, nhiều ít theo kinh tế. Đánh nhau giữa hai đảo giàu khi đó thành cuộc đua tên lửa và lá chắn.
+
+### 7.5 Mọi sự kiện đều có người hành động theo
+
+**Mỗi loại sự kiện trong logic phải có một cảnh.** Mỗi người có mặt trên đảo lúc đó phải có một vai trong cảnh, hay có lý do rõ ràng để tiếp tục việc thường. Ví dụ: trong lúc có lễ hội, lính gác vẫn gác.
+
+**Kiểm thử Node:**
+- Liệt kê mọi loại sự kiện mà logic phát ra; loại nào chưa có cảnh thì báo lỗi.
+- Trong cảnh, đếm người không có vai mà vẫn làm việc thường trái với cảnh. Ví dụ: đang có giặc vào thành mà vẫn ra đồng. Số này phải bằng 0.
+
+### 7.6 Bể kính là một hệ sinh thái hỗn loạn như ngoài đời
+
+**Hỗn loạn thật không phải ngẫu nhiên.** Nó đến từ nhiều thứ ảnh hưởng lẫn nhau theo vòng, nên một chuyện nhỏ có thể lan thành chuyện lớn. Thêm những vòng này, mỗi vòng có nguyên nhân rõ ràng:
+
+| Vòng | Diễn ra |
+|---|---|
+| **Môi trường** | <ul><li>Rừng chặt nhiều thì thưa dần, mọc lại chậm (nhìn thấy cây ít đi).</li><li>Mỏ đào lâu thì cạn.</li><li>Ruộng làm liên tục thì bạc màu.</li><li>Đánh cá nhiều thì cá ít.</li><li>Thời công nghiệp trở đi có ô nhiễm.</li></ul>Đảo phải chọn: khai thác nhanh để lên thời, hay giữ đất cho đời sau. |
+| **Người đi lại giữa các đảo** | <ul><li>Đói, chiến tranh thì dân chạy nạn qua cầu, qua thuyền sang đảo bên cạnh.</li><li>Đảo nhận thêm người làm nhưng thêm miệng ăn; người đứng đầu đa nghi có thể đóng cửa.</li><li>Lấy vợ lấy chồng khác đảo, nên có họ hàng hai bên. Đánh nhau thì có gia đình bị chia cắt.</li></ul> |
+| **Dịch bệnh** | Lây theo người qua lại (cầu, đoàn buôn, quân lính, người chạy nạn). Đảo đóng cầu thì ít lây nhưng mất buôn bán. |
+| **Chính trị trong đảo** | <ul><li>Bất bình kéo dài thì có đảo chính: tướng hay quân sư lật người đứng đầu.</li><li>Tranh ngôi khi người đứng đầu chết.</li><li>Có thể nội chiến chia hai phe.</li></ul>Người đứng đầu mới đổi hết chiến lược. |
+| **Kinh tế giữa các đảo** | <ul><li>Giá theo khan hiếm.</li><li>Một đảo bị cấm vận (các đảo khác không buôn) thì túng quẫn, dễ liều đánh.</li></ul> |
+| **Chiến tranh lan rộng** | Liên minh kéo đồng minh vào. Đảo thứ ba thừa lúc hai đảo đánh nhau để đánh kẻ yếu. |
+| **Thiên tai** | Rơi đúng lúc yếu thì lật thế trận (đã có). |
+
+**Mỗi chuyện xảy ra lưu lại chuỗi nguyên nhân** để dev xem "vì sao". Ví dụ: hạn hán → mất mùa → đói → chạy nạn sang Lúa Vàng → dịch lây → Lúa Vàng đóng cầu → Thông Xanh thù → chiến tranh.
+
+**Mọi vòng đều có người hành động thật** (mục 7.1, 7.5): người chạy nạn mang bọc đi qua cầu; người bệnh nằm ở nhà thuốc; đảo chính có lính vây nhà chính.
+
+**Giữ được kiểm thử và cân chỉnh:** cùng seed vẫn ra cùng lịch sử ở 1×, 2×, 4×. Mỗi vòng có số đo trong bảng dev "Cuộc đua" (bước 6) để cân chỉnh độ hỗn loạn: không quá yên, không sụp hết.
+
+---
+
+## 8. Thứ tự làm trong bước 7 (đề xuất)
+
+| Bước | Việc | Mục |
+|---|---|---|
+| 7a | Nền: người ở đâu (`p.loc`), chỗ làm thật cho mọi đảo, mọi thời, hoạt động có đầu vào và đầu ra, bỏ cử chỉ vô nghĩa, kiểm thử "không vô nghĩa" | 2, 3, 7.1 |
+| 7b | Cảnh: tang lễ, đói, lễ hội, thiên tai; khách trên đảo | 4, 7.5 |
+| 7c | Cầu do người đứng đầu quyết, dựng cầu thật, người qua lại, xô xát ở đầu cầu | 7.2 |
+| 7d | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh | 7.3 |
+| 7e | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể | 7.4 |
+| 7f | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân | 7.6 |
+| 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
+
+Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khung hình điện thoại, rồi commit, push, cập nhật artifact.
