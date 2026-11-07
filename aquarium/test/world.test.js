@@ -1,7 +1,7 @@
 // Bể Kính · test/world.test.js · Cả bể: sáu đảo có dân, một đồng hồ, kết quả không phụ thuộc tốc độ chạy
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 
 test('sáu đảo đều có dân, gia tộc riêng, chốt đã mở thì đủ người sau 3 năm', () => {

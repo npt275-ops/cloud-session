@@ -6,6 +6,12 @@
  * Vai: người đứng đầu, tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả (ghế hội đồng); thợ xây, thương nhân, lính,
  * nông dân, người đi đường, người già, trẻ em.
  * Vị trí cứng (logic/posts.js) đứng đúng chốt; drama (logic/dramas.js) được bộ não xét trước lịch này.
+ * Người đứng đầu có bộ kịch bản riêng (logic/leader.js), lính gác cổng cũng vậy (logic/guards.js); người khác bị kéo vào kịch
+ * bản của họ (họp hội đồng, hộ vệ, nghe nói, mang cơm ra cổng) trước lịch thường.
+ * Đầu vào, đầu ra (design/npc-song-that.md mục 3): việc làm ra hay dùng vật liệu có chu trình (cycle), phần vẽ chạy theo:
+ *   người làm ra tài nguyên  { item, src: chỗ làm, dst: 'store', workAt: 'src' }: làm ở chỗ làm, mang sản phẩm về kho, đặt
+ *                            xuống, quay lại (năng lượng không mang: đi theo dây)
+ *   thợ xây                  { item, src: 'store', dst: 'site', workAt: 'dst' }: ra kho lấy gỗ, đá, mang tới công trình, dựng
  * Cần: logic/schedule.js, logic/people.js, logic/posts.js. Chạy được bằng Node. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
@@ -14,7 +20,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   // việc của người làm ra từng loại tài nguyên: [động từ, chỗ, lý do]
-  const WORK = { food: ['farm', 'field', 'làm ra lương thực'], wood: ['chop', 'woods', 'đốn gỗ'], stone: ['mine', 'quarry', 'đục đá'], metal: ['mine', 'quarry', 'đào quặng'], energy: ['tend', 'plant', 'coi giữ nguồn năng lượng'], luxury: ['craft', 'market', 'làm hàng quý'] };
+  const WORK = { food: ['farm', 'field', 'làm ra lương thực'], wood: ['chop', 'woods', 'đốn gỗ'], stone: ['mine', 'quarry', 'đục đá'], metal: ['mine', 'quarry', 'đào quặng'], energy: ['tend', 'plant', 'coi giữ nguồn năng lượng'], luxury: ['craft', 'craft', 'làm hàng quý ở xưởng'] };
   // tên động từ (cho thẻ người)
   const VERB_NAME = { farm: 'làm ruộng', chop: 'đốn gỗ', mine: 'đục đá, đào quặng', tend: 'coi máy', craft: 'làm hàng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', gatekeep: 'gác cổng', patrol: 'đi tuần', drill: 'luyện quân',
     direct: 'chỉ đạo', rule: 'nói với dân', advise: 'bàn việc làng', pray: 'cầu nguyện', heal: 'chữa bệnh', trade: 'bán hàng', shop: 'mua hàng',
@@ -36,28 +42,30 @@
     };
     const role = p.role, j = p.job;
     const building = S.build && S.build.active != null ? S.build.list[S.build.active] : null;
-    // lính gác cổng thành: ngày đêm đứng ở cổng (bữa ăn mang ra cổng), canh người ra vào
-    // vị trí cứng (logic/posts.js): lính gác cổng chính, cổng phụ ngày đêm đứng ở chốt của mình (bữa ăn mang ra cổng)
     const post = BK.Posts && BK.Posts.of(p);
-    if (post && post.night) return job(post.verb, post.place, ph === 'night' ? post.why + ' ban đêm' : post.why);
+    const ctx = { S, p, rng, d, job, ph, morning: ph === 'morning', building };
+    // bị kéo vào kịch bản của người đứng đầu (họp, hộ vệ, nghe nói, đi dạo cùng); mang cơm trưa ra cổng cho người nhà đang gác
+    if (BK.Leader) { const x = BK.Leader.joinIn(ctx); if (x) return x; }
+    if (BK.Guards) { const x = BK.Guards.bringMeal(ctx); if (x) return x; }
+    // người đứng đầu, lính giữ chốt cổng: kịch bản riêng
+    if (role === 'king' && BK.Leader) return BK.Leader.pick(ctx);
+    if (post && post.night && BK.Guards) return BK.Guards.pick(ctx, post);
     // người diễn thuyết: sáng và tối đứng ở bục giữa sân nói với dân, trưa về ăn, chiều đi gặp dân, đêm ngủ
     if (post && post.key === 'orator' && ph !== 'night') {
       if (ph === 'morning' || ph === 'evening') return job('rule', 'podium', ph === 'morning' ? 'diễn thuyết buổi sáng ở bục giữa sân' : 'diễn thuyết buổi tối cho dân nghe');
       if (ph === 'noon') return job('eat', 'home', 'về nhà ăn trưa');
       return job('stroll', 'stroll', 'đi bộ dọc phố gặp dân');
     }
-    // đêm: ai cũng về nhà ngủ, trừ một nửa số lính thay nhau gác
-    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return job('guard', 'guard', 'gác đêm cho làng'); return job('sleep', 'home', 'về nhà ngủ'); }
+    // đêm: ai cũng về nhà ngủ, trừ một nửa số lính ra các chốt cổng thay ca gác đêm (logic/guards.js)
+    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng'); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)
     if (ph === 'noon') {
-      if (role === 'king') return job('direct', 'hall', 'trông coi làng giờ trưa');
       if (j === 'soldier' && p.id % 3 === 0) return job('guard', 'guard', 'gác thay ca trưa');
       if (role === 'merchant' || j === 'trader') return job('trade', 'market', 'bán hàng giờ trưa');
       return age < 6 ? job('play', 'home', 'chơi quanh nhà') : job('eat', 'home', 'về nhà ăn trưa');
     }
     // tối: tụ ở sân làng (không phải nhà chính); người đứng đầu ra nói với dân, người già kể chuyện cho trẻ
     if (ph === 'evening') {
-      if (role === 'king') return rng.chance(0.5) ? job('rule', 'square', 'ra sân làng nói chuyện với dân') : job('direct', 'hall', 'xem lại việc trong ngày');
       if (role === 'priest') return job('pray', 'shrine', 'làm lễ buổi tối');
       if (j === 'soldier') return p.id % 2 ? job('patrol', 'patrol', 'tuần quanh làng lúc chạng vạng') : job('rest', 'guard', 'nghỉ ở chốt sau ca gác');
       if (j === 'elder') return job('tell', 'home', 'kể chuyện cho con cháu trước cửa nhà');
@@ -75,19 +83,20 @@
     }
     if (j === 'elder') return morning ? job('rest', 'home', 'ngồi trước nhà') : neighborChat('kể chuyện với hàng xóm');
     switch (role) {
-      case 'king': return job('direct', 'hall', building ? 'chỉ đạo dựng ' + building.name.toLowerCase() : 'chỉ đạo việc của cả làng');
       case 'advisor': return job('advise', 'hall', 'bàn việc làng với người đứng đầu');
-      case 'general1': case 'general2': return (role === 'general1') === morning ? job('drill', 'guard', 'luyện quân') : job('patrol', 'patrol', 'đi kiểm tra các chốt gác');
+      case 'general1': case 'general2': return (role === 'general1') === morning ? job('drill', 'drill', 'luyện quân ở bãi tập') : job('patrol', 'patrol', 'đi kiểm tra các chốt gác');
       case 'priest': return job('pray', 'shrine', 'cầu cho làng yên ổn');
       case 'healer': return job('heal', 'visit', 'đi thăm bệnh từng nhà');
       case 'merchant': return job('trade', 'market', 'bán hàng ở chợ');
       case 'builder': break; // thợ cả làm cùng thợ
     }
-    if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase()) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
+    // thợ xây: ra kho lấy vật liệu (gỗ hay đá, người này người kia), mang tới công trình rồi dựng
+    if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase(), { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'site', workAt: 'dst' } }) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
     if (j === 'trader') return job('trade', 'market', 'bán hàng ở chợ');
-    if (j === 'soldier') { const drillFirst = t.aggression > t.paranoia; return drillFirst === morning ? job('drill', 'guard', 'luyện võ') : rng.chance(0.5) ? job('guard', 'guard', 'canh gác làng') : job('patrol', 'patrol', 'đi tuần quanh làng'); }
+    if (j === 'soldier') { const drillFirst = t.aggression > t.paranoia; return drillFirst === morning ? job('drill', 'drill', 'luyện võ ở bãi tập') : rng.chance(0.5) ? job('guard', 'guard', 'canh gác làng') : job('patrol', 'patrol', 'đi tuần quanh làng'); }
     // người làm ra tài nguyên: làm đúng thứ kinh tế giao (p.res, logic/economy.js), ở đúng chỗ của thứ đó
-    if (j === 'worker') { const w = WORK[p.res] || WORK.food; return job(w[0], w[1], morning ? w[2] : w[2] + ' nốt buổi chiều'); }
+    // làm xong một mẻ thì mang sản phẩm về kho (năng lượng đi theo dây, không mang)
+    if (j === 'worker') { const r = WORK[p.res] ? p.res : 'food', w = WORK[r]; return job(w[0], w[1], morning ? w[2] : w[2] + ' nốt buổi chiều', r === 'energy' ? null : { cycle: { item: r, src: w[1], dst: 'store', workAt: 'src' } }); }
     // người đi đường: chủ yếu đi bộ dọc phố (gặp ai thì dừng lại nói chuyện, render/village3d.js), có lúc ra chợ, có lúc ngồi trước nhà
     if (j === 'walker' && p.id % 3 === 0) return job('stroll', 'hallLoop', 'đi bộ quanh nhà chính'); // vài người (khoảng một phần ba người đi đường) đi dạo quanh nhà chính
     if (j === 'walker') { const r = rng.next(); return r < 0.6 ? job('stroll', 'stroll', 'đi bộ dọc phố') : r < 0.85 ? job('shop', 'market', 'ra chợ mua đồ') : job('rest', 'home', 'ngồi nghỉ trước cửa nhà'); }

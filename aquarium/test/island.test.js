@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -116,14 +116,17 @@ test('công trình mỗi thời được dựng dần và xong hết; việc ng�
   for (const v of ['farm', 'build', 'guard', 'sleep', 'eat', 'chat']) assert.ok(seenVerbs.has(v), 'có việc ' + v);
 });
 
-test('dàn vai cố định, dân không vượt trần POP_CAP; nhà chính chỉ đông khi biểu tình', () => {
+test('dàn vai cố định, dân không vượt trần POP_CAP; nhà chính chỉ đông khi biểu tình, họp hội đồng, báo tin', () => {
   const S = BK.Island.create({ key: 'plains', seed: 9 });
   const R = BK.Rules, hallCrowd = () => { let n = 0; for (const m of S.minds.values()) if (m.place === 'hall' || (m.mood === 'argue' && m.target === S.seats.king)) n++; return n; };
-  let maxPop = 0, maxHall = 0;
+  let maxPop = 0, maxHall = 0, meetings = 0;
   for (let d = 0; d < 9 * 360; d++) {
     S.tod = 0.35; S.situ.drought = 0; S.situ.protest = 0; BK.Island.step(S, 1); // ngày thường, buổi sáng
     maxPop = Math.max(maxPop, BK.Island.living(S).length);
-    if (d > 900 && !BK.Dramas.active(S).some((A) => A.key === 'riot')) { maxHall = Math.max(maxHall, hallCrowd()); } // ngày thường: không tính lúc có bạo loạn
+    // ngày thường: không tính lúc có bạo loạn, lúc họp hội đồng, lúc lính vào báo tin (logic/leader.js)
+    const meeting = S.meeting && S.meeting.until > S.day, report = S.report && S.report.cmdUntil > S.day;
+    if (meeting && [...S.minds.values()].some((m) => m.verb === 'advise')) meetings++;
+    if (d > 900 && !meeting && !report && !BK.Dramas.active(S).some((A) => A.key === 'riot')) { maxHall = Math.max(maxHall, hallCrowd()); }
   }
   assert.ok(maxPop <= R.POP_CAP, 'dân tối đa ' + maxPop);
   const live = BK.Island.living(S).length; assert.ok(live >= 35, 'cuối trận còn ' + live + ' người');
@@ -131,7 +134,8 @@ test('dàn vai cố định, dân không vượt trần POP_CAP; nhà chính ch�
   assert.strictEqual(count('builder', 'builder'), R.BUILDERS, 'đủ thợ xây');
   assert.strictEqual(count('trader', 'merchant'), R.TRADERS, 'đủ thương nhân');
   for (const k of ['king', 'general1', 'general2', 'priest', 'healer']) assert.ok(S.seats[k] != null, 'có ghế ' + k);
-  assert.ok(maxHall <= 3, 'ngày thường nhà chính chỉ có người đứng đầu và quân sư: ' + maxHall);
+  assert.ok(maxHall <= 3, 'ngày thường nhà chính chỉ có người đứng đầu, quân sư, hộ vệ: ' + maxHall);
+  assert.ok(meetings >= 5, 'hội đồng có họp: ' + meetings + ' lần thấy đang họp');
   BK.Island.trigger(S, 'protest');
   assert.ok(hallCrowd() >= 8, 'biểu tình: ' + hallCrowd() + ' người ở nhà chính');
 });
@@ -156,7 +160,9 @@ test('cổng thành đã mở thì luôn có đủ 4 lính gác, mỗi người 
       if (!S.postsOpen.includes('gateMain')) { assert.strictEqual(g.length, 0); continue; } // cổng chính mở khi có tường thành và đủ người
       assert.strictEqual(g.length, BK.Rules.GATEKEEPERS, 'ngày ' + d + ': ' + g.length + ' lính gác');
       assert.deepStrictEqual(g.map((p) => p.post).sort(), [0, 1, 2, 3], 'mỗi người một chốt');
-      for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb) assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); }
+      // ca ngày: lính gác đứng ở cổng (trừ lúc chạy vào báo tin); ca đêm về nhà ngủ, lính thường ra gác thay (logic/guards.js)
+      for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report') assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); }
+      if (BK.Schedule.phase(S.tod) === 'night') assert.ok([...S.minds.values()].some((m) => m.place === 'nightGate'), 'đêm có lính thường gác ở cổng');
       checked++;
     }
   }
@@ -175,7 +181,7 @@ test('vị trí cứng: chốt đã mở thì luôn đủ người (4 gác cổn
         const g = by(k); assert.strictEqual(g.length, n, 'ngày ' + d + ' ' + k + ': ' + g.length);
         assert.deepStrictEqual(g.map((p) => p.post).sort(), [...Array(n).keys()], k + ': mỗi người một chỗ');
       }
-      for (const p of by('gateLeft').concat(by('gateRight'))) { const m = S.minds.get(p.id); if (m && m.verb) assert.ok(m.place === 'gateL' || m.place === 'gateR', 'lính cổng phụ đứng ở cổng phụ: ' + m.place); }
+      for (const p of by('gateLeft').concat(by('gateRight'))) { const m = S.minds.get(p.id); if (m && m.verb && m.verb !== 'sleep' && m.verb !== 'report' && m.state !== 'talk') assert.ok(m.place === 'gateL' || m.place === 'gateR', 'lính cổng phụ đứng ở cổng phụ: ' + m.place); }
       checked++;
     }
   }

@@ -46,12 +46,16 @@
       if (place === 'gate') return PL.gate && PL.gate.length ? PL.gate[(p.post || 0) % PL.gate.length] : pickOf(PL.guard, p.id); // bốn chốt gác cổng thành
       if (place === 'gateL' || place === 'gateR') return PL[place] && PL[place].length ? PL[place][(p.post || 0) % PL[place].length] : pickOf(PL.guard, p.id); // hai chốt mỗi cổng phụ
       if (place === 'podium') return PL.podium || pickOf(PL.square, k); // bục diễn thuyết giữa sân
+      if (place === 'nightGate') return pickOf([...(PL.gate || []), ...(PL.gateL || []), ...(PL.gateR || [])], p.id); // ca gác đêm ở các chốt cổng (logic/guards.js)
       if (place === 'hallLoop') return PL.hall; // (vòng đi dạo quanh nhà chính: hallGoal)
-      // chỗ làm ra tài nguyên (logic/tasks.js WORK): đốn gỗ, mỏ đá ở phía trong tường (gần rừng, đá ngoài làng); năng lượng ở
-      // chỗ đang dựng hay ruộng (thời sau có công trình riêng thì đổi)
-      if (place === 'woods') return pickOf(PL.outer && PL.outer.length ? PL.outer : PL.guard, p.id);
-      if (place === 'quarry') return pickOf(PL.guard, p.id + 3);
-      if (place === 'plant') return pickOf(PL.field, p.id);
+      // chỗ làm ra tài nguyên (logic/tasks.js WORK): bãi làm việc thật của đảo (render/build/workyards3d.js); kho (mang sản phẩm về),
+      // bãi tập (luyện quân)
+      if (place === 'woods') return pickOf(PL.wood, p.id);
+      if (place === 'quarry') return pickOf(PL.stone, p.id);
+      if (place === 'plant') return pickOf(PL.power, p.id);
+      if (place === 'craft') return pickOf(PL.craft, p.id);
+      if (place === 'store') return pickOf(PL.store, p.id);
+      if (place === 'drill') return pickOf(PL.drill, p.id);
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
@@ -110,6 +114,8 @@
         _v.copy(f.pos).sub(tgt.pos); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
         return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
+      // đi theo một người (hộ vệ đi sau người đứng đầu, người nhà đi dạo cùng): đứng sau lưng người đó một chút
+      if (mind.follow != null) { const tg = folks.get(mind.follow); if (tg) return { p: tg.pos.clone().add(new THREE.Vector3(-Math.sin(tg.yaw) * 1.5 + Math.cos(tg.yaw) * 0.6, 0, -Math.cos(tg.yaw) * 1.5 - Math.sin(tg.yaw) * 0.6)), face: null }; }
       if (mind.place === 'stroll') { const g = Nav.strollGoal(f); if (g) return g; }
       if (mind.place === 'hallLoop') { const g = Nav.hallGoal(f); if (g) return g; }
       const base = spot(mind.place, f.p);
@@ -117,6 +123,27 @@
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
       return base ? { p: Nav.offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit)), face: null } : null;
     }
+    /* ---------- Chu trình đầu vào, đầu ra (logic/tasks.js cycle; design/npc-song-that.md mục 3) ----------
+     * người làm ra tài nguyên (workAt 'src'): làm ở chỗ làm → mang sản phẩm tới kho → cúi đặt xuống → quay lại
+     * thợ xây (workAt 'dst'): ra kho → cúi nhặt vật liệu → mang tới công trình → dựng
+     * Bước đổi khi tới nơi (làm đủ một mẻ thì đi, đặt nhặt xong thì đi); hàng chỉ hiện khi đang mang. */
+    const STAGES = { src: ['work', 'carry', 'drop', 'back'], dst: ['fetch', 'pick', 'carry', 'work'] };
+    const WORK_SECS = 9;                       // một mẻ làm (giây game), cộng thêm theo người
+    function cycleOf(f, mind) {
+      const C = mind.cycle; if (!C || mind.state !== 'work') { f.cyc = null; return null; }
+      if (!f.cyc || f.cyc.mind !== mind) f.cyc = { mind, k: 0, until: 0, at: false, aim: null, stage: null };
+      const st = STAGES[C.workAt][f.cyc.k], src = C.src, dst = C.dst;
+      const place = st === 'work' ? (C.workAt === 'src' ? src : dst) : st === 'carry' || st === 'drop' ? dst : src;
+      if (!f.cyc.aim || f.cyc.aim.place !== place) f.cyc.aim = Object.assign({}, mind, { place });
+      f.cyc.stage = st; return f.cyc;
+    }
+    function cycleNext(f, arrived, ts) {
+      const c = f.cyc; if (!c) return;
+      if (!arrived) { c.at = false; return; }
+      if (!c.at) { c.at = true; c.until = ts + (c.stage === 'work' ? WORK_SECS + (f.p.id % 5) * 1.5 : c.stage === 'drop' || c.stage === 'pick' ? 1.6 : 0); }
+      if (ts >= c.until) { c.k = (c.k + 1) % 4; c.at = false; }
+    }
+    const carrying = (f) => !!f.cyc && (f.cyc.stage === 'carry' || f.cyc.stage === 'drop' || (f.cyc.stage === 'pick' && f.cyc.at));
     function exprOf(mind, X, p) {
       if (mind.mood === 'pray') return 'closed';
       if (mind.state === 'attack' || mind.mood === 'argue') return 'angry';
@@ -146,7 +173,8 @@
         alive.add(p.id);
         const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
-        let goal = goalOf(f, mind), meetVerb = null, meetGoal = null;
+        const cyc = cycleOf(f, mind), aim = cyc ? cyc.aim : mind; // chu trình: đi tới chỗ của bước đang làm
+        let goal = goalOf(f, aim), meetVerb = null, meetGoal = null;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
         if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
         else if ((mind.place === 'stroll' || mind.place === 'hallLoop') && goal && goal.road && !(ts < (f.meetCool || 0))) {
@@ -160,19 +188,21 @@
         let moving = false;
         const n = Math.max(1, Math.ceil(sec / STEP)), h = sec / n;
         for (let i = 0; i < n; i++) {
-          if (i) goal = meetGoal ? null : goalOf(f, mind);
+          if (i) goal = meetGoal ? null : goalOf(f, aim);
           let g = meetGoal || goal;
           if (g && !meetVerb && !g.road) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
           if (!g) break;
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
-          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride); // tối muộn về ngủ thì rảo bước
+          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) ? 0.85 : 1); // tối muộn về ngủ thì rảo bước; mang hàng thì chậm lại
           if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
         if (!moving) f.ph += real * 3 * f.knobs.tempo;
+        if (cyc) cycleNext(f, !moving && !!goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) < 0.8, ts);
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
-        const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
+        // cử chỉ làm việc chỉ ở chỗ làm (bước 'work' của chu trình), không ở kho, không trên đường
+        const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (!cyc || cyc.stage === 'work' || meetVerb) && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
         f.inside = !moving && verb === 'sleep'; // ngủ: vào trong nhà (không vẽ)
         let tgt, gface = null;
         if (working && Work) {
@@ -181,9 +211,16 @@
             f.work = Work.gestureOf(verb, level, p.id, f.turn); f.gStart = gs;
             f.gEnd = gs + (f.work && !f.work.G.loop ? f.work.G.dur + 0.8 : 6 + (p.id % 4));
           }
-          if (f.work) { const G = f.work.G, u = G.loop ? 0 : Math.min(1, (gs - f.gStart) / G.dur); tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, u, gs, f.knobs); Anim.addLife(tgt, gs, f.knobs); gface = G.face; f.tool = f.work.tool; }
+          if (f.work) { const G = f.work.G, u = G.loop ? 0 : Math.min(1, (gs - f.gStart) / G.dur); tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, u, gs, f.knobs); Anim.addLife(tgt, gs, f.knobs); gface = G.face; f.tool = f.work.tool; f.gk = G.key; }
         }
-        if (!tgt) { f.verb = null; f.tool = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
+        // mang hàng: đi bằng cử chỉ vác hay ôm (render/work3d.js carryOf); tới kho, tới công trình thì cúi đặt, nhặt
+        if (!tgt && cyc && Work && carrying(f)) {
+          const c = Work.carryOf(mind.cycle.item), put = BK.Gestures3D.BY_KEY[Work.PUT];
+          if (c && moving && cyc.stage === 'carry') { tgt = Anim.basePose(f.knobs); c.G.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'mang:' + c.G.key; }
+          else if (c && put && !moving) { tgt = Anim.basePose(f.knobs); put.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'đặt nhặt'; }
+        }
+        if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
+        f.moving = moving; f.meetVerb = meetVerb;
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
         f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE; // ngồi, quỳ thì hạ người
@@ -248,7 +285,24 @@
       for (const k in IM) IM[k].visible = on; if (!on) ring.visible = false;
       if (on) for (const [, f] of folks) { const mind = S.minds.get(f.p.id) || { state: 'idle' }, g = goalOf(f, mind); if (g) f.pos.copy(g.p); f.nav = null; f.route = null; f.meet = null; }
     }
-    return { update, pick, select, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    // kiểm thử "không vô nghĩa" (design/npc-song-that.md mục 7.1): ở khung hình vừa vẽ, ai làm cử chỉ không hợp với việc,
+    // mang hàng khi không đi giữa chỗ làm và kho, hay làm việc khi đang đi, ở chỗ không phải chỗ làm. Trả về danh sách vi phạm
+    const LOAD = new Set(['sack', 'log', 'basket', 'crate']);
+    function audit() {
+      const bad = [];
+      for (const [id, f] of folks) {
+        if (!f.rig || f.inside) continue;
+        const mind = S.minds.get(id) || {}, why = (t) => bad.push(t + ' · người ' + id + ' (' + (mind.verb || mind.state) + ')');
+        if (f.work && f.gk === f.work.G.key && !f.meetVerb) {
+          if (f.moving) why('làm cử chỉ ' + f.gk + ' khi đang đi');
+          if (Work && !Work.allowed(f.verb, level).has(f.gk)) why('cử chỉ ' + f.gk + ' không thuộc việc ' + f.verb);
+          if (f.cyc && f.cyc.stage !== 'work') why('làm việc ở bước ' + f.cyc.stage + ' (không ở chỗ làm)');
+        }
+        if (LOAD.has(f.tool) && !carrying(f)) why('mang ' + f.tool + ' khi không chở hàng');
+      }
+      return bad;
+    }
+    return { update, pick, select, audit, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

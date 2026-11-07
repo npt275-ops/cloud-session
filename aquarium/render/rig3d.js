@@ -157,6 +157,11 @@
     put('cyl', n.wrR, M(0, -0.12, 0, 0.02, 0.38, 0.02), wood, 'tool:hammer'); put('box', n.wrR, M(0, -0.3, 0, 0.16, 0.08, 0.08), blade, 'tool:hammer');
     put('cyl', n.wrR, M(0, -0.25, 0, 0.02, 0.75, 0.02), wood, 'tool:axe'); put('box', n.wrR, M(0, -0.58, 0.1, 0.05, 0.16, 0.2), blade, 'tool:axe');
     put('ball', n.chest, M(-0.24, 0.52, -0.06, 0.22, 0.2, 0.2), '#c9a46e', 'tool:sack');
+    // hàng mang từ chỗ làm về kho (render/village3d.js, logic/tasks.js cycle): khúc gỗ vác vai, thúng đá hay quặng và thùng
+    // hàng quý ôm trước ngực
+    put('cyl', n.chest, M(0.24, 0.56, 0, 0.09, 1.3, 0.09, Math.PI / 2, 0, 0), '#8a5a33', 'tool:log');
+    put('box', n.chest, M(0, 0.08, 0.34, 0.42, 0.24, 0.3), '#8f8a80', 'tool:basket');
+    put('box', n.chest, M(0, 0.12, 0.32, 0.36, 0.32, 0.3), '#b0566f', 'tool:crate');
     put('cyl', n.wrR, M(0, -0.07, 0.04, 0.05, 0.015, 0.05, Math.PI / 2, 0, 0), '#e8c24a', 'tool:coin');
     put('half', n.wrL, M(0, -0.06, 0.06, 0.1, 0.07, 0.1, Math.PI, 0, 0), '#a8603e', 'tool:bowl');
   }

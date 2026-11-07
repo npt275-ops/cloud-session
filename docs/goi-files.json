@@ -125,6 +125,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/guards.js",
+  "src": "logic/guards.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/homes.js",
   "src": "logic/homes.js",
   "mode": 420
@@ -137,6 +142,11 @@
  {
   "path": "BeKinh/logic/jobs.js",
   "src": "logic/jobs.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/leader.js",
+  "src": "logic/leader.js",
   "mode": 420
  },
  {
@@ -382,6 +392,11 @@
  {
   "path": "BeKinh/render/build/vehicles.js",
   "src": "render/build/vehicles.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/workyards3d.js",
+  "src": "render/build/workyards3d.js",
   "mode": 420
  },
  {

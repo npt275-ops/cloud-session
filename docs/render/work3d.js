@@ -1,7 +1,14 @@
 /* Bể Kính · render/work3d.js
- * Đổi động từ của việc (logic/tasks.js) thành cử chỉ trong thư viện (render/gestures3d.js) và đồ cầm tay, theo thời kỳ.
+ * Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1):
+ *   gestureOf  cử chỉ làm việc TẠI CHỖ của một động từ (logic/tasks.js), theo thời kỳ: chỉ những cử chỉ đứng làm ở chỗ làm,
+ *              có đồ nghề đúng việc (cuốc ở ruộng, rìu ở bãi gỗ, búa ở mỏ, ở công trình). Không có cử chỉ đi trong danh sách
+ *              này: vác hàng là cử chỉ đi, chỉ dùng khi đang mang hàng (carryOf).
+ *   carryOf    cách mang một thứ hàng khi đi giữa chỗ làm và kho: bao lương thực vác vai, khúc gỗ vác vai, thúng đá hay quặng
+ *              và thùng hàng quý ôm trước ngực (cử chỉ đi trong thư viện, đồ mang trong khung người render/rig3d.js).
+ *   PUT        cúi xuống đặt hàng xuống hay nhặt hàng lên (ở kho, ở công trình).
  * Mỗi việc có vài cử chỉ để thay phiên (người này cuốc, người kia gặt), chọn theo người và theo lượt.
- * Đồ cầm tay là bộ phận "tool" trong khung người (render/rig3d.js): hoe cuốc, sickle liềm, hammer búa, axe rìu, sack bao, coin xu, bowl bát.
+ * Đồ cầm tay là bộ phận "tool" trong khung người: hoe cuốc, sickle liềm, hammer búa, axe rìu, coin xu, bowl bát; sack bao, log
+ * khúc gỗ, basket thúng, crate thùng hàng.
  * Cần: render/gestures3d.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
@@ -10,13 +17,14 @@
   'use strict';
   // [cử chỉ, đồ cầm]; hàm theo cấp thời kỳ
   const V = {
-    farm: (lv) => (lv <= 1 ? [['harvest', null], ['carry', 'sack']] : lv <= 6 ? [['hoe', 'hoe'], ['harvest', 'sickle'], ['carry', 'sack']] : [['point', null], ['crossArms', null], ['carry', 'sack']]),
-    build: (lv) => (lv <= 1 ? [['mine', 'hammer'], ['carry', 'sack']] : lv <= 7 ? [['build', 'hammer'], ['carry', 'sack'], ['mine', 'hammer']] : [['point', null], ['build', 'hammer']]),
-    repair: (lv) => (lv <= 7 ? [['build', 'hammer'], ['mine', 'hammer'], ['carry', 'sack']] : [['point', null], ['build', 'hammer']]),
-    craft: () => [['mine', 'hammer'], ['chop', 'axe']],
-    chop: () => [['chop', 'axe'], ['carry', 'sack']],             // đốn gỗ (logic/economy.js)
-    mine: () => [['mine', 'hammer'], ['carry', 'sack']],          // đục đá, đào quặng
-    tend: (lv) => (lv <= 6 ? [['build', 'hammer'], ['carry', 'sack']] : [['point', null], ['crossArms', null]]), // coi giữ nguồn năng lượng
+    // ruộng: thời đồ đá hái lượm bằng tay; rồi cuốc, gặt; từ thời Tên lửa máy làm, người cúi kiểm tra cây, chỉ việc cho máy
+    farm: (lv) => (lv <= 1 ? [['harvest', null]] : lv <= 6 ? [['hoe', 'hoe'], ['harvest', 'sickle']] : [['harvest', null], ['point', null]]),
+    build: (lv) => (lv <= 7 ? [['build', 'hammer'], ['mine', 'hammer']] : [['build', 'hammer'], ['point', null]]),
+    repair: (lv) => (lv <= 7 ? [['build', 'hammer'], ['mine', 'hammer']] : [['build', 'hammer'], ['point', null]]),
+    craft: () => [['build', 'hammer'], ['mine', 'hammer']],      // bàn thợ, đe ở xưởng
+    chop: () => [['chop', 'axe']],                               // đốn gỗ ở bãi gỗ (logic/economy.js)
+    mine: () => [['mine', 'hammer']],                            // đục đá, đào quặng ở mỏ
+    tend: (lv) => (lv <= 6 ? [['build', 'hammer'], ['think', null]] : [['point', null], ['think', null]]), // coi lò, coi máy
     direct: () => [['command', null], ['point', null], ['crossArms', null], ['handsBehind', null]],
     patrol: () => [['lookAround', null], ['guard', null]],
     heal: () => [['kneelPray', null], ['nod', null], ['talk', null]],
@@ -32,12 +40,29 @@
     study: () => [['think', null], ['scratchHead', null]],
     tell: () => [['talk', null], ['wave', null], ['laugh', null]],
     play: () => [['cheer', null], ['dance', null]],
-    help: () => [['carry', 'sack'], ['harvest', null]],
+    help: () => [['harvest', null]],                             // trẻ phụ việc: nhặt, hái cùng người lớn
     eat: () => [['eat', 'bowl'], ['drink', null]],
     rest: () => [['sit', null], ['sway', null], ['stand', null]],
     chat: () => [['talk', null], ['laugh', null], ['nod', null], ['whisper', null]],
     riot: () => [['cheer', null], ['command', null], ['point', null], ['thrust', null]], // bạo loạn: giơ tay hô, chỉ trỏ, vung nắm đấm (logic/dramas.js)
     listen: () => [['nod', null], ['crossArms', null], ['handsBehind', null], ['stand', null]], // đứng nghe diễn thuyết, đứng xem
+    // người đứng đầu (logic/leader.js)
+    command: () => [['command', null], ['point', null]],                     // ra lệnh sau khi nghe tin
+    judge: () => [['point', null], ['command', null], ['shakeHead', null]],  // phân xử hai người cãi nhau
+    inspect: () => [['lookAround', null], ['point', null], ['think', null], ['handsBehind', null]], // thị sát, xem hàng
+    review: () => [['command', null], ['handsBehind', null], ['point', null]], // duyệt quân
+    speech: () => [['speech', null], ['command', null]],                     // nói với dân ở bục
+    // người bị kéo vào: báo tin, hộ vệ, mang cơm (logic/leader.js, logic/guards.js)
+    report: () => [['bow', null], ['talk', null], ['point', null]],
+    escort: () => [['guard', null], ['lookAround', null], ['handsBehind', null]],
+    bring: () => [['talk', null], ['nod', null]],
+    // lính gác cổng, mỗi người một kiểu (logic/guards.js)
+    watch: () => [['lookAround', null], ['point', null], ['guard', null]],
+    spear: () => [['guard', null], ['thrust', null]],
+    lean: () => [['handsBehind', null], ['sway', null], ['crossArms', null]],
+    warm: () => [['rubHands', null]],
+    nightWatch: () => [['lookAround', null], ['rubHands', null], ['guard', null]],
+    doze: () => [['sway', null], ['stand', null]],
   };
   // cử chỉ thứ n của một việc cho một người (đổi lượt thì sang cử chỉ khác)
   function gestureOf(verb, level, pid, turn) {
@@ -45,5 +70,11 @@
     const G = BK.Gestures3D && BK.Gestures3D.BY_KEY[key];
     return G ? { G, tool } : null;
   }
-  return { gestureOf, VERBS: Object.keys(V) };
+  // cách mang một thứ hàng khi đi: [cử chỉ đi, đồ mang]
+  const CARRY = { food: ['carry', 'sack'], wood: ['carry', 'log'], stone: ['carryFront', 'basket'], metal: ['carryFront', 'basket'], luxury: ['carryFront', 'crate'] };
+  function carryOf(item) { const c = CARRY[item]; const G = c && BK.Gestures3D && BK.Gestures3D.BY_KEY[c[0]]; return G ? { G, tool: c[1] } : null; }
+  const PUT = 'harvest'; // cúi xuống đặt, nhặt hàng
+  // mọi cử chỉ được phép theo động từ (kiểm thử "không vô nghĩa")
+  const allowed = (verb, level) => new Set((V[verb] || V.rest)(level || 1).map((x) => x[0]));
+  return { gestureOf, carryOf, PUT, allowed, CARRY, VERBS: Object.keys(V) };
 });

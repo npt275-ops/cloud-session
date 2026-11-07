@@ -88,6 +88,7 @@
   add('chop', 'Lao động', 'Chặt cây', { prop: 'axe', gene: 'thợ' }, (p, ph, u, t) => { const c = (t * 1.1) % 1, sw = c < 0.55 ? ease(c / 0.55) : 1 - ease((c - 0.55) / 0.45); p.cy = 0.6 - sw * 0.9; armR(p, 0.8 + sw * 0.6, 1.3 - sw * 0.8, 0.4); armL(p, 0.9 + sw * 0.5, 0.2, 0.6); p.hxL = 0.25; });
   add('mine', 'Lao động', 'Đập đá', { prop: 'hammer', gene: 'thợ cả' }, (p, ph, u, t) => { const c = (t * 1.4) % 1, up = c < 0.6 ? ease(c / 0.6) : 1 - ease((c - 0.6) / 0.4) * 1.1; p.cx = 0.4 - up * 0.35; armR(p, 0.6 + up * 2.2, 0.15, 0.4); armL(p, 0.7 + up * 2.0, 0.1, 0.4); crouch(p, 0.4); });
   add('carry', 'Lao động', 'Vác hàng trên vai', { prop: 'sack', move: 0.8, gene: 'thương nhân, dân' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.25, K); p.cx += 0.15; armR(p, 2.6, 0.5, 2.0); armL(p, -S(ph) * 0.3, 0.1, 0.4); });
+  add('carryFront', 'Lao động', 'Ôm hàng trước ngực mà đi', { prop: 'basket', move: 0.75, gene: 'thợ đá, thợ mỏ, thợ thủ công' }, (p, ph, u, t, K) => { legsWalk(p, ph, 0.22, K); p.cx += 0.08; armL(p, 0.95, 0.05, 1.35); armR(p, 0.95, -0.05, 1.35); });
   add('trade', 'Lao động', 'Trao đổi hàng', { prop: 'coin', loop: false, dur: 2.6, gene: 'thương chủ' }, (p, ph, u) => { const k = bump(u, 0.05, 0.85); armR(p, 0.4 + k * 1.0, 0.1, 0.7 - k * 0.5); p.cx = 0.1 + k * 0.1; p.hx = 0.1; });
   add('build', 'Lao động', 'Đóng búa xây nhà', { prop: 'hammer', gene: 'thợ cả' }, (p, ph, u, t) => { const h = Math.max(0, S(t * 8)); armR(p, 1.1 + h * 0.7, 0.2, 1.1 - h * 0.5); armL(p, 1.0, -0.15, 0.6); p.cx = 0.25; p.hx = 0.25; });
 

@@ -12,7 +12,9 @@
  * từng chỗ (logic/construction.js với Lúa Vàng; năm đảo kia theo thời gian, setProgressByTime); chỗ nào xong thì công trình
  * cũ ở đó (cùng slot, hoặc đè chỗ, hoặc cái cũ gần nhất chưa có ai thay) đổi ngay thành công trình mới. Hết thời thì cái gì
  * còn sót của thời trước nữa cũng mất. Mỗi đảo một lớp vẽ gộp khi ở xa máy quay (render/build/batch3d.js) cho nhẹ máy.
- * Cần: three.js, render/build/kit3d.js, place3d.js, batch3d.js, life3d.js, các tệp kiểu công trình. */
+ * Bãi làm việc (kho, bãi gỗ, mỏ đá, chỗ làm năng lượng, xưởng, bãi tập; render/build/workyards3d.js) dựng cùng mỗi thời, sau
+ * các công trình; places() trả cả chỗ làm của các bãi đó, và không còn chỗ thay thế vô nghĩa (design/npc-song-that.md mục 2).
+ * Cần: three.js, render/build/kit3d.js, place3d.js, batch3d.js, life3d.js, workyards3d.js, các tệp kiểu công trình. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Buildings3D = factory(BK);
@@ -29,7 +31,7 @@
   const SKIP_KEY = new Set(['x', 'z', 'face', 'clear', 'nudge', 'home', 'pre']); // thông số chỉ về chỗ đặt, không đổi hình
 
   function create(o) {
-    const { THREE, lands3d } = o, K = BK.BuildKit, PL = BK.Place3D.create(THREE);
+    const { THREE, lands3d } = o, K = BK.BuildKit, PL = BK.Place3D.create(THREE), WY = BK.WorkYards3D.create({ THREE, lands3d });
     // mỗi đảo: { level, pieces (thời đang có), standing (thời trước, đang được thay dần), group, prevGroup, yard, batch }
     const shown = lands3d.lands.map(() => null);
     const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20), new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true })); yard.position.set(p.x, 0.04, p.y); yard.receiveShadow = true; return yard; };
@@ -87,6 +89,7 @@
       const L = lands3d.lands[i], old = shown[i];
       let standing = [], prevGroup = null;
       if (old) {
+        if (old.wy) for (const Y of old.wy.yards) Y.g.visible = false; // bãi làm việc của thời cũ: thời mới dựng bãi mới
         if (old.batch) { if (old.inBatch.length) unbatch(old); old.batch.dispose(); } // trả lại hình riêng cho công trình cũ còn đứng
         dropGroup(L, old.prevGroup); // công trình hai thời trước: bỏ hẳn
         if (animate) {
@@ -148,7 +151,9 @@
       L.g.add(group);
       for (let j = queue.length - 1; j >= 0; j--) if (queue[j][0] === old) { queue[j][1].queued = false; queue.splice(j, 1); } // việc dựng của thời cũ trên đảo này: bỏ
       const pre = lay.pieces.filter((P) => lay.BUILD[P.kind] && P.pre).length;
-      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, fixed, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
+      // bãi làm việc của thời này (sau các công trình, tránh chỗ của chúng)
+      const wy = WY.build(L, group, fixed, f, level);
+      shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, wy, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, fixed, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
     }
 
     /* ---------- Dựng hình và lên đời ---------- */
@@ -282,7 +287,8 @@
 
     /* ---------- Những chỗ người hay đến (cho người trong làng) ---------- */
     const HOME = new Set(['hut', 'tent', 'house', 'row', 'flats', 'tower', 'pods', 'bud', 'floatHouse', 'folded', 'crystal', 'home']);
-    const FIELD = new Set(['field', 'wildRice', 'lily', 'greenhouse', 'knap', 'kiln', 'forge', 'factory', 'hay', 'tractor', 'robot']);
+    const FIELD = new Set(['field', 'wildRice', 'lily', 'greenhouse', 'hay', 'tractor', 'robot']);   // chỗ trồng trọt
+    const CRAFT = new Set(['knap', 'kiln', 'forge', 'factory']);                                      // xưởng (làm hàng quý)
     const SQUARE = new Set(['fire', 'well', 'sun']);
     const MARKET = new Set(['market', 'shop', 'granary', 'press', 'hideRack', 'rack', 'dronePad']);
     const SHRINE = new Set(['totem', 'paintedRock', 'banyan', 'miniPortal', 'shard', 'mote', 'pylon']);
@@ -290,7 +296,7 @@
     const NOT_A_PLACE = new Set(['town', 'road', 'asphalt', 'glowRoad', 'lamp', 'pole']);
     function places(i) {
       const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
-      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [], shrine: [], school: [], outer: [], all: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [], shrine: [], school: [], outer: [], all: [], store: [], wood: [], stone: [], power: [], craft: [], drill: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
@@ -303,6 +309,7 @@
         if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
         else if (P.home != null || HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && (!out.homeSlots[P.home] || isNew)) out.homeSlots[P.home] = dv; }
         else if (FIELD.has(k)) out.field.push(pos.clone().addScaledVector(fwd, 0.5));
+        else if (CRAFT.has(k)) out.craft.push(door);
         else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, 2.2));
         else if (MARKET.has(k)) out.market.push(door);
         else if (SHRINE.has(k)) out.shrine.push(pos.clone().addScaledVector(fwd, 2));
@@ -323,13 +330,15 @@
       { const a0 = Math.atan2(f.y, f.x); for (let k = 0; k < 6; k++) { const a = a0 + Math.PI / 6 + (k * Math.PI) / 3, R = L.rOf(a) - 10; out.guard.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R)); } }
       if (!out.hall) out.hall = new THREE.Vector3(f.x * 4, 0, f.y * 4);
       if (!out.square.length) out.square.push(new THREE.Vector3(f.x * 9, 0, f.y * 9));
-      if (!out.field.length) out.field.push(new THREE.Vector3(f.x * 14, 0, f.y * 14));
       if (!out.homes.length) out.homes.push(out.square[0].clone());
-      // chưa có chợ, chỗ thờ, trường riêng thì dùng chỗ có nghĩa giữa các nhà (không dồn về nhà chính, không dồn giữa sân)
-      const H = out.homes;
-      if (!out.market.length) out.market.push(...[H[1 % H.length], H[Math.floor(H.length / 2)]].map((v) => v.clone().multiplyScalar(0.85)));
-      if (!out.shrine.length) out.shrine.push(H[2 % H.length].clone()); // chưa có chỗ thờ riêng: trước cửa một nhà, không phải giữa sân
-      if (!out.school.length) out.school.push(H[H.length - 1].clone().multiplyScalar(0.9));
+      // bãi làm việc (render/build/workyards3d.js): chỗ làm phía trước mỗi bãi; mảnh ruộng trồng cộng thêm vào ruộng
+      if (sh.wy) for (const Y of sh.wy.yards) (Y.kind === 'farm' ? out.field : out[Y.kind]).push(...Y.spots);
+      // thời đầu chưa có chợ, chỗ thờ, trường riêng: đổi chác, cúng tế, dạy trẻ đều ở sân làng (quanh đống lửa, giếng) như
+      // làng thật; không dùng chỗ thay thế vô nghĩa (trước cửa một nhà bất kỳ)
+      const sq = (k) => out.square.map((v, j) => v.clone().add(new THREE.Vector3(Math.cos(k + j), 0, Math.sin(k + j)).multiplyScalar(2.5)));
+      if (!out.market.length) out.market.push(...sq(0));
+      if (!out.shrine.length) out.shrine.push(...sq(2));
+      if (!out.school.length) out.school.push(...sq(4));
       out.outer = out.outer.filter(Boolean); // người đi đường, thợ đi tu bổ có khi ra tới bến, trại, đền trong rừng
       out.outer = out.outer.filter((v) => L.inside(v.x, v.z, 5.5)); // chỉ những chỗ còn trong tường thành (bến, trại ngoài tường thì không tới)
       out.all.push(...out.outer);
@@ -343,7 +352,9 @@
       roadCheck: (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); },
       batchInfo: (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) },
     };
-    return { show, setProgress, setProgressByTime, animate, stats, places, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
+    // đống hàng trong kho của đảo i theo lượng hàng thật (ratio: 0..1 mỗi thứ, game/cities.js mỗi giây)
+    const setStock = (i, ratio) => { if (shown[i] && shown[i].wy) WY.setStock(shown[i].wy.piles, ratio); };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

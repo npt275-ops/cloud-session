@@ -110,7 +110,8 @@
       n.stress = stressOf(S, p);
       S.minds.set(p.id, n);
     }
-    S.situChanged = false;
+    // kịch bản vừa mở trong lúc nghĩ (họp hội đồng, báo tin, hộ vệ…, logic/leader.js đặt S.rethink): lần nghĩ sau mọi người xét lại
+    S.situChanged = !!S.rethink; S.rethink = false;
   }
   // độ căng thẳng 0..1 của một người lúc này
   function stressOf(S, p) {

@@ -247,13 +247,62 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 
 **Giữ được kiểm thử và cân chỉnh:** cùng seed vẫn ra cùng lịch sử ở 1×, 2×, 4×. Mỗi vòng có số đo trong bảng dev "Cuộc đua" (bước 6) để cân chỉnh độ hỗn loạn: không quá yên, không sụp hết.
 
+### 7.7 Người đứng đầu đảo: nhiều kịch bản, nhiều hành động
+
+**Hiện có:** đi lại, chắp tay sau lưng, thỉnh thoảng lính gác vào báo tin. Giữ lại những thứ này và thêm một **bộ kịch bản** cho người đứng đầu. Kịch bản được chọn theo hoàn cảnh của đảo và tính cách của chính người đó. Mỗi kịch bản là một chuỗi bước có chỗ thật, người đi cùng thật và cử chỉ thật:
+
+| Kịch bản | Khi nào | Diễn ra |
+|---|---|---|
+| Họp hội đồng | Sáng, vài ngày một lần; có chuyện lớn thì họp ngay | Quân sư, hai tướng, tư tế, thương chủ tới sân nhà chính, đứng thành vòng. Người đứng đầu nói, người khác gật hoặc cãi (đa nghi, hiếu chiến thì cãi). |
+| Nhận tin | Có đoàn buôn tới, quân giặc kéo tới, thiên tai, người chết | Lính gác chạy từ cổng vào báo, cúi chào; người đứng đầu nghe rồi ra lệnh (chỉ tay về phía cổng). |
+| Đi thị sát | Đang dựng công trình, ruộng mất mùa, kho vơi | Đi cùng một lính hộ vệ tới công trình, ruộng, kho; dừng lại chỉ tay, hỏi thợ. |
+| Duyệt quân | Đang tích quân, sắp đánh | Ra bãi tập, lính đứng hàng; người đứng đầu đi dọc hàng. Hiếu chiến thì hô to, giơ tay. |
+| Nói trước dân | Lễ hội, lên thời, sau chiến tranh, khi bất bình cao | Lên bục giữa sân, dân tụ lại nghe. Hoạt ngôn thì nói lâu, cử chỉ nhiều. |
+| Tiếp sứ giả, thương chủ đảo khác | Ký hiệp ước, đề nghị bắc cầu, xin hoà | Ra cổng hay đầu cầu đón, cúi chào, đứng nói chuyện; ký xong thì bắt tay. |
+| Xử kiện | Có người cãi nhau, ẩu đả | Hai bên bị dẫn tới sân nhà chính; người đứng đầu nghe rồi phán, một bên cúi đầu. |
+| Cầu nguyện | Thiên tai, dịch bệnh, tang của người trong hội đồng; người sùng đạo thì thường xuyên | Tới chỗ thờ cùng tư tế, quỳ. |
+| Ăn, nghỉ, về nhà | Trưa, tối, đêm | Ăn trong nhà chính hay nhà riêng, tối dạo sân với vợ hoặc chồng, đêm ngủ (có lính gác trước cửa). |
+| Chiến tranh | Giặc tới cổng, giặc vào thành | Hiếu chiến, gan dạ thì cầm vũ khí ra cổng chỉ huy; nhút nhát thì lui vào nhà chính với đội giữ thành; mưu mô thì cho sứ giả đi xin hoà. |
+| Đầu hàng, bị phế | Mất thành | Bước ra sân, quỳ trước tướng giặc, cờ hạ xuống. |
+
+**Tính cách đổi cách làm:**
+- *Đa nghi:* hay đi kiểm tra chốt gác, luôn có lính hộ vệ.
+- *Hoạt ngôn:* hay ra sân nói với dân.
+- *Ham học:* hay ở trường, ở xưởng.
+- *Tham vọng:* hay duyệt quân, đi thị sát công trình.
+- *Sùng đạo:* hay ở chỗ thờ.
+- *Nhút nhát:* ít ra khỏi nhà chính.
+
+### 7.8 Lính gác cổng: nét riêng, kịch bản riêng
+
+**Mỗi lính gác có tính cách riêng, nên đứng gác mỗi người một kiểu:**
+- *Đa nghi:* đảo mắt liên tục, hay bước ra hỏi người qua cổng.
+- *Hiếu chiến:* cầm giáo thẳng, thỉnh thoảng tập đâm.
+- *Nhu nhược:* đêm hay ngủ gật, dựa vào tường.
+- *Hoạt ngôn:* hay nói chuyện với người gác bên cạnh.
+- *Sùng đạo:* đầu ca chắp tay khấn.
+
+**Kịch bản ở cổng:**
+
+| Kịch bản | Diễn ra |
+|---|---|
+| Đổi ca | Sáng và tối: người ca mới đi từ nhà tới, hai bên chào, người ca cũ về nhà ngủ. Không ai gác suốt ngày đêm nữa. |
+| Kiểm người qua cổng | Đoàn buôn, sứ giả, người lạ, người chạy nạn tới thì một người bước ra chặn, hỏi, xem hàng, rồi cho qua hoặc không. |
+| Chào người đứng đầu | Người đứng đầu đi ngang thì đứng thẳng, giơ tay chào. |
+| Báo tin | Thấy thuyền hay quân lạ thì một người chạy vào nhà chính báo (nối với kịch bản "Nhận tin" của người đứng đầu). |
+| Đêm | Đốt lửa ở cổng, sưởi tay khi trời lạnh, đi qua đi lại cho tỉnh, ngáp. |
+| Ăn | Người nhà mang cơm ra cổng (vợ hoặc con đi từ nhà tới), lính ngồi ăn tại chốt. |
+| Giặc tới | Hô báo động, đóng cổng (cánh cổng khép lại), đứng chắn; cầm giáo đánh. |
+| Mưa bão | Đứng nép vào cổng, không bỏ chốt. |
+| Xô xát ở đầu cầu | Can hai bên, bắt người gây chuyện dẫn vào thành (nối với kịch bản "Xử kiện"). |
+
 ---
 
 ## 8. Thứ tự làm trong bước 7 (đề xuất)
 
 | Bước | Việc | Mục |
 |---|---|---|
-| 7a | Nền: người ở đâu (`p.loc`), chỗ làm thật cho mọi đảo, mọi thời, hoạt động có đầu vào và đầu ra, bỏ cử chỉ vô nghĩa, kiểm thử "không vô nghĩa" | 2, 3, 7.1 |
+| 7a | Nền: người ở đâu (`p.loc`), chỗ làm thật cho mọi đảo, mọi thời, hoạt động có đầu vào và đầu ra, bỏ cử chỉ vô nghĩa, kiểm thử "không vô nghĩa"; kịch bản của người đứng đầu (7.7) và lính gác cổng (7.8) | 2, 3, 7.1, 7.7, 7.8 |
 | 7b | Cảnh: tang lễ, đói, lễ hội, thiên tai; khách trên đảo | 4, 7.5 |
 | 7c | Cầu do người đứng đầu quyết, dựng cầu thật, người qua lại, xô xát ở đầu cầu | 7.2 |
 | 7d | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh | 7.3 |
@@ -262,3 +311,20 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 | 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
 
 Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khung hình điện thoại, rồi commit, push, cập nhật artifact.
+
+---
+
+## 9. Đã làm ở 7a
+
+| Việc | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Chỗ làm thật cho mọi việc, mọi đảo, mọi thời** | `render/build/workyards3d.js`: bãi làm việc dựng cùng mỗi thời, trong tường thành, tránh cổng, tránh đường, dọn cây; kiểu dáng theo ba giai đoạn (thời 1–3, 4–7, 8–12). Có 7 loại bãi: <ul><li>kho (đống hàng theo lượng hàng thật);</li><li>mảnh ruộng (luôn có);</li><li>bãi gỗ;</li><li>mỏ đá;</li><li>xưởng;</li><li>bãi tập;</li><li>chỗ làm năng lượng (từ thời 4).</li></ul> `render/buildings3d.js`: <ul><li>tách lò gốm, lò rèn, nhà máy ra khỏi "ruộng" thành "xưởng";</li><li>bỏ chỗ thay thế vô nghĩa (mỏ đá = chốt lính gác, chợ = trước cửa một nhà bất kỳ); thời đầu chưa có chợ, chỗ thờ, trường thì đổi chác, cúng tế, dạy trẻ ở sân làng.</li></ul> | Kiểm kê trên trình duyệt: 6 đảo × 12 thời đều đủ chỗ cho mọi việc. |
+| **Hoạt động có đầu vào, đầu ra** | `logic/tasks.js` cycle: <ul><li>người làm ra tài nguyên: làm ở chỗ làm → mang sản phẩm về kho → cúi đặt xuống → quay lại;</li><li>thợ xây: ra kho → nhặt gỗ, đá → mang tới công trình → dựng;</li><li>năng lượng đi theo dây, không mang.</li></ul> `render/village3d.js` chạy chu trình theo giờ game. | Ảnh ở kho: người làm đặt hàng xuống; đống hàng đúng lượng trong kho. |
+| **Bỏ cử chỉ vô nghĩa** | `render/work3d.js` tách hai phần: <ul><li>cử chỉ làm việc tại chỗ: bỏ "vác bao" ra khỏi danh sách cử chỉ đứng; vác là cử chỉ đi;</li><li>cách mang khi đi: bao lương thực, khúc gỗ vác vai; thúng đá, quặng, thùng hàng quý ôm trước ngực (đồ mang mới trong `render/rig3d.js`, cử chỉ `carryFront` mới).</li></ul> | `village3d.audit()`: 0 vi phạm trong 360 lần kiểm (khoảng 100 người mỗi lần, chạy theo giờ thật qua đủ các buổi). Đối chứng: làm hỏng danh sách cho phép thì báo 14 vi phạm. |
+| **Kịch bản người đứng đầu (7.7)** | `logic/leader.js`: <ul><li>nhận tin (lính gác chạy vào báo);</li><li>họp hội đồng (định kỳ hay sau tin lớn);</li><li>thị sát công trình, kho, ruộng (có hộ vệ đi theo);</li><li>duyệt quân, nói trước dân (người đi đường ghé nghe), phân xử người cãi nhau;</li><li>cầu nguyện, ghé trường, ăn trưa ở nhà chính, tối dạo với người nhà, đêm về nhà.</li></ul> Chọn theo hoàn cảnh và tính cách, bốc thăm có trọng số. Mở kịch bản thì `S.rethink`: người được gọi tới ngay. | 120 ngày thử: 5 cuộc họp, cả 5 thành viên hội đồng đều tới trong 1/4 ngày; 8 lần báo tin. Ảnh họp và báo tin chụp theo luồng tự nhiên. |
+| **Kịch bản lính gác cổng (7.8)** | `logic/guards.js`: <ul><li>gác ca ngày theo tính cách (đa nghi đảo mắt, hiếu chiến tập đâm, nhu nhược đứng dựa, hoạt ngôn nói chuyện với người bên cạnh, sùng đạo khấn đầu ca);</li><li>ca đêm do lính thường thay, người giữ chốt về nhà ngủ (người nhu nhược gác đêm hay ngủ gật);</li><li>chạy vào báo tin, xem hàng đoàn buôn ở cổng phụ, ăn trưa tại chốt (người nhà mang cơm ra), chiều đông xoa tay.</li></ul> | `test/island.test.js`: ca ngày đứng đúng chốt; đêm có lính thường gác ở cổng. Kiểm thử bắt được lỗi hai vợ chồng cùng gác, người vợ bỏ chốt đi mang cơm; đã sửa. |
+
+**Chưa làm ở 7a, dời sang phần sau (ghi rõ):**
+- `p.loc` (người ở đâu, cho khách trên đảo khác): làm ở 7b, cùng lúc vẽ khách trên đảo.
+- Đổi ca có chào nhau, chào người đứng đầu khi đi ngang (phản xạ trên phần vẽ): làm ở 7b.
+- Đống hàng trong kho đôi khi có bụi cây thấp mọc lên giữa sàn (bụi cây không nằm trong phần dọn cây). Sửa ở 7b.
