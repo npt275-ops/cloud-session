@@ -9,8 +9,9 @@
  * Bước cố định: thời gian đưa vào (advance, tuỳ khung hình và tốc độ 1×, 2×, 4×) chỉ được chạy theo từng bước TICK nguyên;
  * phần lẻ để dành cho lần sau. Vì vậy cùng một seed thì ở tốc độ nào, máy nhanh hay chậm, cũng ra cùng một lịch sử.
  * jump(W, ngày): tua nhanh theo bước 1 ngày (chỉ cho dev rà soát các thời, không bảo đảm trùng với chạy thường).
- * Giữa các đảo: logic/diplomacy.js (quan hệ, đoàn buôn, hiệp ước, cầu), logic/strategy.js (người đứng đầu chọn nước đi).
- * Cần: logic/island.js và các tệp nó cần, logic/diplomacy.js, logic/strategy.js. */
+ * Giữa các đảo: logic/diplomacy.js (quan hệ, đoàn buôn, hiệp ước, cầu), logic/war.js (chiến tranh, sáp nhập, nổi dậy),
+ * logic/strategy.js (người đứng đầu chọn nước đi).
+ * Cần: logic/island.js và các tệp nó cần, logic/diplomacy.js, logic/war.js, logic/strategy.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.World = factory(BK);
@@ -32,15 +33,16 @@
     W.islands = KEYS.map((key, i) => BK.Island.create({ key, seed: seedOf(seed, i), buildPlan: o.buildPlan ? (lv) => o.buildPlan(key, lv) : null }));
     for (const S of W.islands) S.tod = W.tod;
     // giữa các đảo (logic/diplomacy.js, logic/strategy.js): quan hệ, đoàn buôn, hiệp ước, cầu; o.diplomacy === false thì sáu đảo
-    // sống riêng (để so sánh trong kiểm thử)
-    W.diplomacy = o.diplomacy !== false && !!BK.Diplomacy; W.rng = BK.Rng.create(seed * 31 + 7);
-    if (W.diplomacy) BK.Diplomacy.init(W);
+    // sống riêng; o.war === false thì có giao thương nhưng không ai đánh ai (để so sánh trong kiểm thử)
+    W.diplomacy = o.diplomacy !== false && !!BK.Diplomacy; W.war = W.diplomacy && o.war !== false && !!BK.War; W.rng = BK.Rng.create(seed * 31 + 7);
+    if (W.diplomacy) { BK.Diplomacy.init(W); BK.War.init(W); }
     return W;
   }
-  // sang ngày mới: việc giữa các đảo (đoàn buôn tới nơi, quan hệ phai dần, người đứng đầu xét tình hình)
+  // sang ngày mới: việc giữa các đảo (đoàn buôn tới nơi, quan hệ phai dần, các trận đánh, người đứng đầu xét tình hình)
   function worldDay(W, day) {
     if (!W.diplomacy) return;
     BK.Diplomacy.dayTick(W, day);
+    if (W.war) BK.War.dayTick(W, day, W.rng);
     BK.Strategy.dayTick(W, day, W.rng);
   }
   // một bước cố định: lịch và giờ trong ngày đi trước, rồi sáu đảo lần lượt theo thứ tự

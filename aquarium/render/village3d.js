@@ -29,7 +29,8 @@
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
     /* ---------- Những chỗ trong làng ---------- */
-    const bridge = L.landing[0].clone().multiplyScalar(0.86);
+    // chỗ ra giữ cổng khi có chiến tranh: cổng phụ phía quân địch tới (logic/war.js ghi S.situ.warSide)
+    const bridges = L.landing.map((v) => v.clone().multiplyScalar(0.86));
     const pickOf = (arr, k) => (arr && arr.length ? arr[Math.abs(k) % arr.length] : null);
     function spot(place, p) {
       if (!PL) return null;
@@ -41,7 +42,7 @@
       if (place === 'square') return pickOf(PL.square, k);
       if (place === 'field') return pickOf(PL.field, k);
       if (place === 'guard') return pickOf(PL.guard, p.id);
-      if (place === 'bridge') return bridge;
+      if (place === 'bridge') return bridges[S.situ.warSide || 0];
       if (place === 'gate') return PL.gate && PL.gate.length ? PL.gate[(p.post || 0) % PL.gate.length] : pickOf(PL.guard, p.id); // bốn chốt gác cổng thành
       if (place === 'gateL' || place === 'gateR') return PL[place] && PL[place].length ? PL[place][(p.post || 0) % PL[place].length] : pickOf(PL.guard, p.id); // hai chốt mỗi cổng phụ
       if (place === 'podium') return PL.podium || pickOf(PL.square, k); // bục diễn thuyết giữa sân
@@ -141,7 +142,7 @@
       dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
       gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001;
       for (const p of S.people.values()) {
-        if (!p.alive) continue;
+        if (!p.alive || p.away) continue; // đi đánh trận, đóng giữ đảo khác (logic/war.js): không có ở đảo
         alive.add(p.id);
         const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)

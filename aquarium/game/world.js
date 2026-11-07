@@ -18,9 +18,10 @@
     G.touchUi = () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
 
     /* ---------- Sáu vùng đất và trạng thái thế giới ---------- */
+    // color: màu của đảo (chấm ở thanh vùng đất, cờ và áo lính khi đi đánh)
     G.TERRAINS = [
-      { key: 'plains', land: 'Đồng bằng', city: 'Lúa Vàng' }, { key: 'forest', land: 'Rừng', city: 'Thông Xanh' }, { key: 'mountain', land: 'Núi', city: 'Đá Mây' },
-      { key: 'tundra', land: 'Băng nguyên', city: 'Tuyết Trắng' }, { key: 'coast', land: 'Biển', city: 'Cửa Sóng' }, { key: 'desert', land: 'Sa mạc', city: 'Cát Hồng' },
+      { key: 'plains', land: 'Đồng bằng', city: 'Lúa Vàng', color: '#86bb63' }, { key: 'forest', land: 'Rừng', city: 'Thông Xanh', color: '#3f7a4c' }, { key: 'mountain', land: 'Núi', city: 'Đá Mây', color: '#a39d90' },
+      { key: 'tundra', land: 'Băng nguyên', city: 'Tuyết Trắng', color: '#e4edf2' }, { key: 'coast', land: 'Biển', city: 'Cửa Sóng', color: '#4aa3c7' }, { key: 'desert', land: 'Sa mạc', city: 'Cát Hồng', color: '#e3c58e' },
     ];
     G.W = {
       day: 0, // ngày trong trận (9 năm = 3240 ngày)

@@ -4,12 +4,13 @@
  *   của chính nó; người của đảo nào thì vẽ ở đảo đó (render/village3d.js), chỉ những đảo gần máy quay (NEAR) mới vẽ người;
  *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó;
  *   giữa các đảo (logic/diplomacy.js): cầu logic bắc thì hiện ra (render/build/bridges3d.js, dáng theo thời thấp hơn của hai
- *   đảo), đoàn buôn đi thuyền, đi xe qua cầu (render/travel3d.js), tin mới nhất ở góc dưới (dev).
+ *   đảo), đoàn buôn đi thuyền, đi xe qua cầu (render/travel3d.js), tin mới nhất ở góc dưới (dev);
+ *   chiến tranh (logic/war.js): quân đi thuyền, qua cầu, vây cổng, tiến vào nhà chính, cờ đảo cai quản (render/war3d.js).
  * Đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): mỗi khung hình đưa thêm số ngày lịch (tps × thời gian thật) vào logic; giờ
  * trong ngày lấy từ logic (G.time.tod) cho bầu trời; người đi, xe chạy theo giờ game (speed: 1, 2, 4).
  * Mở với ?seed= để thử trận khác, ?cap= để vào thẳng một cấp khi phát triển. Nút ◀ ▶ (dev): đặt thẳng cả sáu đảo vào một thời.
  * Cần: game/world.js, game/nature.js, game/seasons.js, logic/ (world.js và các tệp nó cần), render/ của người và công trình,
- * render/travel3d.js, ui/village-ui.js. */
+ * render/travel3d.js, render/war3d.js, ui/village-ui.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const NEAR = 120, FAR = 150; // vẽ người khi máy quay cách tâm đảo dưới NEAR, thôi vẽ khi xa hơn FAR
@@ -93,11 +94,14 @@
       }); }
     // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, tin mới nhất
     const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d });
+    const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
     const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, Math.min(isle(b.a).level, isle(b.b).level)) - 1);
-    const news = $('worldNews');
+    const news = $('worldNews'), hallAt = [], hallOf = (i) => hallAt[i] || null;
     function syncWorld() {
       if (!world.diplomacy) return;
       bridges3d.sync(world.bridges, bridgeStyle);
+      // sân trước nhà chính của đảo bị sáp nhập (cờ đảo cai quản, render/war3d.js)
+      world.islands.forEach((S, i) => { hallAt[i] = S.annexedBy != null ? buildings.places(i).hall : null; });
       const last = world.log.slice(-NEWS).reverse();
       news.hidden = !last.length;
       news.innerHTML = last.map((e) => '<div><b>Ngày ' + (e.day + 1) + '</b> · ' + e.text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]) + '</div>').join('');
@@ -110,7 +114,7 @@
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
       buildings.animate(dt, t, night, camera.position, speed);
-      if (world.diplomacy) travel.update(world.caravans, world.day + world.acc / World.TICKS_PER_DAY, t, G.levelOf);
+      if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf); war.update(world, day, t, hallOf); }
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }

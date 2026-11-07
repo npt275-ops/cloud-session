@@ -83,7 +83,7 @@
   // một ngày của kinh tế: trả về true nếu đảo vừa lên cấp
   function dayTick(S, day, rng) {
     const st = state(S), live = BK.Island.living(S), P = BK.People, R = BK.Rules;
-    const workers = live.filter((p) => p.job === 'worker');
+    const workers = live.filter((p) => p.job === 'worker' && !p.away); // người đi đánh trận (logic/war.js) không làm ở nhà
     for (const p of live) if (p.job !== 'worker') p.res = null;
     let eat = 0; for (const p of live) { const a = P.ageOf(p, day); eat += a < R.ADULT_AGE ? EAT.child : p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard' ? EAT.soldier : EAT.adult; }
     let councilFood = 0; for (const p of live) if (p.role) councilFood += COUNCIL_WORK(S.level) * BASE * skill(S, p) * richOf(S, 'food') * climate(S, 'food', day) * tech(S.level);
@@ -102,7 +102,8 @@
     // lên cấp
     st.since++;
     const cost = nextCost(S);
-    if (cost && st.since >= MIN_DAYS && !st.hunger && live.length >= POP_NEED(S.level + 1) && Object.keys(cost).every((r) => st.stock[r] >= cost[r])) {
+    // đảo bị sáp nhập (logic/war.js) không tự lên cấp: dùng chung thời với đảo cai quản
+    if (cost && S.annexedBy == null && st.since >= MIN_DAYS && !st.hunger && live.length >= POP_NEED(S.level + 1) && Object.keys(cost).every((r) => st.stock[r] >= cost[r])) {
       for (const r in cost) st.stock[r] -= cost[r];
       S.level++; st.since = 0; return true;
     }

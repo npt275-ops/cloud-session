@@ -22,6 +22,7 @@
       if (!p.alive) continue;
       if (BK.Temper) p.temper = BK.Temper.of(p); // tính cách nổi trội (logic/temper.js), để gom người vào kịch bản
       const age = P.ageOf(p, day);
+      if (p.away) continue; // đang đi đánh trận (logic/war.js): vẫn là lính, không gán lại
       if (age < R.ADULT_AGE) p.job = 'child';
       else if (age >= R.OLD_AGE) p.job = 'elder';
       else if (p.role) p.job = null; // người trong hội đồng làm việc của ghế mình

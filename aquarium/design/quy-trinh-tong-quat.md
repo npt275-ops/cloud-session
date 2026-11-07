@@ -249,6 +249,64 @@ Mỗi cặp đảo lưu các chỉ số sau. Chúng thay đổi theo từng vi�
    - dân đảo bị sáp nhập mang **thù hằn** và **bất bình cao**, nên có thể nổi dậy giành lại độc lập. Đây là một drama mới; độc lập lại hay không là chuyện không đoán trước được.
 5. **Chiến tranh không phải bao giờ cũng đi tới cùng.** Cầu hoà, đình chiến, bồi thường đều có thể xảy ra, tuỳ người quyết hai bên.
 
+### 7.4 Đã làm ở bước 5
+- **Ai đánh ai** (`logic/strategy.js` tryWar, mỗi kỳ xét 10 ngày, từ ngày 300; đánh xong nghỉ ít nhất 180 ngày):
+  - **Hai kiểu đánh:**
+    - *Đột kích:* hợp với người hiếu chiến, ít trí tuệ, đang thiếu thứ bên kia có, hay đang thù.
+    - *Tổng tấn công:* hợp với người hiếu chiến, tham vọng, thù hằn. Chiếm cả đảo nên được tính nặng hơn ×1,5.
+  - **Ai ngại đánh:** người sợ hãi, sùng đạo, nhu nhược.
+  - **Hiệp ước:** có liên minh thì không đánh. Có hiệp ước thường thì chỉ người mưu mô (> 0,6) và ít sùng đạo (< 0,45) mới dám phản bội.
+  - **Muốn đánh mà quân chưa đủ** thì tích quân trước (`pol.warlust` cộng vào thế quân). Đảo bên cạnh thấy vậy thì sợ, cũng tích quân theo.
+  - **Lương thực:** đói hay còn dưới 30 ngày ăn thì giảm quân.
+  - **Tương quan sức nhìn qua mắt người quyết:** tham vọng thì tự tin quá, đa nghi thì e dè, cộng may rủi. Vì vậy có trận đánh nhầm và thua.
+  - **Đánh úp:** người mưu mô thì không tuyên chiến. Bên kia không được báo trước, đồng minh cũng không kịp gửi quân.
+- **Gọi quân** (`logic/war.js`):
+  - Lính của đảo và một nửa lính các đảo mình cai quản, cùng tướng dẫn quân.
+  - Dân binh: đàn ông dưới 45 tuổi, máu chiến, đang làm việc thường. Sức đánh bằng 0,6 lính. Đi đánh thì bỏ việc ở nhà.
+  - Quân là người thật (`p.away`): rời đảo, không làm ra tài nguyên, đi đường thật (thuyền hay qua cầu).
+- **Đánh ở cổng phụ** phía quân tới. Bên thủ là lính, tướng ở nhà, hai lính gác cổng đó, quân đồng minh và quân đóng giữ. Lính gác cổng chính và cổng phía kia giữ chốt.
+  - Tường thành chắc dần theo thời (×1,025 mỗi thời).
+  - Đảo đang đói đánh chỉ bằng 70%; thiên tai đang có cũng làm yếu đi.
+  - Mỗi ngày một đợt. Mỗi người có thể ngã xuống, khả năng theo tỉ lệ sức hai bên, có may rủi.
+  - Sĩ khí dưới 0,25, hoặc còn dưới 30% quân, thì rút.
+  - Người giữ cổng còn dưới 40% sức bên công thì cổng vỡ.
+- **Đột kích:** trụ được 2 ngày ở cổng thì cướp một phần kho (theo tương quan sức) rồi về. Chiến lợi phẩm vào kho khi quân về tới nhà.
+- **Vào thành:**
+  - Người nóng nảy cầm vũ khí giữ nhà, người nhút nhát chạy trốn, người sùng đạo cầu nguyện. Bộ não người dân đọc `S.situ.war`; lính ra cổng phía bị đánh.
+  - Đánh tới nhà chính mất 3 ngày.
+- **Cầu hoà:** cứ 3 ngày bên thủ yếu thế có thể xin hoà và nộp một phần kho. Bên công nhận hay không tuỳ tính người đứng đầu; nhận thì ký không xâm phạm 360 ngày.
+- **Đồng minh** (liên minh) có thể gửi khoảng 35% lính sang giúp. Quân đi thật, tới nơi mới vào trận.
+- **Sáp nhập** khi chiếm được nhà chính:
+  - Kho sang đảo thắng; lương thực để lại đủ 30 ngày cho dân.
+  - Người cai quản là một người trong hội đồng đảo thắng, sang ngồi ghế vua; vua cũ bị phế.
+  - Đảo bị sáp nhập dùng chung thời với đảo thắng và giữ kiến trúc riêng. Mỗi ngày phần dư trong kho nộp về đảo thắng.
+  - 40% quân thắng ở lại đóng giữ ít nhất 360 ngày, tới khi dân yên mới về.
+  - Đảo thắng mà bị sáp nhập thì các đảo nó cai quản cũng sang tay kẻ thắng mới.
+- **Nổi dậy:**
+  - Bất bình tăng theo thù hằn, tính nóng của dân, đói; nguôi dần khi yên ổn.
+  - Đảo cai quản có người đứng đầu cứng rắn thì gửi thêm quân đóng giữ.
+  - Sau 180 ngày, bất bình trên 0,55 thì có thể nổi dậy. Người nóng nảy theo mức bất bình, đánh như dân binh. Lính theo phe nổi dậy với khả năng 15% + 40% × thù hằn.
+  - Thắng thì độc lập lại; người cai quản bị đuổi về.
+- **Thù hằn** tăng theo từng người chết trận. Phản bội làm mọi đảo bớt tin kẻ phản bội.
+- **Vẽ** (`render/war3d.js`):
+  - Lính mặc màu đảo mình, cầm giáo.
+  - Hành quân: thuyền chiến cắm cờ màu đảo, hay hàng quân qua cầu.
+  - Đánh ở cổng: hai hàng quân trước cổng phụ.
+  - Vào thành: quân tiến dần tới nhà chính.
+  - Sau sáp nhập: cờ đảo cai quản ở sân trước nhà chính đảo bị sáp nhập, quân đóng giữ đứng quanh cờ.
+  - Người đi đánh không còn vẽ ở đảo nhà.
+- **Kết quả chạy 9 năm, 30 seed:**
+  - 125 trận, khoảng 4 trận mỗi trận đấu: 96 đột kích, 28 lần tổng tấn công.
+  - 7 lần sáp nhập, ở 7 trận đấu khác nhau.
+  - 7 cuộc nổi dậy: 3 giành lại độc lập, 4 bị dập tắt.
+  - Cuối trận: 26 trận đấu cả 6 đảo độc lập, 4 trận đấu còn 5. Đảo thắng nhiều nhất khác nhau giữa các trận đấu (Cửa Sóng 2, Tuyết Trắng 1, Cát Hồng 1).
+  - So với tắt chiến tranh (10 seed): chết đói gần như bằng nhau (183 so với 181); phần lính trung bình 27% so với 21%.
+- **Chưa đạt, để bước 6 cân chỉnh:**
+  - Mục tiêu ở mục 9 là "có trận đấu chỉ còn 2–3 đảo", nhưng hiện nhiều nhất mới mất 1 đảo.
+  - Thông Xanh hay là đảo bị đánh.
+  - Hai đảo bị trận chiến lấy mất thì đảo chậm lên cấp vẫn chậm.
+- **Chưa làm:** cướp đoàn buôn trên đường, cầu quân sự (một đảo tự bắc để đánh).
+
 ---
 
 ## 8. Nền · Môi trường (hệ thống tự sinh)
@@ -352,6 +410,6 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 | 2 ✅ | Kinh tế và lên cấp theo tài nguyên (`logic/economy.js`, giỏ ở `logic/eras.js`); mỗi đảo một cấp riêng | Các đảo lên cấp khác nhau; khi chưa có giao thương, đảo nào cũng dừng ở thời bắt đầu cần thứ mình gần như không có (`test/economy.test.js`) |
 | 3 ✅ | Khí hậu và ngoại gen (`logic/climate.js`, `logic/epigen.js`); mọi chỗ ra quyết định đọc tính cách biểu hiện | Mỗi đảo đúng thiên tai của mình; đói lâu làm dân đa nghi, hiếu chiến; con sinh lúc khổ đột biến nhiều hơn (`test/climate.test.js`) |
 | 4 ✅ | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu): `logic/strategy.js`, `logic/diplomacy.js`, `render/travel3d.js` | Có giao thương và hiệp ước; quan hệ có trí nhớ; giao thương làm số người chết đói giảm hơn một nửa (`test/strategy.test.js`) |
-| 5 | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính) | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy |
+| 5 ✅ | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính): `logic/war.js`, `logic/strategy.js` tryWar, `render/war3d.js` | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy, thắng hay thua không đoán trước (`test/war.test.js`) |
 | 6 | Bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
 | (sau) | Vai trò người chơi: thêm vào lớp Môi trường hay lớp khác khi chốt | – |

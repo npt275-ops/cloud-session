@@ -180,6 +180,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/war.js",
+  "src": "logic/war.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/world.js",
   "src": "logic/world.js",
   "mode": 420
@@ -487,6 +492,11 @@
  {
   "path": "BeKinh/render/village3d.js",
   "src": "render/village3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/war3d.js",
+  "src": "render/war3d.js",
   "mode": 420
  },
  {
