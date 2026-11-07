@@ -32,6 +32,24 @@
 - **Một bộ đếm ngày chung cho cả bể.** Cả 6 đảo chạy cùng nhịp, theo thứ tự cố định mỗi ngày, nên không đảo nào được đi trước.
 - **Mỗi trận có một hạt giống (seed).** Cùng seed thì ra cùng kết quả, dễ tìm lỗi và dễ kiểm thử; khác seed thì ra một lịch sử khác.
 
+### 1.1 Hai đồng hồ, một tốc độ (1×, 2×, 4×)
+Cả hai đồng hồ đều nhân theo tốc độ:
+- **Lịch:** ngày, mùa, năm, tuổi, thế hệ, tài nguyên, thời đại. Ở 1×, lịch chạy 0,75 ngày mỗi giây thật, nên một trận 9 năm dài khoảng 72 phút.
+- **Giờ trong ngày:** sáng, trưa, chiều, tối, đêm, quyết định lịch làm việc và đèn đường. Ở 1×, một vòng ngày đêm dài 3 phút thật.
+
+Một vòng ngày đêm là "một ngày điển hình" của cả quãng lịch đó, nên lịch trôi nhanh hơn nhiều (chọn có chủ ý: 9 năm không thể có 3240 lần ngày đêm thật).
+
+**Quy tắc để cử động và hành động đúng ở mọi tốc độ:**
+1. **Logic quyết, hình chỉ hiển thị.** Kết quả (ai đi đâu, trận đánh, giao thương) tính trong `logic/`, không phụ thuộc khung hình hay tốc độ. Cùng seed thì 1×, 2×, 4× ra cùng một lịch sử.
+2. **Mọi chuyển động có hệ quả chạy theo giờ game:** người đi bộ, xe, đoàn buôn, quân hành quân. Quãng đường = tốc độ × thời gian game. Ở 4× họ đi nhanh gấp 4, kịp tới nơi trước khi đổi việc.
+3. **Bước con cố định.** Mỗi khung hình chia thời gian game thành các bước nhỏ, mỗi bước tối đa khoảng 50 ms game. Nhờ vậy ở 4× không ai đi vượt quá đích, không xuyên tường, và xe vẫn kịp dừng nhường người.
+4. **Hoạt ảnh:**
+   - Bước chân theo quãng đường đã đi (đã đúng), nên chân luôn khớp với chuyển động.
+   - Cử chỉ tại chỗ (cuốc, đóng búa, nói chuyện) chạy theo giờ game nhưng nhanh nhất 2×. Quá mức đó thì bỏ bớt lượt cử chỉ chứ không tua nhanh, để không bị giật.
+   - Hiệu ứng thuần trang trí (chớp mắt, khói, đèn nhấp nháy) chạy theo giờ thực.
+5. **Đồng hồ nằm trong logic** (`logic/world.js`): giờ trong ngày cũng do logic tính từ lịch, không đọc từ phần chạy game, để chạy giả lập hàng loạt bằng Node vẫn đúng.
+6. **Kiểm thử:** chạy cùng một seed ở 1×, 2×, 4× rồi so nhật ký, phải trùng nhau. Đo được người đi bộ tới nơi trước khi đổi buổi ở cả 3 tốc độ.
+
 ---
 
 ## 2. Bốn lớp của một đảo
@@ -201,7 +219,10 @@ Mỗi cặp đảo lưu các chỉ số sau. Chúng thay đổi theo từng vi�
   - Thông Xanh: cháy rừng.
 - **Thiên tai lớn hiếm gặp:** dịch bệnh, mất mùa liên tiếp.
 - **Tác động:** hệ số sản xuất của ngày; áp lực lên ngoại gen (mục 3); có thể làm hỏng công trình, cầu.
-- **Ngày đêm:** đã có. Thời 10 trở đi trời tím, không còn ngày đêm. Đề xuất: bầu trời theo đảo có cấp cao nhất ("mặt trời mất" là chuyện của cả bể), còn mặt trời nhân tạo chỉ có ở đảo nào đã tới thời 10.
+- **Ngày đêm và trời tím (đã chốt):**
+  - Trời chỉ chuyển sang tím, không còn ngày đêm, khi **cả 6 đảo đều đã tới thời 10**, tức khi đảo cuối cùng tới thời 10.
+  - Đảo bị sáp nhập dùng cấp của đảo đã chiếm nó.
+  - Trước đó trời vẫn có ngày đêm. Đảo nào đã tới thời 10 thì vẫn có mặt trời nhân tạo và thành phố neon của riêng nó.
 - **Sau này**, vai trò của người chơi (khi chốt) sẽ là một nguồn tác động thêm vào lớp này. Các lớp trên không phải sửa gì.
 
 ---
