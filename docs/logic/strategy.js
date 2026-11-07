@@ -9,6 +9,11 @@
  *   giao thương   đổi thứ dư lấy thứ thiếu: mưu mô, trí tuệ thì hay đi buôn và mặc cả giỏi; đa nghi mà ít tin cậy thì ngại
  *   hiệp ước      không xâm phạm, liên minh: mưu mô, trí tuệ, sợ hãi; bên kia cũng phải đồng ý. Hai đảo cùng sợ hay cùng thù
  *                 một đảo thứ ba (kẻ thù chung) thì dễ ký với nhau hơn, dễ thành liên minh (liên minh thì gửi quân giúp nhau)
+ *   bắc cầu       (design/npc-song-that.md mục 7.2) muốn gần đảo bên cạnh: tin cậy, buôn bán nhiều, cùng sợ một kẻ thứ
+ *                 ba, người quyết mưu mô hay trí tuệ; đa nghi, thù hằn thì ngại. Bên kia đồng ý hay không theo tính cách và
+ *                 quan hệ. Lên thời thì xét xây lại cầu theo kiểu mới (tốn vật liệu). Kẻ hiếu chiến muốn đánh đảo bên cạnh mà
+ *                 chưa có cầu thì tự bắc cầu quân sự. Bị đánh qua cầu thì người đa nghi có thể phá cầu (onAttacked).
+ *   cho dân sang  đảo có cầu, tin nhau: vài người hoạt ngôn, ưa giao thiệp sang thăm chợ đảo bên (logic/diplomacy.js startVisit)
  *   cướp đoàn buôn  đoàn đi thuyền ngang qua đảo mình: người đứng đầu hiếu chiến, tham lam, đang thù hay đang đánh nhau với
  *                 một bên thì có thể cho thuyền ra chặn cướp (mỗi đoàn xét một lần); sùng đạo, sợ hãi thì thôi
  *   cứu đói       đảo mình đang cai quản bị đói: người đứng đầu hiền, trí tuệ thì gửi lương thực sang (dân bớt bất bình)
@@ -30,7 +35,8 @@
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
   const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.8; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
-  const CONQUER_PRIZE = 1.5;    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
+  const CONQUER_PRIZE = 1.5;
+  const REBUILD_AGE = 180;      // cầu dùng ít nhất chừng này ngày mới xét xây lại theo kiểu thời mới    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
 
   // tính cách của người quyết: người đứng đầu, pha ý quân sư và tướng (trọng số nghe theo tính người đứng đầu)
   function mind(S) {
@@ -66,8 +72,57 @@
     // hiệp ước: sợ đảo khác, hay tin cậy ai đó, và người quyết mưu mô, trí tuệ
     const willPact = 0.1 + 0.3 * t.intellect + 0.25 * t.cunning + 0.3 * maxFear + 0.2 * t.fear - 0.3 * t.aggression;
     if (rng.chance(Math.max(0, Math.min(0.6, willPact * 0.25)))) tryTreaty(W, i, day, rng, t);
+    // cầu, người qua lại
+    tryBridge(W, i, day, rng, t);
+    tryVisit(W, i, day, rng, t);
     // chiến tranh (logic/war.js)
     if (W.war) tryWar(W, i, day, rng, t);
+  }
+
+  // bắc cầu sang một đảo bên cạnh, hay xây lại cầu cũ theo kiểu thời mới
+  function tryBridge(W, a, day, rng, t) {
+    const D = BK.Diplomacy, A = W.islands[a];
+    if (A.level < D.BRIDGE_LEVEL) return;
+    for (const b of [(a + 1) % D.N, (a + D.N - 1) % D.N]) {
+      if (!D.alive(W, b) || D.workOf(W, a, b) || (BK.War && BK.War.atWar(W, a))) continue;
+      const B = W.islands[b], br = D.bridgeOf(W, a, b), R = W.rel[a][b];
+      if (br) {
+        // xây lại theo kiểu thời mới: cả hai đã lên thời cao hơn kiểu cầu, cầu đã dùng ít nhất REBUILD_AGE ngày (không ai phá cầu
+        // mới tinh để xây lại), người quyết ham tiến (trí tuệ, tham vọng)
+        const era = Math.min(A.level, B.level);
+        if (era > br.era && day - br.day >= REBUILD_AGE && rng.chance(0.08 + 0.15 * t.intellect + 0.1 * t.ambition) && D.canPay(W, a, b, era)) {
+          const M = mind(B); if (M && rng.chance(0.4 + 0.3 * M.t.intellect + 0.3 * W.rel[b][a].trust)) D.startBridge(W, day, a, b, 'rebuild');
+        }
+        continue;
+      }
+      if (B.level < D.BRIDGE_LEVEL) continue;
+      const trips = Math.min(1, (W.tradeCount[D.pairKey(a, b)] || 0) / 6), foe = commonFoe(W, a, b);
+      const want = 0.4 * R.trust + 0.35 * trips + 0.4 * foe + 0.2 * t.cunning + 0.2 * t.intellect - 0.35 * t.paranoia - 0.6 * R.grudge - 0.1;
+      if (want <= 0 || !rng.chance(Math.min(0.5, want * 0.6))) continue;
+      const M = mind(B); if (!M) continue;
+      const tb = M.t, yes = 0.2 + 0.5 * W.rel[b][a].trust + 0.3 * trips + 0.3 * foe + 0.15 * tb.intellect - 0.35 * tb.paranoia - 0.6 * W.rel[b][a].grudge;
+      if (!rng.chance(Math.max(0.02, Math.min(0.95, yes)))) { A.log.push({ day: Math.floor(day), kind: 'treaty', ids: [], text: B.name + ' từ chối bắc cầu.' }); continue; }
+      if (D.startBridge(W, day, a, b, 'build')) return;
+    }
+  }
+  // cho vài người sang thăm chợ đảo bên qua cầu (đảo tin nhau, không thù)
+  function tryVisit(W, a, day, rng, t) {
+    const D = BK.Diplomacy, A = W.islands[a];
+    for (const b of [(a + 1) % D.N, (a + D.N - 1) % D.N]) {
+      if (!D.alive(W, b) || !D.bridged(W, a, b) || W.rel[a][b].trust < 0.15 || (BK.War && BK.War.atWar(W, a))) continue;
+      if (!rng.chance(0.3 + 0.4 * W.rel[a][b].trust - 0.3 * t.paranoia)) continue;
+      // người đi: người đi đường, người làm, ưa giao thiệp (ít đa nghi), người lớn
+      const P = BK.People, pool = BK.Island.living(A).filter((p) => !p.away && !p.role && (p.job === 'walker' || p.job === 'worker' || p.job === 'trader') && P.ageOf(p, day) >= 18 && P.traits(p).paranoia < 0.5);
+      const n = Math.min(pool.length, 1 + Math.floor(rng.next() * 3));
+      for (let k = 0; k < n; k++) { const p = pool.splice(Math.floor(rng.next() * pool.length), 1)[0]; D.startVisit(W, day, p, a, b, p.job === 'trader' ? 'trade' : 'market', 'market', rng); }
+    }
+  }
+  // bị đảo a đánh: đảo b có cầu sang a thì người đứng đầu đa nghi có thể phá cầu để chặn đường (logic/war.js gọi khi biết tin)
+  function onAttacked(W, day, b, a, rng) {
+    const D = BK.Diplomacy; if (!D.bridged(W, a, b) && !D.workOf(W, a, b)) return false;
+    const M = mind(W.islands[b]); if (!M) return false;
+    const t = M.t; if (!rng.chance(Math.max(0, Math.min(0.9, -0.1 + 0.9 * t.paranoia + 0.3 * t.fear - 0.2 * t.aggression)))) return false;
+    return D.destroyBridge(W, day, a, b, b);
   }
 
   // xét đánh ai: đột kích hay tổng tấn công, theo tính cách, nhu cầu, thù hằn và tương quan sức
@@ -98,6 +153,8 @@
     }
     pol.warlust = clamp(lust);
     if (!best || !rng.chance(Math.min(0.5, best.sc * WAR_RATE))) return;
+    // kẻ hiếu chiến muốn đánh đảo bên cạnh mà chưa có cầu: tự bắc cầu quân sự trước (quân tràn sang nhanh hơn), đánh sau
+    if (D.hops(a, best.b) === 1 && !D.bridged(W, a, best.b) && !D.workOf(W, a, best.b) && t.aggression > 0.6 && rng.chance(0.5) && D.startBridge(W, day, a, best.b, 'military', a)) return;
     // người mưu mô đánh úp, không tuyên chiến
     if (Wr.launch(W, day, a, best.b, best.kind, best.kind === 'raid' ? 0.5 : 0.8, rng, t.cunning > 0.6 && rng.chance(t.cunning))) pol.lastWar = day;
   }
@@ -192,5 +249,5 @@
     for (let i = 0; i < BK.Diplomacy.N; i++) { if ((Math.floor(day) + i * 2) % EVERY === 0) { islandTick(W, i, day, rng); if (BK.Diplomacy.alive(W, i)) relief(W, i, day, rng); } else urgentFood(W, i, day, rng); }
     tryRob(W, day, rng);
   }
-  return { EVERY, BASE_SOLDIERS, mind, strength, islandTick, dayTick };
+  return { EVERY, BASE_SOLDIERS, mind, strength, islandTick, dayTick, onAttacked };
 });

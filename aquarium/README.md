@@ -162,6 +162,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   - người đứng đầu có bộ kịch bản (`logic/leader.js`: họp hội đồng, nhận tin, thị sát có hộ vệ, duyệt quân, nói trước dân,
     phân xử, cầu nguyện…); lính gác cổng mỗi người một kiểu, có ca ngày ca đêm, báo tin, xem hàng, ăn tại chốt
     (`logic/guards.js`).
+- **NPC sống thật, phần 7b, 7c** (`design/npc-song-that.md` mục 10, 11):
+  - đám tang ba chặng (khóc ở nhà, đưa tang có người khiêng quan tài, chôn cất), bãi mộ lớn dần theo lịch sử của đảo; nạn
+    đói: dân xếp hàng ở kho nhận khẩu phần; lễ hội nhảy múa; lính gác cúi chào người đứng đầu (`logic/scenes.js`);
+  - cầu do người đứng đầu quyết, thợ hai đảo xây thật (giàn giáo mọc dần), mỗi thời một kiểu cầu (quyết định xây lại), phá
+    cầu khi bị đánh, cầu quân sự; người thật sang thăm đảo bên qua cầu (mặc áo màu đảo nhà), xô xát ở đầu cầu.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

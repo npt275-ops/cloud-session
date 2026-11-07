@@ -4,6 +4,8 @@
  * xe hàng lăn trên mặt cầu (render/build/bridges3d.js bridgePoint), hai chiều đi hai làn. Vị trí theo ngày lịch của trận
  * (tiến độ = (ngày − ngày đi) / (ngày tới − ngày đi)), nên ở 1×, 2×, 4× đoàn đi đúng nhịp của logic. Hàng trên thuyền,
  * trên xe tô màu theo thứ chở nhiều nhất. Thuyền buồm từ thời đầu, thuyền máy từ thời 7.
+ * Người qua lại (logic/diplomacy.js W.visits): khách đang đi trên cầu (chặng đi, về) vẽ là hình người nhỏ mặc màu đảo mình;
+ * tới cổng đảo bên kia thì thành người thật trong làng (render/village3d.js setGuests). Đi thuyền thì ngồi trên thuyền buôn.
  * Cần: three.js, render/map/map3d.js (lands3d), render/build/bridges3d.js. */
 (function (root) {
   'use strict';
@@ -16,6 +18,12 @@
 
   function create(o) {
     const { THREE, scene, lands3d, bridges3d } = o, lands = lands3d.lands, R = lands3d.LAND_R;
+    // người đi bộ trên cầu: thân (màu đảo) và đầu, khối lặp
+    const WALK_MAX = 40, wBody = new THREE.CylinderGeometry(0.2, 0.26, 0.85, 6), wHead = new THREE.SphereGeometry(0.18, 8, 6); wBody.translate(0, 0.43, 0); wHead.translate(0, 1.05, 0);
+    const walkers = new THREE.InstancedMesh(wBody, new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.7, flatShading: true }), WALK_MAX), heads = new THREE.InstancedMesh(wHead, new THREE.MeshStandardMaterial({ color: '#e2b48c', roughness: 0.7 }), WALK_MAX);
+    for (let k = 0; k < WALK_MAX; k++) walkers.setColorAt(k, new THREE.Color('#ffffff'));
+    for (const m of [walkers, heads]) { m.count = 0; m.frustumCulled = false; scene.add(m); }
+    const isleCol = (o.colors || []).map((c) => new THREE.Color(c)), WM = new THREE.Matrix4(), WQ = new THREE.Quaternion(), WS = new THREE.Vector3(1, 1, 1), WUP = new THREE.Vector3(0, 1, 0), wp = new THREE.Vector3();
     const mat = (c, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, flatShading: true }, extra || {}));
     // hình dùng chung: thân thuyền, cột buồm, buồm, ca bin; thân xe, bánh xe; thùng hàng
     const G = {
@@ -70,7 +78,22 @@
       g.userData.crate.material = cargoMat[mainCargo(load)] || cargoMat.food;
     }
     // mỗi khung hình: caravans (W.caravans), day (ngày lịch, có phần lẻ), levelOf(i) (thời của đảo i)
-    function update(caravans, day, t, levelOf) {
+    // người đi bộ trên cầu (khách sang thăm đảo bên, chặng đi và về)
+    function walk(visits, day, t) {
+      let n = 0;
+      for (const v of visits || []) {
+        if (v.by !== 'bridge' || (v.stage !== 'go' && v.stage !== 'back') || n >= WALK_MAX) continue;
+        const s = v.stage === 'go' ? v.from : v.to, d = v.stage === 'go' ? v.to : v.from, B = bridges3d.bridgeOf(s, d); if (!B || B.era < 0) continue;
+        const u = v.stage === 'go' ? (day - v.depart) / Math.max(1e-6, v.arrive - v.depart) : (day - v.leave) / Math.max(1e-6, v.back - v.leave);
+        const fwd = B.a === s, k = Math.max(0, Math.min(1, fwd ? u : 1 - u)); bridges3d.bridgePoint(B, k, wp);
+        const dir = B.pb.clone().sub(B.pa).normalize().multiplyScalar(fwd ? 1 : -1); wp.add(new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(0.5)); wp.y += Math.abs(Math.sin(t * 0.01 + v.id)) * 0.05;
+        WQ.setFromAxisAngle(WUP, Math.atan2(dir.x, dir.z)); WM.compose(wp, WQ, WS); walkers.setMatrixAt(n, WM); heads.setMatrixAt(n, WM); if (isleCol[v.from]) walkers.setColorAt(n, isleCol[v.from]); n++;
+      }
+      for (const m of [walkers, heads]) { m.count = n; m.instanceMatrix.needsUpdate = true; }
+      if (walkers.instanceColor) walkers.instanceColor.needsUpdate = true;
+    }
+    function update(caravans, day, t, levelOf, visits) {
+      walk(visits, day, t);
       used.boat = 0; used.cart = 0;
       for (const c of caravans) {
         const u = Math.max(0, Math.min(1, (day - c.depart) / Math.max(1e-6, c.arrive - c.depart)));

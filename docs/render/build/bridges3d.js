@@ -80,16 +80,42 @@
     function bridgePoint(B, u, out) { return out.copy(B.pa).lerp(B.pb, u).setY(deckY(Math.max(0, B.era), u) + 0.12); }
     // theo danh sách cầu của logic: cầu mới thì dựng, dáng đổi (style(cầu) → 0..11, theo thời của hai đảo) thì dựng lại
     function sync(list, style) {
+      // cầu không còn trong logic (bị phá, hay đã xây lại thành cầu mới): gỡ khỏi màn hình
+      for (let k = bridges.length - 1; k >= 0; k--) if (!list.includes(bridges[k].sim)) { buildBridge(bridges[k], -1); bridges.splice(k, 1); }
       for (const b of list) {
         let B = bridges.find((x) => x.sim === b);
         if (!B) { B = { sim: b, a: b.a, b: b.b, era: -1, g: null, litMat: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.4, emissive: '#ffcf7a', emissiveIntensity: 0 }) }; bridges.push(B); }
         const e = style(b); if (e !== B.era) buildBridge(B, e);
       }
     }
+    // cầu đang xây (logic/diplomacy.js W.bridgeWorks): giàn giáo và ván mọc dần theo tiến độ thật, từ hai đầu vào giữa (cầu
+    // quân sự: từ phía đảo tự xây); xong thì cầu thật hiện ra (sync)
+    const works = new Map();
+    const scafMat = new THREE.MeshStandardMaterial({ color: '#b08a5a', roughness: 0.9, flatShading: true });
+    const plankG = new THREE.BoxGeometry(1.0, 0.1, 1.9), poleG = new THREE.CylinderGeometry(0.07, 0.07, 6.5, 5);
+    function syncWorks(list) {
+      const keep = new Set();
+      for (const w of list) {
+        const key = w.a + '-' + w.b; keep.add(key);
+        let S = works.get(key);
+        if (!S) { const [pa, pb] = bridgeEnds(w); S = { g: new THREE.Group(), pa, pb, step: -1 }; scene.add(S.g); works.set(key, S); }
+        const step = Math.floor(w.progress * 20); if (step === S.step) continue;
+        S.step = step; while (S.g.children.length) S.g.remove(S.g.children[0]);
+        const len = S.pa.distanceTo(S.pb), n = Math.round(len / 1.05), d = S.pb.clone().sub(S.pa).normalize(), side = new THREE.Vector3(-d.z, 0, d.x);
+        const fromA = w.by == null || w.by === w.a, fromB = w.by == null || w.by === w.b, each = Math.ceil((n * w.progress) / (fromA && fromB ? 2 : 1));
+        const put = (k) => {
+          const pos = S.pa.clone().addScaledVector(d, (k + 0.5) * (len / n));
+          const pl = new THREE.Mesh(plankG, scafMat); pl.position.copy(pos).setY(0.05); pl.rotation.y = -Math.atan2(d.z, d.x); S.g.add(pl);
+          if (k % 2 === 0) for (const sd of [-1, 1]) { const po = new THREE.Mesh(poleG, scafMat); po.position.copy(pos).addScaledVector(side, 1.05 * sd).setY(-2.6); S.g.add(po); }
+        };
+        for (let k = 0; k < Math.min(n, each); k++) { if (fromA) put(k); if (fromB && n - 1 - k !== k) put(n - 1 - k); }
+      }
+      for (const [key, S] of works) if (!keep.has(key)) { scene.remove(S.g); works.delete(key); }
+    }
     const bridgeOf = (a, b) => bridges.find((B) => (B.a === a && B.b === b) || (B.a === b && B.b === a)) || null;
     // ban đêm cầu sáng đèn
     function animate(night) { for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2; }
-    return { bridges, sync, bridgeOf, bridgePoint, animate };
+    return { bridges, sync, syncWorks, bridgeOf, bridgePoint, animate };
   }
   BK.Bridges3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

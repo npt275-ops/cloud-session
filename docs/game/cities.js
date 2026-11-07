@@ -94,15 +94,29 @@
       }); }
     // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, quân (tin và bảng dev:
     // ui/race-dev.js)
-    const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d });
+    const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
     const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
-    const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, Math.min(isle(b.a).level, isle(b.b).level)) - 1);
+    // kiểu cầu: theo thời lúc xây (logic/diplomacy.js b.era); lên thời thì người đứng đầu quyết có xây lại hay không
+    const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, b.era) - 1);
     const hallAt = [], hallOf = (i) => hallAt[i] || null;
     function syncWorld() {
       if (!world.diplomacy) return;
-      bridges3d.sync(world.bridges, bridgeStyle);
+      bridges3d.sync(world.bridges, bridgeStyle); bridges3d.syncWorks(world.bridgeWorks || []);
       // sân trước nhà chính của đảo bị sáp nhập (cờ đảo cai quản, render/war3d.js)
       world.islands.forEach((S, i) => { hallAt[i] = S.annexedBy != null ? buildings.places(i).hall : null; });
+      // khách từ đảo khác (logic/diplomacy.js W.visits, chặng ở lại): vào bằng cổng phụ phía đảo mình, đi chợ (sứ giả: nhà chính);
+      // gần lúc về thì đi ra cổng; xô xát ở đầu cầu thì đứng cãi với lính gác cổng đó
+      const guests = world.islands.map(() => []);
+      for (const v of world.visits || []) {
+        if (v.stage !== 'stay') continue;
+        const p = isle(v.from).people.get(v.pid); if (!p) continue;
+        const enter = BK.War.sideOf(v.to, v.from) ? 'gateR' : 'gateL', leaving = world.day > v.leave - 0.3;
+        const guard = v.brawl ? BK.Island.living(isle(v.to)).find((q) => q.job === 'sideguard' && q.postKey === (enter === 'gateR' ? 'gateRight' : 'gateLeft')) : null;
+        const mind = guard && !leaving ? { state: 'talk', verb: 'chat', mood: 'argue', target: guard.id, place: enter, brawl: true }
+          : leaving ? { state: 'walk', verb: null, place: enter } : v.kind === 'envoy' ? { state: 'work', verb: 'advise', place: 'hall' } : { state: 'work', verb: v.kind === 'trade' ? 'trade' : 'shop', place: 'market' };
+        guests[v.to].push({ key: 'g' + v.from + ':' + v.pid, p, level: isle(v.from).level, mind, enter, brawl: v.brawl && !leaving, color: G.TERRAINS[v.from].color });
+      }
+      guests.forEach((list, i) => { if (villages[i]) villages[i].setGuests(list); });
     }
     syncWorld();
     // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
@@ -112,7 +126,7 @@
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
       buildings.animate(dt, t, night, camera.position, speed);
-      if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf); war.update(world, day, t, hallOf); }
+      if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf); }
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }

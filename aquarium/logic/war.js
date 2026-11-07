@@ -131,8 +131,12 @@
     const lv = troops.filter((x) => x.levy).length, who = troops.length + ' quân' + (lv ? ' (' + lv + ' dân binh)' : '');
     say(W, day, A.name + (kind === 'raid' ? ' đem ' + who + ' sang đột kích ' : surprise ? ' lặng lẽ đem ' + who + ' sang đánh úp ' : ' tuyên chiến, đem ' + who + ' sang đánh ') + B.name + ' (' + (w.by === 'bridge' ? 'qua cầu' : 'đi thuyền') + ', ' + days + ' ngày).', [a, b]);
     note(A, day, 'war', (kind === 'raid' ? 'Quân lên đường đột kích ' : 'Quân lên đường đánh ') + B.name + '.', gen ? [gen.id] : []);
-    // đánh úp thì bên kia (và đồng minh) không biết trước
-    if (!surprise) { note(B, day, 'war', 'Tin báo: quân ' + A.name + ' đang kéo sang.'); callAllies(W, day, w, rng); }
+    // đánh úp thì bên kia (và đồng minh) không biết trước; biết trước thì người đứng đầu đa nghi có thể phá cầu chặn đường
+    // (logic/strategy.js onAttacked): quân đang đi qua cầu phải vòng đi thuyền, tới chậm hơn
+    if (!surprise) {
+      note(B, day, 'war', 'Tin báo: quân ' + A.name + ' đang kéo sang.'); callAllies(W, day, w, rng);
+      if (BK.Strategy.onAttacked && BK.Strategy.onAttacked(W, day, b, a, rng) && w.by === 'bridge') { w.by = 'boat'; w.arrive = day + D().travelDays(W, a, b); }
+    }
     return w;
   }
   // đồng minh của bên bị đánh (và của đảo cai quản nó) xét gửi quân giúp

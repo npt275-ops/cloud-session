@@ -25,11 +25,15 @@ test('giao thương giúp các đảo lên thời nhanh hơn, không làm đói 
   assert.ok(fa <= fb + 10, 'chết đói khi có buôn ' + fa + ', sống riêng ' + fb);
 });
 
-test('đi buôn có trí nhớ: đảo buôn với nhau nhiều thì tin cậy nhau hơn', () => {
-  const W = runs[0].on, pairs = Object.entries(W.tradeCount).sort((x, y) => y[1] - x[1]);
-  const [a, b] = pairs[0][0].split('-').map(Number);
-  const avg = W.rel.flat().reduce((s, r) => s + r.trust, 0) / 30;
-  assert.ok(W.rel[a][b].trust > avg, 'cặp buôn nhiều nhất tin nhau hơn trung bình');
+test('đi buôn có trí nhớ: cặp đảo đang buôn với nhau (gần đây) tin nhau hơn cặp không buôn', () => {
+  let near = [], other = [];
+  for (const { on: W } of runs) {
+    // cặp có chuyến buôn trong 200 ngày cuối (nhật ký cả bể); tin cậy phai dần nên chỉ xét chuyến gần đây
+    const recent = new Set(W.log.filter((e) => / đổi /.test(e.text) && e.day > W.day - 200 && e.isles.length === 2).map((e) => BK.Diplomacy.pairKey(e.isles[0], e.isles[1])));
+    for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) (recent.has(BK.Diplomacy.pairKey(a, b)) ? near : other).push((W.rel[a][b].trust + W.rel[b][a].trust) / 2);
+  }
+  const avg = (x) => x.reduce((s, v) => s + v, 0) / Math.max(1, x.length);
+  assert.ok(near.length && avg(near) > avg(other), 'đang buôn ' + avg(near).toFixed(3) + ' (' + near.length + ' cặp), không buôn ' + avg(other).toFixed(3));
 });
 
 test('người đứng đầu hiếu chiến, đa nghi thì tích quân; hiền lành thì giải bớt quân', () => {

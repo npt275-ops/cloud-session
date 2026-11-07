@@ -349,3 +349,22 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
 **Dời sang phần sau:**
 - Khách trên đảo (quân giặc, người cai quản bằng người thật, `p.loc`): làm ở 7d, cùng cảnh chiến tranh.
 - Chào nhau lúc đổi ca gác; cháy rừng có người xách nước thành hàng: làm ở 7f, cùng các vòng môi trường.
+
+## 11. Đã làm ở 7c
+
+| Việc | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Cầu do người đứng đầu quyết** | Bỏ luật tự bắc cầu của bước 4. `logic/strategy.js` tryBridge: muốn gần đảo bên cạnh (tin cậy, buôn bán nhiều, cùng sợ một kẻ thứ ba, mưu mô hay trí tuệ; đa nghi, thù hằn thì ngại); bên kia đồng ý hay từ chối theo tính cách và quan hệ. | 10 trận: khoảng 3,4 cầu mới mỗi trận. |
+| **Xây thật** | `logic/diplomacy.js` startBridge: trả vật liệu trước (gỗ, đá; từ thời 5 thêm kim loại; giá theo thời), rồi mỗi ngày cầu tiến 1/25 nếu bên làm còn thợ xây. Thợ xây (một nửa, nếu đang có công trình trong làng) ra cổng phụ phía cầu, lấy gỗ ở kho mang ra (`logic/tasks.js`, `S.bridgeJob`). Phần vẽ: giàn giáo và ván mọc dần từ hai đầu vào giữa (`render/build/bridges3d.js` syncWorks). | `test/bridges.test.js`: thiếu thợ thì cầu đứng, có thợ thì tiến; thợ đầu cầu có chu trình kho → đầu cầu. Ảnh: cầu đang xây ở cổng phụ. |
+| **Mỗi thời một cầu** | Kiểu cầu theo thời lúc khởi công (`b.era`), lên thời không tự đổi. Người đứng đầu ham tiến (trí tuệ, tham vọng) quyết xây lại theo kiểu thời mới; cầu phải dùng ít nhất 180 ngày (không phá cầu mới tinh để xây lại). Cầu cũ vẫn đi được tới khi cầu mới xong. | 10 trận: khoảng 6,4 lần xây lại mỗi trận. Kiểm thử bắt được lỗi cầu vừa xong đã xây lại; đã sửa. |
+| **Phá cầu, cầu quân sự** | Bị đánh (không bị đánh úp) mà có cầu: người đứng đầu đa nghi, sợ hãi có thể phá cầu; quân đang tới qua cầu phải vòng đi thuyền, tới chậm hơn. Kẻ hiếu chiến muốn đánh đảo bên cạnh chưa có cầu thì tự bắc cầu quân sự (một bên chịu cả phí). | `test/bridges.test.js`: người đa nghi phá cầu, quân đổi sang đi thuyền. 10 trận: 1 lần phá cầu, chưa có cầu quân sự (các đảo kề nhau thường có cầu từ sớm). |
+| **Người qua lại** | `logic/diplomacy.js` startVisit: người hoạt ngôn, ít đa nghi sang thăm chợ đảo bên qua cầu (đảo tin nhau, không thù). Ba chặng: đi (vẽ là hình người nhỏ mặc màu đảo nhà đi trên cầu, `render/travel3d.js`), ở lại vài ngày (là người thật trong làng đảo kia, mặc áo màu đảo nhà, đi chợ; `render/village3d.js` setGuests), rồi về. Đi vắng thì không ở đảo nhà, không làm ở nhà. | `test/bridges.test.js`; 10 trận: khoảng 105 lượt mỗi trận. Trình duyệt: 4 khách ở Lúa Vàng, đi tới cách quầy chợ 6–10 m. |
+| **Xô xát ở đầu cầu** | Hai đảo đang thù nhau: khách tới đầu cầu có thể bị lính gác chặn. Khách đứng cãi với lính gác cổng phụ, lính gác cãi lại (phản xạ ở phần vẽ). Khách bị đuổi về, hai bên thêm thù, có tin trong nhật ký. | 10 trận: khoảng 2,7 vụ mỗi trận. Trình duyệt: khách xô xát đứng cách lính gác 4,7 m. |
+| **Không vô nghĩa** | Khách, thợ đầu cầu nằm trong `audit()`. | 0 vi phạm trong 240 lần kiểm, có khách và cầu đang xây. |
+
+**Ghi lại:**
+- Kiểm thử "cặp buôn nhiều nhất tin nhau hơn" đổi thành "cặp đang buôn gần đây tin nhau hơn", vì tin cậy phai dần. Tổng chuyến buôn không giảm (72–102 so với 73–93 trước 7c), chỉ trải đều ra nhiều cặp hơn.
+- Kiểm thử chiến tranh 9 năm đổi từ 3 lên 5 trận: khoảng một nửa số trận có sáp nhập, 3 trận dễ trượt.
+- Tỉ lệ chiến tranh không đổi (20 trận: 1,3 sáp nhập mỗi trận; có trận chỉ còn 3 đảo).
+
+**Dời sang phần sau:** quân giặc tràn qua cầu bằng người thật, đánh nhau ở đầu cầu: làm ở 7d.

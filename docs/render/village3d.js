@@ -57,6 +57,7 @@
       if (place === 'store') return pickOf(PL.store, p.id);
       if (place === 'drill') return pickOf(PL.drill, p.id);
       if (place === 'grave') return pickOf(PL.grave, p.id);
+      if (place === 'bridgeL' || place === 'bridgeR') return pickOf(PL[place === 'bridgeL' ? 'gateL' : 'gateR'], p.id); // đầu cầu: cổng phụ phía cầu (logic/diplomacy.js)
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
@@ -69,7 +70,10 @@
       if (place === 'patrol') return hop(PL.guard, 3);
       return null;
     }
-    const setPlaces = (pl) => { PL = pl; Nav.reset(); }; // bục giữa sân có thể đổi theo thời: dựng lại mạng lối đi
+    const setPlaces = (pl) => { PL = pl; Nav.reset(); };
+    // khách từ đảo khác đang ở đảo này (game/cities.js mỗi giây, từ logic/diplomacy.js W.visits): [{ key, p, level, mind, enter }]
+    let guests = [];
+    const setGuests = (list) => { guests = list || []; }; // bục giữa sân có thể đổi theo thời: dựng lại mạng lối đi
 
     /* ---------- Khối lặp cho từng loại bộ phận (tự nới chỗ khi làng đông lên) ---------- */
     const shapes = Rig.shapes(), mat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0 }), glowMat = new THREE.MeshBasicMaterial({ toneMapped: false });
@@ -89,16 +93,20 @@
     /* ---------- Mỗi người: khung, tư thế, vị trí ---------- */
     const folks = new Map();
     const ageBand = (a) => (a < 6 ? 'c' : a < 55 ? 'a' : 'o');
-    function rigKey(p, age) { return level + '|' + p.role + '|' + p.job + '|' + ageBand(age); }
-    function ensure(p, age) {
-      let f = folks.get(p.id); const key = rigKey(p, age);
+    function rigKey(p, age, lv) { return (lv || level) + '|' + p.role + '|' + p.job + '|' + ageBand(age); }
+    // id: khoá trong folks (dân: mã số người; khách từ đảo khác: 'g' + đảo + ':' + mã số); lv: thời của đảo nhà người đó (trang phục);
+    // color: khách mặc áo màu đảo nhà (nhìn là biết người từ đảo bên)
+    function ensure(p, age, id, lv, start, color) {
+      if (id == null) id = p.id;
+      let f = folks.get(id); const key = rigKey(p, age, lv);
       if (f && f.key === key) return f;
-      const rig = Rig.build(p, { level, age });
+      const rig = Rig.build(p, { level: lv || level, age });
+      if (color) for (const part of rig.parts) if (part.type === 'shirt') part.color.set(color);
       for (const part of rig.parts) if (part.face) { part.dec = { p: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3() }; part.local.decompose(part.dec.p, part.dec.q, part.dec.s); }
       if (!f) {
-        const h = spot('home', p), start = (h ? h.clone() : new THREE.Vector3()).add(new THREE.Vector3((Math.random() - 0.5) * 3, 0, (Math.random() - 0.5) * 3));
-        f = { p, cur: Anim.blank(), pos: start, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0 };
-        folks.set(p.id, f);
+        const h = start || spot('home', p), at = (h ? h.clone() : new THREE.Vector3()).add(new THREE.Vector3((Math.random() - 0.5) * 3, 0, (Math.random() - 0.5) * 3));
+        f = { p, cur: Anim.blank(), pos: at, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0, guest: typeof id === 'string' };
+        folks.set(id, f);
       }
       // chỗ đứng lệch một chút quanh điểm đến (trước cửa, trước chỗ làm), không dồn đúng một điểm
       { const r = 0.7 + Math.sqrt(Math.random()) * 1.5, a = Math.random() * Math.PI * 2; f.jit.set(Math.cos(a) * r, 0, Math.sin(a) * r); } // đứng ngay trước chỗ làm, cửa nhà
@@ -176,19 +184,20 @@
       // hàng nhận khẩu phần: thứ tự theo người tới trước (giữ thứ tự cũ, người mới đứng cuối)
       { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a, b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id); if (!f.qSince) f.qSince = ts + n * 1e-3; f.qRank = n; }); for (const [, f] of folks) if (f.qSince && !q.includes(f.p.id)) f.qSince = 0; }
       const kingF = S.seats.king != null ? folks.get(S.seats.king) : null, hungry = S.food < 0.5;
-      for (const p of S.people.values()) {
-        if (!p.alive || p.away) continue; // đi đánh trận, đóng giữ đảo khác (logic/war.js): không có ở đảo
-        alive.add(p.id);
-        const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
+      // người có mặt trên đảo: dân (trừ người đi vắng: đi đánh, đóng giữ, sang đảo khác) và khách từ đảo khác (setGuests)
+      const roster = []; for (const p of S.people.values()) if (p.alive && !p.away) roster.push([p.id, p, null]); for (const g of guests) roster.push([g.key, g.p, g]);
+      for (const [key, p, gst] of roster) {
+        alive.add(key);
+        const age = P.ageOf(p, S.day), f = ensure(p, age, key, gst ? gst.level : level, gst ? spot(gst.enter, p) : null, gst && gst.color), mind = gst ? gst.mind : S.minds.get(p.id) || { state: 'idle' };
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
         const cyc = cycleOf(f, mind), aim = cyc ? cyc.aim : mind; // chu trình: đi tới chỗ của bước đang làm
         let goal = goalOf(f, aim), meetVerb = null, meetGoal = null;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
-        if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
+        if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === key) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
         else if ((mind.place === 'stroll' || mind.place === 'hallLoop') && goal && goal.road && !(ts < (f.meetCool || 0))) {
           for (const [oid, o2] of folks) {
-            if (oid === p.id || o2.meet || !o2.strolling || ts < (o2.meetCool || 0)) continue;
-            if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: p.id, until }; meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
+            if (oid === key || o2.meet || !o2.strolling || ts < (o2.meetCool || 0)) continue;
+            if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: key, until }; meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
           }
         }
         f.strolling = (mind.place === 'stroll' || mind.place === 'hallLoop') && !meetVerb;
@@ -230,6 +239,8 @@
         // khiêng quan tài (đám tang): ôm trước ngực mà đi
         f.carryNow = false;
         if (!tgt && mind.carryItem && Work && moving) { const c = Work.carryOf(mind.carryItem); if (c) { tgt = Anim.basePose(f.knobs); c.G.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'mang:' + c.G.key; f.carryNow = true; } }
+        // lính gác cổng phụ cãi lại khách đang xô xát ở đầu cầu (khách từ đảo khác, game/cities.js)
+        if (!gst && !moving && (mind.place === 'gateL' || mind.place === 'gateR')) { const g = guests.find((x) => x.brawl && x.mind.target === p.id); const gf = g && folks.get(g.key); if (gf && gf.pos.distanceToSquared(f.pos) < 9) { tgt = Anim.target('talk', f.ph, gs, f.knobs, { mood: 'argue', moving: false }); f.tool = null; f.gk = 'cãi'; _v.copy(gf.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         // lính gác cúi chào khi người đứng đầu đi ngang qua chốt (mỗi lần đi ngang chào một lần)
         if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
@@ -282,7 +293,7 @@
       let best = null, bd = 1e9;
       for (const type of ['head', 'shirt', 'shorts', 'hairCap', 'skirt']) {
         const m = IM[type]; if (!m || !m.count) continue;
-        for (const h of raycaster.intersectObject(m)) if (h.distance < bd && h.instanceId != null) { bd = h.distance; best = m.userData.owner[h.instanceId]; }
+        for (const h of raycaster.intersectObject(m)) if (h.distance < bd && h.instanceId != null && typeof m.userData.owner[h.instanceId] === 'number') { bd = h.distance; best = m.userData.owner[h.instanceId]; } // khách từ đảo khác: không mở thẻ người
       }
       return best;
     }
@@ -316,7 +327,7 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    return { update, pick, select, audit, setGuests, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

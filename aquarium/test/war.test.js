@@ -92,7 +92,8 @@ test('đảo bị sáp nhập bất bình thì nổi dậy (thắng hay thua kh�
 
 test('chạy thật 9 năm: các đảo tự đánh nhau theo tính cách; chiến tranh có làm đói thêm nhưng không thành nạn đói lớn', () => {
   let wars = 0, annex = 0, a = 0, b = 0;
-  for (const seed of [1, 6, 16]) {
+  // khoảng một nửa số trận có sáp nhập (100 trận đo ở bước 6): 5 trận thì khả năng không trận nào có chỉ khoảng 3%
+  for (const seed of [1, 6, 16, 14, 17]) {
     const W = BK.World.create({ seed }), P = BK.World.create({ seed, war: false });
     BK.World.jump(W, 9 * 360); BK.World.jump(P, 9 * 360);
     wars += W.warCount; annex += W.annexations; a += starved(W); b += starved(P);
@@ -101,5 +102,5 @@ test('chạy thật 9 năm: các đảo tự đánh nhau theo tính cách; chi�
   assert.ok(wars >= 6, 'số trận: ' + wars);
   assert.ok(annex >= 1, 'có trận sáp nhập');
   // đột kích cướp lương thực, dân binh bỏ ruộng: đói thêm là thật; nhưng trung bình dưới 20 người mỗi trận (100 dân mỗi đảo)
-  assert.ok(a / 3 < 20, 'chết đói có chiến tranh ' + a + ', không chiến tranh ' + b);
+  assert.ok(a / 5 < 20, 'chết đói có chiến tranh ' + a + ', không chiến tranh ' + b);
 });

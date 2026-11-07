@@ -94,6 +94,9 @@
       case 'merchant': return job('trade', 'market', 'bán hàng ở chợ');
       case 'builder': break; // thợ cả làm cùng thợ
     }
+    // thợ xây đầu cầu (logic/diplomacy.js S.bridgeJob): một nửa số thợ ra cổng phụ phía cầu, lấy gỗ ở kho mang ra dựng cầu
+    const bj = S.bridgeJob && S.bridgeJob.until > S.day ? S.bridgeJob : null;
+    if (bj && (role === 'builder' || j === 'builder') && (!building || p.id % 2 === 0)) return job('build', bj.side ? 'bridgeR' : 'bridgeL', 'bắc cầu sang ' + bj.toName, { cycle: { item: 'wood', src: 'store', dst: bj.side ? 'bridgeR' : 'bridgeL', workAt: 'dst' } });
     // thợ xây: ra kho lấy vật liệu (gỗ hay đá, người này người kia), mang tới công trình rồi dựng
     if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase(), { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'site', workAt: 'dst' } }) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
     if (j === 'trader') return job('trade', 'market', 'bán hàng ở chợ');
