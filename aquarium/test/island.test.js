@@ -116,7 +116,7 @@ test('công trình mỗi thời được dựng dần và xong hết; việc ng�
   for (const v of ['farm', 'build', 'guard', 'sleep', 'eat', 'chat']) assert.ok(seenVerbs.has(v), 'có việc ' + v);
 });
 
-test('dàn vai cố định tối đa 50 người; nhà chính chỉ đông khi biểu tình', () => {
+test('dàn vai cố định, dân không vượt trần POP_CAP; nhà chính chỉ đông khi biểu tình', () => {
   const S = BK.Island.create({ key: 'plains', seed: 9 });
   const R = BK.Rules, hallCrowd = () => { let n = 0; for (const m of S.minds.values()) if (m.place === 'hall' || (m.mood === 'argue' && m.target === S.seats.king)) n++; return n; };
   let maxPop = 0, maxHall = 0;

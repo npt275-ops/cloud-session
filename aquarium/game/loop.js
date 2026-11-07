@@ -26,6 +26,7 @@
     BK.GameCities.setup(G);  // game/cities.js (sáu thành phố: logic của cả bể, công trình, người)
     if (BK.NeonCity3D) BK.NeonCity3D.setup(G); // render/neon3d.js (mặt trời nhân tạo của thành phố neon, thời 10 trở đi)
     BK.Hud.setup(G);         // ui/hud.js
+    BK.RaceDev.setup(G);     // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")
 
     const { W, renderer, scene, camera, controls } = G, T = G.time;
     let last = performance.now(), lastSlow = 0;
@@ -36,7 +37,7 @@
       G.citiesRun.step((raw * T.tps) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
       const { night } = G.sky.applyTime();
       G.weather.night = night; G.weather.winter = G.seasons.winter();
-      if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.citiesRun.slow(); }
+      if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.citiesRun.slow(); G.raceDev.slow(); }
       G.nature.animate(dt, t, night);
       G.citiesRun.animate(dt, t, night);
       if (G.neonCity) G.neonCity.update(dt, t);

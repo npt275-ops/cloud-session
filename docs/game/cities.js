@@ -4,7 +4,7 @@
  *   của chính nó; người của đảo nào thì vẽ ở đảo đó (render/village3d.js), chỉ những đảo gần máy quay (NEAR) mới vẽ người;
  *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó;
  *   giữa các đảo (logic/diplomacy.js): cầu logic bắc thì hiện ra (render/build/bridges3d.js, dáng theo thời thấp hơn của hai
- *   đảo), đoàn buôn đi thuyền, đi xe qua cầu (render/travel3d.js), tin mới nhất ở góc dưới (dev);
+ *   đảo), đoàn buôn đi thuyền, đi xe qua cầu (render/travel3d.js);
  *   chiến tranh (logic/war.js): quân đi thuyền, qua cầu, vây cổng, tiến vào nhà chính, cờ đảo cai quản (render/war3d.js).
  * Đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): mỗi khung hình đưa thêm số ngày lịch (tps × thời gian thật) vào logic; giờ
  * trong ngày lấy từ logic (G.time.tod) cho bầu trời; người đi, xe chạy theo giờ game (speed: 1, 2, 4).
@@ -14,7 +14,6 @@
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const NEAR = 120, FAR = 150; // vẽ người khi máy quay cách tâm đảo dưới NEAR, thôi vẽ khi xa hơn FAR
-  const NEWS = 3;              // số tin giữa các đảo hiện ở góc dưới
   // khối lượng mỗi công trình trong danh sách xây dựng: nhà chính nặng nhất, kỳ quan, công trình lớn, ngoài làng nặng hơn; nhà
   // riêng, đồ nhỏ (đèn, đường, cột…) nhẹ. Thời đồ đá có sẵn nhà chính, bếp lửa, bốn lều.
   const BIG = new Set(['field', 'market', 'factory', 'station', 'school', 'shop', 'pad', 'nuclear', 'datacenter']);
@@ -33,7 +32,8 @@
   function setup(G) {
     const { THREE, W, lands, lands3d, bridges3d, scene, camera, controls, canvas, $ } = G;
     const Eras = BK.Eras, World = BK.World, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
-    const q = new URLSearchParams(location.search), seed = +q.get('seed') || 42;
+    // trận mặc định: seed 7 (chạy theo nhịp chơi thật có phản bội, đánh úp, sáp nhập hai đảo, chặn cướp đoàn buôn); ?seed= để đổi
+    const q = new URLSearchParams(location.search), seed = +q.get('seed') || 7;
     const world = World.create({ seed, buildPlan });
     // ?cap=: dev vào thẳng một cấp (cả sáu đảo đặt thẳng cấp đó, công trình của thời đó dựng sẵn)
     const devLevel = (l) => { for (const S of world.islands) { BK.Economy.devSetLevel(S, l); BK.Construction.setEra(S, l); for (const it of S.build.list) { it.done = true; it.progress = 1; } S.build.active = null; S.situChanged = true; } };
@@ -92,19 +92,17 @@
         villages.forEach((v, i) => { if (v) v.select(i === hit ? id : null); });
         uis.forEach((u, i) => { if (u) u.select(i === hit ? id : null); });
       }); }
-    // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, tin mới nhất
+    // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, quân (tin và bảng dev:
+    // ui/race-dev.js)
     const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d });
     const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
     const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, Math.min(isle(b.a).level, isle(b.b).level)) - 1);
-    const news = $('worldNews'), hallAt = [], hallOf = (i) => hallAt[i] || null;
+    const hallAt = [], hallOf = (i) => hallAt[i] || null;
     function syncWorld() {
       if (!world.diplomacy) return;
       bridges3d.sync(world.bridges, bridgeStyle);
       // sân trước nhà chính của đảo bị sáp nhập (cờ đảo cai quản, render/war3d.js)
       world.islands.forEach((S, i) => { hallAt[i] = S.annexedBy != null ? buildings.places(i).hall : null; });
-      const last = world.log.slice(-NEWS).reverse();
-      news.hidden = !last.length;
-      news.innerHTML = last.map((e) => '<div><b>Ngày ' + (e.day + 1) + '</b> · ' + e.text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]) + '</div>').join('');
     }
     syncWorld();
     // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
@@ -121,7 +119,7 @@
         else if (v) { v.setVisible(false); buildings.setPeds(i, []); }
       }
     }
-    // mỗi giây: nhãn thời kỳ, cầu và tin giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
+    // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
     function slow() { $('eraName').textContent = eraLabel(); syncWorld(); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
     Object.assign(G, { world, isle: isle(0), buildings, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
   }

@@ -52,9 +52,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 
 ### Người và logic ngầm chạy theo thời gian thực
 - Logic của đảo (`logic/island.js`) chạy cùng đồng hồ của bể. 8 người lập làng (4 nam, 4 nữ), hội đồng 8 ghế; mỗi ngày
-  người già đi và có thể mất; cứ 1,5 năm một mốc thế hệ thì ai đủ tuổi kết đôi; con sinh rải đều (trẻ em tối đa khoảng 28%
-  để các lứa tuổi đều nhau). **Tối đa 50 người một đảo**, làng giữ khoảng 45 tới 50 người suốt 9 năm. Hạn hán mùa hạ, tang,
-  cãi nhau, biểu tình tự xảy ra.
+  người già đi; cứ 1,5 năm một mốc thế hệ thì ai đủ tuổi kết đôi; con sinh rải đều (trẻ em tối đa khoảng 28% để các lứa
+  tuổi đều nhau). **Tối đa 100 người một đảo.** Hạn hán mùa hạ, tang, cãi nhau, biểu tình tự xảy ra.
+- **Tuổi thọ như đời thật** (`logic/people.js`, luật Gompertz): khả năng mất mỗi năm tăng gấp đôi sau khoảng 8 năm tuổi,
+  người trẻ cũng có thể mất vì bệnh. Thời càng tiến bộ, y học càng tốt, người sống lâu hơn. Người già chiếm khoảng 10–16% dân.
 - **Dàn vai cố định, ai cũng có việc chính** (`logic/council.js`, `logic/jobs.js`, chọn theo tính cách; bảng đầy đủ trong
   `design/kich-ban-npc.md` mục 8): 1 người đứng đầu (đứng chỉ đạo trước nhà chính), 1 quân sư, 2 tướng (luyện quân, kiểm
   tra chốt gác), 1 tư tế (cầu nguyện ở chỗ thờ), 1 thầy thuốc (đi thăm bệnh từng nhà), 4 thợ xây, 2 thương nhân (bán ở
@@ -142,8 +143,8 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 
   Sắp hết lương thực thì đi mua ngay, không đợi kỳ xét; đói thì dồn người ra làm. Quan hệ giữa các đảo có trí nhớ: tin cậy
   tăng theo mỗi chuyến buôn và hiệp ước, rồi phai dần. Đoàn buôn đi thật: thuyền băng biển, hay xe hàng qua cầu, nhanh hơn.
-  Hai đảo kề nhau buôn đủ nhiều thì cùng góp gỗ đá bắc cầu, dáng cầu theo thời. Góc dưới hiện ba tin mới nhất giữa các đảo
-  (dev). Chạy 9 năm, giao thương làm số người chết đói giảm từ 57 / 69 / 46 xuống còn 13 / 16 / 5 (seed 1, 2, 3).
+  Hai đảo kề nhau buôn đủ nhiều thì cùng góp gỗ đá bắc cầu, dáng cầu theo thời. Góc dưới hiện ba tin mới nhất giữa các đảo; bấm vào thì mở bảng dev
+  "Cuộc đua" (`ui/race-dev.js`: mỗi đảo một thẻ, số liệu cả bể, nhật ký chung, bấm tin thì bay tới đảo đó). Giao thương giúp các đảo lên thời nhanh hơn và mua được lương thực khi đói.
 - **Chiến tranh, sáp nhập, nổi dậy** (`logic/war.js`, quyết định ở `logic/strategy.js`, vẽ ở `render/war3d.js`):
   - Người đứng đầu hiếu chiến, tham vọng, đang thù hay đang thiếu thì muốn đánh. Quân chưa đủ thì tích quân trước, nhìn sức hai
     bên theo tính mình (tham vọng thì tự tin quá, đa nghi thì e dè). Người mưu mô thì đánh úp, có khi xé cả hiệp ước.
@@ -202,9 +203,9 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - Thanh dưới có **◀ Thời trước / Thời sau ▶** để rà soát: tới thẳng một thời lúc công trình của thời đó đã dựng xong (90%
   thời). Đi tới thì logic chạy tới đó; lùi lại thì dựng lại logic Lúa Vàng từ đầu (cùng hạt giống) rồi chạy tới thời đó, nên
   dân, nhà, công trình và trang phục khớp đúng thời. Bảng làng cũ (nút Làng) đã bỏ khỏi thanh dưới; bấm vào một người vẫn mở thẻ.
-- Mở với `?seed=7` để thử một làng khác.
-- Kết quả chạy thử 9 năm (4 hạt giống): dân lên khoảng 40 tới 50 người vào năm 2 rồi giữ 45 tới 50 tới hết trận; hội
-  đồng gần như luôn đủ ghế, luôn đủ 4 thợ xây và 2 thương nhân.
+- Trận mặc định là seed 7. Mở với `?seed=` và một số khác để thử trận khác (ví dụ `?seed=25`).
+- Kết quả chạy thử 9 năm: dân lên khoảng 100 người vào năm 4 rồi giữ gần 100 tới hết trận (trừ khi chiến tranh, đói);
+  hội đồng gần như luôn đủ ghế, luôn đủ 4 thợ xây và 2 thương nhân.
 
 ## Làng Lúa Vàng: 8 người cốt lõi đầu tiên
 
@@ -290,7 +291,7 @@ Bản mẫu: `design/npc-tinh-chinh.html`; mẫu các thời đại khác (cổ 
 
 1. ~~Làm sạch: sáu đảo trống, giữ thời tiết và thiên nhiên.~~
 2. Logic ngầm: ~~8 người cốt lõi của Lúa Vàng, gen, di truyền mỗi 1,5 năm, hội đồng, bộ não, cử động, kiểm thử 9 năm~~;
-   còn lại: tài nguyên và đặc sản, dân tối đa 50 người, hội đồng bỏ phiếu chính sách, rồi nhân lên 6 đảo (48 người).
+   còn lại: tài nguyên và đặc sản, dân tối đa 100 người, hội đồng bỏ phiếu chính sách, rồi nhân lên 6 đảo.
 3. Hiển thị đảo: nhà chính ở giữa, bãi tài nguyên xung quanh, công trình theo cấp, nhân vật cốt lõi.
 4. Chiến tranh qua cầu và thôn tính.
 5. Nối quyền năng của thần, viện trợ, cấm vận và thì thầm vào logic mới.

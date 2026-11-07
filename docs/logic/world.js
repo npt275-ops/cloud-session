@@ -45,10 +45,12 @@
     if (W.war) BK.War.dayTick(W, day, W.rng);
     BK.Strategy.dayTick(W, day, W.rng);
   }
-  // một bước cố định: lịch và giờ trong ngày đi trước, rồi sáu đảo lần lượt theo thứ tự
+  // một bước cố định: lịch và giờ trong ngày đi trước, rồi sáu đảo lần lượt theo thứ tự, rồi các trận đánh từng giờ
+  // (logic/war.js), sang ngày mới thì việc giữa các đảo
   function tick(W) {
     W.ticks++; W.day = W.ticks / TICKS_PER_DAY; W.tod = todOf(W.day);
     for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1 / TICKS_PER_DAY); }
+    if (W.war) BK.War.step(W, W.day, W.rng, 1 / TICKS_PER_DAY);
     if (W.ticks % TICKS_PER_DAY === 0) worldDay(W, W.day);
   }
   // đưa thêm days ngày lịch vào (phần chạy game gọi mỗi khung hình); chạy hết các bước nguyên, trả về số bước đã chạy
@@ -59,7 +61,12 @@
   }
   // tua nhanh tới ngày toDay (dev rà soát): bước 1 ngày, giờ trong ngày đặt giữa buổi sáng cho mỗi ngày
   function jump(W, toDay) {
-    while (W.day + 1 <= toDay) { W.day += 1; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1); } worldDay(W, W.day); }
+    while (W.day + 1 <= toDay) {
+      W.day += 1; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, 1); }
+      // trận đánh vẫn theo từng giờ trong ngày vừa qua (để tua nhanh ra kết quả gần với chạy thường)
+      if (W.war) for (let k = 1; k <= TICKS_PER_DAY; k++) BK.War.step(W, W.day - 1 + k / TICKS_PER_DAY, W.rng, 1 / TICKS_PER_DAY);
+      worldDay(W, W.day);
+    }
     const rest = toDay - W.day; if (rest > 0) { W.day = toDay; W.ticks = Math.round(W.day * TICKS_PER_DAY); W.tod = todOf(W.day); for (const S of W.islands) { S.tod = W.tod; BK.Island.step(S, rest); } }
     W.acc = 0;
   }

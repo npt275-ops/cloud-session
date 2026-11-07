@@ -41,8 +41,17 @@ body.day .brand, body.day .clock { text-shadow: 0 1px 12px rgba(255, 255, 255, 0
 .bar .era span { min-width: 9.5em; text-align: center; font-size: 13px; white-space: nowrap; }
 .bar .era button { padding: 8px 10px; }
 button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-/* tin giữa các đảo (dev): đoàn buôn, hiệp ước, cầu (logic/diplomacy.js), game/cities.js ghi vào */
-.news { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); width: min(360px, calc(100% - 32px)); border-radius: 14px; padding: 8px 12px; font-size: 12.5px; line-height: 1.45; color: var(--ink-dim); pointer-events: none; }
+/* tin giữa các đảo và bảng dev "Cuộc đua" (ui/race-dev.js): bấm ô tin để mở bảng */
+.news { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); width: min(360px, calc(100% - 32px)); border-radius: 14px; padding: 8px 12px; font-size: 12.5px; line-height: 1.45; color: var(--ink-dim); cursor: pointer; }
+.race { z-index: 5; position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 74px); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); max-width: 560px; overflow-y: auto; overscroll-behavior: contain; border-radius: 16px; padding: 10px; font-size: 12.5px; line-height: 1.45; color: var(--ink-dim); }
+.race .rb-head { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 8px; color: var(--ink); }
+.race .rb-head button { border: 0; background: transparent; color: var(--ink); font-size: 16px; padding: 4px 8px; cursor: pointer; }
+.race button.rb-card, .race .rb-log button { display: block; width: 100%; text-align: left; border: 0; border-left: 4px solid var(--c, var(--glass-line)); background: rgba(255, 255, 255, 0.05); color: inherit; font: inherit; border-radius: 10px; padding: 7px 10px; margin: 0 0 6px; cursor: pointer; }
+.race .rb-card b, .race .rb-log b { color: var(--ink); }
+.race .rb-card span { display: block; }
+.race em { color: var(--amber); font-style: normal; }
+.race .rb-stats { margin: 8px 4px; color: var(--ink); }
+.race .rb-log button { border-left-width: 0; padding: 5px 8px; margin-bottom: 3px; }
 .news b { color: var(--ink); font-weight: 600; }
 #fps { position: fixed; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); padding: 5px 10px; border-radius: 10px; font-size: 12px; }
 .pad { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); display: grid; grid-template-columns: repeat(3, 46px); gap: 6px; }
@@ -63,7 +72,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   <button id="sound" aria-pressed="false">Âm thanh</button>
   <button id="flyBtn" aria-pressed="false" title="Nút bay trên màn hình (phím mũi tên, W A S D, Q E)">Bay</button>
 </div>
-<div class="glass news" id="worldNews" hidden aria-live="polite"></div>
+<div class="glass news" id="worldNews" hidden aria-live="polite" role="button" tabindex="0" aria-expanded="false" title="Bấm để mở bảng Cuộc đua (dev)"></div>
+<div class="glass race" id="raceBoard" hidden aria-label="Bảng Cuộc đua (dev)"></div>
 <div class="glass" id="fps" hidden></div>
 <div class="pad" id="flyPad" hidden>
   <button data-k="up" aria-label="Lên">⤒</button><button data-k="fwd" aria-label="Tới">▲</button><button data-k="down" aria-label="Xuống">⤓</button>
@@ -174,6 +184,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="render/snow3d.js"></script>
 <script src="ui/camera-fly.js"></script>
 <script src="ui/landbar.js"></script>
+<script src="ui/race-dev.js"></script>
 <script src="game/cities.js"></script>
 <script src="ui/hud.js"></script>
 <script src="game/loop.js"></script>

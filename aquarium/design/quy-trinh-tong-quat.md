@@ -407,7 +407,7 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 | 3 ✅ | Khí hậu và ngoại gen (`logic/climate.js`, `logic/epigen.js`); mọi chỗ ra quyết định đọc tính cách biểu hiện | Mỗi đảo đúng thiên tai của mình; đói lâu làm dân đa nghi, hiếu chiến; con sinh lúc khổ đột biến nhiều hơn (`test/climate.test.js`) |
 | 4 ✅ | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu): `logic/strategy.js`, `logic/diplomacy.js`, `render/travel3d.js` | Có giao thương và hiệp ước; quan hệ có trí nhớ; giao thương làm số người chết đói giảm hơn một nửa (`test/strategy.test.js`) |
 | 5 ✅ | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính): `logic/war.js`, `logic/strategy.js` tryWar, `render/war3d.js` | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy, thắng hay thua không đoán trước (`test/war.test.js`) |
-| 6 | Giải quyết nốt mọi việc chưa ổn của bước 2–5 (mục 12.1); bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Hết danh sách 12.1; phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
+| 6 ✅ | Giải quyết nốt mọi việc chưa ổn của bước 2–5 (mục 12.1); bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Hết danh sách 12.1; phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
 | 7 | NPC sống thật và hệ sinh thái hỗn loạn (`design/npc-song-that.md`, làm theo 7a–7g): <ul><li>không hành động vô nghĩa suốt vòng đời;</li><li>sự kiện thành cảnh có hành động thật;</li><li>cầu do người đứng đầu quyết, là lối đi và chiến tuyến;</li><li>đánh thành theo thứ tự cổng → công trình xung quanh → nhà chính;</li><li>tên lửa từ thời 7, hạt nhân từ thời 8 (4 quả là san phẳng);</li><li>môi trường cạn dần, chạy nạn, dịch bệnh, đảo chính, chiến tranh lan rộng.</li></ul> | <ul><li>Kiểm thử ghi 0 cử chỉ vô nghĩa và 0 sự kiện không có cảnh.</li><li>Có chuỗi ảnh mỗi sự kiện.</li><li>Khung hình trên điện thoại không tụt.</li><li>Cùng seed ra cùng lịch sử.</li></ul> |
 | (sau) | Vai trò người chơi: thêm vào lớp Môi trường hay lớp khác khi chốt | – |
 
@@ -456,3 +456,33 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
     - phân bố cấp cuối;
     - số trận đánh, sáp nhập, nổi dậy, chết đói;
     - đảo nào thắng.
+
+### 12.2 Đã làm ở bước 6
+
+| Mục | Kết quả |
+|---|---|
+| 0. Dân 100 | ✅ `Rules.POP_CAP` = 100. Vẫn 20 nhà mỗi đảo, trung bình 5 người một nhà (hộ nhiều thế hệ ở chung). Thêm nhà thì phải sửa bố cục 6 đảo × 12 thời, để sau nếu cần. Người được vẽ gộp theo bộ phận: gần một đảo đủ dân, số lần vẽ chỉ từ 75 lên 81 (máy thử). Điện thoại thật chưa đo. |
+| 1. Cơ cấu dân | ✅ Luật chết Gompertz (`logic/people.js`): rủi ro tăng gấp đôi sau khoảng 8 năm tuổi, người trẻ có thể mất vì bệnh, y học tốt dần theo thời. Người già còn 10–16% (trước có lúc 40%). Chín chốt cứng giờ chỉ chiếm phần nhỏ trong 100 dân. |
+| 2. Kẹt thời 4, chết đói | ✅ Tìm ra hai lỗi kinh tế có từ bước 2. <ul><li>Phần chia việc đòi lương thực vượt trần kho, nên không bao giờ đủ và cả làng làm ruộng mãi.</li><li>Năng suất ước thấp hơn thật; nay đo năng suất thật.</li></ul> Thêm: giỏ tài nguyên nhân `BASKET_SCALE` 2,2 cho 100 dân; Thông Xanh đủ lương thực (rừng săn bắt, hái lượm); cá của Tuyết Trắng bằng Cửa Sóng (trước đây Tuyết Trắng luôn chạm thời 12). |
+| 3. Thông Xanh luôn bị đánh | ✅ Có **kẻ thù chung**: hai đảo cùng sợ hay cùng thù một đảo thứ ba thì dễ ký hiệp ước, liên minh, gửi quân giúp nhau. Thông Xanh bị đánh giảm từ 381 xuống 66 lần (100 trận cũ so với 50 trận mới). Nay đảo yếu nhất là Cát Hồng (sa mạc), bị đánh nhiều nhất. Kẻ mạnh đánh kẻ yếu là thật, nhưng không còn lệch hẳn về một đảo. |
+| 4. Chiến tranh còn nhẹ | ✅ Xem kết quả cân chỉnh ở dưới. |
+| 5. Nhịp trận | ✅ Đánh theo từng giờ: `World.tick` gọi `War.step` mỗi bước cố định 1/12 ngày; tua nhanh cũng chạy 12 đợt mỗi ngày. <ul><li>Sĩ khí đổi theo chênh lệch thiệt hại hai bên.</li><li>Vào thành 5 ngày.</li><li>Nổi dậy thành trận nhiều ngày (`W.wars`, kind `revolt`): lính bản đảo chia ba phe (theo dân, đứng ngoài, giữ phe kẻ chiếm); người cầm đầu chờ thời; thất bại thì 180 ngày sau mới gượng dậy được.</li><li>Quân đóng giữ có trần 15% người lớn.</li><li>Đột kích chỉ khi mạnh hơn hẳn.</li></ul> |
+| 6. Hướng cổng | ✅ Đã kiểm: cổng phụ trái (`gateL`) là `wallGaps[1]`, hướng `landing[0]`; cổng phải hướng `landing[1]`. Khớp với `War.sideOf`. |
+| 7. Cướp đoàn buôn, cứu đói | ✅ Đoàn đi thuyền ngang qua đảo khác có thể bị đảo đó cướp (`Diplomacy.path`, `rob`), do người đứng đầu quyết theo tính cách và thù hằn. Đảo cai quản gửi lương thực cứu đói cho đảo mình chiếm (`Diplomacy.gift`), dân bớt bất bình. Cầu quân sự chuyển sang bước 7 (mục 7.2 của `design/npc-song-that.md`). |
+| 8. Đoàn buôn trên đường trong đảo | Chuyển sang bước 7 (khuân hàng từ kho ra bến). |
+| 9. Trận mặc định | ✅ Seed 7. Chạy theo nhịp chơi thật thì có: Cửa Sóng xé hiệp ước, đánh úp, chiếm Cát Hồng (ngày 642), rồi chiếm Đá Mây (ngày 1717); Lúa Vàng hai lần đánh trả không thành; Tuyết Trắng chặn cướp đoàn buôn. |
+| 10, 11. Bảng dev, nhật ký | ✅ `ui/race-dev.js`: bấm ô tin ở góc dưới thì mở bảng "Cuộc đua". Mỗi đảo một thẻ: thời, dân, lính, kho, người đứng đầu và tính cách, thế quân, thuộc ai, đang đánh ai, hiệp ước, cầu. Số liệu cả bể đếm từ người và `W.warStats`, không đếm chữ. Nhật ký 40 tin, bấm thì bay tới đảo. Ô tin chuyển từ `game/cities.js` sang tệp này. |
+| 12. Dọn chỗ thừa | ✅ Bỏ `NAMED_CAP`. |
+| 13. Cân chỉnh | ✅ Kết quả ở dưới. |
+
+**Kết quả cân chỉnh cuối** (50 trận 9 năm, seed 1–50, tua theo ngày):
+- **Số đảo còn độc lập cuối trận:** 26 trận còn 6, 18 trận còn 5, 3 trận còn 4, 2 trận còn 2, 1 trận chỉ còn 1 (một đảo thống nhất cả bể).
+- **Không đảo nào luôn thắng:** đảo có cấp cao nhất là Đá Mây và Tuyết Trắng mỗi đảo 22 trận, Cửa Sóng 19, Lúa Vàng 5, Thông Xanh 2, Cát Hồng 2.
+- **Cấp cuối trung bình:** Lúa Vàng 9,8; Thông Xanh 8,9; Đá Mây 9,7; Tuyết Trắng 9,9; Cửa Sóng 10,1; Cát Hồng 9,1. Mỗi đảo đều có trận chạm thời 12; thấp nhất là thời 5.
+- **Mỗi trận đấu:** 8,6 trận đánh (1–33), 2,9 đột kích, 5,7 tổng tấn công, 1,5 lần sáp nhập (0–22), 0,3 cuộc nổi dậy (11 lần độc lập lại trong 50 trận), 0,5 vụ cướp đoàn buôn, 61 người chết trận, 1,8 người chết đói.
+
+**Còn lệch, ghi lại để theo dõi:**
+- Chết đói rất thấp (1,8 mỗi trận đấu). Đói là một nguồn hỗn loạn; bước 7f (môi trường cạn dần, dịch bệnh, chạy nạn) sẽ thêm vào.
+- Cát Hồng bị đánh nhiều nhất (173 trên 50 trận), vì là đảo nghèo nhất.
+- Nổi dậy hiếm (0,3 mỗi trận đấu) nhưng thường thành công khi đã nổ ra.
+- Cùng một seed, tua theo ngày (dev) và chạy theo giờ (chơi thật) ra lịch sử khác nhau. Phân bố thống kê thì giống nhau.

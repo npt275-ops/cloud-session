@@ -88,7 +88,7 @@
   }
 
   // giữa hai mốc thế hệ: làng còn chỗ (có người mất) thì một cặp còn sinh được, ít con nhất, có thêm một con.
-  // Nhờ vậy làng nhỏ (tối đa 50 người) không bị dồn một lứa già rồi hụt hẳn một lứa trẻ
+  // Nhờ vậy làng nhỏ (tối đa 100 người, logic/rules.js POP_CAP) không bị dồn một lứa già rồi hụt hẳn một lứa trẻ
   function trickle(S, rng) {
     const pop = living(S).length, room = Math.min(R.POP_CAP - pop, kidsRoom(S)); if (room <= 0) return null;
     if (S.eco && S.eco.hunger) return null; // đang đói thì không sinh thêm (logic/economy.js): dân số tự cân với cái ăn

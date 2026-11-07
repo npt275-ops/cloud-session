@@ -27,7 +27,7 @@
   const A = 1.6, M = 1, F = 0.6, X = 0.08;
   const RICH = {
     plains: { food: A, wood: F, stone: X, metal: X, energy: M, luxury: M },
-    forest: { food: F, wood: A, stone: M, metal: X, energy: M, luxury: M },
+    forest: { food: M, wood: A, stone: M, metal: X, energy: M, luxury: M },   // rừng: săn bắt, hái lượm đủ ăn; gần như không có kim loại
     mountain: { food: F, wood: M, stone: A, metal: A, energy: M, luxury: F },
     tundra: { food: X, wood: X, stone: F, metal: M, energy: A, luxury: M },
     coast: { food: M, wood: F, stone: M, metal: X, energy: M, luxury: A },

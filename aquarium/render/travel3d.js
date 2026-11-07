@@ -75,7 +75,7 @@
       for (const c of caravans) {
         const u = Math.max(0, Math.min(1, (day - c.depart) / Math.max(1e-6, c.arrive - c.depart)));
         place(c.a, c.b, c.give, u, t, levelOf(c.a));
-        place(c.b, c.a, c.get, u, t, levelOf(c.b));
+        if (Object.keys(c.get).length) place(c.b, c.a, c.get, u, t, levelOf(c.b)); // đoàn cứu đói chỉ đi một chiều
       }
       for (const k in pool) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
     }

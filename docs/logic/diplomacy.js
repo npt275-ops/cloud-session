@@ -7,6 +7,9 @@
  *   đoàn buôn  trade(): hai bên giao hàng cùng lúc, đoàn đi thật mất travelDays ngày (cầu thì nhanh, thuyền thì chậm, xa thì
  *              lâu hơn); tới nơi mới nhận hàng, tin cậy hai bên tăng
  *   hiệp ước   pact (không xâm phạm), alliance (liên minh): có hạn; bước 5 (chiến tranh) đọc ở đây
+ *   cướp, cứu  đoàn đi thuyền qua đảo khác (đảo nằm giữa đường, path) có thể bị đảo đó cướp (rob); đảo cai quản gửi lương
+ *              thực cứu đói cho đảo mình chiếm (gift): đoàn chỉ chở một chiều. Ai cướp, ai cứu do người đứng đầu quyết
+ *              (logic/strategy.js).
  *   cầu        hai đảo kề nhau buôn bán đủ nhiều, cùng từ thời 3, hai kho gộp lại đủ gỗ đá thì cùng bắc cầu (mỗi bên góp
  *              một nửa, bên thiếu thì bên kia bù); xét mỗi ngày; cầu làm đường đi nhanh hơn
  * Không vẽ gì, chạy được bằng Node. Cần: logic/economy.js, logic/island.js. */
@@ -30,6 +33,8 @@
   const pairKey = (a, b) => (a < b ? a + '-' + b : b + '-' + a);
   const bridged = (W, a, b) => hops(a, b) === 1 && W.bridges.some((x) => pairKey(x.a, x.b) === pairKey(a, b));
   const travelDays = (W, a, b) => (bridged(W, a, b) ? BRIDGE_DAYS : BOAT_DAYS + HOP_DAYS * (hops(a, b) - 1));
+  // các đảo nằm giữa đường đi thuyền từ a tới b (theo chiều ngắn hơn quanh vòng sáu đảo; ngang nhau thì theo chiều tăng)
+  function path(a, b) { const fwd = (b - a + N) % N, dir = fwd <= N - fwd ? 1 : -1, out = []; for (let i = (a + dir + N) % N; i !== b; i = (i + dir + N) % N) out.push(i); return out; }
   const alive = (W, i) => !W.islands[i].annexedBy && BK.Island.living(W.islands[i]).length > 0;
   const say = (W, day, text, ids) => { W.log.push({ day: Math.floor(day), text, isles: ids || [] }); if (W.log.length > 400) W.log.splice(0, W.log.length - 400); };
 
@@ -65,8 +70,28 @@
     B.log.push({ day: Math.floor(day), kind: 'trade', ids: [], text: 'Đoàn buôn lên đường sang ' + A.name + '.' });
     return c;
   }
+  // quà (cứu đói): a gửi give cho b, không đổi lại
+  function gift(W, day, a, b, give) {
+    const E = BK.Economy, A = W.islands[a], B = W.islands[b];
+    for (const r in give) E.state(A).stock[r] -= give[r];
+    const days = travelDays(W, a, b), c = { id: W.nextId++, a, b, give, get: {}, depart: day, arrive: day + days, by: bridged(W, a, b) ? 'bridge' : 'boat', gift: true };
+    W.caravans.push(c);
+    say(W, day, A.name + ' gửi ' + Object.entries(give).map(([r, v]) => Math.round(v) + ' ' + E.NAME[r].toLowerCase()).join(', ') + ' cứu đói ' + B.name + '.', [a, b]);
+    return c;
+  }
+  // c (đảo giữa đường) cướp đoàn buôn: hàng hai chiều về kho c; hai bên thù c, ai cũng bớt tin c
+  function rob(W, day, cv, c) {
+    const E = BK.Economy, C = W.islands[c], sc = E.state(C).stock, got = {};
+    for (const o of [cv.give, cv.get]) for (const r in o) { const k = Math.min(o[r], E.CAP(C.level, r) - sc[r]); if (k > 0) { sc[r] += k; got[r] = (got[r] || 0) + k; } }
+    W.caravans.splice(W.caravans.indexOf(cv), 1);
+    for (const v of [cv.a, cv.b]) { W.rel[v][c].grudge = Math.min(1, W.rel[v][c].grudge + 0.35); W.rel[v][c].trust = 0; }
+    for (let j = 0; j < N; j++) if (j !== c) W.rel[j][c].trust = Math.max(0, W.rel[j][c].trust - 0.1);
+    W.robberies = (W.robberies || 0) + 1;
+    say(W, day, 'Thuyền ' + C.name + ' chặn cướp đoàn buôn giữa ' + W.islands[cv.a].name + ' và ' + W.islands[cv.b].name + ' (' + Object.entries(got).map(([r, v]) => Math.round(v) + ' ' + E.NAME[r].toLowerCase()).join(', ') + ').', [c, cv.a, cv.b]);
+  }
   function arrive(W, day, c) {
     const E = BK.Economy, A = W.islands[c.a], B = W.islands[c.b], sa = E.state(A), sb = E.state(B);
+    if (c.gift) { for (const r in c.give) sb.stock[r] = Math.min(E.CAP(B.level, r), sb.stock[r] + c.give[r]); B.unrest = Math.max(0, (B.unrest || 0) - 0.15); W.rel[c.b][c.a].grudge = Math.max(0, W.rel[c.b][c.a].grudge - 0.1); B.log.push({ day: Math.floor(day), kind: 'trade', ids: [], text: 'Lương thực cứu đói từ ' + A.name + ' về tới nơi.' }); return; }
     for (const r in c.give) sb.stock[r] = Math.min(E.CAP(B.level, r), sb.stock[r] + c.give[r]);
     for (const r in c.get) sa.stock[r] = Math.min(E.CAP(A.level, r), sa.stock[r] + c.get[r]);
     W.rel[c.a][c.b].trust = Math.min(1, W.rel[c.a][c.b].trust + TRUST_TRADE); W.rel[c.b][c.a].trust = Math.min(1, W.rel[c.b][c.a].trust + TRUST_TRADE);
@@ -110,5 +135,5 @@
     for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) if (a !== b) { const R = W.rel[a][b]; R.trust *= 1 - DECAY; R.grudge *= 1 - DECAY * 0.5; }
     W.treaties = W.treaties.filter((t) => t.until > day || (say(W, day, 'Hiệp ước giữa ' + W.islands[t.a].name + ' và ' + W.islands[t.b].name + ' hết hạn.', [t.a, t.b]), false));
   }
-  return { N, init, hops, travelDays, bridged, alive, need, available, value, canSend, load, trade, treatyOf, sign, maybeBridge, dayTick, say, pairKey };
+  return { N, init, hops, path, travelDays, bridged, alive, need, available, value, canSend, load, trade, gift, rob, treatyOf, sign, maybeBridge, dayTick, say, pairKey };
 });

@@ -525,6 +525,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/ui/race-dev.js",
+  "src": "ui/race-dev.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/ui/village-ui.js",
   "src": "ui/village-ui.js",
   "mode": 420

@@ -27,6 +27,9 @@
     { level: 11, key: 'warp', name: 'Bẻ Cong Không Gian', hall: 'Cổng Trung Tâm', leader: 'Người điều hành', tech: 'gấp không gian để đi xuyên qua nó', beyond: true, cost: { stone: 1400, metal: 2100, energy: 3500, luxury: 1830 } },
     { level: 12, key: 'light', name: 'Siêu Việt', hall: 'Cột Sáng', leader: 'Người điều hành', tech: 'sống như ánh sáng và nghĩ chung một ý', beyond: true, cost: { food: 3100, metal: 2790, energy: 4650, luxury: 2490 } },
   ];
+  // giỏ ghi ở trên tính cho đảo 50 dân; nhân theo dân số thật (logic/rules.js BASKET_SCALE)
+  const SCALE = (R && R.BASKET_SCALE) || 1;
+  for (const e of LIST) for (const r in e.cost) e.cost[r] = Math.round(e.cost[r] * SCALE);
   const MATCH_DAYS = (R && R.MATCH_DAYS) || 3240;
   const ERA_DAYS = MATCH_DAYS / LIST.length; // 270 ngày: nhịp dựng công trình của một thời (không phải hạn lên cấp)
   const of = (level) => LIST[Math.max(1, Math.min(LIST.length, level)) - 1];

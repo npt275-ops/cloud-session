@@ -7,7 +7,11 @@
  * Nước đi ở bước này:
  *   thế quân      tích quân (tăng phần người làm lính) hay giảm quân: hiếu chiến, đa nghi, sợ đảo khác mạnh hơn thì tích
  *   giao thương   đổi thứ dư lấy thứ thiếu: mưu mô, trí tuệ thì hay đi buôn và mặc cả giỏi; đa nghi mà ít tin cậy thì ngại
- *   hiệp ước      không xâm phạm, liên minh: mưu mô, trí tuệ, sợ hãi; bên kia cũng phải đồng ý
+ *   hiệp ước      không xâm phạm, liên minh: mưu mô, trí tuệ, sợ hãi; bên kia cũng phải đồng ý. Hai đảo cùng sợ hay cùng thù
+ *                 một đảo thứ ba (kẻ thù chung) thì dễ ký với nhau hơn, dễ thành liên minh (liên minh thì gửi quân giúp nhau)
+ *   cướp đoàn buôn  đoàn đi thuyền ngang qua đảo mình: người đứng đầu hiếu chiến, tham lam, đang thù hay đang đánh nhau với
+ *                 một bên thì có thể cho thuyền ra chặn cướp (mỗi đoàn xét một lần); sùng đạo, sợ hãi thì thôi
+ *   cứu đói       đảo mình đang cai quản bị đói: người đứng đầu hiền, trí tuệ thì gửi lương thực sang (dân bớt bất bình)
  *   mua lương thực gấp  kho lương thực còn dưới URGENT_DAYS ngày ăn hay đang đói thì không đợi kỳ xét: ngày nào còn thương
  *                 nhân rảnh là cho đoàn đi mua (người đứng đầu đa nghi vẫn có thể chần chừ, bên kia vẫn có thể từ chối)
  *   chiến tranh   đột kích (cướp kho rồi về) hay tổng tấn công (chiếm nhà chính, sáp nhập): hiếu chiến, tham vọng, thù hằn,
@@ -25,8 +29,8 @@
   const EVERY = 10;
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
-  const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.5;
-  const CONQUER_PRIZE = 1.5; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.8; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  const CONQUER_PRIZE = 1.5;    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
 
   // tính cách của người quyết: người đứng đầu, pha ý quân sư và tướng (trọng số nghe theo tính người đứng đầu)
   function mind(S) {
@@ -131,15 +135,22 @@
     return false;
   }
 
+  // kẻ thù chung của a và b: đảo thứ ba mà cả hai cùng sợ hay cùng thù (0..1)
+  function commonFoe(W, a, b) {
+    let m = 0; const threat = (i, x) => Math.max(W.rel[i][x].fear, W.rel[i][x].grudge);
+    for (let x = 0; x < BK.Diplomacy.N; x++) if (x !== a && x !== b) m = Math.max(m, Math.min(threat(a, x), threat(b, x)));
+    return m;
+  }
   function tryTreaty(W, a, day, rng, t) {
     const D = BK.Diplomacy;
     const cands = [];
-    for (let b = 0; b < D.N; b++) if (b !== a && D.alive(W, b) && !D.treatyOf(W, a, b, day)) cands.push([b, W.rel[a][b].trust + W.rel[a][b].fear * 0.8 - W.rel[a][b].grudge + (D.hops(a, b) === 1 ? 0.2 : 0)]);
+    for (let b = 0; b < D.N; b++) if (b !== a && D.alive(W, b) && !D.treatyOf(W, a, b, day)) cands.push([b, W.rel[a][b].trust + W.rel[a][b].fear * 0.8 - W.rel[a][b].grudge + (D.hops(a, b) === 1 ? 0.2 : 0) + commonFoe(W, a, b)]);
     if (!cands.length) return;
     cands.sort((p, q) => q[1] - p[1]);
     const b = cands[0][0], B = W.islands[b], M = mind(B); if (!M) return;
-    const tb = M.t, kind = W.rel[a][b].trust > 0.45 && W.rel[b][a].trust > 0.45 && rng.chance(0.5) ? 'alliance' : 'pact';
-    const ok = 0.2 + 0.3 * tb.intellect + 0.2 * tb.cunning + 0.6 * W.rel[b][a].trust + 0.4 * W.rel[b][a].fear - 0.6 * W.rel[b][a].grudge - 0.25 * tb.aggression;
+    const foe = commonFoe(W, a, b);
+    const tb = M.t, kind = ((W.rel[a][b].trust > 0.45 && W.rel[b][a].trust > 0.45) || (foe > 0.3 && W.rel[a][b].trust > 0.2 && W.rel[b][a].trust > 0.2)) && rng.chance(0.5 + 0.4 * foe) ? 'alliance' : 'pact';
+    const ok = 0.2 + 0.3 * tb.intellect + 0.2 * tb.cunning + 0.6 * W.rel[b][a].trust + 0.4 * W.rel[b][a].fear + 0.6 * foe - 0.6 * W.rel[b][a].grudge - 0.25 * tb.aggression;
     if (rng.chance(Math.max(0.02, Math.min(0.95, ok)))) D.sign(W, day, a, b, kind, kind === 'alliance' ? 540 : 360);
   }
 
@@ -150,10 +161,36 @@
     const M = mind(S); if (!M) return;
     if (rng.chance(Math.max(0.2, 0.9 - 0.5 * M.t.paranoia))) tryTrade(W, i, day, rng, M.t, 'food');
   }
+  // đoàn đi thuyền ngang qua đảo c: người đứng đầu c xét có cướp không (mỗi đoàn, mỗi đảo xét một lần, khi đoàn đi được nửa đường)
+  function tryRob(W, day, rng) {
+    const D = BK.Diplomacy, Wr = BK.War;
+    for (const cv of [...W.caravans]) {
+      if (cv.by !== 'boat' || cv.gift || cv.robChecked || day < (cv.depart + cv.arrive) / 2) continue;
+      cv.robChecked = true;
+      for (const c of D.path(cv.a, cv.b)) {
+        if (!D.alive(W, c)) continue;
+        const M = mind(W.islands[c]); if (!M) continue;
+        const t = M.t, foe = (v) => W.rel[c][v].grudge + (Wr && Wr.atWar(W, c) && (Wr.atWar(W, c).a === v || Wr.atWar(W, c).b === v) ? 0.6 : 0);
+        const p = 0.4 * t.aggression + 0.25 * t.ambition + 0.5 * Math.max(foe(cv.a), foe(cv.b)) - 0.35 * t.piety - 0.3 * t.fear - 0.2;
+        if (rng.chance(Math.max(0, Math.min(0.6, p)))) { D.rob(W, day, cv, c); break; }
+      }
+    }
+  }
+  // đảo mình cai quản đang đói: xét gửi lương thực cứu đói (mỗi EVERY ngày)
+  function relief(W, i, day, rng) {
+    const S = W.islands[i], E = BK.Economy, st = E.state(S);
+    for (let v = 0; v < W.islands.length; v++) {
+      const V = W.islands[v]; if (V.annexedBy !== i || !E.state(V).hunger || W.caravans.some((c) => c.gift && c.b === v)) continue;
+      const M = mind(S); if (!M) return;
+      const t = M.t, spare = st.stock.food - st.eaten * 40, k = Math.floor(Math.min(spare, E.state(V).eaten * 20));
+      if (k > 20 && rng.chance(Math.max(0.05, Math.min(0.9, 0.3 + 0.4 * t.meekness + 0.3 * t.intellect - 0.35 * t.aggression)))) BK.Diplomacy.gift(W, day, i, v, { food: k });
+    }
+  }
   // mỗi ngày (logic/world.js gọi): mỗi đảo xét tình hình EVERY ngày một lần, lệch nhau theo thứ tự đảo; đảo sắp đói thì đi mua
-  // lương thực bất cứ ngày nào
+  // lương thực bất cứ ngày nào; đoàn buôn qua đảo khác có thể bị cướp
   function dayTick(W, day, rng) {
-    for (let i = 0; i < BK.Diplomacy.N; i++) { if ((Math.floor(day) + i * 2) % EVERY === 0) islandTick(W, i, day, rng); else urgentFood(W, i, day, rng); }
+    for (let i = 0; i < BK.Diplomacy.N; i++) { if ((Math.floor(day) + i * 2) % EVERY === 0) { islandTick(W, i, day, rng); if (BK.Diplomacy.alive(W, i)) relief(W, i, day, rng); } else urgentFood(W, i, day, rng); }
+    tryRob(W, day, rng);
   }
   return { EVERY, BASE_SOLDIERS, mind, strength, islandTick, dayTick };
 });

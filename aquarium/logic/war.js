@@ -65,7 +65,7 @@
   const note = (S, day, kind, text, ids) => S.log.push({ day: Math.floor(day), kind, ids: ids || [], text });
 
   // W.warStats: số trận theo kiểu (raid, conquer), số lần thắng, thua, cầu hoà (cho kiểm thử và bảng dev)
-  function init(W) { W.wars = W.wars || []; W.warCount = 0; W.annexations = 0; W.revolts = 0; W.warStats = { raid: 0, conquer: 0, won: 0, lost: 0, peace: 0, revolt: 0, freed: 0 }; }
+  function init(W) { W.wars = W.wars || []; W.warCount = 0; W.annexations = 0; W.revolts = 0; W.warStats = { raid: 0, conquer: 0, won: 0, lost: 0, peace: 0, revolt: 0, freed: 0, target: [0, 0, 0, 0, 0, 0] }; }
   // đảo cai quản i (chính nó nếu độc lập)
   const rulerOf = (W, i) => (W.islands[i].annexedBy != null ? W.islands[i].annexedBy : i);
   const vassalsOf = (W, a) => W.islands.map((S, i) => i).filter((i) => W.islands[i].annexedBy === a);
@@ -118,7 +118,7 @@
     const id = W.nextId++, days = D().travelDays(W, a, b);
     for (const x of troops) x.p.away = id;
     const w = { id, a, b, kind, troops, n0: troops.length, start: day, depart: day, arrive: day + days, by: D().bridged(W, a, b) ? 'bridge' : 'boat', stage: 'march', morale: 1, since: day, helpers: [], loot: {}, gen: gen ? gen.id : null, surprise: !!surprise };
-    W.wars.push(w); W.warCount++; W.warStats[kind]++;
+    W.wars.push(w); W.warCount++; W.warStats[kind]++; W.warStats.target[b]++;
     // phản bội: đang có hiệp ước mà vẫn đánh
     const T = D().treatyOf(W, a, b, day);
     if (T) {
@@ -343,7 +343,7 @@
     const L = living(S).filter((p) => !p.governor && P().ageOf(p, day) >= BK.Rules.ADULT_AGE);
     if (!L.length) return;
     const hot = L.reduce((s, p) => s + P().traits(p).aggression, 0) / L.length, g = W.rel[i][r].grudge;
-    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.003 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004));
+    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.004 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004));
     if ((Math.floor(day) + i * 3) % 10 !== 0 || atWar(W, i)) return;
     if (S.unrest > 0.45) reinforce(W, day, i, rng);
     if (day - S.annexDay < CALM_DAYS || (S.revoltFailed != null && day - S.revoltFailed < REVOLT_REST) || S.unrest < 0.55) return;

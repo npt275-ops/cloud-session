@@ -66,7 +66,7 @@
   function dayTick(S, day, rng) {
     const saved = S.day; S.day = day;
     // già đi và mất
-    for (const p of S.people.values()) if (P.ageStep(p, day, rng)) { S.deaths++; S.log.push({ day, kind: 'death', ids: [p.id], text: P.fullName(p) + ' qua đời ở tuổi ' + Math.round(P.ageOf(p, day)) + '.' }); if (p.role) S.situ.mourning = day + 4; S.situChanged = true; }
+    for (const p of S.people.values()) if (P.ageStep(p, day, rng, S.level)) { S.deaths++; S.log.push({ day, kind: 'death', ids: [p.id], text: P.fullName(p) + ' qua đời ở tuổi ' + Math.round(P.ageOf(p, day)) + '.' }); if (p.role) S.situ.mourning = day + 4; S.situChanged = true; }
     CO.update(S);
     // khí hậu và thiên tai của đảo (logic/climate.js): hạn hán, lũ, bão, cháy rừng, dịch bệnh... đúng mùa của từng đảo
     BK.Climate.dayTick(S, day, rng);

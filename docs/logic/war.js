@@ -24,6 +24,8 @@
  *   nổi dậy      dân đảo bị sáp nhập mang thù hằn; bất bình (S.unrest) tăng theo thù hằn, tính nóng, đói, nguôi dần khi yên ổn;
  *                sau CALM_DAYS ngày, bất bình đủ cao thì có thể nổi dậy: người nóng nảy (theo mức bất bình, đánh như dân binh)
  *                và một phần lính (theo thù hằn) đánh với quân đóng giữ và phần lính còn trung thành. Thắng thì độc lập lại.
+ *                Người cầm đầu cân nhắc trước: yếu hẳn thì chờ thời (lúc đảo cai quản bận đánh nơi khác), trừ khi cùng cực.
+ *                Trận nổi dậy kéo dài nhiều ngày như trận thường (W.wars, kind 'revolt').
  *                Người đứng đầu đảo cai quản mà cứng rắn (hiếu chiến, đa nghi) thì thấy dân bất bình là gửi thêm quân đóng giữ.
  *                Đảo bị đánh thì quân đóng giữ cũng ra giữ cổng; đảo sang tay kẻ khác thì quân đóng giữ cũ bỏ về.
  *   cầu hoà      bên thủ đang yếu thế có thể xin hoà, nộp một phần kho; bên công nhận hay không tuỳ tính người đứng đầu.
@@ -37,10 +39,13 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.War;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const KILL = 0.09;            // mỗi đợt đánh: khả năng ngã xuống của một người khi hai bên ngang sức
+  // nhịp trận: đánh theo từng giờ (mỗi bước cố định 1/12 ngày của logic/world.js), nên trận kéo dài nhiều ngày, nhìn thấy được
+  const KILL = 0.09;            // mỗi ngày đánh: khả năng ngã xuống của một người khi hai bên ngang sức (chia theo độ dài đợt)
   const MORALE_RETREAT = 0.25, LOSS_RETREAT = 0.3;   // sĩ khí dưới mức này, hay còn dưới phần quân này thì rút
+  const MORALE_K = 2.5;         // sĩ khí đổi theo chênh lệch phần thiệt hại hai bên mỗi đợt
   const GATE_BREAK = 0.4;       // sức người giữ cổng còn dưới phần này so với quân công thì cổng vỡ
-  const INSIDE_DAYS = 3;        // số ngày đánh từ cổng tới nhà chính
+  const INSIDE_DAYS = 5;        // số ngày đánh từ cổng tới nhà chính
+  const REBEL_BREAK = 0.3;      // nổi dậy: phe nào còn dưới phần này so với lúc đầu, hay sĩ khí dưới MORALE_RETREAT, thì thua
   const RESERVE_DAYS = 30;      // đảo bị sáp nhập giữ lại chừng này ngày lương thực
   const LOOT_PER = 30;          // mỗi người lính đột kích mang về được chừng này đơn vị
   const GRUDGE_DEATH = 0.06, GRUDGE_ANNEX = 0.9;
@@ -48,6 +53,9 @@
   const HUNGRY = 0.7;           // sức đánh của đảo đang đói
   const RAID_DAYS = 2;
   const GARRISON_SHARE = 0.4, GARRISON_DAYS = 360, CALM_DAYS = 180, CALM_UNREST = 0.4;
+  const REVOLT_REST = 180;      // nổi dậy thất bại: chừng này ngày sau dân mới gượng dậy được
+  const REVOLT_ODDS = 1.0;      // phe nổi dậy ước sức mình dưới phần này so với phe giữ thì chờ thời
+  const GARRISON_MAX = 0.15;    // quân đóng giữ tối đa chừng này phần người lớn của đảo bị sáp nhập (ít nhất 4): nhà cũng cần lính
 
   const P = () => BK.People, D = () => BK.Diplomacy, E = () => BK.Economy;
   const tech = (lv) => 1 + 0.15 * (lv - 1);
@@ -57,11 +65,12 @@
   const note = (S, day, kind, text, ids) => S.log.push({ day: Math.floor(day), kind, ids: ids || [], text });
 
   // W.warStats: số trận theo kiểu (raid, conquer), số lần thắng, thua, cầu hoà (cho kiểm thử và bảng dev)
-  function init(W) { W.wars = W.wars || []; W.warCount = 0; W.annexations = 0; W.revolts = 0; W.warStats = { raid: 0, conquer: 0, won: 0, lost: 0, peace: 0 }; }
+  function init(W) { W.wars = W.wars || []; W.warCount = 0; W.annexations = 0; W.revolts = 0; W.warStats = { raid: 0, conquer: 0, won: 0, lost: 0, peace: 0, revolt: 0, freed: 0, target: [0, 0, 0, 0, 0, 0] }; }
   // đảo cai quản i (chính nó nếu độc lập)
   const rulerOf = (W, i) => (W.islands[i].annexedBy != null ? W.islands[i].annexedBy : i);
   const vassalsOf = (W, a) => W.islands.map((S, i) => i).filter((i) => W.islands[i].annexedBy === a);
   const atWar = (W, i) => W.wars.find((w) => w.a === i || w.b === i || rulerOf(W, w.b) === i) || null;
+  const lvOf = (W) => (i) => W.islands[i].level;
 
   /* ---------- Sức đánh ---------- */
   // sức một người khi cầm vũ khí: tướng mạnh hơn, hiếu chiến thì hăng, nhút nhát thì kém
@@ -109,7 +118,7 @@
     const id = W.nextId++, days = D().travelDays(W, a, b);
     for (const x of troops) x.p.away = id;
     const w = { id, a, b, kind, troops, n0: troops.length, start: day, depart: day, arrive: day + days, by: D().bridged(W, a, b) ? 'bridge' : 'boat', stage: 'march', morale: 1, since: day, helpers: [], loot: {}, gen: gen ? gen.id : null, surprise: !!surprise };
-    W.wars.push(w); W.warCount++; W.warStats[kind]++;
+    W.wars.push(w); W.warCount++; W.warStats[kind]++; W.warStats.target[b]++;
     // phản bội: đang có hiệp ước mà vẫn đánh
     const T = D().treatyOf(W, a, b, day);
     if (T) {
@@ -152,19 +161,20 @@
     W.rel[rulerOf(W, x.i)][enemy].grudge = Math.min(1, W.rel[rulerOf(W, x.i)][enemy].grudge + GRUDGE_DEATH);
     if (x.i !== rulerOf(W, x.i)) W.rel[x.i][enemy].grudge = Math.min(1, W.rel[x.i][enemy].grudge + GRUDGE_DEATH);
   }
-  // một đợt đánh giữa hai nhóm: mỗi người có thể ngã, khả năng theo tỉ lệ sức; trả về số ngã mỗi bên
-  function clash(W, day, att, def, attLv, defLv, defBonus, w, rng) {
+  // một đợt đánh dài dt ngày giữa hai nhóm: mỗi người có thể ngã, khả năng theo tỉ lệ sức; trả về số ngã mỗi bên
+  function clash(W, day, att, def, attLv, defLv, defBonus, w, rng, dt) {
     const A = powerOf(W, att, attLv) * w.morale, Dp = powerOf(W, def, defLv) * defBonus;
     if (!att.length || !def.length) return [0, 0];
-    const pa = Math.max(0.01, Math.min(0.4, KILL * Dp / Math.max(0.1, A))), pd = Math.max(0.01, Math.min(0.4, KILL * A / Math.max(0.1, Dp)));
+    const pa = dt * Math.max(0.01, Math.min(0.4, KILL * Dp / Math.max(0.1, A))), pd = dt * Math.max(0.01, Math.min(0.4, KILL * A / Math.max(0.1, Dp)));
     const deadA = att.filter(() => rng.chance(pa * rng.range(0.6, 1.4))), deadD = def.filter(() => rng.chance(pd * rng.range(0.6, 1.4)));
     for (const x of deadA) fall(W, day, x, w.b, rng);
     for (const x of deadD) fall(W, day, x, w.a, rng);
     return [deadA.length, deadD.length];
   }
 
-  /* ---------- Diễn biến mỗi ngày ---------- */
-  function warDay(W, day, w, rng) {
+  /* ---------- Diễn biến từng đợt (dt ngày, logic/world.js gọi mỗi bước cố định) ---------- */
+  function warStep(W, day, w, rng, dt) {
+    if (w.kind === 'revolt') return uprisingStep(W, day, w, rng, dt);
     const A = W.islands[w.a], B = W.islands[w.b];
     w.troops = w.troops.filter((x) => x.p.alive);
     for (const h of w.helpers) h.troops = h.troops.filter((x) => x.p.alive);
@@ -183,10 +193,12 @@
       const garrison = B.garrison ? B.garrison.troops.filter((x) => x.p.alive) : [];
       let def = gateGuards(B, B.situ.warSide).map((p) => ({ i: w.b, p })).concat(helpers, garrison);
       // bị đánh úp: ngày đầu chỉ một nửa người giữ cổng kịp ra trận
-      if (w.surprise && day === w.since) { def = def.filter((x, k) => k % 2 === 0); note(B, day, 'war', 'Bị đánh úp, cổng ' + (B.situ.warSide ? 'phải' : 'trái') + ' chỉ có ' + def.length + ' người giữ.'); }
-      const [la, ld] = clash(W, day, w.troops, def, (i) => W.islands[i].level, (i) => W.islands[i].level, wall(B.level) * ready(B) / ready(A), w, rng);
-      const fa = la / Math.max(1, w.troops.length + la), fd = ld / Math.max(1, def.length + ld);
-      w.morale = Math.max(0, Math.min(1.2, w.morale + (fa > fd ? -0.1 : 0.04) - 0.01));
+      if (w.surprise && day - w.since < 1) { def = def.filter((x, k) => k % 2 === 0); note(B, day, 'war', 'Bị đánh úp, cổng ' + (B.situ.warSide ? 'phải' : 'trái') + ' chỉ có ' + def.length + ' người giữ.'); }
+      const [la, ld] = clash(W, day, w.troops, def, lvOf(W), lvOf(W), wall(B.level) * ready(B) / ready(A), w, rng, dt);
+      const fa = la / Math.max(1, w.troops.length), fd = ld / Math.max(1, def.length);
+      // sĩ khí theo chênh lệch phần thiệt hại hai bên trong đợt này (mất nhiều hơn hẳn thì nản nhiều, ngang nhau thì giữ)
+      if (la || ld) w.morale = Math.max(0, Math.min(1.2, w.morale + MORALE_K * (fd - fa)));
+      w.morale = Math.max(0, w.morale - 0.01 * dt); // trận kéo dài thì mỏi
       w.troops = w.troops.filter((x) => x.p.alive);
       const left = def.filter((x) => x.p.alive);
       if (!w.troops.length) return lost(W, day, w, 'Cả đoàn quân ' + A.name + ' ngã xuống trước cổng ' + B.name + '.');
@@ -200,14 +212,15 @@
         civilians(W, day, w, rng);
         return;
       }
-      maybePeace(W, day, w, rng);
+      // xin hoà: mỗi ngày xét một lần
+      if (Math.floor(day) !== w.peaceDay) { w.peaceDay = Math.floor(day); maybePeace(W, day, w, rng); }
       return;
     }
     if (w.stage === 'inside') {
       if (w.kind === 'raid') return loot(W, day, w);
       // người nóng nảy cầm vũ khí giữ nhà: đánh với quân vào thành
       const militia = living(B).filter((p) => !p.away && P().ageOf(p, day) >= BK.Rules.ADULT_AGE && (isGuard(p) || P().traits(p).aggression > 0.62)).map((p) => ({ i: w.b, p }));
-      clash(W, day, w.troops, militia, (i) => W.islands[i].level, (i) => W.islands[i].level, 0.8, w, rng);
+      clash(W, day, w.troops, militia, lvOf(W), lvOf(W), 0.8, w, rng, dt);
       w.troops = w.troops.filter((x) => x.p.alive);
       if (!w.troops.length) return lost(W, day, w, 'Dân ' + B.name + ' giữ được nhà chính, quân ' + A.name + ' bị đánh bật.');
       if (day - w.since >= INSIDE_DAYS) return annex(W, day, w.a, w.b, w);
@@ -235,7 +248,7 @@
   }
   // bên thủ yếu thế xin hoà, nộp một phần kho; bên công nhận hay không tuỳ tính người đứng đầu
   function maybePeace(W, day, w, rng) {
-    if ((day - w.since) % 3 !== 0) return;
+    if (Math.floor(day - w.since) % 3 !== 0) return;
     const A = W.islands[w.a], b = rulerOf(W, w.b), B = W.islands[b], MB = BK.Strategy.mind(B), MA = BK.Strategy.mind(A); if (!MB || !MA) return;
     const att = powerOf(W, w.troops, (i) => W.islands[i].level) * w.morale, def = defense(W, w.b, w.a);
     if (def > att * 0.9) return;
@@ -330,16 +343,18 @@
     const L = living(S).filter((p) => !p.governor && P().ageOf(p, day) >= BK.Rules.ADULT_AGE);
     if (!L.length) return;
     const hot = L.reduce((s, p) => s + P().traits(p).aggression, 0) / L.length, g = W.rel[i][r].grudge;
-    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.003 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004));
+    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.004 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004));
     if ((Math.floor(day) + i * 3) % 10 !== 0 || atWar(W, i)) return;
     if (S.unrest > 0.45) reinforce(W, day, i, rng);
-    if (day - S.annexDay < CALM_DAYS || S.unrest < 0.55) return;
+    if (day - S.annexDay < CALM_DAYS || (S.revoltFailed != null && day - S.revoltFailed < REVOLT_REST) || S.unrest < 0.55) return;
     if (!rng.chance((S.unrest - 0.5) * 0.4)) return;
     revolt(W, day, i, rng, L, g);
   }
   // đảo cai quản gửi thêm quân đóng giữ khi dân bất bình (người đứng đầu cứng rắn thì hay gửi)
   function reinforce(W, day, i, rng) {
     const S = W.islands[i], r = S.annexedBy, M = BK.Strategy.mind(W.islands[r]); if (!M || atWar(W, r)) return;
+    const adults = living(S).filter((p) => P().ageOf(p, day) >= BK.Rules.ADULT_AGE).length, have = S.garrison ? S.garrison.troops.filter((x) => x.p.alive).length : 0;
+    if (have >= Math.max(4, Math.round(adults * GARRISON_MAX))) return;
     if (!rng.chance(0.2 + 0.4 * M.t.aggression + 0.3 * M.t.paranoia - 0.3 * M.t.meekness)) return;
     const home = living(W.islands[r]).filter((p) => !p.away && p.job === 'soldier'), k = Math.min(2, Math.floor(home.length / 3)); if (k < 1) return;
     const sent = home.slice(0, k).map((p) => { p.away = 'garrison'; return { i: r, p, levy: false }; });
@@ -347,40 +362,59 @@
     S.garrison.troops.push(...sent);
     note(S, day, 'war', W.islands[r].name + ' gửi thêm ' + k + ' lính sang đóng giữ.');
   }
+  // nổi dậy bùng lên: gom hai phe, mở một trận nhiều ngày (W.wars, kind 'revolt': a đảo nổi dậy, b đảo cai quản)
   function revolt(W, day, i, rng, L, g) {
     const S = W.islands[i], r = S.annexedBy, Rr = W.islands[r];
-    // người nóng nảy nổi dậy; lính (người đảo này) theo thù hằn mà theo phe nổi dậy hay giữ trung thành
+    // người nóng nảy nổi dậy. Lính người đảo này chia ba: theo dân (theo thù hằn), đứng ngoài không đánh ai (nhút nhát, sùng
+    // đạo thì hay đứng ngoài), hay đánh cho đảo cai quản. Quân đóng giữ (người đảo cai quản) luôn giữ phe mình
     const rebels = [], loyal = S.garrison ? S.garrison.troops.filter((x) => x.p.alive).slice() : [];
-    for (const p of L) { if (p.away) continue; const t = P().traits(p); if (isGuard(p)) (rng.chance(0.15 + 0.4 * g) ? rebels : loyal).push({ i, p }); else if ((t.aggression > 0.6 || (t.ambition > 0.7 && t.fear < 0.5)) && rng.chance(0.7 * S.unrest)) rebels.push({ i, p, levy: true }); }
+    for (const p of L) { if (p.away) continue; const t = P().traits(p); if (isGuard(p)) { if (rng.chance(0.15 + 0.4 * g)) rebels.push({ i, p }); else if (!rng.chance(0.25 + 0.3 * t.fear + 0.2 * t.piety)) loyal.push({ i, p }); } else if ((t.aggression > 0.6 || (t.ambition > 0.7 && t.fear < 0.5)) && rng.chance(0.7 * S.unrest)) rebels.push({ i, p, levy: true }); }
     if (rebels.length < 2) return;
-    W.revolts++;
+    // người cầm đầu cân nhắc: phe mình yếu hẳn thì chờ thời (đảo cai quản bận đánh nơi khác thì quân đóng giữ không được tiếp
+    // viện, dễ thắng hơn); chỉ khi cùng cực (bất bình gần tột đỉnh) mới liều
+    const odds = powerOf(W, rebels, () => S.level) / Math.max(0.5, powerOf(W, loyal, lvOf(W)) * 1.1) * (atWar(W, r) ? 1.5 : 1);
+    if (odds < REVOLT_ODDS && S.unrest < 0.98) return;
+    W.revolts++; W.warStats.revolt++;
+    const w = { id: W.nextId++, kind: 'revolt', a: i, b: r, troops: rebels, loyal, n0: rebels.length, l0: Math.max(1, loyal.length), stage: 'uprising', morale: 1, lmorale: 1, since: day, start: day, helpers: [], loot: {} };
+    W.wars.push(w);
     say(W, day, 'Dân ' + S.name + ' nổi dậy chống ' + Rr.name + ' (' + rebels.length + ' người).', [i, r]);
     note(S, day, 'war', rebels.length + ' người nổi dậy, ' + loyal.length + ' lính giữ phe ' + Rr.name + '.');
-    S.situ.war = day + 2; S.situChanged = true;
-    const w = { a: i, b: r, morale: 1 };
-    for (let k = 0; k < 3 && rebels.some((x) => x.p.alive) && loyal.some((x) => x.p.alive); k++) clash(W, day, rebels.filter((x) => x.p.alive), loyal.filter((x) => x.p.alive), () => S.level, () => S.level, 1.1, w, rng);
-    const R2 = rebels.filter((x) => x.p.alive), L2 = loyal.filter((x) => x.p.alive);
-    if (R2.length && powerOf(W, R2, () => S.level) > powerOf(W, L2, () => S.level) * 1.1) {
-      // độc lập lại: người cai quản bị đuổi, hội đồng tự chọn vua mới (logic/council.js)
+  }
+  // trận nổi dậy, từng đợt: hai phe đánh nhau trên đảo; phe nào sĩ khí cạn hay còn quá ít người thì thua
+  function uprisingStep(W, day, w, rng, dt) {
+    const S = W.islands[w.a], Rr = W.islands[w.b];
+    S.situ.war = day + 1; S.situChanged = true;
+    const R = w.troops.filter((x) => x.p.alive), L = w.loyal.filter((x) => x.p.alive);
+    if (L.length && R.length) {
+      const lv = () => S.level, sides = { a: w.a, b: w.b, morale: w.morale };
+      const [lr, ll] = clash(W, day, R, L, lv, lv, 1.1 * w.lmorale, sides, rng, dt);
+      if (lr || ll) { const fr = lr / R.length, fl = ll / L.length; w.morale = Math.max(0, Math.min(1.2, w.morale + MORALE_K * (fl - fr))); w.lmorale = Math.max(0, Math.min(1.2, w.lmorale + MORALE_K * (fr - fl))); }
+    }
+    const R2 = w.troops.filter((x) => x.p.alive), L2 = w.loyal.filter((x) => x.p.alive);
+    const rebelsLose = !R2.length || w.morale < MORALE_RETREAT || R2.length < w.n0 * REBEL_BREAK;
+    const loyalLose = !L2.length || w.lmorale < MORALE_RETREAT + 0.05 || L2.length < w.l0 * REBEL_BREAK;
+    if (!rebelsLose && !loyalLose) return;
+    W.wars.splice(W.wars.indexOf(w), 1);
+    if (loyalLose && !rebelsLose) {
+      // độc lập lại: người cai quản bị đuổi, quân đóng giữ còn sống bỏ về, hội đồng tự chọn vua mới (logic/council.js)
       const gov = S.seats.king != null ? S.people.get(S.seats.king) : null;
       if (gov && gov.governor != null) { gov.alive = false; gov.role = null; gov.cause = 'bị đuổi về'; gov.died = day; S.seats.king = null; }
       if (S.garrison) { for (const x of S.garrison.troops) x.p.away = null; S.garrison = null; }
-      S.annexedBy = null; S.unrest = 0; S.policy = null;
-      W.rel[i][r].grudge = 1; W.rel[r][i].fear = Math.min(1, W.rel[r][i].fear + 0.2);
-      say(W, day, S.name + ' giành lại độc lập từ ' + Rr.name + '.', [i, r]);
+      S.annexedBy = null; S.unrest = 0; S.policy = null; W.warStats.freed++;
+      W.rel[w.a][w.b].grudge = 1; W.rel[w.b][w.a].fear = Math.min(1, W.rel[w.b][w.a].fear + 0.2);
+      say(W, day, S.name + ' giành lại độc lập từ ' + Rr.name + '.', [w.a, w.b]);
       note(S, day, 'war', 'Giành lại độc lập.');
       BK.Council.update(S);
     } else {
-      S.unrest = Math.max(0, S.unrest - 0.4);
-      say(W, day, 'Cuộc nổi dậy ở ' + S.name + ' bị dập tắt.', [i, r]);
+      S.unrest = Math.max(0, S.unrest - 0.4); S.revoltFailed = day;
+      say(W, day, 'Cuộc nổi dậy ở ' + S.name + ' bị dập tắt.', [w.a, w.b]);
       note(S, day, 'war', 'Cuộc nổi dậy bị dập tắt.');
     }
   }
 
-  // mỗi ngày (logic/world.js gọi, sau giao thương): diễn biến các chiến dịch, các đảo bị sáp nhập
-  function dayTick(W, day, rng) {
-    for (const w of [...W.wars]) warDay(W, day, w, rng);
-    for (let i = 0; i < W.islands.length; i++) if (W.islands[i].annexedBy != null) vassalDay(W, day, i, rng);
-  }
-  return { init, rulerOf, vassalsOf, atWar, defense, offense, musterable, launch, annex, dayTick, sideOf, wall, tech };
+  // mỗi bước cố định (logic/world.js gọi, dt ngày): diễn biến các trận
+  function step(W, day, rng, dt) { for (const w of [...W.wars]) warStep(W, day, w, rng, dt); }
+  // mỗi ngày: các đảo bị sáp nhập (nộp kho, bất bình, nổi dậy)
+  function dayTick(W, day, rng) { for (let i = 0; i < W.islands.length; i++) if (W.islands[i].annexedBy != null) vassalDay(W, day, i, rng); }
+  return { init, rulerOf, vassalsOf, atWar, defense, offense, musterable, launch, annex, step, dayTick, sideOf, wall, tech };
 });
