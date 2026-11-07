@@ -1,18 +1,18 @@
 // Bể Kính · test/world.test.js · Cả bể: sáu đảo có dân, một đồng hồ, kết quả không phụ thuộc tốc độ chạy
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'construction', 'homes', 'brain', 'island', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'construction', 'homes', 'brain', 'island', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 
-test('sáu đảo đều có dân, gia tộc riêng, đủ vị trí cứng sau 3 năm', () => {
+test('sáu đảo đều có dân, gia tộc riêng, chốt đã mở thì đủ người sau 3 năm', () => {
   const W = BK.World.create({ seed: 7 });
   BK.World.jump(W, 3 * 360);
   assert.strictEqual(W.islands.length, 6);
   W.islands.forEach((S, i) => {
     const live = BK.Island.living(S);
-    assert.ok(live.length >= 20, S.name + ': ' + live.length + ' người');
+    assert.ok(live.length >= 12, S.name + ': ' + live.length + ' người');
     assert.ok(live.every((p) => BK.People.CLANS[W.keys[i]].includes(p.clan)), S.name + ': gia tộc của đảo mình');
-    for (const [k, n] of [['gateMain', 4], ['gateLeft', 2], ['gateRight', 2], ['orator', 1]]) assert.strictEqual(live.filter((p) => p.postKey === k && BK.Posts.of(p)).length, n, S.name + ' ' + k);
+    for (const [k, n] of [['gateMain', 4], ['gateLeft', 2], ['gateRight', 2], ['orator', 1]]) assert.strictEqual(live.filter((p) => p.postKey === k && BK.Posts.of(p)).length, S.postsOpen.includes(k) ? n : 0, S.name + ' ' + k);
   });
 });
 

@@ -5,7 +5,7 @@
  *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó.
  * Đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): mỗi khung hình đưa thêm số ngày lịch (tps × thời gian thật) vào logic; giờ
  * trong ngày lấy từ logic (G.time.tod) cho bầu trời; người đi, xe chạy theo giờ game (speed: 1, 2, 4).
- * Mở với ?seed= để thử trận khác, ?cap= để vào thẳng một cấp khi phát triển. Nút ◀ ▶ (dev): tới thẳng một thời.
+ * Mở với ?seed= để thử trận khác, ?cap= để vào thẳng một cấp khi phát triển. Nút ◀ ▶ (dev): đặt thẳng cả sáu đảo vào một thời.
  * Cần: game/world.js, game/nature.js, game/seasons.js, logic/ (world.js và các tệp nó cần), render/ của người và công trình,
  * ui/village-ui.js. */
 (function (root) {
@@ -31,7 +31,9 @@
     const Eras = BK.Eras, World = BK.World, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
     const q = new URLSearchParams(location.search), seed = +q.get('seed') || 42;
     const world = World.create({ seed, buildPlan });
-    { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) World.jump(world, Eras.startOf(cap) + 0.01); }
+    // ?cap=: dev vào thẳng một cấp (cả sáu đảo đặt thẳng cấp đó, công trình của thời đó dựng sẵn)
+    const devLevel = (l) => { for (const S of world.islands) { BK.Economy.devSetLevel(S, l); BK.Construction.setEra(S, l); for (const it of S.build.list) { it.done = true; it.progress = 1; } S.build.active = null; S.situChanged = true; } };
+    { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) devLevel(cap); }
     const N = world.islands.length, isle = (i) => world.islands[i];
     const shownLv = [], villages = [], uis = [];
     // cấp của từng đảo (mặt trời nhân tạo, render/neon3d.js), cấp thấp nhất (bầu trời tím khi cả sáu đảo tới thời 10)
@@ -55,23 +57,18 @@
       if (villages[i]) { villages[i].setLevel(S.level); villages[i].setPlaces(buildings.places(i)); }
     }
     // nhãn thời kỳ của đảo đang xem
-    function eraLabel() { const i = G.focus || 0, l = isle(i).level; if (world.day >= Eras.MATCH_DAYS) return isle(i).name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const into = (world.day - Eras.startOf(l)) / Eras.ERA_DAYS; return isle(i).name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · ' + Math.min(99, Math.floor(into * 100)) + '% tới thời sau' : ' · thời cuối'); }
+    // nhãn thời kỳ của đảo đang xem: phần giỏ tài nguyên của thời sau đã gom được (logic/economy.js)
+    function eraLabel() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối'); }
     function resyncAll() {
       syncLevels();
       for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]); villages[i].setPlaces(buildings.places(i)); } }
       $('eraName').textContent = eraLabel();
     }
-    // dev rà soát: tới thẳng một thời (lúc công trình của thời đó đã dựng xong, 90% thời). Đi tới thì tua cả bể tới đó; lùi lại thì
-    // dựng lại cả bể từ đầu (cùng seed) rồi tua tới đó. Tua nhanh không bảo đảm trùng với chạy thường (logic/world.js jump).
+    // dev rà soát (nút ◀ ▶): đặt thẳng cả sáu đảo vào một thời, công trình của thời đó dựng sẵn, để xem kiến trúc từng thời. Chỉ cho
+    // dev: lên cấp thật là do tài nguyên (logic/economy.js)
     function goEra(l) {
       l = Math.max(1, Math.min(Eras.COUNT, l)); if (l === G.level) return;
-      const to = Eras.startOf(l) + 0.9 * Eras.ERA_DAYS;
-      if (to <= world.day) { // dựng lại từ đầu, giữ nguyên các đối tượng đảo (phần vẽ và bảng làng đang trỏ vào chúng)
-        const fresh = World.create({ seed, buildPlan });
-        fresh.islands.forEach((S, i) => { const old = world.islands[i]; for (const k of Object.keys(old)) delete old[k]; Object.assign(old, S); });
-        Object.assign(world, { ticks: fresh.ticks, day: fresh.day, tod: fresh.tod, acc: fresh.acc });
-      }
-      World.jump(world, to); G.seasons.update(true); resyncAll(); for (const u of uis) if (u) u.render(true);
+      devLevel(l); G.seasons.update(true); resyncAll(); for (const u of uis) if (u) u.render(true);
     }
     const jumpEra = () => goEra(G.level + 1); // bài kiểm tra chạy trình duyệt không giao diện
     $('eraPrev').onclick = () => goEra(G.level - 1);

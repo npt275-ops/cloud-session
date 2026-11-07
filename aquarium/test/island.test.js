@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -89,15 +89,12 @@ test('hạn hán mùa hạ có thể xảy ra và làm thiếu lương thực, �
   assert.ok(droughts >= 3, 'sáu trận, chín năm mỗi trận, phải có vài đợt hạn: ' + droughts);
 });
 
-test('chín năm: lên đủ 12 thời kỳ, có lính và nông dân, ghi sinh và mất', () => {
+test('chín năm: lên cấp bằng tài nguyên (nhiều thời, không cần đủ 12), có lính và người làm, ghi sinh và mất', () => {
   const S = BK.Island.create({ key: 'plains', seed: 9 });
-  const eraLog = [];
   for (let d = 0; d < 9 * 360; d++) { BK.Island.step(S, 1); }
-  for (const e of S.log) if (e.kind === 'era') eraLog.push(e.text);
-  assert.strictEqual(S.level, 12);
-  assert.ok(S.log.some((e) => e.kind === 'era' && /Siêu Việt/.test(e.text)), 'có dòng nhật ký lên Siêu Việt');
+  assert.ok(S.level >= 4 && S.level <= 12, 'cấp cuối ' + S.level);
   const live = BK.Island.living(S);
-  assert.ok(BK.Jobs.count(S, 'soldier') >= 1 && BK.Jobs.count(S, 'farmer') >= 1, 'có lính và nông dân');
+  assert.ok(BK.Jobs.count(S, 'soldier') >= 1 && BK.Jobs.count(S, 'worker') >= 1, 'có lính và người làm');
   assert.ok(S.births > 8 && S.deaths > 0, 'có sinh và mất: ' + S.births + '/' + S.deaths);
   assert.ok(live.length > 8 && live.length <= BK.Rules.POP_CAP);
 });
@@ -108,13 +105,14 @@ test('công trình mỗi thời được dựng dần và xong hết; việc ng�
   assert.ok(S.build && S.build.list[0].done && !S.build.list[3].done, 'thời 1 có sẵn 2 công trình');
   let built = 0; const seenVerbs = new Set();
   for (let d = 0; d < 9 * 360; d++) {
+    const lv0 = S.level, done0 = S.build.list.filter((x) => x.done).length;
     S.tod = (d % 6) / 6; BK.Island.step(S, 1);
+    if (S.level === lv0) built += S.build.list.filter((x) => x.done).length - done0; // đếm thẳng trên danh sách xây (nhật ký chỉ giữ 600 dòng cuối)
     for (const m of S.minds.values()) if (m.verb) seenVerbs.add(m.verb);
-    // giữa thời: phải có công trình đang dựng hoặc đã xong một phần
-    if (d % 270 === 200) { const B = S.build, doneN = B.list.filter((x) => x.done).length; assert.ok(doneN >= B.list.length * 0.6, 'cấp ' + S.level + ': dựng được ' + doneN + '/' + B.list.length + ' ở 75% thời'); }
+    // vào thời nào cũng dựng được phần lớn công trình trong khoảng 200 ngày (thời dài ngắn tuỳ tài nguyên)
+    if (S.build && d - S.build.startDay === 200) { const B = S.build, doneN = B.list.filter((x) => x.done).length; assert.ok(doneN >= B.list.length * 0.6, 'cấp ' + S.level + ': dựng được ' + doneN + '/' + B.list.length + ' sau 200 ngày'); }
   }
-  for (const e of S.log) if (e.kind === 'built') built++;
-  assert.ok(built > 50, 'nhật ký có ' + built + ' lần dựng xong');
+  assert.ok(built > 15, 'nhật ký có ' + built + ' lần dựng xong');
   for (const v of ['farm', 'build', 'guard', 'sleep', 'eat', 'chat']) assert.ok(seenVerbs.has(v), 'có việc ' + v);
 });
 
@@ -148,13 +146,14 @@ test('mỗi hộ một nhà riêng trong 20 nhà; vợ chồng ở chung, trẻ 
   assert.ok(occ.filter((n) => n > 0).length >= 12, 'dân ở rải trong nhiều nhà: ' + occ.join(' '));
 });
 
-test('cổng thành luôn có đủ 4 lính gác, mỗi người một chốt, qua mọi thế hệ', () => {
+test('cổng thành đã mở thì luôn có đủ 4 lính gác, mỗi người một chốt, qua mọi thế hệ', () => {
   const S = BK.Island.create({ key: 'plains', seed: 21 });
   let checked = 0;
   for (let d = 0; d < 9 * 360; d++) {
     S.tod = (d % 4) / 4; BK.Island.step(S, 1);
     if (d > 720 && d % 30 === 0) {
       const g = BK.Island.living(S).filter((p) => p.job === 'gatekeeper');
+      if (!S.postsOpen.includes('gateMain')) { assert.strictEqual(g.length, 0); continue; } // cổng chính mở khi có tường thành và đủ người
       assert.strictEqual(g.length, BK.Rules.GATEKEEPERS, 'ngày ' + d + ': ' + g.length + ' lính gác');
       assert.deepStrictEqual(g.map((p) => p.post).sort(), [0, 1, 2, 3], 'mỗi người một chốt');
       for (const p of g) { const m = S.minds.get(p.id); if (m && m.verb) assert.strictEqual(m.place, 'gate', 'lính gác đứng ở cổng'); }
@@ -164,7 +163,7 @@ test('cổng thành luôn có đủ 4 lính gác, mỗi người một chốt, q
   assert.ok(checked > 70);
 });
 
-test('vị trí cứng: 4 gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, qua mọi thế hệ', () => {
+test('vị trí cứng: chốt đã mở thì luôn đủ người (4 gác cổng chính, 2 + 2 cổng phụ, 1 người diễn thuyết), qua mọi thế hệ', () => {
   const S = BK.Island.create({ key: 'plains', seed: 31 });
   let checked = 0;
   for (let d = 0; d < 9 * 360; d++) {
@@ -172,6 +171,7 @@ test('vị trí cứng: 4 gác cổng chính, 2 cổng phụ trái, 2 cổng ph�
     if (d > 720 && d % 45 === 0) {
       const live = BK.Island.living(S), by = (k) => live.filter((p) => p.postKey === k && BK.Posts.of(p));
       for (const [k, n] of [['gateMain', 4], ['gateLeft', 2], ['gateRight', 2], ['orator', 1]]) {
+        if (!S.postsOpen.includes(k)) { assert.strictEqual(by(k).length, 0, k + ' chưa mở mà có người'); continue; } // chốt mở khi có tường và đủ người lớn
         const g = by(k); assert.strictEqual(g.length, n, 'ngày ' + d + ' ' + k + ': ' + g.length);
         assert.deepStrictEqual(g.map((p) => p.post).sort(), [...Array(n).keys()], k + ': mỗi người một chỗ');
       }
@@ -180,6 +180,7 @@ test('vị trí cứng: 4 gác cổng chính, 2 cổng phụ trái, 2 cổng ph�
     }
   }
   assert.ok(checked > 40);
+  assert.ok(S.postsOpen.includes('gateMain'), 'cuối trận cổng chính có người gác');
 });
 
 test('drama: gom người cùng tính cách, bỏ việc ra tham gia, tan thì về việc cũ', () => {

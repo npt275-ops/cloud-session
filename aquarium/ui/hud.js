@@ -9,7 +9,7 @@
     $('speed').onclick = () => { const i = (T.SPEEDS.findIndex((x) => x[0] === T.tps) + 1) % T.SPEEDS.length; T.tps = T.SPEEDS[i][0]; $('speed').textContent = T.SPEEDS[i][1] + ' ▸'; };
     $('sound').onclick = () => { if (!audio) return; const on = !audio.on; if (on) audio.enable(); else audio.disable(); $('sound').setAttribute('aria-pressed', String(audio.on)); };
     let last = '';
-    function dateText() { const d = Math.floor(W.day), doy = d % 360; return 'Cấp ' + Eras.levelOfDay(W.day) + '/' + Eras.COUNT + ' · ' + G.seasons.NAMES[Math.floor(doy / 90)] + ' · Ngày ' + ((doy % 90) + 1); }
+    function dateText() { const d = Math.floor(W.day), doy = d % 360; return 'Cấp ' + (G.levelOf ? G.levelOf(G.focus || 0) : 1) + '/' + Eras.COUNT + ' · ' + G.seasons.NAMES[Math.floor(doy / 90)] + ' · Ngày ' + ((doy % 90) + 1); }
     // mỗi giây: dòng ngày, và trạng thái cho âm thanh tự sinh
     function slow() {
       const t = dateText(); if (t !== last) { last = t; $('date').textContent = t; }

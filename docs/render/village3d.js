@@ -46,6 +46,11 @@
       if (place === 'gateL' || place === 'gateR') return PL[place] && PL[place].length ? PL[place][(p.post || 0) % PL[place].length] : pickOf(PL.guard, p.id); // hai chốt mỗi cổng phụ
       if (place === 'podium') return PL.podium || pickOf(PL.square, k); // bục diễn thuyết giữa sân
       if (place === 'hallLoop') return PL.hall; // (vòng đi dạo quanh nhà chính: hallGoal)
+      // chỗ làm ra tài nguyên (logic/tasks.js WORK): đốn gỗ, mỏ đá ở phía trong tường (gần rừng, đá ngoài làng); năng lượng ở
+      // chỗ đang dựng hay ruộng (thời sau có công trình riêng thì đổi)
+      if (place === 'woods') return pickOf(PL.outer && PL.outer.length ? PL.outer : PL.guard, p.id);
+      if (place === 'quarry') return pickOf(PL.guard, p.id + 3);
+      if (place === 'plant') return pickOf(PL.field, p.id);
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);

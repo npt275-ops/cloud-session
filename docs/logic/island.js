@@ -3,12 +3,12 @@
  * hạn hán mùa hạ, bộ não của từng người, và các tình huống thử (lệnh chiến tranh, cãi nhau, lễ hội).
  * Sáu đảo dùng chung tệp này, mỗi đảo một nét gen và bộ gia tộc riêng (ISLANDS, People.CLANS); cả bể do logic/world.js chạy.
  * Không vẽ gì: phần vẽ đọc S.people, S.minds, S.seats, S.log. Chạy được bằng Node (xem test/island.test.js).
- * Thời kỳ (logic/eras.js) lên theo ngày; việc của dân (logic/jobs.js) gán lại mỗi ngày.
+ * Thời kỳ lên khi đảo nộp đủ giỏ tài nguyên (logic/economy.js); việc của dân (logic/jobs.js) gán lại mỗi ngày.
  * Buổi trong ngày (S.tod, phần chạy game ghi vào) quyết định việc ngày thường (logic/schedule.js, logic/tasks.js); công trình của
  * mỗi thời được dựng dần (logic/construction.js, danh sách lấy từ o.buildPlan(cấp)).
  * Drama trong thành phố (logic/dramas.js) chạy mỗi nhịp: gom người cùng tính cách bỏ việc ra tham gia, tan thì về việc cũ.
  * Cần: logic/rng.js, rules.js, genes.js, people.js, family.js, council.js, temper.js, posts.js, jobs.js, eras.js, schedule.js, tasks.js,
- * dramas.js, construction.js, brain.js. */
+ * dramas.js, economy.js, construction.js, brain.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Island = factory(BK);
@@ -70,16 +70,16 @@
     // hạn hán: mỗi mùa hạ có thể có một đợt
     const doy = day % R.YEAR_DAYS;
     if (doy === 100 && rng.chance(R.DROUGHT_CHANCE)) startDrought(S, rng.int(R.DROUGHT_DAYS[0], R.DROUGHT_DAYS[1]));
-    S.food = S.situ.drought > day ? 0.4 : 1;
     // hạn hán kéo dài thì dân bất bình kéo tới nhà chính biểu tình (người đa nghi, hiếu chiến dẫn đầu)
     // hạn hán làm dân bất bình: bạo loạn dễ nổ ra hơn (logic/dramas.js riot.boost)
     // mốc thế hệ
     if (day >= S.nextGenDay) { S.gen++; S.nextGenDay += R.GEN_DAYS; S.log.push({ day, kind: 'gen', ids: [], text: 'Thế hệ thứ ' + (S.gen + 1) + ' bắt đầu.' }); const n0 = S.people.size; F.generation(S, rng); S.births += S.people.size - n0; S.situChanged = true; }
     else if (F.trickle) { const kids = F.trickle(S, rng); if (kids && kids.length) { S.births += kids.length; S.situChanged = true; } }
     // thời kỳ văn minh: lên cấp theo lịch của logic/eras.js
-    if (E) { const l = E.levelOfDay(day); if (l !== S.level) { S.level = l; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); BK.Dramas.onEra(S, rng); S.situChanged = true; } }
     if (J) J.assign(S);
     if (H) H.assign(S);
+    // kinh tế (logic/economy.js): làm ra, ăn, cất kho; đủ giỏ tài nguyên của thời sau thì lên cấp
+    if (BK.Economy.dayTick(S, day, rng)) { const l = S.level; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); BK.Dramas.onEra(S, rng); S.situChanged = true; }
     if (K) K.dayTick(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;

@@ -90,6 +90,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/economy.js",
+  "src": "logic/economy.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/eras.js",
   "src": "logic/eras.js",
   "mode": 420

@@ -54,7 +54,7 @@
       const seats = CO.SEATS.map((s) => { const id = S.seats[s.key], p = id != null && S.people.get(id); return '<span>' + (p ? CO.seatName(s.key, p.sex) : s.name) + '</span><div>' + (p ? name(id) + ' · ' + Math.floor(P.ageOf(p, S.day)) + ' tuổi' : '<i>trống</i>') + '</div>'; }).join('');
       const log = S.log.slice(-7).reverse().map((e) => '<li><b>' + when(e.day) + '</b> ' + e.text + '</li>').join('');
       const J = BK.Jobs, E = BK.Eras, lv = S.level || 1;
-      const jobs = J ? ' · thợ ' + (J.count(S, 'builder') + (S.seats.builder != null ? 1 : 0)) + ' · lính ' + J.count(S, 'soldier') + ' · nông dân ' + J.count(S, 'farmer') + ' · đi đường ' + J.count(S, 'walker') + ' · già ' + J.count(S, 'elder') : '';
+      const jobs = J ? ' · thợ ' + (J.count(S, 'builder') + (S.seats.builder != null ? 1 : 0)) + ' · lính ' + J.count(S, 'soldier') + ' · người làm ' + J.count(S, 'worker') + ' · đi đường ' + J.count(S, 'walker') + ' · già ' + J.count(S, 'elder') : '';
       panel.innerHTML = '<h3>Làng ' + S.name + ' <small>thế hệ ' + (S.gen + 1) + ' · ' + live.length + ' người · ' + live.filter((p) => P.ageOf(p, S.day) < R.ADULT_AGE).length + ' trẻ</small></h3>' +
         '<div class="stat">' + (E ? 'Cấp ' + lv + ' · ' + E.of(lv).name + ' · ' : '') + when(S.day) + '<br>Đã sinh ' + (S.births || 0) + ' · đã mất ' + (S.deaths || 0) + jobs + '</div>' +
         '<div class="chips">' + chips + (BK.Dramas ? BK.Dramas.active(S).map((A) => '<span class="chip hot">' + A.name + ' · ' + A.who.size + ' người</span>').join('') : '') + '</div>' +

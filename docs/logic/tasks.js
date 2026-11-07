@@ -13,8 +13,10 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.Tasks;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
+  // việc của người làm ra từng loại tài nguyên: [động từ, chỗ, lý do]
+  const WORK = { food: ['farm', 'field', 'làm ra lương thực'], wood: ['chop', 'woods', 'đốn gỗ'], stone: ['mine', 'quarry', 'đục đá'], metal: ['mine', 'quarry', 'đào quặng'], energy: ['tend', 'plant', 'coi giữ nguồn năng lượng'], luxury: ['craft', 'market', 'làm hàng quý'] };
   // tên động từ (cho thẻ người)
-  const VERB_NAME = { farm: 'làm ruộng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', gatekeep: 'gác cổng', patrol: 'đi tuần', drill: 'luyện quân',
+  const VERB_NAME = { farm: 'làm ruộng', chop: 'đốn gỗ', mine: 'đục đá, đào quặng', tend: 'coi máy', craft: 'làm hàng', build: 'dựng nhà', repair: 'sửa nhà', craft: 'làm thợ', guard: 'canh gác', gatekeep: 'gác cổng', patrol: 'đi tuần', drill: 'luyện quân',
     direct: 'chỉ đạo', rule: 'nói với dân', advise: 'bàn việc làng', pray: 'cầu nguyện', heal: 'chữa bệnh', trade: 'bán hàng', shop: 'mua hàng',
     stroll: 'đi bộ', learn: 'học', tell: 'kể chuyện', play: 'chơi đùa', help: 'phụ việc', eat: 'ăn', chat: 'trò chuyện', rest: 'nghỉ', sleep: 'ngủ' };
 
@@ -84,11 +86,12 @@
     if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase()) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
     if (j === 'trader') return job('trade', 'market', 'bán hàng ở chợ');
     if (j === 'soldier') { const drillFirst = t.aggression > t.paranoia; return drillFirst === morning ? job('drill', 'guard', 'luyện võ') : rng.chance(0.5) ? job('guard', 'guard', 'canh gác làng') : job('patrol', 'patrol', 'đi tuần quanh làng'); }
-    if (j === 'farmer') return job('farm', 'field', morning ? 'ra ruộng làm' : 'làm ruộng nốt buổi chiều');
+    // người làm ra tài nguyên: làm đúng thứ kinh tế giao (p.res, logic/economy.js), ở đúng chỗ của thứ đó
+    if (j === 'worker') { const w = WORK[p.res] || WORK.food; return job(w[0], w[1], morning ? w[2] : w[2] + ' nốt buổi chiều'); }
     // người đi đường: chủ yếu đi bộ dọc phố (gặp ai thì dừng lại nói chuyện, render/village3d.js), có lúc ra chợ, có lúc ngồi trước nhà
     if (j === 'walker' && p.id % 3 === 0) return job('stroll', 'hallLoop', 'đi bộ quanh nhà chính'); // vài người (khoảng một phần ba người đi đường) đi dạo quanh nhà chính
     if (j === 'walker') { const r = rng.next(); return r < 0.6 ? job('stroll', 'stroll', 'đi bộ dọc phố') : r < 0.85 ? job('shop', 'market', 'ra chợ mua đồ') : job('rest', 'home', 'ngồi nghỉ trước cửa nhà'); }
     return neighborChat('trò chuyện với hàng xóm');
   }
-  return { VERB_NAME, pick };
+  return { VERB_NAME, WORK, pick };
 });

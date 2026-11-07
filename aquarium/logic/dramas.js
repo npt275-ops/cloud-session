@@ -47,7 +47,7 @@
       responders: [{ pick: 'job:soldier', n: 2, act: { state: 'work', verb: 'guard', place: 'market' }, why: 'tới can hai người đánh nhau' }],
       say: ['{lead} và một người nóng tính đánh nhau ngoài chợ, {n} người đứng xem.', 'Hai người đánh nhau ngoài chợ đã bị can ra.'] },
     { key: 'speech', name: 'Diễn thuyết lớn', phases: ['morning', 'evening'], chance: 0.12, cooldown: 3, minPeople: 8,
-      cast: [{ id: 'lead', from: 'post:orator', n: [1, 1] }, { id: 'crowd', temper: ['sociable', 'ambitious'], n: [5, 10] }],
+      cast: [{ id: 'lead', from: 'post:orator', n: [1, 1] }, { id: 'crowd', temper: ['sociable', 'ambitious'], n: [3, 10], fitMin: 0.52 }],
       stages: [{ dur: 0.6, why: 'nghe diễn thuyết ở sân', act: { lead: { state: 'work', verb: 'rule', place: 'podium' }, crowd: { state: 'talk', verb: 'listen', target: 'lead', place: 'podium' } } }],
       say: ['{lead} diễn thuyết giữa sân, {n} người tụ lại nghe.', 'Buổi diễn thuyết xong, người nghe tản đi.'] },
     { key: 'vigil', name: 'Cầu nguyện tập thể', phases: DAY, chance: 0.04, cooldown: 10, minPeople: 8,

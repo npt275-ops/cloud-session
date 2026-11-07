@@ -5,7 +5,8 @@
  *   gateLeft  2 lính gác cổng phụ bên trái (chỗ hở tường phía đảo bên trái, nơi sau này bắc cầu)  ngày đêm
  *   gateRight 2 lính gác cổng phụ bên phải  ngày đêm
  *   orator    1 người diễn thuyết: sáng và tối đứng ở bục giữa sân nói với dân, cầm đầu các buổi diễn thuyết lớn (logic/dramas.js)
- * Mỗi chốt ghi: số người (count), việc (job, cho trang phục và thẻ người), chỗ đứng (place, phần vẽ đổi thành vị trí thật
+ * Chốt chỉ mở khi đảo đã có tường thành (từ thời 2) và đủ người lớn (open): làng còn nhỏ thì người lớn lo làm ra cái ăn trước.
+ * Mỗi chốt ghi: số người (count), lúc mở (open), việc (job, cho trang phục và thẻ người), chỗ đứng (place, phần vẽ đổi thành vị trí thật
  * theo công trình của đảo), điểm chọn người theo gen (score), và có làm cả đêm không (night).
  * p.postKey: chốt đang giữ, p.post: số thứ tự trong chốt (0..count-1). Không phụ thuộc đảo. Chạy được bằng Node.
  * Cần: logic/rules.js. */
@@ -17,17 +18,20 @@
   'use strict';
   const guardScore = (t) => (1 - t.fear) * 0.45 + t.paranoia * 0.25 + (1 - t.meekness) * 0.2 + (1 - t.aggression) * 0.1; // gan dạ, hay để ý, vững vàng (người nóng nảy để lại cho đời thường)
   const POSTS = [
-    { key: 'gateMain', name: 'Lính gác cổng chính', count: () => BK.Rules.GATEKEEPERS, job: 'gatekeeper', place: 'gate', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng thành chính' },
-    { key: 'gateLeft', name: 'Lính gác cổng phụ trái', count: () => BK.Rules.SIDE_GUARDS, job: 'sideguard', place: 'gateL', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên trái' },
-    { key: 'gateRight', name: 'Lính gác cổng phụ phải', count: () => BK.Rules.SIDE_GUARDS, job: 'sideguard', place: 'gateR', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên phải' },
-    { key: 'orator', name: 'Người diễn thuyết', count: () => BK.Rules.ORATORS, job: 'orator', place: 'podium', verb: 'rule', night: false, score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1, why: 'diễn thuyết trước dân' },
+    { key: 'gateMain', name: 'Lính gác cổng chính', count: () => BK.Rules.GATEKEEPERS, open: (S, adults) => S.level >= 2 && adults >= 14, job: 'gatekeeper', place: 'gate', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng thành chính' },
+    { key: 'gateLeft', name: 'Lính gác cổng phụ trái', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateL', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên trái' },
+    { key: 'gateRight', name: 'Lính gác cổng phụ phải', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateR', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên phải' },
+    { key: 'orator', name: 'Người diễn thuyết', count: () => BK.Rules.ORATORS, open: (S, adults) => adults >= 18, job: 'orator', place: 'podium', verb: 'rule', night: false, score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1, why: 'diễn thuyết trước dân' },
   ];
   const BY_KEY = Object.fromEntries(POSTS.map((X) => [X.key, X]));
   // gán chốt từ những người còn trống (pool: người lớn không ngồi hội đồng); trả lại pool đã bớt người
   // elders: người già; làng thiếu người lớn thì người già giữ chốt (người lớn vẫn được chọn trước), để chốt không bao giờ trống
   function assign(S, pool, elders) {
+    const adults = pool.length + Object.keys(S.seats).length;
+    S.postsOpen = []; // những chốt đang mở (bảng dev, bài kiểm tra)
     for (const X of POSTS) {
-      const n = X.count();
+      if (!X.open(S, adults)) continue; // chốt chưa mở: chưa có tường thành (thời 2), làng còn nhỏ thì người lớn lo làm ăn trước
+      const n = X.count(); S.postsOpen.push(X.key);
       const src = elders ? pool.concat(elders.filter((p) => p.job === 'elder')) : pool;
       // người đang giữ chốt mà còn trong pool: giữ nguyên
       const keep = src.filter((p) => p.postKey === X.key && p.post != null && p.post < n).sort((a, b) => a.post - b.post);

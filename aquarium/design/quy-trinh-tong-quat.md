@@ -121,10 +121,10 @@ Mỗi đảo dồi dào 1–2 thứ và thiếu hẳn vài thứ, nên buộc ph
 |---|---|---|---|
 | Lúa Vàng (đồng bằng) | Lương thực | Gỗ | Kim loại, Đá |
 | Thông Xanh (rừng) | Gỗ | Lương thực | Kim loại |
-| Đá Mây (núi) | Đá, Kim loại | – | Lương thực |
-| Tuyết Trắng (băng nguyên) | Năng lượng (than, dầu, gió), cá | Đá | Gỗ, Lương thực trồng trọt |
+| Đá Mây (núi) | Đá, Kim loại | Lương thực (săn bắt, hái lượm) | – |
+| Tuyết Trắng (băng nguyên) | Năng lượng (than, dầu, gió), cá | Đá | Gỗ, lương thực trồng trọt (sống nhờ cá) |
 | Cửa Sóng (biển) | Hàng quý (muối, ngọc trai), cá | Gỗ | Kim loại |
-| Cát Hồng (sa mạc) | Hàng quý (đá quý), Năng lượng (mặt trời) | Đá | Lương thực, Gỗ |
+| Cát Hồng (sa mạc) | Hàng quý (đá quý), Năng lượng (mặt trời) | Đá, Lương thực (ốc đảo) | Gỗ |
 
 ### 5.3 Sản xuất và tiêu dùng (mỗi ngày)
 
@@ -134,6 +134,18 @@ Mỗi đảo dồi dào 1–2 thứ và thiếu hẳn vài thứ, nên buộc ph
 - **Khí hậu** là hệ số của ngày đó: hạn hán, bão tuyết, mùa đông…
 - **Tiêu dùng:** mỗi người ăn một phần lương thực mỗi ngày. Quân ăn nhiều hơn. Công trình đang xây trừ dần vật liệu.
 - **Kho:** có sức chứa. Đầy thì sản xuất dư bị bỏ phí. Nhà kho và chợ nâng sức chứa.
+
+### 5.3b Ai làm, làm gì (đã làm ở bước 2)
+- Người làm (job `worker`) được chia việc mỗi ngày:
+  - trước hết đủ người làm lương thực để ăn dư khoảng 15%, thêm người khi kho cạn;
+  - số còn lại chia cho những thứ giỏ thời sau còn thiếu, nghiêng về thứ đảo giàu.
+- Người cũ giữ việc của mình nếu không phải đổi.
+- Người trong hội đồng cũng làm ra lương thực: đủ sức ở thời 1–3, nửa sức về sau.
+- Mỗi thứ tài nguyên một chỗ làm và một cử chỉ: ruộng, đốn gỗ, mỏ đá, chỗ làm năng lượng, chợ.
+- **Đói** (hết lương thực):
+  - không sinh thêm con, năng suất giảm, bạo loạn dễ nổ ra;
+  - đói kéo dài thì người yếu (già, trẻ nhỏ) có thể chết.
+- Chốt gác cổng chỉ mở khi đảo đã có tường thành (thời 2) và đủ người lớn: làng còn nhỏ thì người lớn lo làm ăn trước.
 
 ### 5.4 Lên cấp
 - Mỗi thời có **giỏ tài nguyên** phải nộp đủ, cộng một **điều kiện xã hội**: đủ dân, bất bình dưới ngưỡng.
@@ -281,7 +293,7 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 | Bước | Làm | Xong khi |
 |---|---|---|
 | 1 ✅ | Dân cho 6 đảo: `logic/world.js` (đồng hồ chung, bước cố định), gia tộc và nét gen riêng, hiển thị dân ở đảo gần camera (`game/cities.js`); người đi, xe chạy theo giờ game | Cả 6 đảo có dân, đủ vị trí cứng; cùng seed chạy 1×, 2×, 4× ra cùng lịch sử (`test/world.test.js`) |
-| 2 | Kinh tế và lên cấp theo tài nguyên; mỗi đảo một cấp riêng (bỏ `G.level` chung) | Chạy 100 seed: các đảo lên cấp khác nhau; đảo cô lập tụt lại |
+| 2 ✅ | Kinh tế và lên cấp theo tài nguyên (`logic/economy.js`, giỏ ở `logic/eras.js`); mỗi đảo một cấp riêng | Các đảo lên cấp khác nhau; khi chưa có giao thương, đảo nào cũng dừng ở thời bắt đầu cần thứ mình gần như không có (`test/economy.test.js`) |
 | 3 | Khí hậu và ngoại gen | Nghịch cảnh làm đổi hành vi và đổi tỉ lệ đột biến đo được |
 | 4 | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu) | Có giao thương và hiệp ước; quan hệ có trí nhớ |
 | 5 | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính) | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy |

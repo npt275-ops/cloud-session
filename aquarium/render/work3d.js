@@ -14,6 +14,9 @@
     build: (lv) => (lv <= 1 ? [['mine', 'hammer'], ['carry', 'sack']] : lv <= 7 ? [['build', 'hammer'], ['carry', 'sack'], ['mine', 'hammer']] : [['point', null], ['build', 'hammer']]),
     repair: (lv) => (lv <= 7 ? [['build', 'hammer'], ['mine', 'hammer'], ['carry', 'sack']] : [['point', null], ['build', 'hammer']]),
     craft: () => [['mine', 'hammer'], ['chop', 'axe']],
+    chop: () => [['chop', 'axe'], ['carry', 'sack']],             // đốn gỗ (logic/economy.js)
+    mine: () => [['mine', 'hammer'], ['carry', 'sack']],          // đục đá, đào quặng
+    tend: (lv) => (lv <= 6 ? [['build', 'hammer'], ['carry', 'sack']] : [['point', null], ['crossArms', null]]), // coi giữ nguồn năng lượng
     direct: () => [['command', null], ['point', null], ['crossArms', null], ['handsBehind', null]],
     patrol: () => [['lookAround', null], ['guard', null]],
     heal: () => [['kneelPray', null], ['nod', null], ['talk', null]],

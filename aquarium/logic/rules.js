@@ -42,14 +42,14 @@
     DROUGHT_DAYS: [18, 40],
     // dàn vai của một đảo (logic/jobs.js): hội đồng 8 ghế (vua, 2 tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả),
     // thêm thợ cho đủ 4 người dựng và sửa nhà, thêm 1 người bán hàng cho đủ 2 thương nhân, một phần người lớn làm lính,
-    // còn lại là dân: người làm ruộng và người đi đường (đi lại, mua bán, trò chuyện)
+    // còn lại là dân: người làm ra tài nguyên (logic/economy.js) và người đi đường (đi lại, mua bán, trò chuyện)
     HOME_SLOTS: 20,                      // số nhà riêng trong làng: mỗi hộ (bố mẹ và con) một nhà (logic/homes.js)
     GATEKEEPERS: 4,                      // lính gác cổng thành: luôn đủ 4 người, thế hệ này qua thế hệ khác (logic/jobs.js)
     SIDE_GUARDS: 2,                      // lính gác mỗi cổng phụ (trái, phải: chỗ hở tường nơi bắc cầu sang hai đảo bên) (logic/posts.js)
     ORATORS: 1,                          // người diễn thuyết ở bục giữa sân (logic/posts.js)
     BUILDERS: 4,                         // tổng số thợ xây kể cả thợ cả
     TRADERS: 2,                          // tổng số thương nhân kể cả thương chủ
-    SOLDIER_SHARE: 0.3,                  // phần người lớn ngoài hội đồng làm lính
-    WALKER_SHARE: 0.4,                   // phần dân còn lại là người đi đường (số kia làm ruộng)
+    SOLDIER_SHARE: 0.25,                 // phần người lớn ngoài hội đồng làm lính
+    WALKER_SHARE: 0.15,                  // phần dân còn lại là người đi đường (số kia làm ra tài nguyên, logic/economy.js)
   };
 });

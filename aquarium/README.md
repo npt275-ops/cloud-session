@@ -126,6 +126,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   trong ngày do logic giữ. Cùng seed thì chạy 1×, 2×, 4× ra cùng một lịch sử (đã kiểm thử). Người đi, xe chạy theo giờ game
   từng bước con 0,05 giây; cử chỉ tại chỗ nhanh nhất 2×; chỉ đảo gần máy quay mới vẽ người. Mặt trời nhân tạo theo cấp riêng
   từng đảo; trời tím khi cả sáu đảo tới thời 10.
+- **Tài nguyên và lên cấp** (`logic/economy.js`, giỏ tài nguyên ở `logic/eras.js`): sáu loại tài nguyên (lương thực, gỗ, đá,
+  kim loại, năng lượng, hàng quý); mỗi đảo dồi dào vài thứ, gần như không có vài thứ. Người làm được chia việc theo nhu cầu
+  (đủ ăn trước, rồi thứ giỏ thời sau còn thiếu), năng suất theo gen. Mỗi đảo lên cấp riêng khi nộp đủ giỏ tài nguyên, nên có
+  đảo không chạm tới thời 12. Đói thì không sinh con, bạo loạn dễ nổ. Nút ◀ ▶ (dev) đặt thẳng cả sáu đảo vào một thời.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

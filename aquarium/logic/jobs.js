@@ -1,7 +1,8 @@
 /* Bể Kính · logic/jobs.js
  * Việc của người không ngồi trong hội đồng, chọn theo tính cách: vị trí cứng (logic/posts.js: gác cổng chính, cổng phụ, diễn
  * thuyết), thợ xây (cho đủ 4 kể cả thợ cả), thương nhân (đủ 2 kể cả
- * thương chủ), lính (máu chiến nhất), người đi đường (hướng ngoại), nông dân (số còn lại), người già, trẻ em.
+ * thương chủ), lính (máu chiến nhất), người đi đường (hướng ngoại), người làm ra tài nguyên (số còn lại: ruộng, rừng, mỏ...,
+ * logic/economy.js), người già, trẻ em.
  * Gán lại mỗi ngày (người lớn lên, già đi, mất). Không vẽ gì, chạy được bằng Node.
  * Cần: logic/rules.js, logic/people.js, logic/posts.js, logic/temper.js. */
 (function (root, factory) {
@@ -10,7 +11,7 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.Jobs;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const NAME = { gatekeeper: 'Lính gác cổng chính', sideguard: 'Lính gác cổng phụ', orator: 'Người diễn thuyết', soldier: 'Lính', builder: 'Thợ xây', trader: 'Thương nhân', farmer: 'Nông dân', walker: 'Người đi đường', elder: 'Người già', child: 'Trẻ em' };
+  const NAME = { gatekeeper: 'Lính gác cổng chính', sideguard: 'Lính gác cổng phụ', orator: 'Người diễn thuyết', soldier: 'Lính', builder: 'Thợ xây', trader: 'Thương nhân', worker: 'Người làm', walker: 'Người đi đường', elder: 'Người già', child: 'Trẻ em' };
   // chọn theo tính cách: lấy n người có điểm cao nhất trong số còn trống, gán việc
   const take = (pool, n, score, job) => { pool.sort((a, b) => score(b.genome.traits, b) - score(a.genome.traits, a)); pool.splice(0, Math.max(0, n)).forEach((p) => { p.job = job; }); };
   function assign(S) {
@@ -36,7 +37,8 @@
     take(pool, Math.round(pool.length * R.SOLDIER_SHARE), (t, p) => (p.sex === 'm' ? 1 : 0) + t.aggression, 'soldier');
     // dân: người hướng ngoại, ít đa nghi đi đường (đi lại, mua bán, trò chuyện); người chăm, hiền làm ruộng
     take(pool, Math.round(pool.length * R.WALKER_SHARE), (t) => (1 - t.paranoia) * 0.5 + t.cunning * 0.2 + (1 - t.meekness) * 0.3, 'walker');
-    pool.forEach((p) => { p.job = 'farmer'; });
+    // còn lại là người làm ra tài nguyên; làm thứ gì (p.res) do kinh tế chia theo nhu cầu (logic/economy.js)
+    pool.forEach((p) => { p.job = 'worker'; });
   }
   const count = (S, job) => { let n = 0; for (const p of S.people.values()) if (p.alive && p.job === job) n++; return n; };
   return { NAME, assign, count };
