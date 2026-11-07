@@ -89,7 +89,7 @@
       const wantConquer = (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
       const k = T ? 0.4 : 1; lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)
-      const raid = wantRaid * clamp((ratio - 0.75) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
+      const raid = wantRaid * clamp((ratio - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
       for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
     }
     pol.warlust = clamp(lust);

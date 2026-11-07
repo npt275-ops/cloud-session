@@ -23,14 +23,20 @@
     ADULT_AGE: 18,                       // đủ tuổi kết hôn và vào hội đồng
     FERTILE_MAX: 45,                     // người mẹ còn sinh con tới tuổi này
     RETIRE_AGE: 72,                      // rời hội đồng
-    OLD_AGE: 62,                         // từ tuổi này bắt đầu có thể mất vì già
-    DEATH_K: 0.0026,                     // độ dốc của rủi ro mất vì già (mỗi ngày)
+    OLD_AGE: 62,                         // người già: thôi làm việc nặng (logic/jobs.js)
+    // rủi ro mất mỗi năm đời người theo luật Gompertz: MORTALITY_A × e^(MORTALITY_B × (tuổi − 20)); tăng gấp đôi sau khoảng 8
+    // năm tuổi; người trẻ cũng có thể mất vì bệnh. Thời càng tiến bộ y học càng tốt: hệ số giảm MEDICINE mỗi thời, tối đa
+    // còn MEDICINE_FLOOR (thời 1: 60 tuổi khoảng 5%/năm, 80 tuổi khoảng 27%/năm)
+    MORTALITY_A: 0.0015,
+    MORTALITY_B: 0.087,
+    MEDICINE: 0.06,
+    MEDICINE_FLOOR: 0.35,
     CHILDREN: [2, 4],                    // mỗi cặp mỗi thế hệ có 2 tới 4 con khi làng còn thưa (mỗi người mẹ chỉ kịp sinh ở một mốc thế hệ)
     KIDS_SHARE: 0.28,                    // trẻ em tối đa bằng chừng này phần của POP_CAP (để các lứa tuổi đều nhau)
     BIRTH_PER_DAY: 0.08,                 // giữa hai mốc thế hệ: mỗi ngày có chừng này cơ hội một cặp sinh thêm con (khi còn chỗ)
     CHILDREN_FULL: [2, 3],               // làng gần đầy: vẫn đủ thay thế thế hệ trước, không để hụt một lứa
-    POP_CAP: 50,                         // tối đa người trên một đảo: ít người, ai cũng có vai rõ ràng (logic/jobs.js)
-    NAMED_CAP: 40,                       // (cũ, không còn dùng: nay mọi người đều có tên, trần là POP_CAP)
+    POP_CAP: 100,                        // tối đa người trên một đảo (đã chốt); ai cũng có vai rõ ràng (logic/jobs.js)
+    BASKET_SCALE: 2.2,                   // giỏ tài nguyên mỗi thời (logic/eras.js) ghi cho đảo 50 dân; nhân hệ số này cho đảo 100 dân
 
     // ghép đôi: điểm hợp = (1 - khác biệt tính cách) × nặng + ngẫu nhiên × (1 - nặng)
     MATCH_FIT_WEIGHT: 0.6,

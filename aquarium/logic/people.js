@@ -57,15 +57,16 @@
   function cousins(a, b, byId) { const ga = grandparents(a, byId); return ga.length > 0 && grandparents(b, byId).some((x) => ga.includes(x)); }
 
   /* ---------- Già đi và mất ---------- */
-  // rủi ro mất mỗi ngày tăng dần sau tuổi già; trả về true nếu người này vừa mất
-  function ageStep(p, day, rng) {
+  // rủi ro mất mỗi năm đời người (Gompertz, logic/rules.js MORTALITY_*), y học theo thời (level); một ngày trong game là
+  // AGE_PER_DAY năm đời người. Trả về true nếu người này vừa mất (dưới tuổi già: 'bệnh', từ tuổi già: 'già')
+  const yearlyRisk = (age, level) => Math.min(0.95, R.MORTALITY_A * Math.max(R.MEDICINE_FLOOR, 1 - R.MEDICINE * ((level || 1) - 1)) * Math.exp(R.MORTALITY_B * (Math.max(age, 20) - 20)));
+  function ageStep(p, day, rng, level) {
     if (!p.alive) return false;
     const age = ageOf(p, day);
-    if (age < R.OLD_AGE) return false;
-    const x = (age - R.OLD_AGE) / 20;
-    if (rng.chance(R.DEATH_K * x * x + (age > 100 ? 0.05 : 0))) { p.alive = false; p.died = day; p.cause = 'già'; return true; }
+    if (age < R.ADULT_AGE) return false;
+    if (rng.chance(yearlyRisk(age, level) * R.AGE_PER_DAY)) { p.alive = false; p.died = day; p.cause = age < R.OLD_AGE ? 'bệnh' : 'già'; return true; }
     return false;
   }
 
-  return { CLANS, GIVEN, pickName, create, ageOf, traits, fullName, forbidden, cousins, ageStep };
+  return { CLANS, GIVEN, pickName, create, ageOf, traits, fullName, forbidden, cousins, ageStep, yearlyRisk };
 });

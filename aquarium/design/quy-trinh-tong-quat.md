@@ -414,6 +414,11 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 ### 12.1 Bước 6: việc chưa ổn gom lại
 
 **Dân số và lên cấp**
+0. **Dân số tối đa một đảo là 100 người** (đã chốt; trước đây là 50). Phải xem lại theo:
+   - số nhà;
+   - lương thực;
+   - phần người làm, lính;
+   - độ nặng khi vẽ trên điện thoại.
 1. **Cơ cấu dân lệch.** Có lúc 13–17 người già trên 50 dân.
    - Chín chốt cứng (gác cổng, diễn thuyết) chiếm gần nửa số người lớn làm việc.
    - Hệ quả: mỗi đảo chỉ còn 2–7 lính và ít người làm.

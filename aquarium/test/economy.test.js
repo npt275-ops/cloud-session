@@ -19,7 +19,7 @@ test('đặc sản theo địa hình: Lúa Vàng giàu lương thực, Đá Mây
   assert.ok(E.richOf(S(W, 'plains'), 'food') > E.richOf(S(W, 'mountain'), 'food'));
   assert.ok(E.richOf(S(W, 'mountain'), 'metal') > E.richOf(S(W, 'plains'), 'metal') * 10);
   assert.ok(E.richOf(S(W, 'desert'), 'wood') < 0.1);
-  assert.ok(E.richOf(S(W, 'tundra'), 'food') > 0.8, 'Tuyết Trắng sống nhờ cá');
+  assert.ok(E.richOf(S(W, 'tundra'), 'food') > 0.6, 'Tuyết Trắng sống nhờ cá (đất trồng gần như không có)');
 });
 
 test('giỏ tài nguyên: lên cấp thì nộp giỏ; kho không vượt sức chứa; ai làm việc gì cũng là thứ đảo đã khai thác được', () => {

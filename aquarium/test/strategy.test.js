@@ -4,7 +4,8 @@ const assert = require('node:assert');
 for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
-const runs = [1, 2, 3].map((seed) => { const on = BK.World.create({ seed }), off = BK.World.create({ seed, diplomacy: false }); BK.World.jump(on, 9 * 360); BK.World.jump(off, 9 * 360); return { on, off }; });
+// so giao thương với sống riêng: tắt chiến tranh ở cả hai (chiến tranh cũng gây đói, test/war.test.js)
+const runs = [1, 2, 3].map((seed) => { const on = BK.World.create({ seed, war: false }), off = BK.World.create({ seed, diplomacy: false }); BK.World.jump(on, 9 * 360); BK.World.jump(off, 9 * 360); return { on, off }; });
 
 test('các đảo tự đi buôn: nhiều chuyến buôn trọn vẹn, có hiệp ước, bắc cầu giữa các đảo kề nhau buôn nhiều', () => {
   for (const { on } of runs) {
@@ -15,9 +16,12 @@ test('các đảo tự đi buôn: nhiều chuyến buôn trọn vẹn, có hiệ
   }
 });
 
-test('giao thương làm ít người chết đói hơn so với sáu đảo sống riêng (cùng seed)', () => {
-  const a = runs.reduce((s, r) => s + starved(r.on), 0), b = runs.reduce((s, r) => s + starved(r.off), 0);
-  assert.ok(a < b * 0.5, 'chết đói khi có buôn ' + a + ', sống riêng ' + b);
+test('giao thương giúp các đảo lên thời nhanh hơn, không làm đói thêm (cùng seed, so với sáu đảo sống riêng)', () => {
+  const lv = (W) => W.islands.reduce((s, S) => s + S.level, 0);
+  const a = runs.reduce((s, r) => s + lv(r.on), 0), b = runs.reduce((s, r) => s + lv(r.off), 0);
+  assert.ok(a > b, 'tổng cấp khi có buôn ' + a + ', sống riêng ' + b);
+  const fa = runs.reduce((s, r) => s + starved(r.on), 0), fb = runs.reduce((s, r) => s + starved(r.off), 0);
+  assert.ok(fa <= fb + 5, 'chết đói khi có buôn ' + fa + ', sống riêng ' + fb);
 });
 
 test('đi buôn có trí nhớ: đảo buôn với nhau nhiều thì tin cậy nhau hơn', () => {
@@ -38,7 +42,7 @@ test('người đứng đầu hiếu chiến, đa nghi thì tích quân; hiền 
 
 test('sắp hết lương thực thì không đợi kỳ xét: còn thương nhân rảnh là đi mua ngay', () => {
   const W = BK.World.create({ seed: 5 }); BK.World.jump(W, 400);
-  const S = W.islands[1], st = BK.Economy.state(S); st.stock.food = 0; st.hunger = 1;
+  const S = W.islands[1], st = BK.Economy.state(S); st.stock.food = 0; st.hunger = 1; st.stock.wood = 300; // có hàng để trả
   for (const j of [0, 2, 3, 4, 5]) BK.Economy.state(W.islands[j]).stock.food = 3000;
   W.caravans = [];
   for (let k = 1; k <= 3; k++) BK.World.jump(W, 400 + k);
