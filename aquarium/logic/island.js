@@ -1,6 +1,7 @@
 /* Bể Kính · logic/island.js
  * Trạng thái của một đảo và nhịp chạy theo ngày: 8 người đầu tiên, hội đồng, tuổi và cái chết, mốc thế hệ mỗi 1,5 năm,
  * hạn hán mùa hạ, bộ não của từng người, và các tình huống thử (lệnh chiến tranh, cãi nhau, lễ hội).
+ * Sáu đảo dùng chung tệp này, mỗi đảo một nét gen và bộ gia tộc riêng (ISLANDS, People.CLANS); cả bể do logic/world.js chạy.
  * Không vẽ gì: phần vẽ đọc S.people, S.minds, S.seats, S.log. Chạy được bằng Node (xem test/island.test.js).
  * Thời kỳ (logic/eras.js) lên theo ngày; việc của dân (logic/jobs.js) gán lại mỗi ngày.
  * Buổi trong ngày (S.tod, phần chạy game ghi vào) quyết định việc ngày thường (logic/schedule.js, logic/tasks.js); công trình của
@@ -17,13 +18,19 @@
   const R = BK.Rules, G = BK.Genes, P = BK.People, F = BK.Family, CO = BK.Council, B = BK.Brain, J = BK.Jobs, E = BK.Eras, K = BK.Construction, H = BK.Homes;
 
   // nét chung của từng đảo (bộ gen của người đầu tiên và người dân thường lệch theo đây)
+  // nét gen chung của dân mỗi đảo (độ lệch gen gốc, logic/genes.js): mỗi đảo một kiểu người, dẫn tới những lựa chọn khác nhau
   const ISLANDS = {
-    plains: { name: 'Lúa Vàng', bias: { aggression: -0.06, piety: 0.05, intellect: 0.02 } },
+    plains: { name: 'Lúa Vàng', bias: { aggression: -0.06, piety: 0.05, intellect: 0.02 } },      // hiền, sùng đạo
+    forest: { name: 'Thông Xanh', bias: { piety: 0.04, meekness: 0.03, aggression: -0.03 } },     // trầm lặng, gắn với rừng
+    mountain: { name: 'Đá Mây', bias: { aggression: 0.06, fear: -0.05, paranoia: 0.02 } },        // gan lì, hiếu chiến
+    tundra: { name: 'Tuyết Trắng', bias: { paranoia: 0.05, fear: -0.03, intellect: 0.02 } },      // đa nghi, chịu rét
+    coast: { name: 'Cửa Sóng', bias: { cunning: 0.06, ambition: 0.03, paranoia: -0.03 } },       // khéo buôn bán
+    desert: { name: 'Cát Hồng', bias: { ambition: 0.05, piety: 0.04, cunning: 0.02 } },          // tham vọng, sùng đạo
   };
 
   /* ---------- Tạo đảo với 8 người đầu tiên (4 nam, 4 nữ) ---------- */
   function create(o) {
-    const key = o.key || 'plains', def = ISLANDS[key], rng = BK.Rng.create(o.seed || 1);
+    const key = o.key || 'plains', def = ISLANDS[key] || ISLANDS.plains, rng = BK.Rng.create(o.seed || 1);
     const S = {
       key, name: def.name, bias: def.bias, clans: P.CLANS[key], rng,
       day: 0, lastDay: 0, nextGenDay: R.GEN_DAYS, gen: 0, nextId: 1, level: 1, births: 0, deaths: 0, tod: 0.3, buildPlan: o.buildPlan || null, build: null,

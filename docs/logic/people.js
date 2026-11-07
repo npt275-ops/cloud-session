@@ -11,9 +11,14 @@
   const R = BK.Rules;
 
   /* ---------- Tên ---------- */
-  // tên gia tộc theo từng đảo (Lúa Vàng: những thứ của đồng lúa); đảo khác thêm vào sau
+  // tên gia tộc theo từng đảo: những thứ của đất mình (đồng lúa, rừng, núi, băng, biển, cát)
   const CLANS = {
     plains: ['Thóc', 'Mạ', 'Rơm', 'Đòng', 'Cốm', 'Liềm', 'Cò', 'Bông'],
+    forest: ['Thông', 'Lim', 'Sồi', 'Nấm', 'Rêu', 'Dương', 'Tùng', 'Bách'],
+    mountain: ['Đá', 'Mây', 'Ưng', 'Sắt', 'Vách', 'Gió', 'Đèo', 'Mỏ'],
+    tundra: ['Tuyết', 'Băng', 'Sương', 'Giá', 'Bạc', 'Gấu', 'Hàn', 'Cực'],
+    coast: ['Sóng', 'Hàu', 'Ngọc', 'Muối', 'Buồm', 'Cói', 'San', 'Rạn'],
+    desert: ['Cát', 'Hồng', 'Nắng', 'Gò', 'Sỏi', 'Ngải', 'Kê', 'Đụn'],
   };
   const GIVEN = {
     m: ['Hùng', 'Sơn', 'Khoa', 'Tùng', 'Bảo', 'Đạt', 'Lâm', 'Phong', 'Vĩnh', 'Tâm', 'Quang', 'Nam', 'Hải', 'Dũng', 'Kiên', 'Thịnh', 'Lộc', 'Trí', 'An', 'Tín', 'Mạnh', 'Hưng', 'Khải', 'Toàn'],

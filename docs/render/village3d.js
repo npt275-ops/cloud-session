@@ -127,54 +127,65 @@
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.72, 32), new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
     const need = {};
-    function update(dt, t) {
-      dt = Math.max(0, dt || 0); const sec = Math.min(0.1, dt / 1000), ts = t * 0.001, alive = new Set(), X = BK.Island.situNow(S);
+    /* Ba đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): đi lại và hẹn giờ (gặp nhau trên phố) theo giờ game (nhân tốc độ),
+     * chia thành bước con STEP giây để ở 4× không ai đi vượt đích hay xuyên tường; cử chỉ tại chỗ theo giờ game nhưng nhanh nhất
+     * GESTURE_MAX lần; chớp mắt theo giờ thực. speed: 1, 2, 4 (game/cities.js). */
+    const STEP = 0.05, GESTURE_MAX = 2;
+    let gameT = 0, gestT = 0;
+    function update(dt, t, speed) {
+      dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
+      gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001;
       for (const p of S.people.values()) {
         if (!p.alive) continue;
         alive.add(p.id);
         const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0), { seed: p.id * 1.7 });
-        let goal = goalOf(f, mind), meetVerb = null;
+        let goal = goalOf(f, mind), meetVerb = null, meetGoal = null;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
-        if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
+        if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
         else if ((mind.place === 'stroll' || mind.place === 'hallLoop') && goal && goal.road && !(ts < (f.meetCool || 0))) {
           for (const [oid, o2] of folks) {
             if (oid === p.id || o2.meet || !o2.strolling || ts < (o2.meetCool || 0)) continue;
-            if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: p.id, until }; goal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
+            if ((o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2 < 2.6) { const until = ts + 3.5 + Math.random() * 4; f.meet = { id: oid, until }; o2.meet = { id: p.id, until }; meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; break; }
           }
         }
         f.strolling = (mind.place === 'stroll' || mind.place === 'hallLoop') && !meetVerb;
-        if (goal && !meetVerb && !goal.road) goal = Nav.follow(f, goal); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
+        // đi theo giờ game, từng bước con: mỗi bước tìm lại đích (lối đi, điểm kế tiếp trên phố), đi một đoạn, giữ trong tường thành
         let moving = false;
-        if (goal) {
-          _v.copy(goal.p).sub(f.pos); _v.y = 0;
+        const n = Math.max(1, Math.ceil(sec / STEP)), h = sec / n;
+        for (let i = 0; i < n; i++) {
+          if (i) goal = meetGoal ? null : goalOf(f, mind);
+          let g = meetGoal || goal;
+          if (g && !meetVerb && !g.road) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
+          if (!g) break;
+          _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride); // tối muộn về ngủ thì rảo bước
-          if (d > 0.25) { moving = true; const step = Math.min(d, speed * sec); f.pos.addScaledVector(_v.normalize(), step); Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), sec); }
-          else if (goal.face) { _v.copy(goal.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), sec); }
+          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
+          else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
-        if (!moving) f.ph += sec * 3 * f.knobs.tempo;
+        if (!moving) f.ph += real * 3 * f.knobs.tempo;
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
         const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
         f.inside = !moving && verb === 'sleep'; // ngủ: vào trong nhà (không vẽ)
         let tgt, gface = null;
         if (working && Work) {
-          if (f.verb !== verb || ts > f.gEnd) { // đổi việc, hay hết một lượt cử chỉ: sang cử chỉ khác của việc đó
+          if (f.verb !== verb || gs > f.gEnd) { // đổi việc, hay hết một lượt cử chỉ: sang cử chỉ khác của việc đó (đồng hồ cử chỉ gs)
             f.turn = f.verb === verb ? (f.turn || 0) + 1 : 0; f.verb = verb;
-            f.work = Work.gestureOf(verb, level, p.id, f.turn); f.gStart = ts;
-            f.gEnd = ts + (f.work && !f.work.G.loop ? f.work.G.dur + 0.8 : 6 + (p.id % 4));
+            f.work = Work.gestureOf(verb, level, p.id, f.turn); f.gStart = gs;
+            f.gEnd = gs + (f.work && !f.work.G.loop ? f.work.G.dur + 0.8 : 6 + (p.id % 4));
           }
-          if (f.work) { const G = f.work.G, u = G.loop ? 0 : Math.min(1, (ts - f.gStart) / G.dur); tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, u, ts, f.knobs); Anim.addLife(tgt, ts, f.knobs); gface = G.face; f.tool = f.work.tool; }
+          if (f.work) { const G = f.work.G, u = G.loop ? 0 : Math.min(1, (gs - f.gStart) / G.dur); tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, u, gs, f.knobs); Anim.addLife(tgt, gs, f.knobs); gface = G.face; f.tool = f.work.tool; }
         }
-        if (!tgt) { f.verb = null; f.tool = null; tgt = Anim.target(mind.state, f.ph, ts, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
+        if (!tgt) { f.verb = null; f.tool = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
         f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE; // ngồi, quỳ thì hạ người
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ'); f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
         // chớp mắt vài giây một lần
-        if (ts > f.blinkAt) { f.blink = 0.14; f.blinkAt = ts + 2.2 + Math.random() * 3; }
-        f.blink = Math.max(0, f.blink - sec);
+        if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
+        f.blink = Math.max(0, f.blink - real);
         const ek = meetVerb ? 'happy' : gface && EXPR[gface] && !X.war && !X.mourning && !mind.mood ? gface : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
         f.expr = EXPR[ek] || EXPR.neutral; f.closed = f.expr === EXPR.closed || f.blink > 0;
       }
@@ -224,7 +235,14 @@
     // vị trí những người đang ở ngoài (toạ độ đảo) để xe nhường người đi bộ (render/buildings3d.js setPeds)
     const pedList = [];
     function peds() { pedList.length = 0; for (const [, f] of folks) if (!f.inside) pedList.push(f.pos); return pedList; }
-    return { update, pick, select, worldPos, peds, setPlaces, setLevel, drawCalls, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    // ẩn, hiện cả làng (đảo xa máy quay thì không vẽ người, game/cities.js); hiện lại thì ai nấy đứng ngay chỗ đáng ra đang ở
+    let shownNow = true;
+    function setVisible(on) {
+      if (on === shownNow) return; shownNow = on;
+      for (const k in IM) IM[k].visible = on; if (!on) ring.visible = false;
+      if (on) for (const [, f] of folks) { const mind = S.minds.get(f.p.id) || { state: 'idle' }, g = goalOf(f, mind); if (g) f.pos.copy(g.p); f.nav = null; f.route = null; f.meet = null; }
+    }
+    return { update, pick, select, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

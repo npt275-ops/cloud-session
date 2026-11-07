@@ -1,5 +1,5 @@
 /* Bể Kính · render/neon3d.js · Mặt trời nhân tạo của thành phố neon (từ thời 10)
- * Từ thời 10 mặt trời thật đã tắt: trên trời chỉ còn một đĩa đen viền lửa hồng tím (mặt trời đã mất), trời tím không còn
+ * Khi cả sáu đảo đã tới thời 10, mặt trời thật tắt: trên trời chỉ còn một đĩa đen viền lửa hồng tím (mặt trời đã mất), trời tím không còn
  * ngày đêm (render/sky3d.js, render/mood3d.js NEON). Mỗi đảo tự treo một mặt trời nhân tạo trên thành phố của mình, rọi
  * thẳng xuống: lõi sáng, quầng sáng, cột sáng hình nón chiếu xuống thành phố, một đèn điểm (không đổ bóng) tô màu cả đảo.
  * Sáu đảo sáu dáng mặt trời, màu theo render/build/neon.js PAL:
@@ -9,7 +9,8 @@
  *   tundra   Tuyết Trắng Mặt Trời Băng Lăng Trụ: lăng trụ băng xanh, vầng hào quang phẳng có bốn mặt trời giả (sundog)
  *   coast    Cửa Sóng    Mặt Trời Sứa: vòm sứa phát sáng, mười hai xúc tu ánh sáng đung đưa rủ xuống
  *   desert   Cát Hồng    Mặt Trời Hai Vành: cầu hồng có hai vành rộng bắt chéo, khung bát diện vàng quay ngược
- * Cấp 10, 11, 12 mặt trời lớn dần (SCALE). update(dt, t) mỗi khung hình: bật khi G.level >= 10, cho các phần quay, thở.
+ * Cấp 10, 11, 12 mặt trời lớn dần (SCALE). update(dt, t) mỗi khung hình: mặt trời của đảo bật khi đảo đó tới thời 10; mặt trời
+ * thật tắt khi cả sáu đảo tới thời 10; cho các phần quay, thở.
  * Cần: render/build/neon.js (BK.Neon3D), render/sky3d.js (G.glowTex dùng chung), lands3d (G.lands3d.lands). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -83,16 +84,18 @@
     const disc = new THREE.Mesh(new THREE.CircleGeometry(62, 48), basic('#07040e', { depthWrite: false })), rim = new THREE.Mesh(new THREE.RingGeometry(61, 67, 64), add({ color: '#ff4fd8', opacity: 0.85 }));
     const cor = halo('#a040ff', 420, 0.3); disc.renderOrder = rim.renderOrder = cor.renderOrder = -1; dead.add(cor, disc, rim); rim.position.z = 0.1;
     const DEAD_AT = new THREE.Vector3(-0.42, 0.34, -0.84).normalize().multiplyScalar(1500);
-    let lastLv = -1;
+    // mỗi đảo một mặt trời, bật khi chính đảo đó tới thời 10 (G.levelOf(i)); mặt trời thật tắt (đĩa đen trên trời) khi cả sáu đảo
+    // đều đã tới thời 10 (G.skyLevel: cấp thấp nhất trong các đảo, game/cities.js)
     function update(dt, t) {
-      const lv = G.level || 0, on = N.on(lv), ts = t * 0.001;
-      if (lv !== lastLv) { lastLv = lv; for (const S of suns) { S.root.visible = on; const s = SCALE[lv] || 1; S.g.scale.setScalar(s); } dead.visible = on; }
-      if (!on) return;
+      const ts = t * 0.001;
+      suns.forEach((S, i) => { const lv = G.levelOf ? G.levelOf(i) : G.level || 0; if (lv !== S.lv) { S.lv = lv; S.root.visible = N.on(lv); S.g.scale.setScalar(SCALE[lv] || 1); } });
+      dead.visible = N.on(G.skyLevel != null ? G.skyLevel : G.level || 0);
       for (const S of suns) {
+        if (!S.root.visible) continue;
         S.anim(ts); const br = 0.92 + 0.08 * Math.sin(ts * 1.3 + S.ph);
         S.h1.material.opacity = 0.5 * br; S.h2.material.opacity = 0.16 + 0.04 * Math.sin(ts * 0.5 + S.ph); S.light.intensity = LIGHT * br; S.beam.material.opacity = 0.03 + 0.01 * Math.sin(ts * 0.8 + S.ph);
       }
-      dead.position.copy(camera.position).add(DEAD_AT); dead.lookAt(camera.position); rim.rotation.z = ts * 0.05;
+      if (dead.visible) { dead.position.copy(camera.position).add(DEAD_AT); dead.lookAt(camera.position); rim.rotation.z = ts * 0.05; }
     }
     G.neonCity = { update, suns, NAME };
   }

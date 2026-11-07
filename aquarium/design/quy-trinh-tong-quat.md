@@ -280,7 +280,7 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 
 | Bước | Làm | Xong khi |
 |---|---|---|
-| 1 | Dân cho 6 đảo: `logic/world.js`, gia tộc và nét gen riêng, hiển thị dân ở đảo gần camera | Cả 6 đảo có dân sống đủ 9 năm, đủ vị trí cứng và drama |
+| 1 ✅ | Dân cho 6 đảo: `logic/world.js` (đồng hồ chung, bước cố định), gia tộc và nét gen riêng, hiển thị dân ở đảo gần camera (`game/cities.js`); người đi, xe chạy theo giờ game | Cả 6 đảo có dân, đủ vị trí cứng; cùng seed chạy 1×, 2×, 4× ra cùng lịch sử (`test/world.test.js`) |
 | 2 | Kinh tế và lên cấp theo tài nguyên; mỗi đảo một cấp riêng (bỏ `G.level` chung) | Chạy 100 seed: các đảo lên cấp khác nhau; đảo cô lập tụt lại |
 | 3 | Khí hậu và ngoại gen | Nghịch cảnh làm đổi hành vi và đổi tỉ lệ đột biến đo được |
 | 4 | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu) | Có giao thương và hiệp ước; quan hệ có trí nhớ |

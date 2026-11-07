@@ -250,8 +250,10 @@
     }
     // xe chạy, nhường người đi bộ: render/build/traffic3d.js
     const traffic = BK.Traffic3D.create();
-    function animate(dt, t, night, cam) {
-      const ts = t * 0.001; batchedThisFrame = false;
+    // speed: 1, 2, 4 — xe chạy theo giờ game (gameT); quạt quay, nhấp nhô, khói, đèn chập chờn theo giờ thực (ts)
+    let gameT = 0;
+    function animate(dt, t, night, cam, speed) {
+      const ts = t * 0.001; batchedThisFrame = false; gameT += Math.min(0.1, Math.max(0, dt || 0) / 1000) * (speed || 1);
       if (queue.length) pump(cam);
       if (LIT) { LIT.opacity = Math.max(0, Math.min(0.95, ((night || 0) - 0.15) * 1.4)); LIT.visible = LIT.opacity > 0.01; }
       for (const sh of shown) if (sh) {
@@ -267,7 +269,7 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, ts); // xe chạy dọc vòng đường, nhường người đi bộ
+          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT); // xe chạy dọc vòng đường, nhường người đi bộ
           }
           if (!far) for (const G of p.glows) {
             const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);

@@ -1,0 +1,112 @@
+/* Bể Kính · game/cities.js · Sáu thành phố chạy theo đồng hồ của trận
+ * Nối logic của cả bể (logic/world.js: sáu đảo, một đồng hồ, bước cố định) với phần vẽ:
+ *   công trình của từng đảo dựng dần theo danh sách xây dựng của logic (render/buildings3d.js setProgress), mỗi đảo theo cấp
+ *   của chính nó; người của đảo nào thì vẽ ở đảo đó (render/village3d.js), chỉ những đảo gần máy quay (NEAR) mới vẽ người;
+ *   bảng làng và thẻ người (ui/village-ui.js) cho mọi đảo: bấm vào một người ở đảo nào thì mở thẻ của người đó.
+ * Đồng hồ (design/quy-trinh-tong-quat.md mục 1.1): mỗi khung hình đưa thêm số ngày lịch (tps × thời gian thật) vào logic; giờ
+ * trong ngày lấy từ logic (G.time.tod) cho bầu trời; người đi, xe chạy theo giờ game (speed: 1, 2, 4).
+ * Mở với ?seed= để thử trận khác, ?cap= để vào thẳng một cấp khi phát triển. Nút ◀ ▶ (dev): tới thẳng một thời.
+ * Cần: game/world.js, game/nature.js, game/seasons.js, logic/ (world.js và các tệp nó cần), render/ của người và công trình,
+ * ui/village-ui.js. */
+(function (root) {
+  const BK = root.BK || (root.BK = {});
+  const NEAR = 120, FAR = 150; // vẽ người khi máy quay cách tâm đảo dưới NEAR, thôi vẽ khi xa hơn FAR
+  // khối lượng mỗi công trình trong danh sách xây dựng: nhà chính nặng nhất, kỳ quan, công trình lớn, ngoài làng nặng hơn; nhà
+  // riêng, đồ nhỏ (đèn, đường, cột…) nhẹ. Thời đồ đá có sẵn nhà chính, bếp lửa, bốn lều.
+  const BIG = new Set(['field', 'market', 'factory', 'station', 'school', 'shop', 'pad', 'nuclear', 'datacenter']);
+  const SMALL = new Set(['lamp', 'hay', 'road', 'asphalt', 'glowRoad', 'pole', 'shroom', 'mote', 'pylon', 'shard', 'totem', 'rack', 'well', 'robot', 'tractor']);
+  function layoutOf(key, level) { return key === 'plains' ? BK.Plains3D && BK.Plains3D.ERA[level] : BK.Isles3D && BK.Isles3D[key] && BK.Isles3D[key].ERA[level]; }
+  function buildPlan(key, level) {
+    const lay = layoutOf(key, level); if (!lay) return [];
+    let huts = 0;
+    return lay.pieces.filter((P) => lay.BUILD[P.kind]).map((P) => {
+      const size = P.kind === 'hall' ? 4 : P.wonder ? 3 : P.town ? 1.5 : P.home != null ? 0.7 : P.outer ? 1.5 : P.civic || BIG.has(P.kind) ? 2 : SMALL.has(P.kind) || /^x_/.test(P.kind) ? 0.4 : 1;
+      const done = level === 1 && (P.kind === 'hall' || P.kind === 'fire' || /^x_fire/.test(P.kind) || (P.home != null && huts++ < 4));
+      return { name: lay.NAME[P.kind] || P.kind, size, done };
+    });
+  }
+
+  function setup(G) {
+    const { THREE, W, lands, lands3d, scene, camera, controls, canvas, $ } = G;
+    const Eras = BK.Eras, World = BK.World, Island = BK.Island, buildings = BK.Buildings3D.create({ THREE, lands3d });
+    const q = new URLSearchParams(location.search), seed = +q.get('seed') || 42;
+    const world = World.create({ seed, buildPlan });
+    { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) World.jump(world, Eras.startOf(cap) + 0.01); }
+    const N = world.islands.length, isle = (i) => world.islands[i];
+    const shownLv = [], villages = [], uis = [];
+    // cấp của từng đảo (mặt trời nhân tạo, render/neon3d.js), cấp thấp nhất (bầu trời tím khi cả sáu đảo tới thời 10)
+    G.levelOf = (i) => isle(i).level;
+    const syncLevels = () => { G.skyLevel = Math.min(...world.islands.map((S) => S.level)); G.level = isle(G.focus || 0).level; W.day = world.day; G.time.tod = world.tod; };
+    syncLevels();
+    for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
+    // người và bảng làng của một đảo: dựng khi cần lần đầu
+    function villageOf(i) {
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i) });
+      return villages[i];
+    }
+    function uiOf(i) {
+      if (!uis[i]) uis[i] = BK.VillageUI.create({ S: isle(i), Island, panel: false, onFly: () => G.flyTo(lands[i].center, 34, lands[i].inw.clone().setY(0.55), 1.5) });
+      return uis[i];
+    }
+    // đảo i sang thời mới: dựng bố cục thời mới (cái cũ thay dần), người mặc đồ thời mới, chỗ đến mới
+    function syncEra(i, animate) {
+      const S = isle(i); if (S.level === shownLv[i]) return;
+      shownLv[i] = S.level; buildings.show(i, S.level, animate);
+      if (villages[i]) { villages[i].setLevel(S.level); villages[i].setPlaces(buildings.places(i)); }
+    }
+    // nhãn thời kỳ của đảo đang xem
+    function eraLabel() { const i = G.focus || 0, l = isle(i).level; if (world.day >= Eras.MATCH_DAYS) return isle(i).name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const into = (world.day - Eras.startOf(l)) / Eras.ERA_DAYS; return isle(i).name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · ' + Math.min(99, Math.floor(into * 100)) + '% tới thời sau' : ' · thời cuối'); }
+    function resyncAll() {
+      syncLevels();
+      for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]); villages[i].setPlaces(buildings.places(i)); } }
+      $('eraName').textContent = eraLabel();
+    }
+    // dev rà soát: tới thẳng một thời (lúc công trình của thời đó đã dựng xong, 90% thời). Đi tới thì tua cả bể tới đó; lùi lại thì
+    // dựng lại cả bể từ đầu (cùng seed) rồi tua tới đó. Tua nhanh không bảo đảm trùng với chạy thường (logic/world.js jump).
+    function goEra(l) {
+      l = Math.max(1, Math.min(Eras.COUNT, l)); if (l === G.level) return;
+      const to = Eras.startOf(l) + 0.9 * Eras.ERA_DAYS;
+      if (to <= world.day) { // dựng lại từ đầu, giữ nguyên các đối tượng đảo (phần vẽ và bảng làng đang trỏ vào chúng)
+        const fresh = World.create({ seed, buildPlan });
+        fresh.islands.forEach((S, i) => { const old = world.islands[i]; for (const k of Object.keys(old)) delete old[k]; Object.assign(old, S); });
+        Object.assign(world, { ticks: fresh.ticks, day: fresh.day, tod: fresh.tod, acc: fresh.acc });
+      }
+      World.jump(world, to); G.seasons.update(true); resyncAll(); for (const u of uis) if (u) u.render(true);
+    }
+    const jumpEra = () => goEra(G.level + 1); // bài kiểm tra chạy trình duyệt không giao diện
+    $('eraPrev').onclick = () => goEra(G.level - 1);
+    $('eraNext').onclick = () => goEra(G.level + 1);
+    $('eraName').textContent = eraLabel();
+    // mở game là nhìn vào làng Lúa Vàng (cuộn ra để thấy cả bể)
+    { const L = lands[0]; controls.target.copy(L.center).setY(1.5); camera.position.copy(L.center).addScaledVector(L.inw, 26).add(new THREE.Vector3(6, 17, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
+    villageOf(0); uiOf(0);
+    // bấm vào một người (chạm nhẹ, không kéo) ở bất kỳ đảo nào đang vẽ người: mở thẻ người đó; bấm chỗ khác để đóng
+    { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+      canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+      canvas.addEventListener('pointerup', (e) => {
+        if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+        ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+        let hit = -1, id = null; villages.forEach((v, i) => { if (v && v.visible && id == null) { const x = v.pick(ray); if (x != null) { id = x; hit = i; } } });
+        if (hit >= 0) uiOf(hit);
+        villages.forEach((v, i) => { if (v) v.select(i === hit ? id : null); });
+        uis.forEach((u, i) => { if (u) u.select(i === hit ? id : null); });
+      }); }
+    // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
+    function step(dDays) { World.advance(world, dDays); syncLevels(); }
+    // mỗi khung hình: công trình theo tiến độ xây của logic, người của các đảo gần máy quay, xe nhường người
+    function animate(dt, t, night) {
+      const speed = G.time.tps / G.time.SPEEDS[0][0];
+      for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
+      buildings.animate(dt, t, night, camera.position, speed);
+      for (let i = 0; i < N; i++) {
+        const d = camera.position.distanceTo(lands[i].center), v = villages[i];
+        if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }
+        else if (v) { v.setVisible(false); buildings.setPeds(i, []); }
+      }
+    }
+    // mỗi giây: nhãn thời kỳ, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
+    function slow() { $('eraName').textContent = eraLabel(); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
+    Object.assign(G, { world, isle: isle(0), buildings, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
+  }
+  BK.GameCities = { setup, buildPlan };
+})(typeof self !== 'undefined' ? self : globalThis);

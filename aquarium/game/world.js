@@ -32,8 +32,9 @@
     G.focus = 0; // đảo đang xem
 
     /* ---------- Nhịp thời gian và thời tiết ---------- */
-    // tps: ngày trong game mỗi giây thật (1× = 0,75: trận 9 năm khoảng 72 phút); tod: giờ trong ngày 0..1; một vòng ngày đêm 3 phút ở 1×
-    G.time = { tps: 0.75, tod: 0.3, DAY_MS: 90000, SPEEDS: [[0.75, '1×'], [1.5, '2×'], [3, '4×']] };
+    // tps: ngày trong game mỗi giây thật (1× = 0,75: trận 9 năm khoảng 72 phút); tod: giờ trong ngày 0..1, logic giữ (logic/world.js:
+    // một vòng ngày đêm ứng với 135 ngày lịch, tức 3 phút ở 1×), ở đây chỉ là bản sao cho bầu trời đọc
+    G.time = { tps: 0.75, tod: 0.3, SPEEDS: [[0.75, '1×'], [1.5, '2×'], [3, '4×']] };
     G.weather = { lightFlash: 0, stormK: 0, winter: 0, night: 0 };
   }
   BK.GameWorld = { setup };

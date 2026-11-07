@@ -15,8 +15,8 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/game/isles.js",
-  "src": "game/isles.js",
+  "path": "BeKinh/game/cities.js",
+  "src": "game/cities.js",
   "mode": 420
  },
  {
@@ -32,11 +32,6 @@
  {
   "path": "BeKinh/game/seasons.js",
   "src": "game/seasons.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/game/village.js",
-  "src": "game/village.js",
   "mode": 420
  },
  {
@@ -157,6 +152,11 @@
  {
   "path": "BeKinh/logic/temper.js",
   "src": "logic/temper.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/world.js",
+  "src": "logic/world.js",
   "mode": 420
  },
  {

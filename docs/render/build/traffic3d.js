@@ -1,10 +1,11 @@
 /* Bể Kính · render/build/traffic3d.js · Xe chạy trên vòng đường và nhường người đi bộ
- * drive(đảo, thời, A, công trình, giây): mỗi xe của lớp đường (render/build/vehicles.js fleet: A.loop, A.path) có quãng đường
+ * drive(đảo, thời, A, công trình, giây game): mỗi xe của lớp đường (render/build/vehicles.js fleet: A.loop, A.path) có quãng đường
  * đã đi của riêng nó; render/buildings3d.js gọi mỗi khung hình. setPeds(đảo, danh sách): vị trí người đang ở ngoài (toạ độ
  * đảo, game/village.js lấy từ render/village3d.js peds) để xe dừng nhường người đang ở trên lòng đường phía trước.
  * Cần: render/build/plains/town.js (ROAD_W). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
+  const STEP = 0.05; // bước con (giây game)
   function create() {
     // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe có quãng đường đã đi của riêng nó,
     // đầu xe quay theo hướng đoạn đường đang đi. Xe chạy dưới đất nhường người đi bộ: có người đang ở trên mặt đường ngay phía
@@ -20,7 +21,8 @@
     }
     function drive(isle, lv, A, p, ts) {
       if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
-      const st = p.drive || (p.drive = { at: ts, d: {} }), dt = Math.min(0.25, Math.max(0, ts - st.at)); st.at = ts;
+      const st = p.drive || (p.drive = { at: ts, d: {} }), total = Math.min(0.5, Math.max(0, ts - st.at)); st.at = ts; // ts: giờ game (giây)
+      const steps = Math.max(1, Math.ceil(total / STEP)), dt = total / steps; // bước con: ở 4× xe vẫn kịp thấy người và dừng
       const place = (sub, d, y) => {
         d %= A.len; if (d < 0) d += A.len;
         let i = 0; while (i < A.loop.length - 1 && A.cum[i + 1] < d) i++;
@@ -28,7 +30,7 @@
         const x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u, hx = b[0] - a[0], hz = b[1] - a[1];
         sub.position.set(x, y, z); sub.rotation.y = Math.atan2(hx, hz); return [x, z, hx / (Math.hypot(hx, hz) || 1), hz / (Math.hypot(hx, hz) || 1)];
       };
-      for (const [n, speed, off, y, head, flying] of A.path) {
+      for (let k = 0; k < steps; k++) for (const [n, speed, off, y, head, flying] of A.path) {
         const sub = p.subs[n]; if (!sub) continue;
         if (head) { const H = A.path.find((x) => x[0] === head); st.d[n] = (st.d[head] != null ? st.d[head] : 0) + (off - H[2]); place(sub, st.d[n], y); continue; } // toa: bám đầu xe
         if (st.d[n] == null) st.d[n] = ts * speed + off;

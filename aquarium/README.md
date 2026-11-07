@@ -106,7 +106,7 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   (7) mỗi đảo một công trình biểu tượng riêng cho từng thời (`render/build/isles/halls-future.js`, 30 công trình): bệ phóng,
   bộ não, công trình sống, công trình mặt trời, vật lơ lửng, thành phố bay, mỗi đảo một dáng (ví dụ Thông Xanh: tháp phóng
   quả thông, bộ não rừng, cây mẹ, hoa mặt trời, thân cây xoắn, Cây Thế Giới).
-- **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`, `game/isles.js`): bộ kiểu chung `arch.js` (27
+- **Năm đảo còn lại có kiến trúc riêng qua 12 thời** (`render/build/isles/`): bộ kiểu chung `arch.js` (27
   kiểu nhà, 21 kiểu nhà chính, công trình nhỏ, 11 kỳ quan riêng), `compose.js` ghép bố cục (nhà chính, 20 nhà riêng, công
   trình nhỏ, đường và tường sát mép, công trình ngoài làng, kỳ quan), mỗi đảo một tệp chọn kiểu, tên và bảng màu cho từng thời
   (`forest.js`, `mountain.js`, `tundra.js`, `coast.js`, `desert.js`). Trong cùng một thời không có hai đảo chung kiểu nhà hay
@@ -121,6 +121,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   bảng màu ấm theo giờ (bình minh hồng cam, sáng trong, trưa vàng nhạt, chiều vàng mật ong, hoàng hôn cam tím, chạng vạng
   tím, đêm tím xanh), sương ngả theo chân trời; bóng dịu nhờ đèn trời sáng hơn và một đèn hắt nhẹ phía ngược nắng. Mọi màu
   trời và ánh sáng theo giờ nằm ở một chỗ (KEYS), độ phơi sáng ở TONE.
+- **Sáu đảo tự vận hành, một đồng hồ** (`logic/world.js`, `game/cities.js`, `design/quy-trinh-tong-quat.md`): cả sáu đảo đều có
+  dân (gia tộc và nét gen riêng của từng đảo), chạy cùng nhịp theo bước cố định 1/12 ngày lịch, thứ tự cố định; lịch và giờ
+  trong ngày do logic giữ. Cùng seed thì chạy 1×, 2×, 4× ra cùng một lịch sử (đã kiểm thử). Người đi, xe chạy theo giờ game
+  từng bước con 0,05 giây; cử chỉ tại chỗ nhanh nhất 2×; chỉ đảo gần máy quay mới vẽ người. Mặt trời nhân tạo theo cấp riêng
+  từng đảo; trời tím khi cả sáu đảo tới thời 10.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

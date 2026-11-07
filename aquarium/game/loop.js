@@ -1,7 +1,8 @@
 /* Bể Kính · game/loop.js
  * Khởi động game và nhịp mỗi khung hình. start() dựng bộ nhớ chung G theo thứ tự (thế giới, cảnh, bầu trời, độ mượt,
- * bể kính, thiên nhiên, mùa, tuyết, camera, thanh đảo, Lúa Vàng, năm đảo còn lại, màn hình), rồi chạy vòng lặp:
- *   đồng hồ trận đi theo thời gian thật (tới 1 giây mỗi khung: máy chậm vẫn đúng nhịp 1×, 2×, 4×), logic đảo chạy theo;
+ * bể kính, thiên nhiên, mùa, tuyết, camera, thanh đảo, sáu thành phố, màn hình), rồi chạy vòng lặp:
+ *   thời gian thật nhân tốc độ đưa vào logic của cả bể (tới 1 giây mỗi khung: máy chậm vẫn đúng nhịp 1×, 2×, 4×); logic chạy
+ *   theo bước cố định và giữ lịch, giờ trong ngày (logic/world.js);
  *   chuyển động dùng thời gian khung (tối đa 0,1 giây); mỗi giây đổi mùa, ghi ngày, đồng bộ thời kỳ và bảng làng.
  * window.__glass: móc cho các bài kiểm tra chạy trình duyệt không giao diện. */
 (function (root) {
@@ -22,8 +23,7 @@
     BK.Snow3D.setup(G);      // render/snow3d.js
     BK.CameraFly.setup(G);   // ui/camera-fly.js
     BK.LandBar.setup(G);     // ui/landbar.js
-    BK.GameVillage.setup(G); // game/village.js
-    BK.GameIsles.setup(G);   // game/isles.js (công trình năm đảo còn lại)
+    BK.GameCities.setup(G);  // game/cities.js (sáu thành phố: logic của cả bể, công trình, người)
     if (BK.NeonCity3D) BK.NeonCity3D.setup(G); // render/neon3d.js (mặt trời nhân tạo của thành phố neon, thời 10 trở đi)
     BK.Hud.setup(G);         // ui/hud.js
 
@@ -33,14 +33,12 @@
     function frame(t) {
       const raw = Math.max(0, Math.min(1000, t - last)), dt = Math.min(100, raw); last = t; // khung đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
       G.perf.govern(dt);
-      T.tod = (T.tod + (raw * (T.tps / 1.5)) / T.DAY_MS) % 1; // 1×: một vòng ngày đêm 3 phút
-      const dDays = (raw * T.tps) / 1000; W.day += dDays; G.villageRun.step(dDays);
+      G.citiesRun.step((raw * T.tps) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
       const { night } = G.sky.applyTime();
       G.weather.night = night; G.weather.winter = G.seasons.winter();
-      if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.villageRun.slow(); }
+      if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.citiesRun.slow(); }
       G.nature.animate(dt, t, night);
-      G.villageRun.animate(dt, t, night);
-      G.islesRun.update();
+      G.citiesRun.animate(dt, t, night);
       if (G.neonCity) G.neonCity.update(dt, t);
       G.snow.update(dt, t, G.weather.winter);
       const now = performance.now();
@@ -56,8 +54,7 @@
 
     window.__glass = {
       G, THREE, W, scene, camera, controls, renderer, lands3d: G.lands3d, clouds3d: G.clouds3d, sea3d: G.sea3d,
-      buildings: G.buildings, jumpEra: G.jumpEra, level: () => G.level, isle: G.isle, village: G.village, villageUi: G.villageUi,
-      ff: (days) => { W.day += days; G.seasons.update(true); },
+      buildings: G.buildings, jumpEra: G.jumpEra, level: () => G.level, world: G.world, isle: G.isle, village: G.village, villageUi: G.villageUi, villageOf: G.villageOf,
       lockQuality: (q) => G.perf.lock(q), perf: G.perf,
     };
   }
