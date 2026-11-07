@@ -76,13 +76,15 @@
   }
 
   /* ---------- Lai tạo: cha + mẹ → con ---------- */
-  function cross(a, b, rng) {
+  // o.mutate: nhân tỉ lệ đột biến (con sinh ra lúc đảo đang khổ, logic/epigen.js mutateBoost)
+  function cross(a, b, rng, o) {
+    const mutate = TUNE.mutateChance * ((o && o.mutate) || 1);
     const traits = {}, gait = {}, mutations = [];
     // Bước 1, lai chéo: trung bình cha mẹ cộng một chút lệch
     // Bước 2, đột biến: hiếm khi một gen lệch hẳn đi (cha mẹ hiền vẫn có thể sinh con rất hiếu chiến)
     for (const k of KEYS) {
       let v = (a.traits[k] + b.traits[k]) / 2 + rng.gauss() * TUNE.drift;
-      if (rng.chance(TUNE.mutateChance)) { const d = rng.range(TUNE.mutateMin, TUNE.mutateMax) * (rng.chance(0.5) ? 1 : -1); v += d; mutations.push({ key: k, delta: +d.toFixed(2) }); }
+      if (rng.chance(mutate)) { const d = rng.range(TUNE.mutateMin, TUNE.mutateMax) * (rng.chance(0.5) ? 1 : -1); v += d; mutations.push({ key: k, delta: +d.toFixed(2) }); }
       traits[k] = clamp01(v);
     }
     for (const k of GKEYS) gait[k] = clamp01((a.gait[k] + b.gait[k]) / 2 + rng.gauss() * TUNE.drift);

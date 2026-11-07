@@ -28,7 +28,7 @@
     const free = new Set(members.map((p) => p.id));
     for (const seat of SEATS) {
       let best = null, bs = -1;
-      for (const id of free) { const p = S.people.get(id), f = seat.fit(p.genome.traits); if (f > bs) { bs = f; best = p; } }
+      for (const id of free) { const p = S.people.get(id), f = seat.fit(P.traits(p)); if (f > bs) { bs = f; best = p; } }
       if (!best) break;
       free.delete(best.id); best.role = seat.key; S.seats[seat.key] = best.id;
     }
@@ -53,14 +53,14 @@
     for (const p of S.people.values()) {
       if (!p.alive || p.role || p.commoner) continue;
       const age = P.ageOf(p, S.day); if (age < R.ADULT_AGE || age >= R.RETIRE_AGE) continue;
-      let f = seat.fit(p.genome.traits);
+      let f = seat.fit(P.traits(p));
       if (prev && p.clan === prev.clan) f += 0.3;          // cùng gia tộc với người vừa rời ghế
       if (prev && prev.children.includes(p.id)) f += 0.15;   // con của người vừa rời ghế
       if (want && p.sex === want) f += 0.1;
       if (f > bs) { bs = f; best = p; }
     }
     // không còn ai có tên đủ tuổi: lấy người dân thường đã cưới vào làng, còn hơn để ghế trống
-    if (!best) for (const p of S.people.values()) { if (!p.alive || p.role || !p.commoner) continue; const age = P.ageOf(p, S.day); if (age < R.ADULT_AGE || age >= R.RETIRE_AGE) continue; const f = seat.fit(p.genome.traits); if (f > bs) { bs = f; best = p; } }
+    if (!best) for (const p of S.people.values()) { if (!p.alive || p.role || !p.commoner) continue; const age = P.ageOf(p, S.day); if (age < R.ADULT_AGE || age >= R.RETIRE_AGE) continue; const f = seat.fit(P.traits(p)); if (f > bs) { bs = f; best = p; } }
     if (!best) return;
     best.role = seat.key; S.seats[seat.key] = best.id;
     S.log.push({ day: S.day, kind: 'seat', ids: [best.id], text: P.fullName(best) + ' lên làm ' + seatName(seat.key, best.sex) + (prev ? ', thay ' + P.fullName(prev) : '') + '.' });

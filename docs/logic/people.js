@@ -44,6 +44,8 @@
     };
   }
   const ageOf = (p, day) => (day - p.born) * R.AGE_PER_DAY;
+  // tính cách biểu hiện (gen gốc + dấu ngoại gen, logic/epigen.js): mọi chỗ ra quyết định đọc ở đây; lai gen dùng gen gốc
+  const traits = (p) => p.traits || p.genome.traits;
   const fullName = (p) => p.clan + ' ' + p.name;
 
   /* ---------- Họ hàng ---------- */
@@ -65,5 +67,5 @@
     return false;
   }
 
-  return { CLANS, GIVEN, pickName, create, ageOf, fullName, forbidden, cousins, ageStep };
+  return { CLANS, GIVEN, pickName, create, ageOf, traits, fullName, forbidden, cousins, ageStep };
 });

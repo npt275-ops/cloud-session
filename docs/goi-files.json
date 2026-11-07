@@ -75,6 +75,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/climate.js",
+  "src": "logic/climate.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/construction.js",
   "src": "logic/construction.js",
   "mode": 420
@@ -92,6 +97,11 @@
  {
   "path": "BeKinh/logic/economy.js",
   "src": "logic/economy.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/epigen.js",
+  "src": "logic/epigen.js",
   "mode": 420
  },
  {

@@ -62,8 +62,9 @@
     const n = only ? Math.min(room, only) : Math.min(room, Math.max(0, rng.int(C[0], C[1]) - (food < 0.5 ? 1 : 0))); // đói thì ít con hơn
     const clan = dad.commoner ? mom.clan : dad.clan, out = [];
     for (let i = 0; i < n; i++) {
-      const sex = rng.chance(0.5) ? 'm' : 'f', genome = G.cross(dad.genome, mom.genome, rng);
+      const sex = rng.chance(0.5) ? 'm' : 'f', genome = G.cross(dad.genome, mom.genome, rng, { mutate: BK.Epigen ? BK.Epigen.mutateBoost(S, S.day) : 1 }); // sinh ra lúc đảo khổ: dễ đột biến hơn
       const c = P.create({ id: S.nextId++, name: P.pickName(rng, sex, S.usedNames), clan, sex, born: S.day - i * 15, parents: [dad.id, mom.id], genome, gen: Math.max(dad.gen, mom.gen) + 1 });
+      if (BK.Epigen) BK.Epigen.inherit(c, mom); // nhận một phần dấu ngoại gen của mẹ
       S.people.set(c.id, c); S.usedNames.add(c.name); dad.children.push(c.id); mom.children.push(c.id); out.push(c);
       const notes = [];
       if (genome.mutations.length) notes.push('đột biến ' + genome.mutations.map((m) => G.traitName(m.key) + (m.delta > 0 ? ' tăng' : ' giảm')).join(', '));

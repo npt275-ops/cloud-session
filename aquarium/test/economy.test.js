@@ -1,7 +1,7 @@
 // Bể Kính · test/economy.test.js · Tài nguyên và lên cấp: mỗi đảo một nhịp, thiếu thứ gì thì kẹt ở đó (khi chưa có giao thương)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'construction', 'homes', 'brain', 'island', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const runs = [1, 2, 3].map((seed) => { const W = BK.World.create({ seed }); BK.World.jump(W, 9 * 360); return W; });
 

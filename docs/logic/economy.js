@@ -47,14 +47,14 @@
   const richOf = (S, r) => (RICH[S.key] || RICH.plains)[r] + (r === 'food' ? FISH[S.key] || 0 : 0); // cá cộng thêm vào lương thực trồng trọt
   const can = (S, r) => (S.level || 1) >= UNLOCK[r];
   // năng suất một người theo gen, đói thì kém
-  function skill(S, p) { const t = p.genome.traits; return Math.max(0.3, 0.75 + 0.5 * t.intellect - 0.2 * t.fear - 0.2 * t.meekness) * (state(S).hunger > 0 ? 0.7 : 1); }
-  // khí hậu của ngày: mùa đông lương thực trồng trọt kém; hạn hán (logic/island.js) lương thực rất kém
+  function skill(S, p) { const t = BK.People.traits(p); return Math.max(0.3, 0.75 + 0.5 * t.intellect - 0.2 * t.fear - 0.2 * t.meekness) * (state(S).hunger > 0 ? 0.7 : 1); }
+  // khí hậu của ngày: mùa đông lương thực trồng trọt kém; thiên tai (hạn hán, bão, cháy rừng...) theo logic/climate.js
   function climate(S, r, day) {
     const season = Math.floor(((day % BK.Rules.YEAR_DAYS) + BK.Rules.YEAR_DAYS) % BK.Rules.YEAR_DAYS / 90); // 0 xuân 1 hạ 2 thu 3 đông
     let k = 1;
-    if (r === 'food') { k *= [1, 1.15, 1.1, 0.45][season]; if (S.situ.drought > day) k *= 0.35; }
+    if (r === 'food') k *= [1, 1.15, 1.1, 0.45][season];
     if (r === 'wood' && season === 3) k *= 0.8;
-    return k;
+    return k * (BK.Climate ? BK.Climate.factor(S, r, day) : 1); // thiên tai đang có (logic/climate.js)
   }
   const tech = (lv) => 1 + 0.1 * (lv - 1); // công nghệ của thời: mỗi thời làm ra nhiều hơn 10%
   const nextCost = (S) => (S.level < BK.Eras.COUNT ? BK.Eras.of(S.level + 1).cost : null);

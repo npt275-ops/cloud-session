@@ -144,7 +144,7 @@
         if (!p.alive) continue;
         alive.add(p.id);
         const age = P.ageOf(p, S.day), f = ensure(p, age), mind = S.minds.get(p.id) || { state: 'idle' };
-        f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0), { seed: p.id * 1.7 });
+        f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
         let goal = goalOf(f, mind), meetVerb = null, meetGoal = null;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
         if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === p.id) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }

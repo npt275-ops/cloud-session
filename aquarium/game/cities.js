@@ -57,8 +57,9 @@
       if (villages[i]) { villages[i].setLevel(S.level); villages[i].setPlaces(buildings.places(i)); }
     }
     // nhãn thời kỳ của đảo đang xem
-    // nhãn thời kỳ của đảo đang xem: phần giỏ tài nguyên của thời sau đã gom được (logic/economy.js)
-    function eraLabel() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối'); }
+    // nhãn thời kỳ của đảo đang xem: phần giỏ tài nguyên của thời sau đã gom được (logic/economy.js), thiên tai đang có
+    // (logic/climate.js), đang đói
+    function eraLabel() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S, S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối') + (dis ? ' · ' + dis : '') + hungry; }
     function resyncAll() {
       syncLevels();
       for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]); villages[i].setPlaces(buildings.places(i)); } }

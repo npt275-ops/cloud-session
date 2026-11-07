@@ -130,6 +130,10 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   kim loại, năng lượng, hàng quý); mỗi đảo dồi dào vài thứ, gần như không có vài thứ. Người làm được chia việc theo nhu cầu
   (đủ ăn trước, rồi thứ giỏ thời sau còn thiếu), năng suất theo gen. Mỗi đảo lên cấp riêng khi nộp đủ giỏ tài nguyên, nên có
   đảo không chạm tới thời 12. Đói thì không sinh con, bạo loạn dễ nổ. Nút ◀ ▶ (dev) đặt thẳng cả sáu đảo vào một thời.
+- **Khí hậu và ngoại gen** (`logic/climate.js`, `logic/epigen.js`): mỗi đảo một bộ thiên tai theo mùa (hạn hán, lũ, cháy rừng,
+  sạt lở, rét đậm, bão tuyết, bão biển, bão cát, nắng nóng) cộng dịch bệnh hiếm gặp, làm sản xuất kém đi, bắt dân trú bão, có
+  thể có người mất. Nghịch cảnh (đói, thiên tai, chiến tranh, mất người thân) để lại dấu ngoại gen lên tính cách biểu hiện,
+  phai dần khi yên ổn, truyền một phần cho con; sinh ra lúc khổ dễ đột biến hơn. Thẻ người hiện dấu ngoại gen từng chỉ số.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

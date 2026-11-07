@@ -239,6 +239,31 @@ Mỗi cặp đảo lưu các chỉ số sau. Chúng thay đổi theo từng vi�
 
 ---
 
+### 8.1 Đã làm ở bước 3
+- **Thiên tai theo đảo và theo mùa** (`logic/climate.js`):
+  - Lúa Vàng: hạn hán mùa hạ, lũ mùa xuân.
+  - Thông Xanh: cháy rừng.
+  - Đá Mây: sạt lở, rét đậm.
+  - Tuyết Trắng: bão tuyết mùa đông.
+  - Cửa Sóng: bão biển mùa thu.
+  - Cát Hồng: bão cát, nắng nóng.
+  - Mọi đảo: dịch bệnh hiếm gặp.
+- **Mỗi thiên tai có:**
+  - hệ số sản xuất từng loại tài nguyên;
+  - độ căng thẳng;
+  - có bắt dân trú trong nhà không (bão; lính gác vẫn giữ chốt);
+  - khả năng người yếu mất.
+  Mức nặng nhẹ mỗi lần một khác.
+- **Ngoại gen** (`logic/epigen.js`):
+  - Tính cách biểu hiện = gen gốc + dấu ngoại gen. Mọi chỗ ra quyết định đọc tính cách biểu hiện (`People.traits`); lai gen dùng gen gốc.
+  - Dấu tăng theo nghịch cảnh:
+    - đói: đa nghi và hiếu chiến tăng;
+    - thiên tai: người vốn sợ thì càng sợ, ai cũng sùng đạo hơn;
+    - chiến tranh: người gan càng hiếu chiến, người nhát càng sợ;
+    - mất người thân: sùng đạo và sợ hãi tăng.
+  - Dấu phai dần khi yên ổn. Con nhận 40% dấu của mẹ. Sinh ra lúc đảo khổ thì đột biến nhiều tới 2,5 lần.
+- **Kết quả chạy thử:** khi chưa có giao thương, các đảo thiếu lương thực (Thông Xanh, Đá Mây, Cát Hồng) đói triền miên. Dân dần hoá nóng nảy, có trận tới 29/36 người lớn, trong khi đảo no đủ gần như không đổi tính. Đây là mầm cho đột kích và chiến tranh ở bước 5.
+
 ## 9. Vì sao kết quả không đoán trước được, mà vẫn hợp lý
 
 | Nguồn | Cách |
@@ -294,7 +319,7 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 |---|---|---|
 | 1 ✅ | Dân cho 6 đảo: `logic/world.js` (đồng hồ chung, bước cố định), gia tộc và nét gen riêng, hiển thị dân ở đảo gần camera (`game/cities.js`); người đi, xe chạy theo giờ game | Cả 6 đảo có dân, đủ vị trí cứng; cùng seed chạy 1×, 2×, 4× ra cùng lịch sử (`test/world.test.js`) |
 | 2 ✅ | Kinh tế và lên cấp theo tài nguyên (`logic/economy.js`, giỏ ở `logic/eras.js`); mỗi đảo một cấp riêng | Các đảo lên cấp khác nhau; khi chưa có giao thương, đảo nào cũng dừng ở thời bắt đầu cần thứ mình gần như không có (`test/economy.test.js`) |
-| 3 | Khí hậu và ngoại gen | Nghịch cảnh làm đổi hành vi và đổi tỉ lệ đột biến đo được |
+| 3 ✅ | Khí hậu và ngoại gen (`logic/climate.js`, `logic/epigen.js`); mọi chỗ ra quyết định đọc tính cách biểu hiện | Mỗi đảo đúng thiên tai của mình; đói lâu làm dân đa nghi, hiếu chiến; con sinh lúc khổ đột biến nhiều hơn (`test/climate.test.js`) |
 | 4 | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu) | Có giao thương và hiệp ước; quan hệ có trí nhớ |
 | 5 | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính) | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy |
 | 6 | Bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |

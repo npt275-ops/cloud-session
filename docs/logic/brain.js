@@ -17,8 +17,9 @@
   const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate', 'gateL', 'gateR', 'podium', 'hallLoop', 'woods', 'quarry', 'plant']; // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân; hallLoop: vòng đi dạo quanh nhà chính; woods, quarry, plant: chỗ đốn gỗ, mỏ đá, chỗ làm năng lượng // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
-  function knobs(genome, stress) {
-    const t = genome.traits, g = genome.gait, s = stress || 0;
+  // traits: tính cách biểu hiện (gen gốc + ngoại gen); thiếu thì dùng gen gốc
+  function knobs(genome, stress, traits) {
+    const t = traits || genome.traits, g = genome.gait, s = stress || 0;
     const c = (v) => Math.max(0, Math.min(1, v));
     return {
       tempo: 0.7 + 0.5 * g.tempo + 0.4 * t.aggression - 0.25 * t.meekness + 0.3 * s,   // nhịp: hiếu chiến, căng thẳng thì nhanh
@@ -33,7 +34,7 @@
   /* ---------- Chọn việc cho một người ---------- */
   // trả về { state, mood, target, place, intensity, until } (mood: 'argue' | 'pray' | null)
   function decide(S, p, rng) {
-    const t = p.genome.traits, X = S.situ, day = S.day, age = P.ageOf(p, day);
+    const t = P.traits(p), X = S.situ, day = S.day, age = P.ageOf(p, day);
     const d = (state, o) => Object.assign({ state, mood: null, target: null, place: null, intensity: 0.5, until: day + rng.range(0.15, 0.6) }, o);
     const king = S.seats.king != null ? S.seats.king : null;
     const ph = BK.Schedule ? BK.Schedule.phase(S.tod) : null, night = ph === 'night';
@@ -41,6 +42,8 @@
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà
+    // bão, bão tuyết, bão cát (logic/climate.js): ai cũng trú trong nhà, trừ lính gác cổng
+    if (BK.Climate) { const c = BK.Climate.taskFor(S, p, d); if (c) return c; }
     // drama (logic/dramas.js): người trong drama bỏ việc thường ra tham gia (tan thì lịch thường đưa về đúng việc của mình);
     // người ngoài drama mà sợ nó (avoid: người nhút nhát khi có bạo loạn) thì ở trong nhà
     if (BK.Dramas && !(X.war > day)) { const dt = BK.Dramas.taskFor(S, p, d); if (dt) return dt; }
@@ -111,7 +114,7 @@
   }
   // độ căng thẳng 0..1 của một người lúc này
   function stressOf(S, p) {
-    const X = S.situ, t = p.genome.traits, day = S.day;
+    const X = S.situ, t = P.traits(p), day = S.day;
     let s = 0;
     if (X.war > day) s = Math.max(s, 0.5 + 0.5 * Math.max(t.fear, t.aggression));
     if (X.drought > day) s = Math.max(s, 0.3 + 0.4 * t.paranoia + 0.3 * t.fear);

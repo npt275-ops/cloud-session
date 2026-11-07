@@ -7,8 +7,9 @@
  * Buổi trong ngày (S.tod, phần chạy game ghi vào) quyết định việc ngày thường (logic/schedule.js, logic/tasks.js); công trình của
  * mỗi thời được dựng dần (logic/construction.js, danh sách lấy từ o.buildPlan(cấp)).
  * Drama trong thành phố (logic/dramas.js) chạy mỗi nhịp: gom người cùng tính cách bỏ việc ra tham gia, tan thì về việc cũ.
+ * Khí hậu, thiên tai (logic/climate.js) và ngoại gen (logic/epigen.js) chạy mỗi ngày.
  * Cần: logic/rng.js, rules.js, genes.js, people.js, family.js, council.js, temper.js, posts.js, jobs.js, eras.js, schedule.js, tasks.js,
- * dramas.js, economy.js, construction.js, brain.js. */
+ * dramas.js, economy.js, climate.js, epigen.js, construction.js, brain.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Island = factory(BK);
@@ -67,35 +68,32 @@
     // già đi và mất
     for (const p of S.people.values()) if (P.ageStep(p, day, rng)) { S.deaths++; S.log.push({ day, kind: 'death', ids: [p.id], text: P.fullName(p) + ' qua đời ở tuổi ' + Math.round(P.ageOf(p, day)) + '.' }); if (p.role) S.situ.mourning = day + 4; S.situChanged = true; }
     CO.update(S);
-    // hạn hán: mỗi mùa hạ có thể có một đợt
-    const doy = day % R.YEAR_DAYS;
-    if (doy === 100 && rng.chance(R.DROUGHT_CHANCE)) startDrought(S, rng.int(R.DROUGHT_DAYS[0], R.DROUGHT_DAYS[1]));
-    // hạn hán kéo dài thì dân bất bình kéo tới nhà chính biểu tình (người đa nghi, hiếu chiến dẫn đầu)
-    // hạn hán làm dân bất bình: bạo loạn dễ nổ ra hơn (logic/dramas.js riot.boost)
+    // khí hậu và thiên tai của đảo (logic/climate.js): hạn hán, lũ, bão, cháy rừng, dịch bệnh... đúng mùa của từng đảo
+    BK.Climate.dayTick(S, day, rng);
     // mốc thế hệ
     if (day >= S.nextGenDay) { S.gen++; S.nextGenDay += R.GEN_DAYS; S.log.push({ day, kind: 'gen', ids: [], text: 'Thế hệ thứ ' + (S.gen + 1) + ' bắt đầu.' }); const n0 = S.people.size; F.generation(S, rng); S.births += S.people.size - n0; S.situChanged = true; }
     else if (F.trickle) { const kids = F.trickle(S, rng); if (kids && kids.length) { S.births += kids.length; S.situChanged = true; } }
-    // thời kỳ văn minh: lên cấp theo lịch của logic/eras.js
     if (J) J.assign(S);
     if (H) H.assign(S);
     // kinh tế (logic/economy.js): làm ra, ăn, cất kho; đủ giỏ tài nguyên của thời sau thì lên cấp
     if (BK.Economy.dayTick(S, day, rng)) { const l = S.level; S.log.push({ day, kind: 'era', ids: [], text: S.name + ' bước sang ' + E.of(l).name + ': ' + E.of(l).tech + '.' }); if (K) K.setEra(S, l); BK.Dramas.onEra(S, rng); S.situChanged = true; }
     if (K) K.dayTick(S, day);
+    // ngoại gen (logic/epigen.js): nghịch cảnh hôm nay để lại dấu lên tính cách, yên ổn thì phai dần
+    BK.Epigen.dayTick(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;
   }
 
   /* ---------- Tình huống (dùng cho thời tiết thật và cho nút thử) ---------- */
-  function startDrought(S, days) { S.situ.drought = S.day + days; S.situChanged = true; S.log.push({ day: Math.floor(S.day), kind: 'drought', ids: [], text: 'Hạn hán kéo đến ' + S.name + ', ruộng nứt nẻ.' }); }
   function trigger(S, kind) {
     const rng = S.rng, day = S.day;
-    if (kind === 'drought') startDrought(S, 20);
+    if (BK.Climate.HAZARDS[S.key] && Object.values(BK.Climate.HAZARDS).flat().concat([BK.Climate.PLAGUE]).some((z) => z.key === kind)) BK.Climate.start(S, kind, 20, 1); // thử một thiên tai (logic/climate.js)
     else if (kind === 'war') { S.situ.war = day + 6; S.log.push({ day: Math.floor(day), kind: 'war', ids: [], text: 'Lệnh chiến tranh được ban ra.' }); }
     else if (kind === 'protest') { if (!BK.Dramas.start(S, 'riot', rng, { stage: 1 })) S.log.push({ day: Math.floor(day), kind: 'drama', ids: [], text: 'Không đủ người nóng tính hưởng ứng, bạo loạn không thành.' }); } // bạo loạn kéo thẳng tới nhà chính
     else if (BK.Dramas.BY_KEY[kind]) BK.Dramas.start(S, kind, rng); // thử một drama (logic/dramas.js)
     else if (kind === 'festival') { S.situ.festival = day + 4; S.log.push({ day: Math.floor(day), kind: 'festival', ids: [], text: 'Làng mở hội.' }); }
     else if (kind === 'quarrel') { const adults = [...S.people.values()].filter((p) => p.alive && P.ageOf(p, day) >= R.ADULT_AGE); if (adults.length > 1) { const a = rng.pick(adults); let b = rng.pick(adults); while (b === a) b = rng.pick(adults); S.situ.quarrel = null; B.startQuarrel(S, a.id, b.id, rng); } }
-    else if (kind === 'calm') { for (const A of [...BK.Dramas.active(S)]) BK.Dramas.end(S, A); S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [], text: 'Mọi chuyện lắng xuống.' }); }
+    else if (kind === 'calm') { for (const A of [...BK.Dramas.active(S)]) BK.Dramas.end(S, A); for (const e of BK.Climate.active(S, day)) e.until = day; S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [], text: 'Mọi chuyện lắng xuống.' }); }
     else if (kind === 'nextGen') { const d = Math.max(0, S.nextGenDay - S.day); step(S, d + 0.01); return; }
     S.situChanged = true; B.think(S, rng);
   }

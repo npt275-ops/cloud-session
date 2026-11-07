@@ -12,8 +12,8 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const NAME = { gatekeeper: 'Lính gác cổng chính', sideguard: 'Lính gác cổng phụ', orator: 'Người diễn thuyết', soldier: 'Lính', builder: 'Thợ xây', trader: 'Thương nhân', worker: 'Người làm', walker: 'Người đi đường', elder: 'Người già', child: 'Trẻ em' };
-  // chọn theo tính cách: lấy n người có điểm cao nhất trong số còn trống, gán việc
-  const take = (pool, n, score, job) => { pool.sort((a, b) => score(b.genome.traits, b) - score(a.genome.traits, a)); pool.splice(0, Math.max(0, n)).forEach((p) => { p.job = job; }); };
+  // chọn theo tính cách biểu hiện (gen gốc + ngoại gen, logic/epigen.js): lấy n người có điểm cao nhất trong số còn trống, gán việc
+  const take = (pool, n, score, job) => { pool.sort((a, b) => score(BK.People.traits(b), b) - score(BK.People.traits(a), a)); pool.splice(0, Math.max(0, n)).forEach((p) => { p.job = job; }); };
   function assign(S) {
     const R = BK.Rules, P = BK.People, day = S.day, pool = [];
     for (const p of S.people.values()) {

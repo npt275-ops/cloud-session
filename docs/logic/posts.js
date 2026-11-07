@@ -40,7 +40,7 @@
       const take = (p) => { const i = pool.indexOf(p); if (i >= 0) pool.splice(i, 1); };
       for (const p of kept) { p.job = X.job; take(p); }
       // chốt còn trống: người hợp nhất (và chưa giữ chốt khác); thiếu người lớn thì (chốt nhận người già) lấy người già
-      const cand = src.filter((p) => !kept.includes(p) && (pool.includes(p) || p.job === 'elder')).sort((a, b) => (pool.includes(b) ? 1 : 0) - (pool.includes(a) ? 1 : 0) || X.score(b.genome.traits) - X.score(a.genome.traits));
+      const cand = src.filter((p) => !kept.includes(p) && (pool.includes(p) || p.job === 'elder')).sort((a, b) => (pool.includes(b) ? 1 : 0) - (pool.includes(a) ? 1 : 0) || X.score(BK.People.traits(b)) - X.score(BK.People.traits(a)));
       for (let k = 0; k < n; k++) {
         if (used.has(k)) continue;
         const p = cand.shift(); if (!p) break;

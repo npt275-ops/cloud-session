@@ -38,8 +38,6 @@
 
     // bộ não: vài lần mỗi ngày trong game, mỗi người quyết định làm gì
     THINK_PER_DAY: 6,
-    DROUGHT_CHANCE: 0.35,                // xác suất có hạn hán vào mỗi mùa hạ
-    DROUGHT_DAYS: [18, 40],
     // dàn vai của một đảo (logic/jobs.js): hội đồng 8 ghế (vua, 2 tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả),
     // thêm thợ cho đủ 4 người dựng và sửa nhà, thêm 1 người bán hàng cho đủ 2 thương nhân, một phần người lớn làm lính,
     // còn lại là dân: người làm ra tài nguyên (logic/economy.js) và người đi đường (đi lại, mua bán, trò chuyện)

@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày
@@ -83,9 +83,9 @@ test('bộ não: cùng lệnh chiến tranh, người máu chiến ra đánh, ng
   assert.ok(k1.tempo > k2.tempo && k1.amplitude > k2.amplitude && k1.lean > 0 && k2.lean < 0 && k2.jitter > k1.jitter);
 });
 
-test('hạn hán mùa hạ có thể xảy ra và làm thiếu lương thực, ít con hơn', () => {
+test('hạn hán mùa hạ có thể xảy ra ở Lúa Vàng (logic/climate.js)', () => {
   let droughts = 0;
-  for (const seed of [1, 2, 3, 4, 5, 6]) droughts += runMatch(seed).log.filter((e) => e.kind === 'drought').length;
+  for (const seed of [1, 2, 3, 4, 5, 6]) droughts += (runMatch(seed).climate.count.drought || 0);
   assert.ok(droughts >= 3, 'sáu trận, chín năm mỗi trận, phải có vài đợt hạn: ' + droughts);
 });
 

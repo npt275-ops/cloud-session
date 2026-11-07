@@ -27,12 +27,13 @@
   // gen, nên tính cách nổi trội so theo điểm chuẩn hoá (z), để sáu tính cách công bằng như nhau
   for (const T of TEMPERS) { T.sd = 0.2 * Math.sqrt(Object.values(T.w).reduce((s, v) => s + v * v, 0)); T.score = (t) => { let s = 0.5; for (const k in T.w) s += T.w[k] * (t[k] - 0.5); return s; }; }
   const BY_KEY = Object.fromEntries(TEMPERS.map((T) => [T.key, T]));
+  const tr = (p) => p.traits || p.genome.traits; // tính cách biểu hiện (gen gốc + ngoại gen, logic/epigen.js)
   // điểm hợp của một người với một (hay vài) tính cách: điểm thô cao nhất
-  const fit = (p, keys) => Math.max(...[].concat(keys).map((k) => BY_KEY[k].score(p.genome.traits)));
+  const fit = (p, keys) => Math.max(...[].concat(keys).map((k) => BY_KEY[k].score(tr(p))));
   // tính cách nổi trội: điểm chuẩn hoá cao nhất
   function of(p) {
     let best = TEMPERS[0], bs = -1e9;
-    for (const T of TEMPERS) { const z = (T.score(p.genome.traits) - 0.5) / T.sd; if (z > bs) { bs = z; best = T; } }
+    for (const T of TEMPERS) { const z = (T.score(tr(p)) - 0.5) / T.sd; if (z > bs) { bs = z; best = T; } }
     return best.key;
   }
   const nameOf = (k) => (BY_KEY[k] ? BY_KEY[k].name : k);
