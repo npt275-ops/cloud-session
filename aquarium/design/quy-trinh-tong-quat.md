@@ -301,11 +301,7 @@ Mỗi cặp đảo lưu các chỉ số sau. Chúng thay đổi theo từng vi�
   - 7 cuộc nổi dậy: 3 giành lại độc lập, 4 bị dập tắt.
   - Cuối trận: 26 trận đấu cả 6 đảo độc lập, 4 trận đấu còn 5. Đảo thắng nhiều nhất khác nhau giữa các trận đấu (Cửa Sóng 2, Tuyết Trắng 1, Cát Hồng 1).
   - So với tắt chiến tranh (10 seed): chết đói gần như bằng nhau (183 so với 181); phần lính trung bình 27% so với 21%.
-- **Chưa đạt, để bước 6 cân chỉnh:**
-  - Mục tiêu ở mục 9 là "có trận đấu chỉ còn 2–3 đảo", nhưng hiện nhiều nhất mới mất 1 đảo.
-  - Thông Xanh hay là đảo bị đánh.
-  - Hai đảo bị trận chiến lấy mất thì đảo chậm lên cấp vẫn chậm.
-- **Chưa làm:** cướp đoàn buôn trên đường, cầu quân sự (một đảo tự bắc để đánh).
+- **Chưa đạt, chưa làm:** gom hết vào bước 6 (mục 12.1).
 
 ---
 
@@ -411,5 +407,47 @@ Mỗi bước đều có bài kiểm thử chạy bằng Node.
 | 3 ✅ | Khí hậu và ngoại gen (`logic/climate.js`, `logic/epigen.js`); mọi chỗ ra quyết định đọc tính cách biểu hiện | Mỗi đảo đúng thiên tai của mình; đói lâu làm dân đa nghi, hiếu chiến; con sinh lúc khổ đột biến nhiều hơn (`test/climate.test.js`) |
 | 4 ✅ | Chiến lược, quan hệ, giao thương (đoàn buôn đi thật, xây cầu): `logic/strategy.js`, `logic/diplomacy.js`, `render/travel3d.js` | Có giao thương và hiệp ước; quan hệ có trí nhớ; giao thương làm số người chết đói giảm hơn một nửa (`test/strategy.test.js`) |
 | 5 ✅ | Chiến tranh và sáp nhập (quân đi thật, đánh ở cổng, chiếm nhà chính): `logic/war.js`, `logic/strategy.js` tryWar, `render/war3d.js` | Có trận sáp nhập; đảo bị sáp nhập có thể nổi dậy, thắng hay thua không đoán trước (`test/war.test.js`) |
-| 6 | Bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
+| 6 | Giải quyết nốt mọi việc chưa ổn của bước 2–5 (mục 12.1); bảng dev "Cuộc đua", nhật ký chung; cân chỉnh bằng chạy hàng loạt | Hết danh sách 12.1; phân bố kết quả 100 trận đạt mục tiêu ở mục 9 |
+| 7 | NPC sống thật (`design/npc-song-that.md`): mỗi người một hoạt động có đầu vào, đầu ra ở chỗ thật; sự kiện thành cảnh có hành động thật (gọi quân, đánh ở cổng, vào thành, kéo cờ, nổi dậy, đói, đám tang) | Không ai làm việc ở chỗ không phải chỗ làm; chuỗi ảnh mỗi sự kiện; khung hình trên điện thoại không tụt |
 | (sau) | Vai trò người chơi: thêm vào lớp Môi trường hay lớp khác khi chốt | – |
+
+### 12.1 Bước 6: việc chưa ổn gom lại
+
+**Dân số và lên cấp**
+1. **Cơ cấu dân lệch.** Có lúc 13–17 người già trên 50 dân.
+   - Chín chốt cứng (gác cổng, diễn thuyết) chiếm gần nửa số người lớn làm việc.
+   - Hệ quả: mỗi đảo chỉ còn 2–7 lính và ít người làm.
+   - Cần xem lại tuổi già, nhịp sinh, trần dân, hay mở chốt theo số dân (chốt vẫn đúng kịch bản 4 + 2 + 2 + 1 khi đảo đủ người).
+2. **Thông Xanh và Cát Hồng hay kẹt ở thời 4**, và vẫn có người chết đói (khoảng 18 người mỗi trận đấu). Lý do: thiếu người, đất nuôi ít.
+3. **Thông Xanh thường là đảo bị đánh**, vì yếu nhất.
+
+**Chiến tranh**
+
+4. **Chiến tranh còn nhẹ hơn mục tiêu ở mục 9.** Chạy 30 trận đấu, nhiều nhất mới mất 1 đảo; chưa có trận đấu nào chỉ còn 2–3 đảo.
+5. **Nhịp trận quá nhanh để nhìn:** một ngày logic dài 1,33 giây ở 1×.
+   - Đánh theo từng giờ (1/12 ngày), thay vì từng ngày.
+   - Vây cổng, đánh vào thành, nổi dậy kéo dài nhiều ngày; nổi dậy không giải quyết gọn trong một ngày nữa.
+   - Đây là phần logic cần cho bước 7, nên làm trước khi cân chỉnh.
+6. **Kiểm lại hướng cổng:** cổng phụ trái, phải (`logic/posts.js` gateLeft, gateRight) có đúng phía đảo bên cạnh `L.landing[0]`, `L.landing[1]` không.
+7. **Chưa làm:**
+   - cướp đoàn buôn trên đường khi có đảo thù địch;
+   - cầu quân sự (một đảo tự bắc cầu để đánh);
+   - người đứng đầu xét giúp đỡ đảo mình đang cai quản khi nó đói.
+
+**Giao thương**
+
+8. **Đoàn buôn chưa đi trên đường trong đảo:** thuyền cập bờ, xe chỉ chạy trên cầu. Việc khuân hàng từ kho ra bến làm ở bước 7.
+
+**Trận mở mặc định và dev**
+
+9. **Trận mặc định (seed 42) chỉ có 2 lần đột kích.** Chọn seed mặc định sau khi cân chỉnh, hoặc để dev chọn seed.
+10. **Bảng dev "Cuộc đua" và nhật ký chung đầy đủ** (mục 10). Mỗi tin trong nhật ký bấm vào thì bay máy quay tới chỗ đó.
+11. **Nhật ký chỉ giữ 600 dòng mỗi đảo, 400 dòng cả bể.** Bảng dev cần đếm theo số liệu (`W.warStats`…), không đếm chữ.
+
+**Dọn dẹp và cân chỉnh**
+
+12. **Dọn chỗ thừa:** `Rules.NAMED_CAP` không còn dùng.
+13. **Cân chỉnh bằng 100 trận** sau khi xong các mục trên:
+    - phân bố cấp cuối;
+    - số trận đánh, sáp nhập, nổi dậy, chết đói;
+    - đảo nào thắng.
