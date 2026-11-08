@@ -2,7 +2,7 @@
 // đầu hàng, quỳ, sửa lại, tiễn quân, vai của dân trong trận
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, War = BK.War, Siege = BK.Siege, E = BK.Economy, living = BK.Island.living;
 
 // dựng sẵn: tới ngày 500, đảo a (thêm extra lính) đánh đảo b; weak: lính đảo b đi vắng hết
@@ -28,7 +28,8 @@ test('tiễn quân: quân tập hợp ở cổng, người nhà ra cổng tiễn
 
 test('đi thuyền thì đánh cổng chính, qua cầu thì đánh cổng phụ đầu cầu; người giữ cổng gồm lính gác đúng cổng và dân tự nguyện', () => {
   const { W, w } = setup(3, 2, 1, 10), B = W.islands[1];
-  assert.ok(until(W, () => w.stage === 'gate', 12 * 30));
+  // (qua cảnh đấu tướng, vây thành nếu có: logic/battles.js)
+  assert.ok(until(W, () => w.stage === 'gate' && !(w.duel && !w.duel.done) && !(w.blockade && !w.blockade.done), 12 * 60));
   assert.strictEqual(w.gate, w.by === 'bridge' ? (BK.War.sideOf(1, 2) ? 'gateR' : 'gateL') : 'gate');
   const sg = B.situ.siege, def = sg.def.map((id) => B.people.get(id));
   assert.ok(def.length >= 3, 'người giữ ' + def.length);
@@ -81,6 +82,8 @@ test('công trình hư: sản lượng giảm theo độ bền, nhà cháy thì 
   assert.ok(S.repairJob && Siege.damaged(S).includes(S.repairJob.key), 'có việc sửa');
   // thợ tới chỗ hư (ban ngày: một vòng ngày đêm dài nhiều ngày lịch, nên đặt giờ buổi sáng rồi cho mọi người nghĩ lại)
   for (let k = 0; k < 100 && BK.Schedule.phase(S.tod) !== 'morning'; k++) S.tod = k / 100;
+  // (không có lễ hội, drama lúc kiểm: thợ dự lễ là việc hợp lệ, logic/prosperity.js)
+  S.situ.festival = 0; for (const A of [...BK.Dramas.active(S)]) BK.Dramas.end(S, A);
   S.situChanged = true; BK.Brain.think(S, W.rng);
   const fixers = living(S).filter((q) => q.job === 'builder' || q.role === 'builder').map((q) => S.minds.get(q.id)).filter((m) => m && m.verb === 'repair' && /^ruin:/.test(m.place));
   assert.ok(fixers.length >= 1, 'thợ đi sửa chỗ hư');

@@ -1,7 +1,7 @@
 // Bể Kính · test/scenes.test.js · Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, living = BK.Island.living;
 const until = (W, cond, max) => { for (let k = 0; k < max && !cond(); k++) BK.World.tick(W); return cond(); };
 const morningOf = (W, S) => until(W, () => BK.Schedule.phase(S.tod) === 'morning', 12 * 140);

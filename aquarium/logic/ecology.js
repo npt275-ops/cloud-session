@@ -192,7 +192,7 @@
   }
   // không qua lại, không buôn bán giữa a và b: một bên đóng cầu (qua cầu) hay bị cấm vận
   function blocked(W, a, b, day) {
-    const shut = (i) => W.islands[i].closed && W.islands[i].closed.until > day;
+    const shut = (i) => (W.islands[i].closed && W.islands[i].closed.until > day) || W.islands[i].situ.blockade > day; // đóng cầu vì dịch, hay bị vây (logic/battles.js)
     if ((shut(a) || shut(b)) && D().hops(a, b) === 1) return true;
     return !!(W.embargo && (W.embargo[a] > day || W.embargo[b] > day));
   }
@@ -222,7 +222,7 @@
         const seat = gen.role; if (seat) S.seats[seat] = null;
         if (old && old.alive) { old.role = null; S.situ.kneel = { id: old.id, until: day + 1, ruler: i }; }
         gen.role = 'king'; S.seats.king = gen.id; S.lastKing = gen.id; S.policy = null; S.discontent = 0.15; BK.Council.update(S);
-        W.ecoStats.coups++;
+        W.ecoStats.coups++; if (BK.Chronicle) BK.Chronicle.add(W, day, i, P().fullName(gen) + ' đảo chính ở ' + S.name, 4, 'hall');
         say(W, day, P().fullName(gen) + ' đảo chính ở ' + S.name + ', lật ' + (old ? P().fullName(old) : 'người đứng đầu') + ' (vì ' + C.why + ').', [i]);
         note(S, day, 'seat', P().fullName(gen) + ' lên làm người đứng đầu sau cuộc đảo chính.', [gen.id]);
       }

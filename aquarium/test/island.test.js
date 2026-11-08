@@ -1,7 +1,7 @@
 // Bể Kính · kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium.
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, { Island, Genes, People, Brain, Rules, Rng } = BK;
 
 // chạy trọn chín năm, mỗi lần một ngày

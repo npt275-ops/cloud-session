@@ -35,7 +35,7 @@
     // giữa các đảo (logic/diplomacy.js, logic/strategy.js): quan hệ, đoàn buôn, hiệp ước, cầu; o.diplomacy === false thì sáu đảo
     // sống riêng; o.war === false thì có giao thương nhưng không ai đánh ai (để so sánh trong kiểm thử)
     W.diplomacy = o.diplomacy !== false && !!BK.Diplomacy; W.war = W.diplomacy && o.war !== false && !!BK.War; W.rng = BK.Rng.create(seed * 31 + 7);
-    if (W.diplomacy) { BK.Diplomacy.init(W); BK.War.init(W); if (BK.Ecology) BK.Ecology.init(W); }
+    if (W.diplomacy) { BK.Diplomacy.init(W); BK.War.init(W); if (BK.Ecology) BK.Ecology.init(W); if (BK.Chronicle) BK.Chronicle.init(W); if (BK.Prosperity) BK.Prosperity.init(W); }
     return W;
   }
   // sang ngày mới: việc giữa các đảo (đoàn buôn tới nơi, quan hệ phai dần, các trận đánh, người đứng đầu xét tình hình)
@@ -47,6 +47,9 @@
     BK.Diplomacy.dayTick(W, day);
     if (W.war) BK.War.dayTick(W, day, W.rng);
     BK.Strategy.dayTick(W, day, W.rng);
+    // thịnh vượng, suy tàn (logic/prosperity.js); biên niên, nhân vật, nhịp kịch tính (logic/chronicle.js)
+    if (BK.Prosperity) BK.Prosperity.dayTick(W, day, W.rng);
+    if (BK.Chronicle) BK.Chronicle.dayTick(W, day, W.rng);
   }
   // một bước cố định: lịch và giờ trong ngày đi trước, rồi sáu đảo lần lượt theo thứ tự, rồi các trận đánh từng giờ
   // (logic/war.js), sang ngày mới thì việc giữa các đảo

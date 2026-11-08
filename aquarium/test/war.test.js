@@ -1,7 +1,7 @@
 // Bể Kính · test/war.test.js · Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
@@ -31,7 +31,7 @@ test('đi đánh là người thật rời đảo: không làm ở nhà, đi m�
 test('chiếm nhà chính thì sáp nhập: kho sang đảo thắng, người cai quản từ đảo thắng, dùng chung thời, có quân đóng giữ', () => {
   const { W, w } = setup(3, 2, 1, 'conquer'), A = W.islands[2], B = W.islands[1];
   E.state(B).stock.wood = 300; const wood0 = E.state(A).stock.wood, pop = living(B).length;
-  run(W, 30);
+  run(W, 60); // (vây thành có thể kéo dài tới 24 ngày, logic/battles.js)
   assert.strictEqual(B.annexedBy, 2, 'Thông Xanh thuộc về Đá Mây');
   assert.ok(E.state(A).stock.wood > wood0, 'gỗ chuyển sang đảo thắng');
   const gov = B.people.get(B.seats.king);

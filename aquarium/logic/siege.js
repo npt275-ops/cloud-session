@@ -103,7 +103,7 @@
     const K = S.seats.king != null ? S.people.get(S.seats.king) : null;
     if (!K || !K.alive) return lostShare > 0.7 && rng.chance(0.5) ? 'không còn người chỉ huy' : null;
     const t = P().traits(K), base = 0.08 + 0.55 * t.fear + 0.4 * t.meekness - 0.45 * t.aggression - 0.3 * t.ambition;
-    return rng.chance(Math.max(0, Math.min(0.9, 0.3 * base * (0.2 + lostShare)))) ? 'cứu dân' : null;
+    return rng.chance(Math.max(0, Math.min(0.9, 0.2 * base * (0.2 + lostShare)))) ? 'cứu dân' : null;
   }
 
   /* ---------- Vai của từng người trong trận (logic/brain.js hỏi trước mọi việc khác) ---------- */
@@ -121,6 +121,10 @@
     if (X.alarm > day && !X.siege && !isGuard(p) && S.seats.king !== p.id) { const lodge = lodging(S, p); return d(t.fear > 0.6 ? 'panic' : 'work', Object.assign({ verb: 'hide', reason: 'báo động tên lửa, vào nhà trốn' }, lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' }, short)); }
     const sg = X.siege; if (!sg) return null;
     const di = sg.def.indexOf(p.id), n = sg.foes.length;
+    // vây thành (logic/battles.js): lính canh ở cổng, dân vẫn sống như thường (đói thì xếp hàng nhận khẩu phần)
+    if (sg.stage === 'blockade') return di >= 0 ? d('work', Object.assign({ verb: 'watch', place: sg.gate, reason: 'canh cổng, giặc dựng trại vây ngoài thành' }, short)) : null;
+    // đấu tướng: tướng bên mình đánh tướng giặc, người giữ cổng đứng xem hò reo
+    if (sg.stage === 'duel' && sg.duel) { if (p.id === sg.duel.b) return d('attack', Object.assign({ target: 'w' + sg.duel.ai + ':' + sg.duel.a, place: sg.gate, reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate, reason: 'xem hai tướng đấu tay đôi' }, short)); return null; }
     const foe = (k) => (n ? 'w' + sg.foes[k % n].i + ':' + sg.foes[k % n].id : null);
     const fight = (place, why) => d('attack', Object.assign({ target: foe(di), place, reason: why, intensity: 0.5 + 0.5 * t.aggression }, short));
     if (S.seats.king === p.id) return d('work', Object.assign({ verb: 'command', place: 'hall', reason: sg.stage === 'hall' ? 'chỉ huy giữ nhà chính' : 'chỉ huy giữ thành từ nhà chính' }, short));

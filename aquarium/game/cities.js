@@ -206,6 +206,8 @@
       // trận trên đảo (logic/war.js onIsland): quân giặc, quân đồng minh tới giúp, quân đóng giữ là người thật mặc màu đảo mình,
       // mỗi người một việc theo chặng trận (đánh cổng, khuân hàng cướp, đốt phá, vây nhà chính)
       world.islands.forEach((S, i) => { for (const x of BK.War.onIsland(world, i)) guests[i].push({ key: x.key, p: x.p, level: isle(x.i).level, mind: x.mind, enter: x.enter, color: G.TERRAINS[x.i].color, side: x.side }); });
+      // tù binh (logic/battles.js): người đảo khác ngồi ở bãi tập của đảo bắt giữ, mặc màu đảo nhà
+      world.islands.forEach((S, i) => { for (const q of S.prisoners || []) { const p = isle(q.i).people.get(q.pid); if (p && p.alive) guests[i].push({ key: 'pr' + q.i + ':' + q.pid, p, level: isle(q.i).level, mind: { state: 'work', verb: 'captive', place: 'drill', reason: 'tù binh' }, enter: 'drill', color: G.TERRAINS[q.i].color }); } });
       // quân đang tập hợp ở cổng trước khi lên đường (logic/war.js sendOff): vẫn là người của làng (giữ khoá số, đi tiếp từ chỗ
       // đang đứng), người nhà ra tiễn (logic/siege.js roleOf)
       world.islands.forEach((S, i) => { const M = S.situ.muster; if (!M || M.until <= world.day) return; for (const id of M.troops) { const p = S.people.get(id); if (p && p.alive) guests[i].push({ key: id, p, level: S.level, mind: { state: 'work', verb: 'guard', place: M.gate, reason: 'tập hợp ở cổng, sắp lên đường đánh ' + M.to }, enter: 'home', color: null }); } });

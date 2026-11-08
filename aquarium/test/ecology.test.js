@@ -2,7 +2,7 @@
 // dịch lây và đóng cầu, đảo chính, cấm vận, chuyền nước chữa cháy, bàn giao ca
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, Eco = BK.Ecology, E = BK.Economy, D = BK.Diplomacy, living = BK.Island.living;
 const temper = (S, tr) => { for (const k of ['king', 'advisor', 'general1', 'general2']) { const p = S.seats[k] != null && S.people.get(S.seats[k]); if (p) p.traits = Object.assign({}, BK.People.traits(p), tr); } };
 const world = (seed, war) => { const W = BK.World.create({ seed, war: !!war }); BK.World.jump(W, 500); return W; };

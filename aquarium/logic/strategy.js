@@ -34,7 +34,7 @@
   const EVERY = 10;
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
-  const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.8; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.7; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
   const CONQUER_PRIZE = 1.5;
   const REBUILD_AGE = 180;      // cầu dùng ít nhất chừng này ngày mới xét xây lại theo kiểu thời mới    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
 
@@ -147,7 +147,9 @@
       const grudge = W.rel[a][b].grudge, far = 1 + 0.3 * (D.hops(a, b) - 1);
       // muốn đánh (chưa tính sức): muốn mà quân chưa đủ thì tích quân trước (pol.warlust)
       const wantRaid = (0.5 * t.aggression + 0.25 * (1 - t.intellect) + 0.6 * need + 0.4 * grudge - 0.4 * t.fear - 0.3 * t.piety - 0.25) / far;
-      const wantConquer = (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
+      // bị khiêu khích (chạy đua vũ trang không thành hiệp ước, logic/battles.js; nỗi nhục, logic/chronicle.js) thì muốn đánh hơn
+      const provoked = pol.provoked > day ? 0.3 : 0;
+      const wantConquer = provoked + (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
       // thừa nước đục thả câu: đảo b đang bị đánh nơi khác thì kẻ mưu mô muốn đánh hơn; bị cấm vận thì túng quẫn, dễ liều
       const k = (T ? 0.4 : 1) * (Wr.atWar(W, b) && t.cunning > 0.55 ? 1.15 : 1) * (W.embargo && W.embargo[a] > day ? 1.25 : 1); lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)

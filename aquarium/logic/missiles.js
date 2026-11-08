@@ -73,7 +73,7 @@
     // số giữ trong kho theo độ giàu: kho kim loại, năng lượng đầy thì giữ đủ, vơi thì ít (đảo nghèo ít tên lửa)
     const rich = Math.min(st.stock.metal / E().CAP(S.level, 'metal'), st.stock.energy / E().CAP(S.level, 'energy'));
     const cap = Math.round((MAX_MISSILES + 2 * (S.level - MISSILE_LV)) * (0.3 + 0.7 * clamp(rich, 0, 1)));
-    if (A.missiles < cap && canPay(st, MISSILE, RICH) && rng.chance(clamp(0.02 + 0.12 * want + 0.15 * th, 0, 0.4))) { pay(st, MISSILE); A.missiles++; W.armStats.built++; }
+    if (A.missiles < cap && canPay(st, MISSILE, RICH) && rng.chance(clamp(0.02 + 0.12 * want + 0.15 * th + (BK.Battles && BK.Battles.racing(W, i, day) ? 0.1 : 0), 0, 0.5))) { pay(st, MISSILE); A.missiles++; W.armStats.built++; }
   }
 
   /* ---------- Bắn tên lửa ---------- */
@@ -163,6 +163,7 @@
       W.islands[j].dustUntil = Math.max(W.islands[j].dustUntil || 0, day + DUST_DAYS);
       if (j === a) continue; const r = W.rel[j][a]; r.fear = Math.min(1, r.fear + 0.4); r.grudge = Math.min(1, r.grudge + (j === b ? 0.6 : 0.3)); r.trust = Math.max(0, r.trust - 0.4);
     }
+    if (BK.Chronicle) BK.Chronicle.add(W, day, b, 'Hạt nhân của ' + A.name + ' nổ ở ' + B.name, 6, 'hall');
     say(W, day, 'Hạt nhân của ' + A.name + ' nổ ở ' + B.name + ': một phần tư đảo thành tro, ' + dead + ' người chết. Bụi che trời cả bể.', [a, b]);
     note(B, day, 'war', 'Hạt nhân nổ: ' + dead + ' người chết, đất nhiễm xạ (lần thứ ' + B.nuked + ').');
     if (B.nuked >= 4) {

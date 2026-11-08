@@ -1,7 +1,7 @@
 // Bể Kính · test/missiles.test.js · Tên lửa (thời 7), hạt nhân (thời 8) (logic/missiles.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, M = BK.Missiles, E = BK.Economy, Siege = BK.Siege, living = BK.Island.living;
 const until = (W, cond, max) => { for (let k = 0; k < max && !cond(); k++) { BK.World.tick(W); BK.War.step(W, W.day, W.rng, 1 / 12); if (k % 12 === 11) BK.War.dayTick(W, W.day, W.rng); } return cond(); };
 // đặt người đứng đầu đảo S có tính cách tr (hội đồng cũng vậy, để logic/strategy.js mind ra đúng tính này)
