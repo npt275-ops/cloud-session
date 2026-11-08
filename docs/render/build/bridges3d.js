@@ -11,6 +11,8 @@
     const { THREE, TAU, C, clamp, hash, LAND_R, RING, SC, UBOX, UCYL, UCONE, TCYL, DOME, ICO, DOD, OCT, GABLE, TORUS, VAULT, SPHG, Kit, mergeG, bodyMat, metalMat, meshOf, disposeGroup, pick, TSTYLE, landRng } = X;
     /* =============== Cầu nối hai miền =============== */
     const bridges = [];
+    // cầu rộng (ngang mặt cầu gấp WIDE lần dáng gốc): đủ chỗ cho quân lính, xe hàng, xe tăng đi hai làn
+    const WIDE = 2.2;
     function bridgeEnds(b) {
       const A = lands[b.a], B = lands[b.b];
       const pa = A.world(A.landing[1]), pb = B.world(B.landing[0]);
@@ -74,7 +76,7 @@
       }
       const g = meshOf(k, B.litMat, scene, 0, 0, 0, e === 4);
       const d = pb.clone().sub(pa);
-      g.position.copy(pa).addScaledVector(d.clone().normalize(), -0.6); g.rotation.y = -Math.atan2(d.z, d.x);
+      g.position.copy(pa).addScaledVector(d.clone().normalize(), -0.6); g.rotation.y = -Math.atan2(d.z, d.x); g.scale.set(1, 1, WIDE);
       B.g = g; B.era = e; B.len = len; B.pa = pa; B.pb = pb;
     }
     function bridgePoint(B, u, out) { return out.copy(B.pa).lerp(B.pb, u).setY(deckY(Math.max(0, B.era), u) + 0.12); }
@@ -115,7 +117,7 @@
     const bridgeOf = (a, b) => bridges.find((B) => (B.a === a && B.b === b) || (B.a === b && B.b === a)) || null;
     // ban đêm cầu sáng đèn
     function animate(night) { for (const B of bridges) B.litMat.emissiveIntensity = night * 1.2; }
-    return { bridges, sync, syncWorks, bridgeOf, bridgePoint, animate };
+    return { bridges, sync, syncWorks, bridgeOf, bridgePoint, animate, WIDE };
   }
   BK.Bridges3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

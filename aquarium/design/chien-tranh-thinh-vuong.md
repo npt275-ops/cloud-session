@@ -187,3 +187,23 @@ riêng, không bị cuốn vào hạn hán, chiến tranh, cãi nhau của ngư�
 | Trời neon | `game/cities.js`, `render/sky3d.js`, `render/neon3d.js` | Đảo đầu tiên tới thời 10 là mặt trời thật tắt, trời tím; đảo đó (và đảo nào tới thời 10 sau) treo mặt trời nhân tạo của mình; đảo chưa tới thời 10 bật đèn đường, đèn cửa sổ suốt như đêm |
 | Thời muộn nhanh hơn | `logic/economy.js` | Từ thời 8 trở đi giỏ tài nguyên còn 60% và ở mỗi thời ít nhất 75 ngày (trước là 120) |
 | Bá chủ | `logic/strategy.js` | Từ năm 6, đảo tới thời 10 muốn thống trị các đảo kém mình (thêm 1,0 vào lòng muốn chiếm), tự tin hơn khi so sức, nghỉ giữa hai trận chỉ 60 ngày. Đảo bị chiếm nộp hết phần dư về đảo cai quản (logic/war.js), dùng chung thời với đảo cai quản |
+
+Cầu rộng gấp 2,2 lần (`render/build/bridges3d.js` WIDE): quân đứng bốn người một hàng ngang trên mặt cầu; xe, máy công thành
+chạy hai làn, mỗi cặp cách nhau 6 đơn vị (`game/cities.js` GEAR_GAP); vào thành thì một hàng so le, mỗi xe cách xe trước 6 đơn
+vị, không chạm nhau.
+
+Cân chỉnh 100 trận (hạt giống 1–100) sau bước 10:
+
+| Chỉ số | Bước 9 | Bước 10 |
+|---|---|---|
+| Trận đánh mỗi trận | 8,9 | 14,7 |
+| Sáp nhập | 1,75 | 4,07 |
+| Thời trung bình cả bể (đảo bị chiếm dùng chung thời đảo cai quản) | 9,52 | 10,77 |
+| Cả sáu đảo từ thời 10 (cuối trận) | 4% | 50% |
+| Cuối trận còn 1–2 đảo độc lập | 7% | 29% (còn 3 đảo: 35%) |
+| Chết đói mỗi trận | 1,9 | 2,9 |
+| Trận có dùng hạt nhân | 6% | 23% |
+
+Thử 12 trận theo năm (`prog`): đảo đầu tiên tới thời 10 trung bình khoảng ngày 2.300 (năm 7); tới cuối năm 8, 8/12 trận có từ
+2 đảo ở thời 11 trở lên. Cuối trận nhiều chiến tranh, nhiều hạt nhân hơn hẳn trước: đây là giai đoạn bá chủ tranh nhau thống
+trị cả bể.

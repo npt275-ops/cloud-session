@@ -190,6 +190,7 @@
       return new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r).add(L.center).setY(L.center.y);
     }
     // máy công thành của bên đánh đứng ngoài cổng đảo đang vẽ gần, bắn vào cổng; trại vây; cổng dịch chuyển; lá chắn của đảo thời 12
+    const GEAR_GAP = 6; // khoảng cách giữa hai xe, máy công thành (đơn vị thế giới; xe dài khoảng 3)
     function siegeGear(now) {
       const list = [];
       for (const w of world.wars) {
@@ -203,8 +204,10 @@
         const aimW = inTown ? (w.siege === 'hall' || !sg || !sg.target ? hallW : (spotAt(i, sg.target) || hw || g).clone().add(L.center)) : gw;
         (w.engines || []).forEach((e, k) => {
           let at, face = aimW;
-          if (e.kind !== 'drone' && inTown) { const dir = hallW.clone().sub(gw).setY(0).normalize(), sd = new THREE.Vector3(-dir.z, 0, dir.x); at = gw.clone().addScaledVector(dir, 7 + Math.floor(k / 2) * 4).addScaledVector(sd, k % 2 ? 2 : -2); at.y = L.center.y; }
-          else if (e.kind !== 'drone' && B && B.pa) at = bridges3d.bridgePoint(B, B.a === i ? 0.13 + k * 0.06 : 0.87 - k * 0.06, new THREE.Vector3());
+          // trong thành: một hàng so le dọc đường từ cổng tới nhà chính, mỗi xe cách xe trước GEAR_GAP đơn vị
+          if (e.kind !== 'drone' && inTown) { const dir = hallW.clone().sub(gw).setY(0).normalize(), sd = new THREE.Vector3(-dir.z, 0, dir.x); at = gw.clone().addScaledVector(dir, 7 + k * GEAR_GAP).addScaledVector(sd, k % 2 ? 1.6 : -1.6); at.y = L.center.y; }
+          // trên cầu: hai làn, mỗi cặp xe cách nhau GEAR_GAP đơn vị dọc mặt cầu, không chạm nhau
+          else if (e.kind !== 'drone' && B && B.pa) { const L2 = B.len || B.pa.distanceTo(B.pb), u = Math.min(0.9, (6 + Math.floor(k / 2) * GEAR_GAP) / L2), d = B.pb.clone().sub(B.pa).setY(0).normalize(); at = bridges3d.bridgePoint(B, B.a === i ? u : 1 - u, new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), k % 2 ? 1.5 : -1.5); }
           else at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
           const key = w.id + ':' + k, st = engState.get(key) || { next: now + 1 + k * 0.7, shot: null }; engState.set(key, st);
           // vây thành: vẫn nã vào cổng nhưng thưa hơn; đồng hồ lùi (tua năm) thì bắn lại ngay

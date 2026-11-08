@@ -166,10 +166,12 @@
       const foe = mind.side === 'foe', k = mind.rank, base = mind.place === 'hall' ? PL.hall : spot(mind.place, f.p);
       if (!base) return null;
       const gateSide = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR';
-      // trận ở cầu: một phần ba quân đánh đứng trên mặt cầu (ba người một hàng ngang), đầu hàng sát cổng phụ, quay về cổng
+      // trận ở cầu: một phần ba quân đánh đứng trên mặt cầu, đầu hàng sát cổng phụ, quay về cổng
       if (gateSide && foe && mind.bridge != null && k % 3 === 0 && o.deck) {
-        const j = Math.floor(k / 3), row = Math.floor(j / 3), col = j % 3, u = 0.05 + row * 0.03, at = o.deck(mind.bridge, u), nx = o.deck(mind.bridge, u + 0.02);
-        if (at && nx) { const al = nx.clone().sub(at).setY(0).normalize(), pr = new THREE.Vector3(-al.z, 0, al.x); at.addScaledVector(pr, (col - 1) * 0.85); return { p: at, face: base, bridge: true }; }
+        // cầu rộng (render/build/bridges3d.js WIDE): bốn người một hàng ngang, hàng sau cách 1,4 đơn vị
+        const a0 = o.deck(mind.bridge, 0), a1 = o.deck(mind.bridge, 1), len = a0 && a1 ? a0.distanceTo(a1) : 30;
+        const j = Math.floor(k / 3), row = Math.floor(j / 4), col = j % 4, u = Math.min(0.5, (2.5 + row * 1.4) / len), at = o.deck(mind.bridge, u), nx = o.deck(mind.bridge, u + 0.02);
+        if (at && nx) { const al = nx.clone().sub(at).setY(0).normalize(), pr = new THREE.Vector3(-al.z, 0, al.x); at.addScaledVector(pr, (col - 1.5) * 1.2); return { p: at, face: base, bridge: true }; }
       }
       if (gateSide) {
         // dọc theo vòng tường: cột theo góc quanh cổng, hàng theo bán kính
