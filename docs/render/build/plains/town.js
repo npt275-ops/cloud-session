@@ -24,7 +24,7 @@
   // đèn, cây… dọc vòng đường, đứng bên lề (lệch ra theo pháp tuyến), không đứng giữa đường
   function beside(N, step, side, fn) { for (const q of R3().along(N.loop, step, true)) fn(q.a, q.x + q.n[0] * side, q.z + q.n[1] * side, q); }
   // xe của thời chạy theo vòng đường (render/build/vehicles.js); gộp với phần chuyển động khác của lớp làng
-  function withTraffic(k, lv, N, anim) { const F = V3().fleet(k, lv, N.loop); return Object.assign(anim || {}, F || {}); }
+  function withTraffic(k, lv, N, anim) { const F = V3().fleet(k, lv, N.loop, N.spokes); return Object.assign(anim || {}, F || {}); }
   // tường bao kín sát mép đảo (từ thời 2), chỉ hở ba chỗ: cổng thành chính giữa mép trước (góc 0) và hai chỗ sau này bắc cầu
   // sang hai đảo bên cạnh (o.land.gaps, render/buildings3d.js tính từ L.landing). Tường chạy liền qua cả chỗ núi, hồ, sông;
   // hai đầu mỗi lỗ hở có trụ (gateEnd). Mỗi đoạn (seg) đặt theo mép thật của đảo.

@@ -205,6 +205,14 @@
     let sightFoe = [], sightDef = [];
     function gateAnchor() { const sg = S.situ.siege, k = sg && sg.gate; return k && PL && PL[k] && PL[k].length ? PL[k][0] : null; }
     function formation(f, mind) {
+      // hành quân trên mặt cầu (game/cities.js): chỗ trên cầu theo ngày (u0 + du × số ngày), hàng bốn người, người sau lùi lại
+      // theo chiều đi; quay mặt về phía trước
+      if (mind.place === 'deck' && o.deck && mind.u0 != null) {
+        const dir = mind.du >= 0 ? 1 : -1, row = Math.floor((mind.rank || 0) / 4), col = (mind.rank || 0) % 4, uu = mind.u0 + mind.du * (S.day - mind.d0) - dir * row * 0.035;
+        const u1 = Math.max(0.02, Math.min(0.98, uu)), at = o.deck(mind.bridge, u1), nx = o.deck(mind.bridge, Math.max(0, Math.min(1, u1 + dir * 0.03)));
+        if (!at || !nx) return null; const al = nx.clone().sub(at).setY(0); if (al.lengthSq() < 1e-6) al.set(0, 0, 1); al.normalize();
+        at.addScaledVector(new THREE.Vector3(-al.z, 0, al.x), (col - 1.5) * 1.0); return { p: at, face: at.clone().addScaledVector(al, 5), bridge: true };
+      }
       if ((mind.state !== 'attack' && !mind.camp && !mind.muster) || !mind.side || !PL || mind.rank == null) return null; // (camp: trại vây, đứng xem đấu tướng: đứng hàng, không bắn)
       // tập hợp quân trước khi lên đường: hàng ngang trong cổng mình, mỗi hàng 6 người, quay ra cổng (không dồn một chỗ)
       if (mind.muster) { const g = spot(mind.place, f.p); if (!g) return null; const a0 = Math.atan2(g.z, g.x), row = Math.floor(mind.rank / 6), col = mind.rank % 6, r = L.rOf(a0) - 8 - row * 1.3, a = a0 + ((col - 2.5) * 1.2) / r;
@@ -459,6 +467,7 @@
         // đánh trận: chỉ bắn xa (design/chien-tranh-thinh-vuong.md mục 8). Ai ra trận (lính, quân đảo khác, dân tự nguyện) cũng
         // cầm vũ khí bắn xa của thời đảo mình (logic/arms.js KIT); đứng vào hàng (formation), ngắm (súng, súng tia) hay giương
         // (ná, cung, nỏ) rồi bắn về phía người mình nhắm, không có ai thì về phía hàng bên kia, công trình đang phá
+        if (mind.march && BK.Arms) { const K = BK.Arms.kit(gst ? gst.level : level); f.tool = K ? K.ranged : null; } // hành quân: vác vũ khí của thời mình
         if ((mind.state === 'attack' && (S.situ.siege || gst)) || f.engage) {
           const K = BK.Arms && BK.Arms.kit(gst ? gst.level : level);
           f.tool = K ? K.ranged : 'sling';

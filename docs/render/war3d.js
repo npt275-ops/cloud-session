@@ -8,7 +8,8 @@
  *   sáp nhập            cờ màu đảo cai quản cắm ở sân trước nhà chính của đảo bị sáp nhập (hallOf(đảo): chỗ đó, theo toạ độ
  *                       của đảo); cột cao hơn mái nhà; quân đóng giữ đứng quanh cờ. Vừa mất thành thì cờ đảo cũ hạ xuống,
  *                       cờ đảo thắng kéo lên trong RAISE_DAYS ngày.
- * Đảo đang vẽ gần (near): quân là người thật trong làng (render/village3d.js, logic/war.js onIsland), không vẽ hình nhỏ.
+ * Đảo đang vẽ gần (near): quân là người thật trong làng (render/village3d.js, logic/war.js onIsland; hành quân trên cầu, băng qua
+ * đảo: game/cities.js), không vẽ hình nhỏ. Hình nhỏ chỉ để nhìn từ xa.
  * Người ở nhà (dân, lính giữ cổng) do render/village3d.js vẽ, theo bộ não (logic/brain.js đọc S.situ.war).
  * Lính vẽ bằng khối dựng sẵn dùng chung (InstancedMesh): thân, đầu, giáo, mỗi thứ một lần vẽ cho mọi người lính.
  * Cần: three.js, render/map/map3d.js (lands3d), render/build/bridges3d.js, logic/war.js. */
@@ -58,11 +59,13 @@
     // hành quân, rút về theo đường cầu path ([đảo đi, ..., đảo tới]), u 0..1 cả đường, cnt người, c màu. Mỗi chặng là một cây cầu;
     // từ chặng thứ hai, phần đầu của chặng là băng qua đảo ở giữa (từ đầu cầu trước tới đầu cầu sau)
     const ACROSS = 0.3, perp = new THREE.Vector3(), face = new THREE.Vector3(), endA = new THREE.Vector3();
-    function march(path, u, cnt, c, t) {
+    function march(path, u, cnt, c, t, near) {
       const legs = path.length - 1;
       for (let k = 0; k < cnt; k++) {
         const uk = Math.max(0, Math.min(1 - 1e-6, u - Math.floor(k / 2) * 0.012)), li = Math.min(legs - 1, Math.floor(uk * legs)), v = uk * legs - li;
         const s = path[li], d = path[li + 1], B = bridges3d.bridgeOf(s, d); if (!B || B.era < 0) continue;
+        // làng ở đầu cầu đang vẽ gần: quân là người thật trong làng đó (game/cities.js), không vẽ hình nhỏ
+        if (near && (near(s) || (!(li > 0 && v < ACROSS) && near(d)))) continue;
         const fwd = B.a === s; side.copy(B.pb).sub(B.pa).normalize(); perp.set(-side.z, 0, side.x); face.copy(side).multiplyScalar(fwd ? 1 : -1);
         let w = v;
         if (li > 0 && v < ACROSS) { // băng qua đảo s: từ cuối cầu trước tới đầu cầu này
@@ -85,7 +88,7 @@
         if (w.stage === 'march' || w.stage === 'return') {
           const u = Math.max(0, Math.min(1, (day - w.depart) / Math.max(1e-6, w.arrive - w.depart)));
           const path = w.path || [w.a, w.b];
-          march(w.stage === 'march' ? path : path.slice().reverse(), u, cnt, c, t);
+          march(w.stage === 'march' ? path : path.slice().reverse(), u, cnt, c, t, near);
           continue;
         }
         if (w.stage === 'muster' || (near && near(w.b))) continue; // tập hợp ở nhà, hay đảo đang vẽ gần: người thật

@@ -271,6 +271,8 @@
     }
     // trại vây trên bờ, hai bên cổng: dịch dọc bờ cho khỏi chồng lên bến, trại, đền ngoài tường (L.outerSpots,
     // render/build/place3d.js outerSpot; design/ke-hoach-khac-phuc.md mục 6.2)
+    // đầu nòng của từng loại máy (render/engines3d.js): [tiến về phía trước, độ cao]; đạn bay ra từ đó
+    const MUZZLE = { catapult: [0.6, 2.8], cannon: [2.0, 1.2], artillery: [2.7, 1.55], armor: [2.75, 1.45], drone: [0.3, 4.8], plasma: [3.15, 1.62] };
     function tentAt(L, g, side, k) {
       const taken = Object.values(L.outerSpots || {}).filter(Boolean);
       for (const s of [17, 21, 13, 25, 9, 29]) { const q = ashore(L, g, side, k * s), x = q.x - L.center.x, z = q.z - L.center.z;
@@ -312,7 +314,7 @@
           if (st.next - now > 10) st.next = now;
           if ((w.stage === 'gate' || inTown) && !moving && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
-            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(face.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = face.clone(); to.y += 2;
+            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(), tip = MUZZLE[e.kind] || [0, 1.6]; from.addScaledVector(face.clone().sub(at).setY(0).normalize(), tip[0]); from.y += tip[1]; const to = face.clone(); to.y += 2;
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
           }
           list.push({ kind: e.kind, at, face, shot: st.shot });
@@ -364,6 +366,27 @@
       // trận trên đảo (logic/war.js onIsland): quân giặc, quân đồng minh tới giúp, quân đóng giữ là người thật mặc màu đảo mình,
       // mỗi người một việc theo chặng trận (đánh cổng, khuân hàng cướp, đốt phá, vây nhà chính)
       world.islands.forEach((S, i) => { for (const x of BK.War.onIsland(world, i)) guests[i].push({ key: x.key, p: x.p, level: isle(x.i).level, mind: x.mind, enter: x.enter, color: G.TERRAINS[x.i].color, side: x.side }); });
+      // quân đang hành quân, rút về (w.path): là người thật trong làng ở đầu cầu đang vẽ gần (render/war3d.js chỉ vẽ hình nhỏ khi ở
+      // xa). Trên cầu: hàng bốn người đi trên mặt cầu; băng qua đảo ở giữa: đi từ cổng phụ này sang cổng phụ kia. Tiến độ tính theo
+      // ngày lịch của trận (u0 + du × số ngày), người đi đều theo từng khung hình
+      for (const w of world.wars) {
+        if (w.kind === 'revolt' || (w.stage !== 'march' && w.stage !== 'return')) continue;
+        const path = w.stage === 'march' ? w.path || [w.a, w.b] : (w.path || [w.a, w.b]).slice().reverse(), legs = path.length - 1, span = Math.max(1e-6, w.arrive - w.depart);
+        const u = Math.max(0, Math.min(1 - 1e-6, (world.day - w.depart) / span)), li = Math.min(legs - 1, Math.floor(u * legs)), v = u * legs - li, s0 = path[li], d0 = path[li + 1];
+        const troops = w.troops.filter((x) => x.p.alive).slice(0, 40), ACROSS = 0.3, perDay = legs / span; // (phần chặng mỗi ngày)
+        if (li > 0 && v < ACROSS) { // băng qua đảo s0
+          if (!villages[s0] || !villages[s0].visible) continue;
+          const exit = BK.War.sideOf(s0, d0) ? 'gateR' : 'gateL', enter = BK.War.sideOf(s0, path[li - 1]) ? 'gateR' : 'gateL';
+          troops.forEach((x, k) => guests[s0].push({ key: 'w' + x.i + ':' + x.p.id, p: x.p, level: isle(x.i).level, mind: { state: 'walk', place: exit, march: true, arm: 'ranged', reason: 'hành quân qua ' + isle(s0).name },
+            enter, color: G.TERRAINS[x.i].color, side: 'foe' }));
+          continue;
+        }
+        const h = villages[d0] && villages[d0].visible ? d0 : villages[s0] && villages[s0].visible ? s0 : null; if (h == null) continue;
+        const wv = li > 0 ? (v - ACROSS) / (1 - ACROSS) : v, rate = (li > 0 ? perDay / (1 - ACROSS) : perDay) * (h === s0 ? 1 : -1);
+        troops.forEach((x, k) => guests[h].push({ key: 'w' + x.i + ':' + x.p.id, p: x.p, level: isle(x.i).level, mind: { state: 'walk', place: 'deck', bridge: h === s0 ? d0 : s0,
+          u0: h === s0 ? wv : 1 - wv, du: rate, d0: world.day, rank: k, of: troops.length, march: true, arm: 'ranged', side: 'foe', reason: (w.stage === 'march' ? 'hành quân sang đánh ' : 'rút về ') + isle(path[legs]).name },
+          enter: BK.War.sideOf(h, h === s0 ? d0 : s0) ? 'gateR' : 'gateL', color: G.TERRAINS[x.i].color, side: 'foe' }));
+      }
       // tù binh (logic/battles.js): người đảo khác ngồi ở bãi tập của đảo bắt giữ, mặc màu đảo nhà
       world.islands.forEach((S, i) => { for (const q of S.prisoners || []) { const p = isle(q.i).people.get(q.pid);
           if (p && p.alive) guests[i].push({ key: 'pr' + q.i + ':' + q.pid, p, level: isle(q.i).level, mind: { state: 'work', verb: 'captive', place: 'drill',
