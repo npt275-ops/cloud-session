@@ -231,12 +231,15 @@
     $('nextEvent').onclick = () => seek('war');
     $('nextDrama').onclick = () => seek('drama');
     // xem chậm: đảo đang xem (gần máy quay) có trận đánh hay drama thì thời gian chậm lại SLOWMO lần, cho kịp thấy từng người làm gì
-    const SLOWMO = 1 / 16;
+    const SLOWMO = 1 / 16, D_BRIDGE = (BK.Diplomacy && BK.Diplomacy.BRIDGE_DAYS) || 3;
     // chuyện vừa tìm bằng nút (watch): xem chậm tới khi chuyện đó xong, dù máy quay còn đang bay tới
     let watch = null;
     function slowmoNow() {
       if (watch && eventNow(watch.kind, watch.i)) return SLOWMO; watch = null;
-      const i = G.focus || 0, v = villages[i]; return v && v.visible && (eventNow('war', i) || eventNow('drama', i)) ? SLOWMO : 0;
+      const i = G.focus || 0, v = villages[i]; if (!v || !v.visible) return 0;
+      // quân đang qua cầu tới đảo đang xem (chặng cuối của đường hành quân) cũng xem chậm, để kịp thấy đoàn quân kéo sang
+      const coming = world.wars.some((w) => w.kind !== 'revolt' && w.stage === 'march' && w.b === i && world.day >= w.arrive - D_BRIDGE);
+      return coming || eventNow('war', i) || eventNow('drama', i) ? SLOWMO : 0;
     }
     $('eraName').textContent = eraLabel();
     // mở game là nhìn vào làng Lúa Vàng (cuộn ra để thấy cả bể)
@@ -368,8 +371,8 @@
       // quân đang tập hợp ở cổng trước khi lên đường (logic/war.js sendOff): vẫn là người của làng (giữ khoá số, đi tiếp từ chỗ
       // đang đứng)
       world.islands.forEach((S, i) => { const M = S.situ.muster; if (!M || M.until <= world.day) return;
-          for (const id of M.troops) { const p = S.people.get(id); if (p && p.alive) guests[i].push({ key: id, p, level: S.level, mind: { state: 'work',
-          verb: 'guard', place: M.gate, reason: 'tập hợp ở cổng, sắp lên đường đánh ' + M.to }, enter: 'home', color: null }); } });
+          M.troops.forEach((id, k) => { const p = S.people.get(id); if (p && p.alive) guests[i].push({ key: id, p, level: S.level, mind: { state: 'work',
+          verb: 'guard', place: M.gate, muster: true, side: 'def', rank: k, of: M.troops.length, reason: 'tập hợp ở cổng, sắp lên đường đánh ' + M.to }, enter: 'home', color: null }); }); });
       // việc không đổi thì giữ đúng đối tượng việc cũ (chu trình khuân hàng của phần vẽ chạy tiếp, không bắt đầu lại mỗi giây)
       const seen = new Map(); for (const list of guests) for (const g of list) { const j = JSON.stringify(g.mind), old = guestMind.get(g.key); if (old && old.j === j) g.mind = old.mind; seen.set(g.key, { j, mind: g.mind }); }
       guestMind = seen;

@@ -203,12 +203,15 @@
     let sightFoe = [], sightDef = [];
     function gateAnchor() { const sg = S.situ.siege, k = sg && sg.gate; return k && PL && PL[k] && PL[k].length ? PL[k][0] : null; }
     function formation(f, mind) {
-      if (mind.state !== 'attack' || !mind.side || !PL || mind.rank == null) return null;
+      if ((mind.state !== 'attack' && !mind.camp && !mind.muster) || !mind.side || !PL || mind.rank == null) return null; // (camp: trại vây, đứng xem đấu tướng: đứng hàng, không bắn)
+      // tập hợp quân trước khi lên đường: hàng ngang trong cổng mình, mỗi hàng 6 người, quay ra cổng (không dồn một chỗ)
+      if (mind.muster) { const g = spot(mind.place, f.p); if (!g) return null; const a0 = Math.atan2(g.z, g.x), row = Math.floor(mind.rank / 6), col = mind.rank % 6, r = L.rOf(a0) - 8 - row * 1.3, a = a0 + ((col - 2.5) * 1.2) / r;
+        return { p: new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), face: g }; }
       const foe = mind.side === 'foe', k = mind.rank, base = mind.place === 'hall' ? PL.hall : spot(mind.place, f.p);
       if (!base) return null;
       const gateSide = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR';
       // trận ở cầu: một phần ba quân đánh đứng trên mặt cầu, đầu hàng sát cổng phụ, quay về cổng
-      if (gateSide && foe && mind.bridge != null && k % 3 === 0 && o.deck) {
+      if (gateSide && foe && !mind.camp && mind.bridge != null && k % 3 === 0 && o.deck) {
         // cầu rộng (render/build/bridges3d.js WIDE): bốn người một hàng ngang, hàng sau cách 1,4 đơn vị
         const a0 = o.deck(mind.bridge, 0), a1 = o.deck(mind.bridge, 1), len = a0 && a1 ? a0.distanceTo(a1) : 30;
         const j = Math.floor(k / 3), row = Math.floor(j / 4), col = j % 4, u = Math.min(0.5, (2.5 + row * 1.4) / len), at = o.deck(mind.bridge, u), nx = o.deck(mind.bridge, u + 0.02);
@@ -438,7 +441,11 @@
         // lính gác cúi chào khi người đứng đầu đi ngang qua chốt (mỗi lần đi ngang chào một lần)
         if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
-        if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
+        if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving });
+          // đứng chờ, đứng gác không đứng trơ (design/ke-hoach-buoc-12.md mục 4.3): liếc nhìn, chuyển trọng tâm (Anim.addLife), cứ chừng
+          // mươi giây lại nhìn quanh một lượt (mỗi người một nhịp riêng)
+          if (!moving && (mind.state === 'idle' || mind.state === 'walk')) { Anim.addLife(tgt, gs, f.knobs); const u = (gs * 0.09 + p.id * 0.37) % 1, G = BK.Gestures3D.BY_KEY.lookAround;
+            if (G && u < 0.16) { G.pose(tgt, f.ph, u / 0.16, gs, f.knobs); f.gk = 'nhìn quanh'; } else tgt.prz += Math.sin(gs * 0.5 + p.id) * 0.04; } }
         // đánh trận: chỉ bắn xa (design/chien-tranh-thinh-vuong.md mục 8). Ai ra trận (lính, quân đảo khác, dân tự nguyện) cũng
         // cầm vũ khí bắn xa của thời đảo mình (logic/arms.js KIT); đứng vào hàng (formation), ngắm (súng, súng tia) hay giương
         // (ná, cung, nỏ) rồi bắn về phía người mình nhắm, không có ai thì về phía hàng bên kia, công trình đang phá
@@ -473,7 +480,7 @@
         f.rig.root.updateMatrixWorld(true);
         // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)
         // (thanh máu từng người: người đã mất máu, hay người ra trận ở gần máy quay; ở xa thì game/cities.js vẽ thanh tổng của cả đội)
-        if (bars && shownNow && !f.inside && (f.hpShow < 100 || (f.side && camera && f.rig.root.position.distanceToSquared(camera.position) < 38 * 38))) { _p.copy(f.rig.root.position); _p.y += 2.25 * sc * SCALE; bars.add(_p, f.hpShow / 100, 0.75 * SCALE); }
+        if (bars && shownNow && !f.inside && f.hpShow < 100 && f.hpShow > 0) { _p.copy(f.rig.root.position); _p.y += 2.25 * sc * SCALE; bars.add(_p, f.hpShow / 100, 0.75 * SCALE); }
         // chớp mắt vài giây một lần
         if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
         f.blink = Math.max(0, f.blink - real);
@@ -552,7 +559,10 @@
         if (H && HALLISH.has(mind.place || '-') && (f.pos.x - H.x) ** 2 + (f.pos.z - H.z) ** 2 < 100) { nearHall++; const k = (mind.verb || mind.state) + '@' + (mind.place || '-'); why[k] = (why[k] || 0) + 1; }
         if (f.moving && f.inplace) inplace++;
       }
-      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, hallWhy: why }; stuckN = 0; return r;
+      // người đứng chồng lên nhau (gần hơn 0,45, cả hai đứng yên): lỗi nhìn thấy được (một cục người)
+      const still = [...folks.values()].filter((f) => f.rig && !f.inside && !f.moving); let overlap = 0;
+      for (let a = 0; a < still.length; a++) for (let b = a + 1; b < still.length; b++) if ((still[a].pos.x - still[b].pos.x) ** 2 + (still[a].pos.z - still[b].pos.z) ** 2 < 0.2) overlap++;
+      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, overlap, hallWhy: why }; stuckN = 0; return r;
     }
     function audit() {
       const bad = [];

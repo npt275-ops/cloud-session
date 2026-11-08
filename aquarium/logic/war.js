@@ -703,8 +703,8 @@
       w.troops.forEach((x, k) => {
         const tgt = def.length ? def[k % def.length] : null;
         let mind;
-        if (w.stage === 'gate' && w.blockade && !w.blockade.done && !(w.blockade.sortie > W.day)) mind = { state: 'work', verb: 'guard', place: w.gate, reason: 'dựng trại vây thành' };
-        else if (w.stage === 'gate' && w.duel && !w.duel.done) mind = x.p.id === w.duel.a ? { state: 'attack', target: w.duel.b, place: w.gate, reason: 'đấu tay đôi với tướng ' + S.name } : { state: 'work', verb: 'watchDuel', place: w.gate, reason: 'xem tướng mình đấu tay đôi' };
+        if (w.stage === 'gate' && w.blockade && !w.blockade.done && !(w.blockade.sortie > W.day)) mind = { state: 'work', verb: 'guard', place: w.gate, camp: true, reason: 'dựng trại vây thành' };
+        else if (w.stage === 'gate' && w.duel && !w.duel.done) mind = x.p.id === w.duel.a ? { state: 'attack', target: w.duel.b, place: w.gate, reason: 'đấu tay đôi với tướng ' + S.name } : { state: 'work', verb: 'watchDuel', place: w.gate, camp: true, reason: 'xem tướng mình đấu tay đôi' };
         else if (w.stage === 'loot') mind = k % 2 ? { state: 'work', verb: 'guard', place: w.gate, cycle: { item: 'food', src: 'store', dst: w.gate,
             workAt: 'dst' }, reason: 'khuân hàng cướp được ra cổng' } : { state: 'attack', target: tgt, place: w.gate,
             reason: 'giữ cổng cho đồng đội khuân hàng' };
@@ -715,7 +715,8 @@
         else mind = { state: 'attack', target: tgt, place: 'hall', reason: 'vây đánh nhà chính' };
         // chỉ bắn xa; đứng vào hàng của quân đánh (render/village3d.js formation); qua cầu thì một phần ba đánh trên mặt cầu
         // (bridge: đảo bên kia đầu cầu), số còn lại đổ bộ hai bên cổng phụ
-        mind.arm = 'ranged'; if (mind.state === 'attack' && !(w.duel && !w.duel.done)) { mind.side = 'foe'; mind.rank = k; mind.of = w.troops.length; if (w.by === 'bridge' && (w.stage === 'gate' || w.stage === 'loot')) mind.bridge = w.from != null ? w.from : w.a; }
+        mind.arm = 'ranged'; if (mind.camp) { mind.side = 'foe'; mind.rank = k; mind.of = w.troops.length; } // trại vây, đứng xem đấu tướng: mỗi người một chỗ trong hàng
+        if (mind.state === 'attack' && !(w.duel && !w.duel.done)) { mind.side = 'foe'; mind.rank = k; mind.of = w.troops.length; if (w.by === 'bridge' && (w.stage === 'gate' || w.stage === 'loot')) mind.bridge = w.from != null ? w.from : w.a; }
         out.push({ key: key(x), i: x.i, p: x.p, mind, enter: w.gate, side: 'foe' });
       });
       let j = def.length; // quân đồng minh đứng tiếp vào hàng bên giữ
