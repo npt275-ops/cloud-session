@@ -47,6 +47,13 @@
     CO.assignAll(S, [...S.people.values()]);
     S.log.push({ day: 0, kind: 'start', ids: [], text: 'Tám người đầu tiên dựng làng ' + S.name + '.' });
     F.generation(S, rng); // lập làng: tám người kết đôi và sinh lứa con đầu tiên
+    // lứa con đầu tiên đủ các tuổi (sơ sinh tới khoảng 12 tuổi, nhỏ hơn cha mẹ ít nhất 18 tuổi): ngày đầu làng có trẻ đi học,
+    // trẻ phụ việc, không phải chỉ toàn trẻ nhỏ chạy quanh nhà
+    for (const c of S.people.values()) {
+      if (!c.parents || !c.parents.length) continue;
+      const young = Math.min(...c.parents.map((id) => P.ageOf(S.people.get(id), 0))), age = Math.max(0, Math.min(young - 17, rng.range(0, 8)));
+      c.born = -age / R.AGE_PER_DAY;
+    }
     S.births = S.people.size - 8; if (J) J.assign(S);
     if (K) K.setEra(S, 1);
     B.think(S, rng);

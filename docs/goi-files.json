@@ -460,6 +460,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/hpbars3d.js",
+  "src": "render/hpbars3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/ik3d.js",
   "src": "render/ik3d.js",
   "mode": 420

@@ -47,7 +47,9 @@
     if (BK.Battles) { const br = BK.Battles.roleOf(S, p, d, ph); if (br) return br; }
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
-    if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà
+    // trẻ nhỏ: lịch riêng (logic/tasks.js): ở trong nhà với người lớn, sáng ra sân chơi có người già trông; không cuốn vào
+    // chuyện của người lớn
+    if (age < 6 && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     // bão, bão tuyết, bão cát (logic/climate.js): ai cũng trú trong nhà, trừ lính gác cổng
     if (BK.Climate) { const c = BK.Climate.taskFor(S, p, d); if (c) return c; }
     // drama (logic/dramas.js): người trong drama bỏ việc thường ra tham gia (tan thì lịch thường đưa về đúng việc của mình);

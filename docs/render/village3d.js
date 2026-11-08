@@ -26,6 +26,7 @@
     const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People, Work = BK.Work3D;
     const SCALE = Rig.PERSON_SCALE;
     const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
+    const bars = o.bars || null;   // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
@@ -64,7 +65,9 @@
       // kia đảo so với cổng bị đánh
       if (place && place.startsWith('ruin:')) return ruinSpot(place.slice(5), p.id);
       if (place === 'refuge') return refugeOf(p.id);
-      if (place === 'market') return pickOf(PL.market, k);
+      // sân chơi của làng: bãi trống phía ngoài một dãy nhà dân, trẻ nhỏ chơi thành nhóm, người già ngồi trông
+      if (place === 'playground') { const h = PL.homes && PL.homes.length ? PL.homes[Math.floor(PL.homes.length / 2)] : null; return h ? h.clone().addScaledVector(h.clone().setY(0).normalize(), 4.5) : pickOf(PL.square, 0); } // bãi trống ngoài dãy nhà, xa nhà chính
+      if (place === 'market') return pickOf(PL.market, k) || pickOf(PL.store, k) || pickOf(PL.square, k); // thời chưa có chợ: trao đổi ở kho, ở sân
       if (place === 'shrine') return pickOf(PL.shrine, k);
       if (place === 'school') return pickOf(PL.school, k);
       // đi vòng: người đi đường, thợ đi tu bổ, thầy thuốc đi thăm từng nhà, lính đi tuần đổi chỗ theo thời gian
@@ -140,7 +143,7 @@
       for (const part of rig.parts) if (part.face) { part.dec = { p: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3() }; part.local.decompose(part.dec.p, part.dec.q, part.dec.s); }
       if (!f) {
         const h = start || spot('home', p), at = (h ? h.clone() : new THREE.Vector3()).add(new THREE.Vector3((Math.random() - 0.5) * 3, 0, (Math.random() - 0.5) * 3));
-        f = { p, cur: Anim.blank(), pos: at, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0, guest: typeof id === 'string' };
+        f = { fresh: true, p, cur: Anim.blank(), pos: at, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0, guest: typeof id === 'string' };
         folks.set(id, f);
       }
       // chỗ đứng lệch một chút quanh điểm đến (trước cửa, trước chỗ làm), không dồn đúng một điểm
@@ -148,13 +151,45 @@
       f.rig = rig; f.key = key; return f;
     }
 
+    /* ---------- Đội hình trận (design/chien-tranh-thinh-vuong.md mục 8) ----------
+     * Chỉ đánh bằng vũ khí bắn xa: mỗi bên xếp thành hàng ngang, hàng dọc, quay mặt về phía bên kia mà bắn.
+     *   ở cổng       quân đánh hai hàng ngoài tường (dải đất giữa tường và mép đảo), trải dọc hai bên cổng; quân giữ ba hàng
+     *                ngay trong cổng
+     *   nhà chính    quân giữ hàng ngang trước cửa nhà chính; quân đánh hàng ngang cách đó một đoạn, phía cổng đã vỡ
+     *   trên phố     quân đánh hàng ngang trước công trình đang bị phá; dân binh hàng ngang chắn bên sườn
+     * mind.side: 'foe' (quân đánh) hay 'def' (bên giữ); mind.rank: thứ tự trong đội; mind.of: số người của đội. */
+    const FORM_GAP = 1.3;
+    function gateAnchor() { const sg = S.situ.siege, k = sg && sg.gate; return k && PL && PL[k] && PL[k].length ? PL[k][0] : null; }
+    function formation(f, mind) {
+      if (mind.state !== 'attack' || !mind.side || !PL || mind.rank == null) return null;
+      const foe = mind.side === 'foe', k = mind.rank, base = mind.place === 'hall' ? PL.hall : spot(mind.place, f.p);
+      if (!base) return null;
+      const gateSide = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR';
+      if (gateSide) {
+        // dọc theo vòng tường: cột theo góc quanh cổng, hàng theo bán kính
+        const a0 = Math.atan2(base.z, base.x), COLS = foe ? Math.max(4, Math.min(14, Math.ceil((mind.of || 8) / 2))) : 8, row = Math.floor(k / COLS), col = k % COLS;
+        const r = foe ? L.rOf(a0) - 0.9 - row * 1.15 : L.rOf(a0) - 6.4 - row * FORM_GAP;
+        const a = a0 + ((col - (COLS - 1) / 2) * FORM_GAP) / r, rr = foe ? L.rOf(a) - 0.9 - row * 1.15 : r;
+        const at = new THREE.Vector3(Math.cos(a) * rr, 0, Math.sin(a) * rr), fr = foe ? L.rOf(a0) - 7 : L.rOf(a0) - 1;
+        return { p: at, face: new THREE.Vector3(Math.cos(a0) * fr, 0, Math.sin(a0) * fr), outside: foe };
+      }
+      const g = gateAnchor() || base.clone().multiplyScalar(1.6), out = g.clone().sub(base).setY(0); if (out.lengthSq() < 1e-3) out.set(1, 0, 0); out.normalize();
+      const side = new THREE.Vector3(-out.z, 0, out.x), COLS = 8, row = Math.floor(k / COLS), col = k % COLS, cs = (col - (COLS - 1) / 2) * FORM_GAP;
+      let c, back, face;
+      if (mind.place === 'hall') { c = foe ? base.clone().addScaledVector(out, 13) : base.clone().addScaledVector(out, 1.5); back = foe ? out : out.clone().negate(); face = foe ? base.clone().addScaledVector(out, 1.5) : base.clone().addScaledVector(out, 13); }
+      else { c = foe ? base.clone().addScaledVector(out, 3) : base.clone().addScaledVector(out, 3).addScaledVector(side, 12); back = foe ? out : side; face = foe ? base.clone().addScaledVector(out, 3).addScaledVector(side, 12) : base.clone().addScaledVector(out, 3); }
+      const lat = foe || mind.place === 'hall' ? side : out;
+      return { p: c.addScaledVector(lat, cs).addScaledVector(back, row * FORM_GAP), face, outside: false };
+    }
+
     /* ---------- Đi tới đâu ---------- */
     const _v = new THREE.Vector3();
     function goalOf(f, mind) {
+      const fm = formation(f, mind); if (fm) return fm;
       const tgt = mind.target != null ? folks.get(mind.target) : null;
       if (tgt && (mind.state === 'talk' || mind.state === 'attack')) {
         // đứng nghe, đứng xem (drama): toả thành vòng rộng quanh người nói; trò chuyện, cãi, đánh: đứng sát
-        const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? (mind.arm === 'ranged' ? 5.5 + (f.p.id % 4) * 0.6 : 0.95 - K.lean * 0.2) : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
+        const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? 7 + (f.p.id % 4) * 0.6 : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
         _v.copy(f.pos).sub(tgt.pos); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
         return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
@@ -232,6 +267,9 @@
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
         const cyc = cycleOf(f, mind), aim = cyc ? cyc.aim : mind; // chu trình: đi tới chỗ của bước đang làm
         let goal = goalOf(f, aim), meetVerb = null, meetGoal = null;
+        // quân đánh vừa tới: đứng ngay vào hàng ngoài tường (không đi xuyên tường); người đánh nhắm về phía bên kia
+        if (goal && goal.outside && f.fresh) f.pos.copy(goal.p);
+        f.fresh = false; if (mind.state === 'attack' && goal && goal.face) f.shootAt = goal.face;
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
         if (f.meet) { const o2 = folks.get(f.meet.id); if (ts < f.meet.until && o2 && o2.meet && o2.meet.id === key) { meetGoal = { p: f.pos.clone(), face: o2.pos }; meetVerb = 'chat'; } else { f.meet = null; f.meetCool = ts + 18 + (p.id % 7) * 3; } }
         else if ((mind.place === 'stroll' || mind.place === 'hallLoop') && goal && goal.road && !(ts < (f.meetCool || 0))) {
@@ -247,12 +285,12 @@
         for (let i = 0; i < n; i++) {
           if (i) goal = meetGoal ? null : goalOf(f, aim);
           let g = meetGoal || goal;
-          if (g && !meetVerb && !g.road) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
+          if (g && !meetVerb && !g.road && !g.outside) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
           if (!g) break;
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) || mind.carryItem ? 0.85 : 1) * (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
-          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
+          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); if (g.outside) { const a = Math.atan2(f.pos.z, f.pos.x), R = L.rOf(a) - 0.6, r = Math.hypot(f.pos.x, f.pos.z); if (r > R) f.pos.multiplyScalar(R / r); } else Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
         if (!moving) f.ph += real * 3 * f.knobs.tempo;
@@ -260,7 +298,7 @@
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
         // cử chỉ làm việc chỉ ở chỗ làm (bước 'work' của chu trình), không ở kho, không trên đường
         const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (!cyc || cyc.stage === 'work' || meetVerb) && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
-        f.inside = !moving && (verb === 'sleep' || verb === 'hide'); // ngủ, trốn giặc: vào trong nhà (không vẽ)
+        f.inside = !moving && (verb === 'sleep' || verb === 'hide' || verb === 'indoor'); // ngủ, trốn giặc, ở trong nhà: vào trong nhà (không vẽ)
         let tgt, gface = null;
         if (working && Work) {
           if (f.verb !== verb || gs > f.gEnd) { // đổi việc, hay hết một lượt cử chỉ: sang cử chỉ khác của việc đó (đồng hồ cử chỉ gs)
@@ -285,23 +323,22 @@
         if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
-        // đánh trận: lính (cả quân đảo khác) cầm giáo; dân tự nguyện cầm đồ nghề của mình làm vũ khí
+        // đánh trận: chỉ bắn xa (design/chien-tranh-thinh-vuong.md mục 8). Ai ra trận (lính, quân đảo khác, dân tự nguyện) cũng
+        // cầm vũ khí bắn xa của thời đảo mình (logic/arms.js KIT); đứng vào hàng (formation), ngắm (súng, súng tia) hay giương
+        // (ná, cung, nỏ) rồi bắn về phía người mình nhắm, không có ai thì về phía hàng bên kia, công trình đang phá
         if (mind.state === 'attack' && (S.situ.siege || gst)) {
-          // vũ khí theo thời của đảo người đó (logic/arms.js KIT): lính cầm vũ khí, dân tự nguyện cầm đồ nghề; người bắn xa đứng
-          // lùi lại, ngắm (súng, súng tia) hay giương (ná, cung, nỏ) rồi bắn (render/shots3d.js); đánh đêm thì cầm đuốc
-          const soldier = gst || p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard' || /general/.test(p.role || ''), K = BK.Arms && BK.Arms.kit(gst ? gst.level : level);
-          f.tool = soldier ? (K ? (mind.arm === 'ranged' ? K.ranged : K.melee) : 'spear') : p.job === 'builder' ? 'hammer' : p.res === 'wood' ? 'axe' : 'hoe';
-          if (mind.torch) f.tool = 'torch';
-          if (soldier && K && mind.arm === 'ranged' && !moving && !mind.torch) {
+          const K = BK.Arms && BK.Arms.kit(gst ? gst.level : level);
+          f.tool = K ? K.ranged : 'sling';
+          if (K && !moving) {
             const draw = K.ranged === 'sling' || K.ranged === 'bow' || K.ranged === 'crossbow', G = BK.Gestures3D.BY_KEY[draw ? 'draw' : 'aim'];
             if (G) { tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, 0, gs, f.knobs); f.gk = 'bắn'; }
-            const T = mind.target != null ? folks.get(mind.target) : null;
-            if (T) { _v.copy(T.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); }
-            if (shots && T && (rs > (f.nextShot || 0) || f.nextShot - rs > 5)) { // đồng hồ lùi (tải lại, tua): bắn lại ngay
+            const T = mind.target != null ? folks.get(mind.target) : null, aimAt = T ? T.pos : f.shootAt;
+            if (aimAt) { _v.copy(aimAt).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); }
+            if (shots && aimAt && (rs > (f.nextShot || 0) || f.nextShot - rs > 5)) { // đồng hồ lùi (tải lại, tua): bắn lại ngay
               const kind = BK.Shots3D.OF[K.ranged] || ['arrow'], gap = K.ranged === 'mg' || K.ranged === 'autorifle' ? 0.35 : draw ? 1.8 : 1.1;
               f.nextShot = rs + gap * (0.7 + Math.random() * 0.8);
               const from = new THREE.Vector3().copy(L.center).add(f.pos); from.y += 1.25 * SCALE; from.x += Math.sin(f.yaw) * 0.5 * SCALE; from.z += Math.cos(f.yaw) * 0.5 * SCALE;
-              const to = new THREE.Vector3().copy(L.center).add(T.pos); to.y += 0.9 * SCALE;
+              const to = new THREE.Vector3().copy(L.center).add(aimAt); to.y += 0.9 * SCALE; if (!T) { to.x += (Math.random() - 0.5) * 4; to.z += (Math.random() - 0.5) * 4; }
               shots.fire(K.fire && Math.random() < 0.25 ? 'fire' : kind[0], from, to, rs, { color: kind[1], puff: kind[2] });
             }
           }
@@ -312,6 +349,8 @@
         f.rig.root.position.copy(L.center).add(f.pos); f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE; // ngồi, quỳ thì hạ người
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ'); f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
+        // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)
+        if (bars && shownNow && !f.inside && ((mind.state === 'attack' && (S.situ.siege || gst)) || (p.hp != null && p.hp < 100))) { _p.copy(f.rig.root.position); _p.y += 2.25 * sc * SCALE; bars.add(_p, (p.hp == null ? 100 : p.hp) / 100, 0.75 * SCALE); }
         // chớp mắt vài giây một lần
         if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
         f.blink = Math.max(0, f.blink - real);

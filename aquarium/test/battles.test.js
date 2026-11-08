@@ -10,14 +10,15 @@ function world(seed, lv) { const W = BK.World.create({ seed, war: false }); BK.W
 const soldiers = (S, n) => living(S).filter((p) => p.job === 'worker').slice(0, n).forEach((p) => { p.job = 'soldier'; });
 const tick = (W, n) => { for (let k = 0; k < n; k++) { BK.World.tick(W); BK.War.step(W, W.day, W.rng, 1 / 12); if (k % 12 === 11) BK.War.dayTick(W, W.day, W.rng); } };
 
-test('vũ khí theo thời: thời đồ đá chỉ có ná và giáo; thời trung đại có nỏ, máy bắn đá (tốn gỗ); đảo nghèo không có máy', () => {
+test('vũ khí theo thời: thời đồ đá chỉ có ná; thời trung đại có nỏ, máy bắn đá (tốn gỗ); đảo nghèo không có máy', () => {
   assert.strictEqual(Arms.kit(1).ranged, 'sling'); assert.strictEqual(Arms.kit(1).engine, null);
   assert.strictEqual(Arms.kit(3).engine, 'catapult'); assert.strictEqual(Arms.kit(4).ranged, 'musket'); assert.ok(Arms.kit(11).portal && Arms.kit(12).shield);
   const W = world(3, 3), A = W.islands[2]; soldiers(A, 12); fill(A, 1);
   const wood0 = E.state(A).stock.wood, w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng);
   assert.ok(w.engines.length >= 1 && w.engines.every((e) => e.kind === 'catapult'), 'có máy bắn đá: ' + w.engines.length);
   assert.ok(E.state(A).stock.wood < wood0, 'tốn gỗ');
-  const r = w.troops.filter((x) => x.arm === 'ranged').length; assert.ok(r > 0 && r < w.troops.length, 'vừa người bắn vừa người cận chiến: ' + r + '/' + w.troops.length);
+  // chỉ đánh bằng vũ khí bắn xa (mục 8): cả đoàn quân đều bắn xa
+  assert.ok(w.troops.every((x) => x.arm === 'ranged'), 'cả đoàn quân bắn xa');
   const W2 = world(3, 3), A2 = W2.islands[2]; soldiers(A2, 12); fill(A2, 0); const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng);
   assert.strictEqual(w2.engines.length, 0, 'kho trống: không có máy');
 });
@@ -93,4 +94,21 @@ test('biên niên: chuyện lớn được ghi; cả bể yên quá lâu thì ng
   BK.Chronicle.dayTick(W, W.day + 1, W.rng);
   assert.ok(W.pushes > before, 'đẩy một nguyên nhân thật');
   assert.ok(W.islands.some((S) => S.policy && S.policy.provoked > W.day), 'có người đứng đầu bị khiêu khích');
+});
+
+test('máu: trúng đạn mất máu, hết máu thì ngã; cổng hết máu thì vỡ; nhà chính hết máu thì mất thành; rút về thì hồi máu', () => {
+  const W = world(4, 5), A = W.islands[2], B = W.islands[1]; soldiers(A, 30); fill(A, 1);
+  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
+  let hurtSeen = 0, k = 0;
+  for (; k < 12 * 30 && w.stage === 'gate'; k++) { tick(W, 1); hurtSeen = Math.max(hurtSeen, [...B.people.values(), ...A.people.values()].filter((p) => p.alive && p.hp != null && p.hp < 100).length); }
+  assert.ok(hurtSeen > 0, 'có người bị thương mà chưa ngã');
+  if (w.stage === 'inside') assert.ok(Siege.hp(B, 'gate') <= 0, 'cổng vỡ khi hết máu: ' + Siege.hp(B, 'gate'));
+  // nhà chính hết máu thì mất thành
+  const W2 = world(6, 5), A2 = W2.islands[2], B2 = W2.islands[1]; soldiers(A2, 30);
+  const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'hall'; w2.since = W2.day; w2.gate = 'gate'; w2.team = []; w2.team0 = 1; w2.sg = B2.situ.siege = { war: w2.id, from: 2, stage: 'hall', gate: 'gate', def: [], foes: [] };
+  Siege.hit(B2, 'hall', 0.99); const keep = BK.Siege.hallTeam(B2, W2.day); w2.team = keep.map((p) => p.id); w2.team0 = Math.max(1, keep.length);
+  for (let n = 0; n < 12 * 3 && B2.annexedBy == null && W2.wars.includes(w2); n++) tick(W2, 1);
+  assert.ok(B2.annexedBy === 2 || !W2.wars.includes(w2), 'trận nhà chính kết thúc');
+  // hồi máu
+  const q = BK.Island.living(A)[0]; q.hp = 40; q.hurtAt = W.day - 2; BK.War.dayTick(W, W.day, W.rng); assert.ok(q.hp == null || q.hp > 40, 'hồi máu');
 });

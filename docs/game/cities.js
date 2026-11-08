@@ -35,6 +35,8 @@
     // tên, đạn bay dùng chung cho người bắn trong làng, máy công thành, thuyền chiến (render/shots3d.js); máy công thành, trại vây,
     // cổng dịch chuyển, lá chắn (render/engines3d.js)
     const shots = BK.Shots3D ? BK.Shots3D.create({ THREE, scene }) : null, engines3d = BK.Engines3D ? BK.Engines3D.create({ THREE, scene }) : null, engState = new Map();
+    // thanh máu: người ra trận, người bị thương, cổng đang bị đánh, nhà chính đang bị vây (render/hpbars3d.js)
+    const bars = BK.HpBars3D ? BK.HpBars3D.create({ THREE, scene, camera }) : null;
     // trận mặc định: seed 7 (chạy theo nhịp chơi thật có phản bội, đánh úp, sáp nhập hai đảo, chặn cướp đoàn buôn); ?seed= để đổi
     const q = new URLSearchParams(location.search), seed = +q.get('seed') || 7;
     const world = World.create({ seed, buildPlan });
@@ -54,7 +56,7 @@
     for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
     // người và bảng làng của một đảo: dựng khi cần lần đầu
     function villageOf(i) {
-      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots });
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars });
       return villages[i];
     }
     function uiOf(i) {
@@ -199,7 +201,8 @@
           const siegeOnly = w.blockade && !w.blockade.done;
           if (st.next - now > 10) st.next = now;
           if (w.stage === 'gate' && now > st.next && shots) {
-            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); from.y += e.kind === 'drone' ? 5 : 1.6; const to = gw.clone(); to.y += 2;
+            // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
+            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(gw.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = gw.clone(); to.y += 2;
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
           }
           list.push({ kind: e.kind, at, face: gw, shot: st.shot });
@@ -269,11 +272,22 @@
         if (shots) shots.update(t * 0.001);
         if (prosper) prosper.update(world, day, t * 0.001, (i) => !!(villages[i] && villages[i].visible), (i) => buildings.places(i), night || 0);
         G.dust = BK.Missiles ? BK.Missiles.dust(world, day) : 0; } // bụi hạt nhân: trời xám (render/sky3d.js)
+      if (bars) { bars.begin(); siegeBars(); }
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }
         else if (v) { v.setVisible(false); buildings.setPeds(i, []); }
       }
+      if (bars) bars.end();
+    }
+    // máu cổng đang bị đánh và máu nhà chính (logic/siege.js hp; logic/war.js: cổng hết máu thì vỡ, nhà chính hết máu thì mất thành)
+    function siegeBars() {
+      world.islands.forEach((S, i) => {
+        const sg = S.situ.siege, v = villages[i]; if (!sg || !v || !v.visible) return;
+        const L = lands[i], pl = buildings.places(i); if (!pl) return;
+        const g = pl[sg.gate] && pl[sg.gate][0]; if (g) { const out = g.clone().setY(0).normalize(); bars.add(g.clone().addScaledVector(out, 3).add(L.center).setY(L.center.y + 8), BK.Siege.hp(S, sg.gate), 6); }
+        if (pl.hall && (sg.stage === 'hall' || sg.stage === 'outer' || BK.Siege.hp(S, 'hall') < 1)) bars.add(pl.hall.clone().add(L.center).setY(L.center.y + 13), BK.Siege.hp(S, 'hall'), 9);
+      });
     }
     // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
     function slow() { G.slowmo = slowmoNow(); $('eraName').textContent = eraLabel(); syncWorld();

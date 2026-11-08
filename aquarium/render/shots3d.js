@@ -4,7 +4,7 @@
  *   stone   đá ná, đá máy bắn đá (bay vòng cung, xám)          arrow  mũi tên, tên nỏ (vòng cung thấp, thân gỗ)
  *   fire    tên lửa đốt (vòng cung, đầu lửa)                     bullet đạn súng (thẳng, vệt sáng vàng ngắn)
  *   ball    đạn đại bác, pháo (vòng cung, cầu sẫm)               plasma cầu sáng xanh lá hay xanh dương (thẳng, chậm)
- *   beam    tia (súng điện, súng tia: tia sáng loé rồi tắt)
+ *   beam    tia (súng điện, súng tia: tia sáng loé rồi tắt)      shell  đạn pháo xe tăng (thẳng, nhanh, đầu đạn sáng cam)
  * Súng hoả mai, súng trường, đại bác, pháo có khói trắng ở nòng (puff). Khối lặp dùng chung, mỗi loại một lần vẽ.
  * Cần: three.js. */
 (function (root) {
@@ -12,7 +12,7 @@
   const BK = root.BK || (root.BK = {});
   const MAX = 240;
   // [thời gian bay (giây), độ cao vòng cung, cỡ]
-  const KIND = { stone: [0.9, 2.2, 0.16], arrow: [0.6, 1.0, 1], fire: [0.7, 1.4, 1], bullet: [0.14, 0, 1], ball: [1.1, 3.5, 0.28], plasma: [0.45, 0, 0.22], beam: [0.12, 0, 1] };
+  const KIND = { stone: [0.9, 2.2, 0.16], arrow: [0.6, 1.0, 1], fire: [0.7, 1.4, 1], bullet: [0.14, 0, 1], ball: [1.1, 3.5, 0.28], plasma: [0.45, 0, 0.22], beam: [0.12, 0, 1], shell: [0.3, 0.15, 0.13] };
   function create(o) {
     const { THREE, scene } = o;
     const mk = (geo, mat) => { const I = new THREE.InstancedMesh(geo, mat, MAX); I.count = 0; I.frustumCulled = false; scene.add(I); return I; };
@@ -48,6 +48,7 @@
         at(s, u, V); at(s, Math.min(1, u + 0.03), V2); V2.sub(V); if (V2.lengthSq() < 1e-8) V2.set(0, 0, 1); Q.setFromUnitVectors(Z, V2.normalize());
         if (s.kind === 'arrow' || s.kind === 'fire') { S.set(1, 1, 1); M.compose(V, Q, S); I.arrow.setMatrixAt(n.arrow++, M); if (s.kind === 'fire') { S.setScalar(0.12); M.compose(V, Q, S); I.glow.setMatrixAt(n.glow, M); I.glow.setColorAt(n.glow++, col.set('#ff8a2a')); } }
         else if (s.kind === 'bullet') { S.set(1, 1, 1); M.compose(V, Q, S); I.tracer.setMatrixAt(n.tracer++, M); }
+        else if (s.kind === 'shell') { S.set(2.2, 2.2, 1.6); M.compose(V, Q, S); I.tracer.setMatrixAt(n.tracer++, M); S.setScalar(K[2]); M.compose(V, Q, S); I.glow.setMatrixAt(n.glow, M); I.glow.setColorAt(n.glow++, col.set('#ffb347')); }
         else if (s.kind === 'plasma') { S.setScalar(K[2]); M.compose(V, Q, S); I.glow.setMatrixAt(n.glow, M); I.glow.setColorAt(n.glow++, col.set(s.color || '#5fd8ff')); }
         else { S.setScalar(K[2]); M.compose(V, Q, S); I[s.kind].setMatrixAt(n[s.kind]++, M); }
       }
@@ -63,7 +64,7 @@
   const OF = {
     sling: ['stone'], bow: ['arrow'], crossbow: ['arrow'], musket: ['bullet', null, 0.35], rifle: ['bullet', null, 0.18], mg: ['bullet'], autorifle: ['bullet'],
     shock: ['beam', '#5fd8ff'], spore: ['plasma', '#9dff6a'], ray: ['beam', '#ff6af0'],
-    catapult: ['stone'], cannon: ['ball', null, 0.8], artillery: ['ball', null, 1.0], armor: ['ball', null, 0.6], drone: ['bullet'], plasma: ['plasma', '#7af7ff'],
+    catapult: ['stone'], cannon: ['ball', null, 0.8], artillery: ['ball', null, 1.0], armor: ['shell', null, 0.7], drone: ['bullet'], plasma: ['plasma', '#7af7ff'],
   };
   BK.Shots3D = { create, OF };
 })(typeof self !== 'undefined' ? self : globalThis);

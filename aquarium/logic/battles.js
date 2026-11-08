@@ -60,8 +60,9 @@
     const A = W.islands[w.a], R = W.islands[N.r];
     const pa = w.troops.length * BK.Arms.kit(A.level).pow * (1 + 0.15 * A.level), pd = N.crew.filter((x) => x.p.alive).length * BK.Arms.kit(R.level).pow * (1 + 0.15 * R.level) * 1.2;
     const ka = Math.min(0.4, dt * NAVAL_KILL * pd / Math.max(1, pa)), kd = Math.min(0.4, dt * NAVAL_KILL * pa / Math.max(1, pd));
-    for (const x of w.troops) if (x.p.alive && rng.chance(ka)) fall(x, N.r, 'sea');
-    for (const x of N.crew) if (x.p.alive && rng.chance(kd)) fall(x, w.a, 'sea');
+    const ch = fall.chance || ((k) => k); // một phát trúng mất máu (logic/war.js hurt)
+    for (const x of w.troops) if (x.p.alive && rng.chance(ch(ka))) fall(x, N.r, 'sea');
+    for (const x of N.crew) if (x.p.alive && rng.chance(ch(kd))) fall(x, w.a, 'sea');
     w.troops = w.troops.filter((x) => x.p.alive);
     if (day < N.until) return false;
     N.done = true; for (const x of N.crew) if (x.p.alive) x.p.away = null;
@@ -76,7 +77,7 @@
     // phục kích trên cầu
     if (w.by === 'bridge' && !w.surprise && tb && tb.cunning > 0.6 && rng.chance(0.6)) {
       const k = rng.range(AMBUSH[0], AMBUSH[1]); let n = 0;
-      for (const x of w.troops) if (rng.chance(k)) { fall(x, w.b, w.gate); n++; }
+      for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate)) n++;
       w.troops = w.troops.filter((x) => x.p.alive); w.morale = Math.max(0, w.morale - 0.2); w.ambush = n; stat(W, 'ambush');
       say(W, day, B.name + ' phục kích quân ' + A.name + ' trên cầu: ' + n + ' người ngã.', [w.a, w.b]);
     }
@@ -124,7 +125,7 @@
       const a = A.people.get(w.duel.a), b = B.people.get(w.duel.b); if (!a || !b || !a.alive || !b.alive) return null;
       const sa = (0.7 + 0.6 * P().traits(a).aggression) * (1 + 0.15 * A.level) * rng.range(0.6, 1.4), sb = (0.7 + 0.6 * P().traits(b).aggression) * (1 + 0.15 * B.level) * rng.range(0.6, 1.4);
       const [win, lose, wi, li] = sa >= sb ? [a, b, w.a, w.b] : [b, a, w.b, w.a];
-      const lx = w.troops.find((x) => x.p === lose) || { i: li, p: lose }; fall(lx, wi, w.gate);
+      const lx = w.troops.find((x) => x.p === lose) || { i: li, p: lose }; (fall.kill || fall)(lx, wi, w.gate);
       w.morale = Math.max(0, Math.min(1.2, w.morale + (wi === w.a ? 0.3 : -0.3)));
       say(W, day, 'Tướng ' + P().fullName(win) + ' thắng trận đấu tay đôi, tướng ' + P().fullName(lose) + ' ngã xuống.', [w.a, w.b]);
       legend(W, day, wi, win, 'hero', 'thắng trận đấu tướng trước cổng ' + B.name);

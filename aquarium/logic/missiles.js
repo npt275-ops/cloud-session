@@ -51,7 +51,7 @@
   const traitsOf = (S) => { const M = BK.Strategy.mind(S); return M ? M.t : null; };
   // mức hiếu chiến về vũ khí và có dám dùng hạt nhân không
   const militancy = (t) => clamp(0.15 + 0.4 * t.aggression + 0.3 * t.paranoia + 0.2 * t.ambition - 0.3 * t.meekness - 0.2 * t.piety, 0, 1);
-  const nukeWill = (t) => t.aggression > 0.5 && t.ambition > 0.45 && t.piety < 0.55 && t.meekness < 0.45;
+  const nukeWill = (t) => t.aggression > 0.55 && t.ambition > 0.5 && t.piety < 0.55 && t.meekness < 0.45;
   // mối đe doạ đảo i cảm thấy: sợ, thù đảo khác mạnh nhất; đang có chiến tranh thì thêm
   function threat(W, i) {
     let m = 0; for (let j = 0; j < W.islands.length; j++) if (j !== i) m = Math.max(m, 0.6 * W.rel[i][j].fear + 0.6 * W.rel[i][j].grudge);

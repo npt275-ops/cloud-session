@@ -39,7 +39,10 @@
     learn: () => [['think', null], ['nod', null]],
     study: () => [['think', null], ['scratchHead', null]],
     tell: () => [['talk', null], ['wave', null], ['laugh', null]],
-    play: () => [['cheer', null], ['dance', null]],
+    play: () => [['cheer', null], ['dance', null], ['laugh', null]],
+    mind: () => [['sit', null], ['wave', null], ['laugh', null]],   // người già trông trẻ ở sân chơi
+    errand: () => [['trade', 'coin'], ['nod', null]],
+    indoor: () => [['stand', null]],                                // (ở trong nhà: không vẽ, render/village3d.js)               // đi chợ, ra kho lĩnh phần (chu trình mang về nhà)
     help: () => [['harvest', null]],                             // trẻ phụ việc: nhặt, hái cùng người lớn
     eat: () => [['eat', 'bowl'], ['drink', null]],
     rest: () => [['sit', null], ['sway', null], ['stand', null]],

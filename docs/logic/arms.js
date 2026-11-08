@@ -49,7 +49,9 @@
   const P = () => BK.People, G = () => BK.Siege, E = () => BK.Economy;
   const kit = (lv) => KIT[Math.max(1, Math.min(12, lv || 1))];
   // người này bắn xa không (theo mã người, cố định suốt trận; dân binh, dân tự nguyện đánh gần)
-  const isRanged = (p, lv, levy) => !levy && ((p.id * 0.6180339887) % 1) < kit(lv).share;
+  // chỉ đánh bằng vũ khí bắn xa (design/chien-tranh-thinh-vuong.md mục 8): lính, dân binh, dân tự nguyện đều cầm vũ khí bắn xa
+  // của thời mình; không còn cận chiến
+  const isRanged = () => true;
 
   /* ---------- Ra quân: chia loại người, dựng máy công thành (tốn tài nguyên) ---------- */
   function equip(W, w) {
@@ -66,11 +68,13 @@
     if (W.armStats) W.armStats.engines = (W.armStats.engines || 0) + w.engines.length;
   }
   // người giữ có bắn xa không (cho phần vẽ, logic/siege.js)
-  const armOf = (S, p) => (isRanged(p, S.level, false) && (p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard') ? 'ranged' : 'melee');
+  const armOf = () => 'ranged';
 
   /* ---------- Mỗi đợt ở cổng: bắn xa, công thành, tên lửa đốt, đặc biệt ---------- */
   // def: người giữ [{i, p}]; fall(x, enemy): người ngã (logic/war.js); trả về số người giữ ngã
-  function gateTick(W, day, w, def, dt, rng, fall) {
+  // fall(x, enemy): một phát trúng (logic/war.js hurt: mất máu, hết máu thì ngã); chance(k): khả năng trúng theo khả năng ngã k
+  function gateTick(W, day, w, def, dt, rng, fall, chance) {
+    const ch = chance || ((k) => k);
     const A = W.islands[w.a], B = W.islands[w.b], ka = kit(w.kit || A.level), kb = kit(B.level);
     const st = (w.armLog || (w.armLog = { volleys: 0, gateDmg: 0, fires: 0 }));
     // lá chắn năng lượng (bên giữ thời 12): đỡ phần lớn đòn tới khi bị phá
@@ -83,19 +87,19 @@
     let dead = 0;
     if (pa > 0 && def.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pa / Math.max(1, def.length) * shield);
-      for (const x of def) if (x.p.alive && rng.chance(pk)) { fall(x, w.a); dead++; }
+      for (const x of def) if (x.p.alive && rng.chance(ch(pk)) && fall(x, w.a)) dead++;
       st.volleys++;
     }
     if (pd > 0 && w.troops.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pd / Math.max(1, w.troops.length));
-      for (const x of w.troops) if (x.p.alive && rng.chance(pk)) fall(x, w.b);
+      for (const x of w.troops) if (x.p.alive && rng.chance(ch(pk))) fall(x, w.b);
     }
     // máy công thành: phá cổng (lá chắn đỡ trước), bắn người giữ
     for (const e of w.engines || []) {
       const E0 = ENGINE[e.kind];
       if (kb.shield && B.shieldHp > 0) { B.shieldHp = Math.max(0, B.shieldHp - dt * E0.gate * 0.5); continue; }
       G().hit(B, w.gate, dt * E0.gate); st.gateDmg += dt * E0.gate;
-      if (E0.kill > 0) for (const x of def) if (x.p.alive && rng.chance(Math.min(0.2, dt * 0.04 * E0.kill))) { fall(x, w.a); dead++; }
+      if (E0.kill > 0) for (const x of def) if (x.p.alive && rng.chance(ch(Math.min(0.2, dt * 0.04 * E0.kill))) && fall(x, w.a)) dead++;
     }
     // bên giữ: người bắn xa cũng nhắm máy công thành
     if (pd > 0) for (const e of w.engines || []) e.hp -= dt * 0.02 * pd / Math.max(1, (w.engines || []).length);

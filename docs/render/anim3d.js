@@ -44,13 +44,15 @@
       p.py = Math.abs(C(ph * freqMul)) * 0.035 * (0.6 + K.stride);
       p.pry = s * 0.06;
     };
-    if (state === 'walk' || (o.moving && state !== 'attack' && state !== 'panic')) {
+    // bước chân chỉ khi đang thật sự di chuyển (đứng yên mà trạng thái 'đi' thì đứng thở như người chờ, không bước tại chỗ);
+    // ra trận cũng chạy bằng bước chân, tới chỗ trong hàng mới giương vũ khí
+    if (o.moving && state !== 'panic') {
       const amp = (0.28 + 0.3 * K.stride) * (0.7 + 0.5 * A);
       walkLegs(amp, 1);
       p.sxL = -S(ph) * (0.25 + 0.45 * A); p.sxR = S(ph) * (0.25 + 0.45 * A);
       p.exL = p.exR = 0.25 + 0.2 * A;
     }
-    if (state === 'idle' && !o.moving) {
+    if ((state === 'idle' || state === 'walk') && !o.moving) {
       const br = S(t * 1.6) * 0.02; p.cx += br; p.hx = -br;
       habit(p, o.habit, t, K);
       if (o.mood === 'pray') { // cầu nguyện: cúi đầu, chắp tay trước ngực, hơi khuỵu gối
@@ -70,7 +72,7 @@
         habit(p, o.habit, t, K, true);
       }
     }
-    if (state === 'attack') { // đánh: bước chéo chân, tay phải bổ xuống theo nhịp, người chồm tới hay lùi theo tính cách
+    if (state === 'attack' && !o.moving) { // thế đứng ra trận khi chưa có cử chỉ ngắm, giương (render/village3d.js đặt đè): hạ thấp người, chân choãi
       const c = ph * 1.4;
       p.py = -0.06 - 0.03 * A;
       p.hxL = 0.35 + lean * 0.15; p.hxR = -0.3 + lean * 0.15; p.kxL = 0.4; p.kxR = 0.45;
@@ -78,7 +80,6 @@
       p.sxR = 1.1 + S(c) * (0.6 + 1.0 * A); p.szR = 0.2; p.exR = 0.35 + 0.5 * (1 + C(c)) * 0.5;
       p.sxL = 0.6 + S(c + 2) * 0.3 * A; p.szL = 0.35; p.exL = 1.2;
       p.pry = S(c) * 0.25 * A;
-      if (o.moving) walkLegs(0.5, 1);
     }
     if (state === 'panic') { // hoảng sợ chạy: chân nhanh, tay quơ trên đầu, ngoái lại phía sau
       walkLegs(0.55 + 0.2 * A, 1);

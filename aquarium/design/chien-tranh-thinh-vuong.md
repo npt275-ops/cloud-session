@@ -138,3 +138,23 @@ còn ở thời đồ đá và nhịp kịch tính chưa can thiệp (từ ngày
 Ảnh lúc đồng hồ chạy thật (xem chậm 1/16): đại bác thời 4, xe bọc thép thời 6, drone thời 8–9, pháo plasma thời 12 nã
 vào cổng; người bắn xa trong làng bắn tên, đạn; hải chiến; thời hoàng kim; kỳ quan đang dựng; cỏ dại lúc suy tàn; thuyền
 ở ngư trường chung; bảng biên niên. Kiểm "không vô nghĩa" (audit của làng) 0 vi phạm, không lỗi trang.
+
+## 8. Chỉ đánh bằng vũ khí bắn xa, máu, đời sống NPC có trật tự (bước 9)
+
+Yêu cầu: bỏ cận chiến (nhìn xấu); khi đánh thì tập hợp thành đội quân, dùng vũ khí bắn xa; xe tăng bắn đạn; cổng thành và
+nhà chính có thanh máu, phá hết thì mất thành; NPC có máu, trúng đạn mất máu, hết máu thì ngã. Nhìn lại cả bể kính: NPC phải
+có việc, có mục đích, nhìn vào thấy trật tự.
+
+| Phần | Tệp | Có gì |
+|---|---|---|
+| Chỉ bắn xa | `logic/arms.js`, `render/village3d.js`, `render/anim3d.js` | Mọi người ra trận (lính, dân binh, dân tự nguyện, quân đồng minh, quân đóng giữ) cầm vũ khí bắn xa của thời mình. Không còn giáo, gươm, đồ nghề làm vũ khí, đuốc; đang chạy vào hàng thì chạy bằng bước chân, tới chỗ mới giương cung hay ngắm súng mà bắn |
+| Đội hình | `render/village3d.js` (formation), `logic/war.js`, `logic/siege.js` | Mỗi người trong trận có bên (`side`), thứ tự (`rank`), số người của đội (`of`). Ở cổng: quân đánh hai hàng ngoài tường (dải đất giữa tường và mép đảo) trải dọc hai bên cổng, quân giữ ba hàng ngay trong cổng. Nhà chính: quân giữ hàng ngang trước cửa, quân đánh hàng ngang cách đó 13 đơn vị về phía cổng. Trên phố: quân đánh trước công trình đang phá, dân binh chắn bên sườn. Ai không có người để nhắm thì bắn về phía hàng bên kia hay công trình đang phá |
+| Máu người | `logic/war.js` (hurt, healDay) | Đầy là 100. Mỗi phát trúng mất 28–45 máu, hết máu thì ngã; khả năng trúng mỗi đợt bằng bốn lần khả năng ngã cũ. Người bị thương rút về thì mỗi ngày hồi 20 máu. Hải chiến, phục kích, máy công thành, bắn xa ở cổng đều qua cùng một đường (một phát trúng); thua đấu tướng thì ngã hẳn |
+| Máu cổng | `logic/war.js`, `logic/siege.js` | Cổng chỉ vỡ khi hết máu. Quân đánh bắn phá cổng mỗi ngày `GATE_HIT × (tỉ lệ sức × 0,4 − 0,7)` (không còn ai giữ thì 2 mỗi ngày), cộng máy công thành |
+| Máu nhà chính | `logic/war.js` | Vây nhà chính: quân đánh bắn phá nhà chính `HALL_HIT × tỉ lệ sức` mỗi ngày, cộng phần của máy công thành; nhà chính hết máu thì sụp, mất thành. Hết chiến tranh thì thợ xây sửa như các chỗ hư khác |
+| Thanh máu | `render/hpbars3d.js`, `game/cities.js` | Thanh máu quay về máy quay, xanh lá, vàng, đỏ theo mức máu: trên đầu người đang ra trận hay đang bị thương, trên cổng đang bị đánh, trên nhà chính khi bị vây hay đã hư |
+| Xe tăng | `render/shots3d.js` (shell), `game/cities.js` | Xe bọc thép bắn đạn pháo từ đầu nòng tháp pháo, đạn đi thẳng, nhanh, đầu đạn sáng cam, khói ở nòng |
+| Không bước tại chỗ | `render/anim3d.js` | Bước chân chỉ khi thật sự di chuyển; đứng yên mà trạng thái "đi" thì đứng thở như người chờ |
+| Lập làng đủ lứa tuổi | `logic/island.js` | Lứa con đầu tiên của tám người lập làng có tuổi từ 1 tới 10 (nhỏ hơn cha mẹ ít nhất 17 tuổi), không còn cả làng toàn trẻ sơ sinh |
+| Trẻ nhỏ | `logic/tasks.js`, `logic/brain.js`, `render/village3d.js` | Dưới 3 tuổi ở trong nhà với người lớn. 3–5 tuổi: buổi sáng ra sân chơi của làng (bãi trống ngoài một dãy nhà, xa nhà chính), có một nửa số người già ra trông; còn lại ở trong nhà (ăn trưa, ngủ trưa, ăn tối). Trẻ nhỏ không bị cuốn vào chuyện người lớn (chiến tranh, cãi nhau). Trẻ lớn buổi tối ở trong nhà ăn tối, học bài, không đứng chơi trước cửa |
+| Việc có mục đích | `logic/tasks.js`, `render/work3d.js` | Người làm việc vặt không còn đi dạo vô định hay vòng quanh nhà chính: mỗi chuyến ra chợ mua đồ mang về nhà, ra kho lĩnh phần cho nhà (chu trình mang hàng), hay ghé nhà hàng xóm. Thời chưa có chợ thì trao đổi ở kho, ở sân. Trưa hai phần ba số người về nhà ăn trong nhà, một phần ba ăn ngoài hiên |
