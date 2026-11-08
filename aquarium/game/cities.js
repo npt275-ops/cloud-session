@@ -83,7 +83,7 @@
     for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
     // người và bảng làng của một đảo: dựng khi cần lần đầu
     function villageOf(i) {
-      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u) });
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u), idx: i, color: G.TERRAINS[i].color, hits: () => world.hitLog });
       return villages[i];
     }
     function uiOf(i) {
@@ -224,6 +224,7 @@
     }
     // máy công thành của bên đánh đứng ngoài cổng đảo đang vẽ gần, bắn vào cổng; trại vây; cổng dịch chuyển; lá chắn của đảo thời 12
     const GEAR_GAP = 6; // khoảng cách giữa hai xe, máy công thành (đơn vị thế giới; xe dài khoảng 3)
+    const GEAR_SPEED = 5; // xe lăn bao nhiêu đơn vị mỗi giây thật khi đổi chỗ
     function siegeGear(now) {
       const list = [];
       for (const w of world.wars) {
@@ -245,10 +246,16 @@
               new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), k % 2 ? 1.5 : -1.5); }
           else at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
           const key = w.id + ':' + k, st = engState.get(key) || { next: now + 1 + k * 0.7, shot: null }; engState.set(key, st);
+          // đổi chặng (cầu → trong thành): xe lăn từ chỗ cũ tới cổng rồi theo đường vào chỗ mới, không nhảy chỗ
+          // (design/ke-hoach-khac-phuc.md mục 2.4); đang lăn thì không bắn
+          if (!st.pos) st.pos = at.clone();
+          { const goal = inTown && !st.passed ? gw : at, d = goal.distanceTo(st.pos), stepLen = Math.min(d, GEAR_SPEED * Math.max(0, Math.min(0.1, now - (st.t || now)))); st.t = now;
+            if (d > 0.05) st.pos.addScaledVector(goal.clone().sub(st.pos).normalize(), stepLen); if (inTown && !st.passed && st.pos.distanceTo(gw) < 1.5) st.passed = true; if (!inTown) st.passed = false; }
+          const moving = st.pos.distanceTo(at) > 0.6; at = st.pos.clone(); if (moving) face = (inTown && !st.passed ? gw : aimW);
           // vây thành: vẫn nã vào cổng nhưng thưa hơn; đồng hồ lùi (tua năm) thì bắn lại ngay
           const siegeOnly = w.blockade && !w.blockade.done;
           if (st.next - now > 10) st.next = now;
-          if ((w.stage === 'gate' || inTown) && now > st.next && shots) {
+          if ((w.stage === 'gate' || inTown) && !moving && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
             const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(face.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = face.clone(); to.y += 2;
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
@@ -316,7 +323,7 @@
       guestMind = seen;
       guests.forEach((list, i) => { if (villages[i]) villages[i].setGuests(list); });
       // người ngã xuống còn nằm trên chiến trường (logic/war.js S.fallen): hai ngày
-      world.islands.forEach((S, i) => { if (villages[i]) villages[i].setFallen((S.fallen || []).filter((x) => world.day - x.day < 2).map((x) => ({ id: x.id, at: x.at, color: G.TERRAINS[x.i].color }))); });
+      world.islands.forEach((S, i) => { if (villages[i]) villages[i].setFallen((S.fallen || []).filter((x) => world.day - x.day < 2).map((x) => ({ id: x.id, i: x.i, at: x.at, color: G.TERRAINS[x.i].color }))); });
     }
     syncWorld();
     // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
