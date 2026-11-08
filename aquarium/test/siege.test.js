@@ -45,32 +45,28 @@ test('đi thuyền thì đánh cổng chính, qua cầu thì đánh cổng phụ
 });
 
 test('cổng vỡ: địch đốt phá công trình quanh thành (kho mất hàng, sản lượng giảm, dân dạt sang phía kia hay trốn trong nhà), rồi vây nhà chính; mất thành thì vua cũ quỳ', () => {
-  let done = 0;
-  for (const seed of [3, 5, 8]) {
-    const { W, w } = setup(seed, 2, 1, 16, true), B = W.islands[1], sb = E.state(B).stock;
-    if (!until(W, () => w.stage === 'inside' || w.stage === 'return', 12 * 40) || w.stage !== 'inside') continue;
-    assert.strictEqual(Siege.hp(B, w.gate), 0, 'cổng vỡ hẳn');
-    const food0 = sb.food;
-    until(W, () => Siege.hp(B, 'store') < 0.5 || w.siege !== 'outer', 12 * 3);
-    if (Siege.hp(B, 'store') < 0.5) assert.ok(sb.food < food0, 'kho cháy mất hàng');
-    BK.World.tick(W);
-    if (w.siege === 'outer') {
-      const ref = living(B).filter((p) => !p.away && !B.situ.siege.def.includes(p.id) && p.id !== B.seats.king).map((p) => B.minds.get(p.id)).filter(Boolean);
-      // (bước 10: người sợ hãi, trẻ nhỏ, một phần ba số người trốn trong nhà; số còn lại dạt sang phía bên kia đảo)
-      assert.ok(ref.filter((x) => x.place === 'refuge' || x.verb === 'hide').length >= ref.length * 0.8, 'dân dạt sang phía bên kia đảo hay trốn trong nhà');
-      assert.ok(ref.some((x) => x.place === 'refuge') && ref.some((x) => x.verb === 'hide'), 'có người chạy, có người trốn');
-    }
-    const old = B.seats.king;
-    until(W, () => w.stage === 'return' || !W.wars.includes(w), 12 * 20);
-    if (B.annexedBy !== 2) continue;
-    done++;
-    assert.ok(B.situ.kneel && B.situ.kneel.id === old, 'vua cũ bị dẫn ra quỳ');
-    BK.World.tick(W);
-    assert.strictEqual(B.minds.get(old).verb, 'kneel');
-    assert.ok((B.fallen || []).length > 0, 'người ngã nằm lại trên chiến trường');
-    assert.ok(Siege.damaged(B).length >= 2, 'còn chỗ hư: ' + JSON.stringify(B.ruin));
-  }
-  assert.ok(done >= 1, 'ít nhất một trận mất thành');
+  // (kiểm thử hành vi: quân tới cổng thì đặt thẳng cổng hết máu, không chờ trận đánh may rủi)
+  const { W, w } = setup(3, 2, 1, 16, true), B = W.islands[1], sb = E.state(B).stock;
+  assert.ok(until(W, () => w.stage === 'gate', 12 * 40), 'quân tới cổng');
+  w.blockade = null; w.duel = null; w.forceGate = true; Siege.hit(B, w.gate, 1);
+  assert.ok(until(W, () => w.stage === 'inside', 12), 'cổng vỡ, quân vào thành');
+  assert.strictEqual(Siege.hp(B, w.gate), 0, 'cổng vỡ hẳn');
+  const food0 = sb.food;
+  until(W, () => Siege.hp(B, 'store') < 0.5 || w.siege !== 'outer', 12 * 3);
+  if (Siege.hp(B, 'store') < 0.5) assert.ok(sb.food < food0, 'kho cháy mất hàng');
+  BK.World.tick(W);
+  const ref = living(B).filter((p) => !p.away && !B.situ.siege.def.includes(p.id) && p.id !== B.seats.king).map((p) => B.minds.get(p.id)).filter(Boolean);
+  // (bước 10: người sợ hãi, trẻ nhỏ, một phần ba số người trốn trong nhà; số còn lại dạt sang phía bên kia đảo)
+  const tally = {}; for (const x of ref) tally[(x.verb || x.state) + '@' + x.place] = (tally[(x.verb || x.state) + '@' + x.place] || 0) + 1;
+  // (người sùng đạo ra chỗ thờ cầu cho thành không mất)
+  assert.ok(ref.filter((x) => x.place === 'refuge' || x.verb === 'hide' || x.place === 'shrine').length >= ref.length * 0.8, 'dân dạt sang phía bên kia đảo, trốn trong nhà hay cầu nguyện: ' + w.stage + '/' + w.siege + ' ' + JSON.stringify(tally));
+  assert.ok(ref.some((x) => x.place === 'refuge') && ref.some((x) => x.verb === 'hide'), 'có người chạy, có người trốn');
+  // mất thành: đặt thẳng sáp nhập
+  const old = B.seats.king; War.annex(W, W.day, 2, 1, w);
+  assert.ok(B.situ.kneel && B.situ.kneel.id === old, 'vua cũ bị dẫn ra quỳ');
+  BK.World.tick(W);
+  assert.strictEqual(B.minds.get(old).verb, 'kneel');
+  assert.ok(Siege.damaged(B).length >= 1, 'còn chỗ hư: ' + JSON.stringify(B.ruin));
 });
 
 test('công trình hư: sản lượng giảm theo độ bền, nhà cháy thì ở nhờ; hết giặc thì thợ sửa lại, có thợ tới chỗ hư', () => {

@@ -120,3 +120,19 @@ test('xe, máy công thành chỉ đi qua cầu: đi thuyền thì chỉ mang dr
   w.by = 'bridge'; Arms.equip(W, w); assert.ok(w.engines.length >= 1, 'qua cầu: có máy');
   Arms.strand(w); assert.strictEqual(w.engines.length, 0, 'cầu bị phá: máy kẹt lại');
 });
+
+test('phát trúng ghi lại cho phần vẽ (ai bắn ai, trên đảo nào); đổi chặng gặp dân binh trên đường thì đánh, không đi qua', () => {
+  const W = world(4, 5), A = W.islands[2], B = W.islands[1]; soldiers(A, 30); fill(A, 1);
+  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
+  for (let k = 0; k < 12 * 3 && !(W.hitLog && W.hitLog.length); k++) tick(W, 1);
+  assert.ok(W.hitLog && W.hitLog.length, 'có phát trúng được ghi');
+  const h = W.hitLog[0]; assert.strictEqual(h.isle, 1); assert.ok(h.by != null && h.byI != null, 'biết người bắn');
+  // đổi chặng: quân đang chạy tới nhà chính, dân binh còn đông trên đường thì chưa tới được nhà chính
+  const W2 = world(6, 5), A2 = W2.islands[2], B2 = W2.islands[1]; soldiers(A2, 20);
+  const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'move'; w2.since = W2.day; w2.moveUntil = W2.day; w2.gate = 'gate';
+  w2.sg = B2.situ.siege = { war: w2.id, from: 2, stage: 'outer', gate: 'gate', def: [], foes: [] };
+  const militia = Siege.gateGuards(B2, 'gate').length + living(B2).filter((p) => p.job === 'soldier' && !p.away).length;
+  assert.ok(militia > 1, 'có dân binh, lính trên đường: ' + militia);
+  BK.War.step(W2, W2.day + 0.01, W2.rng, 1 / 12);
+  assert.strictEqual(w2.siege, 'move', 'chưa tới nhà chính khi còn dân binh');
+});

@@ -93,12 +93,12 @@
     let dead = 0;
     if (pa > 0 && def.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pa / Math.max(1, def.length) * shield);
-      for (const x of def) if (x.p.alive && rng.chance(ch(pk)) && fall(x, w.a)) dead++;
+      def.forEach((x, j) => { if (x.p.alive && rng.chance(ch(pk)) && fall(x, w.a, shooters[j % shooters.length])) dead++; });
       st.volleys++;
     }
     if (pd > 0 && w.troops.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pd / Math.max(1, w.troops.length));
-      for (const x of w.troops) if (x.p.alive && rng.chance(ch(pk))) fall(x, w.b);
+      w.troops.forEach((x, j) => { if (x.p.alive && rng.chance(ch(pk))) fall(x, w.b, defShoot[j % defShoot.length]); });
     }
     // máy công thành: phá cổng (lá chắn đỡ trước), bắn người giữ
     for (const e of w.engines || []) {
