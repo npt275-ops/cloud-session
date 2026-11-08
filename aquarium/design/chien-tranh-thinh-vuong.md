@@ -175,3 +175,15 @@ Số đã chỉnh: `HITS` 6 (khả năng trúng mỗi đợt), `GATE_HIT` 1,2, `
 (`logic/island.js`); người đứng đầu chỉ muốn làm hạt nhân khi hiếu chiến trên 0,55 và tham vọng trên 0,5 (`logic/missiles.js`).
 Đầu hàng hiếm hơn trước (0,05 mỗi trận): nhà chính thường sụp trước khi người đứng đầu chịu hàng. Trẻ dưới 12 tuổi theo lịch
 riêng, không bị cuốn vào hạn hán, chiến tranh, cãi nhau của người lớn.
+
+## 9. Gặp là bắn, càn quét, trận ở cầu, trời neon, bá chủ cuối trận (bước 10)
+
+| Phần | Tệp | Có gì |
+|---|---|---|
+| Gặp là bắn | `render/village3d.js` | Người cầm súng của hai bên (người ra trận; lính, lính gác của đảo khi có giặc) thấy kẻ địch trong tầm 13 đơn vị thì dừng lại, quay về phía đó mà bắn; không đi lướt qua nhau, không chạm mặt nhau trên đường. Vị trí kẻ địch lấy theo khung hình trước |
+| Càn quét | `logic/war.js`, `logic/siege.js` | Cổng vỡ: nửa quân đánh đi càn quét, bắn dân thường đang chạy nạn ngoài đường (mỗi ngày khả năng trúng `CIV_HIT`), nửa kia đốt phá công trình; xong mới vây nhà chính. Người sợ hãi, trẻ nhỏ và một phần ba số người trốn trong nhà, đóng cửa (khả năng trúng chỉ `CIV_HID` phần, giặc lục từng nhà); số còn lại chạy dạt sang phía bên kia đảo |
+| Xe chỉ qua cầu | `logic/arms.js` (equip, strand) | Xe, máy công thành (máy bắn đá, đại bác, pháo, xe bọc thép, pháo plasma) chỉ đi được qua cầu; đi thuyền thì chỉ mang được drone. Bên bị đánh phá cầu lúc quân đang tới thì máy kẹt lại |
+| Trận ở cầu | `render/village3d.js` (formation), `game/cities.js` (deckAt, siegeGear) | Đánh qua cầu: một phần ba quân đánh đứng trên mặt cầu (ba người một hàng), số còn lại đổ bộ hai bên cổng phụ; xe, máy công thành nối đuôi trên mặt cầu nã vào cổng phụ. Cổng phụ vỡ thì xe lăn vào thành theo đường từ cổng tới nhà chính, nã vào chỗ đang bị phá rồi vào nhà chính |
+| Trời neon | `game/cities.js`, `render/sky3d.js`, `render/neon3d.js` | Đảo đầu tiên tới thời 10 là mặt trời thật tắt, trời tím; đảo đó (và đảo nào tới thời 10 sau) treo mặt trời nhân tạo của mình; đảo chưa tới thời 10 bật đèn đường, đèn cửa sổ suốt như đêm |
+| Thời muộn nhanh hơn | `logic/economy.js` | Từ thời 8 trở đi giỏ tài nguyên còn 60% và ở mỗi thời ít nhất 75 ngày (trước là 120) |
+| Bá chủ | `logic/strategy.js` | Từ năm 6, đảo tới thời 10 muốn thống trị các đảo kém mình (thêm 1,0 vào lòng muốn chiếm), tự tin hơn khi so sức, nghỉ giữa hai trận chỉ 60 ngày. Đảo bị chiếm nộp hết phần dư về đảo cai quản (logic/war.js), dùng chung thời với đảo cai quản |

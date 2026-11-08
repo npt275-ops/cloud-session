@@ -44,7 +44,7 @@ test('đi thuyền thì đánh cổng chính, qua cầu thì đánh cổng phụ
   assert.strictEqual(B.minds.get(B.seats.king).verb, 'command');
 });
 
-test('cổng vỡ: địch đốt phá công trình quanh thành (kho mất hàng, sản lượng giảm, dân dạt sang phía kia), rồi vây nhà chính; mất thành thì vua cũ quỳ', () => {
+test('cổng vỡ: địch đốt phá công trình quanh thành (kho mất hàng, sản lượng giảm, dân dạt sang phía kia hay trốn trong nhà), rồi vây nhà chính; mất thành thì vua cũ quỳ', () => {
   let done = 0;
   for (const seed of [3, 5, 8]) {
     const { W, w } = setup(seed, 2, 1, 16, true), B = W.islands[1], sb = E.state(B).stock;
@@ -56,7 +56,9 @@ test('cổng vỡ: địch đốt phá công trình quanh thành (kho mất hàn
     BK.World.tick(W);
     if (w.siege === 'outer') {
       const ref = living(B).filter((p) => !p.away && !B.situ.siege.def.includes(p.id) && p.id !== B.seats.king).map((p) => B.minds.get(p.id)).filter(Boolean);
-      assert.ok(ref.filter((x) => x.place === 'refuge').length >= ref.length * 0.6, 'dân dạt sang phía bên kia đảo');
+      // (bước 10: người sợ hãi, trẻ nhỏ, một phần ba số người trốn trong nhà; số còn lại dạt sang phía bên kia đảo)
+      assert.ok(ref.filter((x) => x.place === 'refuge' || x.verb === 'hide').length >= ref.length * 0.8, 'dân dạt sang phía bên kia đảo hay trốn trong nhà');
+      assert.ok(ref.some((x) => x.place === 'refuge') && ref.some((x) => x.verb === 'hide'), 'có người chạy, có người trốn');
     }
     const old = B.seats.king;
     until(W, () => w.stage === 'return' || !W.wars.includes(w), 12 * 20);

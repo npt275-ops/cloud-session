@@ -42,6 +42,10 @@
   // sức chứa kho mỗi thứ (lương thực gấp ba: kho thóc); luôn chứa đủ giỏ của thời sau, dư thêm 25%
   const CAP = (lv, r) => { const next = lv < BK.Eras.COUNT ? BK.Eras.of(lv + 1).cost[r] || 0 : 0; return Math.max((400 + 80 * lv) * (r === 'food' ? 3 : 1), next * 1.25); };
   const MIN_DAYS = 120;                                       // ở một thời ít nhất chừng này ngày mới lên được thời sau
+  // thời muộn (design/chien-tranh-thinh-vuong.md mục 9): công nghệ cũ dẫn đường cho công nghệ mới, nên từ thời LATE_LV giỏ
+  // nhẹ hơn (LATE_COST phần) và ở mỗi thời ngắn hơn (LATE_DAYS): đảo dẫn đầu tới thời 11 vào khoảng năm 7, 8
+  const LATE_LV = 7, LATE_COST = 0.6, LATE_DAYS = 75;
+  const minDays = (lv) => (lv >= LATE_LV ? LATE_DAYS : MIN_DAYS);
   const POP_NEED = (lv) => 12 + lv;                          // dân tối thiểu để lên thời lv
 
   const state = (S) => S.eco || (S.eco = { stock: Object.fromEntries(RES.map((r) => [r, r === 'food' ? 160 : 0])), made: {}, eaten: 0, hunger: 0, since: 0 });
@@ -58,7 +62,7 @@
     return k * (BK.Climate ? BK.Climate.factor(S, r, day) : 1); // thiên tai đang có (logic/climate.js)
   }
   const tech = (lv) => 1 + 0.1 * (lv - 1); // công nghệ của thời: mỗi thời làm ra nhiều hơn 10%
-  const nextCost = (S) => (S.level < BK.Eras.COUNT ? BK.Eras.of(S.level + 1).cost : null);
+  const nextCost = (S) => { if (S.level >= BK.Eras.COUNT) return null; const c = BK.Eras.of(S.level + 1).cost; if (S.level + 1 < LATE_LV + 1) return c; const o = {}; for (const r in c) o[r] = Math.round(c[r] * LATE_COST); return o; };
   // chia người làm: trước hết đủ người làm lương thực để ăn dư ~15% (thêm người khi kho cạn); số còn lại chia cho những thứ
   // giỏ thời sau còn thiếu, nghiêng về thứ đảo mình giàu, và một phần làm đặc sản để bán
   function allocate(S, workers, day, eat, councilFood) {
@@ -113,7 +117,7 @@
     st.since++;
     const cost = nextCost(S);
     // đảo bị sáp nhập (logic/war.js) không tự lên cấp: dùng chung thời với đảo cai quản
-    if (cost && S.annexedBy == null && st.since >= MIN_DAYS && !st.hunger && live.length >= POP_NEED(S.level + 1) && Object.keys(cost).every((r) => st.stock[r] >= cost[r])) {
+    if (cost && S.annexedBy == null && st.since >= minDays(S.level) && !st.hunger && live.length >= POP_NEED(S.level + 1) && Object.keys(cost).every((r) => st.stock[r] >= cost[r])) {
       for (const r in cost) st.stock[r] -= cost[r];
       S.level++; st.since = 0; return true;
     }

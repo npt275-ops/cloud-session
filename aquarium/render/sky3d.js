@@ -2,7 +2,7 @@
  * Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod),
  * hướng nắng, bóng nắng theo chỗ camera nhìn (nhích từng bước bằng một điểm ảnh của bản đồ bóng để mép bóng không rung),
  * trời sầm lại khi giông, chớp loé sáng; ghi giờ lên đồng hồ. Màu trời và ánh sáng theo giờ lấy từ render/mood3d.js (bảng màu
- * ấm theo giờ), có thêm một đèn hắt nhẹ phía ngược nắng cho bóng dịu. Khi cả sáu đảo đã tới thời 10 trời chỉ còn tím, có rèm cực
+ * ấm theo giờ), có thêm một đèn hắt nhẹ phía ngược nắng cho bóng dịu. Khi bất kỳ đảo nào tới thời 10 trời chỉ còn tím, có rèm cực
  * quang, không còn ngày đêm (mood3d NEON); applyTime trả night = 1 để mọi đèn, cửa sổ sáng suốt. Cần: game/world.js, render/scene3d.js, render/perf3d.js (PERF.half). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -11,7 +11,7 @@
     const skyMat = new THREE.ShaderMaterial({
       uniforms: { top: { value: C('#5aa9e6') }, bottom: { value: C('#cfe8f5') }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: C('#fff3d0') }, neon: { value: 0 }, time: { value: 0 } },
       vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      // trời tím (cả sáu đảo đã tới thời 10): rèm cực quang xanh ngọc hồng trôi chậm và ánh thành phố hắt lên chân trời
+      // trời tím (bất kỳ đảo nào đã tới thời 10): rèm cực quang xanh ngọc hồng trôi chậm và ánh thành phố hắt lên chân trời
       fragmentShader: 'uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; uniform float neon; uniform float time; varying vec3 vW; void main(){ vec3 d = normalize(vW); float h = clamp(d.y * 1.4 + 0.25, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.8)); float s = max(dot(d, normalize(sunDir)), 0.0); c += sunCol * (pow(s, 600.0) * 1.2 + pow(s, 12.0) * 0.18);'
         + ' if (neon > 0.0) { float az = atan(d.z, d.x); float band = sin(az * 3.0 + time * 0.05 + sin(az * 7.0 - time * 0.08) * 0.7); float hgt = smoothstep(0.06, 0.28, d.y) * (1.0 - smoothstep(0.34, 0.8, d.y)); float cur = pow(max(band, 0.0), 3.0) * hgt * (0.75 + 0.25 * sin(az * 23.0 + time * 0.4));'
         + ' vec3 ac = mix(vec3(0.2, 1.0, 0.85), vec3(1.0, 0.3, 0.85), 0.5 + 0.5 * sin(az * 2.0 + time * 0.03)); c += ac * cur * 0.38 * neon; c += vec3(0.7, 0.22, 0.55) * pow(1.0 - abs(d.y), 10.0) * 0.3 * neon; }'
@@ -50,7 +50,7 @@
     function applyTime() {
       // mất mặt trời (render/neon3d.js): không còn ngày đêm, đèn sáng suốt; ánh sáng rọi từ trên
       // cao (các mặt trời nhân tạo trên mỗi đảo) nên bóng đổ gần như thẳng xuống
-      const neon = (G.skyLevel != null ? G.skyLevel : G.level || 0) >= ((BK.Neon3D && BK.Neon3D.LV) || 10); // cả sáu đảo đều đã tới thời 10 (đảo cuối cùng tới thì trời mới tím)
+      const neon = (G.skyLevel != null ? G.skyLevel : G.level || 0) >= ((BK.Neon3D && BK.Neon3D.LV) || 10); // bất kỳ đảo nào đã tới thời 10 (G.skyLevel: cấp cao nhất; đảo đầu tiên tới là trời tím)
       const tod = G.time.tod, ang = (tod - 0.25) * Math.PI * 2, e = Math.sin(ang);
       const day = neon ? 0 : clamp(e * 2.2 + 0.25, 0, 1), night = neon ? 1 : 1 - clamp(e * 3 + 0.6, 0, 1), gold = neon ? 0 : clamp(1 - Math.abs(e) * 3.2, 0, 1) * (e > -0.25 ? 1 : 0);
       if (neon) sunDir.set(0.22, 1, 0.3).normalize(); else sunDir.set(Math.cos(ang) * 0.85, Math.max(0.05, e), 0.55).normalize();

@@ -51,12 +51,14 @@
     // cấp của từng đảo (mặt trời nhân tạo, render/neon3d.js), cấp thấp nhất (bầu trời tím khi cả sáu đảo tới thời 10)
     G.levelOf = (i) => isle(i).level;
     G.shots3d = shots; // số phát đang bay (kiểm thử, bảng dev)
-    const syncLevels = () => { G.skyLevel = Math.min(...world.islands.map((S) => S.level)); G.level = isle(G.focus || 0).level; W.day = world.day; G.time.tod = world.tod; };
+    // trời (render/sky3d.js, render/neon3d.js): bất kỳ đảo nào tới thời 10 là mặt trời thật tắt, trời tím; đảo đó treo mặt trời nhân tạo,
+    // đảo chưa tới thời 10 thì bật đèn đường, đèn cửa sổ suốt (như đêm)
+    const syncLevels = () => { G.skyLevel = Math.max(...world.islands.map((S) => S.level)); G.level = isle(G.focus || 0).level; W.day = world.day; G.time.tod = world.tod; };
     syncLevels();
     for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
     // người và bảng làng của một đảo: dựng khi cần lần đầu
     function villageOf(i) {
-      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars });
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u) });
       return villages[i];
     }
     function uiOf(i) {
@@ -194,18 +196,26 @@
         if (w.kind === 'revolt' || !['gate', 'loot', 'inside'].includes(w.stage)) continue;
         const i = w.b, v = villages[i], g = gateAt[i]; if (!v || !v.visible || !g) continue;
         const L = lands[i], gw = g.clone().add(L.center), out = g.clone().setY(0).normalize(), side = new THREE.Vector3(-out.z, 0, out.x), n = (w.engines || []).length;
+        // xe, máy công thành chỉ đi qua cầu (logic/arms.js): ở cổng thì đứng trên mặt cầu sau hàng quân, nã vào cổng phụ; cổng vỡ
+        // thì lăn vào thành theo đường từ cổng tới nhà chính, nã vào chỗ đang bị phá hay nhà chính. Drone bay lượn trên cổng
+        const B = w.by === 'bridge' ? bridges3d.bridgeOf(i, w.a) : null, inTown = w.stage === 'inside', sg = isle(i).situ.siege;
+        const hw = hallAt[i] || (buildings.places(i) || {}).hall, hallW = hw ? hw.clone().add(L.center) : L.center.clone();
+        const aimW = inTown ? (w.siege === 'hall' || !sg || !sg.target ? hallW : (spotAt(i, sg.target) || hw || g).clone().add(L.center)) : gw;
         (w.engines || []).forEach((e, k) => {
-          const at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
+          let at, face = aimW;
+          if (e.kind !== 'drone' && inTown) { const dir = hallW.clone().sub(gw).setY(0).normalize(), sd = new THREE.Vector3(-dir.z, 0, dir.x); at = gw.clone().addScaledVector(dir, 7 + Math.floor(k / 2) * 4).addScaledVector(sd, k % 2 ? 2 : -2); at.y = L.center.y; }
+          else if (e.kind !== 'drone' && B && B.pa) at = bridges3d.bridgePoint(B, B.a === i ? 0.13 + k * 0.06 : 0.87 - k * 0.06, new THREE.Vector3());
+          else at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
           const key = w.id + ':' + k, st = engState.get(key) || { next: now + 1 + k * 0.7, shot: null }; engState.set(key, st);
           // vây thành: vẫn nã vào cổng nhưng thưa hơn; đồng hồ lùi (tua năm) thì bắn lại ngay
           const siegeOnly = w.blockade && !w.blockade.done;
           if (st.next - now > 10) st.next = now;
-          if (w.stage === 'gate' && now > st.next && shots) {
+          if ((w.stage === 'gate' || inTown) && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
-            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(gw.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = gw.clone(); to.y += 2;
+            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(face.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = face.clone(); to.y += 2;
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
           }
-          list.push({ kind: e.kind, at, face: gw, shot: st.shot });
+          list.push({ kind: e.kind, at, face, shot: st.shot });
         });
         if (w.blockade && !w.blockade.done) for (const k of [-1, 1]) list.push({ kind: 'tent', at: ashore(L, g, side, k * 17), face: gw });
         if (w.portal) { const at = gw.clone().addScaledVector(out, -7); at.y = L.center.y; list.push({ kind: 'portal', at, face: L.center }); }
@@ -214,9 +224,17 @@
       if (engState.size > 200) engState.clear();
       return list;
     }
+    // mặt cầu giữa đảo i và đảo from, u tính từ đầu cầu phía đảo i (0) sang đảo kia (1); toạ độ của đảo i (y là độ cao mặt cầu)
+    function deckAt(i, from, u) {
+      const B = bridges3d.bridgeOf(i, from); if (!B || !B.pa || B.era < 0) return null;
+      return bridges3d.bridgePoint(B, B.a === i ? u : 1 - u, new THREE.Vector3()).sub(lands[i].center);
+    }
     function spotAt(i, key) {
       const pl = buildings.places(i); if (!pl) return null; const first = (a) => (a && a.length ? a[0] : null);
       if (key.startsWith('home:')) return (pl.homeSlots && pl.homeSlots[+key.slice(5)]) || first(pl.homes);
+      // dân chạy nạn ngã ở phía bên kia đảo so với cổng bị đánh (render/village3d.js refugeOf); chỗ đang bị phá ('ruin:<khoá>')
+      if (key === 'refuge') { const sg = isle(i).situ.siege, g = (sg && first(pl[sg.gate])) || first(pl.gate) || pl.hall; if (g) { const a = Math.atan2(-g.z, -g.x), R = lands[i].rOf(a) * 0.5; return new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R); } }
+      if (key.startsWith('ruin:')) return spotAt(i, key.slice(5));
       return key === 'hall' ? pl.hall : first(key === 'farm' ? pl.field : pl[key]) || pl.hall;
     }
     // kiểu cầu: theo thời lúc xây (logic/diplomacy.js b.era); lên thời thì người đứng đầu quyết có xây lại hay không

@@ -35,6 +35,11 @@
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
   const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.7; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  // bá chủ (design/chien-tranh-thinh-vuong.md mục 9): từ năm HEGEMON_DAY, đảo đã tới thời HEGEMON_LV muốn thống trị các đảo
+  // kém mình (thêm HEGEMON_WANT vào lòng muốn chiếm), nghỉ giữa hai trận ngắn hơn (HEGEMON_REST); cuối trận còn một, hai đảo
+  // vô địch nắm cả bể, đảo bị chiếm nộp hết phần dư về đảo cai quản (logic/war.js vassalDay)
+  const HEGEMON_DAY = 5 * 360, HEGEMON_LV = 10, HEGEMON_WANT = 1.0, HEGEMON_REST = 60;
+  const hegemon = (W, a, day) => day >= HEGEMON_DAY && W.islands[a].level >= HEGEMON_LV;
   const CONQUER_PRIZE = 1.5;
   const REBUILD_AGE = 180;      // cầu dùng ít nhất chừng này ngày mới xét xây lại theo kiểu thời mới    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
 
@@ -128,7 +133,7 @@
   // xét đánh ai: đột kích hay tổng tấn công, theo tính cách, nhu cầu, thù hằn và tương quan sức
   function tryWar(W, a, day, rng, t) {
     const D = BK.Diplomacy, E = BK.Economy, Wr = BK.War, A = W.islands[a], pol = A.policy;
-    if (day < FIRST_WAR || Wr.atWar(W, a) || (pol.lastWar != null && day - pol.lastWar < WAR_REST)) return;
+    if (day < FIRST_WAR || Wr.atWar(W, a) || (pol.lastWar != null && day - pol.lastWar < (hegemon(W, a, day) ? HEGEMON_REST : WAR_REST))) return;
     // tên lửa phá cổng trước, hạt nhân yểm trợ (logic/missiles.js): kẻ có vũ khí bắn xa ước sức mình mạnh hơn
     const ar = W.islands[a].arms, off = Wr.offense(W, a, day) * (1 + (ar ? 0.02 * Math.min(6, ar.missiles) + 0.25 * Math.min(1, ar.nukes) : 0)); if (off < 3) return;
     const clamp = (x) => Math.max(0, Math.min(1, x));
@@ -149,11 +154,13 @@
       const wantRaid = (0.5 * t.aggression + 0.25 * (1 - t.intellect) + 0.6 * need + 0.4 * grudge - 0.4 * t.fear - 0.3 * t.piety - 0.25) / far;
       // bị khiêu khích (chạy đua vũ trang không thành hiệp ước, logic/battles.js; nỗi nhục, logic/chronicle.js) thì muốn đánh hơn
       const provoked = pol.provoked > day ? 0.3 : 0;
-      const wantConquer = provoked + (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
+      const boss = hegemon(W, a, day) && A.level >= W.islands[rb].level + 1 ? HEGEMON_WANT : 0; // bá chủ muốn thống trị đảo kém mình
+      const wantConquer = boss + provoked + (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
       // thừa nước đục thả câu: đảo b đang bị đánh nơi khác thì kẻ mưu mô muốn đánh hơn; bị cấm vận thì túng quẫn, dễ liều
       const k = (T ? 0.4 : 1) * (Wr.atWar(W, b) && t.cunning > 0.55 ? 1.15 : 1) * (W.embargo && W.embargo[a] > day ? 1.25 : 1); lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)
-      const raid = wantRaid * clamp((ratioRaid - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
+      // (bá chủ tự tin hơn: thấy mình mạnh hơn một chút là đã dám đánh chiếm)
+      const raid = wantRaid * clamp((ratioRaid - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * (boss ? clamp((ratio - 0.8) / 1.0) : clamp((ratio - 1.0) / 1.5));
       for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
     }
     pol.warlust = clamp(lust);

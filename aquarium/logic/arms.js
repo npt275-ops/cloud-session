@@ -53,12 +53,18 @@
   // của thời mình; không còn cận chiến
   const isRanged = () => true;
 
+  // máy không cần đường bộ (bay): đi thuyền vẫn mang theo được
+  const GROUND_FREE = new Set(['drone']);
+  // cầu bị phá, đổi sang đi thuyền: xe, máy công thành kẹt lại bên này biển
+  const strand = (w) => { if (w.engines) w.engines = w.engines.filter((e) => GROUND_FREE.has(e.kind)); };
   /* ---------- Ra quân: chia loại người, dựng máy công thành (tốn tài nguyên) ---------- */
   function equip(W, w) {
     const A = W.islands[w.a], k = kit(A.level);
     for (const x of w.troops) x.arm = isRanged(x.p, W.islands[x.i].level, x.levy) ? 'ranged' : 'melee';
     w.kit = A.level; w.engines = [];
     const E0 = k.engine && ENGINE[k.engine]; if (!E0) return;
+    // xe, máy công thành chỉ đi được qua cầu (design/chien-tranh-thinh-vuong.md mục 9); đi thuyền thì chỉ mang được drone
+    if (w.by !== 'bridge' && !GROUND_FREE.has(k.engine)) return;
     const st = E().state(A).stock, want = Math.min(MAX_ENGINES, Math.floor(w.troops.length / PER_ENGINE) * (w.kind === 'raid' ? 0.5 : 1));
     for (let n = 0; n < want; n++) {
       if (!Object.keys(E0.cost).every((r) => st[r] >= E0.cost[r] * 2)) break; // không vét sạch kho
@@ -120,5 +126,5 @@
   }
   // phần sức giữ cổng còn lại theo độ bền cổng (logic/war.js): cổng hư thì người giữ mất chỗ dựa
   const describe = (lv) => { const k = kit(lv); return (NAME[k.ranged] || k.ranged) + (k.engine ? ', ' + ENGINE[k.engine].name : ''); };
-  return { KIT, ENGINE, NAME, kit, equip, gateTick, armOf, isRanged, describe };
+  return { KIT, ENGINE, NAME, kit, equip, strand, gateTick, armOf, isRanged, describe };
 });

@@ -140,7 +140,10 @@
       const lodge = lodging(S, p), at = lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' };
       return d(t.fear > 0.6 ? 'panic' : 'work', Object.assign({ verb: 'hide', reason: t.fear > 0.6 ? 'chạy về nhà trốn, đóng cửa' : 'đưa con vào nhà, đóng cửa' }, at, short));
     }
-    return d(t.fear > 0.6 || age < 12 ? 'panic' : 'work', Object.assign({ verb: 'shelter', place: 'refuge', reason: 'giặc vào thành, dạt sang phía bên kia đảo' }, short));
+    // giặc vào thành: người sợ hãi, trẻ nhỏ và một phần ba số người trốn trong nhà, đóng cửa (ít bị bắn hơn); số còn lại chạy
+    // dạt sang phía bên kia đảo (ngoài đường, quân càn quét bắn vào, logic/war.js)
+    if (t.fear > 0.55 || age < 12 || p.id % 3 === 0) { const lodge = lodging(S, p), at = lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' }; return d('panic', Object.assign({ verb: 'hide', reason: 'giặc vào thành, trốn trong nhà, đóng cửa' }, at, short)); }
+    return d('panic', Object.assign({ verb: 'shelter', place: 'refuge', reason: 'giặc vào thành, chạy dạt sang phía bên kia đảo' }, short));
   }
 
   /* ---------- Sửa lại sau chiến tranh ---------- */

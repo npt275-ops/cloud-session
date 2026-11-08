@@ -1,5 +1,5 @@
 /* Bể Kính · render/neon3d.js · Mặt trời nhân tạo của thành phố neon (từ thời 10)
- * Khi cả sáu đảo đã tới thời 10, mặt trời thật tắt: trên trời chỉ còn một đĩa đen viền lửa hồng tím (mặt trời đã mất), trời tím không còn
+ * Khi bất kỳ đảo nào tới thời 10, mặt trời thật tắt: trên trời chỉ còn một đĩa đen viền lửa hồng tím (mặt trời đã mất), trời tím không còn
  * ngày đêm (render/sky3d.js, render/mood3d.js NEON). Mỗi đảo tự treo một mặt trời nhân tạo trên thành phố của mình, rọi
  * thẳng xuống: lõi sáng, quầng sáng, cột sáng hình nón chiếu xuống thành phố, một đèn điểm (không đổ bóng) tô màu cả đảo.
  * Sáu đảo sáu dáng mặt trời, màu theo render/build/neon.js PAL:
@@ -10,7 +10,7 @@
  *   coast    Cửa Sóng    Mặt Trời Sứa: vòm sứa phát sáng, mười hai xúc tu ánh sáng đung đưa rủ xuống
  *   desert   Cát Hồng    Mặt Trời Hai Vành: cầu hồng có hai vành rộng bắt chéo, khung bát diện vàng quay ngược
  * Cấp 10, 11, 12 mặt trời lớn dần (SCALE). update(dt, t) mỗi khung hình: mặt trời của đảo bật khi đảo đó tới thời 10; mặt trời
- * thật tắt khi cả sáu đảo tới thời 10; cho các phần quay, thở.
+ * thật tắt khi bất kỳ đảo nào tới thời 10; cho các phần quay, thở.
  * Cần: render/build/neon.js (BK.Neon3D), render/sky3d.js (G.glowTex dùng chung), lands3d (G.lands3d.lands). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -84,8 +84,8 @@
     const disc = new THREE.Mesh(new THREE.CircleGeometry(62, 48), basic('#07040e', { depthWrite: false })), rim = new THREE.Mesh(new THREE.RingGeometry(61, 67, 64), add({ color: '#ff4fd8', opacity: 0.85 }));
     const cor = halo('#a040ff', 420, 0.3); disc.renderOrder = rim.renderOrder = cor.renderOrder = -1; dead.add(cor, disc, rim); rim.position.z = 0.1;
     const DEAD_AT = new THREE.Vector3(-0.42, 0.34, -0.84).normalize().multiplyScalar(1500);
-    // mỗi đảo một mặt trời, bật khi chính đảo đó tới thời 10 (G.levelOf(i)); mặt trời thật tắt (đĩa đen trên trời) khi cả sáu đảo
-    // đều đã tới thời 10 (G.skyLevel: cấp thấp nhất trong các đảo, game/cities.js)
+    // mỗi đảo một mặt trời, bật khi chính đảo đó tới thời 10 (G.levelOf(i)); mặt trời thật tắt (đĩa đen trên trời) khi bất kỳ đảo nào
+    // đã tới thời 10 (G.skyLevel: cấp cao nhất trong các đảo, game/cities.js)
     function update(dt, t) {
       const ts = t * 0.001;
       suns.forEach((S, i) => { const lv = G.levelOf ? G.levelOf(i) : G.level || 0; if (lv !== S.lv) { S.lv = lv; S.root.visible = N.on(lv); S.g.scale.setScalar(SCALE[lv] || 1); } });

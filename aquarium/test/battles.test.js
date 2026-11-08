@@ -14,7 +14,8 @@ test('vũ khí theo thời: thời đồ đá chỉ có ná; thời trung đại
   assert.strictEqual(Arms.kit(1).ranged, 'sling'); assert.strictEqual(Arms.kit(1).engine, null);
   assert.strictEqual(Arms.kit(3).engine, 'catapult'); assert.strictEqual(Arms.kit(4).ranged, 'musket'); assert.ok(Arms.kit(11).portal && Arms.kit(12).shield);
   const W = world(3, 3), A = W.islands[2]; soldiers(A, 12); fill(A, 1);
-  const wood0 = E.state(A).stock.wood, w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng);
+  // (bước 10: xe, máy công thành chỉ đi qua cầu: cho đoàn quân đi qua cầu rồi trang bị lại)
+  const wood0 = E.state(A).stock.wood, w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w);
   assert.ok(w.engines.length >= 1 && w.engines.every((e) => e.kind === 'catapult'), 'có máy bắn đá: ' + w.engines.length);
   assert.ok(E.state(A).stock.wood < wood0, 'tốn gỗ');
   // chỉ đánh bằng vũ khí bắn xa (mục 8): cả đoàn quân đều bắn xa
@@ -25,7 +26,7 @@ test('vũ khí theo thời: thời đồ đá chỉ có ná; thời trung đại
 
 test('ở cổng: máy công thành phá cổng, tên lửa đốt làm cháy nhà; cổng dịch chuyển (thời 11) mở cổng từ bên trong', () => {
   const W = world(5, 4), A = W.islands[2], B = W.islands[1]; soldiers(A, 14); fill(A, 1);
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.sg = B.situ.siege = { war: w.id, from: 2, stage: 'gate', gate: 'gate', def: [], foes: [] };
+  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.sg = B.situ.siege = { war: w.id, from: 2, stage: 'gate', gate: 'gate', def: [], foes: [] };
   const def = Siege.gateGuards(B, 'gate').map((p) => ({ i: 1, p }));
   for (let k = 0; k < 24; k++) Arms.gateTick(W, W.day + k / 12, w, def, 1 / 12, W.rng, (x) => { x.p.alive = false; });
   assert.ok(Siege.hp(B, 'gate') < 1, 'cổng bị đại bác phá: ' + Siege.hp(B, 'gate'));
@@ -112,4 +113,12 @@ test('máu: trúng đạn mất máu, hết máu thì ngã; cổng hết máu th
   assert.ok(B2.annexedBy === 2 || !W2.wars.includes(w2), 'trận nhà chính kết thúc');
   // hồi máu
   const q = BK.Island.living(A)[0]; q.hp = 40; q.hurtAt = W.day - 2; BK.War.dayTick(W, W.day, W.rng); assert.ok(q.hp == null || q.hp > 40, 'hồi máu');
+});
+
+test('xe, máy công thành chỉ đi qua cầu: đi thuyền thì chỉ mang drone; cầu bị phá giữa đường thì máy kẹt lại', () => {
+  const W = world(3, 5), A = W.islands[2]; soldiers(A, 14); fill(A, 1);
+  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'boat'; Arms.equip(W, w);
+  assert.strictEqual(w.engines.length, 0, 'đi thuyền: không có máy công thành');
+  w.by = 'bridge'; Arms.equip(W, w); assert.ok(w.engines.length >= 1, 'qua cầu: có máy');
+  Arms.strand(w); assert.strictEqual(w.engines.length, 0, 'cầu bị phá: máy kẹt lại');
 });
