@@ -47,12 +47,11 @@
     if (BK.Battles) { const br = BK.Battles.roleOf(S, p, d, ph); if (br) return br; }
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
-    // trẻ dưới 12 tuổi: lịch riêng (logic/tasks.js): trẻ nhỏ ở trong nhà, sáng ra sân chơi có người già trông; trẻ lớn đi học,
-    // phụ việc; không cuốn vào
-    // chuyện của người lớn
-    if (age < 12 && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     // bão, bão tuyết, bão cát (logic/climate.js): ai cũng trú trong nhà, trừ lính gác cổng
     if (BK.Climate) { const c = BK.Climate.taskFor(S, p, d); if (c) return c; }
+    // trẻ dưới 12 tuổi (sau bão: bão thì trẻ cũng trú trong nhà): lịch riêng (logic/tasks.js): trẻ nhỏ ở trong nhà, sáng ra
+    // sân chơi có người già trông; trẻ lớn đi học, phụ việc; không bị cuốn vào chuyện của người lớn
+    if (age < 12 && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     // drama (logic/dramas.js): người trong drama bỏ việc thường ra tham gia (tan thì lịch thường đưa về đúng việc của mình);
     // người ngoài drama mà sợ nó (avoid: người nhút nhát khi có bạo loạn) thì ở trong nhà
     if (BK.Dramas && !(X.war > day)) { const dt = BK.Dramas.taskFor(S, p, d); if (dt) return dt; }

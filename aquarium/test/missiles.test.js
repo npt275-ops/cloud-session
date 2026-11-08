@@ -13,9 +13,10 @@ const fill = (S, k) => { const st = E.state(S); for (const r of E.RES) st.stock[
 test('tên lửa theo kinh tế và tính cách: đảo giàu, người đứng đầu hiếu chiến làm nhiều; đảo nghèo, nhu nhược làm ít; trước thời 7 không có', () => {
   const W = world(3, 7); const [A, B, C] = W.islands;
   temper(A, HAWK); temper(B, DOVE); temper(C, HAWK); fill(A, 1); fill(B, 1); fill(C, 0.12); E.devSetLevel(W.islands[3], 6); fill(W.islands[3], 1);
-  for (let d = 0; d < 120; d++) { for (const S of [A, B, C]) fill(S, S === C ? 0.12 : 1); M.dayTick(W, W.day + d, W.rng); }
+  // (40 ngày: đo nhịp làm, chưa chạm trần kho của đảo giàu)
+  for (let d = 0; d < 40; d++) { for (const S of [A, B, C]) fill(S, S === C ? 0.12 : 1); M.dayTick(W, W.day + d, W.rng); }
   const n = (S) => (S.arms ? S.arms.missiles : 0);
-  assert.ok(n(A) >= 5, 'giàu, hiếu chiến: ' + n(A));
+  assert.ok(n(A) >= 3, 'giàu, hiếu chiến: ' + n(A));
   assert.ok(n(A) > n(B), 'hiếu chiến ' + n(A) + ' > nhu nhược ' + n(B));
   assert.ok(n(A) > n(C), 'giàu ' + n(A) + ' > nghèo ' + n(C));
   assert.strictEqual(n(W.islands[3]), 0, 'thời 6 chưa có tên lửa');
