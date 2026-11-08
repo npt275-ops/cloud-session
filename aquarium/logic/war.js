@@ -113,10 +113,14 @@
   const ready = (S) => (E().state(S).hunger ? HUNGRY : 1) * (1 - 0.3 * (BK.Climate ? BK.Climate.stress(S, S.day) : 0));
   // ước lượng sức thủ cổng của đảo b trước quân từ đảo a (cho người đứng đầu đảo a xét trước khi đánh)
   // (bên ngoài chỉ thấy lính giữ cổng, không biết trước bao nhiêu dân sẽ cầm vũ khí ra giữ)
+  // cổng ít người giữ nhất của đảo S (quân đột kích đi thuyền chọn chỗ đổ bộ; 7g sau: cổng chính lúc nào cũng có 4 lính gác giữ
+  // chốt, đâm vào đó thì những năm đầu không đảo nào đủ sức đột kích)
+  const weakGate = (S) => ['gate', 'gateL', 'gateR'].map((g) => [g, G().gateGuards(S, g).reduce((s, p) => s + fighter(p), 0)]).sort((x, y) => x[1] - y[1])[0][0];
+  // kind 'raid' đi thuyền: ước theo cổng yếu nhất
   // đảo b đang bị cai quản: bên ngoài thấy quân đóng giữ ở đó, và biết đảo cai quản sẽ gửi quân sang giữ (RULER_AID; 7g)
-  function defense(W, b, a) {
-    const S = W.islands[b], r = rulerOf(W, b);
-    let n = G().gateGuards(S, gateFor(W, b, a)).reduce((s, p) => s + fighter(p), 0) * tech(S.level);
+  function defense(W, b, a, kind) {
+    const S = W.islands[b], r = rulerOf(W, b), g = kind === 'raid' && !D().bridged(W, a, b) ? weakGate(S) : gateFor(W, b, a);
+    let n = G().gateGuards(S, g).reduce((s, p) => s + fighter(p), 0) * tech(S.level);
     if (r !== b) {
       n += (S.garrison ? S.garrison.troops.filter((x) => x.p.alive) : []).reduce((s, x) => s + fighter(x.p), 0) * tech(W.islands[r].level);
       n += RULER_AID * living(W.islands[r]).filter((p) => !p.away && p.job === 'soldier').reduce((s, p) => s + fighter(p), 0) * tech(W.islands[r].level);
@@ -240,7 +244,7 @@
       // tới nơi: đảo đó đã thuộc về mình (người khác đánh giúp) thì về
       if (rulerOf(W, w.b) === w.a) return goHome(W, day, w, 'Đảo ' + B.name + ' đã thuộc về ' + A.name + ', quân quay về.');
       // qua cầu thì đánh cổng phụ đầu cầu, đi thuyền thì đổ bộ đánh cổng chính (logic/siege.js)
-      w.stage = 'gate'; w.since = day; B.situ.warSide = sideOf(w.b, w.a); w.gate = G().gateOf(B.situ.warSide, w.by === 'bridge'); w.field = w.gate;
+      w.stage = 'gate'; w.since = day; B.situ.warSide = sideOf(w.b, w.a); w.gate = w.kind === 'raid' && w.by !== 'bridge' ? weakGate(B) : G().gateOf(B.situ.warSide, w.by === 'bridge'); // quân đột kích đi thuyền đổ bộ ở cổng yếu nhất w.field = w.gate;
       // mỗi trận giữ trạng thái trận của mình (w.sg); trên đảo hiện trận đang diễn ra (hai đảo cùng đánh một đảo thì trận vừa
       // chạy đợt sau cùng)
       w.sg = B.situ.siege = { war: w.id, from: w.a, stage: 'gate', gate: w.gate, def: [], foes: [] };

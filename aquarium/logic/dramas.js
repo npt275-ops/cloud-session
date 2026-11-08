@@ -27,20 +27,22 @@
   'use strict';
   const DAY = ['morning', 'afternoon', 'evening'];
   const DRAMAS = [
-    { key: 'riot', name: 'Bạo loạn', phases: DAY, chance: 0.005, cooldown: 45, minPeople: 14,
+    // biểu tình (khoá cũ 'riot'): tụ tập ở sân, rồi xếp hàng ngang hàng dọc trước nhà chính, cầm biển hô khẩu hiệu (không giận dữ)
+    { key: 'riot', name: 'Biểu tình', phases: DAY, chance: 0.005, cooldown: 45, minPeople: 14,
       avoid: { temper: ['timid'], why: 'sợ đám đông, ở trong nhà' }, // người nhút nhát (không trong drama) trốn trong nhà
       boost: (S) => (S.situ.drought > S.day ? 6 : 1) * (S.food < 1 ? 2 : 1),
-      cast: [{ id: 'lead', temper: ['ambitious', 'hothead'], n: [1, 1] }, { id: 'mob', temper: ['hothead', 'ambitious'], n: [3, 8], fitMin: 0.52 }],
+      // đám biểu tình: người nóng nảy, tham vọng, cả người hoạt ngôn (đủ đông để xếp hàng ngang hàng dọc)
+      cast: [{ id: 'lead', temper: ['ambitious', 'hothead'], n: [1, 1] }, { id: 'mob', temper: ['hothead', 'ambitious', 'sociable'], n: [5, 16], fitMin: 0.45 }],
       stages: [
-        { dur: 0.7, why: 'tụ tập, hô hào kéo nhau tới nhà chính', act: { lead: { state: 'work', verb: 'rule', mood: 'argue', place: 'square' }, mob: { state: 'work', verb: 'riot', mood: 'argue', place: 'square', target: 'lead' } } },
-        { dur: 1.4, why: 'bạo loạn trước nhà chính', act: { lead: { state: 'talk', mood: 'argue', target: 'king' }, mob: { state: 'work', verb: 'riot', mood: 'argue', place: 'hall' } } },
+        { dur: 0.7, why: 'tụ tập ở sân, nghe người cầm đầu nói, giơ biển', act: { lead: { state: 'work', verb: 'speech', place: 'square' }, mob: { state: 'work', verb: 'protest', place: 'square' } } },
+        { dur: 1.4, why: 'biểu tình trước nhà chính: xếp hàng, cầm biển hô khẩu hiệu', act: { lead: { state: 'talk', target: 'king' }, mob: { state: 'work', verb: 'protest', place: 'protest' } } },
       ],
       responders: [
         { pick: 'job:soldier', n: 4, act: { state: 'work', verb: 'guard', place: 'hall' }, why: 'giữ trật tự trước nhà chính' },
         { pick: 'role:general', n: 2, act: { state: 'work', verb: 'drill', place: 'hall' }, why: 'chỉ huy lính giữ nhà chính' },
         { pick: 'post:orator', n: 1, act: { state: 'work', verb: 'rule', place: 'hall' }, why: 'ra nói với đám đông cho dịu lại' },
       ],
-      say: ['{lead} cầm đầu {n} người nóng tính kéo nhau đi bạo loạn.', 'Đám bạo loạn tan, ai về việc nấy.'] },
+      say: ['{lead} dẫn {n} người kéo nhau đi biểu tình trước nhà chính.', 'Cuộc biểu tình tan, ai về việc nấy.'] },
     { key: 'brawl', name: 'Ẩu đả ở chợ', phases: DAY, chance: 0.05, cooldown: 8, minPeople: 8,
       cast: [{ id: 'fight', temper: ['hothead', 'ambitious'], n: [2, 2], fitMin: 0.52 }, { id: 'watch', temper: ['sociable', 'ambitious'], n: [2, 5], fitMin: 0.5 }],
       stages: [{ dur: 0.45, why: 'ẩu đả ngoài chợ', act: { fight: { state: 'attack', target: 'pair', place: 'market' }, watch: { state: 'talk', verb: 'listen', target: 'lead', place: 'market' } } }],
@@ -167,7 +169,9 @@
       else if (act.target === 'king') target = S.seats.king != null ? S.seats.king : null;
       else if (act.target === 'pair') { const g = A.parts[part], i = g.indexOf(p.id); target = g[i % 2 ? i - 1 : i + 1] != null ? g[i % 2 ? i - 1 : i + 1] : g[0] !== p.id ? g[0] : null; }
       const why = (part === D.cast[0].id && A.lead === p.id ? 'cầm đầu: ' : '') + stage.why;
-      return d(act.state, { verb: act.verb || null, mood: act.mood || null, place: act.place || null, target, reason: why + ' (' + D.name.toLowerCase() + ')', until, drama: A.key, phase: null, intensity: act.mood === 'argue' ? 0.8 : 0.55 });
+      // xếp hàng biểu tình: thứ tự của mỗi người trong đám (hàng ngang hàng dọc, render/village3d.js)
+      const line = act.place === 'protest' ? { rank: A.parts[part].indexOf(p.id), of: A.parts[part].length } : {};
+      return d(act.state, Object.assign(line, { verb: act.verb || null, mood: act.mood || null, place: act.place || null, target, reason: why + ' (' + D.name.toLowerCase() + ')', until, drama: A.key, phase: null, intensity: act.mood === 'argue' ? 0.8 : 0.55  }));
     }
     return null;
   }

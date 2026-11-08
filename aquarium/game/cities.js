@@ -38,6 +38,9 @@
     // ?cap=: dev vào thẳng một cấp (cả sáu đảo đặt thẳng cấp đó, công trình của thời đó dựng sẵn)
     const devLevel = (l) => { for (const S of world.islands) { BK.Economy.devSetLevel(S, l); BK.Construction.setEra(S, l); for (const it of S.build.list) { it.done = true; it.progress = 1; } S.build.active = null; S.situChanged = true; } };
     { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) devLevel(cap); }
+    // ?day=: dev vào thẳng một ngày của trận (nút về năm trước dựng lại trận từ đầu với cùng seed rồi chạy tới đó: cùng seed
+    // ra cùng lịch sử)
+    { const day = +q.get('day'); if (day > 0) World.jump(world, Math.min(day, Eras.MATCH_DAYS)); }
     const N = world.islands.length, isle = (i) => world.islands[i];
     const shownLv = [], villages = [], uis = [];
     // cấp của từng đảo (mặt trời nhân tạo, render/neon3d.js), cấp thấp nhất (bầu trời tím khi cả sáu đảo tới thời 10)
@@ -62,7 +65,10 @@
     }
     // nhãn thời kỳ của đảo đang xem: phần giỏ tài nguyên của thời sau đã gom được (logic/economy.js), thiên tai đang có
     // (logic/climate.js), đang đói
-    function eraLabel() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S, S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối') + (dis ? ' · ' + dis : '') + hungry; }
+    // chuyện vừa tìm được (nút Sự kiện ⏭) hiện kèm nhãn 15 giây
+    let evNote = null;
+    function eraLabel() { return 'Năm ' + Math.min(9, Math.floor(world.day / (BK.Rules.YEAR_DAYS || 360)) + 1) + '/9 · ' + eraLabel0() + (evNote && performance.now() < evNote.until ? ' · ' + evNote.text : '') + (G.slowmo ? ' · đang xem chậm' : ''); }
+    function eraLabel0() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S, S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; return S.name + ' · ' + Eras.of(l).name + (l < Eras.COUNT ? ' · gom ' + Math.floor(BK.Economy.progress(S) * 100) + '% tài nguyên thời sau' : ' · thời cuối') + (dis ? ' · ' + dis : '') + hungry; }
     function resyncAll() {
       syncLevels();
       for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]); villages[i].setPlaces(buildings.places(i)); } }
@@ -75,8 +81,78 @@
       devLevel(l); G.seasons.update(true); resyncAll(); for (const u of uis) if (u) u.render(true);
     }
     const jumpEra = () => goEra(G.level + 1); // bài kiểm tra chạy trình duyệt không giao diện
-    $('eraPrev').onclick = () => goEra(G.level - 1);
-    $('eraNext').onclick = () => goEra(G.level + 1);
+    /* ---------- Dev: đi qua từng năm của trận, tua tới sự kiện kế tiếp ----------
+     * ▶ năm sau: chạy thật tới đầu năm sau (logic như chơi thường, chỉ nhanh); ◀ năm trước: dựng lại trận từ đầu với cùng seed
+     * rồi chạy tới đầu năm trước (?seed=&day=), vì cùng seed ra cùng lịch sử. Sự kiện ⏭: chạy từng ngày tới khi có chuyện đáng xem
+     * (quân đánh tới cổng hay vào thành, đảo chính, biểu tình, tên lửa đang bay), rồi bay tới đúng chỗ đó. */
+    const YEAR = BK.Rules.YEAR_DAYS || 360;
+    function busy(on, text) { for (const id of ['yearPrev', 'yearNext', 'nextEvent', 'nextDrama']) $(id).disabled = on; if (text) $('eraName').textContent = text; }
+    function afterJump() { resyncAll(); syncWorld(); slow(); for (const u of uis) if (u) u.render(true); }
+    $('yearNext').onclick = () => {
+      if (world.day >= Eras.MATCH_DAYS) return;
+      const to = Math.min(Eras.MATCH_DAYS, (Math.floor(world.day / YEAR) + 1) * YEAR);
+      busy(true, 'Đang tua tới năm ' + (to / YEAR + 1) + '…');
+      setTimeout(() => { World.jump(world, to); afterJump(); busy(false); }, 30); // để thanh dev kịp hiện chữ "đang tua"
+    };
+    $('yearPrev').onclick = () => {
+      const y = Math.ceil(world.day / YEAR) - 1, to = Math.max(0, (y - 1) * YEAR);
+      busy(true, 'Đang dựng lại trận…'); location.search = '?seed=' + seed + (to > 0 ? '&day=' + to : '');
+    };
+    // chuyện đáng xem lúc này: [đảo, chỗ (khoá chỗ trên đảo) hay null, tên]; kind 'war': trận đánh, tên lửa, nổi dậy, đảo chính;
+    // 'drama': drama trong làng (biểu tình, ẩu đả, diễn thuyết…), đám tang, người đứng đầu cũ quỳ
+    function eventNow(kind, only) {
+      const want = (i) => only == null || only === i;
+      if (kind === 'war') {
+        for (const w of world.wars) {
+          if (w.kind !== 'revolt' && ['gate', 'loot', 'inside'].includes(w.stage) && want(w.b)) return [w.b, w.stage === 'inside' && w.siege === 'hall' ? 'hall' : w.gate, 'quân ' + isle(w.a).name + ' đánh ' + isle(w.b).name];
+          if (w.kind !== 'revolt' && w.stage === 'muster' && want(w.a) && only != null) return [w.a, null, 'tiễn quân ' + isle(w.a).name];
+          if (w.kind === 'revolt' && want(w.a)) return [w.a, 'hall', 'nổi dậy ở ' + isle(w.a).name];
+        }
+        for (const m of world.missiles || []) if (!m.done && want(m.to)) return [m.to, m.key, (m.kind === 'nuke' ? 'hạt nhân' : 'tên lửa') + ' bay tới ' + isle(m.to).name];
+        for (let i = 0; i < N; i++) { const S = isle(i); if (want(i) && S.situ.coup && !S.situ.coup.done) return [i, 'hall', 'đảo chính ở ' + S.name]; }
+        return null;
+      }
+      for (let i = 0; i < N; i++) {
+        if (!want(i)) continue; const S = isle(i), A = BK.Dramas.active(S)[0];
+        if (A) return [i, A.key === 'riot' ? 'hall' : null, A.name.toLowerCase() + ' ở ' + S.name];
+        const sc = (S.scenes || []).find((x) => x.until > S.day); if (sc) return [i, sc.kind === 'funeral' ? 'grave' : 'shrine', (sc.kind === 'funeral' ? 'đám tang ' : 'lễ tưởng niệm ') + sc.name];
+        if (S.situ.kneel && S.situ.kneel.until > S.day) return [i, 'hall', 'người đứng đầu cũ quỳ ở ' + S.name];
+      }
+      return null;
+    }
+    function lookAt(i, key) {
+      const pl = buildings.places(i), L = lands[i], at = key && pl ? (key === 'hall' ? pl.hall : (pl[key] && pl[key][0]) || pl.hall) : null;
+      G.setFocus(i); G.flyTo(at ? at.clone().add(L.center) : L.center, at ? 30 : 96);
+    }
+    function seek(kind) {
+      busy(true, 'Đang tìm ' + (kind === 'war' ? 'trận đánh' : 'drama') + ' kế tiếp…');
+      setTimeout(() => {
+        // chuyện đang diễn ra thì bỏ qua nó, tìm chuyện mới (tối đa 2 năm). Trận đánh: tua từng ngày trọn (World.jump chỉ chạy
+        // chiến tranh, việc giữa các đảo khi qua trọn một ngày; trận ở cổng kéo dài nhiều ngày nên không lỡ). Drama ngắn hơn một
+        // ngày: chạy từng nhịp như chơi thường (World.advance), dừng ở mỗi phần tư ngày
+        const now = eventNow(kind), skip = now ? now[2] : null; let ev = null;
+        for (let k = 0; k < (kind === 'war' ? 2 : 8) * YEAR && world.day < Eras.MATCH_DAYS; k++) {
+          if (kind === 'war') World.jump(world, Math.floor(world.day) + 1); else World.advance(world, 0.25);
+          const e = eventNow(kind);
+          // drama: chỉ dừng ở chuyện ban ngày (tối, đêm thì một lát sau cả làng đi ngủ, không còn gì để xem)
+          if (e && e[2] !== skip && (kind === 'war' || ['morning', 'noon', 'afternoon'].includes(BK.Schedule.phase(world.tod)))) { ev = e; break; }
+        }
+        afterJump(); busy(false);
+        evNote = { text: ev ? ev[2] : 'không có ' + (kind === 'war' ? 'trận đánh' : 'drama') + ' nào trong 2 năm tới', until: performance.now() + 15000 };
+        if (ev) { lookAt(ev[0], ev[1]); watch = { kind, i: ev[0] }; G.slowmo = SLOWMO; } // xem chậm ngay, theo đúng chuyện vừa tìm
+        $('eraName').textContent = eraLabel();
+      }, 30);
+    }
+    $('nextEvent').onclick = () => seek('war');
+    $('nextDrama').onclick = () => seek('drama');
+    // xem chậm: đảo đang xem (gần máy quay) có trận đánh hay drama thì thời gian chậm lại SLOWMO lần, cho kịp thấy từng người làm gì
+    const SLOWMO = 1 / 16;
+    // chuyện vừa tìm bằng nút (watch): xem chậm tới khi chuyện đó xong, dù máy quay còn đang bay tới
+    let watch = null;
+    function slowmoNow() {
+      if (watch && eventNow(watch.kind, watch.i)) return SLOWMO; watch = null;
+      const i = G.focus || 0, v = villages[i]; return v && v.visible && (eventNow('war', i) || eventNow('drama', i)) ? SLOWMO : 0;
+    }
     $('eraName').textContent = eraLabel();
     // mở game là nhìn vào làng Lúa Vàng (cuộn ra để thấy cả bể)
     { const L = lands[0]; controls.target.copy(L.center).setY(1.5); camera.position.copy(L.center).addScaledVector(L.inw, 26).add(new THREE.Vector3(6, 17, 0)); if (window.innerWidth < 720) camera.position.sub(controls.target).multiplyScalar(1.5).add(controls.target); }
@@ -158,7 +234,7 @@
       }
     }
     // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
-    function slow() { $('eraName').textContent = eraLabel(); syncWorld();
+    function slow() { G.slowmo = slowmoNow(); $('eraName').textContent = eraLabel(); syncWorld();
       // đống hàng trong kho của từng đảo theo lượng hàng thật (render/build/workyards3d.js); chỗ hư trong chiến tranh (đang cháy khi còn giặc,
       // hay ba ngày sau khi bị hạt nhân)
       world.islands.forEach((S, i) => { const st = BK.Economy.state(S); buildings.setStock(i, Object.fromEntries(BK.Economy.RES.map((r) => [r, st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setRuin(i, S.ruin, !!S.situ.siege || S.falloutUntil - world.day > 357, S.repairJob && S.repairJob.key); if (S.env && lands3d.thinTrees) lands3d.thinTrees(lands[i], S.env.forest); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }

@@ -197,8 +197,9 @@ test('drama: gom người cùng tính cách, bỏ việc ra tham gia, tan thì v
   assert.ok(A, 'mở được bạo loạn');
   BK.Brain.think(S, S.rng);
   const mob = A.parts.mob.map((id) => S.people.get(id));
-  const hot = mob.filter((p) => ['hothead', 'ambitious'].includes(p.temper) || BK.Temper.fit(p, ['hothead', 'ambitious']) >= 0.52).length;
-  assert.strictEqual(hot, mob.length, 'cả đám đông đều nóng tính hay tham vọng: ' + hot + '/' + mob.length);
+  // biểu tình (khoá 'riot'): đám đông là người nóng nảy, tham vọng, hoạt ngôn (logic/dramas.js cast)
+  const T = ['hothead', 'ambitious', 'sociable'], hot = mob.filter((p) => T.includes(p.temper) || BK.Temper.fit(p, T) >= 0.45).length;
+  assert.strictEqual(hot, mob.length, 'cả đám đông đều nóng tính, tham vọng hay hoạt ngôn: ' + hot + '/' + mob.length);
   for (const p of mob) assert.strictEqual(S.minds.get(p.id).drama, 'riot', 'người trong đám làm việc của drama');
   assert.ok(!mob.some((p) => p.job === 'gatekeeper' || p.job === 'sideguard'), 'lính gác cổng không bỏ chốt');
   const before = new Map(mob.map((p) => [p.id, p.job]));

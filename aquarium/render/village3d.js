@@ -99,7 +99,9 @@
       for (const x of list || []) {
         if (n >= FALLEN_MAX || !PL) break;
         const base = spot(x.at, { id: x.id, clan: null, home: null, post: x.id }); if (!base) continue;
-        const a = x.id * 2.39996, r = 0.8 + (x.id % 7) * 0.45; V.set(base.x + Math.cos(a) * r, 0.02, base.z + Math.sin(a) * r); Nav.keepInside(V); V.add(L.center); V.y = L.center.y + 0.02;
+        const a = x.id * 2.39996, r = 0.8 + (x.id % 7) * 0.45; V.set(base.x + Math.cos(a) * r, 0.02, base.z + Math.sin(a) * r);
+        // ngã ở cổng: chỗ đứng của chốt gác nằm trong khung cổng, dịch vào phía trong thành vài bước cho khỏi lẫn vào nhà cổng
+        if (/^gate/.test(x.at)) { const inw = V.clone().setY(0); if (inw.lengthSq() > 1) V.addScaledVector(inw.normalize(), -4.5); } Nav.keepInside(V); V.add(L.center); V.y = L.center.y + 0.02;
         Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), a * 3.1); M.compose(V, Q, one);
         fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++;
       }
@@ -164,6 +166,8 @@
       if (mind.place === 'queue' && PL && PL.store && PL.store.length) { const s1 = PL.store[Math.min(1, PL.store.length - 1)], dir = s1.clone().negate().setY(0).normalize(); return { p: s1.clone().addScaledVector(dir, 0.9 * ((f.qRank || 0) + 1)), face: s1 }; }
       // chuyền nước chữa cháy rừng (logic/ecology.js): hàng người từ giếng giữa làng ra bãi gỗ, mỗi người một chỗ theo thứ tự
       if (mind.place === 'bucket' && PL) { const w0 = pickOf(PL.square, 0), f0 = pickOf(PL.wood, 0) || pickOf(PL.outer, 0) || pickOf(PL.guard, 0); if (w0 && f0) { const u = ((mind.rank || 0) + 0.5) / Math.max(1, mind.of || 1), at = w0.clone().lerp(f0, u), nx = w0.clone().lerp(f0, Math.min(1, u + 0.05)); return { p: at, face: nx }; } }
+      // biểu tình (logic/dramas.js): xếp hàng ngang hàng dọc ngay trước nhà chính, mỗi hàng 4 người, quay mặt vào nhà chính
+      if (mind.place === 'protest' && PL && PL.hall) { const H = PL.hall, dv = (PL.podium ? PL.podium.clone().sub(H) : H.clone().negate()).setY(0); if (dv.lengthSq() < 1e-3) dv.set(1, 0, 0); dv.normalize(); const sd = new THREE.Vector3(-dv.z, 0, dv.x), k = mind.rank || 0, COLS = 4, r = Math.floor(k / COLS), c = k % COLS; return { p: H.clone().addScaledVector(dv, -(0.3 + r * 1.3)).addScaledVector(sd, (c - (COLS - 1) / 2) * 1.4), face: H.clone().addScaledVector(dv, -9) }; } // các hàng ở khoảng trống giữa sân và nhà chính (sân có đống lửa, giếng), quay mặt vào nhà chính
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
@@ -191,6 +195,7 @@
     }
     const carrying = (f) => !!f.cyc && (f.cyc.stage === 'carry' || f.cyc.stage === 'drop' || (f.cyc.stage === 'pick' && f.cyc.at));
     function exprOf(mind, X, p) {
+      if (mind.verb === 'protest') return 'neutral'; // biểu tình: nghiêm, không giận dữ
       if (mind.mood === 'pray') return 'closed';
       if (mind.verb === 'mourn' || mind.verb === 'bear' || mind.verb === 'ration' || mind.verb === 'cry') return 'sad'; // tang, đói
       if (mind.state === 'attack' || mind.mood === 'argue') return 'angry';
@@ -290,7 +295,7 @@
         // chớp mắt vài giây một lần
         if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
         f.blink = Math.max(0, f.blink - real);
-        const ek = meetVerb ? 'happy' : gface && EXPR[gface] && !X.war && !X.mourning && !mind.mood && !hungry ? gface : exprOf(mind, X, p) === 'neutral' && hungry ? 'sad' : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
+        const ek = meetVerb ? 'happy' : gface && EXPR[gface] && mind.verb !== 'protest' && !X.war && !X.mourning && !mind.mood && !hungry ? gface : exprOf(mind, X, p) === 'neutral' && hungry ? 'sad' : exprOf(mind, X, p); // bạo loạn, cãi nhau: giận (mood) dù đang làm cử chỉ
         f.expr = EXPR[ek] || EXPR.neutral; f.closed = f.expr === EXPR.closed || f.blink > 0;
       }
       for (const [id] of folks) if (!alive.has(id)) { folks.delete(id); if (selected === id) selected = null; }

@@ -46,7 +46,7 @@
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
     const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', gate: 'ở cổng thành', gateL: 'ở cổng phụ trái', gateR: 'ở cổng phụ phải', podium: 'ở bục diễn thuyết', site: 'ở chỗ đang dựng' };
-    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Bạo loạn'], ['brawl', 'Ẩu đả'], ['speech', 'Diễn thuyết'], ['vigil', 'Cầu nguyện'], ['debate', 'Tranh luận'], ['gossip', 'Buôn chuyện'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']]; // drama: logic/dramas.js
+    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['brawl', 'Ẩu đả'], ['speech', 'Diễn thuyết'], ['vigil', 'Cầu nguyện'], ['debate', 'Tranh luận'], ['gossip', 'Buôn chuyện'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']]; // drama: logic/dramas.js
 
     function renderPanel() {
       const X = Island.situNow(S), live = Island.living(S);

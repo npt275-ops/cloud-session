@@ -51,7 +51,8 @@ test('dịch lây theo khách qua lại; đảo kề bên có người đứng �
   BK.Climate.start(A, 'plague', 30, 1);
   // khách của đảo 0 đang ở đảo 1
   const p = living(A).find((q) => !q.role && !q.away && q.job === 'walker') || living(A).find((q) => !q.role && !q.away);
-  const v = D.startVisit(W, W.day, p, 0, 1, 'market', 'market', W.rng); v.stage = 'stay'; v.leave = W.day + 50; v.back = W.day + 52;
+  // sứ giả: không cưới xin ở lại đảo kia (logic/ecology.js marryDay), để bài chỉ kiểm việc lây theo người qua lại
+  const v = D.startVisit(W, W.day, p, 0, 1, 'envoy', 'hall', W.rng); v.stage = 'stay'; v.leave = W.day + 50; v.back = W.day + 52;
   let hit = false; for (let d = 0; d < 60 && !hit; d++) { Eco.dayTick(W, W.day, W.rng); hit = !!BK.Climate.active(W.islands[1], W.day).find((e) => e.key === 'plague'); }
   assert.ok(hit, 'dịch lây sang đảo 1');
   assert.ok(A.sick && A.sick.length > 0, 'có người ốm');

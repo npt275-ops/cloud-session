@@ -1,6 +1,6 @@
 /* Bể Kính · ui/camera-fly.js
  * Camera đi theo tay người chơi: bay tới một chỗ (flyTo, trượt êm), bay tự do bằng phím mũi tên, W A S D, Q E (lên xuống)
- * và nút bay trên màn hình điện thoại; bay ngang qua đảo nào thì đảo đó thành đảo đang xem. Không tự xoay camera.
+ * (nút bay trên màn hình đã bỏ theo yêu cầu); bay ngang qua đảo nào thì đảo đó thành đảo đang xem. Không tự xoay camera.
  * Cần: game/world.js, render/scene3d.js, render/tank3d.js (bán kính vòm), ui/landbar.js (setFocus). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -10,7 +10,7 @@
     function flyTo(p, dist, dir, y) { const k = camera.aspect < 0.8 ? 1.4 : 1; tween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(), from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: (dist || 30) * k, dirFrom: dir ? camera.position.clone().sub(controls.target).normalize() : null, dirTo: dir ? dir.clone().normalize() : null, dur: dir ? 1700 : 1200 }; }
 
     /* ---------- Bay tự do ---------- */
-    const FLY = { keys: new Set(), pad: new Set(), v: new THREE.Vector3(), on: false, padOn: false, near: 0 };
+    const FLY = { keys: new Set(), v: new THREE.Vector3(), on: false, near: 0 };
     const FLY_KEYS = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', PageUp: 'up', KeyE: 'up', Space: 'up', PageDown: 'down', KeyQ: 'down', ShiftLeft: 'down', ShiftRight: 'down' };
     document.addEventListener('keydown', (e) => {
       const k = FLY_KEYS[e.code];
@@ -20,18 +20,10 @@
       e.preventDefault(); FLY.keys.add(k);
     });
     document.addEventListener('keyup', (e) => { const k = FLY_KEYS[e.code]; if (k) FLY.keys.delete(k); });
-    window.addEventListener('blur', () => { FLY.keys.clear(); FLY.pad.clear(); });
-    for (const b of document.querySelectorAll('#flyPad button')) {
-      const k = b.dataset.k, on = (v) => (e) => { e.preventDefault(); if (v) FLY.pad.add(k); else FLY.pad.delete(k); b.classList.toggle('on', v); };
-      b.addEventListener('pointerdown', on(true)); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, on(false));
-      b.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-    function padUi(on) { FLY.padOn = on; $('flyPad').hidden = !on; $('flyBtn').setAttribute('aria-pressed', String(on)); }
-    $('flyBtn').onclick = () => padUi(!FLY.padOn);
-    padUi(G.touchUi());
+    window.addEventListener('blur', () => { FLY.keys.clear(); });
     const _ff = new THREE.Vector3(), _frt = new THREE.Vector3(), _fm = new THREE.Vector3(), _fo = new THREE.Vector3();
     function flyStep(dt) {
-      const has = (k) => FLY.keys.has(k) || FLY.pad.has(k);
+      const has = (k) => FLY.keys.has(k);
       _fm.set((has('right') ? 1 : 0) - (has('left') ? 1 : 0), (has('up') ? 1 : 0) - (has('down') ? 1 : 0), (has('fwd') ? 1 : 0) - (has('back') ? 1 : 0));
       FLY.v.lerp(_fm, Math.min(1, dt / (_fm.lengthSq() ? 180 : 260))); // tăng tốc êm, hãm dần
       if (FLY.v.lengthSq() < 4e-6) { FLY.v.set(0, 0, 0); FLY.on = false; return false; }

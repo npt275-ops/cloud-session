@@ -140,6 +140,7 @@
       const T = D.treatyOf(W, a, rb, day);
       if (T && (T.kind === 'alliance' || t.cunning < 0.6 || t.piety > 0.45)) continue;
       // tương quan sức theo cách người quyết nhìn: tham vọng thì tự tin quá, đa nghi thì e dè, cộng may rủi của tin do thám
+      const ratioRaid = off / Math.max(0.5, Wr.defense(W, b, a, 'raid')) * (1 + 0.5 * (t.ambition - 0.5) - 0.4 * (t.paranoia - 0.5)) * rng.range(0.8, 1.25); // đột kích: đổ bộ ở cổng yếu nhất
       const ratio = off / Math.max(0.5, Wr.defense(W, b, a)) * (1 + 0.5 * (t.ambition - 0.5) - 0.4 * (t.paranoia - 0.5)) * rng.range(0.8, 1.25);
       const sb = E.state(B).stock;
       const need = E.state(A).hunger ? 1 : clamp(E.RES.reduce((s, r) => s + Math.min(D.need(A, r), sb[r]) * D.value(A, r), 0) / 400);
@@ -150,7 +151,7 @@
       // thừa nước đục thả câu: đảo b đang bị đánh nơi khác thì kẻ mưu mô muốn đánh hơn; bị cấm vận thì túng quẫn, dễ liều
       const k = (T ? 0.4 : 1) * (Wr.atWar(W, b) && t.cunning > 0.55 ? 1.15 : 1) * (W.embargo && W.embargo[a] > day ? 1.25 : 1); lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)
-      const raid = wantRaid * clamp((ratio - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
+      const raid = wantRaid * clamp((ratioRaid - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
       for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
     }
     pol.warlust = clamp(lust);

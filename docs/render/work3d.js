@@ -44,7 +44,8 @@
     eat: () => [['eat', 'bowl'], ['drink', null]],
     rest: () => [['sit', null], ['sway', null], ['stand', null]],
     chat: () => [['talk', null], ['laugh', null], ['nod', null], ['whisper', null]],
-    riot: () => [['cheer', null], ['command', null], ['point', null], ['thrust', null]], // bạo loạn: giơ tay hô, chỉ trỏ, vung nắm đấm (logic/dramas.js)
+    riot: () => [['cheer', null], ['command', null], ['point', null], ['thrust', null]], // (động từ cũ của bạo loạn)
+    protest: () => [['cheer', 'sign'], ['command', 'sign']], // biểu tình: giơ biển, hô khẩu hiệu (logic/dramas.js)
     // đám tang (logic/scenes.js): người nhà khóc, quỳ; người khiêng quan tài đứng chờ
     mourn: () => [['cry', null], ['sad', null], ['kneelPray', null]],
     // đói: xếp hàng nhận khẩu phần, trẻ khóc; lễ hội: nhảy múa

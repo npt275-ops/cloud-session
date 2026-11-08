@@ -34,7 +34,8 @@
     function frame(t) {
       const raw = Math.max(0, Math.min(1000, t - last)), dt = Math.min(100, raw); last = t; // khung đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
       G.perf.govern(dt);
-      G.citiesRun.step((raw * T.tps) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
+      // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
+      G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1)) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
       const { night } = G.sky.applyTime();
       G.weather.night = night; G.weather.winter = G.seasons.winter();
       if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.citiesRun.slow(); G.raceDev.slow(); }

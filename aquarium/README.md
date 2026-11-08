@@ -186,6 +186,9 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - **NPC sống thật, phần 7g: cân chỉnh bằng 100 trận** (`design/npc-song-that.md` mục 15): đủ 6 đảo độc lập ở 34% số trận,
   còn ≤2 đảo 2%; thời trung bình 8,97; 6,6 trận đánh và 1,6 sáp nhập mỗi trận; chết đói 2,8; hạt nhân được dùng ở 6% số trận.
   Đảo cai quản gửi quân giữ đảo nó cai quản; luân canh; môi trường ảnh hưởng sản lượng nhẹ hơn.
+- **Thấy được chiến tranh và drama** (`design/npc-song-that.md` mục 16): đảo đang xem có chuyện thì thời gian chậm lại 16
+  lần; thanh dev có ◀ Năm x/9 ▶, "Trận đánh ⏭", "Drama ⏭" (tua tới chuyện kế tiếp và bay tới đó), bỏ nút Bay; biểu tình xếp
+  hàng ngang hàng dọc trước nhà chính, cầm biển hô khẩu hiệu; quân đột kích đổ bộ ở cổng yếu nhất nên chiến tranh tới sớm hơn.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

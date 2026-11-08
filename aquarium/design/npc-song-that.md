@@ -553,3 +553,39 @@ Tệp mới `logic/ecology.js`, chạy mỗi ngày ở cấp cả bể. Môi tr�
 - Bài kiểm thử "đầu hàng theo tính cách": ngưỡng của người nhát đổi từ 30% xuống 10% mỗi ngày, theo luật mới.
 - Kịch bản đo nằm ngoài kho mã (thư mục làm việc tạm), gồm chạy trận theo seed, tổng hợp, và cờ thí nghiệm tắt từng phần.
 
+## 16. Sửa theo phản hồi sau 7g: thấy được chiến tranh và drama
+
+**Vì sao trước đó không thấy cuộc chiến hay drama nào** (đo lại, nói thẳng):
+
+| Nguyên nhân | Chi tiết |
+|---|---|
+| Nhịp thời gian | Ở 1× một ngày lịch là 1,33 giây (trận 9 năm khoảng 72 phút). Cảnh của logic tính bằng ngày, nên trên màn hình chỉ chớp qua: biểu tình 1,4 ngày (chưa tới 2 giây, dân chưa kịp đi tới nhà chính đã tan), đám tang khoảng 1 giây, trận đánh ở cổng vài giây. |
+| Kiểm thử chưa bắt được | Các bài kiểm "không vô nghĩa" trên trình duyệt trước giờ dựng cảnh với đồng hồ logic đứng yên, nên không bắt được lỗi nhịp này. |
+| Chiến tranh tới muộn | Với seed mặc định 7, 16 phút đầu không có trận nào. Trận đầu tiên thường ở năm 3–5, vì cổng chính luôn có 4 lính gác mà những năm đầu chưa đảo nào đủ quân. |
+
+**Đã sửa:**
+
+| Việc | Làm thế nào |
+|---|---|
+| **Xem chậm** (`game/cities.js` G.slowmo, `game/loop.js`) | Đảo đang xem (làng đang vẽ gần) có trận đánh, biểu tình, drama, đám tang, người đứng đầu cũ quỳ… thì thời gian chậm lại 16 lần cho tới khi chuyện đó xong; thanh dev ghi "đang xem chậm". Logic và số đã cân chỉnh không đổi. Đo trên trình duyệt: khoảng 0,06 ngày mỗi giây; trận đánh ở cổng xem được trọn khoảng 16 giây (8 quân Cửa Sóng đánh cổng Đá Mây, 20 người giữ, quân giặc ngã dần rồi rút). |
+| **Thanh dev** | <ul><li>Bỏ nút Bay và bảng nút bay trên màn hình; bay bằng phím vẫn giữ.</li><li>Thay nút lên thời, xuống thời bằng ◀ Năm x/9 ▶: ▶ chạy thật tới đầu năm sau; ◀ dựng lại trận từ đầu với cùng seed rồi chạy tới đầu năm trước (`?seed=&day=`).</li><li>Thêm "Trận đánh ⏭": tua tới trận kế tiếp (quân đánh tới cổng hay vào thành, nổi dậy, đảo chính, tên lửa), bay máy quay tới đúng chỗ và xem chậm ngay.</li><li>Thêm "Drama ⏭": tương tự cho drama ban ngày (biểu tình, ẩu đả, diễn thuyết…), đám tang.</li><li>Chuyện vừa tìm được ghi trên thanh dev 15 giây; không có thì báo "không có … trong 2 năm tới".</li></ul> |
+| **Biểu tình** (`logic/dramas.js`, khoá cũ 'riot') | Không còn đám đông giận dữ. Chặng 1: tụ tập ở sân, nghe người cầm đầu nói, giơ biển. Chặng 2: xếp hàng ngang hàng dọc ngay trước nhà chính (mỗi hàng 4 người, quay mặt vào nhà chính), cầm biển, hô khẩu hiệu (giơ tay, nắm tay), mặt nghiêm; người cầm đầu nói với người đứng đầu đảo; lính đứng giữ trật tự. Đám đông gồm cả người hoạt ngôn (5–16 người) cho đủ hàng lối. Phần vẽ: biển cầm tay mới (`render/rig3d.js` tool:sign), động từ `protest`. |
+| **Đột kích đổ bộ ở cổng yếu nhất** (`logic/war.js` weakGate) | Quân đột kích đi thuyền đổ bộ đánh cổng ít người giữ nhất, thường là cổng phụ; người đứng đầu cũng ước sức theo cổng đó khi xét có đột kích không. Tổng tấn công vẫn đánh cổng theo đường tới. Trận đầu tiên giờ ở ngày 596–910 (trước là 668–1838) với seed 1, 2, 3, 7. |
+| **Người ngã ở cổng** | Dịch chỗ nằm vào phía trong thành vài bước, không còn nằm lẫn vào khối nhà cổng. |
+
+**Cân bằng sau khi sửa** (40 trận, seed 1–40):
+- 9,8 trận đánh mỗi trận (5,8 đột kích), 1,95 sáp nhập.
+- Thời trung bình 8,85; có đảo kẹt dưới thời 6 ở 5% số trận.
+- Chết đói 3,1 mỗi trận; hạt nhân được dùng ở 10% số trận; đủ 6 đảo độc lập ở 35% số trận.
+- Vẫn trong mục tiêu của 7g.
+
+**Bài kiểm thử sửa (ghi rõ lý do):**
+- **"drama: gom người cùng tính cách":** đám biểu tình giờ gồm cả người hoạt ngôn.
+- **"dịch lây theo khách qua lại":** người khách được dựng sẵn là sứ giả, vì khách thường có khoảng 45% khả năng cưới người đảo kia rồi ở lại, lượt thăm biến mất trước khi kịp lây; trước đây bài qua là nhờ may.
+
+**Lỗi tìm thấy trong lúc sửa:**
+- Tua bằng `World.jump` với bước lẻ (0,25 ngày) thì không chạy chiến tranh và các việc giữa các đảo; nút tìm trận đánh giờ tua từng ngày trọn.
+- Xem chậm bật trễ trong lúc máy quay còn bay tới, nên trận đã xong trước khi kịp xem; giờ bật ngay khi tìm được.
+
+**Ghi lại:** tua nhanh (từng ngày một) không cho ra lịch sử giống hệt lúc chơi thường (12 nhịp mỗi ngày), nên nút năm và nút tìm chuyện cho một lịch sử gần đúng chứ không trùng khớp với lúc xem ở 1×. Cùng seed, cùng cách chạy thì vẫn ra cùng lịch sử.
+
