@@ -200,6 +200,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/save.js",
+  "src": "logic/save.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/scenes.js",
   "src": "logic/scenes.js",
   "mode": 420

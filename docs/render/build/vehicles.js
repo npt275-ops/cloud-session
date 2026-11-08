@@ -10,10 +10,16 @@
   const THREE = () => window.THREE;
   const wheel = (s, x, y, z, r) => s.add(new (THREE().CylinderGeometry)(r, r, 0.14, 10).rotateZ(Math.PI / 2), '#2a2a2a', x, y, z);
   const M = {
-    ox(s, c) { s.add(B(1.2, 0.5, 1.7, 0.08), C.woodL, 0, 0.5, -0.6); for (const z of [-1.1, -0.2]) for (const x of [-0.65, 0.65]) wheel(s, x, 0.42, z, 0.42); s.add(K.ball(0.55, 0), c || '#6a6a6a', 0, 0.8, 1.2, { sc: [0.8, 0.8, 1.5] }); s.add(K.ball(0.3, 0), c || '#6a6a6a', 0, 1.0, 2.1); s.add(Bc(0.08, 0.08, 1.4, 0.02), C.wood, 0, 0.8, 0.4); },
-    rider(s, c) { s.add(B(0.5, 0.7, 1.4, 0.15), c || '#7a4a2a', 0, 0.95, 0); for (const z of [-0.5, 0.5]) for (const x of [-0.18, 0.18]) s.add(K.post(0.07, 1, 4), c || '#7a4a2a', x, 0, z); s.add(B(0.35, 0.8, 0.35, 0.08), c || '#7a4a2a', 0, 1.45, 0.75, { rot: [0.5, 0, 0] }); s.add(B(0.4, 0.7, 0.3, 0.08), '#c94f3a', 0, 1.7, -0.1); s.add(K.ball(0.18, 0), '#e8c8a0', 0, 2.2, -0.1); },
+    ox(s, c) { s.add(B(1.2, 0.5, 1.7, 0.08), C.woodL, 0, 0.5, -0.6); for (const z of [-1.1, -0.2]) for (const x of [-0.65, 0.65]) wheel(s, x, 0.42, z, 0.42);
+        s.add(K.ball(0.55, 0), c || '#6a6a6a', 0, 0.8, 1.2, { sc: [0.8, 0.8, 1.5] }); s.add(K.ball(0.3, 0), c || '#6a6a6a', 0, 1.0, 2.1); s.add(Bc(0.08, 0.08,
+        1.4, 0.02), C.wood, 0, 0.8, 0.4); },
+    rider(s, c) { s.add(B(0.5, 0.7, 1.4, 0.15), c || '#7a4a2a', 0, 0.95, 0); for (const z of [-0.5, 0.5]) for (const x of [-0.18, 0.18]) s.add(K.post(0.07, 1,
+        4), c || '#7a4a2a', x, 0, z); s.add(B(0.35, 0.8, 0.35, 0.08), c || '#7a4a2a', 0, 1.45, 0.75, { rot: [0.5, 0, 0] }); s.add(B(0.4, 0.7, 0.3, 0.08),
+        '#c94f3a', 0, 1.7, -0.1); s.add(K.ball(0.18, 0), '#e8c8a0', 0, 2.2, -0.1); },
     carriage(s, c) { M.rider(s, c); s.add(B(1.2, 0.9, 1.4, 0.08), C.woodL, 0, 0.6, -1.8); s.add(K.roof(1.3, 0.5, 1.5, 0.05, 0.2, 1.4), C.paint, 0, 1.5, -1.8); for (const x of [-0.65, 0.65]) wheel(s, x, 0.45, -1.8, 0.45); },
-    loco(s) { s.add(K.post(0.55, 2.0, 10).rotateX(Math.PI / 2), '#2e2e32', 0, 1.0, 0.4); s.add(B(1.2, 1.4, 1.0, 0.06), '#2e2e32', 0, 0.4, -0.9); s.add(K.post(0.22, 0.9, 8), '#2e2e32', 0, 1.5, 1.0); s.add(B(1.3, 0.2, 2.6, 0.04), '#b8462e', 0, 0.25, 0); for (const z of [-0.8, 0, 0.8]) for (const x of [-0.6, 0.6]) wheel(s, x, 0.35, z, 0.32); return { smoke: true }; },
+    loco(s) { s.add(K.post(0.55, 2.0, 10).rotateX(Math.PI / 2), '#2e2e32', 0, 1.0, 0.4); s.add(B(1.2, 1.4, 1.0, 0.06), '#2e2e32', 0, 0.4, -0.9);
+        s.add(K.post(0.22, 0.9, 8), '#2e2e32', 0, 1.5, 1.0); s.add(B(1.3, 0.2, 2.6, 0.04), '#b8462e', 0, 0.25, 0); for (const z of [-0.8, 0,
+        0.8]) for (const x of [-0.6, 0.6]) wheel(s, x, 0.35, z, 0.32); return { smoke: true }; },
     wagon(s, c) { s.add(B(1.2, 1.2, 2.3, 0.06), c || '#7a3a2a', 0, 0.35, 0); s.add(K.roof(1.3, 0.25, 2.4, 0.04, 1.1, 2.3), '#3a3a3e', 0, 1.55, 0); for (const z of [-0.8, 0.8]) for (const x of [-0.6, 0.6]) wheel(s, x, 0.3, z, 0.28); },
     car(s, c) { s.add(B(0.95, 0.55, 1.9, 0.15), c || '#c94f3a', 0, 0.2, 0); s.add(B(0.85, 0.45, 1.1, 0.15), '#2f4a6b', 0, 0.75, -0.1); for (const z of [-0.6, 0.6]) for (const x of [-0.48, 0.48]) wheel(s, x, 0.2, z, 0.2); s.add(Bc(0.7, 0.12, 0.04, 0.01), '#fff2c8', 0, 0.45, 0.96, { glow: true }); },
     mono(s) { s.add(B(1.3, 1.4, 3, 0.4), C.white, 0, -0.7, 0); s.add(Bc(1.32, 0.4, 2.6, 0.05), '#3f7fb8', 0, 0.2, 0); },

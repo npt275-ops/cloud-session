@@ -82,7 +82,9 @@
         if (BK.Chronicle) BK.Chronicle.legend(W, day, i, who, 'inventor', 'phát minh mới cho ' + S.name);
         // gián điệp: đảo khác mưu mô lấy một nửa
         const spy = W.islands.map((V, j) => ({ V, j, t: traitsOf(V) })).filter((x) => x.j !== i && x.t && x.t.cunning > 0.65 && x.V.annexedBy == null && x.V.level <= S.level)[0];
-        if (spy && rng.chance(SPY)) { const sv = E().state(spy.V).stock; sv[r] = Math.min(E().CAP(spy.V.level, r), sv[r] + Math.round(gain / 2)); W.rel[i][spy.j].grudge = Math.min(1, W.rel[i][spy.j].grudge + 0.15); stat(W, 'spy'); say(W, day, 'Gián điệp ' + spy.V.name + ' lấy được bí mật phát minh của ' + S.name + '.', [spy.j, i]); }
+        if (spy && rng.chance(SPY)) { const sv = E().state(spy.V).stock; sv[r] = Math.min(E().CAP(spy.V.level, r), sv[r] + Math.round(gain / 2));
+            W.rel[i][spy.j].grudge = Math.min(1, W.rel[i][spy.j].grudge + 0.15); stat(W, 'spy'); say(W, day,
+            'Gián điệp ' + spy.V.name + ' lấy được bí mật phát minh của ' + S.name + '.', [spy.j, i]); }
       }
     }
     // đầu tiên tới thời này

@@ -105,7 +105,9 @@
     if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
     if (this.lit.length) { const m = new THREE.Mesh(merge(this.lit, 1), litMat()); m.renderOrder = 2; g.add(m); g.userData.lit = m; }
     g.userData.subs = {};
-    for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c; g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0); if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
+    for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c;
+        g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0);
+        if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
     return g;
   };
   function dispose(g) { g.traverse((o) => { if (o.isMesh || o.isLine) o.geometry.dispose(); }); }

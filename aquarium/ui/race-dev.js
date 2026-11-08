@@ -19,7 +19,8 @@
     const { $ } = G, W = G.world, E = BK.Economy, P = BK.People, news = $('worldNews'), board = $('raceBoard');
     let open = false;
     const toggle = (v) => { open = v == null ? !open : v; board.hidden = !open; news.setAttribute('aria-expanded', String(open)); if (open) render(); };
-    news.addEventListener('click', () => toggle());
+    // dòng chuyện lớn nhất đang diễn ra (design/ke-hoach-khac-phuc.md mục 3.2): bấm thì máy quay đạo diễn bay tới đúng góc của cảnh
+    news.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-top]'); if (t && G.watchIsland) { G.watchIsland(+t.dataset.top); return; } toggle(); });
     news.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     board.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return toggle(false);
@@ -79,8 +80,11 @@
     function slow() {
       if (!W.diplomacy) return;
       const last = W.log.slice(-NEWS).reverse();
-      news.hidden = !last.length;
-      news.innerHTML = last.map((e) => '<div><b>Ngày ' + (e.day + 1) + '</b> · ' + esc(e.text) + '</div>').join('');
+      // hai tầng: chuyện lớn đang diễn ra (giữ ở đầu, có nút xem) và tin thường (mờ hơn, trôi nhanh)
+      const top = G.topStory ? G.topStory() : null;
+      news.hidden = !last.length && !top;
+      news.innerHTML = (top ? '<div class="top" data-top="' + top.i + '">⚑ Đang diễn ra: ' + esc(top.text) + ' <u>xem</u></div>' : '') +
+        last.slice(0, top ? NEWS - 1 : NEWS).map((e) => '<div class="minor"><b>Ngày ' + (e.day + 1) + '</b> · ' + esc(e.text) + '</div>').join('');
       if (open) render();
     }
     slow();

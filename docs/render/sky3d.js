@@ -67,7 +67,9 @@
       if (M) { sun.intensity = M.sunI; sun.color.copy(M.sun); hemi.intensity = M.hemiI; hemi.color.copy(M.hemiSky); hemi.groundColor.copy(M.hemiGround); fill.intensity = M.fillI; fill.position.set(-sunDir.x * 100, 60, -sunDir.z * 100); }
       else { sun.intensity = 1.0 * day; sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8); hemi.intensity = 0.22 + 0.3 * day + 0.24 * night; hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night); }
       moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = neon ? 0 : 0.46 * night; // trăng: đêm không tối mịt
-      { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position); moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night; moonDisc.visible = moonHalo.visible = !neon && night > 0.02; } // thời neon: thay trăng bằng mặt trời đã tắt (render/neon3d.js)
+      { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position);
+          moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night;
+          moonDisc.visible = moonHalo.visible = !neon && night > 0.02; } // thời neon: thay trăng bằng mặt trời đã tắt (render/neon3d.js)
       const top = M ? M.top.clone() : SKY.nightTop.clone().lerp(SKY.dayTop, day).lerp(SKY.dawnTop, gold * 0.6);
       const bot = M ? M.bot.clone() : SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
       const overcast = G.weather.stormK * 0.55 * 0.6; // giông trong bể làm trời sầm lại

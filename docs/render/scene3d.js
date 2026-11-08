@@ -52,7 +52,8 @@
     for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(puffGeo, new THREE.MeshStandardMaterial({ color: '#f2f2f2', transparent: true, opacity: 0, flatShading: true, roughness: 1, depthWrite: false })); m.visible = false; scene.add(m); puffs.push({ m, t0: 0 }); }
     let puffIdx = 0;
     function puff(worldPos, dark, color) { const p = puffs[puffIdx++ % puffs.length]; p.m.position.copy(worldPos); p.m.material.color.set(color || (dark ? '#8d8d8d' : '#f4f4f4')); p.t0 = performance.now(); p.m.visible = true; }
-    function updatePuffs(now, dt) { for (const p of puffs) { if (!p.m.visible) continue; const k = (now - p.t0) / 3200; if (k > 1) { p.m.visible = false; continue; } p.m.position.y += dt * 0.0012; p.m.position.x += dt * 0.0004; p.m.scale.setScalar(0.6 + k * 1.8); p.m.material.opacity = 0.55 * (1 - k); } }
+    function updatePuffs(now, dt) { for (const p of puffs) { if (!p.m.visible) continue; const k = (now - p.t0) / 3200; if (k > 1) { p.m.visible = false;
+        continue; } p.m.position.y += dt * 0.0012; p.m.position.x += dt * 0.0004; p.m.scale.setScalar(0.6 + k * 1.8); p.m.material.opacity = 0.55 * (1 - k); } }
 
     Object.assign(G, { canvas, renderer, scene, camera, controls, resize, mat, mesh, glowTex, puff, updatePuffs });
   }

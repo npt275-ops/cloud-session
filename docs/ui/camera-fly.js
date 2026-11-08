@@ -7,7 +7,9 @@
   function setup(G) {
     const { THREE, camera, controls, clamp, lerp, $ } = G;
     let tween = null;
-    function flyTo(p, dist, dir, y) { const k = camera.aspect < 0.8 ? 1.4 : 1; tween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(), from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: (dist || 30) * k, dirFrom: dir ? camera.position.clone().sub(controls.target).normalize() : null, dirTo: dir ? dir.clone().normalize() : null, dur: dir ? 1700 : 1200 }; }
+    function flyTo(p, dist, dir, y) { const k = camera.aspect < 0.8 ? 1.4 : 1; tween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(),
+        from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: (dist || 30) * k,
+        dirFrom: dir ? camera.position.clone().sub(controls.target).normalize() : null, dirTo: dir ? dir.clone().normalize() : null, dur: dir ? 1700 : 1200 }; }
 
     /* ---------- Bay tự do ---------- */
     const FLY = { keys: new Set(), v: new THREE.Vector3(), on: false, near: 0 };

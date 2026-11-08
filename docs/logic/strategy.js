@@ -178,7 +178,9 @@
     for (const y of wants.slice(0, 2)) {
       // đảo có dư thứ y, xếp theo lượng dư và tin cậy (ít thù hằn); bỏ qua đảo đang không đi được
       const partners = [];
-      for (let b = 0; b < D.N; b++) { if (b === a || !D.alive(W, b) || !D.canSend(W, b) || (BK.Ecology && BK.Ecology.blocked(W, a, b, day))) continue; const av = D.available(W.islands[b], y); if (av >= 10) partners.push([b, av * (1 + W.rel[a][b].trust - W.rel[a][b].grudge) / D.travelDays(W, a, b)]); }
+      for (let b = 0; b < D.N; b++) { if (b === a || !D.alive(W, b) || !D.canSend(W, b) || (BK.Ecology && BK.Ecology.blocked(W, a, b, day))) continue;
+          const av = D.available(W.islands[b], y); if (av >= 10) partners.push([b, av * (1 + W.rel[a][b].trust - W.rel[a][b].grudge) / D.travelDays(W, a, b)]);
+          }
       if (!partners.length) continue;
       partners.sort((p, q) => q[1] - p[1]);
       const b = partners[rng.next() < 0.75 || partners.length === 1 ? 0 : 1][0], B = W.islands[b];

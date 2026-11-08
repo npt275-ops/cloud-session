@@ -118,13 +118,17 @@
     const K = X.kneel; if (K && K.until > day && K.id === p.id) return d('work', { verb: 'kneel', place: 'hall', reason: 'bị dẫn ra quỳ ở sân nhà chính', until: K.until });
     const M = X.muster; if (M && M.until > day && M.family.includes(p.id)) return d('work', { verb: 'farewell', place: M.gate, reason: 'ra cổng tiễn người nhà đi đánh ' + M.to, until: M.until, intensity: 0.6 });
     // báo động tên lửa (logic/missiles.js): ai không cầm vũ khí giữ chốt thì vào nhà trốn
-    if (X.alarm > day && !X.siege && !isGuard(p) && S.seats.king !== p.id) { const lodge = lodging(S, p); return d(t.fear > 0.6 ? 'panic' : 'work', Object.assign({ verb: 'hide', reason: 'báo động tên lửa, vào nhà trốn' }, lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' }, short)); }
+    if (X.alarm > day && !X.siege && !isGuard(p) && S.seats.king !== p.id) { const lodge = lodging(S, p); return d(t.fear > 0.6 ? 'panic' : 'work',
+        Object.assign({ verb: 'hide', reason: 'báo động tên lửa, vào nhà trốn' }, lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' },
+        short)); }
     const sg = X.siege; if (!sg) return null;
     const di = sg.def.indexOf(p.id), n = sg.foes.length;
     // vây thành (logic/battles.js): lính canh ở cổng, dân vẫn sống như thường (đói thì xếp hàng nhận khẩu phần)
     if (sg.stage === 'blockade') return di >= 0 ? d('work', Object.assign({ verb: 'watch', place: sg.gate, reason: 'canh cổng, giặc dựng trại vây ngoài thành' }, short)) : null;
     // đấu tướng: tướng bên mình đánh tướng giặc, người giữ cổng đứng xem hò reo
-    if (sg.stage === 'duel' && sg.duel) { if (p.id === sg.duel.b) return d('attack', Object.assign({ target: 'w' + sg.duel.ai + ':' + sg.duel.a, place: sg.gate, reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate, reason: 'xem hai tướng đấu tay đôi' }, short)); return null; }
+    if (sg.stage === 'duel' && sg.duel) { if (p.id === sg.duel.b) return d('attack', Object.assign({ target: 'w' + sg.duel.ai + ':' + sg.duel.a,
+        place: sg.gate, reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate,
+        reason: 'xem hai tướng đấu tay đôi' }, short)); return null; }
     const foe = (k) => (n ? 'w' + sg.foes[k % n].i + ':' + sg.foes[k % n].id : null);
     // arm: người bắn xa hay cận chiến (logic/arms.js), cho phần vẽ: người bắn đứng lùi lại mà bắn
     // đứng vào hàng của bên giữ (side, rank, of: phần vẽ xếp đội hình, render/village3d.js formation), bắn xa

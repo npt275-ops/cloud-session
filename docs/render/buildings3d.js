@@ -35,7 +35,9 @@
     const { THREE, lands3d } = o, K = BK.BuildKit, PL = BK.Place3D.create(THREE), WY = BK.WorkYards3D.create({ THREE, lands3d });
     // mỗi đảo: { level, pieces (thời đang có), standing (thời trước, đang được thay dần), group, prevGroup, yard, batch }
     const shown = lands3d.lands.map(() => null);
-    const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20), new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true })); yard.position.set(p.x, 0.04, p.y); yard.receiveShadow = true; return yard; };
+    const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20),
+        new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true })); yard.position.set(p.x, 0.04, p.y);
+        yard.receiveShadow = true; return yard; };
     const near = (P, Q) => { const rr = P.clear + Q.clear * 0.6 + 0.5; return (Q.x - P.x) ** 2 + (Q.z - P.z) ** 2 < rr * rr || (P.kind === 'hall' && Q.kind === 'hall'); };
     // bỏ một nhóm công trình: trả bộ nhớ hình, trừ hình dùng chung còn nằm trong kho BAKED
     const SHARED = new WeakSet();
@@ -138,7 +140,9 @@
         g.position.set(p.x, P.outer === 'sea' ? SEA_Y : 0, p.y); g.rotation.y = Math.atan2(dir.x, dir.y); g.visible = false;
         g.userData.kind = P.kind; g.userData.name = lay.NAME[P.kind];
         group.add(g);
-        const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, solo: !!P.solo, fitS: 1, anim: null, glows: [], subs: {}, parts: {}, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, progress: -1, started: false, dead, spec: P, build, tint: P.tint || lay.tint || null, baked: false };
+        const piece = { g, grp: group, kind: P.kind, slot: P.slot || null, home: P.home, outer: P.outer || null, solo: !!P.solo, fitS: 1, anim: null,
+            glows: [], subs: {}, parts: {}, ph: (p.x * 0.37 + p.y * 0.61) % 6, clear: P.clear || 1.5, x: p.x, z: p.y, progress: -1, started: false, dead,
+            spec: P, build, tint: P.tint || lay.tint || null, baked: false };
         // thay cái cũ cùng slot, hoặc cái cũ đè chỗ (solo: lớp đường của làng, kỳ quan, chỉ thay món cùng slot)
         piece.replaces = standing.filter((Q) => (piece.slot && Q.slot === piece.slot) || (!piece.solo && !Q.solo && near(piece, Q) && !(Q.home != null && piece.home != null)));
         pieces.push(piece);
@@ -298,7 +302,9 @@
     const NOT_A_PLACE = new Set(['town', 'road', 'asphalt', 'glowRoad', 'lamp', 'pole']);
     function places(i) {
       const sh = shown[i], L = lands3d.lands[i]; if (!sh) return null;
-      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [], shrine: [], school: [], outer: [], all: [], store: [], wood: [], stone: [], power: [], craft: [], drill: [], grave: [] }, f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
+      const out = { hall: null, square: [], field: [], homes: [], homeSlots: [], guard: [], gate: [], gateL: [], gateR: [], podium: null, site: [], market: [],
+          shrine: [], school: [], outer: [], all: [], store: [], wood: [], stone: [], power: [], craft: [], drill: [], grave: [] },
+          f = new THREE.Vector2(L.inw.x, L.inw.z).normalize();
       for (const [P, isNew] of [...sh.pieces.map((P) => [P, true]), ...sh.standing.map((P) => [P, false])]) {
         const g = P.g, pos = new THREE.Vector3(g.position.x, 0, g.position.z), fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)), k = P.kind;
         if (isNew && P.progress > 0 && P.progress < 1) { out.site.push(pos.clone().addScaledVector(fwd, Math.max(2.5, P.clear * 0.8))); continue; }
@@ -322,7 +328,9 @@
       // bục diễn thuyết: giữa sân trước nhà chính (logic/posts.js)
       if (L.wallGaps && L.wallGaps.length > 2) {
         const th = Math.atan2(f.x, f.y), c = Math.cos(th), sn = Math.sin(th);
-        [['gateL', L.wallGaps[1]], ['gateR', L.wallGaps[2]]].forEach(([k, g]) => { const dx = Math.sin(g), dz = Math.cos(g), X = dx * c + dz * sn, Z = -dx * sn + dz * c, R = L.rOf(Math.atan2(Z, X)) - 7.5, base = new THREE.Vector3(X * R, 0, Z * R), tan = new THREE.Vector3(-Z, 0, X); out[k] = [base.clone().addScaledVector(tan, 2.4), base.clone().addScaledVector(tan, -2.4)]; });
+        [['gateL', L.wallGaps[1]], ['gateR', L.wallGaps[2]]].forEach(([k, g]) => { const dx = Math.sin(g), dz = Math.cos(g), X = dx * c + dz * sn,
+            Z = -dx * sn + dz * c, R = L.rOf(Math.atan2(Z, X)) - 7.5, base = new THREE.Vector3(X * R, 0, Z * R), tan = new THREE.Vector3(-Z, 0, X);
+            out[k] = [base.clone().addScaledVector(tan, 2.4), base.clone().addScaledVector(tan, -2.4)]; });
       }
       // vòng đi dạo quanh nhà chính: tâm và bán kính theo khung bao thật của nhà chính đang đứng
       { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
@@ -349,10 +357,16 @@
       return out;
     }
     // số liệu một đảo (bảng làng, bài kiểm tra): old = số công trình của thời trước còn đứng, done = số công trình thời này đã có
-    const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name, old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length, moved: shown[i].moved || 0, stuck: shown[i].stuck || 0 };
+    const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name,
+        old: shown[i].standing.filter((P) => P.g.visible && !P.gone).length, done: shown[i].pieces.filter((P) => P.g.visible).length,
+        moved: shown[i].moved || 0, stuck: shown[i].stuck || 0 };
     // chỉ cho bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng), trạng thái gộp khối của một đảo
     const debug = {
-      roadCheck: (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); },
+      roadCheck: (i, all) => { const sh = shown[i]; if (!sh) return null;
+          return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null;
+          P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1),
+          z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all));
+          },
       batchInfo: (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) },
     };
     /* ---------- Hư hại trong chiến tranh (logic/siege.js S.ruin; game/cities.js mỗi giây) ----------

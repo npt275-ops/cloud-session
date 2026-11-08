@@ -85,7 +85,9 @@
         for (let i = 0; i + 1 < pl.length; i++) {
           const [x0, z0] = pl[i], [x1, z1] = pl[i + 1], dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz); if (L < 1e-6) continue;
           const nx = dz / L, nz = -dx / L, a = Math.atan2(dx, dz);
-          for (const s of [-1, 1]) { const cx = (x0 + x1) / 2 + nx * s * (w / 2 + WALK / 2), cz = (z0 + z1) / 2 + nz * s * (w / 2 + WALK / 2); if (others.some((S) => segDist(cx, cz, S) < w / 2 + WALK * 0.5)) continue; k.add(Bc(WALK, 0.07, L + 0.15, 0.01), st.walk, cx, Y + 0.02, cz, { rot: [0, a, 0], ao: false }); }
+          for (const s of [-1, 1]) { const cx = (x0 + x1) / 2 + nx * s * (w / 2 + WALK / 2), cz = (z0 + z1) / 2 + nz * s * (w / 2 + WALK / 2);
+              if (others.some((S) => segDist(cx, cz, S) < w / 2 + WALK * 0.5)) continue; k.add(Bc(WALK, 0.07, L + 0.15, 0.01), st.walk, cx, Y + 0.02, cz,
+              { rot: [0, a, 0], ao: false }); }
         }
       });
     }

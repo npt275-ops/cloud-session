@@ -38,8 +38,33 @@
     // thanh máu: người ra trận, người bị thương, cổng đang bị đánh, nhà chính đang bị vây (render/hpbars3d.js)
     const bars = BK.HpBars3D ? BK.HpBars3D.create({ THREE, scene, camera }) : null;
     // trận mặc định: seed 7 (chạy theo nhịp chơi thật có phản bội, đánh úp, sáp nhập hai đảo, chặn cướp đoàn buôn); ?seed= để đổi
-    const q = new URLSearchParams(location.search), seed = +q.get('seed') || 7;
-    const world = World.create({ seed, buildPlan });
+    const q = new URLSearchParams(location.search);
+    // lưu và tiếp tục trận (logic/save.js; design/ke-hoach-khac-phuc.md mục 1.4): tự lưu vào bộ nhớ trình duyệt mỗi năm trong game
+    // và khi đóng trang; mở lại (không có ?seed=, ?day=) thì hỏi có tiếp tục không, chọn tiếp tục thì tải lại trang và nạp bản lưu
+    const SAVE = 'bekinh.save', SAVE_META = 'bekinh.save.meta', store = (f) => { try { return f(); } catch (e) { return null; } };
+    const plain = !q.get('seed') && !q.get('day') && !q.get('cap'), meta = plain ? store(() => JSON.parse(localStorage.getItem(SAVE_META) || 'null')) : null;
+    let world = null;
+    if (meta && store(() => sessionStorage.getItem('bekinh.resume')) === '1') {
+      store(() => sessionStorage.removeItem('bekinh.resume'));
+      world = store(() => BK.Save.load(localStorage.getItem(SAVE), { restore: (W) => World.restore(W, { buildPlan }) }));
+    }
+    const resumed = !!world;
+    if (!world) world = World.create({ seed: +q.get('seed') || 7, buildPlan });
+    const seed = world.seed;
+    function saveNow() {
+      if (!BK.Save) return;
+      const t = store(() => BK.Save.save(world)); if (!t) return;
+      if (store(() => { localStorage.setItem(SAVE, t); localStorage.setItem(SAVE_META, JSON.stringify({ day: Math.floor(world.day), seed, at: Date.now() })); return true; }) == null) store(() => localStorage.removeItem(SAVE));
+    }
+    let savedYear = Math.floor(world.day / 360);
+    addEventListener('pagehide', () => { if (world.day > 30) saveNow(); });
+    // có bản lưu mà chưa nạp: hỏi người xem
+    if (meta && !resumed && meta.day > 30) {
+      const box = document.createElement('div'); box.className = 'resume';
+      box.innerHTML = '<span>Tiếp tục trận đã lưu (năm ' + (Math.floor(meta.day / 360) + 1) + ', ngày ' + ((meta.day % 360) + 1) + ')?</span><button data-k="go">Tiếp tục</button><button data-k="new">Trận mới</button>';
+      box.onclick = (e) => { const k = e.target.dataset && e.target.dataset.k; if (k === 'go') { store(() => sessionStorage.setItem('bekinh.resume', '1')); location.reload(); } else if (k === 'new') { store(() => { localStorage.removeItem(SAVE); localStorage.removeItem(SAVE_META); }); box.remove(); } };
+      document.body.appendChild(box); setTimeout(() => box.remove(), 20000);
+    }
     // ?cap=: dev vào thẳng một cấp (cả sáu đảo đặt thẳng cấp đó, công trình của thời đó dựng sẵn)
     const devLevel = (l) => { for (const S of world.islands) { BK.Economy.devSetLevel(S, l); BK.Construction.setEra(S, l); for (const it of S.build.list) { it.done = true; it.progress = 1; } S.build.active = null; S.situChanged = true; } };
     { const cap = +q.get('cap'); if (cap > 1 && cap <= Eras.COUNT) devLevel(cap); }
@@ -58,7 +83,7 @@
     for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
     // người và bảng làng của một đảo: dựng khi cần lần đầu
     function villageOf(i) {
-      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u) });
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u), idx: i, color: G.TERRAINS[i].color, hits: () => world.hitLog, camera });
       return villages[i];
     }
     function uiOf(i) {
@@ -76,10 +101,18 @@
     // chuyện vừa tìm được (nút Sự kiện ⏭) hiện kèm nhãn 15 giây
     let evNote = null;
     function eraLabel() { return 'Năm ' + Math.min(9, Math.floor(world.day / (BK.Rules.YEAR_DAYS || 360)) + 1) + '/9 · ' + eraLabel0() + (evNote && performance.now() < evNote.until ? ' · ' + evNote.text : '') + (G.slowmo ? ' · đang xem chậm' : ''); }
-    function eraLabel0() { const i = G.focus || 0, S = isle(i), l = S.level; if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S, S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; const pr = l < Eras.COUNT ? BK.Economy.progress(S) : 1; $('eraProg').style.width = Math.round(pr * 100) + '%'; $('eraProgBox').title = l < Eras.COUNT ? 'Đã gom ' + Math.floor(pr * 100) + '% tài nguyên cho thời sau' : 'Thời cuối'; return S.name + ' · ' + Eras.of(l).name + (dis ? ' · ' + dis : '') + hungry; } // phần đã gom cho thời sau: thanh phần trăm cạnh nhãn (không ghi bằng chữ)
+    function eraLabel0() { const i = G.focus || 0, S = isle(i), l = S.level;
+        if (world.day >= Eras.MATCH_DAYS) return S.name + ' · ' + Eras.of(l).name + ' · hết 9 năm'; const dis = BK.Climate.active(S,
+        S.day).map((e) => e.name).join(', '), hungry = BK.Economy.state(S).hunger ? ' · đang đói' : ''; const pr = l < Eras.COUNT ? BK.Economy.progress(S) : 1;
+        $('eraProg').style.width = Math.round(pr * 100) + '%';
+        $('eraProgBox').title = l < Eras.COUNT ? 'Đã gom ' + Math.floor(pr * 100) + '% tài nguyên cho thời sau' : 'Thời cuối';
+        return S.name + ' · ' + Eras.of(l).name + (dis ? ' · ' + dis : '') + hungry;
+        } // phần đã gom cho thời sau: thanh phần trăm cạnh nhãn (không ghi bằng chữ)
     function resyncAll() {
       syncLevels();
-      for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]); villages[i].setPlaces(buildings.places(i)); } }
+      for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); buildings.setProgress(i,
+          isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); if (villages[i]) { villages[i].setLevel(shownLv[i]);
+          villages[i].setPlaces(buildings.places(i)); } }
       $('eraName').textContent = eraLabel();
     }
     // dev rà soát (nút ◀ ▶): đặt thẳng cả sáu đảo vào một thời, công trình của thời đó dựng sẵn, để xem kiến trúc từng thời. Chỉ cho
@@ -112,9 +145,10 @@
       const want = (i) => only == null || only === i;
       if (kind === 'war') {
         for (const w of world.wars) {
-          if (w.kind !== 'revolt' && ['gate', 'loot', 'inside'].includes(w.stage) && want(w.b)) return [w.b, w.stage === 'inside' && w.siege === 'hall' ? 'hall' : w.gate, 'quân ' + isle(w.a).name + ' đánh ' + isle(w.b).name];
+          if (w.kind !== 'revolt' && ['gate', 'loot', 'inside'].includes(w.stage) && want(w.b)) return [w.b, w.stage === 'inside' && w.siege === 'hall' ? 'hall' : w.gate, 'quân ' + isle(w.a).name + ' đánh ' + isle(w.b).name, w];
+          if (w.kind !== 'revolt' && w.stage === 'march' && w.naval && !w.naval.done && world.day >= w.naval.from && want(w.b)) return [w.b, null, 'hải chiến giữa ' + isle(w.a).name + ' và ' + isle(w.naval.r).name, w];
           if (w.kind !== 'revolt' && w.stage === 'muster' && want(w.a) && only != null) return [w.a, null, 'tiễn quân ' + isle(w.a).name];
-          if (w.kind === 'revolt' && want(w.a)) return [w.a, 'hall', 'nổi dậy ở ' + isle(w.a).name];
+          if (w.kind === 'revolt' && want(w.a)) return [w.a, 'hall', 'nổi dậy ở ' + isle(w.a).name, null, () => w.troops.filter((x) => x.p.alive).map((x) => x.p.id)];
         }
         for (const m of world.missiles || []) if (!m.done && want(m.to)) return [m.to, m.key, (m.kind === 'nuke' ? 'hạt nhân' : 'tên lửa') + ' bay tới ' + isle(m.to).name];
         for (let i = 0; i < N; i++) { const S = isle(i); if (want(i) && S.situ.coup && !S.situ.coup.done) return [i, 'hall', 'đảo chính ở ' + S.name]; }
@@ -122,12 +156,62 @@
       }
       for (let i = 0; i < N; i++) {
         if (!want(i)) continue; const S = isle(i), A = BK.Dramas.active(S)[0];
-        if (A) return [i, A.key === 'riot' ? 'hall' : null, A.name.toLowerCase() + ' ở ' + S.name];
-        const sc = (S.scenes || []).find((x) => x.until > S.day); if (sc) return [i, sc.kind === 'funeral' ? 'grave' : 'shrine', (sc.kind === 'funeral' ? 'đám tang ' : 'lễ tưởng niệm ') + sc.name];
-        if (S.situ.kneel && S.situ.kneel.until > S.day) return [i, 'hall', 'người đứng đầu cũ quỳ ở ' + S.name];
+        // (phần tử thứ năm: những người trong cảnh, để máy quay nhắm đúng chỗ họ đang đứng)
+        if (A) return [i, A.key === 'riot' ? 'hall' : null, A.name.toLowerCase() + ' ở ' + S.name, null, () => [...A.who]];
+        const sc = (S.scenes || []).find((x) => x.until > S.day); if (sc) return [i, sc.kind === 'funeral' ? 'grave' : 'shrine', (sc.kind === 'funeral' ? 'đám tang ' : 'lễ tưởng niệm ') + sc.name, null, () => [...S.minds].filter(([, m]) => m.verb === 'mourn' || m.verb === 'bear' || m.mood === 'pray').map(([id]) => id)];
+        if (S.situ.kneel && S.situ.kneel.until > S.day) return [i, 'hall', 'người đứng đầu cũ quỳ ở ' + S.name, null, () => [S.situ.kneel.id]];
       }
       return null;
     }
+    /* ---------- Máy quay đạo diễn (design/ke-hoach-khac-phuc.md mục 3.1) ----------
+     * Mỗi loại cảnh có một góc đặt sẵn: trận ở cổng (ngang tường, thấy hai tuyến), trận ở cầu (ngang cầu), càn quét (trên cao),
+     * vây nhà chính (chéo trên cao), hải chiến (ngang mặt biển), biểu tình, đám tang, người đứng đầu quỳ. "Trận đánh ⏭",
+     * "Drama ⏭", bấm tin đều bay tới đúng góc đó; đang theo một trận thì mỗi giây xét lại, trận đổi chặng thì bay theo. */
+    const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    function shotOf(i, key, w) {
+      const L = lands[i], pl = buildings.places(i), c = L.center.clone(); if (!pl) return { t: c, d: 96, dir: null };
+      const first = (a) => (a && a.length ? a[0] : null), gate = w ? first(pl[w.gate]) || first(pl.gate) : null, hall = pl.hall || V3(0, 0, 0);
+      const out = (gate || hall).clone().setY(0); if (out.lengthSq() < 1) out.copy(L.inw).negate(); out.normalize();
+      const side = V3(-out.z, 0, out.x), W3 = (v) => v.clone().add(L.center);
+      if (w && w.stage === 'march' && w.naval && !w.naval.done) { // hải chiến: giữa biển, ngang mặt nước
+        const A = lands[w.a].center, B = lands[w.b].center, u = Math.max(0, Math.min(1, (world.day - w.depart) / Math.max(0.01, w.arrive - w.depart))), d = B.clone().sub(A).setY(0).normalize();
+        const m = A.clone().lerp(B, 0.15 + 0.7 * u).setY(0), pr = V3(-d.z, 0, d.x); return { t: m, d: 34, dir: pr.add(V3(0, 0.6, 0)) };
+      }
+      if (w && (w.stage === 'gate' || w.stage === 'loot') && gate) {
+        const B = w.by === 'bridge' ? bridges3d.bridgeOf(i, w.a) : null;
+        if (B && B.pa) { // trận ở cầu: nhìn ngang cầu, thấy xe trên cầu và cổng phụ
+          const at = deckAt(i, w.a, 0.1), d = B.pb.clone().sub(B.pa).setY(0).normalize(), pr = V3(-d.z, 0, d.x);
+          if (at) return { t: W3(at), d: 30, dir: pr.add(V3(0, 0.75, 0)).addScaledVector(out, 0.4) };
+        }
+        return { t: W3(gate.clone().addScaledVector(out, 3)), d: 28, dir: side.clone().addScaledVector(out, 0.9).add(V3(0, 0.8, 0)) }; // ngang tường
+      }
+      if (w && w.stage === 'inside' && (w.siege === 'outer' || w.siege === 'move')) return { t: W3(gate ? gate.clone().multiplyScalar(0.45) : V3(0, 0, 0)), d: 70, dir: out.clone().multiplyScalar(0.5).add(V3(0, 1.4, 0)) }; // càn quét: trên cao
+      if ((w && w.stage === 'inside') || key === 'hall') return { t: W3(hall.clone().addScaledVector(out, 5)), d: 36, dir: out.clone().multiplyScalar(0.7).add(side).add(V3(0, 1.1, 0)) }; // nhà chính: chéo trên cao
+      const at = key && (key === 'hall' ? hall : first(pl[key])); if (at) return { t: W3(at), d: 26, dir: side.clone().add(out).add(V3(0, 1, 0)) };
+      return { t: c, d: 96, dir: null };
+    }
+    // chỗ những người trong cảnh đang đứng (trung bình), khi làng đó đang được vẽ
+    function castAt(ev) {
+      const v = villages[ev[0]]; if (!ev[4] || !v || !v.visible) return null;
+      const c = new THREE.Vector3(); let n = 0; for (const id of ev[4]()) { const q = v.worldPos(id); if (q) { c.add(q); n++; } }
+      return n ? c.multiplyScalar(1 / n) : null;
+    }
+    function direct(ev) {
+      const w = ev[3] || null, S = shotOf(ev[0], ev[1], w), at = castAt(ev);
+      if (at) { const L = lands[ev[0]], out = at.clone().sub(L.center).setY(0); if (out.lengthSq() < 1) out.set(1, 0, 0); out.normalize(); G.setFocus(ev[0]); G.flyTo(at, 22, out.add(new THREE.Vector3(-out.z, 0, out.x)).add(new THREE.Vector3(0, 1, 0)), at.y + 1); return 'cast'; }
+      G.setFocus(ev[0]); G.flyTo(S.t, S.d, S.dir, S.t.y + 1);
+      return w ? (w.stage === 'march' ? 'naval' : w.stage + '/' + (w.siege || '') + '/' + w.by) : String(ev[1]);
+    }
+    // đang theo một trận: trận đổi chặng (cổng → càn quét → nhà chính) thì bay sang góc mới
+    function directorTick() {
+      // drama, đám tang: làng vừa hiện ra thì nhắm lại đúng chỗ những người trong cảnh
+      if (watch && watch.kind === 'drama' && watch.shot !== 'cast') { const ev = eventNow('drama', watch.i); if (ev && castAt(ev)) watch.shot = direct(ev); return; }
+      if (!watch || watch.kind !== 'war') return;
+      const ev = eventNow('war', watch.i); if (!ev || !ev[3]) return;
+      const w = ev[3], k = w.stage === 'march' ? 'naval' : w.stage + '/' + (w.siege || '') + '/' + w.by; if (k !== watch.shot) watch.shot = direct(ev);
+    }
+    G.watchIsland = (i) => { const ev = eventNow('war', i) || eventNow('drama', i); if (!ev) return false; const shot = direct(ev); watch = { kind: ev[3] ? 'war' : 'drama', i: ev[0], shot }; G.slowmo = SLOWMO; return true; };
+    G.topStory = () => { const ev = eventNow('war') || eventNow('drama'); return ev ? { i: ev[0], text: ev[2] } : null; };
     function lookAt(i, key) {
       const pl = buildings.places(i), L = lands[i], at = key && pl ? (key === 'hall' ? pl.hall : (pl[key] && pl[key][0]) || pl.hall) : null;
       G.setFocus(i); G.flyTo(at ? at.clone().add(L.center) : L.center, at ? 30 : 96);
@@ -147,7 +231,7 @@
         }
         afterJump(); busy(false);
         evNote = { text: ev ? ev[2] : 'không có ' + (kind === 'war' ? 'trận đánh' : 'drama') + ' nào trong 2 năm tới', until: performance.now() + 15000 };
-        if (ev) { lookAt(ev[0], ev[1]); watch = { kind, i: ev[0] }; G.slowmo = SLOWMO; } // xem chậm ngay, theo đúng chuyện vừa tìm
+        if (ev) { const shot = direct(ev); watch = { kind, i: ev[0], shot }; G.slowmo = SLOWMO; } // xem chậm ngay, bay tới đúng góc của cảnh (máy quay đạo diễn)
         $('eraName').textContent = eraLabel();
       }, 30);
     }
@@ -179,7 +263,7 @@
     // giữa các đảo: cầu theo danh sách của logic (dáng theo thời thấp hơn của hai đảo), đoàn buôn, quân (tin và bảng dev:
     // ui/race-dev.js)
     const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
-    const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color), shots });
+    const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color), shots, bars });
     const prosper = BK.Prosper3D ? BK.Prosper3D.create({ THREE, scene, lands, colors: G.TERRAINS.map((T) => T.color) }) : null;
     // tên lửa, hạt nhân (logic/missiles.js W.missiles): bay vòng cung tới đúng chỗ nhắm, nổ (render/missiles3d.js)
     const missiles3d = BK.Missiles3D ? BK.Missiles3D.create({ THREE, scene, lands3d }) : null;
@@ -191,6 +275,7 @@
     }
     // máy công thành của bên đánh đứng ngoài cổng đảo đang vẽ gần, bắn vào cổng; trại vây; cổng dịch chuyển; lá chắn của đảo thời 12
     const GEAR_GAP = 6; // khoảng cách giữa hai xe, máy công thành (đơn vị thế giới; xe dài khoảng 3)
+    const GEAR_SPEED = 5; // xe lăn bao nhiêu đơn vị mỗi giây thật khi đổi chỗ
     function siegeGear(now) {
       const list = [];
       for (const w of world.wars) {
@@ -207,13 +292,21 @@
           // trong thành: một hàng so le dọc đường từ cổng tới nhà chính, mỗi xe cách xe trước GEAR_GAP đơn vị
           if (e.kind !== 'drone' && inTown) { const dir = hallW.clone().sub(gw).setY(0).normalize(), sd = new THREE.Vector3(-dir.z, 0, dir.x); at = gw.clone().addScaledVector(dir, 7 + k * GEAR_GAP).addScaledVector(sd, k % 2 ? 1.6 : -1.6); at.y = L.center.y; }
           // trên cầu: hai làn, mỗi cặp xe cách nhau GEAR_GAP đơn vị dọc mặt cầu, không chạm nhau
-          else if (e.kind !== 'drone' && B && B.pa) { const L2 = B.len || B.pa.distanceTo(B.pb), u = Math.min(0.9, (6 + Math.floor(k / 2) * GEAR_GAP) / L2), d = B.pb.clone().sub(B.pa).setY(0).normalize(); at = bridges3d.bridgePoint(B, B.a === i ? u : 1 - u, new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), k % 2 ? 1.5 : -1.5); }
+          else if (e.kind !== 'drone' && B && B.pa) { const L2 = B.len || B.pa.distanceTo(B.pb), u = Math.min(0.9, (6 + Math.floor(k / 2) * GEAR_GAP) / L2),
+              d = B.pb.clone().sub(B.pa).setY(0).normalize(); at = bridges3d.bridgePoint(B, B.a === i ? u : 1 - u,
+              new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), k % 2 ? 1.5 : -1.5); }
           else at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
           const key = w.id + ':' + k, st = engState.get(key) || { next: now + 1 + k * 0.7, shot: null }; engState.set(key, st);
+          // đổi chặng (cầu → trong thành): xe lăn từ chỗ cũ tới cổng rồi theo đường vào chỗ mới, không nhảy chỗ
+          // (design/ke-hoach-khac-phuc.md mục 2.4); đang lăn thì không bắn
+          if (!st.pos) st.pos = at.clone();
+          { const goal = inTown && !st.passed ? gw : at, d = goal.distanceTo(st.pos), stepLen = Math.min(d, GEAR_SPEED * Math.max(0, Math.min(0.1, now - (st.t || now)))); st.t = now;
+            if (d > 0.05) st.pos.addScaledVector(goal.clone().sub(st.pos).normalize(), stepLen); if (inTown && !st.passed && st.pos.distanceTo(gw) < 1.5) st.passed = true; if (!inTown) st.passed = false; }
+          const moving = st.pos.distanceTo(at) > 0.6; at = st.pos.clone(); if (moving) face = (inTown && !st.passed ? gw : aimW);
           // vây thành: vẫn nã vào cổng nhưng thưa hơn; đồng hồ lùi (tua năm) thì bắn lại ngay
           const siegeOnly = w.blockade && !w.blockade.done;
           if (st.next - now > 10) st.next = now;
-          if ((w.stage === 'gate' || inTown) && now > st.next && shots) {
+          if ((w.stage === 'gate' || inTown) && !moving && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
             const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(); if (e.kind === 'armor') from.addScaledVector(face.clone().sub(at).setY(0).normalize(), 2.4); from.y += e.kind === 'drone' ? 5 : e.kind === 'armor' ? 1.3 : 1.6; const to = face.clone(); to.y += 2;
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
@@ -268,16 +361,20 @@
       // mỗi người một việc theo chặng trận (đánh cổng, khuân hàng cướp, đốt phá, vây nhà chính)
       world.islands.forEach((S, i) => { for (const x of BK.War.onIsland(world, i)) guests[i].push({ key: x.key, p: x.p, level: isle(x.i).level, mind: x.mind, enter: x.enter, color: G.TERRAINS[x.i].color, side: x.side }); });
       // tù binh (logic/battles.js): người đảo khác ngồi ở bãi tập của đảo bắt giữ, mặc màu đảo nhà
-      world.islands.forEach((S, i) => { for (const q of S.prisoners || []) { const p = isle(q.i).people.get(q.pid); if (p && p.alive) guests[i].push({ key: 'pr' + q.i + ':' + q.pid, p, level: isle(q.i).level, mind: { state: 'work', verb: 'captive', place: 'drill', reason: 'tù binh' }, enter: 'drill', color: G.TERRAINS[q.i].color }); } });
+      world.islands.forEach((S, i) => { for (const q of S.prisoners || []) { const p = isle(q.i).people.get(q.pid);
+          if (p && p.alive) guests[i].push({ key: 'pr' + q.i + ':' + q.pid, p, level: isle(q.i).level, mind: { state: 'work', verb: 'captive', place: 'drill',
+          reason: 'tù binh' }, enter: 'drill', color: G.TERRAINS[q.i].color }); } });
       // quân đang tập hợp ở cổng trước khi lên đường (logic/war.js sendOff): vẫn là người của làng (giữ khoá số, đi tiếp từ chỗ
       // đang đứng), người nhà ra tiễn (logic/siege.js roleOf)
-      world.islands.forEach((S, i) => { const M = S.situ.muster; if (!M || M.until <= world.day) return; for (const id of M.troops) { const p = S.people.get(id); if (p && p.alive) guests[i].push({ key: id, p, level: S.level, mind: { state: 'work', verb: 'guard', place: M.gate, reason: 'tập hợp ở cổng, sắp lên đường đánh ' + M.to }, enter: 'home', color: null }); } });
+      world.islands.forEach((S, i) => { const M = S.situ.muster; if (!M || M.until <= world.day) return;
+          for (const id of M.troops) { const p = S.people.get(id); if (p && p.alive) guests[i].push({ key: id, p, level: S.level, mind: { state: 'work',
+          verb: 'guard', place: M.gate, reason: 'tập hợp ở cổng, sắp lên đường đánh ' + M.to }, enter: 'home', color: null }); } });
       // việc không đổi thì giữ đúng đối tượng việc cũ (chu trình khuân hàng của phần vẽ chạy tiếp, không bắt đầu lại mỗi giây)
       const seen = new Map(); for (const list of guests) for (const g of list) { const j = JSON.stringify(g.mind), old = guestMind.get(g.key); if (old && old.j === j) g.mind = old.mind; seen.set(g.key, { j, mind: g.mind }); }
       guestMind = seen;
       guests.forEach((list, i) => { if (villages[i]) villages[i].setGuests(list); });
       // người ngã xuống còn nằm trên chiến trường (logic/war.js S.fallen): hai ngày
-      world.islands.forEach((S, i) => { if (villages[i]) villages[i].setFallen((S.fallen || []).filter((x) => world.day - x.day < 2).map((x) => ({ id: x.id, at: x.at, color: G.TERRAINS[x.i].color }))); });
+      world.islands.forEach((S, i) => { if (villages[i]) villages[i].setFallen((S.fallen || []).filter((x) => world.day - x.day < 2).map((x) => ({ id: x.id, i: x.i, at: x.at, color: G.TERRAINS[x.i].color }))); });
     }
     syncWorld();
     // mỗi khung hình: đưa thêm ngày lịch vào logic (chỉ chạy các bước cố định nguyên), lấy lại giờ trong ngày cho bầu trời
@@ -285,6 +382,7 @@
     // mỗi khung hình: công trình theo tiến độ xây của logic, người của các đảo gần máy quay, xe nhường người
     function animate(dt, t, night) {
       const speed = G.time.tps / G.time.SPEEDS[0][0];
+      if (bars) bars.begin(); // thanh máu: hải chiến (render/war3d.js), cổng, nhà chính, người trong làng
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
       buildings.animate(dt, t, night, camera.position, speed);
       if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf, (i) => !!(villages[i] && villages[i].visible), (i) => gateAt[i] || null);
@@ -293,7 +391,7 @@
         if (shots) shots.update(t * 0.001);
         if (prosper) prosper.update(world, day, t * 0.001, (i) => !!(villages[i] && villages[i].visible), (i) => buildings.places(i), night || 0);
         G.dust = BK.Missiles ? BK.Missiles.dust(world, day) : 0; } // bụi hạt nhân: trời xám (render/sky3d.js)
-      if (bars) { bars.begin(); siegeBars(); }
+      if (bars) siegeBars();
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }
@@ -308,13 +406,24 @@
         const L = lands[i], pl = buildings.places(i); if (!pl) return;
         const g = pl[sg.gate] && pl[sg.gate][0]; if (g) { const out = g.clone().setY(0).normalize(); bars.add(g.clone().addScaledVector(out, 3).add(L.center).setY(L.center.y + 8), BK.Siege.hp(S, sg.gate), 6); }
         if (pl.hall && (sg.stage === 'hall' || sg.stage === 'outer' || BK.Siege.hp(S, 'hall') < 1)) bars.add(pl.hall.clone().add(L.center).setY(L.center.y + 13), BK.Siege.hp(S, 'hall'), 9);
+        // thanh tổng của hai đội (quân còn lại so với lúc đầu), cho khi nhìn từ xa (design/ke-hoach-khac-phuc.md mục 3.3)
+        const w = world.wars.find((x) => x.id === sg.war); if (!w || !g) return;
+        sg.def0 = Math.max(sg.def0 || 0, sg.def.length); const out = g.clone().setY(0).normalize(), hall = sg.stage === 'hall' && pl.hall;
+        const foeAt = hall ? pl.hall.clone().addScaledVector(out, 13) : g.clone().addScaledVector(out, 5), defAt = hall ? pl.hall.clone().addScaledVector(out, 2) : g.clone().addScaledVector(out, -5);
+        const far = (v) => camera.position.distanceTo(v) > 40;
+        { const v = foeAt.add(L.center).setY(L.center.y + 6); if (far(v)) bars.add(v, w.troops.length / Math.max(1, w.n0), 5); }
+        { const v = defAt.add(L.center).setY(L.center.y + 6); if (far(v) && sg.def0) bars.add(v, sg.def.length / sg.def0, 5); }
       });
     }
     // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
-    function slow() { G.slowmo = slowmoNow(); $('eraName').textContent = eraLabel(); syncWorld();
+    function slow() { G.slowmo = slowmoNow(); $('eraName').textContent = eraLabel(); syncWorld(); directorTick();
+      if (Math.floor(world.day / 360) !== savedYear) { savedYear = Math.floor(world.day / 360); saveNow(); } // tự lưu mỗi năm trong game
       // đống hàng trong kho của từng đảo theo lượng hàng thật (render/build/workyards3d.js); chỗ hư trong chiến tranh (đang cháy khi còn giặc,
       // hay ba ngày sau khi bị hạt nhân)
-      world.islands.forEach((S, i) => { const st = BK.Economy.state(S); buildings.setStock(i, Object.fromEntries(BK.Economy.RES.map((r) => [r, st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setRuin(i, S.ruin, !!S.situ.siege || S.falloutUntil - world.day > 357, S.repairJob && S.repairJob.key); if (S.env && lands3d.thinTrees) lands3d.thinTrees(lands[i], S.env.forest); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
+      world.islands.forEach((S, i) => { const st = BK.Economy.state(S); buildings.setStock(i, Object.fromEntries(BK.Economy.RES.map((r) => [r,
+          st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setRuin(i, S.ruin,
+          !!S.situ.siege || S.falloutUntil - world.day > 357, S.repairJob && S.repairJob.key); if (S.env && lands3d.thinTrees) lands3d.thinTrees(lands[i],
+          S.env.forest); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
     Object.assign(G, { world, isle: isle(0), buildings, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
   }
   BK.GameCities = { setup, buildPlan };

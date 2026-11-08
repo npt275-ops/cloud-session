@@ -438,7 +438,8 @@
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ'); f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
         // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)
-        if (bars && shownNow && !f.inside && (f.side || f.hpShow < 100)) { _p.copy(f.rig.root.position); _p.y += 2.25 * sc * SCALE; bars.add(_p, f.hpShow / 100, 0.75 * SCALE); }
+        // (thanh máu từng người: người đã mất máu, hay người ra trận ở gần máy quay; ở xa thì game/cities.js vẽ thanh tổng của cả đội)
+        if (bars && shownNow && !f.inside && (f.hpShow < 100 || (f.side && camera && f.rig.root.position.distanceToSquared(camera.position) < 38 * 38))) { _p.copy(f.rig.root.position); _p.y += 2.25 * sc * SCALE; bars.add(_p, f.hpShow / 100, 0.75 * SCALE); }
         // chớp mắt vài giây một lần
         if (rs > f.blinkAt) { f.blink = 0.14; f.blinkAt = rs + 2.2 + Math.random() * 3; } // giờ thực
         f.blink = Math.max(0, f.blink - real);

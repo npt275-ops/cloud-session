@@ -19,7 +19,8 @@
     const { $ } = G, W = G.world, E = BK.Economy, P = BK.People, news = $('worldNews'), board = $('raceBoard');
     let open = false;
     const toggle = (v) => { open = v == null ? !open : v; board.hidden = !open; news.setAttribute('aria-expanded', String(open)); if (open) render(); };
-    news.addEventListener('click', () => toggle());
+    // dòng chuyện lớn nhất đang diễn ra (design/ke-hoach-khac-phuc.md mục 3.2): bấm thì máy quay đạo diễn bay tới đúng góc của cảnh
+    news.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-top]'); if (t && G.watchIsland) { G.watchIsland(+t.dataset.top); return; } toggle(); });
     news.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     board.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return toggle(false);
@@ -44,7 +45,11 @@
         // kho vũ khí bắn xa (logic/missiles.js): tên lửa, hạt nhân, quả đang chế tạo; đảo từng bị bắn hạt nhân, đang nhiễm xạ
         (S.arms && (S.arms.missiles || S.arms.nukes || S.arms.nukeDone) || S.nukedTotal ? '<span>' + esc([S.arms && S.arms.missiles ? S.arms.missiles + ' tên lửa' : '', S.arms && S.arms.nukes ? S.arms.nukes + ' hạt nhân' : '', S.arms && S.arms.nukeDone ? 'đang chế tạo hạt nhân' : '', S.nukedTotal ? 'bị bắn ' + S.nukedTotal + ' quả hạt nhân' + (S.falloutUntil > W.day ? ', đang nhiễm xạ' : '') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         // hệ sinh thái (logic/ecology.js): rừng, mỏ, đất ruộng, khói bụi; đóng cầu, cấm vận, bất bình, giữ đất cho đời sau
-        (S.env ? '<span>' + esc(['rừng ' + Math.round(S.env.forest * 100) + '%', 'mỏ ' + Math.round(S.env.ore * 100) + '%', 'đất ' + Math.round(S.env.soil * 100) + '%', S.env.smog > 0.02 ? 'khói bụi ' + Math.round(S.env.smog * 100) + '%' : '', S.conserve ? 'giữ đất cho đời sau' : '', S.closed && S.closed.until > W.day ? 'đóng cầu (' + S.closed.why + ')' : '', W.embargo && W.embargo[i] > W.day ? 'bị cấm vận' : '', S.discontent > 0.3 ? 'bất bình ' + Math.round(S.discontent * 100) + '%' : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
+        (S.env ? '<span>' + esc(['rừng ' + Math.round(S.env.forest * 100) + '%', 'mỏ ' + Math.round(S.env.ore * 100) + '%',
+            'đất ' + Math.round(S.env.soil * 100) + '%', S.env.smog > 0.02 ? 'khói bụi ' + Math.round(S.env.smog * 100) + '%' : '',
+            S.conserve ? 'giữ đất cho đời sau' : '', S.closed && S.closed.until > W.day ? 'đóng cầu (' + S.closed.why + ')' : '',
+            W.embargo && W.embargo[i] > W.day ? 'bị cấm vận' : '',
+            S.discontent > 0.3 ? 'bất bình ' + Math.round(S.discontent * 100) + '%' : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         (pacts.length || bridges.length ? '<span>' + esc([pacts.join(', '), bridges.length ? 'cầu sang ' + bridges.join(', ') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         '</button>';
     }
@@ -63,7 +68,9 @@
     function chronicle() {
       if (!BK.Chronicle || !W.chronicle) return '';
       const years = BK.Chronicle.byYear(W, 3).reverse().slice(0, 9);
-      const glory = W.islands.map((S) => [S.golden ? 'thời hoàng kim' : '', S.wonder ? 'đang dựng kỳ quan ' + Math.round(S.wonder.progress * 100) + '%' : '', (S.wonders || []).length ? (S.wonders.length + ' kỳ quan') : '', S.decline ? 'suy tàn' : ''].filter(Boolean)).map((xs, i) => (xs.length ? esc(W.islands[i].name) + ': ' + xs.join(', ') : '')).filter(Boolean);
+      const glory = W.islands.map((S) => [S.golden ? 'thời hoàng kim' : '', S.wonder ? 'đang dựng kỳ quan ' + Math.round(S.wonder.progress * 100) + '%' : '',
+          (S.wonders || []).length ? (S.wonders.length + ' kỳ quan') : '', S.decline ? 'suy tàn' : ''].filter(Boolean)).map((xs,
+          i) => (xs.length ? esc(W.islands[i].name) + ': ' + xs.join(', ') : '')).filter(Boolean);
       const heroes = (W.legends || []).slice(-6).reverse().map((L) => '<button data-isle="' + L.isle + '"><b>' + esc(BK.Chronicle.TITLE[L.kind] || L.kind) + '</b> ' + esc(L.name) + ' (' + esc(W.islands[L.isle].name) + ')</button>');
       return '<div class="rb-chron"><b>Biên niên</b>' + (glory.length ? '<p>' + glory.join(' · ') + '</p>' : '') +
         years.map((Y) => '<div><i>Năm ' + Y.year + '</i>' + Y.items.map((c) => '<button data-isle="' + c.isle + '">' + '★'.repeat(Math.min(3, Math.ceil(c.w / 2))) + ' ' + esc(W.islands[c.isle].name) + ': ' + esc(c.text) + '</button>').join('') + '</div>').join('') +
@@ -73,8 +80,11 @@
     function slow() {
       if (!W.diplomacy) return;
       const last = W.log.slice(-NEWS).reverse();
-      news.hidden = !last.length;
-      news.innerHTML = last.map((e) => '<div><b>Ngày ' + (e.day + 1) + '</b> · ' + esc(e.text) + '</div>').join('');
+      // hai tầng: chuyện lớn đang diễn ra (giữ ở đầu, có nút xem) và tin thường (mờ hơn, trôi nhanh)
+      const top = G.topStory ? G.topStory() : null;
+      news.hidden = !last.length && !top;
+      news.innerHTML = (top ? '<div class="top" data-top="' + top.i + '">⚑ Đang diễn ra: ' + esc(top.text) + ' <u>xem</u></div>' : '') +
+        last.slice(0, top ? NEWS - 1 : NEWS).map((e) => '<div class="minor"><b>Ngày ' + (e.day + 1) + '</b> · ' + esc(e.text) + '</div>').join('');
       if (open) render();
     }
     slow();

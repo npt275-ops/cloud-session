@@ -69,7 +69,9 @@
       out.push(to.clone()); return out;
     }
     // đoạn (x0, z0)-(x1, z1) có cắt đoạn S không
-    function cuts(x0, z0, x1, z1, [a0, b0, a1, b1]) { const d = (x1 - x0) * (b1 - b0) - (z1 - z0) * (a1 - a0); if (Math.abs(d) < 1e-9) return false; const u = ((a0 - x0) * (b1 - b0) - (b0 - z0) * (a1 - a0)) / d, v = ((a0 - x0) * (z1 - z0) - (b0 - z0) * (x1 - x0)) / d; return u > 0 && u < 1 && v > 0 && v < 1; }
+    function cuts(x0, z0, x1, z1, [a0, b0, a1, b1]) { const d = (x1 - x0) * (b1 - b0) - (z1 - z0) * (a1 - a0); if (Math.abs(d) < 1e-9) return false;
+        const u = ((a0 - x0) * (b1 - b0) - (b0 - z0) * (a1 - a0)) / d, v = ((a0 - x0) * (z1 - z0) - (b0 - z0) * (x1 - x0)) / d;
+        return u > 0 && u < 1 && v > 0 && v < 1; }
     // chỗ đứng (trước cửa, trước chỗ làm) rơi vào lòng đường thì lùi ra vỉa hè phía bên đó: không ai đứng giữa đường xe chạy
     function offCarriage(v) {
       if (!L.roadSegs) return v;

@@ -70,7 +70,9 @@
     const wasNight = p.lastPh === 'night'; p.lastPh = ph;
     if (wasNight && ph === 'morning' && j === 'soldier' && p.id % 2 === 0 && BK.Guards) { const h = BK.Guards.handover(ctx); if (h) return h; }
     // đêm: ai cũng về nhà ngủ, trừ một nửa số lính ra các chốt cổng thay ca gác đêm (logic/guards.js)
-    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng'); const lodge = BK.Siege ? BK.Siege.lodging(S, p) : null; if (lodge != null) return job('sleep', 'homeSlot', 'nhà cháy, ở nhờ nhà hàng xóm', { slot: lodge }); return job('sleep', 'home', 'về nhà ngủ'); }
+    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng');
+        const lodge = BK.Siege ? BK.Siege.lodging(S, p) : null; if (lodge != null) return job('sleep', 'homeSlot', 'nhà cháy, ở nhờ nhà hàng xóm',
+        { slot: lodge }); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)
     if (ph === 'noon') {
       if (j === 'soldier' && p.id % 3 === 0) return job('guard', 'guard', 'gác thay ca trưa');
@@ -120,7 +122,9 @@
     // người đi đường: chủ yếu đi bộ dọc phố (gặp ai thì dừng lại nói chuyện, render/village3d.js), có lúc ra chợ, có lúc ngồi trước nhà
     // người làm việc vặt (người đi đường): mỗi chuyến có việc rõ: ra chợ mua đồ mang về nhà, mang đồ tới nhà người quen,
     // ra kho lĩnh phần cho nhà; không đi dạo vô định, không vòng quanh nhà chính
-    if (j === 'walker') { const r = rng.next(); return r < 0.45 ? job('errand', 'market', 'ra chợ mua đồ mang về nhà', { cycle: { item: 'food', src: 'market', dst: 'home', workAt: 'src' } }) : r < 0.75 ? job('errand', 'store', 'ra kho lĩnh phần cho nhà', { cycle: { item: 'food', src: 'store', dst: 'home', workAt: 'src' } }) : neighborChat('ghé nhà hàng xóm'); }
+    if (j === 'walker') { const r = rng.next(); return r < 0.45 ? job('errand', 'market', 'ra chợ mua đồ mang về nhà', { cycle: { item: 'food', src: 'market',
+        dst: 'home', workAt: 'src' } }) : r < 0.75 ? job('errand', 'store', 'ra kho lĩnh phần cho nhà', { cycle: { item: 'food', src: 'store', dst: 'home',
+        workAt: 'src' } }) : neighborChat('ghé nhà hàng xóm'); }
     return neighborChat('trò chuyện với hàng xóm');
   }
   return { VERB_NAME, WORK, pick };

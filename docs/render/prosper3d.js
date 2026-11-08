@@ -38,7 +38,9 @@
     }
     // thuyền đánh cá
     const boats = [], hullG = new THREE.BoxGeometry(1.8, 0.35, 0.7), hullM = std('#6b4a2f'), sailG = new THREE.PlaneGeometry(0.9, 1.1), sailM = (colors || PAL).map((c) => std(c, { side: THREE.DoubleSide }));
-    function boat(k) { if (!boats[k]) { const g = new THREE.Group(); g.add(new THREE.Mesh(hullG, hullM)); const s = new THREE.Mesh(sailG, sailM[0]); s.position.set(0, 0.8, 0); s.rotation.y = Math.PI / 2; g.add(s); g.userData.sail = s; scene.add(g); boats[k] = g; } boats[k].visible = true; return boats[k]; }
+    function boat(k) { if (!boats[k]) { const g = new THREE.Group(); g.add(new THREE.Mesh(hullG, hullM)); const s = new THREE.Mesh(sailG, sailM[0]);
+        s.position.set(0, 0.8, 0); s.rotation.y = Math.PI / 2; g.add(s); g.userData.sail = s; scene.add(g); boats[k] = g; } boats[k].visible = true;
+        return boats[k]; }
     const ropes = [];
     function rope(k, pts) {
       if (!ropes[k]) { ropes[k] = new THREE.Line(new THREE.BufferGeometry(), ropeM); ropes[k].frustumCulled = false; scene.add(ropes[k]); }
@@ -107,7 +109,9 @@
         // suy tàn: cỏ dại trước cửa nhà
         if (S0.decline) for (let h = 0; h < (pl.homes || []).length && nw < MAXW - 6; h++) {
           const d = pl.homes[h];
-          for (let j = 0; j < 6; j++) { const a = hash(i * 977 + h * 31 + j) * Math.PI * 2, r = 0.8 + hash(h * 7 + j * 13 + i) * 2.4; V.set(d.x + L.center.x + Math.cos(a) * r, base + 0.4, d.z + L.center.z + Math.sin(a) * r); Q.identity(); S.setScalar(0.7 + hash(h + j * 3) * 0.7); M.compose(V, Q, S); weeds.setMatrixAt(nw++, M); }
+          for (let j = 0; j < 6; j++) { const a = hash(i * 977 + h * 31 + j) * Math.PI * 2, r = 0.8 + hash(h * 7 + j * 13 + i) * 2.4;
+              V.set(d.x + L.center.x + Math.cos(a) * r, base + 0.4, d.z + L.center.z + Math.sin(a) * r); Q.identity();
+              S.setScalar(0.7 + hash(h + j * 3) * 0.7); M.compose(V, Q, S); weeds.setMatrixAt(nw++, M); }
         }
       });
       // ngư trường chung: thuyền đánh cá của hai đảo giữa biển

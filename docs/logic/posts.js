@@ -21,7 +21,8 @@
     { key: 'gateMain', name: 'Lính gác cổng chính', count: () => BK.Rules.GATEKEEPERS, open: (S, adults) => S.level >= 2 && adults >= 14, job: 'gatekeeper', place: 'gate', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng thành chính' },
     { key: 'gateLeft', name: 'Lính gác cổng phụ trái', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateL', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên trái' },
     { key: 'gateRight', name: 'Lính gác cổng phụ phải', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateR', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên phải' },
-    { key: 'orator', name: 'Người diễn thuyết', count: () => BK.Rules.ORATORS, open: (S, adults) => adults >= 18, job: 'orator', place: 'podium', verb: 'rule', night: false, score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1, why: 'diễn thuyết trước dân' },
+    { key: 'orator', name: 'Người diễn thuyết', count: () => BK.Rules.ORATORS, open: (S, adults) => adults >= 18, job: 'orator', place: 'podium', verb: 'rule',
+        night: false, score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1, why: 'diễn thuyết trước dân' },
   ];
   const BY_KEY = Object.fromEntries(POSTS.map((X) => [X.key, X]));
   // gán chốt từ những người còn trống (pool: người lớn không ngồi hội đồng); trả lại pool đã bớt người

@@ -21,7 +21,7 @@
   const RAISE_DAYS = 1, RAISE_H = 12.5;   // kéo cờ: một ngày, từ chân cột lên đỉnh
 
   function create(o) {
-    const { THREE, scene, lands3d, bridges3d, colors } = o, lands = lands3d.lands, R = lands3d.LAND_R, shots = o.shots || null, navalNext = new Map();
+    const { THREE, scene, lands3d, bridges3d, colors } = o, lands = lands3d.lands, R = lands3d.LAND_R, shots = o.shots || null, navalNext = new Map(), bars = o.bars || null, navalMax = new Map(), sinking = [];
     const col = colors.map((c) => new THREE.Color(c));
     const mat = (c, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, flatShading: true }, extra || {}));
     // lính: thân (áo màu đảo), đầu, giáo; mỗi thứ một InstancedMesh
@@ -87,13 +87,20 @@
     // hải chiến (logic/battles.js w.naval): đội thuyền đảo bị đánh chắn trước đội thuyền bên đánh, hai bên bắn nhau
     // bằng vũ khí thời mình (tên, đạn, tia; render/shots3d.js)
     function naval(W, w, lead, t) {
-      const N = w.naval, crew = N.crew.filter((x) => x.p.alive).length, nd = Math.max(1, Math.min(4, Math.ceil(crew / PER_BOAT))), now = t * 0.001;
+      // hai hàng thuyền chặn đối đầu đội thuyền bên đánh; thuyền hết người thì chìm dần (design/ke-hoach-khac-phuc.md mục 6.1);
+      // thanh máu tổng của hai đội (người còn lại so với lúc đầu)
+      const N = w.naval, crew = N.crew.filter((x) => x.p.alive).length, nd = crew ? Math.max(1, Math.min(6, Math.ceil(crew / PER_BOAT))) : 0, now = t * 0.001;
+      const slot = (b, out) => out.copy(lead).addScaledVector(dir, 8 + (b % 2) * 2.6).addScaledVector(side, (Math.floor(b / 2) - (Math.ceil(Math.max(nd, 1) / 2) - 1) / 2) * 3);
+      const mx = navalMax.get(w.id) || 0; if (nd < mx) for (let b = nd; b < mx; b++) sinking.push({ t0: now, pos: slot(b, new THREE.Vector3()), yaw: -Math.atan2(-dir.z, -dir.x), c: N.r });
+      navalMax.set(w.id, nd);
       const at = [];
       for (let b = 0; b < nd; b++) {
         const g = boat(nb++); g.userData.flag.material = flagM[N.r];
-        g.position.copy(lead).addScaledVector(dir, 7 + (b % 2) * 1.5).addScaledVector(side, (b - (nd - 1) / 2) * 2.6).setY(SEA_Y + 0.25 + Math.sin(t * 0.003 + b + 2) * 0.08);
+        slot(b, g.position).setY(SEA_Y + 0.25 + Math.sin(t * 0.003 + b + 2) * 0.08);
         g.rotation.set(0, -Math.atan2(-dir.z, -dir.x), Math.sin(t * 0.002 + b) * 0.04); at.push(g.position);
       }
+      if (bars) { const n0 = N.crew.length; bars.add(lead.clone().setY(SEA_Y + 4), w.troops.length / Math.max(1, w.n0), 5); if (at.length) bars.add(at[0].clone().addScaledVector(side, (at.length - 1) * 0.75).setY(SEA_Y + 4), crew / Math.max(1, n0), 5); }
+      if (!at.length) return;
       const nx = navalNext.get(w.id) || 0; if (!shots || (now < nx && nx - now < 5)) return;
       navalNext.set(w.id, now + 0.35 + Math.random() * 0.4); if (navalNext.size > 50) navalNext.clear();
       const fire = (lv, a, b) => { const k = BK.Shots3D.OF[BK.Arms ? BK.Arms.kit(lv).ranged : 'bow'] || ['arrow']; const f = a.clone(), e = b.clone();
@@ -144,6 +151,12 @@
         const gar = S.garrison ? Math.min(MAX_SHOWN, S.garrison.troops.filter((x) => x.p.alive).length) : 0;
         for (let k = 0; k < gar; k++) { const a = (k / Math.max(1, gar)) * Math.PI * 2; side.set(Math.cos(a), 0, Math.sin(a)); from.copy(tmp).addScaledVector(side, 2.2); soldier(from, yawOf(side), S.annexedBy); }
       });
+      // thuyền chìm: nghiêng, chìm dần trong 3 giây rồi mất
+      const nowS = t * 0.001;
+      for (let k = sinking.length - 1; k >= 0; k--) {
+        const s = sinking[k], u = (nowS - s.t0) / 3; if (u >= 1 || u < 0) { sinking.splice(k, 1); continue; }
+        const g = boat(nb++); g.userData.flag.material = flagM[s.c]; g.position.copy(s.pos).setY(SEA_Y + 0.25 - u * 2.2); g.rotation.set(u * 0.9, s.yaw, u * 0.5);
+      }
       for (let k = nb; k < boats.length; k++) boats[k].visible = false;
       for (let k = nf; k < flags.length; k++) flags[k].visible = false;
       for (const m of [bodies, heads, spears]) { m.count = n; m.instanceMatrix.needsUpdate = true; }

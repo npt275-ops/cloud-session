@@ -66,5 +66,7 @@
     shock: ['beam', '#5fd8ff'], spore: ['plasma', '#9dff6a'], ray: ['beam', '#ff6af0'],
     catapult: ['stone'], cannon: ['ball', null, 0.8], artillery: ['ball', null, 1.0], armor: ['shell', null, 0.7], drone: ['bullet'], plasma: ['plasma', '#7af7ff'],
   };
-  BK.Shots3D = { create, OF };
+  // thời gian bay của một kiểu đạn (giây), cho phần vẽ hẹn lúc đạn tới (render/village3d.js takeHits)
+  const FLIGHT = (kind) => (KIND[kind] || KIND.arrow)[0];
+  BK.Shots3D = { create, OF, FLIGHT };
 })(typeof self !== 'undefined' ? self : globalThis);
