@@ -79,6 +79,11 @@
     kneel: () => [['submit', null], ['surrender', null]],
     // hệ sinh thái (logic/ecology.js): người ốm vì dịch nằm, ngồi ở nhà; chuyền nước chữa cháy rừng (cúi nhận, đưa lên)
     sick: () => [['sick', null], ['sit', null]],
+    // kịch bản chiến tranh (logic/battles.js): xem đấu tướng, khải hoàn, ra mừng, tù binh ngồi
+    watchDuel: () => [['cheer', null], ['point', null]],
+    parade: () => [['victory', null], ['cheer', null]],
+    celebrate: () => [['cheer', null], ['dance', null]],
+    captive: () => [['sit', null], ['sad', null]],
     bucket: () => [['harvest', null], ['build', null]],
   };
   // cử chỉ thứ n của một việc cho một người (đổi lượt thì sang cử chỉ khác)

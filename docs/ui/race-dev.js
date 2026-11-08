@@ -55,7 +55,19 @@
       board.innerHTML = '<div class="rb-head"><b>Cuộc đua · ngày ' + (Math.floor(W.day) + 1) + '</b><button data-close aria-label="Đóng bảng">✕</button></div>' +
         W.islands.map(card).join('') +
         '<p class="rb-stats">' + free + ' đảo độc lập · đột kích ' + (s.raid || 0) + ' · tổng tấn công ' + (s.conquer || 0) + ' · sáp nhập ' + (W.annexations || 0) + ' · nổi dậy ' + (s.revolt || 0) + ' (độc lập lại ' + (s.freed || 0) + ') · cướp đoàn buôn ' + (W.robberies || 0) + ' · chết trận ' + dead('chiến tranh') + ' · chết đói ' + dead('đói') + '</p>' +
+        chronicle() +
         '<div class="rb-log">' + W.log.slice(-LOG).reverse().map((e) => '<button data-isle="' + (e.isles && e.isles.length ? e.isles[0] : 0) + '"><b>Ngày ' + (e.day + 1) + '</b> ' + esc(e.text) + '</button>').join('') + '</div>';
+    }
+    // biên niên (logic/chronicle.js): mỗi năm ba chuyện lớn nhất, năm mới nhất ở trên; trạng thái thịnh vượng
+    // (logic/prosperity.js) và nhân vật nổi bật; bấm một chuyện thì bay tới đảo đó
+    function chronicle() {
+      if (!BK.Chronicle || !W.chronicle) return '';
+      const years = BK.Chronicle.byYear(W, 3).reverse().slice(0, 9);
+      const glory = W.islands.map((S) => [S.golden ? 'thời hoàng kim' : '', S.wonder ? 'đang dựng kỳ quan ' + Math.round(S.wonder.progress * 100) + '%' : '', (S.wonders || []).length ? (S.wonders.length + ' kỳ quan') : '', S.decline ? 'suy tàn' : ''].filter(Boolean)).map((xs, i) => (xs.length ? esc(W.islands[i].name) + ': ' + xs.join(', ') : '')).filter(Boolean);
+      const heroes = (W.legends || []).slice(-6).reverse().map((L) => '<button data-isle="' + L.isle + '"><b>' + esc(BK.Chronicle.TITLE[L.kind] || L.kind) + '</b> ' + esc(L.name) + ' (' + esc(W.islands[L.isle].name) + ')</button>');
+      return '<div class="rb-chron"><b>Biên niên</b>' + (glory.length ? '<p>' + glory.join(' · ') + '</p>' : '') +
+        years.map((Y) => '<div><i>Năm ' + Y.year + '</i>' + Y.items.map((c) => '<button data-isle="' + c.isle + '">' + '★'.repeat(Math.min(3, Math.ceil(c.w / 2))) + ' ' + esc(W.islands[c.isle].name) + ': ' + esc(c.text) + '</button>').join('') + '</div>').join('') +
+        (heroes.length ? '<div><i>Nhân vật nổi bật</i>' + heroes.join('') + '</div>' : '') + '</div>';
     }
     // mỗi giây (game/loop.js): ô tin, và bảng nếu đang mở
     function slow() {

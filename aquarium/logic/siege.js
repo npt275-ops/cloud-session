@@ -126,7 +126,8 @@
     // đấu tướng: tướng bên mình đánh tướng giặc, người giữ cổng đứng xem hò reo
     if (sg.stage === 'duel' && sg.duel) { if (p.id === sg.duel.b) return d('attack', Object.assign({ target: 'w' + sg.duel.ai + ':' + sg.duel.a, place: sg.gate, reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate, reason: 'xem hai tướng đấu tay đôi' }, short)); return null; }
     const foe = (k) => (n ? 'w' + sg.foes[k % n].i + ':' + sg.foes[k % n].id : null);
-    const fight = (place, why) => d('attack', Object.assign({ target: foe(di), place, reason: why, intensity: 0.5 + 0.5 * t.aggression }, short));
+    // arm: người bắn xa hay cận chiến (logic/arms.js), cho phần vẽ: người bắn đứng lùi lại mà bắn
+    const fight = (place, why) => d('attack', Object.assign({ target: foe(di), place, reason: why, intensity: 0.5 + 0.5 * t.aggression, arm: BK.Arms ? BK.Arms.armOf(S, p) : 'melee' }, short));
     if (S.seats.king === p.id) return d('work', Object.assign({ verb: 'command', place: 'hall', reason: sg.stage === 'hall' ? 'chỉ huy giữ nhà chính' : 'chỉ huy giữ thành từ nhà chính' }, short));
     if (di >= 0) {
       if (sg.stage === 'gate' || sg.stage === 'loot') return fight(sg.gate, 'ra giữ ' + nameOf(sg.gate));

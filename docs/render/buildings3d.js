@@ -327,6 +327,7 @@
       // vòng đi dạo quanh nhà chính: tâm và bán kính theo khung bao thật của nhà chính đang đứng
       { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
         if (H) { const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
+      out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
       out.podium = new THREE.Vector3(f.x * 4, 0, f.y * 4); out.podiumFace = new THREE.Vector3(f.x * 12, 0, f.y * 12);
       // chốt tuần tra, luyện quân: rải dọc phía trong tường thành (xa sân giữa), không dồn quanh nhà chính
       { const a0 = Math.atan2(f.y, f.x); for (let k = 0; k < 6; k++) { const a = a0 + Math.PI / 6 + (k * Math.PI) / 3, R = L.rOf(a) - 10; out.guard.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R)); } }

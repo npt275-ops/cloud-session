@@ -98,3 +98,14 @@ Mỗi phần có:
 - kiểm "không vô nghĩa";
 - ảnh trên trình duyệt chụp lúc đồng hồ chạy thật (có xem chậm), không chỉ lúc dừng;
 - commit, push, cập nhật artifact.
+
+## 6. Đã làm
+
+| Phần | Tệp | Có gì |
+|---|---|---|
+| 8a | `logic/arms.js` | Bộ vũ khí 12 thời (`KIT`): ná, cung, nỏ, hoả mai, súng trường, súng máy, súng tự động, súng điện, súng bào tử, súng tia; máy bắn đá, đại bác, pháo, xe bọc thép, drone, pháo plasma (tốn gỗ, kim loại, năng lượng; kho trống thì không có máy); tên lửa đốt nhà (thời 3–5), tường sống (thời 9), cổng dịch chuyển (thời 11), lá chắn năng lượng (thời 12). Quân chia người bắn xa và người cận chiến |
+| 8b | `render/shots3d.js`, `render/engines3d.js`, `render/rig3d.js`, `render/village3d.js`, `render/war3d.js`, `game/cities.js` | Người bắn xa đứng lùi lại, giương cung hay ngắm súng rồi bắn: tên, đá, đạn có vệt sáng, khói ở nòng, tia, cầu plasma bay thật. Máy công thành đứng trên dải đất giữa tường và mép đảo, hai bên cổng, nã vào cổng (giật nòng, vung cần); vây thành thì nã thưa hơn và có trại lều, đống lửa. Cổng dịch chuyển, vòm lá chắn mờ dần khi bị phá. Hải chiến: đội thuyền đảo bị đánh ra chặn, hai bên bắn nhau giữa biển |
+| 8c | `logic/battles.js` | Hải chiến, phục kích, đánh đêm (cầm đuốc), nội gián mở cổng, đấu tướng, vây thành cắt lương, phá vây, đào ngũ, cứu viện phút chót, tù binh và tiền chuộc, khải hoàn diễu hành, tưởng niệm, chạy đua vũ trang |
+| 8d | `logic/prosperity.js`, `render/prosper3d.js` | Thời hoàng kim (dây cờ đuôi nheo, đèn lồng quanh nhà chính; làm ra thêm 10%), kỳ quan (đài nhiều tầng viền vàng, tầng đang dựng có giàn giáo, ngọn lửa trên đỉnh; chọn chỗ trống không chồng công trình, không trên đường), phát minh và gián điệp, đảo đầu tiên tới một thời, suy tàn (cỏ dại trước cửa nhà) và phục hưng, ngư trường và mỏ chung (thuyền đánh cá hai màu đảo, xô xát hay ký chia) |
+| 8e | `logic/chronicle.js`, `ui/race-dev.js`, `ui/village-ui.js` | Biên niên: mỗi năm ba chuyện lớn nhất trong bảng "Cuộc đua", bấm thì bay tới đảo; trạng thái thịnh vượng từng đảo; nhân vật nổi bật (anh hùng, kẻ phản bội, nhà phát minh, người đứng đầu huyền thoại) có danh hiệu trong thẻ người. Nhịp kịch tính: cả bể yên quá 200 ngày thì người đứng đầu tham vọng nhất thấy bị sỉ nhục (nguyên nhân thật: đảo giàu hơn hay mối thù cũ), muốn đánh hơn |
+| 8f | kiểm thử, 100 trận, ảnh | Xem mục 7 |

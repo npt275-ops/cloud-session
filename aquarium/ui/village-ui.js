@@ -74,6 +74,8 @@
       const spouse = p.spouses.map(name).join(', ') || 'chưa có';
       card.hidden = false;
       card.innerHTML = '<button class="x" data-close="1" aria-label="Đóng">✕</button><h2>' + P.fullName(p) + '</h2>' +
+        // danh hiệu (logic/chronicle.js legend): anh hùng, kẻ phản bội, nhà phát minh, người đứng đầu huyền thoại
+        (p.title ? '<div class="sub legend"><b>' + p.title + '</b>' + (p.legend ? ' · ' + p.legend : '') + '</div>' : '') +
         '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.temper && BK.Temper ? 'tính ' + BK.Temper.nameOf(p.temper).toLowerCase() + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
         '<p><span class="k">Đang:</span> ' + doing + '</p>' +
         '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + (p.alive && p.home != null ? '<br><span class="k">Nhà:</span> số ' + (p.home + 1) + (BK.Homes ? ' (' + BK.Homes.occupancy(S)[p.home] + ' người)' : '') : '') + '</p>' +

@@ -146,6 +146,8 @@
     for (const x of troops) x.p.away = id;
     // gọi quân: tập hợp ở cổng MUSTER ngày (người nhà ra tiễn) rồi mới lên đường
     const w = { id, a, b, kind, troops, n0: troops.length, start: day, depart: day + MUSTER, arrive: day + MUSTER + days, by: D().bridged(W, a, b) ? 'bridge' : 'boat', stage: 'muster', morale: 1, since: day, helpers: [], loot: {}, gen: gen ? gen.id : null, surprise: !!surprise };
+    // vũ khí theo thời (logic/arms.js): người bắn xa, người cận chiến, máy công thành (tốn tài nguyên)
+    if (BK.Arms) BK.Arms.equip(W, w);
     W.wars.push(w); W.warCount++; W.warStats[kind]++; W.warStats.target[b]++;
     // phản bội: đang có hiệp ước mà vẫn đánh
     const T = D().treatyOf(W, a, b, day);
@@ -156,7 +158,7 @@
       say(W, day, A.name + ' xé ' + (T.kind === 'alliance' ? 'liên minh' : 'hiệp ước') + ' với ' + B.name + '.', [a, b]);
     }
     W.rel[b][a].trust = 0; W.rel[b][a].grudge = Math.min(1, W.rel[b][a].grudge + 0.2);
-    const lv = troops.filter((x) => x.levy).length, who = troops.length + ' quân' + (lv ? ' (' + lv + ' dân binh)' : '');
+    const lv = troops.filter((x) => x.levy).length, eng = (w.engines || []).length, who = troops.length + ' quân' + (lv ? ' (' + lv + ' dân binh)' : '') + (BK.Arms ? ', ' + BK.Arms.NAME[BK.Arms.kit(A.level).ranged] + (eng ? ', ' + eng + ' ' + BK.Arms.ENGINE[w.engines[0].kind].name : '') : '');
     say(W, day, A.name + (kind === 'raid' ? ' đem ' + who + ' sang đột kích ' : surprise ? ' lặng lẽ đem ' + who + ' sang đánh úp ' : ' tuyên chiến, đem ' + who + ' sang đánh ') + B.name + ' (' + (w.by === 'bridge' ? 'qua cầu' : 'đi thuyền') + ', ' + days + ' ngày).', [a, b]);
     note(A, day, 'war', (kind === 'raid' ? 'Quân lên đường đột kích ' : 'Quân lên đường đánh ') + B.name + '.', gen ? [gen.id] : []);
     // đánh úp thì bên kia (và đồng minh) không biết trước; biết trước thì người đứng đầu đa nghi có thể phá cầu chặn đường
@@ -229,6 +231,8 @@
 
   /* ---------- Diễn biến từng đợt (dt ngày, logic/world.js gọi mỗi bước cố định) ---------- */
   function warStep(W, day, w, rng, dt) {
+    // người ngã trong các kịch bản (logic/battles.js): at là chỗ ngã trên đảo bị đánh, 'sea' thì ngã ngoài biển (không thi thể)
+    const F = (x, enemy, at) => fall(W, day, x, enemy, rng, at === 'sea' ? null : { isle: w.b, at: at || w.gate });
     if (w.kind === 'revolt') return uprisingStep(W, day, w, rng, dt);
     const A = W.islands[w.a], B = W.islands[w.b];
     w.troops = w.troops.filter((x) => x.p.alive);
@@ -240,6 +244,8 @@
     if (w.stage === 'march') {
       // tên lửa (logic/missiles.js): quân sắp tới thì bắn trước, trúng lúc quân vừa tới cổng
       if (!w.salvo && BK.Missiles && day >= w.arrive - BK.Missiles.FLIGHT) { w.salvo = true; BK.Missiles.salvo(W, day, w); }
+      // hải chiến (logic/battles.js): đảo bị đánh ra chặn ngoài biển; thua trên biển thì quay về
+      if (BK.Battles) { BK.Battles.beforeArrive(W, day, w, rng); if (BK.Battles.navalStep(W, day, w, rng, dt, F)) { W.warStats.lost++; return goHome(W, day, w, null, false); } }
       if (day < w.arrive) return;
       // tới nơi: đảo đó đã thuộc về mình (người khác đánh giúp) thì về
       if (rulerOf(W, w.b) === w.a) return goHome(W, day, w, 'Đảo ' + B.name + ' đã thuộc về ' + A.name + ', quân quay về.');
@@ -250,6 +256,8 @@
       w.sg = B.situ.siege = { war: w.id, from: w.a, stage: 'gate', gate: w.gate, def: [], foes: [] };
       say(W, day, 'Quân ' + A.name + (w.by === 'bridge' ? ' qua cầu, đánh cổng phụ ' : ' đổ bộ, đánh cổng chính ') + B.name + '.', [w.a, w.b]);
       note(B, day, 'war', 'Quân ' + A.name + ' đánh tới ' + G().nameOf(w.gate) + '.');
+      // phục kích, đánh đêm, nội gián, đấu tướng, vây thành (logic/battles.js)
+      if (BK.Battles) { BK.Battles.onArrive(W, day, w, rng, F); if (!w.troops.length) return lost(W, day, w, 'Cả đoàn quân ' + A.name + ' ngã xuống trên cầu.'); }
     }
     if (w.stage === 'gate' || w.stage === 'inside') { B.situ.war = day + 1.5; B.situChanged = true; }
     if (w.stage === 'gate') {
@@ -258,8 +266,13 @@
       const garrison = B.garrison ? B.garrison.troops.filter((x) => x.p.alive) : [];
       let def = gateDefenders(B, w.gate, day, w.b).concat(helpers, garrison);
       // bị đánh úp: ngày đầu chỉ một nửa người giữ cổng kịp ra trận
-      if (w.surprise && day - w.since < 1) { def = def.filter((x, k) => k % 2 === 0); note(B, day, 'war', 'Bị đánh úp, cổng ' + (B.situ.warSide ? 'phải' : 'trái') + ' chỉ có ' + def.length + ' người giữ.'); }
-      // cổng bị tên lửa phá (logic/missiles.js) thì người giữ mất chỗ dựa
+      // (đánh đêm: chỉ một phần ba)
+      if (w.surprise && day - w.since < 1) { def = def.filter((x, k) => k % (w.night ? 3 : 2) === 0); note(B, day, 'war', 'Bị đánh úp, cổng ' + (B.situ.warSide ? 'phải' : 'trái') + ' chỉ có ' + def.length + ' người giữ.'); }
+      // đấu tướng, vây thành, đào ngũ, cứu viện (logic/battles.js)
+      if (BK.Battles) { const r = BK.Battles.gateStep(W, day, w, rng, dt, F, def); if (r === 'hold') { siegeView(B, w, w.blockade && !w.blockade.done ? 'blockade' : 'duel', def); return; } if (r === 'surrender') return annex(W, day, w.a, w.b, w, 'hết lương vì bị vây'); if (!w.troops.length) return lost(W, day, w, 'Quân ' + A.name + ' tan rã trước cổng ' + B.name + '.'); }
+      // pha bắn xa, công thành, tên lửa đốt (logic/arms.js) trước khi áp sát
+      if (BK.Arms) { BK.Arms.gateTick(W, day, w, def, dt, rng, (x, enemy) => fall(W, day, x, enemy, rng, { isle: w.b, at: w.gate })); def = def.filter((x) => x.p.alive); w.troops = w.troops.filter((x) => x.p.alive); }
+      // cổng bị tên lửa, máy công thành phá thì người giữ mất chỗ dựa
       const [la, ld] = clash(W, day, w.troops, def, lvOf(W), lvOf(W), wall(B.level) * ready(B) / ready(A) * (0.6 + 0.4 * G().hp(B, w.gate)), w, rng, dt);
       const fa = la / Math.max(1, w.troops.length), fd = ld / Math.max(1, def.length);
       // sĩ khí theo chênh lệch phần thiệt hại hai bên trong đợt này (mất nhiều hơn hẳn thì nản nhiều, ngang nhau thì giữ)
@@ -273,10 +286,11 @@
       // đột kích: trụ được ở cổng thì xông vào cướp kho rồi rút
       // (khuân hàng từ kho ra cổng LOOT_DAYS ngày, rồi rút)
       if (w.kind === 'raid' && day - w.since >= RAID_DAYS - 1 && w.morale > 0.5) { w.share = Math.min(1, powerOf(W, w.troops, (i) => W.islands[i].level) / Math.max(1, powerOf(W, left, (i) => W.islands[i].level) * wall(B.level))); w.stage = 'loot'; w.since = day; siegeView(B, w, 'loot', left); note(B, day, 'war', 'Quân ' + A.name + ' xông vào kho.'); return; }
-      if (!left.length || powerOf(W, left, (i) => W.islands[i].level) * wall(B.level) < GATE_BREAK * powerOf(W, w.troops, (i) => W.islands[i].level) * w.morale) {
+      if (w.forceGate || !left.length || powerOf(W, left, (i) => W.islands[i].level) * wall(B.level) < GATE_BREAK * powerOf(W, w.troops, (i) => W.islands[i].level) * w.morale) {
         w.stage = 'inside'; w.since = day; w.siege = 'outer'; G().hit(B, w.gate, 1);
         const sg = w.sg; sg.targets = G().plan(B, rng); sg.at = 0; sg.hit = [];
         say(W, day, 'Cổng ' + B.name + ' vỡ, quân ' + A.name + ' tràn vào thành.', [w.a, w.b]);
+        if (BK.Chronicle) BK.Chronicle.add(W, day, w.b, 'Cổng ' + B.name + ' vỡ trước quân ' + A.name, 3, w.gate);
         note(B, day, 'war', 'Cổng thành vỡ. Quân ' + A.name + ' đã vào thành.');
         civilians(W, day, w, rng);
         return;
@@ -328,6 +342,7 @@
     const sg = w.sg || (w.sg = { war: w.id, from: w.a, gate: w.gate }); B.situ.siege = sg;
     sg.stage = stage; sg.def = def.filter((x) => x.i === w.b).map((x) => x.p.id); sg.foes = w.troops.map((x) => ({ i: x.i, id: x.p.id }));
     sg.target = stage === 'outer' && sg.targets ? sg.targets[sg.at] || null : null;
+    sg.duel = w.duel && !w.duel.done ? { a: w.duel.a, ai: w.a, b: w.duel.b } : null; // đấu tướng (logic/battles.js)
   }
   // dân phản ứng khi quân vào thành (ghi lại cho bảng làng; cử động do logic/brain.js theo S.situ.war)
   function civilians(W, day, w, rng) {
@@ -345,6 +360,7 @@
     for (const r of order) { const k = Math.floor(Math.min(room, sb[r] * take)); if (k <= 0) continue; sb[r] -= k; w.loot[r] = (w.loot[r] || 0) + k; room -= k; }
     const txt = Object.entries(w.loot).map(([r, v]) => v + ' ' + E().NAME[r].toLowerCase()).join(', ') || 'chẳng được gì';
     say(W, day, 'Quân ' + A.name + ' cướp kho ' + B.name + ': ' + txt + '.', [w.a, w.b]);
+    if (BK.Chronicle) BK.Chronicle.add(W, day, w.b, 'Bị ' + A.name + ' cướp kho', 2, 'store');
     note(B, day, 'war', 'Kho bị quân ' + A.name + ' cướp: ' + txt + '.');
     goHome(W, day, w, null, true);
   }
@@ -369,6 +385,8 @@
     say(W, day, text, [w.a, w.b]); note(B, day, 'war', 'Giữ được thành trước quân ' + W.islands[w.a].name + '.');
     W.rel[w.a][b].fear = Math.min(1, W.rel[w.a][b].fear + 0.3);
     W.warStats.lost++;
+    if (BK.Battles && w.stage === 'gate') BK.Battles.onRepelled(W, day, w, W.rng); // tù binh, anh hùng giữ cổng
+    if (BK.Chronicle) BK.Chronicle.add(W, day, w.b, 'Giữ được thành trước ' + w.n0 + ' quân ' + W.islands[w.a].name, w.n0 >= 10 ? 3 : 2, w.gate);
     goHome(W, day, w, null, false);
   }
   // quân quay về: đi đường thật; quân đồng minh về ngay khi hết trận
@@ -384,6 +402,7 @@
     for (const x of w.troops) x.p.away = null;
     for (const r in w.loot) sa[r] = Math.min(E().CAP(A.level, r), sa[r] + w.loot[r]);
     if (w.won) W.warStats.won++;
+    if (BK.Battles) BK.Battles.onHome(W, day, w); // khải hoàn hay đón quân trong im lặng
     note(A, day, 'war', 'Quân về tới nhà, còn ' + w.troops.length + '/' + w.n0 + ' người' + (Object.keys(w.loot).length ? ', mang theo chiến lợi phẩm.' : '.'));
     W.wars.splice(W.wars.indexOf(w), 1);
   }
@@ -427,6 +446,8 @@
     syncEra(W, b, day);
     say(W, day, A.name + ' chiếm nhà chính ' + B.name + '. ' + B.name + (was != null ? ' (vốn thuộc ' + W.islands[was].name + ')' : '') + ' bị sáp nhập vào ' + A.name + '.', [a, b]);
     note(B, day, 'war', 'Nhà chính thất thủ. Đảo bị sáp nhập vào ' + A.name + '.');
+    if (BK.Chronicle) BK.Chronicle.add(W, day, b, B.name + ' bị sáp nhập vào ' + A.name + (why ? ' (' + why + ')' : ''), 5, 'hall');
+    if (B.wonders && B.wonders.length) say(W, day, (B.wonders.length > 1 ? B.wonders.length + ' kỳ quan' : 'Kỳ quan') + ' của ' + B.name + ' nay thuộc về ' + A.name + '.', [a, b]);
     note(A, day, 'war', 'Chiếm được ' + B.name + '.');
     if (w) goHome(W, day, w, null, true);
   }
@@ -514,6 +535,7 @@
       S.annexedBy = null; S.unrest = 0; S.policy = null; W.warStats.freed++;
       W.rel[w.a][w.b].grudge = 1; W.rel[w.b][w.a].fear = Math.min(1, W.rel[w.b][w.a].fear + 0.2);
       say(W, day, S.name + ' giành lại độc lập từ ' + Rr.name + '.', [w.a, w.b]);
+      if (BK.Chronicle) BK.Chronicle.add(W, day, w.a, S.name + ' giành lại độc lập từ ' + Rr.name, 4, 'hall');
       note(S, day, 'war', 'Giành lại độc lập.');
       BK.Council.update(S);
     } else {
@@ -526,7 +548,7 @@
   // mỗi bước cố định (logic/world.js gọi, dt ngày): diễn biến các trận
   function step(W, day, rng, dt) { for (const w of [...W.wars]) warStep(W, day, w, rng, dt); if (BK.Missiles) BK.Missiles.step(W, day); }
   // mỗi ngày: các đảo bị sáp nhập (nộp kho, bất bình, nổi dậy)
-  function dayTick(W, day, rng) { for (let i = 0; i < W.islands.length; i++) if (W.islands[i].annexedBy != null) vassalDay(W, day, i, rng); if (BK.Missiles) BK.Missiles.dayTick(W, day, rng); }
+  function dayTick(W, day, rng) { for (let i = 0; i < W.islands.length; i++) if (W.islands[i].annexedBy != null) vassalDay(W, day, i, rng); if (BK.Missiles) BK.Missiles.dayTick(W, day, rng); if (BK.Battles) BK.Battles.dayTick(W, day, rng); }
   // kết thúc một trận từ bên ngoài (đảo bị san phẳng bằng hạt nhân, logic/missiles.js): quân quay về
   const endWar = (W, day, w) => goHome(W, day, w, null, false);
   // quân giặc đang ở trên đảo i (cho phần vẽ, game/cities.js): người thật mặc màu đảo mình, mỗi người một việc theo chặng trận
@@ -541,10 +563,13 @@
       w.troops.forEach((x, k) => {
         const tgt = def.length ? def[k % def.length] : null;
         let mind;
-        if (w.stage === 'loot') mind = k % 2 ? { state: 'work', verb: 'guard', place: w.gate, cycle: { item: 'food', src: 'store', dst: w.gate, workAt: 'dst' }, reason: 'khuân hàng cướp được ra cổng' } : { state: 'attack', target: tgt, place: w.gate, reason: 'giữ cổng cho đồng đội khuân hàng' };
+        if (w.stage === 'gate' && w.blockade && !w.blockade.done && !(w.blockade.sortie > W.day)) mind = { state: 'work', verb: 'guard', place: w.gate, reason: 'dựng trại vây thành' };
+        else if (w.stage === 'gate' && w.duel && !w.duel.done) mind = x.p.id === w.duel.a ? { state: 'attack', target: w.duel.b, place: w.gate, reason: 'đấu tay đôi với tướng ' + S.name } : { state: 'work', verb: 'watchDuel', place: w.gate, reason: 'xem tướng mình đấu tay đôi' };
+        else if (w.stage === 'loot') mind = k % 2 ? { state: 'work', verb: 'guard', place: w.gate, cycle: { item: 'food', src: 'store', dst: w.gate, workAt: 'dst' }, reason: 'khuân hàng cướp được ra cổng' } : { state: 'attack', target: tgt, place: w.gate, reason: 'giữ cổng cho đồng đội khuân hàng' };
         else if (w.stage === 'gate') mind = { state: 'attack', target: tgt, place: w.gate, reason: 'đánh ' + G().nameOf(w.gate) };
         else if (w.siege === 'outer') mind = { state: 'attack', target: tgt != null && k % 3 === 0 ? tgt : null, place: 'ruin:' + (sg && sg.target || 'store'), reason: 'đốt phá ' + G().nameOf(sg && sg.target || 'store') };
         else mind = { state: 'attack', target: tgt, place: 'hall', reason: 'vây đánh nhà chính' };
+        mind.arm = x.arm || 'melee'; if (w.night && W.day - w.since < 1) mind.torch = true; // người bắn xa hay cận chiến (logic/arms.js); đánh đêm thì cầm đuốc
         out.push({ key: key(x), i: x.i, p: x.p, mind, enter: w.gate, side: 'foe' });
       });
       for (const h of w.helpers) if (h.arrive <= W.day) for (const x of h.troops) if (x.p.alive) out.push({ key: key(x), i: x.i, p: x.p, mind: { state: 'attack', target: null, place: w.gate, reason: 'sang giúp giữ cổng' }, enter: w.gate, side: 'ally' });

@@ -55,6 +55,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .race em { color: var(--amber); font-style: normal; }
 .race .rb-stats { margin: 8px 4px; color: var(--ink); }
 .race .rb-log button { border-left-width: 0; padding: 5px 8px; margin-bottom: 3px; }
+.race .rb-chron { margin: 8px 0; } .race .rb-chron p { margin: 4px 0; font-size: 0.85em; } .race .rb-chron i { display: block; margin-top: 6px; opacity: 0.75; }
+.race .rb-chron button { display: block; width: 100%; text-align: left; border: 0; background: rgba(255, 215, 90, 0.07); color: inherit; font: inherit; border-radius: 8px; padding: 4px 8px; margin: 2px 0; cursor: pointer; }
 .news b { color: var(--ink); font-weight: 600; }
 #fps { position: fixed; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); padding: 5px 10px; border-radius: 10px; font-size: 12px; }
 .err { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; }
@@ -147,6 +149,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 <script src="render/travel3d.js"></script>
 <script src="render/war3d.js"></script>
 <script src="render/missiles3d.js"></script>
+<script src="render/shots3d.js"></script>
+<script src="render/engines3d.js"></script>
+<script src="render/prosper3d.js"></script>
 <!-- Lúa Vàng: phần chung, mỗi thời một tệp (cấp 1 Thời đồ đá … cấp 12 Siêu Việt), rồi công trình ngoài làng (rừng, bờ, biển), mười hai kỳ quan, đường và xe của làng theo thời -->
 <script src="render/build/plains/common.js"></script>
 <script src="render/build/plains/e01.js"></script>

@@ -569,6 +569,7 @@
         else if (w.stage === 'gate') mind = { state: 'attack', target: tgt, place: w.gate, reason: 'đánh ' + G().nameOf(w.gate) };
         else if (w.siege === 'outer') mind = { state: 'attack', target: tgt != null && k % 3 === 0 ? tgt : null, place: 'ruin:' + (sg && sg.target || 'store'), reason: 'đốt phá ' + G().nameOf(sg && sg.target || 'store') };
         else mind = { state: 'attack', target: tgt, place: 'hall', reason: 'vây đánh nhà chính' };
+        mind.arm = x.arm || 'melee'; if (w.night && W.day - w.since < 1) mind.torch = true; // người bắn xa hay cận chiến (logic/arms.js); đánh đêm thì cầm đuốc
         out.push({ key: key(x), i: x.i, p: x.p, mind, enter: w.gate, side: 'foe' });
       });
       for (const h of w.helpers) if (h.arrive <= W.day) for (const x of h.troops) if (x.p.alive) out.push({ key: key(x), i: x.i, p: x.p, mind: { state: 'attack', target: null, place: w.gate, reason: 'sang giúp giữ cổng' }, enter: w.gate, side: 'ally' });

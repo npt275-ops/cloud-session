@@ -140,6 +140,10 @@
   for (const G of L) { G.face = 'neutral'; G.closed = CLOSED.includes(G.key); }
   for (const f in FACE) for (const k of FACE[f]) { const G = L.find((x) => x.key === k); if (G) G.face = f; }
 
+  // bắn xa (logic/arms.js): ngắm bắn súng, súng tia (hai tay đưa thẳng, giật nhẹ mỗi phát); giương cung, nỏ, ná (tay trái đẩy
+  // ra trước, tay phải kéo về rồi buông)
+  add('aim', 'Chiến đấu', 'Ngắm bắn', { gene: 'hiếu chiến' }, (p, ph, u, t, K) => { const r = Math.max(0, S(t * 5 + K.seed)) ** 6; armR(p, 1.5 - r * 0.15, 0.05, 0.15); armL(p, 1.4, -0.35, 0.7); p.cx = -0.03 - r * 0.04; p.hx = 0.04; p.hxL = 0.15; p.hxR = -0.12; p.kxL = p.kxR = 0.15; });
+  add('draw', 'Chiến đấu', 'Giương cung', { gene: 'hiếu chiến' }, (p, ph, u, t, K) => { const c = (t * 0.7 + (K.seed || 0) * 0.1) % 1, k = c < 0.7 ? ease(c / 0.7) : 1 - ease((c - 0.7) / 0.3); armL(p, 1.55, -0.1, 0.05); armR(p, 1.45, 0.3 + k * 0.2, 0.4 + k * 1.6); p.hx = 0.05; p.cx = -0.02; p.hxL = 0.18; p.hxR = -0.15; p.kxL = p.kxR = 0.12; });
   const BY_KEY = {}; for (const G of L) BY_KEY[G.key] = G;
   const GROUPS = [...new Set(L.map((G) => G.g))];
   return { LIST: L, BY_KEY, GROUPS, ease, bump, ramp };

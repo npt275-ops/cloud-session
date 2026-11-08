@@ -157,6 +157,22 @@
     put('cyl', n.wrR, M(0, -0.12, 0, 0.02, 0.38, 0.02), wood, 'tool:hammer'); put('box', n.wrR, M(0, -0.3, 0, 0.16, 0.08, 0.08), blade, 'tool:hammer');
     put('cyl', n.wrR, M(0, 0.35, 0, 0.022, 1.0, 0.022), wood, 'tool:sign'); put('box', n.wrR, M(0, 0.95, 0, 0.5, 0.34, 0.03), '#f4efe2', 'tool:sign'); put('box', n.wrR, M(0, 0.95, 0.02, 0.4, 0.07, 0.01), '#b8322a', 'tool:sign'); // biển biểu tình (cán, tấm biển, dòng chữ)
     put('cyl', n.wrR, M(0, -0.1, 0, 0.022, 1.8, 0.022), wood, 'tool:spear'); put('box', n.wrR, M(0, 0.86, 0, 0.05, 0.16, 0.05), blade, 'tool:spear'); // giáo (đánh trận, logic/siege.js)
+    // vũ khí theo thời (logic/arms.js KIT): trục -y của cổ tay là hướng nòng khi tay đưa thẳng ra trước
+    const iron = '#3a3d42', W2 = '#6b4a2f';
+    put('cyl', n.wrR, M(0, -0.25, 0, 0.008, 0.5, 0.008), '#c9b48a', 'tool:sling'); put('ball', n.wrR, M(0, -0.52, 0, 0.05, 0.05, 0.05), '#8f8a80', 'tool:sling');
+    put('box', n.wrR, M(0, -0.06, 0, 0.03, 0.05, 0.95), W2, 'tool:bow'); put('box', n.wrR, M(0, 0.06, 0, 0.006, 0.006, 0.9), '#e8e2d0', 'tool:bow');
+    put('box', n.wrR, M(0, -0.25, 0, 0.07, 0.55, 0.06), W2, 'tool:crossbow'); put('box', n.wrR, M(0, -0.45, 0, 0.04, 0.04, 0.6), '#5a4030', 'tool:crossbow');
+    put('cyl', n.wrR, M(0, -0.55, 0, 0.026, 1.05, 0.026), iron, 'tool:musket'); put('box', n.wrR, M(0, 0.02, 0.02, 0.07, 0.35, 0.09), W2, 'tool:musket');
+    put('cyl', n.wrR, M(0, -0.45, 0, 0.022, 0.85, 0.022), iron, 'tool:rifle'); put('box', n.wrR, M(0, 0.02, 0.02, 0.06, 0.3, 0.08), '#4b3a2a', 'tool:rifle');
+    put('cyl', n.wrR, M(0, -0.45, 0, 0.022, 0.85, 0.022), iron, 'tool:bayonet'); put('box', n.wrR, M(0, 0.02, 0.02, 0.06, 0.3, 0.08), '#4b3a2a', 'tool:bayonet'); put('box', n.wrR, M(0, -0.95, 0, 0.012, 0.22, 0.03), '#c8cdd2', 'tool:bayonet');
+    put('cyl', n.wrR, M(0, -0.4, 0, 0.045, 0.75, 0.045), iron, 'tool:mg'); put('box', n.wrR, M(0, -0.12, -0.08, 0.12, 0.14, 0.12), '#2c2f33', 'tool:mg');
+    put('box', n.wrR, M(0, -0.3, 0, 0.07, 0.65, 0.1), '#2f3338', 'tool:autorifle'); put('box', n.wrR, M(0, -0.15, -0.09, 0.05, 0.16, 0.06), '#2f3338', 'tool:autorifle');
+    put('box', n.wrR, M(0, -0.22, 0, 0.08, 0.45, 0.11), '#8c949c', 'tool:shock'); put('gSph', n.wrR, M(0, -0.5, 0, 0.06, 0.06, 0.06), '#5fd8ff', 'tool:shock');
+    put('box', n.wrR, M(0, -0.22, 0, 0.08, 0.45, 0.11), '#4f6b45', 'tool:spore'); put('gSph', n.wrR, M(0, -0.5, 0, 0.06, 0.06, 0.06), '#9dff6a', 'tool:spore');
+    put('box', n.wrR, M(0, -0.22, 0, 0.08, 0.45, 0.11), '#e8ecf0', 'tool:ray'); put('gSph', n.wrR, M(0, -0.5, 0, 0.07, 0.07, 0.07), '#ff6af0', 'tool:ray');
+    put('box', n.wrR, M(0, -0.45, 0, 0.03, 0.7, 0.09), '#c8cdd2', 'tool:sword'); put('box', n.wrR, M(0, -0.08, 0, 0.04, 0.04, 0.24), '#8a6a2a', 'tool:sword');
+    put('cyl', n.wrR, M(0, -0.28, 0, 0.03, 0.55, 0.03), '#22252a', 'tool:baton'); put('gSph', n.wrR, M(0, -0.58, 0, 0.045, 0.045, 0.045), '#ffd84a', 'tool:baton');
+    put('cyl', n.wrR, M(0, 0.28, 0, 0.03, 0.6, 0.03), W2, 'tool:torch'); put('gSph', n.wrR, M(0, 0.62, 0, 0.09, 0.13, 0.09), '#ff9a2e', 'tool:torch'); // đuốc (đánh đêm)
     put('cyl', n.wrR, M(0, -0.25, 0, 0.02, 0.75, 0.02), wood, 'tool:axe'); put('box', n.wrR, M(0, -0.58, 0.1, 0.05, 0.16, 0.2), blade, 'tool:axe');
     put('ball', n.chest, M(-0.24, 0.52, -0.06, 0.22, 0.2, 0.2), '#c9a46e', 'tool:sack');
     // hàng mang từ chỗ làm về kho (render/village3d.js, logic/tasks.js cycle): khúc gỗ vác vai, thúng đá hay quặng và thùng

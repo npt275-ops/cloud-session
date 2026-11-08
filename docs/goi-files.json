@@ -70,8 +70,23 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/arms.js",
+  "src": "logic/arms.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/battles.js",
+  "src": "logic/battles.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/brain.js",
   "src": "logic/brain.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/chronicle.js",
+  "src": "logic/chronicle.js",
   "mode": 420
  },
  {
@@ -167,6 +182,11 @@
  {
   "path": "BeKinh/logic/posts.js",
   "src": "logic/posts.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/prosperity.js",
+  "src": "logic/prosperity.js",
   "mode": 420
  },
  {
@@ -430,6 +450,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/engines3d.js",
+  "src": "render/engines3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/gestures3d.js",
   "src": "render/gestures3d.js",
   "mode": 420
@@ -505,6 +530,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/prosper3d.js",
+  "src": "render/prosper3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/rig3d.js",
   "src": "render/rig3d.js",
   "mode": 420
@@ -512,6 +542,11 @@
  {
   "path": "BeKinh/render/scene3d.js",
   "src": "render/scene3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/shots3d.js",
+  "src": "render/shots3d.js",
   "mode": 420
  },
  {

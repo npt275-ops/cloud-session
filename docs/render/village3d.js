@@ -25,6 +25,7 @@
   function create(o) {
     const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People, Work = BK.Work3D;
     const SCALE = Rig.PERSON_SCALE;
+    const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
@@ -153,7 +154,7 @@
       const tgt = mind.target != null ? folks.get(mind.target) : null;
       if (tgt && (mind.state === 'talk' || mind.state === 'attack')) {
         // đứng nghe, đứng xem (drama): toả thành vòng rộng quanh người nói; trò chuyện, cãi, đánh: đứng sát
-        const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? 0.95 - K.lean * 0.2 : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
+        const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? (mind.arm === 'ranged' ? 5.5 + (f.p.id % 4) * 0.6 : 0.95 - K.lean * 0.2) : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
         _v.copy(f.pos).sub(tgt.pos); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
         return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
@@ -285,7 +286,26 @@
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
         // đánh trận: lính (cả quân đảo khác) cầm giáo; dân tự nguyện cầm đồ nghề của mình làm vũ khí
-        if (mind.state === 'attack' && (S.situ.siege || gst)) f.tool = gst || p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard' || /general/.test(p.role || '') ? 'spear' : p.job === 'builder' ? 'hammer' : p.res === 'wood' ? 'axe' : 'hoe';
+        if (mind.state === 'attack' && (S.situ.siege || gst)) {
+          // vũ khí theo thời của đảo người đó (logic/arms.js KIT): lính cầm vũ khí, dân tự nguyện cầm đồ nghề; người bắn xa đứng
+          // lùi lại, ngắm (súng, súng tia) hay giương (ná, cung, nỏ) rồi bắn (render/shots3d.js); đánh đêm thì cầm đuốc
+          const soldier = gst || p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard' || /general/.test(p.role || ''), K = BK.Arms && BK.Arms.kit(gst ? gst.level : level);
+          f.tool = soldier ? (K ? (mind.arm === 'ranged' ? K.ranged : K.melee) : 'spear') : p.job === 'builder' ? 'hammer' : p.res === 'wood' ? 'axe' : 'hoe';
+          if (mind.torch) f.tool = 'torch';
+          if (soldier && K && mind.arm === 'ranged' && !moving && !mind.torch) {
+            const draw = K.ranged === 'sling' || K.ranged === 'bow' || K.ranged === 'crossbow', G = BK.Gestures3D.BY_KEY[draw ? 'draw' : 'aim'];
+            if (G) { tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, 0, gs, f.knobs); f.gk = 'bắn'; }
+            const T = mind.target != null ? folks.get(mind.target) : null;
+            if (T) { _v.copy(T.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); }
+            if (shots && T && (rs > (f.nextShot || 0) || f.nextShot - rs > 5)) { // đồng hồ lùi (tải lại, tua): bắn lại ngay
+              const kind = BK.Shots3D.OF[K.ranged] || ['arrow'], gap = K.ranged === 'mg' || K.ranged === 'autorifle' ? 0.35 : draw ? 1.8 : 1.1;
+              f.nextShot = rs + gap * (0.7 + Math.random() * 0.8);
+              const from = new THREE.Vector3().copy(L.center).add(f.pos); from.y += 1.25 * SCALE; from.x += Math.sin(f.yaw) * 0.5 * SCALE; from.z += Math.cos(f.yaw) * 0.5 * SCALE;
+              const to = new THREE.Vector3().copy(L.center).add(T.pos); to.y += 0.9 * SCALE;
+              shots.fire(K.fire && Math.random() < 0.25 ? 'fire' : kind[0], from, to, rs, { color: kind[1], puff: kind[2] });
+            }
+          }
+        }
         f.moving = moving; f.meetVerb = meetVerb;
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
