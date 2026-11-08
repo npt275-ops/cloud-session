@@ -308,7 +308,7 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 | 7d ✅ | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh (mục 12) | 7.3 |
 | 7e ✅ | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể (mục 13) | 7.4 |
 | 7f ✅ | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân (mục 14) | 7.6 |
-| 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
+| 7g ✅ | Cân chỉnh lại độ hỗn loạn bằng 100 trận (mục 15) | – |
 
 Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khung hình điện thoại, rồi commit, push, cập nhật artifact.
 
@@ -378,7 +378,7 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
 | **Quân giặc là người thật** | Quân giặc, quân đồng minh tới giúp, quân đóng giữ đều là người thật trong làng, mặc màu đảo mình, cầm giáo (`logic/war.js` onIsland, `game/cities.js`). Đảo đang vẽ gần thì không vẽ thêm hình lính nhỏ. Người ngã xuống nằm lại đúng chỗ đã ngã tới hết trận (hai ngày, `S.fallen`). | Trình duyệt: 26–37 quân giặc đánh từng cặp ở cổng chính. |
 | **Công trình có độ bền** | `logic/siege.js` (tệp mới): `S.ruin[khoá]` là độ bền còn lại. Khoá là bãi làm việc (kho, xưởng, chỗ làm năng lượng, ruộng, bãi gỗ, mỏ đá), nhà dân, hay cổng. Cổng vỡ thì hư hẳn. Địch đốt phá lần lượt: kho, xưởng, chỗ làm năng lượng, ba nhà dân, ruộng, tối đa 2 ngày. Lính còn lại và dân nóng nảy đánh trên phố; dân khác dạt sang phía bên kia đảo. | Thử ép sẵn: cổng vỡ → đốt kho, xưởng, chỗ làm năng lượng, 2 nhà → vây nhà chính. |
 | **Hư thì kinh tế mất phần đó** | Kho cháy thì mất hàng ngay (tới một nửa). Bãi hư thì sản lượng thứ đó còn 30–100% theo độ bền. Nhà cháy (độ bền dưới 0,5) thì người nhà ở nhờ nhà gần nhất còn ở được. | `test/siege.test.js` |
-| **Vây nhà chính, đầu hàng** | Đội giữ thành gồm lính còn lại, người trong hội đồng, dân tự nguyện. Mất thành khi đội này ngã hết, hoặc người đứng đầu đầu hàng (xét mỗi ngày): người sợ hãi, nhu nhược hàng sớm để cứu dân; người hiếu chiến, tham vọng đánh tới cùng; bị vây quá 6 ngày thì hết lương phải hàng. Đội giữ thành cũng có thể đánh bật quân giặc. | `test/siege.test.js`: người nhát hàng hơn 30% mỗi ngày, người gan 0%. |
+| **Vây nhà chính, đầu hàng** | Đội giữ thành gồm lính còn lại, người trong hội đồng, dân tự nguyện. Mất thành khi đội này ngã hết, hoặc người đứng đầu đầu hàng (xét mỗi ngày): người sợ hãi, nhu nhược hàng sớm để cứu dân; người hiếu chiến, tham vọng đánh tới cùng; bị vây quá 6 ngày thì hết lương phải hàng. Đội giữ thành cũng có thể đánh bật quân giặc. | `test/siege.test.js`: người nhát hàng hơn 10% mỗi ngày (7g giảm khả năng đầu hàng), người gan 0%. |
 | **Mất thành** | Người đứng đầu cũ bị dẫn ra quỳ ở sân nhà chính (`S.situ.kneel`). Cờ đảo cũ hạ xuống, cờ đảo thắng kéo lên trong một ngày (`render/war3d.js`). Quân đóng giữ là người thật, đi tuần trong làng. | Trình duyệt: vua cũ quỳ, cờ, người ngã. |
 | **Vẽ hư hại** | `render/build/ruins3d.js` (tệp mới): đống đổ nát cháy đen nhiều hay ít theo độ bền đã mất; lửa và khói đen khi còn giặc. Độ bền dưới 0,35 thì nhà sụp (ẩn đi, còn đống đổ) và bãi làm việc bị đè bẹp. Khi sửa thì có giàn giáo. | Ảnh kho cháy. |
 | **Sửa lại sau chiến tranh** | Hết giặc thì thợ xây ra kho lấy gỗ, đá mang tới chỗ hư nặng nhất mà sửa (`S.repairJob`, `logic/tasks.js`). Mỗi thợ sửa 0,06 độ bền mỗi ngày; thiếu vật liệu thì chỉ còn 30% tốc độ. Đảo bị sáp nhập giữ lại 60 gỗ, 60 đá để sửa, không nộp hết. Sửa xong thì công trình dựng lại. | `test/siege.test.js`. Thử ép sẵn: cổng và kho sửa xong sau khoảng 30 ngày. |
@@ -481,4 +481,75 @@ Tệp mới `logic/ecology.js`, chạy mỗi ngày ở cấp cả bể. Môi tr�
 **Lần thử đầu quá nặng tay (đã sửa):** mỏ cạn tới 10% làm các đảo kẹt ở thời 7; 88 người chạy nạn mỗi trận; 11 lần tranh ngôi mỗi trận.
 
 **Chưa làm:** nội chiến chia hai phe, giá theo khan hiếm (giá hiện theo giá trị mỗi đảo tự định).
+
+## 15. Đã làm ở 7g: cân chỉnh bằng 100 trận
+
+**Cách đo:** mỗi trận 9 năm (3240 ngày), cả bể tự chạy, seed 1–100; chạy 4 luồng song song. Trong lúc chỉnh, mỗi vòng đo nhanh 40 trận (seed 1–40). Mốc đối chiếu là bản logic 7c (trước đánh thành, tên lửa, hệ sinh thái), chạy trên cùng 40 seed.
+
+**Mục tiêu** ("không quá yên, không sụp hết", theo số đã chốt ở bước 6):
+
+| Mục | Mục tiêu |
+|---|---|
+| Cuối trận | Đủ 6 đảo độc lập 30–50% số trận; còn ≤2 đảo ≤5% |
+| Chiến tranh | 7–10 trận đánh, 1,2–2,0 sáp nhập mỗi trận; có nổi dậy |
+| Đói | Chết đói trung bình ≤5 mỗi trận, trận đói nhất ≤40 |
+| Phát triển | Thời trung bình 8,8–9,6; có đảo kẹt dưới thời 6 ≤10% số trận |
+| Hạt nhân | Được dùng ở 5–15% số trận |
+| Hệ sinh thái | Mỗi vòng đều xảy ra, không vòng nào lấn át |
+
+**Tìm nguyên nhân bằng thí nghiệm tắt từng phần** (40 trận mỗi lần):
+- **Tắt tên lửa bắn trước:** sáp nhập giảm từ 4,8 xuống 3,3, ngoài ra ít đổi.
+- **Tắt phần môi trường làm giảm sản lượng:** gần như mọi số về đúng mục tiêu (thời 9,17; đảo kẹt 3%; chết đói 2,6; trận đánh 5,7). Đây là thủ phạm chính, qua vòng xoáy đất bạc màu → thiếu ăn → đói → đi cướp, đi đánh → nghèo thêm.
+
+**Những gì đã chỉnh:**
+
+| Chỗ | Trước | Sau | Vì sao |
+|---|---|---|---|
+| Sản lượng theo môi trường (`logic/ecology.js` output) | gỗ 50–100%, đá và kim loại 60–100%, lương thực 65–100%, khói bụi trừ tới 40% | gỗ 70–100%, đá và kim loại 80–100%, lương thực 80–100%, khói bụi trừ tới 15% | Vòng đói và đánh nhau lấn át cả bể |
+| Giữ đất cho đời sau | làm ra 90% mọi thứ | làm ra 90% gỗ, đá, kim loại; không cắt lương thực | Cắt lương thực làm đảo đói |
+| Luân canh (`SOIL_SAFE`) | không có | ruộng làm tới 30% dân thì không bạc màu | Đảo ít lương thực (sa mạc, núi) kẹt mãi ở thời thấp |
+| Đảo cai quản giữ đất (`RULER_AID`) | không gửi quân | gửi 40% lính ở nhà sang giữ đảo nó cai quản | Một đảo bị sáp nhập bị chuyền tay tới 26 lần trong 9 năm |
+| Ước sức đảo bị sáp nhập (`defense`) | chỉ đếm lính của chính đảo đó | cộng quân đóng giữ và quân đảo cai quản sẽ gửi | Bên ngoài thấy và biết những quân đó |
+| Lỗi trong luật mới | tính cả chính trận vừa mở là "đảo cai quản đang có chiến tranh" | bỏ qua chính trận này | Luật mới không chạy lần nào |
+| Đầu hàng | xác suất đầy đủ, bị vây 6 ngày thì hết lương | còn 30% xác suất, 8 ngày mới hết lương | Hơn một nửa số lần sáp nhập là do đầu hàng |
+| Dân tự nguyện (`VOL_POWER`) | 0,3 sức lính | 0,4 sức lính | Thành đổ quá dễ |
+| `WAR_RATE` | 0,8 | thử 0,5 → 0,65 → giữ 0,8 | Sau khi sửa phần môi trường, sáp nhập và ước sức, 0,8 cho số trận đánh vừa |
+| Hạt nhân | 400 kim loại, 700 năng lượng; làm khi bị đe doạ từ 0,4 | 300 kim loại, 500 năng lượng; làm khi bị đe doạ từ 0,3; tính cách hiếu chiến từ 0,5, tham vọng từ 0,45 | Chưa được dùng lần nào |
+| Bắn hạt nhân | yểm trợ khi sĩ khí dưới 0,8; phủ đầu khi thù từ 0,95, sợ từ 0,4 | sĩ khí dưới 0,9; thù từ 0,9, sợ từ 0,3 | Như trên |
+| Đảo chính | bất bình từ 0,55 | từ 0,45 | Gần như không còn xảy ra sau khi bớt đói |
+| Cấm vận | tin dưới 0,1, thù trên 0,5 | tin dưới 0,15, thù trên 0,4 | Chưa xảy ra lần nào |
+
+**Kết quả 100 trận (seed 1–100):**
+
+| Mục | Mốc chuẩn đầu 7g | Sau 7g | Mục tiêu |
+|---|---|---|---|
+| Đảo độc lập cuối trận (6/5/4/3/≤2) | 16/46/24/8/6 | 34/46/16/2/2 | ✓ |
+| Thời trung bình cả bể | 8,18 | 8,97 | ✓ |
+| Có đảo kẹt dưới thời 6 | 23% | 4% | ✓ |
+| Trời tím (cả sáu đảo ≥ thời 10) | 1% | 2% | (bản 7c: 5% trên 40 trận) |
+| Trận đánh | 11,9 | 6,6 | hơi thấp (bản 7c: 7,5) |
+| Sáp nhập | 5,85 | 1,59 | ✓ |
+| Đầu hàng | 2,92 | 1,07 | |
+| Nổi dậy / độc lập lại | 0,98 / 0,48 | 0,51 / 0,25 | ✓ |
+| Chết trận | 106 | 67 | |
+| Chết đói (trận đói nhất) | 9,1 (28) | 2,8 (17) | ✓ |
+| Chết vì tên lửa, hạt nhân | 14,7 | 20,7 | |
+| Tên lửa làm / bắn | 31 / 12,5 | 39 / 9,7 | |
+| Hạt nhân làm / dùng / số trận có dùng | 0,06 / 0 / 0% | 0,63 / 0,08 / 6% | ✓ |
+| Đảo bị san phẳng | 0 | 0 | rất hiếm, chưa thấy trong 100 trận |
+| Người chạy nạn | 39,5 | 15,8 | |
+| Đám cưới khác đảo | 1,1 | 1,5 | |
+| Dịch lây sang đảo khác | 1,1 | 0,9 | |
+| Đóng cầu vì dịch | 1,3 | 1,9 | |
+| Đảo chính | 0,73 | 0,40 | |
+| Tranh ngôi | 3,3 | 3,0 | |
+| Cấm vận | 0,01 | 0,02 | rất hiếm |
+| Môi trường cuối trận tb (thấp nhất) | rừng 87% (12%), mỏ 83% (41%), đất 74% | rừng 82% (10%), mỏ 82% (41%), đất 100% | |
+
+**Ghi lại:**
+- Ruộng giờ gần như không bạc màu: chỉ đảo làm ruộng quá 30% dân mới bị. Rừng và mỏ vẫn cạn thấy rõ ở đảo khai thác nhiều.
+- So với bản 7c, các đảo phát triển chậm hơn khoảng 0,4 thời (9,40 so với 8,97). Đó là cái giá của chiến tranh, tên lửa, môi trường, đúng như thiết kế.
+- Trận đánh hơi dưới mục tiêu, nhưng ngang bản 7c; không nâng thêm vì sáp nhập đã ở mức trên của mục tiêu.
+- Bài kiểm thử "đầu hàng theo tính cách": ngưỡng của người nhát đổi từ 30% xuống 10% mỗi ngày, theo luật mới.
+- Kịch bản đo nằm ngoài kho mã (thư mục làm việc tạm), gồm chạy trận theo seed, tổng hợp, và cờ thí nghiệm tắt từng phần.
 

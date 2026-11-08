@@ -28,7 +28,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const MISSILE_LV = 7, NUKE_LV = 8;
-  const MISSILE = { metal: 60, energy: 80 }, NUKE = { metal: 400, energy: 700 };
+  const MISSILE = { metal: 60, energy: 80 }, NUKE = { metal: 300, energy: 500 };
   const RICH = 3;               // chỉ làm khi kho có ít nhất chừng này lần giá một quả
   const MAX_MISSILES = 6, MAX_NUKES = 4;
   const NUKE_DAYS = 40;
@@ -51,7 +51,7 @@
   const traitsOf = (S) => { const M = BK.Strategy.mind(S); return M ? M.t : null; };
   // mức hiếu chiến về vũ khí và có dám dùng hạt nhân không
   const militancy = (t) => clamp(0.15 + 0.4 * t.aggression + 0.3 * t.paranoia + 0.2 * t.ambition - 0.3 * t.meekness - 0.2 * t.piety, 0, 1);
-  const nukeWill = (t) => t.aggression > 0.55 && t.ambition > 0.5 && t.piety < 0.55 && t.meekness < 0.45;
+  const nukeWill = (t) => t.aggression > 0.5 && t.ambition > 0.45 && t.piety < 0.55 && t.meekness < 0.45;
   // mối đe doạ đảo i cảm thấy: sợ, thù đảo khác mạnh nhất; đang có chiến tranh thì thêm
   function threat(W, i) {
     let m = 0; for (let j = 0; j < W.islands.length; j++) if (j !== i) m = Math.max(m, 0.6 * W.rel[i][j].fear + 0.6 * W.rel[i][j].grudge);
@@ -67,7 +67,7 @@
     const A = arms(S), st = E().state(S), want = militancy(t), th = threat(W, i);
     // hạt nhân: quả đang chế tạo xong thì vào kho; người dám dùng, bị đe doạ thật, kho dư hẳn thì khởi công quả mới
     if (A.nukeDone != null && day >= A.nukeDone) { A.nukeDone = null; A.nukes++; W.armStats.nukesBuilt++; note(S, day, 'war', 'Chế tạo xong một quả hạt nhân (có ' + A.nukes + ').'); say(W, day, S.name + ' có thêm một quả hạt nhân.', [i]); }
-    if (S.level >= NUKE_LV && A.nukeDone == null && A.nukes < MAX_NUKES && nukeWill(t) && th > 0.4 && canPay(st, NUKE, 1) && rng.chance(0.05 + 0.1 * th)) {
+    if (S.level >= NUKE_LV && A.nukeDone == null && A.nukes < MAX_NUKES && nukeWill(t) && th > 0.3 && canPay(st, NUKE, 1) && rng.chance(0.08 + 0.12 * th)) {
       pay(st, NUKE); A.nukeDone = day + NUKE_DAYS; note(S, day, 'war', 'Người đứng đầu cho chế tạo hạt nhân.');
     }
     // số giữ trong kho theo độ giàu: kho kim loại, năng lượng đầy thì giữ đủ, vơi thì ít (đảo nghèo ít tên lửa)
@@ -138,9 +138,9 @@
       const war = W.wars.find((w) => w.kind !== 'revolt' && ((w.a === a && w.b === b) || (w.a === b && Wr().rulerOf(W, w.b) === a)));
       const losing = war && (war.a === a ? war.morale < 0.6 || war.troops.length < war.n0 * 0.5 : true); // đang bị đánh vào nhà: coi như thua
       const revenge = B.arms && B.arms.lastNukeAt === a && day - B.arms.lastNuke < 30;
-      const assault = war && war.a === a && war.kind === 'conquer' && (war.stage === 'gate' || war.stage === 'inside') && (g > 0.7 || war.morale < 0.8); // yểm trợ quân mình đang đánh vào đảo mình thù sâu, hay đang núng thế
+      const assault = war && war.a === a && war.kind === 'conquer' && (war.stage === 'gate' || war.stage === 'inside') && (g > 0.7 || war.morale < 0.9); // yểm trợ quân mình đang đánh vào đảo mình thù sâu, hay đang núng thế
       // thù rất sâu và sợ đảo kia (không cần đang đánh nhau): bắn phủ đầu, ít khi
-      const deep = !war && g >= 0.95 && W.rel[a][b].fear >= 0.4 && rng.chance(0.15);
+      const deep = !war && g >= 0.9 && W.rel[a][b].fear >= 0.3 && rng.chance(0.15);
       const sc = revenge ? 2 : war && (losing || g > 0.9 || assault) ? 1 + g : deep ? 0.5 : 0;
       if (sc > bs) { bs = sc; best = b; }
     }

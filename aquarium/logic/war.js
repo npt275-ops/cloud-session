@@ -54,13 +54,14 @@
   const LOOT_PER = 30;          // mỗi người lính đột kích mang về được chừng này đơn vị
   const GRUDGE_DEATH = 0.06, GRUDGE_ANNEX = 0.9;
   const LEVY_POWER = 0.6, LEVY_AGE = 45; // dân binh: sức so với lính, quá tuổi này không bị gọi
-  const VOL_POWER = 0.3;        // dân tự nguyện giữ thành (cầm đồ nghề làm vũ khí): sức so với lính
+  const VOL_POWER = 0.4;        // dân tự nguyện giữ thành (cầm đồ nghề làm vũ khí): sức so với lính
   const HUNGRY = 0.7;           // sức đánh của đảo đang đói
   const RAID_DAYS = 2;
   const GARRISON_SHARE = 0.4, GARRISON_DAYS = 360, CALM_DAYS = 180, CALM_UNREST = 0.4;
   const REVOLT_REST = 180;      // nổi dậy thất bại: chừng này ngày sau dân mới gượng dậy được
   const REVOLT_ODDS = 1.0;      // phe nổi dậy ước sức mình dưới phần này so với phe giữ thì chờ thời
   const GARRISON_MAX = 0.15;    // quân đóng giữ tối đa chừng này phần người lớn của đảo bị sáp nhập (ít nhất 4): nhà cũng cần lính
+  const RULER_AID = 0.4;        // đảo cai quản gửi chừng này phần lính ở nhà sang giữ đảo nó cai quản khi bị đánh
   const MUSTER = 0.3;           // gọi quân: tập hợp ở cổng chừng này ngày, người nhà ra tiễn, rồi mới lên đường
   const OUTER_DAYS = 2;         // vào thành: đánh các công trình quanh thành tối đa chừng này ngày rồi vây nhà chính
   const LOOT_DAYS = 0.4;        // đột kích: chừng này ngày khuân hàng từ kho ra cổng rồi rút
@@ -112,7 +113,16 @@
   const ready = (S) => (E().state(S).hunger ? HUNGRY : 1) * (1 - 0.3 * (BK.Climate ? BK.Climate.stress(S, S.day) : 0));
   // ước lượng sức thủ cổng của đảo b trước quân từ đảo a (cho người đứng đầu đảo a xét trước khi đánh)
   // (bên ngoài chỉ thấy lính giữ cổng, không biết trước bao nhiêu dân sẽ cầm vũ khí ra giữ)
-  function defense(W, b, a) { const S = W.islands[b]; return G().gateGuards(S, gateFor(W, b, a)).reduce((s, p) => s + fighter(p), 0) * tech(S.level) * wall(S.level) * ready(S); }
+  // đảo b đang bị cai quản: bên ngoài thấy quân đóng giữ ở đó, và biết đảo cai quản sẽ gửi quân sang giữ (RULER_AID; 7g)
+  function defense(W, b, a) {
+    const S = W.islands[b], r = rulerOf(W, b);
+    let n = G().gateGuards(S, gateFor(W, b, a)).reduce((s, p) => s + fighter(p), 0) * tech(S.level);
+    if (r !== b) {
+      n += (S.garrison ? S.garrison.troops.filter((x) => x.p.alive) : []).reduce((s, x) => s + fighter(x.p), 0) * tech(W.islands[r].level);
+      n += RULER_AID * living(W.islands[r]).filter((p) => !p.away && p.job === 'soldier').reduce((s, p) => s + fighter(p), 0) * tech(W.islands[r].level);
+    }
+    return n * wall(S.level) * ready(S);
+  }
   function offense(W, a, day) { return powerOf(W, musterable(W, a, day), (i) => W.islands[i].level) * ready(W.islands[a]); }
   // cổng phía nào của đảo b hướng về đảo a (0: phía đảo b−1, 1: phía đảo b+1; render/map/map3d.js L.landing)
   const sideOf = (b, a) => { const d = (a - b + 6) % 6; return d === 0 ? 0 : d <= 3 ? 1 : 0; };
@@ -165,6 +175,16 @@
   // đồng minh của bên bị đánh (và của đảo cai quản nó) xét gửi quân giúp
   function callAllies(W, day, w, rng) {
     const b = rulerOf(W, w.b);
+    // đảo cai quản giữ đất của mình: đảo bị đánh là đảo nó đang cai quản thì nó gửi quân sang giữ (7g: không có luật này thì
+    // một đảo bị sáp nhập thành miếng mồi bị chuyền tay hàng chục lần)
+    if (b !== w.b && b !== w.a && D().alive(W, b) && !W.wars.some((x) => x !== w && (x.a === b || x.b === b))) { // (không tính chính trận này)
+      const L = living(W.islands[b]).filter((p) => !p.away && p.job === 'soldier'), k = Math.floor(L.length * RULER_AID);
+      if (k >= 1) {
+        const sent = L.slice(0, k).map((p) => { p.away = w.id; return { i: b, p }; });
+        w.helpers.push({ c: b, troops: sent, arrive: day + D().travelDays(W, b, w.b) });
+        say(W, day, W.islands[b].name + ' gửi ' + k + ' quân sang giữ ' + W.islands[w.b].name + '.', [b, w.b]);
+      }
+    }
     for (const T of W.treaties) {
       if (T.kind !== 'alliance' || T.until <= day || (T.a !== b && T.b !== b)) continue;
       const c = T.a === b ? T.b : T.a; if (c === w.a || !D().alive(W, c) || atWar(W, c)) continue;

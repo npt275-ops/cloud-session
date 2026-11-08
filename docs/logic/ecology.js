@@ -28,12 +28,13 @@
   // môi trường: hao theo số người khai thác mỗi ngày, hồi theo phần còn thiếu
   // (theo phần dân làm việc đó: share = số người khai thác / số dân; hồi theo phần đã mất, nên có điểm cân bằng)
   const FOREST_USE = 0.06, FOREST_GROW = 0.004, ORE_USE = 0.008, ORE_GROW = 0.003, SOIL_USE = 0.008, SOIL_REST = 0.004;
+  const SOIL_SAFE = 0.3;
   const SMOG_LV = 5, SMOG_CLEAN_LV = 9, SMOG_ADD = 0.0001, SMOG_DECAY = 0.004;
   const CONSERVE_USE = 0.6, CONSERVE_OUT = 0.9;
   const FLEE = 0.03, HUNGER_FLEE = 8, MAX_HOUSE = 6;
   const MARRY = 0.02;
   const SPREAD = 0.1, IMMUNE = 60, CLOSE_DAYS = 30;
-  const COUP_AT = 0.55, COUP = 0.03, COUP_SCENE = 0.6;
+  const COUP_AT = 0.45, COUP = 0.03, COUP_SCENE = 0.6;
   const EMBARGO_DAYS = 120, EMBARGO_VOTES = 3;
   const P = () => BK.People, E = () => BK.Economy, D = () => BK.Diplomacy, Wr = () => BK.War;
   const living = (S) => BK.Island.living(S);
@@ -55,17 +56,20 @@
     const k = S.conserve ? CONSERVE_USE : 1, pop = Math.max(1, living(S).length);
     V.forest = clamp(V.forest - FOREST_USE * k * n.wood / pop + FOREST_GROW * (1 - V.forest) * (0.3 + V.forest), 0.05, 1); // rừng thưa thì mọc lại chậm
     V.ore = clamp(V.ore - ORE_USE * k * n.mine / pop + ORE_GROW * (1 - V.ore), 0.25, 1); // vỉa nghèo vẫn đào được ít
-    V.soil = clamp(V.soil - SOIL_USE * k * n.farm / pop + SOIL_REST * (1 - V.soil), 0.2, 1);
+    // luân canh: ruộng làm tới SOIL_SAFE phần dân không bạc màu; làm quá sức mới kiệt đất (7g: đảo ít lương thực như sa mạc,
+    // núi cần nhiều người làm ruộng, không thì bạc màu → thiếu ăn → thêm người ra ruộng, kẹt mãi ở thời thấp)
+    V.soil = clamp(V.soil - SOIL_USE * k * Math.max(0, n.farm / pop - SOIL_SAFE) + SOIL_REST * (1 - V.soil), 0.2, 1);
     if (S.level >= SMOG_LV) V.smog += SMOG_ADD * (S.level - SMOG_LV + 1) * (S.level >= SMOG_CLEAN_LV ? 0.4 : 1);
     V.smog = clamp(V.smog * (1 - SMOG_DECAY), 0, 1);
   }
   // phần sản lượng còn lại theo môi trường (logic/economy.js)
   function output(S, r) {
     const V = S.env; if (!V) return 1;
-    const c = S.conserve && r !== 'energy' && r !== 'luxury' ? CONSERVE_OUT : 1;
-    if (r === 'wood') return c * (0.5 + 0.5 * V.forest);
-    if (r === 'stone' || r === 'metal') return c * (0.6 + 0.4 * V.ore);
-    if (r === 'food') return c * (0.65 + 0.35 * V.soil) * (1 - 0.4 * V.smog);
+    const c = S.conserve && (r === 'wood' || r === 'stone' || r === 'metal') ? CONSERVE_OUT : 1; // giữ rừng, giữ mỏ; không cắt lương thực
+    // (7g, đo 100 trận: hụt mạnh hơn thế này thì vòng đói → cướp → đánh nhau → nghèo thêm lấn át cả bể)
+    if (r === 'wood') return c * (0.7 + 0.3 * V.forest);
+    if (r === 'stone' || r === 'metal') return c * (0.8 + 0.2 * V.ore);
+    if (r === 'food') return c * (0.8 + 0.2 * V.soil) * (1 - 0.15 * V.smog);
     return c;
   }
 
@@ -237,7 +241,7 @@
   function embargoDay(W, day) {
     for (let a = 0; a < W.islands.length; a++) {
       if (W.embargo[a] > day || W.islands[a].annexedBy != null || !D().alive(W, a)) continue;
-      const votes = W.islands.map((S, j) => j).filter((j) => j !== a && W.islands[j].annexedBy == null && D().alive(W, j) && W.rel[j][a].trust < 0.1 && W.rel[j][a].grudge > 0.5);
+      const votes = W.islands.map((S, j) => j).filter((j) => j !== a && W.islands[j].annexedBy == null && D().alive(W, j) && W.rel[j][a].trust < 0.15 && W.rel[j][a].grudge > 0.4);
       if (votes.length < EMBARGO_VOTES) continue;
       W.embargo[a] = day + EMBARGO_DAYS; W.ecoStats.embargoes++;
       say(W, day, votes.map((j) => W.islands[j].name).join(', ') + ' cùng cấm vận ' + W.islands[a].name + ': không ai buôn bán với đảo này (vì mất tin và thù hằn).', [a, ...votes]);

@@ -92,6 +92,7 @@ test('đầu hàng theo tính cách: người sợ hãi, nhu nhược hàng sớ
   const W = BK.World.create({ seed: 2, war: false }), S = W.islands[0], K = S.people.get(S.seats.king), rng = W.rng;
   const odds = (tr) => { K.traits = Object.assign({}, BK.People.traits(K), tr); let n = 0; for (let k = 0; k < 2000; k++) if (Siege.surrender(S, 0.5, 1, rng)) n++; return n / 2000; };
   const timid = odds({ fear: 0.9, meekness: 0.9, aggression: 0.1, ambition: 0.1 }), bold = odds({ fear: 0.1, meekness: 0.1, aggression: 0.9, ambition: 0.9 });
-  assert.ok(timid > 0.3 && bold === 0, 'nhát ' + timid + ', gan ' + bold);
+  // (7g: khả năng đầu hàng giảm còn 30% so với trước: người nhát hàng khoảng 18% mỗi ngày khi đã mất nửa đội giữ thành)
+  assert.ok(timid > 0.1 && bold === 0, 'nhát ' + timid + ', gan ' + bold);
   assert.strictEqual(Siege.surrender(S, 0, Siege.HALL_DAYS, rng), 'hết lương', 'vây lâu quá thì hết lương');
 });
