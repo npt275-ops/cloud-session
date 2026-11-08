@@ -206,7 +206,9 @@
       const old = S.people.get(S.lastKing), now = king != null ? S.people.get(king) : null;
       if (old && !old.alive && now && S.annexedBy == null) {
         const rival = BK.Council.members(S).filter((q) => q && q.alive && q.id !== now.id && P().traits(q).ambition > 0.75).sort((x, y) => P().traits(y).ambition - P().traits(x).ambition)[0];
-        if (rival && rng.chance(0.5) && BK.Brain.startQuarrel(S, now.id, rival.id, rng)) { W.ecoStats.disputes++; note(S, day, 'seat', P().fullName(rival) + ' không phục, tranh ngôi với ' + P().fullName(now) + '.', [rival.id, now.id]); say(W, day, 'Tranh ngôi ở ' + S.name + ' sau khi người đứng đầu mất.', [i]); }
+        if (rival && rng.chance(0.5) && BK.Brain.startQuarrel(S, now.id, rival.id, rng)) { W.ecoStats.disputes++; note(S, day, 'seat',
+            P().fullName(rival) + ' không phục, tranh ngôi với ' + P().fullName(now) + '.', [rival.id, now.id]); say(W, day,
+            'Tranh ngôi ở ' + S.name + ' sau khi người đứng đầu mất.', [i]); }
       }
     }
     S.lastKing = S.seats.king;
@@ -265,7 +267,9 @@
     if (S.sick && S.sick.includes(p.id)) return d('work', Object.assign({ verb: 'sick', place: 'home', reason: 'ốm vì dịch, nằm nhà' }, short));
     const fire = BK.Climate.active(S, day).find((e) => e.key === 'wildfire');
     if (fire && !p.role && !p.away && (p.job === 'worker' || p.job === 'walker' || p.job === 'builder') && P().ageOf(p, day) >= 16 && P().ageOf(p, day) < 60 && !(BK.Posts && BK.Posts.of(p))) {
-      const line = S.bucketLine && S.bucketLine.day === Math.floor(day) ? S.bucketLine : (S.bucketLine = { day: Math.floor(day), ids: living(S).filter((q) => !q.role && !q.away && (q.job === 'worker' || q.job === 'walker' || q.job === 'builder') && P().ageOf(q, day) >= 16 && P().ageOf(q, day) < 60).slice(0, 14).map((q) => q.id) });
+      const line = S.bucketLine && S.bucketLine.day === Math.floor(day) ? S.bucketLine : (S.bucketLine = { day: Math.floor(day),
+          ids: living(S).filter((q) => !q.role && !q.away && (q.job === 'worker' || q.job === 'walker' || q.job === 'builder') && P().ageOf(q,
+          day) >= 16 && P().ageOf(q, day) < 60).slice(0, 14).map((q) => q.id) });
       const k = line.ids.indexOf(p.id);
       if (k >= 0) return d('work', Object.assign({ verb: 'bucket', place: 'bucket', rank: k, of: line.ids.length, reason: 'chuyền nước chữa cháy rừng' }, short));
     }

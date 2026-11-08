@@ -38,7 +38,8 @@
     const hullM = mat('#3b2c22'), mastM = mat('#4a3422'), flagM = col.map((c) => mat(c, { side: THREE.DoubleSide, emissive: c, emissiveIntensity: 0.15 }));
     const boats = [], flags = [];
     function boat(k) {
-      if (!boats[k]) { const g = new THREE.Group(); g.add(new THREE.Mesh(hullG, hullM)); const m = new THREE.Mesh(mastG, mastM); m.position.set(0.4, 1.6, 0); g.add(m); const f = new THREE.Mesh(flagG, flagM[0]); f.position.set(0.45, 2.8, 0); g.add(f); g.userData.flag = f; scene.add(g); boats[k] = g; }
+      if (!boats[k]) { const g = new THREE.Group(); g.add(new THREE.Mesh(hullG, hullM)); const m = new THREE.Mesh(mastG, mastM); m.position.set(0.4, 1.6, 0);
+          g.add(m); const f = new THREE.Mesh(flagG, flagM[0]); f.position.set(0.45, 2.8, 0); g.add(f); g.userData.flag = f; scene.add(g); boats[k] = g; }
       boats[k].visible = true; return boats[k];
     }
     // cờ của đảo cai quản trên đảo bị sáp nhập: cột cao, lá cờ lớn
@@ -70,7 +71,9 @@
       const B = bridges3d.bridgeOf(s, d);
       if (B && B.era >= 0) {
         const fwd = B.a === s; side.copy(B.pb).sub(B.pa).normalize(); const perp = new THREE.Vector3(-side.z, 0, side.x), face = side.clone().multiplyScalar(fwd ? 1 : -1);
-        for (let k = 0; k < cnt; k++) { const uu = Math.max(0, Math.min(1, (fwd ? u : 1 - u) - (fwd ? 1 : -1) * Math.floor(k / 2) * 0.03)); bridges3d.bridgePoint(B, uu, tmp); tmp.addScaledVector(perp, (k % 2 ? 0.45 : -0.45) - 0.55 * (fwd ? 1 : -1)); tmp.y += Math.abs(Math.sin(t * 0.012 + k)) * 0.06; soldier(tmp, yawOf(face), c); }
+        for (let k = 0; k < cnt; k++) { const uu = Math.max(0, Math.min(1, (fwd ? u : 1 - u) - (fwd ? 1 : -1) * Math.floor(k / 2) * 0.03));
+            bridges3d.bridgePoint(B, uu, tmp); tmp.addScaledVector(perp, (k % 2 ? 0.45 : -0.45) - 0.55 * (fwd ? 1 : -1));
+            tmp.y += Math.abs(Math.sin(t * 0.012 + k)) * 0.06; soldier(tmp, yawOf(face), c); }
         return;
       }
       shore(s, d, from); shore(d, s, to); dir.copy(to).sub(from).setY(0).normalize(); side.set(dir.z, 0, -dir.x);
@@ -93,7 +96,9 @@
       }
       const nx = navalNext.get(w.id) || 0; if (!shots || (now < nx && nx - now < 5)) return;
       navalNext.set(w.id, now + 0.35 + Math.random() * 0.4); if (navalNext.size > 50) navalNext.clear();
-      const fire = (lv, a, b) => { const k = BK.Shots3D.OF[BK.Arms ? BK.Arms.kit(lv).ranged : 'bow'] || ['arrow']; const f = a.clone(), e = b.clone(); f.y += 1; e.y += 0.6; e.x += (Math.random() - 0.5) * 1.5; e.z += (Math.random() - 0.5) * 1.5; shots.fire(k[0], f, e, now, { color: k[1], puff: k[2] }); };
+      const fire = (lv, a, b) => { const k = BK.Shots3D.OF[BK.Arms ? BK.Arms.kit(lv).ranged : 'bow'] || ['arrow']; const f = a.clone(), e = b.clone();
+          f.y += 1; e.y += 0.6; e.x += (Math.random() - 0.5) * 1.5; e.z += (Math.random() - 0.5) * 1.5; shots.fire(k[0], f, e, now, { color: k[1],
+          puff: k[2] }); };
       const d = at[Math.floor(Math.random() * at.length)];
       fire(W.islands[w.a].level, lead, d); fire(W.islands[N.r].level, d, lead);
     }

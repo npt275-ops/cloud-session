@@ -103,8 +103,12 @@
     else if (kind === 'protest') { if (!BK.Dramas.start(S, 'riot', rng, { stage: 1 })) S.log.push({ day: Math.floor(day), kind: 'drama', ids: [], text: 'Không đủ người nóng tính hưởng ứng, bạo loạn không thành.' }); } // bạo loạn kéo thẳng tới nhà chính
     else if (BK.Dramas.BY_KEY[kind]) BK.Dramas.start(S, kind, rng); // thử một drama (logic/dramas.js)
     else if (kind === 'festival') { S.situ.festival = day + 4; S.log.push({ day: Math.floor(day), kind: 'festival', ids: [], text: 'Làng mở hội.' }); }
-    else if (kind === 'quarrel') { const adults = [...S.people.values()].filter((p) => p.alive && P.ageOf(p, day) >= R.ADULT_AGE); if (adults.length > 1) { const a = rng.pick(adults); let b = rng.pick(adults); while (b === a) b = rng.pick(adults); S.situ.quarrel = null; B.startQuarrel(S, a.id, b.id, rng); } }
-    else if (kind === 'calm') { for (const A of [...BK.Dramas.active(S)]) BK.Dramas.end(S, A); for (const e of BK.Climate.active(S, day)) e.until = day; S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [], text: 'Mọi chuyện lắng xuống.' }); }
+    else if (kind === 'quarrel') { const adults = [...S.people.values()].filter((p) => p.alive && P.ageOf(p, day) >= R.ADULT_AGE);
+        if (adults.length > 1) { const a = rng.pick(adults); let b = rng.pick(adults); while (b === a) b = rng.pick(adults); S.situ.quarrel = null;
+        B.startQuarrel(S, a.id, b.id, rng); } }
+    else if (kind === 'calm') { for (const A of [...BK.Dramas.active(S)]) BK.Dramas.end(S, A); for (const e of BK.Climate.active(S, day)) e.until = day;
+        S.situ = { drought: 0, war: 0, festival: 0, mourning: 0, quarrel: null, protest: 0 }; S.log.push({ day: Math.floor(day), kind: 'calm', ids: [],
+        text: 'Mọi chuyện lắng xuống.' }); }
     else if (kind === 'nextGen') { const d = Math.max(0, S.nextGenDay - S.day); step(S, d + 0.01); return; }
     S.situChanged = true; B.think(S, rng);
   }

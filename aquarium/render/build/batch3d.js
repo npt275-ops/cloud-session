@@ -41,7 +41,9 @@
       for (const kind of KINDS) {
         if (meshes[kind]) { parent.remove(meshes[kind]); meshes[kind].geometry.dispose(); meshes[kind] = null; }
         const geo = mergeOf(lists[kind]); if (!geo) continue;
-        const M = mats[kind === 'flat' ? 'main' : kind]; if (!M) continue; const m = kind === 'neon' ? new THREE.LineSegments(geo, M) : new THREE.Mesh(geo, M); if (kind === 'main') { m.castShadow = shadow !== false; m.receiveShadow = true; } else if (kind === 'flat') m.receiveShadow = true; else m.renderOrder = 2;
+        const M = mats[kind === 'flat' ? 'main' : kind]; if (!M) continue; const m = kind === 'neon' ? new THREE.LineSegments(geo, M) : new THREE.Mesh(geo, M);
+            if (kind === 'main') { m.castShadow = shadow !== false; m.receiveShadow = true; } else if (kind === 'flat') m.receiveShadow = true;
+            else m.renderOrder = 2;
         parent.add(m); meshes[kind] = m;
       }
     }

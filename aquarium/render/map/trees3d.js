@@ -53,7 +53,9 @@
       const pickKind = () => { let u = rng(); for (const [k, w] of F.kinds) { if ((u -= w) <= 0) return k; } return F.kinds[0][0]; };
       // lùm cây: phần lớn cây mọc quanh vài tâm lùm, phần còn lại rải lẻ
       const groves = []; for (let g = 0; g < F.groves * 6 && groves.length < F.groves; g++) { const a = rng() * TAU, r = 14 + Math.sqrt(rng()) * (LAND_R - 18), x = Math.cos(a) * r, z = Math.sin(a) * r; if (L.inside(x, z, 4)) groves.push([x, z, 5 + rng() * 6]); }
-      const spot = () => { if (groves.length && rng() < 0.72) { const [gx, gz, gr] = groves[Math.floor(rng() * groves.length)], a = rng() * TAU, r = Math.sqrt(rng()) * gr; return [gx + Math.cos(a) * r, gz + Math.sin(a) * r]; } const a = rng() * TAU, r = Math.sqrt(rng()) * LAND_R * 1.12; return [Math.cos(a) * r, Math.sin(a) * r]; };
+      const spot = () => { if (groves.length && rng() < 0.72) { const [gx, gz, gr] = groves[Math.floor(rng() * groves.length)], a = rng() * TAU,
+          r = Math.sqrt(rng()) * gr; return [gx + Math.cos(a) * r, gz + Math.sin(a) * r]; } const a = rng() * TAU, r = Math.sqrt(rng()) * LAND_R * 1.12;
+          return [Math.cos(a) * r, Math.sin(a) * r]; };
       for (let n = 0; n < F.n * 10 && list.length < F.n; n++) {
         const [x, z] = spot(); let kind = pickKind();
         if (L.ter === 'desert') { const nearOasis = L.oasis && Math.hypot(x - L.oasis[0], z - L.oasis[1]) < 9; if (nearOasis) kind = rng() < 0.6 ? 'palm' : 'round'; }
@@ -98,7 +100,9 @@
       else if (t.kind === 'broad') { set('trunks', s, 1.3 * s, s, 0); set('icos', 1.05 * s, 1.0 * s, 1.05 * s, 1.9 * s); }
       else set('icos', 0.55 * s, 0.4 * s, 0.55 * s, 0.25 * s);
     }
-    const LEAF = { conifer: ['#3f7a4c', '#4a8a55', '#356b43'], broad: ['#5b9a52', '#6aa85a', '#4f8d48'], round: ['#62a24e', '#71b058', '#5a9646', '#7cb85e'], tall: ['#4f8f45', '#5a9a4a'], bush: ['#6aa04e', '#5f9446', '#7aa858'], blossom: ['#e8a0b8', '#f2bc78', '#d8a8e6'], palm: ['#5f9f4a', '#6aa85a'], snowpine: ['#e9f0f3', '#d8e4ea'], snowround: ['#e6eef2', '#dbe6ec'], shrub: ['#9aa060', '#8a9455'] };
+    const LEAF = { conifer: ['#3f7a4c', '#4a8a55', '#356b43'], broad: ['#5b9a52', '#6aa85a', '#4f8d48'], round: ['#62a24e', '#71b058', '#5a9646', '#7cb85e'],
+        tall: ['#4f8f45', '#5a9a4a'], bush: ['#6aa04e', '#5f9446', '#7aa858'], blossom: ['#e8a0b8', '#f2bc78', '#d8a8e6'], palm: ['#5f9f4a', '#6aa85a'],
+        snowpine: ['#e9f0f3', '#d8e4ea'], snowround: ['#e6eef2', '#dbe6ec'], shrub: ['#9aa060', '#8a9455'] };
     const DRY = { desert: ['#a8a060', '#9a9455'], tundra: ['#c8d4d8', '#b8c6cc'] }; // bụi ở sa mạc khô, ở băng nguyên phủ tuyết
     function treeColors(L, w) {
       const T = L.trees, tmp = new THREE.Color();

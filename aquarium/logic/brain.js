@@ -14,7 +14,9 @@
   const STATES = ['idle', 'walk', 'talk', 'attack', 'panic', 'work']; // work: làm một việc (verb) ở chỗ của nó (logic/tasks.js)
   const STATE_NAME = { idle: 'Đứng yên', walk: 'Đi lại', talk: 'Nói chuyện', argue: 'Tranh cãi', attack: 'Chiến đấu', panic: 'Hoảng sợ', pray: 'Cầu nguyện', work: 'Làm việc' };
   // những chỗ trong làng (vị trí cụ thể do phần vẽ đặt, logic chỉ biết tên chỗ)
-  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate', 'gateL', 'gateR', 'podium', 'hallLoop', 'woods', 'quarry', 'plant']; // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân; hallLoop: vòng đi dạo quanh nhà chính; woods, quarry, plant: chỗ đốn gỗ, mỏ đá, chỗ làm năng lượng // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
+  const PLACES = ['home', 'field', 'hall', 'square', 'bridge', 'guard', 'site', 'repair', 'market', 'shrine', 'school', 'visit', 'stroll', 'patrol', 'gate',
+      'gateL', 'gateR', 'podium', 'hallLoop', 'woods', 'quarry', 'plant'];
+      // gateL, gateR: cổng phụ trái, phải; podium: bục diễn thuyết giữa sân; hallLoop: vòng đi dạo quanh nhà chính; woods, quarry, plant: chỗ đốn gỗ, mỏ đá, chỗ làm năng lượng // guard: chỗ lính đi tuần (cổng, mép làng); site: công trình đang dựng
 
   /* ---------- Núm vặn cử động: tính cách và gen dáng ảnh hưởng tới cách cử động ---------- */
   // traits: tính cách biểu hiện (gen gốc + ngoại gen); thiếu thì dùng gen gốc
@@ -86,7 +88,9 @@
     if (X.mourning > day && !(ph === 'noon' && S.eco && (S.eco.hunger || S.eco.scarce)) && rng.chance(0.6)) return d('idle', { mood: t.piety > 0.55 ? 'pray' : null, place: t.piety > 0.55 ? 'shrine' : 'home', intensity: 0.3, phase: ph });
     // lễ hội: tụ ở quảng trường, nói cười, đung đưa
     // (không mở hội khi đang đói)
-    if (X.festival > day && !(S.eco && S.eco.hunger)) { const r0 = rng.next(); return r0 < 0.4 ? d('work', { verb: 'dance', place: 'square', reason: 'nhảy múa ngày hội', intensity: 0.8, phase: ph }) : r0 < 0.75 ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7, phase: ph }) : d('walk', { place: 'square', intensity: 0.7, phase: ph }); }
+    if (X.festival > day && !(S.eco && S.eco.hunger)) { const r0 = rng.next(); return r0 < 0.4 ? d('work', { verb: 'dance', place: 'square',
+        reason: 'nhảy múa ngày hội', intensity: 0.8, phase: ph }) : r0 < 0.75 ? d('talk', { target: friendOf(S, p, rng), place: 'square', intensity: 0.7,
+        phase: ph }) : d('walk', { place: 'square', intensity: 0.7, phase: ph }); }
     // ngày thường: việc theo vai và theo buổi (logic/tasks.js); người đa nghi, hiếu chiến đôi khi gây sự
     const r = rng.next();
     if (r > 0.993 && t.paranoia + t.aggression > 1.25) { const other = friendOf(S, p, rng, true); if (other != null) startQuarrel(S, p.id, other, rng); }

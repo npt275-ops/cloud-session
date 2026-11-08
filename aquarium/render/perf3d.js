@@ -7,7 +7,9 @@
   function setup(G) {
     const { THREE, renderer, scene, camera, controls, sun, clamp, $, resize } = G;
     const lowEnd = window.innerWidth < 720 || (navigator.hardwareConcurrency || 8) <= 4;
-    const PERF = { prMax: Math.min(2, window.devicePixelRatio || 1), prMin: 0.75, pr: 1, shadow: lowEnd ? 1024 : 2048, shadowEvery: 2, frame: 0, ema: 16.7, slow: 0, good: 0, ceiling: 9, cool: 0, half: 70, force: true, lastT: new THREE.Vector3(1e9, 0, 0), fps: 60, fpsN: 0, fpsT: 0, fpsOn: false, locked: false };
+    const PERF = { prMax: Math.min(2, window.devicePixelRatio || 1), prMin: 0.75, pr: 1, shadow: lowEnd ? 1024 : 2048, shadowEvery: 2, frame: 0, ema: 16.7,
+        slow: 0, good: 0, ceiling: 9, cool: 0, half: 70, force: true, lastT: new THREE.Vector3(1e9, 0, 0), fps: 60, fpsN: 0, fpsT: 0, fpsOn: false,
+        locked: false };
     PERF.pr = PERF.prMax; // cảnh đã nhẹ: máy nào cũng bắt đầu ở độ nét cao nhất, chậm thì bộ điều tốc tự hạ
     const PRESETS = [{ pr: 2, shadow: 2048 }, { pr: 1.5, shadow: 1024 }, { pr: 1, shadow: 0 }, { pr: 0.75, shadow: 0 }];
     function applyQuality() {

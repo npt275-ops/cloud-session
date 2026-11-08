@@ -38,19 +38,17 @@ test('ở cổng: máy công thành phá cổng, tên lửa đốt làm cháy nh
 });
 
 test('kịch bản: hải chiến khi đảo bị đánh ra chặn; đấu tướng hai tướng hiếu chiến; vây thành làm đảo bị vây gần như không làm ra lương thực', () => {
-  // hải chiến
-  let naval = 0, duel = 0, block = 0;
-  for (const seed of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) {
-    if (naval) break; // đủ một ca là được
-    const W = world(seed, 5), A = W.islands[2], B = W.islands[4]; soldiers(A, 12); soldiers(B, 8);
-    const w = BK.War.launch(W, W.day, 2, 4, 'conquer', 1, W.rng); if (!w) continue; w.by = 'boat';
-    for (let k = 0; k < 12 * 20 && !(w.naval || (w.stage !== 'march' && w.stage !== 'muster')); k++) { temper(B, { aggression: 0.9, paranoia: 0.8 }); temper(A, { aggression: 0.9, cunning: 0.7 }); tick(W, 1); }
-    if (w.naval) naval++;
-    tick(W, 12 * 3);
-    if (W.battleStats && W.battleStats.duel) duel++;
-    if (W.battleStats && W.battleStats.blockade) block++;
-  }
-  assert.ok(naval >= 1, 'có hải chiến: ' + naval);
+  // hải chiến (kiểm thử hành vi: đặt thẳng đoàn quân đi thuyền sắp tới, người đứng đầu bên bị đánh hiếu chiến; rng luôn "có")
+  { const W = world(2, 5), A = W.islands[2], B = W.islands[4]; soldiers(A, 12); soldiers(B, 8);
+    temper(B, { aggression: 0.9, paranoia: 0.8 });
+    const w = BK.War.launch(W, W.day, 2, 4, 'conquer', 1, W.rng); w.by = 'boat'; w.surprise = false;
+    const yes = Object.assign(Object.create(W.rng), { chance: () => true });
+    BK.Battles.beforeArrive(W, w.arrive, w, yes, () => false);
+    assert.ok(w.naval && w.naval.crew.length >= 3, 'có hải chiến: thuyền ' + B.name + ' ra chặn');
+    // thua trên biển (mất quá nửa quân) thì quay về, không đổ bộ
+    for (const x of w.troops.slice(0, Math.ceil(w.troops.length * 0.6))) x.p.alive = false;
+    const back = BK.Battles.navalStep(W, w.naval.until + 0.01, w, Object.assign(Object.create(W.rng), { chance: () => false }), 0.1, () => false);
+    assert.ok(back, 'mất quá nửa quân trên biển thì quay về'); }
   // vây thành: lương thực đảo bị vây gần như không làm ra
   const W = world(7, 5), S = W.islands[1], st = E.state(S); BK.World.jump(W, W.day + 2);
   const made0 = st.made.food; S.situ.blockade = W.day + 10; BK.World.jump(W, W.day + 1);

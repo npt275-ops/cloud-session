@@ -80,7 +80,9 @@
     { const best = RES.filter((r) => r !== 'food' && can(S, r)).sort((x, y) => richOf(S, y) - richOf(S, x))[0];
       if (best && richOf(S, best) >= 1.5 && st.stock[best] < CAP(S.level, best) * 0.6) want[best] = (want[best] || 0) + 0.35 * Math.sqrt(richOf(S, best)); }
     let rest = workers.length - quota.food; const sum = Object.values(want).reduce((a, b) => a + b, 0);
-    if (sum > 0) { const order = Object.keys(want).sort((a, b) => want[b] - want[a]); let given = 0; for (const r of order) { const k = Math.floor((want[r] / sum) * rest); quota[r] = (quota[r] || 0) + k; given += k; } for (let k = 0; given < rest; k++, given++) quota[order[k % order.length]] = (quota[order[k % order.length]] || 0) + 1; }
+    if (sum > 0) { const order = Object.keys(want).sort((a, b) => want[b] - want[a]); let given = 0;
+        for (const r of order) { const k = Math.floor((want[r] / sum) * rest); quota[r] = (quota[r] || 0) + k; given += k; } for (let k = 0; given < rest; k++,
+        given++) quota[order[k % order.length]] = (quota[order[k % order.length]] || 0) + 1; }
     else quota.food += rest; // giỏ đã đủ: làm thêm lương thực để dành
     // giữ người cũ ở việc cũ còn chỗ; ai thừa thì sang việc còn thiếu người
     const free = [];
@@ -97,7 +99,9 @@
     allocate(S, workers, day, eat, councilFood);
     st.made = { food: councilFood }; // phần lương thực người trong hội đồng làm ra
     let farm = 0, farmers = 0;
-    for (const p of workers) { const r = p.res; if (!can(S, r)) continue; const v = BASE * skill(S, p) * richOf(S, r) * climate(S, r, day) * tech(S.level) * (BK.Siege ? BK.Siege.output(S, r) : 1) * (BK.Missiles ? BK.Missiles.output(S, r, day) : 1) * (BK.Ecology ? BK.Ecology.output(S, r) : 1) * (BK.Prosperity ? BK.Prosperity.output(S) : 1); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
+    for (const p of workers) { const r = p.res; if (!can(S, r)) continue; const v = BASE * skill(S, p) * richOf(S, r) * climate(S, r,
+        day) * tech(S.level) * (BK.Siege ? BK.Siege.output(S, r) : 1) * (BK.Missiles ? BK.Missiles.output(S, r, day) : 1) * (BK.Ecology ? BK.Ecology.output(S,
+        r) : 1) * (BK.Prosperity ? BK.Prosperity.output(S) : 1); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
     // bị vây (logic/battles.js): ruộng ngoài thành không ra được, cả đảo gần như không làm ra lương thực
     if (S.situ.blockade > day) { st.made.food *= BK.Battles ? BK.Battles.BLOCKADE_FOOD : 0.3; farm *= BK.Battles ? BK.Battles.BLOCKADE_FOOD : 0.3; }
     if (farmers) st.perFood = st.perFood ? st.perFood * 0.8 + (farm / farmers) * 0.2 : farm / farmers; // năng suất thật (cho allocate)
@@ -112,7 +116,9 @@
     S.food = st.hunger ? 0.4 : S.situ.drought > day ? 0.6 : 1;
     // kho lương thực xuống dưới 3 ngày ăn (bắt đầu phát khẩu phần, logic/tasks.js) hay có lại: cả đảo xét lại việc
     const scarce = st.stock.food < eat * 3; if (scarce !== !!st.scarce) { st.scarce = scarce; S.situChanged = true; }
-    if (st.hunger > 20 && rng.chance(0.03)) { const weak = live.filter((p) => P.ageOf(p, day) >= R.OLD_AGE || P.ageOf(p, day) < 4); if (weak.length) { const v = rng.pick(weak); v.alive = false; v.died = day; v.cause = 'đói'; S.deaths++; S.log.push({ day: Math.floor(day), kind: 'death', ids: [v.id], text: P.fullName(v) + ' chết đói.' }); S.situChanged = true; } }
+    if (st.hunger > 20 && rng.chance(0.03)) { const weak = live.filter((p) => P.ageOf(p, day) >= R.OLD_AGE || P.ageOf(p, day) < 4);
+        if (weak.length) { const v = rng.pick(weak); v.alive = false; v.died = day; v.cause = 'đói'; S.deaths++; S.log.push({ day: Math.floor(day),
+        kind: 'death', ids: [v.id], text: P.fullName(v) + ' chết đói.' }); S.situChanged = true; } }
     // lên cấp
     st.since++;
     const cost = nextCost(S);

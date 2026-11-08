@@ -77,5 +77,7 @@
     W.acc = 0;
   }
   const island = (W, key) => W.islands[KEYS.indexOf(key)];
-  return { KEYS, TICKS_PER_DAY, CYCLE_DAYS, todOf, create, tick, advance, jump, island };
+  // nạp lại trận đã lưu (logic/save.js): gắn lại kế hoạch dựng công trình của phần vẽ (hàm, không lưu được)
+  function restore(W, o) { for (const S of W.islands) S.buildPlan = o && o.buildPlan ? (lv) => o.buildPlan(S.key, lv) : null; return W; }
+  return { KEYS, TICKS_PER_DAY, CYCLE_DAYS, todOf, create, restore, tick, advance, jump, island };
 });

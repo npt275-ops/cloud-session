@@ -32,6 +32,7 @@
     let last = performance.now(), lastSlow = 0;
     G.seasons.update(true);
     function frame(t) {
+      const f0 = performance.now(); // đo hiệu năng (G.frameTime: thời gian phần JS và phần vẽ mỗi khung hình, trung bình trượt; tools/ đo 4 cảnh)
       const raw = Math.max(0, Math.min(1000, t - last)), dt = Math.min(100, raw); last = t; // khung đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
       G.perf.govern(dt);
       // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
@@ -49,7 +50,10 @@
       G.cameraFly.update(dt, now);
       controls.update();
       G.perf.shadowTick();
+      const f1 = performance.now();
       renderer.render(scene, camera);
+      const f2 = performance.now(), FT = G.frameTime || (G.frameTime = { js: 0, gl: 0, n: 0 }), k = FT.n < 30 ? 1 / ++FT.n : 1 / 30;
+      FT.js += (f1 - f0 - FT.js) * k; FT.gl += (f2 - f1 - FT.gl) * k;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

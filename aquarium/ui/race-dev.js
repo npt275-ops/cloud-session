@@ -44,7 +44,11 @@
         // kho vũ khí bắn xa (logic/missiles.js): tên lửa, hạt nhân, quả đang chế tạo; đảo từng bị bắn hạt nhân, đang nhiễm xạ
         (S.arms && (S.arms.missiles || S.arms.nukes || S.arms.nukeDone) || S.nukedTotal ? '<span>' + esc([S.arms && S.arms.missiles ? S.arms.missiles + ' tên lửa' : '', S.arms && S.arms.nukes ? S.arms.nukes + ' hạt nhân' : '', S.arms && S.arms.nukeDone ? 'đang chế tạo hạt nhân' : '', S.nukedTotal ? 'bị bắn ' + S.nukedTotal + ' quả hạt nhân' + (S.falloutUntil > W.day ? ', đang nhiễm xạ' : '') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         // hệ sinh thái (logic/ecology.js): rừng, mỏ, đất ruộng, khói bụi; đóng cầu, cấm vận, bất bình, giữ đất cho đời sau
-        (S.env ? '<span>' + esc(['rừng ' + Math.round(S.env.forest * 100) + '%', 'mỏ ' + Math.round(S.env.ore * 100) + '%', 'đất ' + Math.round(S.env.soil * 100) + '%', S.env.smog > 0.02 ? 'khói bụi ' + Math.round(S.env.smog * 100) + '%' : '', S.conserve ? 'giữ đất cho đời sau' : '', S.closed && S.closed.until > W.day ? 'đóng cầu (' + S.closed.why + ')' : '', W.embargo && W.embargo[i] > W.day ? 'bị cấm vận' : '', S.discontent > 0.3 ? 'bất bình ' + Math.round(S.discontent * 100) + '%' : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
+        (S.env ? '<span>' + esc(['rừng ' + Math.round(S.env.forest * 100) + '%', 'mỏ ' + Math.round(S.env.ore * 100) + '%',
+            'đất ' + Math.round(S.env.soil * 100) + '%', S.env.smog > 0.02 ? 'khói bụi ' + Math.round(S.env.smog * 100) + '%' : '',
+            S.conserve ? 'giữ đất cho đời sau' : '', S.closed && S.closed.until > W.day ? 'đóng cầu (' + S.closed.why + ')' : '',
+            W.embargo && W.embargo[i] > W.day ? 'bị cấm vận' : '',
+            S.discontent > 0.3 ? 'bất bình ' + Math.round(S.discontent * 100) + '%' : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         (pacts.length || bridges.length ? '<span>' + esc([pacts.join(', '), bridges.length ? 'cầu sang ' + bridges.join(', ') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         '</button>';
     }
@@ -63,7 +67,9 @@
     function chronicle() {
       if (!BK.Chronicle || !W.chronicle) return '';
       const years = BK.Chronicle.byYear(W, 3).reverse().slice(0, 9);
-      const glory = W.islands.map((S) => [S.golden ? 'thời hoàng kim' : '', S.wonder ? 'đang dựng kỳ quan ' + Math.round(S.wonder.progress * 100) + '%' : '', (S.wonders || []).length ? (S.wonders.length + ' kỳ quan') : '', S.decline ? 'suy tàn' : ''].filter(Boolean)).map((xs, i) => (xs.length ? esc(W.islands[i].name) + ': ' + xs.join(', ') : '')).filter(Boolean);
+      const glory = W.islands.map((S) => [S.golden ? 'thời hoàng kim' : '', S.wonder ? 'đang dựng kỳ quan ' + Math.round(S.wonder.progress * 100) + '%' : '',
+          (S.wonders || []).length ? (S.wonders.length + ' kỳ quan') : '', S.decline ? 'suy tàn' : ''].filter(Boolean)).map((xs,
+          i) => (xs.length ? esc(W.islands[i].name) + ': ' + xs.join(', ') : '')).filter(Boolean);
       const heroes = (W.legends || []).slice(-6).reverse().map((L) => '<button data-isle="' + L.isle + '"><b>' + esc(BK.Chronicle.TITLE[L.kind] || L.kind) + '</b> ' + esc(L.name) + ' (' + esc(W.islands[L.isle].name) + ')</button>');
       return '<div class="rb-chron"><b>Biên niên</b>' + (glory.length ? '<p>' + glory.join(' · ') + '</p>' : '') +
         years.map((Y) => '<div><i>Năm ' + Y.year + '</i>' + Y.items.map((c) => '<button data-isle="' + c.isle + '">' + '★'.repeat(Math.min(3, Math.ceil(c.w / 2))) + ' ' + esc(W.islands[c.isle].name) + ': ' + esc(c.text) + '</button>').join('') + '</div>').join('') +

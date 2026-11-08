@@ -20,7 +20,9 @@
     /* ---------- Khung và bộ phận: một người nên mỗi bộ phận là một khối riêng ---------- */
     const rig = Rig.build(Object.assign({}, person, { role: null }), 0), shapes = Rig.shapes();
     // mắt dựng riêng ở khuôn mặt (render/face3d.js), nên bỏ mắt mặc định của khung
-    const meshes = rig.parts.filter((part) => part.type !== 'eye').map((part) => { const m = new THREE.Mesh(shapes[part.type], new THREE.MeshStandardMaterial({ color: part.color, roughness: 0.75 })); m.matrixAutoUpdate = false; m.castShadow = true; m.userData.model = true; scene.add(m); return { m, part }; });
+    const meshes = rig.parts.filter((part) => part.type !== 'eye').map((part) => { const m = new THREE.Mesh(shapes[part.type],
+        new THREE.MeshStandardMaterial({ color: part.color, roughness: 0.75 })); m.matrixAutoUpdate = false; m.castShadow = true; m.userData.model = true;
+        scene.add(m); return { m, part }; });
     const props = Rig.buildProps(rig.nodes);
     scene.add(rig.root); rig.root.rotation.order = 'YXZ';
     // vòng sáng dưới chân: nhìn từ xa vẫn thấy NPC mẫu đứng ở đâu

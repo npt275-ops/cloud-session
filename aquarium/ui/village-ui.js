@@ -46,11 +46,15 @@
     const name = (id) => { const p = S.people.get(id); return p ? '<a data-id="' + id + '">' + P.fullName(p) + '</a>' : '?'; };
     const when = (day) => 'Năm ' + (Math.floor(day / R.YEAR_DAYS) + 1) + ' · ngày ' + ((Math.floor(day) % R.YEAR_DAYS) + 1);
     const PLACE_NAME = { home: 'ở nhà', field: 'ngoài ruộng', hall: 'ở nhà chính', square: 'ở sân làng', bridge: 'ra cầu', guard: 'đi tuần', gate: 'ở cổng thành', gateL: 'ở cổng phụ trái', gateR: 'ở cổng phụ phải', podium: 'ở bục diễn thuyết', site: 'ở chỗ đang dựng' };
-    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['brawl', 'Ẩu đả'], ['speech', 'Diễn thuyết'], ['vigil', 'Cầu nguyện'], ['debate', 'Tranh luận'], ['gossip', 'Buôn chuyện'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen', 'Sang thế hệ mới']]; // drama: logic/dramas.js
+    const TEST = [['drought', 'Hạn hán'], ['war', 'Lệnh chiến tranh'], ['protest', 'Biểu tình'], ['brawl', 'Ẩu đả'], ['speech', 'Diễn thuyết'], ['vigil',
+        'Cầu nguyện'], ['debate', 'Tranh luận'], ['gossip', 'Buôn chuyện'], ['quarrel', 'Cãi nhau'], ['festival', 'Lễ hội'], ['calm', 'Yên ổn'], ['nextGen',
+        'Sang thế hệ mới']]; // drama: logic/dramas.js
 
     function renderPanel() {
       const X = Island.situNow(S), live = Island.living(S);
-      const chips = [['war', 'Chiến tranh'], ['drought', 'Hạn hán'], ['protest', 'Biểu tình'], ['quarrel', 'Đang cãi nhau'], ['festival', 'Lễ hội'], ['mourning', 'Để tang']].filter(([k]) => X[k]).map(([, t]) => '<span class="chip hot">' + t + '</span>').join('') || '<span class="chip">Ngày thường</span>';
+      const chips = [['war', 'Chiến tranh'], ['drought', 'Hạn hán'], ['protest', 'Biểu tình'], ['quarrel', 'Đang cãi nhau'], ['festival', 'Lễ hội'],
+          ['mourning', 'Để tang']].filter(([k]) => X[k]).map(([,
+          t]) => '<span class="chip hot">' + t + '</span>').join('') || '<span class="chip">Ngày thường</span>';
       const seats = CO.SEATS.map((s) => { const id = S.seats[s.key], p = id != null && S.people.get(id); return '<span>' + (p ? CO.seatName(s.key, p.sex) : s.name) + '</span><div>' + (p ? name(id) + ' · ' + Math.floor(P.ageOf(p, S.day)) + ' tuổi' : '<i>trống</i>') + '</div>'; }).join('');
       const log = S.log.slice(-7).reverse().map((e) => '<li><b>' + when(e.day) + '</b> ' + e.text + '</li>').join('');
       const J = BK.Jobs, E = BK.Eras, lv = S.level || 1;
@@ -68,15 +72,19 @@
       const g = p.genome, mind = S.minds.get(p.id), age = P.ageOf(p, S.day);
       const doing = !p.alive ? 'Đã mất (' + when(p.died) + ')' : mind ? (mind.verb && !mind.mood && BK.Tasks && BK.Tasks.VERB_NAME[mind.verb] ? BK.Tasks.VERB_NAME[mind.verb].replace(/^./, (c) => c.toUpperCase()) : B.STATE_NAME[mind.mood || mind.state] || mind.state) + (mind.place ? ' · ' + (PLACE_NAME[mind.place] || mind.place) : '') + (mind.target != null && S.people.get(mind.target) ? ' với ' + P.fullName(S.people.get(mind.target)) : '') + (mind.reason ? ' — ' + mind.reason : '') : '';
       // thanh tính cách: gen gốc; con số: tính cách biểu hiện, kèm dấu ngoại gen (logic/epigen.js) nếu có
-      const bars = G.TRAITS.map((t) => { const v = g.traits[t.key], e = (p.epi && p.epi[t.key]) || 0, mut = g.mutations && g.mutations.some((m) => m.key === t.key); return '<div class="row"><span class="k">' + t.name + (mut ? ' ✦' : '') + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + Math.round(P.traits(p)[t.key] * 100) + (Math.abs(e) >= 0.01 ? ' <small>(' + (e > 0 ? '+' : '') + Math.round(e * 100) + ')</small>' : '') + '</span></div>'; }).join('');
-      const gait = G.GAIT.map((x) => { const v = g.gait[x.key]; return '<div class="row"><span class="k">' + x.name + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + (v < 0.4 ? x.low.split(',')[0] : v > 0.6 ? x.high.split(',')[0] : 'vừa') + '</span></div>'; }).join('');
+      const bars = G.TRAITS.map((t) => { const v = g.traits[t.key], e = (p.epi && p.epi[t.key]) || 0,
+          mut = g.mutations && g.mutations.some((m) => m.key === t.key);
+          return '<div class="row"><span class="k">' + t.name + (mut ? ' ✦' : '') + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + Math.round(P.traits(p)[t.key] * 100) + (Math.abs(e) >= 0.01 ? ' <small>(' + (e > 0 ? '+' : '') + Math.round(e * 100) + ')</small>' : '') + '</span></div>'; }).join('');
+      const gait = G.GAIT.map((x) => { const v = g.gait[x.key];
+          return '<div class="row"><span class="k">' + x.name + '</span><div class="bar"><i style="width:' + Math.round(v * 100) + '%"></i></div><span>' + (v < 0.4 ? x.low.split(',')[0] : v > 0.6 ? x.high.split(',')[0] : 'vừa') + '</span></div>'; }).join('');
       const kids = p.children.map(name).join(', ') || 'chưa có';
       const spouse = p.spouses.map(name).join(', ') || 'chưa có';
       card.hidden = false;
       card.innerHTML = '<button class="x" data-close="1" aria-label="Đóng">✕</button><h2>' + P.fullName(p) + '</h2>' +
         // danh hiệu (logic/chronicle.js legend): anh hùng, kẻ phản bội, nhà phát minh, người đứng đầu huyền thoại
         (p.title ? '<div class="sub legend"><b>' + p.title + '</b>' + (p.legend ? ' · ' + p.legend : '') + '</div>' : '') +
-        '<div class="sub">' + (p.role ? CO.seatName(p.role, p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.temper && BK.Temper ? 'tính ' + BK.Temper.nameOf(p.temper).toLowerCase() + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
+        '<div class="sub">' + (p.role ? CO.seatName(p.role,
+            p.sex) + ' · ' : p.job && BK.Jobs ? BK.Jobs.NAME[p.job] + ' · ' : '') + (p.temper && BK.Temper ? 'tính ' + BK.Temper.nameOf(p.temper).toLowerCase() + ' · ' : '') + (p.sex === 'm' ? 'nam' : 'nữ') + ' · ' + Math.floor(age) + ' tuổi · đời thứ ' + (p.gen + 1) + (p.commoner ? ' · người dân thường' : '') + '</div>' +
         '<p><span class="k">Đang:</span> ' + doing + '</p>' +
         '<p><span class="k">Cha mẹ:</span> ' + (p.parents.map(name).join(' và ') || 'người lập làng') + '<br><span class="k">Vợ chồng:</span> ' + spouse + '<br><span class="k">Con:</span> ' + kids + (p.alive && p.home != null ? '<br><span class="k">Nhà:</span> số ' + (p.home + 1) + (BK.Homes ? ' (' + BK.Homes.occupancy(S)[p.home] + ' người)' : '') : '') + '</p>' +
         '<div class="sec">Tính cách</div>' + bars +

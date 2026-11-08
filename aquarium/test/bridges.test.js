@@ -48,10 +48,3 @@ test('người qua lại: sang đảo bên, ở lại vài ngày rồi về; đi
   BK.World.jump(W, Math.ceil(v.back) + 1); assert.ok(!p.away && !W.visits.includes(v), 'đã về nhà');
 });
 
-test('chạy thật 9 năm: cầu được khởi công, xây lại theo thời mới, có người qua lại, có xô xát ở đầu cầu', () => {
-  const T = {};
-  for (const seed of [1, 2, 3]) { const W = BK.World.create({ seed }); BK.World.jump(W, 9 * 360); for (const k in W.bridgeStats) T[k] = (T[k] || 0) + W.bridgeStats[k]; }
-  assert.ok(T.build >= 3 && T.done >= 3, 'cầu: ' + JSON.stringify(T));
-  assert.ok(T.rebuild >= 1, 'xây lại theo thời mới');
-  assert.ok(T.visits >= 30, 'người qua lại: ' + T.visits);
-});

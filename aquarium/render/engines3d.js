@@ -34,7 +34,9 @@
       tent: () => { const g = new THREE.Group(); add(g, new THREE.ConeGeometry(1.3, 1.8, 6), M.tent, 0, 0.9, 0); add(g, new THREE.ConeGeometry(1.0, 1.5, 6), M.tent, 2.6, 0.75, 1.0);
         add(g, new THREE.SphereGeometry(0.3, 8, 6), glow('#ff9a2e'), 1.3, 0.3, -1.6); for (let k = 0; k < 5; k++) add(g, cyl(0.06, 0.06, 0.8), M.dark, 1.3 + Math.cos(k) * 0.3, 0.12, -1.6 + Math.sin(k) * 0.3, Math.PI / 2, k); g.userData.fire = g.children[2]; return g; },
       portal: () => { const g = new THREE.Group(); const ring = add(g, new THREE.TorusGeometry(1.6, 0.18, 10, 32), glow('#c38bff'), 0, 1.8, 0); add(g, new THREE.CircleGeometry(1.5, 32), glow('#6a3bff', 0.35), 0, 1.8, 0); g.userData.ring = ring; return g; },
-      shield: () => { const g = new THREE.Group(); const d = add(g, new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#7fe8ff', transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); g.userData.dome = d; return g; },
+      shield: () => { const g = new THREE.Group(); const d = add(g, new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshBasicMaterial({ color: '#7fe8ff', transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending })); g.userData.dome = d; return g; },
     };
     const pool = {}, used = {};
     function take(kind) { const P = pool[kind] || (pool[kind] = []); used[kind] = used[kind] || 0; if (used[kind] >= P.length) { const g = BUILD[kind](); scene.add(g); P.push(g); } const g = P[used[kind]++]; g.visible = true; return g; }

@@ -101,7 +101,9 @@
   }
   function arrive(W, day, c) {
     const E = BK.Economy, A = W.islands[c.a], B = W.islands[c.b], sa = E.state(A), sb = E.state(B);
-    if (c.gift) { for (const r in c.give) sb.stock[r] = Math.min(E.CAP(B.level, r), sb.stock[r] + c.give[r]); B.unrest = Math.max(0, (B.unrest || 0) - 0.15); W.rel[c.b][c.a].grudge = Math.max(0, W.rel[c.b][c.a].grudge - 0.1); B.log.push({ day: Math.floor(day), kind: 'trade', ids: [], text: 'Lương thực cứu đói từ ' + A.name + ' về tới nơi.' }); return; }
+    if (c.gift) { for (const r in c.give) sb.stock[r] = Math.min(E.CAP(B.level, r), sb.stock[r] + c.give[r]); B.unrest = Math.max(0, (B.unrest || 0) - 0.15);
+        W.rel[c.b][c.a].grudge = Math.max(0, W.rel[c.b][c.a].grudge - 0.1); B.log.push({ day: Math.floor(day), kind: 'trade', ids: [],
+        text: 'Lương thực cứu đói từ ' + A.name + ' về tới nơi.' }); return; }
     for (const r in c.give) sb.stock[r] = Math.min(E.CAP(B.level, r), sb.stock[r] + c.give[r]);
     for (const r in c.get) sa.stock[r] = Math.min(E.CAP(A.level, r), sa.stock[r] + c.get[r]);
     W.rel[c.a][c.b].trust = Math.min(1, W.rel[c.a][c.b].trust + TRUST_TRADE); W.rel[c.b][c.a].trust = Math.min(1, W.rel[c.b][c.a].trust + TRUST_TRADE);

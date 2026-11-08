@@ -21,7 +21,9 @@
     const THREE = T(), S = {}, V2 = (x, y) => new THREE.Vector2(x, y);
     const lathe = (prof, seg, zs) => { const g = new THREE.LatheGeometry(prof.map(([r, y]) => V2(Math.max(0.0001, r), y)), seg || 12); if (zs) g.scale(1, 1, zs); g.computeVertexNormals(); return g; };
     // ống bo tròn hai đầu, kéo từ khớp xuống dưới
-    const limb = (r1, r2, len, seg) => { const p = []; for (let i = 2; i >= 0; i--) { const a = (i / 2) * Math.PI / 2; p.push(V2(Math.cos(a) * r2 + 0.0001, -len - Math.sin(a) * r2 * 0.9)); } for (let i = 0; i <= 2; i++) { const a = (i / 2) * Math.PI / 2; p.push(V2(Math.cos(a) * r1 + 0.0001, Math.sin(a) * r1 * 0.9)); } return new THREE.LatheGeometry(p, seg || 7); };
+    const limb = (r1, r2, len, seg) => { const p = []; for (let i = 2; i >= 0; i--) { const a = (i / 2) * Math.PI / 2; p.push(V2(Math.cos(a) * r2 + 0.0001,
+        -len - Math.sin(a) * r2 * 0.9)); } for (let i = 0; i <= 2; i++) { const a = (i / 2) * Math.PI / 2; p.push(V2(Math.cos(a) * r1 + 0.0001,
+        Math.sin(a) * r1 * 0.9)); } return new THREE.LatheGeometry(p, seg || 7); };
     const sph = (w, h) => new THREE.SphereGeometry(1, w || 10, h || 7);
     S.shirt = lathe([[0.001, -0.25], [0.21, -0.24], [0.185, -0.17], [0.175, -0.08], [0.19, 0.06], [0.2, 0.2], [0.18, 0.3], [0.12, 0.37], [0.06, 0.4], [0.001, 0.405]], 12, 0.74);
     S.shorts = lathe([[0.001, -0.1], [0.14, -0.09], [0.16, 0.0], [0.15, 0.08], [0.001, 0.09]], 10, 0.76);
@@ -76,7 +78,9 @@
       nodes['hip' + s] = N('hip' + s, nodes.pelvis, x * 0.48, -0.02, 0); nodes['kn' + s] = N('kn' + s, nodes['hip' + s], 0, -0.36, 0); nodes['an' + s] = N('an' + s, nodes['kn' + s], 0, -0.36, 0);
     }
     const parts = [];
-    const M = (x, y, z, sx, sy, sz, rx, ry, rz) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx || 0, ry || 0, rz || 0)), new THREE.Vector3(sx == null ? 1 : sx, sy == null ? (sx == null ? 1 : sx) : sy, sz == null ? (sx == null ? 1 : sx) : sz));
+    const M = (x, y, z, sx, sy, sz, rx, ry, rz) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(rx || 0, ry || 0, rz || 0)), new THREE.Vector3(sx == null ? 1 : sx,
+        sy == null ? (sx == null ? 1 : sx) : sy, sz == null ? (sx == null ? 1 : sx) : sz));
     const put = (type, node, local, color, face) => parts.push({ type, node, local, color: new THREE.Color(color), face: face || null });
     // thân
     put('shirt', nodes.chest, M(0, 0, 0), shirt);
@@ -137,9 +141,13 @@
     if (!look.hat) return;
     const [kind, c, c2] = look.hat, H = n.head;
     if (kind === 'band') put('tor', H, M(0, 0.29, -0.01, 0.2, 0.186, 0.2, Math.PI / 2 - 0.25, 0, 0), c);
-    else if (kind === 'feathers') { put('tor', H, M(0, 0.29, -0.01, 0.2, 0.186, 0.2, Math.PI / 2 - 0.25, 0, 0), c); for (let i = 0; i < 7; i++) { const a = -0.9 + i * 0.3; put('cone', H, M(Math.sin(a) * 0.17, 0.42, -0.06 + Math.cos(a) * 0.05, 0.03, 0.22, 0.03, -0.25, 0, -a * 0.6), i % 2 ? c2 : c); } }
+    else if (kind === 'feathers') { put('tor', H, M(0, 0.29, -0.01, 0.2, 0.186, 0.2, Math.PI / 2 - 0.25, 0, 0), c); for (let i = 0; i < 7;
+        i++) { const a = -0.9 + i * 0.3; put('cone', H, M(Math.sin(a) * 0.17, 0.42, -0.06 + Math.cos(a) * 0.05, 0.03, 0.22, 0.03, -0.25, 0, -a * 0.6),
+        i % 2 ? c2 : c); } }
     else if (kind === 'nonLa') { put('coneOpen', H, M(0, 0.42, -0.01, 0.4, 0.21, 0.4, -0.08, 0, 0), c); put('ring', H, M(0, 0.315, 0, 0.4, 0.4, 0.4, Math.PI / 2 - 0.08, 0, 0), '#b89a5a'); }
-    else if (kind === 'crown') { put('cylOpen', H, M(0, 0.32, 0, 0.21, 0.09, 0.21), c); for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; put('cone', H, M(Math.sin(a) * 0.19, 0.4, Math.cos(a) * 0.19, 0.03, 0.09, 0.03), c); } put('ball', H, M(0, 0.33, 0.212, 0.03, 0.03, 0.015), c2 || '#c8302a'); }
+    else if (kind === 'crown') { put('cylOpen', H, M(0, 0.32, 0, 0.21, 0.09, 0.21), c); for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2;
+        put('cone', H, M(Math.sin(a) * 0.19, 0.4, Math.cos(a) * 0.19, 0.03, 0.09, 0.03), c); } put('ball', H, M(0, 0.33, 0.212, 0.03, 0.03, 0.015),
+        c2 || '#c8302a'); }
     else if (kind === 'helmet') { put('half', H, M(0, 0.2, 0, 0.228, 0.21, 0.235), c); put('cyl', H, M(0, 0.2, 0.02, 0.25, 0.02, 0.27), c); if (c2) put('cone', H, M(0, 0.47, -0.02, 0.035, 0.18, 0.035, -0.3, 0, 0), c2); }
     else if (kind === 'khanDong') { put('cyl', H, M(0, 0.31, -0.005, 0.214, 0.085, 0.214), c); put('ring', H, M(0, 0.29, -0.005, 0.214, 0.214, 0.214, Math.PI / 2, 0, 0), '#4a5a80'); }
     else if (kind === 'quaiThao') { put('cyl', H, M(0, 0.38, 0, 0.42, 0.05, 0.42), c); put('cylOpen', H, M(0, 0.34, 0, 0.2, 0.06, 0.2), c); put('ring', H, M(0, 0.38, 0, 0.42, 0.42, 0.42, Math.PI / 2, 0, 0), c2 || '#e8c24a'); }

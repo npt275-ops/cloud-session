@@ -29,7 +29,9 @@
 
   function create(o) {
     const { THREE, lands3d } = o, X = lands3d.shared, { Kit, meshOf, UBOX, UCYL, ICO, DOD } = X, PL = BK.Place3D.create(THREE);
-    const pileGeo = { food: new THREE.CylinderGeometry(0.32, 0.38, 0.5, 7), wood: new THREE.CylinderGeometry(0.16, 0.16, 1.4, 6), stone: new THREE.DodecahedronGeometry(0.34), metal: new THREE.BoxGeometry(0.7, 0.18, 0.3), energy: new THREE.CylinderGeometry(0.22, 0.22, 0.6, 8), luxury: new THREE.BoxGeometry(0.45, 0.4, 0.45) };
+    const pileGeo = { food: new THREE.CylinderGeometry(0.32, 0.38, 0.5, 7), wood: new THREE.CylinderGeometry(0.16, 0.16, 1.4, 6),
+        stone: new THREE.DodecahedronGeometry(0.34), metal: new THREE.BoxGeometry(0.7, 0.18, 0.3), energy: new THREE.CylinderGeometry(0.22, 0.22, 0.6, 8),
+        luxury: new THREE.BoxGeometry(0.45, 0.4, 0.45) };
     pileGeo.wood.rotateZ(Math.PI / 2);
     const pileMat = Object.fromEntries(RES.map((r) => [r, new THREE.MeshStandardMaterial({ color: PILE[r], roughness: 0.8, flatShading: true, emissive: r === 'energy' ? PILE[r] : '#000000', emissiveIntensity: r === 'energy' ? 0.35 : 0 })]));
 
@@ -57,7 +59,9 @@
         else if (tier === 2) { k.cyl('#2b3340', -2.2, 1, 1, 0.5, 2, 10); k.cyl('#7fe7ff', -2.2, 2.05, 1, 0.3, 0.08, 10, 'glow'); }
       } else if (kind === 'power') {
         k.box(ground, 0, 0.05, 0, 6, 0.1, 4.5);
-        if (lv <= 5) { k.cyl('#5b4a3a', -1.2, 1.4, -0.8, 0.9, 2.8, 10); k.cyl('#3a3330', -1.2, 3.4, -0.8, 0.28, 1.4, 8); k.box('#ff8a3a', -1.2, 0.5, 0.15, 0.6, 0.4, 0.05, 0, 'glow'); k.box('#6d5139', 1.6, 2, -0.8, 0.3, 4, 0.3); for (let i = 0; i < 4; i++) k.add(UBOX(), '#e9e1cf', 1.6, 3.8, -0.6, 0.15, 2.4, 0.4, 0, 0, i * Math.PI / 2); }
+        if (lv <= 5) { k.cyl('#5b4a3a', -1.2, 1.4, -0.8, 0.9, 2.8, 10); k.cyl('#3a3330', -1.2, 3.4, -0.8, 0.28, 1.4, 8); k.box('#ff8a3a', -1.2, 0.5, 0.15, 0.6,
+            0.4, 0.05, 0, 'glow'); k.box('#6d5139', 1.6, 2, -0.8, 0.3, 4, 0.3); for (let i = 0; i < 4; i++) k.add(UBOX(), '#e9e1cf', 1.6, 3.8, -0.6, 0.15, 2.4,
+            0.4, 0, 0, i * Math.PI / 2); }
         else if (tier === 1) { for (let i = 0; i < 3; i++) k.add(UBOX(), '#2a3b5a', -1.8 + i * 1.8, 0.7, -0.8, 1.5, 0.08, 1.1, 0, -0.5); k.box('#7d8fa3', 1.8, 0.8, 1, 0.8, 1.6, 0.8); }
         else { k.cyl('#e6eef4', 0, 1.2, -0.8, 1, 2.4, 14); k.add(ICO(), '#7fe7ff', 0, 2.8, -0.8, 0.7, 0.7, 0.7, 0, 0, 0, 'glow'); }
       } else if (kind === 'craft') {

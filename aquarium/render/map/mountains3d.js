@@ -75,7 +75,10 @@
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
       const m = new THREE.Mesh(g, massifMat); m.castShadow = true; m.receiveShadow = false; L.g.add(m); // không nhận bóng của chính nó: sườn núi không tối đen
       // thông mọc ở chân núi
-      for (let q = 0, placed = 0; q < (M.pines || 0) * 6 && placed < (M.pines || 0); q++) { const i = 1 + Math.floor(rng() * (NU - 1)), j = 1 + Math.floor(rng() * (NV - 1)), p0 = P(i, j), t = p0[1] / M.H; if (t < 0.06 || t > 0.32) continue; const s2 = 0.7 + rng() * 0.5; k.cone(pick(['#3f7a4c', '#4a8a55', '#356b43'], rng()), p0[0], p0[1] + 0.4 * s2, p0[2], 0.9 * s2, 2.4 * s2, 7); k.cyl('#6b4b32', p0[0], p0[1] - 0.2, p0[2], 0.12 * s2, 0.7 * s2, 5); placed++; }
+      for (let q = 0, placed = 0; q < (M.pines || 0) * 6 && placed < (M.pines || 0); q++) { const i = 1 + Math.floor(rng() * (NU - 1)),
+          j = 1 + Math.floor(rng() * (NV - 1)), p0 = P(i, j), t = p0[1] / M.H; if (t < 0.06 || t > 0.32) continue; const s2 = 0.7 + rng() * 0.5;
+          k.cone(pick(['#3f7a4c', '#4a8a55', '#356b43'], rng()), p0[0], p0[1] + 0.4 * s2, p0[2], 0.9 * s2, 2.4 * s2, 7); k.cyl('#6b4b32', p0[0], p0[1] - 0.2,
+          p0[2], 0.12 * s2, 0.7 * s2, 5); placed++; }
       for (const u of [-0.42, -0.21, 0, 0.21, 0.42]) prop(cx + tx * u * M.W, cz + tz * u * M.W, M.D * 0.5);
       (L.massifs || (L.massifs = [])).push({ x: cx, z: cz, ang, W: M.W, D: M.D, H: M.H });
       return true;

@@ -14,7 +14,9 @@
   function tmp() {
     if (V) return V;
     const T = window.THREE;
-    V = { T, m: new T.Matrix4(), m2: new T.Matrix4(), p: new T.Vector3(), s: new T.Vector3(), d: new T.Vector3(), pole: new T.Vector3(), perp: new T.Vector3(), u: new T.Vector3(), e: new T.Vector3(), f: new T.Vector3(), x: new T.Vector3(), y: new T.Vector3(), z: new T.Vector3(), q: new T.Quaternion(), qFk: new T.Quaternion(), basis: new T.Matrix4() };
+    V = { T, m: new T.Matrix4(), m2: new T.Matrix4(), p: new T.Vector3(), s: new T.Vector3(), d: new T.Vector3(), pole: new T.Vector3(), perp: new T.Vector3(),
+        u: new T.Vector3(), e: new T.Vector3(), f: new T.Vector3(), x: new T.Vector3(), y: new T.Vector3(), z: new T.Vector3(), q: new T.Quaternion(),
+        qFk: new T.Quaternion(), basis: new T.Matrix4() };
     return V;
   }
 

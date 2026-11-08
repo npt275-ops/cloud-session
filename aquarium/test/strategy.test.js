@@ -4,8 +4,9 @@ const assert = require('node:assert');
 for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
-// so giao thương với sống riêng: tắt chiến tranh ở cả hai (chiến tranh cũng gây đói, test/war.test.js)
-const runs = [1, 2, 3].map((seed) => { const on = BK.World.create({ seed, war: false }), off = BK.World.create({ seed, diplomacy: false }); BK.World.jump(on, 9 * 360); BK.World.jump(off, 9 * 360); return { on, off }; });
+// so giao thương với sống riêng: tắt chiến tranh ở cả hai (chiến tranh cũng gây đói, test/war.test.js); sáu năm là đủ thấy
+// (để tệp chạy dưới 60 giây; số đo cả chín năm: tools/calibrate.js)
+const runs = [1, 2, 3].map((seed) => { const on = BK.World.create({ seed, war: false }), off = BK.World.create({ seed, diplomacy: false }); BK.World.jump(on, 6 * 360); BK.World.jump(off, 6 * 360); return { on, off }; });
 
 test('các đảo tự đi buôn: nhiều chuyến buôn trọn vẹn, có hiệp ước, bắc cầu giữa các đảo kề nhau buôn nhiều', () => {
   for (const { on } of runs) {

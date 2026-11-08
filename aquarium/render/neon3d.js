@@ -28,7 +28,9 @@
       plains(g, c) {
         g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(4.2, 2), basic(c.sun)));
         const rings = [7, 8.6, 10.2].map((r, i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.4, 6, 64), basic(i === 1 ? c.b : c.a)); g.add(m); return m; });
-        const grain = new THREE.Group(); for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2, m = new THREE.Mesh(new THREE.OctahedronGeometry(0.55, 0), basic(c.a)); m.position.set(Math.cos(a) * 13, Math.sin(a * 3) * 1.2, Math.sin(a) * 13); m.scale.set(0.6, 1.6, 0.6); grain.add(m); } g.add(grain);
+        const grain = new THREE.Group(); for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2, m = new THREE.Mesh(new THREE.OctahedronGeometry(0.55,
+            0), basic(c.a)); m.position.set(Math.cos(a) * 13, Math.sin(a * 3) * 1.2, Math.sin(a) * 13); m.scale.set(0.6, 1.6, 0.6); grain.add(m);
+            } g.add(grain);
         return (ts) => { rings[0].rotation.set(ts * 0.5, ts * 0.2, 0); rings[1].rotation.set(Math.PI / 2, ts * 0.35, ts * 0.15); rings[2].rotation.set(ts * 0.12, 0, Math.PI / 3 + ts * 0.4); grain.rotation.y = -ts * 0.18; };
       },
       forest(g, c) {
@@ -40,7 +42,9 @@
       mountain(g, c) {
         const core = new THREE.Mesh(new THREE.IcosahedronGeometry(4.8, 0), basic(c.sun)); g.add(core);
         const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(5.6, 0), add({ color: c.b, opacity: 0.35, wireframe: true })); g.add(inner);
-        const orbit = new THREE.Group(); orbit.rotation.z = 0.45; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, m = new THREE.Mesh(new THREE.OctahedronGeometry(0.8 + (i % 3) * 0.4, 0), basic(i % 2 ? c.a : c.b)); m.position.set(Math.cos(a) * 11, Math.sin(a * 2) * 1.5, Math.sin(a) * 11); orbit.add(m); } g.add(orbit);
+        const orbit = new THREE.Group(); orbit.rotation.z = 0.45; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2,
+            m = new THREE.Mesh(new THREE.OctahedronGeometry(0.8 + (i % 3) * 0.4, 0), basic(i % 2 ? c.a : c.b)); m.position.set(Math.cos(a) * 11,
+            Math.sin(a * 2) * 1.5, Math.sin(a) * 11); orbit.add(m); } g.add(orbit);
         return (ts) => { core.rotation.set(ts * 0.3, ts * 0.45, 0); inner.rotation.set(-ts * 0.2, -ts * 0.3, 0); orbit.rotation.y = ts * 0.4; orbit.children.forEach((m, i) => { m.rotation.set(ts * (1 + i * 0.1), ts * 0.7, 0); }); };
       },
       tundra(g, c) {
@@ -53,7 +57,9 @@
       coast(g, c) {
         const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), basic(c.sun)); g.add(dome);
         const skirt = new THREE.Mesh(new THREE.TorusGeometry(6, 0.5, 6, 40), basic(c.b)); skirt.rotation.x = Math.PI / 2; g.add(skirt);
-        const arms = []; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, piv = new THREE.Group(), len = 10 + (i % 3) * 4, m = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, len, 5).translate(0, -len / 2, 0), basic(i % 2 ? c.a : c.b)); piv.position.set(Math.cos(a) * 5, 0, Math.sin(a) * 5); piv.add(m); g.add(piv); arms.push(piv); }
+        const arms = []; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, piv = new THREE.Group(), len = 10 + (i % 3) * 4,
+            m = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, len, 5).translate(0, -len / 2, 0), basic(i % 2 ? c.a : c.b));
+            piv.position.set(Math.cos(a) * 5, 0, Math.sin(a) * 5); piv.add(m); g.add(piv); arms.push(piv); }
         return (ts) => { const s = 1 + 0.08 * Math.sin(ts * 1.2); dome.scale.set(s, 1 / s, s); arms.forEach((p, i) => { p.rotation.x = Math.sin(ts * 0.9 + i) * 0.22; p.rotation.z = Math.cos(ts * 0.7 + i * 1.7) * 0.22; }); g.position.y = g.userData.y0 + Math.sin(ts * 0.6) * 1.5; };
       },
       desert(g, c) {

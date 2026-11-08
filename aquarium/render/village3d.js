@@ -209,9 +209,14 @@
       if (mind.place === 'homeSlot' && PL && PL.homeSlots && PL.homeSlots[mind.slot]) return { p: Nav.offCarriage(PL.homeSlots[mind.slot].clone().add(f.jit)), face: PL.homeSlots[mind.slot] };
       if (mind.place === 'queue' && PL && PL.store && PL.store.length) { const s1 = PL.store[Math.min(1, PL.store.length - 1)], dir = s1.clone().negate().setY(0).normalize(); return { p: s1.clone().addScaledVector(dir, 0.9 * ((f.qRank || 0) + 1)), face: s1 }; }
       // chuyền nước chữa cháy rừng (logic/ecology.js): hàng người từ giếng giữa làng ra bãi gỗ, mỗi người một chỗ theo thứ tự
-      if (mind.place === 'bucket' && PL) { const w0 = pickOf(PL.square, 0), f0 = pickOf(PL.wood, 0) || pickOf(PL.outer, 0) || pickOf(PL.guard, 0); if (w0 && f0) { const u = ((mind.rank || 0) + 0.5) / Math.max(1, mind.of || 1), at = w0.clone().lerp(f0, u), nx = w0.clone().lerp(f0, Math.min(1, u + 0.05)); return { p: at, face: nx }; } }
+      if (mind.place === 'bucket' && PL) { const w0 = pickOf(PL.square, 0), f0 = pickOf(PL.wood, 0) || pickOf(PL.outer, 0) || pickOf(PL.guard, 0);
+          if (w0 && f0) { const u = ((mind.rank || 0) + 0.5) / Math.max(1, mind.of || 1), at = w0.clone().lerp(f0, u), nx = w0.clone().lerp(f0, Math.min(1,
+          u + 0.05)); return { p: at, face: nx }; } }
       // biểu tình (logic/dramas.js): xếp hàng ngang hàng dọc ngay trước nhà chính, mỗi hàng 4 người, quay mặt vào nhà chính
-      if (mind.place === 'protest' && PL && PL.hall) { const H = PL.hall, dv = (PL.podium ? PL.podium.clone().sub(H) : H.clone().negate()).setY(0); if (dv.lengthSq() < 1e-3) dv.set(1, 0, 0); dv.normalize(); const sd = new THREE.Vector3(-dv.z, 0, dv.x), k = mind.rank || 0, COLS = 4, r = Math.floor(k / COLS), c = k % COLS; return { p: H.clone().addScaledVector(dv, -(0.3 + r * 1.3)).addScaledVector(sd, (c - (COLS - 1) / 2) * 1.4), face: H.clone().addScaledVector(dv, -9) }; } // các hàng ở khoảng trống giữa sân và nhà chính (sân có đống lửa, giếng), quay mặt vào nhà chính
+      if (mind.place === 'protest' && PL && PL.hall) { const H = PL.hall, dv = (PL.podium ? PL.podium.clone().sub(H) : H.clone().negate()).setY(0);
+          if (dv.lengthSq() < 1e-3) dv.set(1, 0, 0); dv.normalize(); const sd = new THREE.Vector3(-dv.z, 0, dv.x), k = mind.rank || 0, COLS = 4,
+          r = Math.floor(k / COLS), c = k % COLS; return { p: H.clone().addScaledVector(dv, -(0.3 + r * 1.3)).addScaledVector(sd, (c - (COLS - 1) / 2) * 1.4),
+          face: H.clone().addScaledVector(dv, -9) }; } // các hàng ở khoảng trống giữa sân và nhà chính (sân có đống lửa, giếng), quay mặt vào nhà chính
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
@@ -265,7 +270,9 @@
       dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
       gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001;
       // hàng nhận khẩu phần: thứ tự theo người tới trước (giữ thứ tự cũ, người mới đứng cuối)
-      { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a, b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id); if (!f.qSince) f.qSince = ts + n * 1e-3; f.qRank = n; }); for (const [, f] of folks) if (f.qSince && !q.includes(f.p.id)) f.qSince = 0; }
+      { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a,
+          b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id);
+          if (!f.qSince) f.qSince = ts + n * 1e-3; f.qRank = n; }); for (const [, f] of folks) if (f.qSince && !q.includes(f.p.id)) f.qSince = 0; }
       const kingF = S.seats.king != null ? folks.get(S.seats.king) : null, hungry = S.food < 0.5;
       // người có mặt trên đảo: dân (trừ người đi vắng: đi đánh, đóng giữ, sang đảo khác) và khách từ đảo khác (setGuests)
       const roster = []; for (const p of S.people.values()) if (p.alive && !p.away) roster.push([p.id, p, null]); for (const g of guests) roster.push([g.key, g.p, g]);
@@ -311,7 +318,10 @@
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) || mind.carryItem ? 0.85 : 1) * (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
-          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step); if (g.bridge) { /* trên cầu: không giữ trong đảo */ } else if (g.outside) { const a = Math.atan2(f.pos.z, f.pos.x), R = L.rOf(a) - 0.6, r = Math.hypot(f.pos.x, f.pos.z); if (r > R) f.pos.multiplyScalar(R / r); } else Nav.keepInside(f.pos); f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
+          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step);
+              if (g.bridge) { /* trên cầu: không giữ trong đảo */ } else if (g.outside) { const a = Math.atan2(f.pos.z, f.pos.x), R = L.rOf(a) - 0.6,
+              r = Math.hypot(f.pos.x, f.pos.z); if (r > R) f.pos.multiplyScalar(R / r); } else Nav.keepInside(f.pos);
+              f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
         if (!moving) f.ph += real * 3 * f.knobs.tempo;
@@ -339,7 +349,9 @@
         f.carryNow = false;
         if (!tgt && mind.carryItem && Work && moving) { const c = Work.carryOf(mind.carryItem); if (c) { tgt = Anim.basePose(f.knobs); c.G.pose(tgt, f.ph, 0, gs, f.knobs); f.tool = c.tool; f.verb = null; f.gk = 'mang:' + c.G.key; f.carryNow = true; } }
         // lính gác cổng phụ cãi lại khách đang xô xát ở đầu cầu (khách từ đảo khác, game/cities.js)
-        if (!gst && !moving && (mind.place === 'gateL' || mind.place === 'gateR')) { const g = guests.find((x) => x.brawl && x.mind.target === p.id); const gf = g && folks.get(g.key); if (gf && gf.pos.distanceToSquared(f.pos) < 9) { tgt = Anim.target('talk', f.ph, gs, f.knobs, { mood: 'argue', moving: false }); f.tool = null; f.gk = 'cãi'; _v.copy(gf.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
+        if (!gst && !moving && (mind.place === 'gateL' || mind.place === 'gateR')) { const g = guests.find((x) => x.brawl && x.mind.target === p.id);
+            const gf = g && folks.get(g.key); if (gf && gf.pos.distanceToSquared(f.pos) < 9) { tgt = Anim.target('talk', f.ph, gs, f.knobs, { mood: 'argue',
+            moving: false }); f.tool = null; f.gk = 'cãi'; _v.copy(gf.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         // lính gác cúi chào khi người đứng đầu đi ngang qua chốt (mỗi lần đi ngang chào một lần)
         if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
@@ -449,7 +461,9 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    return { update, pick, select, audit, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
+        get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++;
+        return n; } };
   }
 
   return { create, EXPR };

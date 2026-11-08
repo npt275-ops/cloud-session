@@ -1,0 +1,71 @@
+{
+  "_ghi_chu": "Mục tiêu cân chỉnh (design/ke-hoach-khac-phuc.md). Mỗi chỉ số: tên hiện, min, max (bỏ trống là không giới hạn). Đổi mục tiêu ở đây, có chủ ý.",
+  "wars": {
+    "name": "Trận đánh mỗi trận",
+    "min": 9,
+    "max": 12
+  },
+  "nukeMatches": {
+    "name": "Trận có dùng hạt nhân (%)",
+    "min": 8,
+    "max": 15
+  },
+  "champions": {
+    "name": "Cuối trận còn 1–2 đảo độc lập (%)",
+    "min": 55
+  },
+  "year8top": {
+    "name": "Cuối năm 8 có ≥ 2 đảo từ thời 11 (%)",
+    "min": 70
+  },
+  "lull": {
+    "name": "Khoảng lặng dài nhất trung bình (ngày)",
+    "max": 220
+  },
+  "starve": {
+    "name": "Chết đói mỗi trận",
+    "max": 5
+  },
+  "stuck": {
+    "name": "Có đảo độc lập kẹt dưới thời 6 (%)",
+    "max": 10
+  },
+  "ambush": {
+    "name": "Phục kích mỗi trận",
+    "min": 0.4
+  },
+  "rescue": {
+    "name": "Cứu viện phút chót mỗi trận",
+    "min": 0.4
+  },
+  "traitor": {
+    "name": "Nội gián mỗi trận",
+    "min": 0.4
+  },
+  "surrender": {
+    "name": "Đầu hàng mỗi trận",
+    "min": 0.8,
+    "max": 1.5
+  },
+  "civShare": {
+    "name": "Dân thường chết mỗi lần mất thành (%)",
+    "min": 5,
+    "max": 15
+  },
+  "vassalPop": {
+    "name": "Dân đảo bị chiếm một năm sau (% lúc mất thành)",
+    "min": 85
+  },
+  "bridgesDone": {
+    "name": "Cầu xây xong mỗi trận",
+    "min": 1
+  },
+  "bridgeRebuild": {
+    "name": "Cầu xây lại theo thời mới mỗi trận",
+    "min": 0.3
+  },
+  "visits": {
+    "name": "Lượt người qua lại giữa các đảo mỗi trận",
+    "min": 10
+  }
+}
