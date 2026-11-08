@@ -28,6 +28,7 @@
   const HIT = 0.2;              // độ bền một người lính phá được mỗi ngày (cháy, đập)
   const HOMES_HIT = 3;          // số nhà dân bị đánh
   const VOLUNTEER_AGE = [18, 50];
+  const SURRENDER_DAY = 0.2, SURRENDER_QUARTER = 0.9; // hệ số xét đầu hàng mỗi ngày / mỗi khi nhà chính mất thêm một phần tư
   const HALL_DAYS = 8;          // bị vây quá chừng này ngày thì hết lương, phải hàng
   const REPAIR = 0.06;          // một thợ sửa được chừng này độ bền mỗi ngày (đủ vật liệu)
   const REPAIR_COST = 6;        // mỗi phần mười độ bền tốn chừng này gỗ và đá
@@ -98,12 +99,15 @@
     return [...ids].map((id) => S.people.get(id));
   }
   // người đứng đầu có đầu hàng không (mỗi ngày xét một lần). lost: phần đội giữ thành đã mất; days: số ngày bị vây
-  function surrender(S, lostShare, days, rng) {
+  // người đứng đầu xét đầu hàng (design/ke-hoach-khac-phuc.md mục 5.2): mỗi ngày xét nhẹ, mỗi khi nhà chính mất thêm một phần
+  // tư độ bền (quarter) thì xét nặng. lostShare: phần đội giữ nhà chính đã ngã; hallLost: phần độ bền nhà chính đã mất
+  function surrender(S, lostShare, days, rng, hallLost, quarter) {
     if (days >= HALL_DAYS) return 'hết lương';
     const K = S.seats.king != null ? S.people.get(S.seats.king) : null;
     if (!K || !K.alive) return lostShare > 0.7 && rng.chance(0.5) ? 'không còn người chỉ huy' : null;
     const t = P().traits(K), base = 0.08 + 0.55 * t.fear + 0.4 * t.meekness - 0.45 * t.aggression - 0.3 * t.ambition;
-    return rng.chance(Math.max(0, Math.min(0.9, 0.2 * base * (0.2 + lostShare)))) ? 'cứu dân' : null;
+    const press = 0.2 + lostShare + (hallLost || 0);
+    return rng.chance(Math.max(0, Math.min(0.9, (quarter ? SURRENDER_QUARTER : SURRENDER_DAY) * base * press))) ? 'cứu dân' : null;
   }
 
   /* ---------- Vai của từng người trong trận (logic/brain.js hỏi trước mọi việc khác) ---------- */

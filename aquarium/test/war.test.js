@@ -1,7 +1,9 @@
 // Bể Kính · test/war.test.js · Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
+    'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
+    'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
@@ -29,17 +31,17 @@ test('đi đánh là người thật rời đảo: không làm ở nhà, đi m�
   assert.ok(w.troops.every((x) => x.p.job === 'soldier' || x.p.job === 'worker' || x.p.job === 'walker' || x.p.role), 'việc giữ nguyên khi đi vắng');
 });
 
-test('chiếm nhà chính thì sáp nhập: kho sang đảo thắng, người cai quản từ đảo thắng, dùng chung thời, có quân đóng giữ', () => {
+test('chiếm nhà chính thì sáp nhập: kho sang đảo thắng, người cai quản từ đảo thắng, giữ thời của mình, có quân đóng giữ', () => {
   // (kiểm thử hành vi: đặt thẳng trận vào lúc mất nhà chính, không phụ thuộc may rủi của trận đánh)
   const { W, w } = setup(3, 2, 1, 'conquer'), A = W.islands[2], B = W.islands[1];
   w.stage = 'inside'; w.siege = 'hall'; w.since = W.day; w.gate = 'gate';
-  E.state(B).stock.wood = 300; const wood0 = E.state(A).stock.wood, pop = living(B).length;
+  E.state(B).stock.wood = 300; const wood0 = E.state(A).stock.wood, pop = living(B).length, lv0 = B.level;
   War.annex(W, W.day, 2, 1, w); run(W, 2);
   assert.strictEqual(B.annexedBy, 2, 'Thông Xanh thuộc về Đá Mây');
   assert.ok(E.state(A).stock.wood > wood0, 'gỗ chuyển sang đảo thắng');
   const gov = B.people.get(B.seats.king);
   assert.ok(gov && gov.governor === 2 && gov.alive, 'người cai quản từ Đá Mây ngồi ghế vua');
-  assert.strictEqual(B.level, A.level, 'dùng chung thời');
+  assert.strictEqual(B.level, lv0, 'giữ thời của mình (không nhảy theo đảo thắng)');
   assert.ok(living(B).length >= pop * 0.7, 'dân vẫn sống trên đảo cũ (' + living(B).length + '/' + pop + ')');
   assert.ok(B.garrison && B.garrison.troops.length >= 1, 'có quân đóng giữ');
   assert.ok(!BK.Diplomacy.alive(W, 1), 'đảo bị sáp nhập không tự quyết nữa');
@@ -99,4 +101,51 @@ test('đảo bị sáp nhập bất bình thì nổi dậy (thắng hay thua kh�
 test('tắt chiến tranh thì không ai đánh ai (số trận, sáp nhập, chết đói theo năm: tools/calibrate.js)', () => {
   const P = BK.World.create({ seed: 1, war: false }); BK.World.jump(P, 2 * 360);
   assert.strictEqual(P.warCount, 0, 'tắt chiến tranh thì không ai đánh');
+});
+
+// ---------- Bước 11e (design/ke-hoach-khac-phuc.md mục 4.3, 4.4, 5.2) ----------
+test('đảo bị chiếm giữ thời của mình, đảo cai quản chuyển công nghệ dần: mỗi 90 ngày một thời, tới bằng mình trừ một', () => {
+  const { W, w } = setup(3, 2, 1, 'conquer'), A = W.islands[2], B = W.islands[1];
+  War.annex(W, W.day, 2, 1, w);
+  A.level = 9; B.level = 4; const d0 = W.day;
+  run(W, 89); assert.strictEqual(B.level, 4, 'chưa đủ 90 ngày thì chưa lên');
+  run(W, 2); assert.strictEqual(B.level, 5, 'đủ 90 ngày lên một thời');
+  // (dân không bất bình, để không nổi dậy giành lại đảo giữa chừng; đảo cai quản vẫn tự lên thời)
+  for (let k = 0; k < 10; k++) { W.rel[1][2].grudge = 0; B.unrest = 0; run(W, 91); assert.ok(B.level <= Math.max(5, A.level - 1), 'không vượt đảo cai quản trừ một'); }
+  assert.strictEqual(B.annexedBy, 2);
+  assert.strictEqual(B.level, A.level - 1, 'tới bằng đảo cai quản trừ một rồi dừng');
+  assert.ok(W.day - d0 > 360);
+  assert.ok(B.log.some((e) => /chuyển công nghệ/.test(e.text)), 'có tin chuyển công nghệ');
+});
+
+test('đầu hàng để cứu dân có điều kiện: người đứng đầu giữ ghế, đảo giữ lại một phần kho', () => {
+  const { W, w } = setup(3, 2, 1, 'conquer'), B = W.islands[1], king = B.seats.king;
+  E.state(B).stock.stone = 200;
+  War.annex(W, W.day, 2, 1, w, 'cứu dân');
+  assert.strictEqual(B.annexedBy, 2);
+  assert.strictEqual(B.seats.king, king, 'người đứng đầu cũ giữ ghế');
+  assert.strictEqual(B.people.get(king).governor, 2, 'cai quản thay đảo thắng');
+  assert.ok(E.state(B).stock.stone >= 200 * 0.4 - 1, 'giữ lại một phần kho (' + E.state(B).stock.stone + ')');
+  assert.ok(W.log.some((e) => /đầu hàng Đá Mây để cứu dân/.test(e.text)));
+});
+
+test('xét đầu hàng mỗi khi nhà chính mất thêm một phần tư độ bền', () => {
+  const S = { seats: { king: 1 }, people: new Map([[1, { id: 1, alive: true, genome: { traits: { fear: 0.9, meekness: 0.9, aggression: 0.1, ambition: 0.1 } } }]]) };
+  BK.People.traits = ((f) => (p) => (p.genome && p.genome.traits && p.genome.traits.fear != null && p.id === 1 ? Object.assign({ cunning: 0.5, paranoia: 0.5, piety: 0.5, intellect: 0.5 }, p.genome.traits) : f(p)))(BK.People.traits);
+  const yes = { chance: (p) => p > 0.25 }, Gs = BK.Siege;
+  assert.strictEqual(Gs.surrender(S, 0.2, 1, yes, 0.25, false), null, 'xét nhẹ mỗi ngày: chưa hàng');
+  assert.strictEqual(Gs.surrender(S, 0.2, 1, yes, 0.25, true), 'cứu dân', 'nhà chính vừa mất thêm một phần tư: người nhút nhát hàng');
+});
+
+test('đảo nhỏ tự xin làm chư hầu: không đánh, không quân đóng giữ, không tính là mất thành', () => {
+  const W = BK.World.create({ seed: 3, war: false }); BK.World.jump(W, 500);
+  const n0 = (W.cityLoss || []).length;
+  assert.ok(War.submit(W, W.day, 2, 1), 'bá chủ nhận');
+  const B = W.islands[1];
+  assert.strictEqual(B.annexedBy, 2);
+  assert.ok(!B.garrison, 'không quân đóng giữ');
+  assert.strictEqual((W.cityLoss || []).length, n0, 'không tính là mất thành (không có càn quét)');
+  assert.strictEqual(W.warStats.vassal, 1);
+  assert.ok(W.log.some((e) => /tự xin làm chư hầu Đá Mây/.test(e.text)));
+  assert.ok(!War.submit(W, W.day, 2, 1), 'đã là chư hầu thì không xin lại');
 });

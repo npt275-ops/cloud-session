@@ -106,12 +106,12 @@
           const sc = g.userData.scaffold; sc.visible = !!S0.wonder; if (sc.visible) { const w = 3.2 - done * 0.22; sc.scale.set(w * 0.62, y + 0.8, w * 0.62); }
           const fl = g.userData.flame; fl.visible = done > 0; fl.position.y = y + 0.6; fl.scale.set(1, 1 + 0.25 * Math.sin(t * 8), 1);
         }
-        // suy tàn: cỏ dại trước cửa nhà
-        if (S0.decline) for (let h = 0; h < (pl.homes || []).length && nw < MAXW - 6; h++) {
-          const d = pl.homes[h];
-          for (let j = 0; j < 6; j++) { const a = hash(i * 977 + h * 31 + j) * Math.PI * 2, r = 0.8 + hash(h * 7 + j * 13 + i) * 2.4;
-              V.set(d.x + L.center.x + Math.cos(a) * r, base + 0.4, d.z + L.center.z + Math.sin(a) * r); Q.identity();
-              S.setScalar(0.7 + hash(h + j * 3) * 0.7); M.compose(V, Q, S); weeds.setMatrixAt(nw++, M); }
+        // suy tàn: cỏ dại cao trước cửa nhà, giữa sân, quanh chợ đã đóng cửa (design/ke-hoach-khac-phuc.md mục 6.4)
+        if (S0.decline) for (const d of [...(pl.homes || []), ...(pl.square || []).slice(0, 2), ...(pl.market || []).slice(0, 2)]) {
+          if (nw > MAXW - 8) break; const h = Math.round(d.x * 7 + d.z * 13);
+          for (let j = 0; j < 8; j++) { const a = hash(i * 977 + h * 31 + j) * Math.PI * 2, r = 0.8 + hash(h * 7 + j * 13 + i) * 2.6;
+              V.set(d.x + L.center.x + Math.cos(a) * r, base + 0.6, d.z + L.center.z + Math.sin(a) * r); Q.identity();
+              S.set(1, 1.1 + hash(h + j * 3) * 0.9, 1).multiplyScalar(0.8 + hash(h + j) * 0.5); M.compose(V, Q, S); weeds.setMatrixAt(nw++, M); }
         }
       });
       // ngư trường chung: thuyền đánh cá của hai đảo giữa biển
@@ -129,7 +129,7 @@
       for (let k = nr; k < ropes.length; k++) ropes[k].visible = false;
       for (let k = nb; k < boats.length; k++) boats[k].visible = false;
     }
-    return { update };
+    return { update, spotOf: (i, lv) => spots.get(i + ':' + lv) || null }; // spotOf: chỗ đài kỳ quan đã chọn (tools/check-scene.js)
   }
   BK.Prosper3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

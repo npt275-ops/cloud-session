@@ -26,6 +26,8 @@
   'use strict';
   const NAVAL_LV = 3, NAVAL_DAYS = 0.5, NAVAL_KILL = 0.25;
   const AMBUSH = [0.12, 0.28];
+  const TRAITOR = 0.2;          // có người đủ lý do phản: khả năng bị mua chuộc mở cổng (nhân với độ mưu mô bên đánh)
+  const AMBUSH_COVER = { forest: 0.15, mountain: 0.15 }; // đảo có rừng, núi sát cổng: dễ giấu quân phục kích
   const DUEL_DAYS = 0.5;
   const BLOCKADE_DAYS = 24, BLOCKADE_FOOD = 0.3;
   const PRISONERS = 3, PRISON_DAYS = 360, RANSOM = 40;
@@ -74,12 +76,15 @@
   /* ---------- Tới nơi: phục kích, đánh đêm, nội gián, đấu tướng, vây thành ---------- */
   function onArrive(W, day, w, rng, fall) {
     const A = W.islands[w.a], B = W.islands[w.b], r = Wr().rulerOf(W, w.b), tb = traitsOf(W.islands[r]), ta = traitsOf(A);
-    // phục kích trên cầu
-    if (w.by === 'bridge' && !w.surprise && tb && tb.cunning > 0.6 && rng.chance(0.6)) {
+    // phục kích (design/ke-hoach-khac-phuc.md mục 5.1): trên cầu, hay ở bãi đổ bộ khi đảo có rừng, núi sát cổng; người đứng đầu
+    // mưu mô thì hay bày, đảo rừng núi thì dễ giấu quân. Quân đánh úp (surprise) thì không ai kịp phục
+    const cover = AMBUSH_COVER[B.key] || 0, wit = tb ? Math.max(0, tb.cunning - 0.45) * 0.6 : 0;
+    if (!w.surprise && tb && rng.chance(Math.min(0.8, (w.by === 'bridge' ? 0.15 : 0) + cover + wit))) {
       const k = rng.range(AMBUSH[0], AMBUSH[1]); let n = 0;
       for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate)) n++;
       w.troops = w.troops.filter((x) => x.p.alive); w.morale = Math.max(0, w.morale - 0.2); w.ambush = n; stat(W, 'ambush');
-      say(W, day, B.name + ' phục kích quân ' + A.name + ' trên cầu: ' + n + ' người ngã.', [w.a, w.b]);
+      const where = w.by === 'bridge' ? 'trên cầu' : cover ? (B.key === 'forest' ? 'trong rừng sát bãi đổ bộ' : 'trên sườn núi sát bãi đổ bộ') : 'ở bãi đổ bộ';
+      say(W, day, B.name + ' phục kích quân ' + A.name + ' ' + where + (wit > 0.1 ? ' (người đứng đầu mưu mô đoán trước đường quân tới)' : '') + ': ' + n + ' người ngã.', [w.a, w.b]);
     }
     // đánh đêm
     if (w.surprise && night(day)) {
@@ -88,12 +93,18 @@
       if (dozing) G().hit(B, w.gate, 0.15 * Math.min(3, dozing));
       say(W, day, 'Quân ' + A.name + ' cầm đuốc đánh đêm vào ' + B.name + (dozing ? ', lính gác đêm ngủ gật' : '') + '.', [w.a, w.b]);
     }
-    // nội gián mở cổng
-    if (ta && ta.cunning > 0.55 && (B.discontent || 0) + (B.unrest || 0) > 0.15 && rng.chance(0.5 * ta.cunning)) {
-      const tr = living(B).find((p) => !p.away && !p.role && P().ageOf(p, day) >= 18 && P().traits(p).paranoia > 0.65 && P().traits(p).aggression > 0.5);
-      if (tr) {
+    // nội gián mở cổng (design/ke-hoach-khac-phuc.md mục 5.1): người lớn không giữ ghế, có lý do phản: nợ ân đảo kia (từng sang
+    // chợ, theo đoàn buôn được tiếp đãi), bất bình với đảo mình (đảo đang bất mãn, bất bình), hay tính đa nghi nóng nảy. Người
+    // đứng đầu bên đánh càng mưu mô càng hay mua chuộc được
+    if (ta && !w.forceGate) {
+      const sour = (B.discontent || 0) + (B.unrest || 0);
+      const why = (p) => { const t = P().traits(p); return p.owes && p.owes[w.a] != null && day - p.owes[w.a] < 3 * 360 ? 'nợ ân ' + A.name
+          : sour > 0.3 && t.aggression > 0.55 ? 'bất bình với ' + B.name : t.paranoia > 0.65 && t.aggression > 0.5 ? 'nuôi oán người đứng đầu' : null; };
+      const tr = living(B).find((p) => !p.away && !p.role && p.job !== 'soldier' && P().ageOf(p, day) >= 18 && why(p));
+      if (tr && rng.chance(TRAITOR * (0.4 + ta.cunning))) {
+        const cause = why(tr);
         w.traitor = tr.id; w.forceGate = true; G().hit(B, w.gate, 1); stat(W, 'traitor');
-        say(W, day, P().fullName(tr) + ' lén mở cổng ' + B.name + ' cho quân ' + A.name + '.', [w.a, w.b]);
+        say(W, day, P().fullName(tr) + ' (' + cause + ') lén mở cổng ' + B.name + ' cho quân ' + A.name + '.', [w.a, w.b]);
         legend(W, day, w.b, tr, 'traitor', 'mở cổng cho quân ' + A.name);
       }
     }

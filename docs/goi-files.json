@@ -145,6 +145,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/goals.js",
+  "src": "logic/goals.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/guards.js",
   "src": "logic/guards.js",
   "mode": 420
@@ -182,6 +187,11 @@
  {
   "path": "BeKinh/logic/posts.js",
   "src": "logic/posts.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/powers.js",
+  "src": "logic/powers.js",
   "mode": 420
  },
  {

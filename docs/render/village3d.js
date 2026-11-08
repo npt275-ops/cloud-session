@@ -28,6 +28,7 @@
     const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
     const camera = o.camera || null, LOD_FAR = 40; let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
     const bars = o.bars || null;   // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
+    const UNSTICK_S = 3, UNSTICK_D = 0.5; let stuckN = 0; // gỡ người kẹt: đi chừng này giây (giờ game) không tiến được chừng này đơn vị (đếm số lần cho auditStats)
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
@@ -67,8 +68,10 @@
       if (place && place.startsWith('ruin:')) return ruinSpot(place.slice(5), p.id);
       if (place === 'refuge') return refugeOf(p.id);
       // sân chơi của làng: bãi trống phía ngoài một dãy nhà dân, trẻ nhỏ chơi thành nhóm, người già ngồi trông
-      if (place === 'playground') { const h = PL.homes && PL.homes.length ? PL.homes[Math.floor(PL.homes.length / 2)] : null; return h ? h.clone().addScaledVector(h.clone().setY(0).normalize(), 4.5) : pickOf(PL.square, 0); } // bãi trống ngoài dãy nhà, xa nhà chính
-      if (place === 'market') return pickOf(PL.market, k) || pickOf(PL.store, k) || pickOf(PL.square, k); // thời chưa có chợ: trao đổi ở kho, ở sân
+      if (place === 'playground') { if (PL.playground) return PL.playground;
+          const h = PL.homes && PL.homes.length ? PL.homes[Math.floor(PL.homes.length / 2)] : null;
+          return h ? h.clone().addScaledVector(h.clone().setY(0).normalize(), 4.5) : pickOf(PL.square, 0); } // bãi trống ngoài dãy nhà, xa nhà chính
+      if (place === 'market') return (S.decline ? null : pickOf(PL.market, k)) || pickOf(PL.store, k) || pickOf(PL.square, k); // thời chưa có chợ: trao đổi ở kho, ở sân; suy tàn: chợ đóng cửa, mua ở kho
       if (place === 'shrine') return pickOf(PL.shrine, k);
       if (place === 'school') return pickOf(PL.school, k);
       // đi vòng: người đi đường, thợ đi tu bổ, thầy thuốc đi thăm từng nhà, lính đi tuần đổi chỗ theo thời gian
@@ -106,7 +109,9 @@
         if (n >= FALLEN_MAX || !PL) break;
         // ngã trong trận đang xem gần: nằm đúng chỗ đứng lúc trúng đạn, quay theo hướng đang đứng (bodies, takeHits)
         const bk = x.i + ':' + x.id, B = bodies.get(bk);
-        if (B) { keep.add(bk); V.copy(B.pos).add(L.center); V.y = L.center.y + 0.02 + Math.max(0, B.pos.y); Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), B.yaw + Math.PI); M.compose(V, Q, one); fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++; continue; }
+        if (B) { keep.add(bk); V.copy(B.pos).add(L.center); V.y = L.center.y + 0.02 + Math.max(0, B.pos.y); Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0),
+            B.yaw + Math.PI); M.compose(V, Q, one); fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++;
+            continue; }
         const base = spot(x.at, { id: x.id, clan: null, home: null, post: x.id }); if (!base) continue;
         const a = x.id * 2.39996, r = 0.8 + (x.id % 7) * 0.45; V.set(base.x + Math.cos(a) * r, 0.02, base.z + Math.sin(a) * r);
         // ngã ở cổng: chỗ đứng của chốt gác nằm trong khung cổng, dịch vào phía trong thành vài bước cho khỏi lẫn vào nhà cổng
@@ -379,6 +384,22 @@
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
         if (!moving) f.ph += real * 3 * f.knobs.tempo;
+        // gỡ người kẹt (design/ke-hoach-khac-phuc.md mục 6.3): đang đi mà UNSTICK_S giây không tiến được UNSTICK_D thì tìm lại đường;
+        // kẹt lần nữa thì nhảy sang điểm kế tiếp trên lối đi (hay tới đích). Bước tại chỗ: đang đi mà không nhích (đếm cho audit)
+        // (đo bằng thời gian đi của chính người đó theo giờ game: xem chậm thì người đi chậm, không phải kẹt)
+        if (moving) {
+          const pr = f.prog || (f.prog = { x: f.pos.x, z: f.pos.z, t: 0, n: 0 }); pr.t += secF;
+          f.inplace = !!f.lastP && secF > 0.02 && Math.abs(f.lastP.x - f.pos.x) + Math.abs(f.lastP.z - f.pos.z) < 1e-4;
+          if (pr.t >= UNSTICK_S) {
+            if (Math.hypot(f.pos.x - pr.x, f.pos.z - pr.z) < UNSTICK_D) {
+              stuckN++; pr.n++;
+              if (pr.n === 1) f.nav = null;
+              else { const N = f.nav, nx = N && N.pts[Math.min(N.pts.length - 1, N.i + 1)]; f.pos.copy(nx || (goal && goal.p) || f.pos); Nav.keepInside(f.pos); f.nav = null; pr.n = 0; }
+            } else pr.n = 0;
+            pr.x = f.pos.x; pr.z = f.pos.z; pr.t = 0;
+          }
+        } else { f.prog = null; f.inplace = false; }
+        (f.lastP || (f.lastP = new THREE.Vector3())).copy(f.pos);
         if (cyc) cycleNext(f, !moving && !!goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) < 0.8, ts);
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
         // cử chỉ làm việc chỉ ở chỗ làm (bước 'work' của chu trình), không ở kho, không trên đường
@@ -503,6 +524,23 @@
     // kiểm thử "không vô nghĩa" (design/npc-song-that.md mục 7.1): ở khung hình vừa vẽ, ai làm cử chỉ không hợp với việc,
     // mang hàng khi không đi giữa chỗ làm và kho, hay làm việc khi đang đi, ở chỗ không phải chỗ làm. Trả về danh sách vi phạm
     const LOAD = new Set(['sack', 'log', 'basket', 'crate']);
+    // số đo "không vô nghĩa" (design/ke-hoach-khac-phuc.md mục 7.2): phần người đứng không, người đi không có đích, số người
+    // trong vòng 10 quanh nhà chính, số người bước tại chỗ, số lần kẹt (từ lần đo trước)
+    const HALLISH = new Set(['hall', 'square', 'hallLoop', 'podium', '-']);
+    function auditStats() {
+      let out = 0, idle = 0, noGoal = 0, nearHall = 0, inplace = 0; const H = PL && (PL.hallC || PL.hall), why = {};
+      for (const [id, f] of folks) {
+        if (!f.rig || f.inside) continue; out++;
+        const mind = S.minds.get(id) || {};
+        if (!f.moving && !f.verb && !f.gk && (mind.state === 'idle' || !mind.state)) idle++;
+        if (f.moving && !mind.place && mind.target == null && mind.follow == null) noGoal++;
+        // tụ tập quanh nhà chính: người ở trong vòng 10 mà việc là ở nhà chính, sân, vòng quanh nhà chính hay không có chỗ (người
+        // về nhà mình, đi làm ngang qua ở làng nhỏ thời đầu không tính)
+        if (H && HALLISH.has(mind.place || '-') && (f.pos.x - H.x) ** 2 + (f.pos.z - H.z) ** 2 < 100) { nearHall++; const k = (mind.verb || mind.state) + '@' + (mind.place || '-'); why[k] = (why[k] || 0) + 1; }
+        if (f.moving && f.inplace) inplace++;
+      }
+      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, hallWhy: why }; stuckN = 0; return r;
+    }
     function audit() {
       const bad = [];
       for (const [id, f] of folks) {
@@ -517,7 +555,7 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
+    return { update, pick, select, audit, auditStats, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
         get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++;
         return n; } };
   }

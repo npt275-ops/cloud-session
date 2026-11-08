@@ -43,6 +43,9 @@
     // hệ sinh thái (logic/ecology.js): môi trường, chính trị trong đảo chạy cả khi sáu đảo sống riêng; chạy nạn, lấy vợ chồng
     // khác đảo, dịch lây, cấm vận chỉ khi có qua lại giữa các đảo
     if (BK.Ecology) BK.Ecology.dayTick(W, day, W.rng);
+    // niềm tin dâng lên cho quyền năng, mục tiêu theo trận (logic/powers.js, logic/goals.js: phần logic của vòng chơi)
+    if (BK.Powers) BK.Powers.dayTick(W, day);
+    if (BK.Goals) BK.Goals.dayTick(W, day);
     if (!W.diplomacy) return;
     BK.Diplomacy.dayTick(W, day);
     if (W.war) BK.War.dayTick(W, day, W.rng);

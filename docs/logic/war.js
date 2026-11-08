@@ -61,6 +61,9 @@
   const REVOLT_REST = 180;      // nổi dậy thất bại: chừng này ngày sau dân mới gượng dậy được
   const REVOLT_ODDS = 1.0;      // phe nổi dậy ước sức mình dưới phần này so với phe giữ thì chờ thời
   const GARRISON_MAX = 0.15;    // quân đóng giữ tối đa chừng này phần người lớn của đảo bị sáp nhập (ít nhất 4): nhà cũng cần lính
+  const RESCUE = 0.5;           // nhà chính bị vây: hệ số một đảo thân (hay thù kẻ đánh) gửi quân cứu viện gấp
+  const KEEP_YIELD = 0.4;       // đầu hàng để cứu dân: đảo thua giữ lại chừng này phần kho
+  const TECH_DAYS = 90;         // đảo bị chiếm: cứ chừng này ngày đảo cai quản chuyển công nghệ lên một thời (tới bằng mình trừ một)
   const RULER_AID = 0.4;        // đảo cai quản gửi chừng này phần lính ở nhà sang giữ đảo nó cai quản khi bị đánh
   const MUSTER = 0.3;           // gọi quân: tập hợp ở cổng chừng này ngày, người nhà ra tiễn, rồi mới lên đường
   const OUTER_DAYS = 2;         // vào thành: đánh các công trình quanh thành tối đa chừng này ngày rồi vây nhà chính
@@ -77,7 +80,7 @@
   const GATE_HIT = 1.2, GATE_EMPTY = 2, HALL_HIT = 0.04;
   // càn quét (mục 9): vào thành rồi, nửa quân đi bắn dân thường đang chạy nạn ngoài đường trước khi tới nhà chính; mỗi ngày
   // khả năng trúng của một người ngoài đường theo CIV_HIT (người trốn trong nhà chỉ CIV_HID phần)
-  const CIV_HIT = 0.12, CIV_HID = 0.12;
+  const CIV_HIT = 0.33, CIV_HID = 0.15;
   // đổi chặng (design/ke-hoach-khac-phuc.md mục 2.4): từ phá công trình sang vây nhà chính, quân chạy qua phố mất TRANSIT ngày;
   // gặp dân binh, lính còn lại trên đường thì đánh hết (còn tối đa TRANSIT_LEFT người) mới tới nhà chính, không đi lướt qua
   const TRANSIT = 0.3, TRANSIT_LEFT = 1, TRANSIT_MAX = 1.5;
@@ -177,6 +180,8 @@
     const lv = troops.filter((x) => x.levy).length, eng = (w.engines || []).length, who = troops.length + ' quân' + (lv ? ' (' + lv + ' dân binh)' : '') + (BK.Arms ? ', ' + BK.Arms.NAME[BK.Arms.kit(A.level).ranged] + (eng ? ', ' + eng + ' ' + BK.Arms.ENGINE[w.engines[0].kind].name : '') : '');
     say(W, day, A.name + (kind === 'raid' ? ' đem ' + who + ' sang đột kích ' : surprise ? ' lặng lẽ đem ' + who + ' sang đánh úp ' : ' tuyên chiến, đem ' + who + ' sang đánh ') + B.name + ' (' + (w.by === 'bridge' ? 'qua cầu' : 'đi thuyền') + ', ' + days + ' ngày).', [a, b]);
     note(A, day, 'war', (kind === 'raid' ? 'Quân lên đường đột kích ' : 'Quân lên đường đánh ') + B.name + '.', gen ? [gen.id] : []);
+    // tổng tấn công là chuyện lớn của cả bể (biên niên độ lớn 3, máy quay theo chặng tiễn quân); đột kích nhỏ hơn
+    if (BK.Chronicle) BK.Chronicle.add(W, day, a, A.name + (kind === 'raid' ? ' đột kích ' : ' khởi binh đánh ') + B.name, kind === 'raid' ? 2 : 3, 'gate');
     // đánh úp thì bên kia (và đồng minh) không biết trước; biết trước thì người đứng đầu đa nghi có thể phá cầu chặn đường
     // (logic/strategy.js onAttacked): quân đang đi qua cầu phải vòng đi thuyền, tới chậm hơn
     if (!surprise) {
@@ -218,6 +223,24 @@
       w.helpers.push({ c, troops: sent, arrive: day + D().travelDays(W, c, w.b) });
       W.rel[w.b][c].trust = Math.min(1, W.rel[w.b][c].trust + 0.2);
       say(W, day, W.islands[c].name + ' gửi ' + k + ' quân sang giúp ' + W.islands[w.b].name + '.', [c, w.b]);
+    }
+  }
+
+  // nhà chính bị vây (design/ke-hoach-khac-phuc.md mục 5.1): tin khẩn tới các đảo thân, quân đang trên đường thì đi gấp; đảo
+  // tin cậy đảo bị đánh hay thù kẻ đánh thì có thể gửi quân, đi nhanh gấp đôi (cứu viện phút chót)
+  function lastCall(W, day, w, rng) {
+    const b = rulerOf(W, w.b);
+    for (const h of w.helpers) if (h.arrive > day) h.arrive = day + (h.arrive - day) * 0.5;
+    for (let c = 0; c < W.islands.length; c++) {
+      if (c === w.a || c === w.b || c === b || !D().alive(W, c) || atWar(W, c) || w.helpers.some((h) => h.c === c)) continue;
+      const M = BK.Strategy.mind(W.islands[c]); if (!M) continue;
+      const tr = W.rel[c][b].trust, foe = W.rel[c][w.a].grudge, t = M.t;
+      if (tr < 0.3 && foe < 0.5) continue;
+      if (!rng.chance(Math.max(0, Math.min(0.8, RESCUE * (0.2 + tr + foe + 0.4 * t.aggression - 0.4 * t.fear))))) continue;
+      const L = living(W.islands[c]).filter((p) => !p.away && p.job === 'soldier'), k = Math.floor(L.length * 0.3); if (k < 1) continue;
+      const sent = L.slice(0, k).map((p) => { p.away = w.id; return { i: c, p }; });
+      w.helpers.push({ c, troops: sent, arrive: day + D().travelDays(W, c, w.b) * 0.5, why: tr >= foe ? 'tin cậy ' + W.islands[w.b].name : 'thù ' + W.islands[w.a].name });
+      say(W, day, W.islands[c].name + ' nhận tin ' + W.islands[w.b].name + ' bị vây nhà chính, gửi gấp ' + k + ' quân sang.', [c, w.b]);
     }
   }
 
@@ -380,11 +403,18 @@
           const burnt = (sg.hit || []).map((k) => G().nameOf(k));
           say(W, day, 'Quân ' + A.name + ' vây nhà chính ' + B.name + (burnt.length ? ' (đã đốt phá ' + burnt.join(', ') + ')' : '') + '.', [w.a, w.b]);
           note(B, day, 'war', team.length + ' người vào giữ nhà chính.');
+          lastCall(W, day, w, rng);
         }
         return;
       }
       // vây nhà chính: đội giữ thành đánh từ trong ra; chết hết hay người đứng đầu đầu hàng thì mất thành
       const team = w.team.map((id) => B.people.get(id)).filter((p) => p && p.alive && !p.away).map((p) => ({ i: w.b, p, levy: !G().isGuard(p), vol: !G().isGuard(p) && !p.role }));
+      // quân cứu viện tới khi nhà chính đang bị vây: vào đánh cùng đội giữ nhà chính (cứu viện phút chót)
+      for (const h of w.helpers) if (h.arrive <= day) {
+        if (!h.hallTold && h.troops.length) { h.hallTold = true; h.told = true; w.morale = Math.max(0, w.morale - 0.25); const bs = W.battleStats || (W.battleStats = {}); bs.rescue = (bs.rescue || 0) + 1;
+          say(W, day, 'Quân ' + W.islands[h.c].name + ' tới cứu viện ' + B.name + ' đúng lúc nhà chính sắp mất' + (h.why ? ' (' + h.why + ')' : '') + '.', [h.c, w.b, w.a]);
+          if (BK.Chronicle) BK.Chronicle.add(W, day, w.b, 'Được ' + W.islands[h.c].name + ' cứu viện phút chót', 4, 'hall'); }
+        team.push(...h.troops.filter((x) => x.p.alive)); }
       clash(W, day, w.troops, team, lvOf(W), lvOf(W), HALL_WALL * wall(B.level) * ready(B), w, rng, dt);
       w.troops = w.troops.filter((x) => x.p.alive);
       const left = team.filter((x) => x.p.alive);
@@ -396,9 +426,10 @@
         const eng = (w.engines || []).reduce((s, e) => s + ((BK.Arms && BK.Arms.ENGINE[e.kind] && BK.Arms.ENGINE[e.kind].gate) || 0), 0) * 0.3;
         G().hit(B, 'hall', dt * (HALL_HIT * Math.min(3, ratio) + eng));
         if (G().hp(B, 'hall') <= 0) { say(W, day, 'Nhà chính ' + B.name + ' sụp dưới làn đạn của quân ' + A.name + '.', [w.a, w.b]); return annex(W, day, w.a, w.b, w, 'nhà chính sụp'); } }
-      if (Math.floor(day) !== w.yieldDay) {
-        w.yieldDay = Math.floor(day);
-        const why = G().surrender(B, 1 - left.length / w.team0, day - w.since, rng);
+      const hallLost = 1 - G().hp(B, 'hall'), q = Math.floor(hallLost * 4), quarter = q > (w.yieldQ || 0);
+      if (Math.floor(day) !== w.yieldDay || quarter) {
+        w.yieldDay = Math.floor(day); w.yieldQ = Math.max(w.yieldQ || 0, q);
+        const why = G().surrender(B, 1 - left.length / w.team0, day - w.since, rng, hallLost, quarter);
         if (why) { W.warStats.surrender = (W.warStats.surrender || 0) + 1; return annex(W, day, w.a, w.b, w, why); }
       }
     }
@@ -479,9 +510,12 @@
   function annex(W, day, a, b, w, why) {
     const A = W.islands[a], B = W.islands[b], sa = E().state(A).stock, sb = E().state(B).stock, stB = E().state(B);
     // đo đạc (tools/calibrate.js): dân lúc khởi binh, dân thường chết vì càn quét, dân lúc mất thành; một năm sau ghi dân còn lại
-    (W.cityLoss || (W.cityLoss = [])).push({ b, day: Math.floor(day), pop0: (w && w.popB) || living(B).length, civ: (w && w.civDead) || 0, popAt: living(B).length, pop1: null });
+    if (w) (W.cityLoss || (W.cityLoss = [])).push({ b, day: Math.floor(day), pop0: (w && w.popB) || living(B).length, civ: (w && w.civDead) || 0, popAt: living(B).length, pop1: null });
     // kho: chuyển hết sang đảo thắng, lương thực để lại đủ cho dân RESERVE_DAYS ngày
-    for (const r of E().RES) { const keep = r === 'food' ? Math.min(sb.food, stB.eaten * RESERVE_DAYS) : 0, k = sb[r] - keep; if (k > 0) { sa[r] = Math.min(E().CAP(A.level, r), sa[r] + k); sb[r] = keep; } }
+    // đầu hàng để cứu dân (design/ke-hoach-khac-phuc.md mục 5.2) thì có điều kiện: giữ lại KEEP_YIELD phần kho, người đứng đầu cũ
+    // giữ ghế, cai quản thay cho đảo thắng
+    const yielded = why === 'cứu dân', share = yielded ? 1 - KEEP_YIELD : 1;
+    for (const r of E().RES) { const keep = r === 'food' ? Math.min(sb.food, stB.eaten * RESERVE_DAYS) : 0, k = (sb[r] - keep) * share; if (k > 0) { sa[r] = Math.min(E().CAP(A.level, r), sa[r] + k); sb[r] -= k; } }
     const was = B.annexedBy;
     if (B.garrison) { for (const x of B.garrison.troops) x.p.away = null; B.garrison = null; }
     B.annexedBy = a; B.annexDay = day; B.unrest = 0.3;
@@ -497,14 +531,20 @@
     W.annexations++;
     // người cai quản: một người trong hội đồng đảo thắng sang ngồi ghế vua; vua cũ bị phế
     const old = B.seats.king != null ? B.people.get(B.seats.king) : null;
-    if (old && old.alive) {
+    if (yielded && old && old.alive) {
+      old.governor = a; B.situ.kneel = { id: old.id, until: day + 1.2, ruler: a };
+      note(B, day, 'seat', P().fullName(old) + ' đầu hàng, được giữ ghế, cai quản đảo thay ' + A.name + '.', [old.id]);
+    } else if (old && old.alive) {
       old.role = null; note(B, day, 'seat', P().fullName(old) + ' bị phế.', [old.id]);
       // người đứng đầu cũ bị dẫn ra quỳ ở sân nhà chính; cờ đảo cũ hạ xuống, cờ đảo thắng kéo lên (phần vẽ: B.annexDay)
       B.situ.kneel = { id: old.id, until: day + 1.2, ruler: a };
     }
-    if (why) say(W, day, (old ? P().fullName(old) : 'Nhà chính') + ' ' + B.name + ' đầu hàng ' + A.name + (why === 'cứu dân' ? ' để cứu dân.' : ' (' + why + ').'), [a, b]);
-    B.seats.king = null;
-    const pick = ['advisor', 'general2', 'priest', 'merchant'].map((k) => A.seats[k]).filter((id) => id != null).map((id) => A.people.get(id)).find((p) => p && p.alive && !p.away);
+    const asked = why === 'xin làm chư hầu';
+    if (asked) { W.rel[b][a].grudge = Math.max(0, W.rel[b][a].grudge - GRUDGE_ANNEX * 0.7); B.unrest = 0.1; } // tự xin: ít oán hơn bị đánh chiếm
+    if (asked) say(W, day, (old ? P().fullName(old) : 'Người đứng đầu') + ' ' + B.name + ' thấy không thể chống nổi, tự xin làm chư hầu ' + A.name + '.', [a, b]);
+    else if (why) say(W, day, (old ? P().fullName(old) : 'Nhà chính') + ' ' + B.name + ' đầu hàng ' + A.name + (why === 'cứu dân' ? ' để cứu dân.' : ' (' + why + ').'), [a, b]);
+    if (!(yielded && old && old.alive)) B.seats.king = null;
+    const pick = B.seats.king != null ? null : ['advisor', 'general2', 'priest', 'merchant'].map((k) => A.seats[k]).filter((id) => id != null).map((id) => A.people.get(id)).find((p) => p && p.alive && !p.away);
     if (pick) {
       const g = P().create({ id: B.nextId++, name: pick.name, clan: pick.clan, sex: pick.sex, born: pick.born, genome: pick.genome, gen: pick.gen });
       g.traits = pick.traits; g.epi = pick.epi; g.governor = a; g.role = 'king'; g.from = A.key; g.job = null;
@@ -514,25 +554,33 @@
       note(A, day, 'seat', P().fullName(pick) + ' sang cai quản ' + B.name + '.', [pick.id]);
       note(B, day, 'seat', P().fullName(g) + ' từ ' + A.name + ' sang cai quản đảo.', [g.id]);
     }
-    syncEra(W, b, day);
-    say(W, day, A.name + ' chiếm nhà chính ' + B.name + '. ' + B.name + (was != null ? ' (vốn thuộc ' + W.islands[was].name + ')' : '') + ' bị sáp nhập vào ' + A.name + '.', [a, b]);
-    note(B, day, 'war', 'Nhà chính thất thủ. Đảo bị sáp nhập vào ' + A.name + '.');
+    B.techDay = day;
+    if (!asked) say(W, day, A.name + ' chiếm nhà chính ' + B.name + '. ' + B.name + (was != null ? ' (vốn thuộc ' + W.islands[was].name + ')' : '') + ' bị sáp nhập vào ' + A.name + '.', [a, b]);
+    note(B, day, 'war', asked ? 'Đảo xin làm chư hầu ' + A.name + '.' : 'Nhà chính thất thủ. Đảo bị sáp nhập vào ' + A.name + '.');
     if (BK.Chronicle) BK.Chronicle.add(W, day, b, B.name + ' bị sáp nhập vào ' + A.name + (why ? ' (' + why + ')' : ''), 5, 'hall');
     if (B.wonders && B.wonders.length) say(W, day, (B.wonders.length > 1 ? B.wonders.length + ' kỳ quan' : 'Kỳ quan') + ' của ' + B.name + ' nay thuộc về ' + A.name + '.', [a, b]);
     note(A, day, 'war', 'Chiếm được ' + B.name + '.');
     if (w) goHome(W, day, w, null, true);
   }
-  // đảo bị sáp nhập dùng chung thời với đảo cai quản
+  // đảo nhỏ tự xin làm chư hầu bá chủ (design/ke-hoach-khac-phuc.md mục 4.3, logic/strategy.js trySubmit): không đánh, không
+  // càn quét, không quân đóng giữ; người đứng đầu cũ vẫn ra quỳ, bá chủ cử người sang cai quản như khi chiếm
+  function submit(W, day, a, b) {
+    if (W.islands[b].annexedBy != null || atWar(W, a) || atWar(W, b)) return false;
+    W.warStats.vassal = (W.warStats.vassal || 0) + 1;
+    annex(W, day, a, b, null, 'xin làm chư hầu');
+    return true;
+  }
+  // thời thật của đảo bị chiếm (design/ke-hoach-khac-phuc.md mục 4.4): đảo giữ thời của chính mình, đảo cai quản chuyển công
+  // nghệ dần, mỗi TECH_DAYS ngày lên một thời, tới bằng đảo cai quản trừ một (không bao giờ tụt thời)
   function syncEra(W, i, day) {
     const S = W.islands[i], R = W.islands[rulerOf(W, i)];
-    if (S.level === R.level) return;
-    const up = R.level > S.level; S.level = R.level;
+    if (S.level >= R.level - 1 || day - (S.techDay != null ? S.techDay : S.annexDay || 0) < TECH_DAYS) return;
+    S.techDay = day; S.level++;
     if (BK.Construction) BK.Construction.setEra(S, S.level);
-    if (up && BK.Dramas) BK.Dramas.onEra(S, S.rng);
-    note(S, day, 'era', S.name + ' theo ' + R.name + ' sang ' + BK.Eras.of(S.level).name + '.');
+    if (BK.Dramas) BK.Dramas.onEra(S, S.rng);
+    note(S, day, 'era', R.name + ' chuyển công nghệ: ' + S.name + ' sang ' + BK.Eras.of(S.level).name + '.');
     S.situChanged = true;
   }
-
   /* ---------- Đảo bị sáp nhập: nộp kho, bất bình, nổi dậy ---------- */
   function vassalDay(W, day, i, rng) {
     const S = W.islands[i], r = S.annexedBy, Rr = W.islands[r], st = E().state(S), sr = E().state(Rr).stock;
@@ -673,5 +721,5 @@
         rank: gk++, of: gk } : { state: 'work', verb: 'patrol', place: 'patrol', reason: 'quân đóng giữ đi tuần' }, enter: 'gate', side: 'garrison' });
     return out;
   }
-  return { init, rulerOf, vassalsOf, atWar, defense, offense, musterable, launch, annex, endWar, step, dayTick, sideOf, wall, tech, onIsland, gateFor };
+  return { init, rulerOf, vassalsOf, atWar, defense, offense, musterable, launch, annex, submit, endWar, step, dayTick, sideOf, wall, tech, onIsland, gateFor };
 });

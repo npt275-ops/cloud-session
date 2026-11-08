@@ -279,9 +279,12 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT); // xe chạy dọc vòng đường, nhường người đi bộ
+          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT, !!sh.decline); // xe chạy dọc vòng đường, nhường người đi bộ; suy tàn thì vắng xe
           }
+          // suy tàn: hai phần ba nhà bỏ hoang, đèn tắt (design/ke-hoach-khac-phuc.md mục 6.4)
+          const dark = !!sh.decline && Math.floor(p.ph * 97) % 3 !== 0;
           if (!far) for (const G of p.glows) {
+            G.visible = !dark; if (dark) continue;
             const fl = A && A.pulse ? 0.7 + 0.3 * Math.sin(ts * 1.6 + p.ph) : 0.86 + 0.14 * Math.sin(ts * 17 + p.ph) * Math.sin(ts * 11 + p.ph * 2);
             G.material.opacity = Math.min(1, (0.7 + 0.25 * (night || 0)) * fl + 0.1);
           }
@@ -336,6 +339,30 @@
       { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
         if (H) { const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
+      // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
+      // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra
+      { const sp = sh.spots || (sh.spots = {});
+        // (công trình dựng sau có thể dời lấn vào chỗ đã chọn: thấy chồng thì chọn lại, dời cả đồ dựng theo)
+        const spot = (tag, v, r, prop) => {
+          const was = sp[tag]; if (was && !PL.overlaps(was.x, was.z, r, sh.fixed, 'spot:' + tag).length) return was;
+          if (was === null && sp[tag + ':n'] === sh.fixed.length) return null;
+          const q = v && PL.freeSpot(L, v.x, v.z, r, sh.fixed.filter((F) => F.P !== 'spot:' + tag)); sp[tag + ':n'] = sh.fixed.length;
+          const F = sh.fixed.find((x) => x.P === 'spot:' + tag); if (F && !q) sh.fixed.splice(sh.fixed.indexOf(F), 1);
+          sp[tag] = q ? new THREE.Vector3(q.x, 0, q.z) : null; if (!q) return null;
+          if (F) { F.x = q.x; F.y = q.z; } else sh.fixed.push({ x: q.x, y: q.z, r, P: 'spot:' + tag });
+          if (prop) { if (!sp[tag + ':g']) sp[tag + ':g'] = prop(); sp[tag + ':g'].position.set(q.x, 0, q.z); }
+          return sp[tag];
+        };
+        const mid = out.homes.length ? out.homes[Math.floor(out.homes.length / 2)] : null, sq0 = out.square[0] || new THREE.Vector3(f.x * 9, 0, f.y * 9);
+        // sân chơi của trẻ: bãi trống phía ngoài dãy nhà dân, xa nhà chính
+        if (mid) out.playground = spot('playground', mid.clone().addScaledVector(mid.clone().setY(0).normalize(), 4.5), 3);
+        // thời đầu (1–2) chưa có chợ, trường: bãi trao đổi giữa sân và nhà dân (vòng khúc gỗ), gốc cây kể chuyện phía bên kia
+        if (sh.level <= 2 && mid) {
+          const side = new THREE.Vector3(-f.y, 0, f.x);
+          out.trade = spot('trade', sq0.clone().lerp(mid, 0.5).addScaledVector(side, 3), 2.5, () => { const g = earlyProp('trade'); sh.group.add(g); return g; });
+          out.story = spot('story', sq0.clone().addScaledVector(side, -9), 2.5, () => { const g = earlyProp('story'); sh.group.add(g); return g; });
+        }
+      }
       out.podium = new THREE.Vector3(f.x * 4, 0, f.y * 4); out.podiumFace = new THREE.Vector3(f.x * 12, 0, f.y * 12);
       // chốt tuần tra, luyện quân: rải dọc phía trong tường thành (xa sân giữa), không dồn quanh nhà chính
       { const a0 = Math.atan2(f.y, f.x); for (let k = 0; k < 6; k++) { const a = a0 + Math.PI / 6 + (k * Math.PI) / 3, R = L.rOf(a) - 10; out.guard.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R)); } }
@@ -347,14 +374,25 @@
       // thời đầu chưa có chợ, chỗ thờ, trường riêng: đổi chác, cúng tế, dạy trẻ đều ở sân làng (quanh đống lửa, giếng) như
       // làng thật; không dùng chỗ thay thế vô nghĩa (trước cửa một nhà bất kỳ)
       const sq = (k) => out.square.map((v, j) => v.clone().add(new THREE.Vector3(Math.cos(k + j), 0, Math.sin(k + j)).multiplyScalar(2.5)));
-      if (!out.market.length) out.market.push(...sq(0));
+      if (!out.market.length) out.market.push(...(out.trade ? [out.trade] : sq(0)));
       if (!out.shrine.length) out.shrine.push(...sq(2));
-      if (!out.school.length) out.school.push(...sq(4));
+      if (!out.school.length) out.school.push(...(out.story ? [out.story] : sq(4)));
       out.outer = out.outer.filter(Boolean); // người đi đường, thợ đi tu bổ có khi ra tới bến, trại, đền trong rừng
       out.outer = out.outer.filter((v) => L.inside(v.x, v.z, 5.5)); // chỉ những chỗ còn trong tường thành (bến, trại ngoài tường thì không tới)
       out.all.push(...out.outer);
       if (!out.all.length) out.all.push(...out.homes);
       return out;
+    }
+    // đồ dựng cho chỗ thời đầu: bãi trao đổi (vòng khúc gỗ quanh tấm chiếu), gốc cây kể chuyện (gốc to, khúc gỗ ngồi quanh)
+    const propMat = { wood: new THREE.MeshLambertMaterial({ color: 0x7a5434 }), mat: new THREE.MeshLambertMaterial({ color: 0xc8a96a }), bark: new THREE.MeshLambertMaterial({ color: 0x5b3d25 }) };
+    const logGeo = new THREE.CylinderGeometry(0.28, 0.28, 1.6, 7), matGeo = new THREE.CylinderGeometry(1.3, 1.3, 0.06, 12), stumpGeo = new THREE.CylinderGeometry(0.9, 1.1, 0.9, 10);
+    function earlyProp(kind) {
+      const g = new THREE.Group(); g.userData.spot = kind;
+      if (kind === 'trade') { const m = new THREE.Mesh(matGeo, propMat.mat); m.position.y = 0.04; g.add(m); }
+      else { const m = new THREE.Mesh(stumpGeo, propMat.bark); m.position.y = 0.45; g.add(m); }
+      for (let k = 0; k < 4; k++) { const a = (k * Math.PI) / 2 + 0.4, m = new THREE.Mesh(logGeo, propMat.wood); m.rotation.z = Math.PI / 2; m.rotation.y = a + Math.PI / 2;
+        m.position.set(Math.cos(a) * 2, 0.28, Math.sin(a) * 2); g.add(m); }
+      return g;
     }
     // số liệu một đảo (bảng làng, bài kiểm tra): old = số công trình của thời trước còn đứng, done = số công trình thời này đã có
     const stats = (i) => shown[i] && { level: shown[i].level, tris: Math.round(shown[i].tris), count: shown[i].count, hall: shown[i].name,
@@ -389,6 +427,8 @@
       if (on && at.piece.g.visible) { at.piece.g.visible = false; sh.unbatch = true; sh.down.set(at.key, at); }
       else if (!on && sh.down.has(at.key)) { at.piece.g.visible = !at.piece.gone && !at.piece.dead; sh.unbatch = true; sh.down.delete(at.key); }
     }
+    // đảo đang suy tàn (logic/prosperity.js S.decline): vắng xe, nhà bỏ hoang tắt đèn (game/cities.js gọi mỗi giây)
+    function setDecline(i, on) { if (shown[i]) shown[i].decline = !!on; }
     function setRuin(i, ruin, burning, fixing) {
       const sh = shown[i]; if (!sh || !BK.Ruins3D) return;
       const keys = Object.keys(ruin || {}); if (!sh.ruins && !keys.length) return;
@@ -402,7 +442,7 @@
     const setStock = (i, ratio) => { if (shown[i] && shown[i].wy) WY.setStock(shown[i].wy.piles, ratio); };
     // số mộ trong bãi mộ của đảo i (logic/scenes.js S.graves)
     const setGraves = (i, n) => { if (shown[i] && shown[i].wy) WY.setGraves(shown[i].wy.graves, n); };
-    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setGraves, setRuin, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setGraves, setRuin, setDecline, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

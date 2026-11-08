@@ -1,5 +1,5 @@
 /* Bể Kính · render/build/traffic3d.js · Xe chạy trên vòng đường và nhường người đi bộ
- * drive(đảo, thời, A, công trình, giây game): mỗi xe của lớp đường (render/build/vehicles.js fleet: A.loop, A.path) có quãng đường
+ * drive(đảo, thời, A, công trình, giây game, ít xe): mỗi xe của lớp đường (render/build/vehicles.js fleet: A.loop, A.path) có quãng đường
  * đã đi của riêng nó; render/buildings3d.js gọi mỗi khung hình. setPeds(đảo, danh sách): vị trí người đang ở ngoài (toạ độ
  * đảo, game/village.js lấy từ render/village3d.js peds) để xe dừng nhường người đang ở trên lòng đường phía trước.
  * Cần: render/build/plains/town.js (ROAD_W). */
@@ -19,7 +19,9 @@
       for (const q of list) { const dx = q.x - X, dz = q.z - Z, fwd = dx * HX + dz * HZ, lat = Math.abs(dx * HZ - dz * HX); if (fwd > 0.3 && fwd < 4.2 && lat < lane) return true; }
       return false;
     }
-    function drive(isle, lv, A, p, ts) {
+    // few: đảo đang suy tàn (logic/prosperity.js decline): đường vắng, chỉ một phần ba số xe còn chạy, số còn lại ẩn
+    function drive(isle, lv, A, p, ts, few) {
+      A.path.forEach(([n, , , , head], j) => { const sub = p.subs[n]; if (!sub) return; const k = head ? A.path.findIndex((x) => x[0] === head) : j; sub.visible = !few || k % 3 === 0; });
       if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
       const st = p.drive || (p.drive = { at: ts, d: {} }), total = Math.min(0.5, Math.max(0, ts - st.at)); st.at = ts; // ts: giờ game (giây)
       const steps = Math.max(1, Math.ceil(total / STEP)), dt = total / steps; // bước con: ở 4× xe vẫn kịp thấy người và dừng

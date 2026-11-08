@@ -44,7 +44,7 @@
   const MIN_DAYS = 120;                                       // ở một thời ít nhất chừng này ngày mới lên được thời sau
   // thời muộn (design/chien-tranh-thinh-vuong.md mục 9): công nghệ cũ dẫn đường cho công nghệ mới, nên từ thời LATE_LV giỏ
   // nhẹ hơn (LATE_COST phần) và ở mỗi thời ngắn hơn (LATE_DAYS): đảo dẫn đầu tới thời 11 vào khoảng năm 7, 8
-  const LATE_LV = 7, LATE_COST = 0.6, LATE_DAYS = 75;
+  const LATE_LV = 6, LATE_COST = 0.45, LATE_DAYS = 70;
   const minDays = (lv) => (lv >= LATE_LV ? LATE_DAYS : MIN_DAYS);
   const POP_NEED = (lv) => 12 + lv;                          // dân tối thiểu để lên thời lv
 
@@ -101,7 +101,7 @@
     let farm = 0, farmers = 0;
     for (const p of workers) { const r = p.res; if (!can(S, r)) continue; const v = BASE * skill(S, p) * richOf(S, r) * climate(S, r,
         day) * tech(S.level) * (BK.Siege ? BK.Siege.output(S, r) : 1) * (BK.Missiles ? BK.Missiles.output(S, r, day) : 1) * (BK.Ecology ? BK.Ecology.output(S,
-        r) : 1) * (BK.Prosperity ? BK.Prosperity.output(S) : 1); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
+        r) : 1) * (BK.Prosperity ? BK.Prosperity.output(S) : 1) * (BK.Powers ? BK.Powers.output(S, day) : 1); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
     // bị vây (logic/battles.js): ruộng ngoài thành không ra được, cả đảo gần như không làm ra lương thực
     if (S.situ.blockade > day) { st.made.food *= BK.Battles ? BK.Battles.BLOCKADE_FOOD : 0.3; farm *= BK.Battles ? BK.Battles.BLOCKADE_FOOD : 0.3; }
     if (farmers) st.perFood = st.perFood ? st.perFood * 0.8 + (farm / farmers) * 0.2 : farm / farmers; // năng suất thật (cho allocate)

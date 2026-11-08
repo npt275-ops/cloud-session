@@ -37,6 +37,7 @@
   const KILL = 0.3, SHELTER = 0.08; // khả năng chết của người ở chỗ trúng (trốn trong nhà: SHELTER)
   const FALLOUT_DAYS = 360, FALLOUT_K = 0.15, DUST_DAYS = 90, DUST_FOOD = 0.75;
   const NUKE_REST = 20;         // giữa hai lần bắn hạt nhân của một đảo
+  const DESPERATE = 0.9;        // nhà chính bị vây: tính nóng + đa nghi quá chừng này thì người đứng đầu dám liều dùng hạt nhân
   const HOMES_PER_QUARTER = 5;
   const YARDS = ['store', 'farm', 'wood', 'stone', 'craft', 'power', 'drill'];
   const P = () => BK.People, E = () => BK.Economy, G = () => BK.Siege, Wr = () => BK.War;
@@ -130,21 +131,23 @@
   // mỗi ngày: đảo có hạt nhân, người đứng đầu dám dùng, xét bắn
   function nukeDecide(W, day, a, rng) {
     const A = W.islands[a], aa = arms(A); if (!aa.nukes || A.annexedBy != null || day - aa.lastNuke < NUKE_REST) return;
-    const t = traitsOf(A); if (!t || !nukeWill(t)) return;
+    // nhà chính đang bị vây thì người đứng đầu cùng đường, kể cả người không hiếu chiến lắm cũng có thể liều (DESPERATE)
+    const t = traitsOf(A); if (!t) return;
+    const cornered = W.wars.some((w) => w.kind !== 'revolt' && w.b === a && w.stage === 'inside' && w.siege === 'hall');
+    if (!nukeWill(t) && !(cornered && t.aggression + t.paranoia > DESPERATE)) return;
     let best = null, bs = 0;
     for (let b = 0; b < W.islands.length; b++) {
       if (b === a || Wr().rulerOf(W, b) === a) continue;
       const B = W.islands[b], g = W.rel[a][b].grudge;
       const war = W.wars.find((w) => w.kind !== 'revolt' && ((w.a === a && w.b === b) || (w.a === b && Wr().rulerOf(W, w.b) === a)));
-      const losing = war && (war.a === a ? war.morale < 0.6 || war.troops.length < war.n0 * 0.5 : true); // đang bị đánh vào nhà: coi như thua
+      // răn đe (design/ke-hoach-khac-phuc.md mục 4.2): chỉ bắn khi nhà chính của mình đang bị vây, hay đảo mình vừa bị bắn
+      // hạt nhân; còn lại hạt nhân nằm trong kho để đảo khác ngại đánh (strategy.js tính nỗi sợ đó)
+      const hallLost = war && war.a !== a && war.stage === 'inside' && war.siege === 'hall';
       const revenge = B.arms && B.arms.lastNukeAt === a && day - B.arms.lastNuke < 30;
-      const assault = war && war.a === a && war.kind === 'conquer' && (war.stage === 'gate' || war.stage === 'inside') && (g > 0.7 || war.morale < 0.9); // yểm trợ quân mình đang đánh vào đảo mình thù sâu, hay đang núng thế
-      // thù rất sâu và sợ đảo kia (không cần đang đánh nhau): bắn phủ đầu, ít khi
-      const deep = !war && g >= 0.9 && W.rel[a][b].fear >= 0.3 && rng.chance(0.15);
-      const sc = revenge ? 2 : war && (losing || g > 0.9 || assault) ? 1 + g : deep ? 0.5 : 0;
+      const sc = revenge ? 2 : hallLost ? 1 + g : 0;
       if (sc > bs) { bs = sc; best = b; }
     }
-    if (best == null || !rng.chance(0.25 + 0.3 * t.aggression)) return;
+    if (best == null || !rng.chance(0.4 + 0.4 * t.aggression)) return;
     aa.nukes--; aa.lastNuke = day; aa.lastNukeAt = best; W.armStats.nukes++;
     fire(W, day, a, best, 'nuke', 'nuke');
     say(W, day, A.name + ' bắn hạt nhân vào ' + W.islands[best].name + '!', [a, best]);
@@ -194,5 +197,5 @@
   }
   // độ bụi trên trời lúc này (0..1, phần vẽ: trời xám)
   const dust = (W, day) => W.islands.reduce((m, S) => Math.max(m, S.dustUntil > day ? Math.min(1, (S.dustUntil - day) / 20) : 0), 0);
-  return { init, step, dayTick, salvo, fire, output, dust, arms, militancy, nukeWill, MISSILE_LV, NUKE_LV, MISSILE, NUKE, FLIGHT, NUKE_FLIGHT };
+  return { init, step, dayTick, salvo, fire, nukeDecide, output, dust, arms, militancy, nukeWill, MISSILE_LV, NUKE_LV, MISSILE, NUKE, FLIGHT, NUKE_FLIGHT };
 });

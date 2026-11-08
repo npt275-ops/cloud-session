@@ -45,7 +45,7 @@
   const travelDays = (W, a, b) => (bridged(W, a, b) ? BRIDGE_DAYS : BOAT_DAYS + HOP_DAYS * (hops(a, b) - 1));
   // các đảo nằm giữa đường đi thuyền từ a tới b (theo chiều ngắn hơn quanh vòng sáu đảo; ngang nhau thì theo chiều tăng)
   function path(a, b) { const fwd = (b - a + N) % N, dir = fwd <= N - fwd ? 1 : -1, out = []; for (let i = (a + dir + N) % N; i !== b; i = (i + dir + N) % N) out.push(i); return out; }
-  const alive = (W, i) => !W.islands[i].annexedBy && BK.Island.living(W.islands[i]).length > 0;
+  const alive = (W, i) => W.islands[i].annexedBy == null && BK.Island.living(W.islands[i]).length > 0;
   const say = (W, day, text, ids) => { W.log.push({ day: Math.floor(day), text, isles: ids || [] }); if (W.log.length > 400) W.log.splice(0, W.log.length - 400); };
 
   /* ---------- Giá trị, dư, thiếu ---------- */
@@ -162,7 +162,7 @@
       const sides = w.by != null ? [w.by] : [w.a, w.b];
       // thợ xây của bên làm ra cổng phụ phía cầu (logic/tasks.js đọc S.bridgeJob; side 0 cổng trái, 1 cổng phải)
       for (const i of sides) { const o = i === w.a ? w.b : w.a; W.islands[i].bridgeJob = { to: o, toName: W.islands[o].name, side: (o - i + N) % N === 1 ? 1 : 0, until: day + 1.5, progress: w.progress }; }
-      if (sides.some((i) => !alive(W, i) && !W.islands[i].annexedBy) || sides.some((i) => builders(W.islands[i]) === 0)) continue;
+      if (sides.some((i) => !alive(W, i) && W.islands[i].annexedBy == null) || sides.some((i) => builders(W.islands[i]) === 0)) continue;
       w.progress = Math.min(1, w.progress + 1 / BUILD_DAYS);
       if (w.progress < 1) continue;
       W.bridgeWorks.splice(W.bridgeWorks.indexOf(w), 1);
@@ -199,7 +199,8 @@
           W.islands[v.to].log.push({ day: Math.floor(day), kind: 'brawl', ids: [], text: 'Lính gác xô xát với người ' + S.name + ' ở đầu cầu.' });
         }
       }
-      if (v.stage === 'stay' && day >= v.leave) { v.stage = 'back'; p.loc = null; }
+      // người được đảo kia tiếp đãi tử tế (đi chợ, theo đoàn buôn, không bị đuổi) thì mang ơn đảo đó (logic/battles.js nội gián)
+      if (v.stage === 'stay' && day >= v.leave) { v.stage = 'back'; p.loc = null; if (!v.brawl && v.kind !== 'envoy') (p.owes || (p.owes = {}))[v.to] = day; }
       if (v.stage === 'back' && day >= v.back) { p.away = null; p.loc = null; W.visits.splice(W.visits.indexOf(v), 1); }
     }
   }

@@ -6,6 +6,7 @@
  *              kỳ quan (wonder: tìm rộng hơn vì to). Tìm một lần cho mỗi slot (địa hình không đổi) và nhớ trong L.outerSpots
  *   landFor    cho hàm dựng của một công trình biết đất quanh nó, theo toạ độ của chính công trình: edge(góc) bán kính
  *              mép đảo theo một hướng, free(x, z, r) chỗ đó có trống không (dùng cho tường thành sát mép đảo)
+ *   freeSpot   chỗ dùng chung trống quanh một điểm (sân chơi, bãi trao đổi, gốc cây kể chuyện): không chồng công trình, đường
  * Toạ độ là toạ độ của đảo (L.g), Vector2 (x, z). Cần: three.js. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
@@ -104,7 +105,20 @@
       const F = (fixed || []).find((x) => x.P === P.self); if (F) { F.x = q[0]; F.y = q[1]; F.r = Math.max(F.r, fp.r * k); } else if (fixed) fixed.push({ x: q[0], y: q[1], r: fp.r * k, P: P.self });
       return { x: q[0], z: q[1], fitS: P.fitS * k };
     }
-    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad };
+    // chỗ trống bán kính r gần (x, z) cho chỗ dùng chung (sân chơi, bãi trao đổi, gốc cây kể chuyện; design/ke-hoach-khac-phuc.md
+    // mục 6.2): xoắn ốc ra quanh điểm muốn đặt, tránh mép đảo, núi, hồ, sông, mặt đường và công trình đã có (fixed). null nếu hết chỗ
+    function freeSpot(L, x, z, r, fixed) {
+      for (let ring = 0; ring <= 24; ring++) for (let k = 0; k < (ring ? 12 + ring : 1); k++) {
+        const a = (k * 2 * Math.PI) / (12 + ring) + ring * 0.37, d = ring * 1.5, qx = x + Math.cos(a) * d, qz = z + Math.sin(a) * d;
+        if (!L.inside(qx, qz, r + 2) || (L.blockedWild && L.blockedWild(qx, qz, r)) || onRoad(L, qx, qz, r * 0.8)) continue;
+        if ((fixed || []).some((F) => (F.x - qx) ** 2 + (F.y - qz) ** 2 < (F.r + r) ** 2)) continue;
+        return { x: qx, z: qz };
+      }
+      return null;
+    }
+    // chỗ (x, z) có chồng lên công trình nào trong fixed không (bỏ qua chính nó: tag); dùng cho bài kiểm tra tools/check-scene.js
+    const overlaps = (x, z, r, fixed, tag) => (fixed || []).filter((F) => F.P !== tag && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r + r - 0.3) ** 2);
+    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad, freeSpot, overlaps };
   }
   return { create };
 });

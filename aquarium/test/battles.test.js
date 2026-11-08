@@ -2,7 +2,9 @@
 // thịnh vượng và suy tàn (logic/prosperity.js), biên niên và nhịp kịch tính (logic/chronicle.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
+    'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
+    'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, Arms = BK.Arms, Siege = BK.Siege, living = BK.Island.living;
 const temper = (S, tr) => { for (const k of ['king', 'advisor', 'general1', 'general2']) { const p = S.seats[k] != null && S.people.get(S.seats[k]); if (p) p.traits = Object.assign({}, BK.People.traits(p), tr); } };
 const fill = (S, k) => { const st = E.state(S); for (const r of E.RES) st.stock[r] = E.CAP(S.level, r) * k; };
@@ -135,4 +137,36 @@ test('phát trúng ghi lại cho phần vẽ (ai bắn ai, trên đảo nào); �
   assert.ok(militia > 1, 'có dân binh, lính trên đường: ' + militia);
   BK.War.step(W2, W2.day + 0.01, W2.rng, 1 / 12);
   assert.strictEqual(w2.siege, 'move', 'chưa tới nhà chính khi còn dân binh');
+});
+
+// ---------- Bước 11e (design/ke-hoach-khac-phuc.md mục 5.1): kịch bản hiếm có nguyên nhân ghi trong tin ----------
+test('nội gián có lý do (nợ ân đảo kia); phục kích ở bãi đổ bộ của đảo rừng; cứu viện tới lúc nhà chính bị vây', () => {
+  const yes = { chance: () => true, next: () => 0.5, range: (a, b) => (a + b) / 2, int: (a) => a }, no = Object.assign({}, yes, { chance: () => false });
+  // nội gián: một người Thông Xanh từng sang chợ Đá Mây được tiếp đãi
+  { const W = world(3), B = W.islands[1]; temper(W.islands[2], { cunning: 0.8 });
+    const tr = living(B).find((p) => !p.role && p.job !== 'soldier' && BK.People.ageOf(p, W.day) >= 18); tr.owes = { 2: W.day - 10 };
+    const w = { a: 2, b: 1, gate: 'gate', by: 'boat', surprise: true, troops: [], n0: 0, morale: 1, helpers: [] };
+    const fall = Object.assign(() => false, { chance: (k) => k });
+    // (rng chỉ nhận lần bốc thăm nội gián; phục kích không xét vì đánh úp)
+    BK.Battles.onArrive(W, W.day, w, { chance: (p) => p > 0, next: () => 0.5, range: (a, b) => a, int: (a) => a }, fall);
+    assert.ok(w.forceGate && w.traitor != null, 'có người mở cổng');
+    assert.ok(W.log.some((e) => /\(nợ ân Đá Mây\) lén mở cổng/.test(e.text)), 'tin ghi rõ lý do'); }
+  // phục kích: Thông Xanh (đảo rừng) phục quân trong rừng sát bãi đổ bộ
+  { const W = world(3), A = W.islands[2]; soldiers(A, 10);
+    const troops = living(A).filter((p) => p.job === 'soldier').map((p) => ({ i: 2, p }));
+    const w = { a: 2, b: 1, gate: 'gate', by: 'boat', surprise: false, troops, n0: troops.length, morale: 1, helpers: [] };
+    const fall = Object.assign((x) => { x.p.alive = false; return true; }, { chance: (k) => k });
+    BK.Battles.onArrive(W, W.day, w, yes, fall);
+    assert.ok(w.ambush > 0, 'có người ngã vì phục kích');
+    assert.ok(W.log.some((e) => /phục kích quân Đá Mây trong rừng sát bãi đổ bộ/.test(e.text)), 'tin ghi chỗ phục kích'); }
+  // cứu viện: nhà chính bị vây, đảo tin cậy gửi quân gấp, tới thì vào đánh cùng đội giữ nhà chính
+  { const W = world(3), B = W.islands[1]; W.rel[4][1].trust = 0.9; soldiers(W.islands[4], 12);
+    const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, no); assert.ok(w, 'có trận');
+    w.stage = 'inside'; w.siege = 'move'; w.moveUntil = W.day; w.since = W.day - 5; w.sg = w.sg || { targets: [], at: 0, hit: [] };
+    for (const p of living(B)) if (p.job === 'soldier' || /guard|keeper/.test(p.job || '')) p.away = 'test';
+    BK.War.step(W, W.day, yes, 1 / 12);
+    const h = w.helpers.find((x) => x.c === 4);
+    assert.ok(h && h.troops.length >= 1, 'Cửa Sóng gửi gấp quân sang');
+    h.arrive = W.day; BK.War.step(W, W.day + 0.05, yes, 1 / 12);
+    assert.ok(W.log.some((e) => /tới cứu viện Thông Xanh đúng lúc nhà chính sắp mất/.test(e.text)), 'cứu viện phút chót ở nhà chính'); }
 });

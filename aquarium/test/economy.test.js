@@ -1,7 +1,9 @@
 // Bể Kính · test/economy.test.js · Tài nguyên và lên cấp: mỗi đảo một nhịp, thiếu thứ gì thì kẹt ở đó (khi chưa có giao thương)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
+    'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
+    'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const runs = [1, 2, 3].map((seed) => { const W = BK.World.create({ seed, diplomacy: false }); BK.World.jump(W, 9 * 360); return W; });
 
@@ -11,7 +13,9 @@ test('mỗi đảo lên cấp theo nhịp riêng khi chưa có giao thương: c�
   for (const W of runs) {
     const lv = W.islands.map((S) => S.level);
     assert.ok(new Set(lv).size >= 2, 'cấp cuối: ' + lv.join(','));
-    assert.ok(lv.filter((l) => l === 12).length <= 2, 'số đảo chạm thời 12: ' + lv.join(','));
+    // (từ bước 11e thời muộn rẻ hơn, logic/economy.js LATE_*, để năm 8 có ≥ 2 đảo từ thời 11 khi có chiến tranh, giao thương;
+    // sống riêng chín năm thì nhiều đảo chạm thời 12 hơn, nhưng không phải cả sáu: đảo thiếu hẳn một thứ vẫn kẹt)
+    assert.ok(lv.filter((l) => l === 12).length <= 4, 'số đảo chạm thời 12: ' + lv.join(','));
     assert.ok(BK.World.island(W, 'desert').level <= 9, 'Cát Hồng: ' + BK.World.island(W, 'desert').level);
   }
 });

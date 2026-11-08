@@ -1,7 +1,9 @@
 // Bể Kính · test/bridges.test.js · Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
+    'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
+    'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, D = BK.Diplomacy, E = BK.Economy, living = BK.Island.living;
 const ready = (seed) => { const W = BK.World.create({ seed, war: false }); BK.World.jump(W, 900); for (const S of W.islands) { const st = E.state(S).stock; st.wood = st.stone = st.metal = 2000; } return W; };
 
@@ -35,7 +37,9 @@ test('bị đánh qua cầu: người đứng đầu đa nghi phá cầu, quân 
   W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }];
   const king = W.islands[1].people.get(W.islands[1].seats.king); king.genome.traits.paranoia = 1; king.genome.traits.fear = 1; king.genome.traits.aggression = 0; BK.Epigen.express(king);
   living(W.islands[0]).filter((p) => p.job === 'worker').slice(0, 8).forEach((p) => { p.job = 'soldier'; });
-  let broke = 0; for (let k = 0; k < 6 && !broke; k++) { W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }]; W.wars = []; for (const p of living(W.islands[0])) p.away = null; const w = BK.War.launch(W, W.day, 0, 1, 'raid', 0.5, W.rng); if (w && !D.bridged(W, 0, 1)) { broke++; assert.strictEqual(w.by, 'boat'); } }
+  let broke = 0; for (let k = 0; k < 6 && !broke; k++) { W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }]; W.wars = [];
+      for (const p of living(W.islands[0])) p.away = null; const w = BK.War.launch(W, W.day, 0, 1, 'raid', 0.5, W.rng); if (w && !D.bridged(W, 0,
+      1)) { broke++; assert.strictEqual(w.by, 'boat'); } }
   assert.ok(broke, 'có lần phá cầu');
 });
 

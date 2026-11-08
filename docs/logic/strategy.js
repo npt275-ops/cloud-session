@@ -34,13 +34,16 @@
   const EVERY = 10;
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
-  const FIRST_WAR = 300, WAR_REST = 180, WAR_RATE = 0.7; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  const FIRST_WAR = 300, WAR_REST = 210, WAR_RATE = 0.45; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
   // bá chủ (design/chien-tranh-thinh-vuong.md mục 9): từ năm HEGEMON_DAY, đảo đã tới thời HEGEMON_LV muốn thống trị các đảo
-  // kém mình (thêm HEGEMON_WANT vào lòng muốn chiếm), nghỉ giữa hai trận ngắn hơn (HEGEMON_REST); cuối trận còn một, hai đảo
+  // kém mình (thêm HEGEMON_WANT vào lòng muốn chiếm), nghỉ giữa hai trận HEGEMON_REST ngày nhưng mỗi trận đem gần hết quân (ít trận, trận lớn); cuối trận còn một, hai đảo
   // vô địch nắm cả bể, đảo bị chiếm nộp hết phần dư về đảo cai quản (logic/war.js vassalDay)
-  const HEGEMON_DAY = 5 * 360, HEGEMON_LV = 10, HEGEMON_WANT = 1.0, HEGEMON_REST = 60;
+  const HEGEMON_DAY = 5 * 360, HEGEMON_LV = 10, HEGEMON_WANT = 1.0, HEGEMON_REST = 120;
   const hegemon = (W, a, day) => day >= HEGEMON_DAY && W.islands[a].level >= HEGEMON_LV;
   const CONQUER_PRIZE = 1.5;
+  const ULTIMATUM_GAP = 1.3, ULTIMATUM_EVERY = 180; // bá chủ mạnh gấp chừng này lần mới gửi tối hậu thư; mỗi chừng này ngày một lần
+  const SUBMIT_GAP = 2.5;         // bá chủ mạnh gấp chừng này lần thì đảo nhỏ mới tính chuyện xin làm chư hầu
+  const DETER = 0.35;           // đảo kia có hạt nhân, mình không có: lòng muốn đánh chiếm còn chừng này (răn đe)
   const REBUILD_AGE = 180;      // cầu dùng ít nhất chừng này ngày mới xét xây lại theo kiểu thời mới    // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho
 
   // tính cách của người quyết: người đứng đầu, pha ý quân sư và tướng (trọng số nghe theo tính người đứng đầu)
@@ -81,7 +84,49 @@
     tryBridge(W, i, day, rng, t);
     tryVisit(W, i, day, rng, t);
     // chiến tranh (logic/war.js)
-    if (W.war) tryWar(W, i, day, rng, t);
+    if (W.war) {
+      if (trySubmit(W, i, day, rng, t, mine)) return;
+      // bá chủ: cứ ULTIMATUM_EVERY ngày gửi tối hậu thư cho đảo độc lập yếu nhất (logic vòng cuối, ít trận mà dứt khoát)
+      if (hegemon(W, i, day) && day - (pol.lastUltimatum || 0) >= ULTIMATUM_EVERY && ultimatum(W, day, rng, i)) return;
+      tryWar(W, i, day, rng, t);
+    }
+  }
+  // đảo nhỏ tự xin làm chư hầu bá chủ khi chênh lệch quá lớn (design/ke-hoach-khac-phuc.md mục 4.3): người đứng đầu nhút nhát,
+  // hiền thì dễ xin; tham vọng, hiếu chiến thì thà đánh. Bá chủ nhận mà không cần đánh (logic/war.js submit)
+  // tối hậu thư (logic/chronicle.js gọi khi cả bể yên quá lâu từ năm 6): bá chủ mạnh nhất đòi một đảo độc lập yếu hơn thần
+  // phục. Đảo kia xét như trySubmit: chịu thì làm chư hầu không cần đánh; không chịu thì bá chủ muốn đánh (provoked). Trả về
+  // true nếu có tối hậu thư
+  // by: bá chủ gửi (bỏ trống: bá chủ mạnh nhất)
+  function ultimatum(W, day, rng, by) {
+    if (day < HEGEMON_DAY || !BK.War) return false;
+    const D = BK.Diplomacy, free = W.islands.map((S, i) => i).filter((i) => D.alive(W, i) && !BK.War.atWar(W, i));
+    const boss = by != null ? (free.includes(by) && hegemon(W, by, day) ? by : null) : free.filter((i) => hegemon(W, i, day)).sort((x, y) => strength(W.islands[y], W) - strength(W.islands[x], W))[0];
+    if (boss == null) return false;
+    W.islands[boss].policy && (W.islands[boss].policy.lastUltimatum = day);
+    const R = W.islands[boss], sb = strength(R, W);
+    const cands = free.filter((i) => i !== boss && sb / Math.max(1, strength(W.islands[i], W)) >= ULTIMATUM_GAP).sort((x, y) => strength(W.islands[x], W) - strength(W.islands[y], W));
+    if (!cands.length) return false;
+    const i = cands[0], S = W.islands[i], M = mind(S); if (!M) return false;
+    const t = M.t, gap = sb / Math.max(1, strength(S, W));
+    const will = 0.1 + 0.35 * t.fear + 0.3 * t.meekness - 0.3 * t.ambition - 0.25 * t.aggression - 0.4 * W.rel[i][boss].grudge + 0.08 * (gap - ULTIMATUM_GAP);
+    D.say(W, day, R.name + ' gửi tối hậu thư: ' + S.name + ' phải thần phục, nộp cống.', [boss, i]);
+    if (rng.chance(Math.max(0.05, Math.min(0.8, will))) && BK.War.submit(W, day, boss, i)) return true;
+    R.policy && (R.policy.provoked = day + 150); W.rel[boss][i].grudge = Math.min(1, W.rel[boss][i].grudge + 0.3);
+    D.say(W, day, BK.People.fullName(M.who) + ' khước từ tối hậu thư của ' + R.name + '.', [i, boss]);
+    if (BK.Chronicle) BK.Chronicle.add(W, day, i, S.name + ' khước từ tối hậu thư của ' + R.name, 3, 'hall');
+    return true;
+  }
+  function trySubmit(W, i, day, rng, t, mine) {
+    const S = W.islands[i]; if (day < HEGEMON_DAY || BK.War.atWar(W, i)) return false;
+    let best = null, gap = 0;
+    for (let j = 0; j < BK.Diplomacy.N; j++) {
+      const R = W.islands[j]; if (j === i || !hegemon(W, j, day) || !BK.Diplomacy.alive(W, j) || R.level < S.level + 1) continue;
+      const g = strength(R, W) / Math.max(1, mine); if (g > gap) { gap = g; best = j; }
+    }
+    if (best == null || gap < SUBMIT_GAP) return false;
+    const will = 0.05 + 0.35 * t.fear + 0.3 * t.meekness - 0.3 * t.ambition - 0.25 * t.aggression - 0.4 * W.rel[i][best].grudge + 0.05 * (gap - SUBMIT_GAP);
+    if (!rng.chance(Math.max(0, Math.min(0.5, will)))) return false;
+    return BK.War.submit(W, day, best, i);
   }
 
   // bắc cầu sang một đảo bên cạnh, hay xây lại cầu cũ theo kiểu thời mới
@@ -135,7 +180,7 @@
     const D = BK.Diplomacy, E = BK.Economy, Wr = BK.War, A = W.islands[a], pol = A.policy;
     if (day < FIRST_WAR || Wr.atWar(W, a) || (pol.lastWar != null && day - pol.lastWar < (hegemon(W, a, day) ? HEGEMON_REST : WAR_REST))) return;
     // tên lửa phá cổng trước, hạt nhân yểm trợ (logic/missiles.js): kẻ có vũ khí bắn xa ước sức mình mạnh hơn
-    const ar = W.islands[a].arms, off = Wr.offense(W, a, day) * (1 + (ar ? 0.02 * Math.min(6, ar.missiles) + 0.25 * Math.min(1, ar.nukes) : 0)); if (off < 3) return;
+    const ar = W.islands[a].arms, off = Wr.offense(W, a, day) * (1 + (ar ? 0.02 * Math.min(6, ar.missiles) : 0)); if (off < 3) return;
     const clamp = (x) => Math.max(0, Math.min(1, x));
     let best = null, lust = 0;
     for (let b = 0; b < D.N; b++) {
@@ -157,18 +202,21 @@
       const boss = hegemon(W, a, day) && A.level >= W.islands[rb].level + 1 ? HEGEMON_WANT : 0; // bá chủ muốn thống trị đảo kém mình
       const wantConquer = boss + provoked + (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
       // thừa nước đục thả câu: đảo b đang bị đánh nơi khác thì kẻ mưu mô muốn đánh hơn; bị cấm vận thì túng quẫn, dễ liều
+      // răn đe hạt nhân (logic/missiles.js chỉ bắn khi mất nhà chính): đảo kia có hạt nhân mà mình không có thì ngại đánh
+      // chiếm (đột kích cướp kho thì không chạm tới nhà chính, ít ngại); cùng có thì ngại vừa
+      const nb = W.islands[rb].arms ? W.islands[rb].arms.nukes : 0, na = ar ? ar.nukes : 0, deter = nb > 0 ? (na > 0 ? 0.7 : DETER) : 1;
       const k = (T ? 0.4 : 1) * (Wr.atWar(W, b) && t.cunning > 0.55 ? 1.15 : 1) * (W.embargo && W.embargo[a] > day ? 1.25 : 1); lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)
       // (bá chủ tự tin hơn: thấy mình mạnh hơn một chút là đã dám đánh chiếm)
       const raid = wantRaid * clamp((ratioRaid - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * (boss ? clamp((ratio - 0.8) / 1.0) : clamp((ratio - 1.0) / 1.5));
-      for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
+      for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k * deter]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
     }
     pol.warlust = clamp(lust);
     if (!best || !rng.chance(Math.min(0.5, best.sc * WAR_RATE))) return;
     // kẻ hiếu chiến muốn đánh đảo bên cạnh mà chưa có cầu: tự bắc cầu quân sự trước (quân tràn sang nhanh hơn), đánh sau
     if (D.hops(a, best.b) === 1 && !D.bridged(W, a, best.b) && !D.workOf(W, a, best.b) && t.aggression > 0.6 && rng.chance(0.5) && D.startBridge(W, day, a, best.b, 'military', a)) return;
     // người mưu mô đánh úp, không tuyên chiến
-    if (Wr.launch(W, day, a, best.b, best.kind, best.kind === 'raid' ? 0.5 : 0.8, rng, t.cunning > 0.6 && rng.chance(t.cunning))) pol.lastWar = day;
+    if (Wr.launch(W, day, a, best.b, best.kind, best.kind === 'raid' ? 0.5 : hegemon(W, a, day) ? 0.95 : 0.8, rng, t.cunning > 0.6 && rng.chance(t.cunning))) pol.lastWar = day;
   }
 
   // only: chỉ tìm đổi thứ này (mua lương thực gấp)
@@ -263,5 +311,5 @@
     for (let i = 0; i < BK.Diplomacy.N; i++) { if ((Math.floor(day) + i * 2) % EVERY === 0) { islandTick(W, i, day, rng); if (BK.Diplomacy.alive(W, i)) relief(W, i, day, rng); } else urgentFood(W, i, day, rng); }
     tryRob(W, day, rng);
   }
-  return { EVERY, BASE_SOLDIERS, mind, strength, islandTick, dayTick, onAttacked };
+  return { EVERY, BASE_SOLDIERS, mind, strength, islandTick, dayTick, onAttacked, ultimatum };
 });

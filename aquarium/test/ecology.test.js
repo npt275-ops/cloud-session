@@ -2,7 +2,9 @@
 // dịch lây và đóng cầu, đảo chính, cấm vận, chuyền nước chữa cháy, bàn giao ca
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle', 'prosperity', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
+    'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
+    'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, Eco = BK.Ecology, E = BK.Economy, D = BK.Diplomacy, living = BK.Island.living;
 const temper = (S, tr) => { for (const k of ['king', 'advisor', 'general1', 'general2']) { const p = S.seats[k] != null && S.people.get(S.seats[k]); if (p) p.traits = Object.assign({}, BK.People.traits(p), tr); } };
 const world = (seed, war) => { const W = BK.World.create({ seed, war: !!war }); BK.World.jump(W, 500); return W; };
@@ -25,10 +27,11 @@ test('chạy nạn: đói kéo dài thì cả hộ mang bọc sang đảo khác 
   let v = null;
   for (let d = 0; d < 400 && !v; d++) { st.stock.food = 0; st.hunger = 1; S.hungerDays = 20; Eco.dayTick(W, W.day, W.rng); v = W.visits.find((x) => x.kind === 'refugee' && x.from === 1); }
   assert.ok(v && v.members.length >= 1, 'có hộ chạy nạn');
-  const T = W.islands[v.to], pop = living(T).length, n = v.members.length;
+  const T = W.islands[v.to], pop = living(T).length, n = v.members.length, kin0 = living(T).filter((q) => q.kin === 1).length;
   assert.ok(v.members.every((id) => S.people.get(id).away === 'refugee'), 'đang đi, không ở đảo cũ');
   for (let k = 0; k < 12 * 15 && W.visits.includes(v); k++) BK.World.tick(W);
-  assert.strictEqual(living(T).length, pop + n, 'tới nơi, ở lại đảo kia');
+  // (đếm người gốc đảo cũ ở đảo kia: trong 15 ngày đảo kia có thể có người sinh, người mất vì chuyện khác)
+  assert.strictEqual(living(T).filter((q) => q.kin === 1).length, kin0 + n, 'tới nơi, ở lại đảo kia');
   assert.ok(v.members.every((id) => !S.people.get(id).alive && S.people.get(id).left === v.to), 'rời đảo cũ (không tính là chết)');
   // đảo nhận đa nghi, không tin: đóng cửa
   const W2 = world(3, true), S2 = W2.islands[1];

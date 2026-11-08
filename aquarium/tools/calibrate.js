@@ -10,7 +10,7 @@ const path = require('path'), fs = require('fs'), { spawn } = require('child_pro
 const ROOT = path.join(__dirname, '..');
 const FILES = ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas',
   'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles', 'chronicle',
-  'prosperity', 'strategy', 'world'];
+  'prosperity', 'strategy', 'powers', 'goals', 'world'];
 const DAYS = 3240, Y7 = 2520, Y8 = 2880;
 
 // ---------- Tiến trình con: chạy các trận từ hạt giống a tới b - 1, mỗi trận in một dòng JSON ----------
@@ -21,7 +21,7 @@ function worker(a, b) {
     const W = BK.World.create({ seed }), snap = {};
     for (const d of [Y7, Y8, DAYS]) {
       BK.World.jump(W, d);
-      snap[d] = W.islands.map((S) => ({ lv: S.level, own: S.ownLevel != null ? S.ownLevel : S.level, free: S.annexedBy == null }));
+      snap[d] = W.islands.map((S) => ({ lv: S.level, free: S.annexedBy == null })); // S.level: thời thật của từng đảo (đảo bị chiếm lên dần, logic/war.js syncEra)
     }
     const dead = (c) => W.islands.reduce((s, S) => s + [...S.people.values()].filter((p) => p.cause === c).length, 0);
     console.log(JSON.stringify({
@@ -45,7 +45,7 @@ function metrics(rows) {
     year8top: pct((r) => r.snap[Y8].filter((x) => x.lv >= 11).length >= 2),
     lull: avg(lull),
     starve: avg((r) => r.starve),
-    stuck: pct((r) => free(r).some((x) => x.own < 6)),
+    stuck: pct((r) => free(r).some((x) => x.lv < 6)),
     ambush: avg((r) => r.bs.ambush || 0),
     rescue: avg((r) => r.bs.rescue || 0),
     traitor: avg((r) => r.bs.traitor || 0),
@@ -55,7 +55,7 @@ function metrics(rows) {
     vassalPop: later.length ? (100 * later.reduce((s, c) => s + c.pop1 / c.popAt, 0)) / later.length : 100,
     // (tham khảo, không có mục tiêu)
     annex: avg((r) => r.annex), warDead: avg((r) => r.war), missileDead: avg((r) => r.missile), revolt: avg((r) => r.ws.revolt || 0),
-    levelAll: avg((r) => end(r).reduce((s, x) => s + x.lv, 0) / 6), levelOwn: avg((r) => end(r).reduce((s, x) => s + x.own, 0) / 6),
+    levelAll: avg((r) => end(r).reduce((s, x) => s + x.lv, 0) / 6), levelFree: avg((r) => free(r).reduce((s, x) => s + x.lv, 0) / Math.max(1, free(r).length)),
     year7top: pct((r) => r.snap[Y7].filter((x) => x.lv >= 11).length >= 2),
     freeEnd: rows.reduce((o, r) => { const k = free(r).length; o[k] = (o[k] || 0) + 1; return o; }, {}),
     scenes: Object.fromEntries(['naval', 'duel', 'blockade', 'night', 'desert', 'prisoners', 'triumph'].map((k) => [k, +avg((r) => r.bs[k] || 0).toFixed(2)])),
@@ -74,7 +74,7 @@ function report(rows) {
     console.log((ok ? 'ĐẠT       ' : 'KHÔNG ĐẠT ') + t.name.padEnd(44) + String(+v.toFixed(2)).padStart(8) + '   mục tiêu ' + range);
   }
   console.log('tham khảo: sáp nhập ' + M.annex.toFixed(2) + ' · chết trận ' + M.warDead.toFixed(0) + ' · chết vì tên lửa, hạt nhân ' + M.missileDead.toFixed(1) +
-    ' · nổi dậy ' + M.revolt.toFixed(2) + ' · thời tb (cả bể) ' + M.levelAll.toFixed(2) + ' · thời tb (thời thật của từng đảo) ' + M.levelOwn.toFixed(2) +
+    ' · nổi dậy ' + M.revolt.toFixed(2) + ' · thời tb (cả bể) ' + M.levelAll.toFixed(2) + ' · thời tb (đảo độc lập) ' + M.levelFree.toFixed(2) +
     ' · năm 7 có ≥ 2 đảo từ thời 11 ' + M.year7top.toFixed(0) + '% · số đảo độc lập cuối trận ' + JSON.stringify(M.freeEnd) + ' · cảnh ' + JSON.stringify(M.scenes));
   return bad;
 }

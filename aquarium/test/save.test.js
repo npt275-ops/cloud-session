@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks',
   'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'battles',
-  'chronicle', 'prosperity', 'strategy', 'world', 'save']) require('../logic/' + f + '.js');
+  'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world', 'save']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const sum = (W) => JSON.stringify([W.day, W.warCount, W.annexations, W.rng.state, W.islands.map((S) => [S.level, BK.Island.living(S).length,
   Math.round(BK.Economy.state(S).stock.food), S.rng.state, S.annexedBy])]);
