@@ -100,6 +100,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/ecology.js",
+  "src": "logic/ecology.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/economy.js",
   "src": "logic/economy.js",
   "mode": 420

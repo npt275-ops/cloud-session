@@ -178,6 +178,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
     dân trốn vào nhà, đảo bị đánh bắn trả; tên lửa chỉ phá, bộ binh vẫn phải chiếm nhà chính;
   - từ thời 8 người đứng đầu hiếu chiến, tham vọng có thể làm hạt nhân: mỗi quả san phẳng một phần tư đảo, nhiễm xạ, cả bể
     sợ và mất mùa, trời xám bụi; bốn quả thì đảo bị san phẳng, buộc sáp nhập.
+- **NPC sống thật, phần 7f: hệ sinh thái hỗn loạn** (`design/npc-song-that.md` mục 14, `logic/ecology.js`):
+  - rừng thưa dần (cây trên đảo thưa đi thật), mỏ cạn, đất bạc màu, khói bụi; người đứng đầu chọn khai thác nhanh hay giữ đất;
+  - chạy nạn sang đảo khác (có đảo đóng cửa), lấy vợ chồng khác đảo, dịch lây theo người qua lại và đảo đóng cầu, người ốm
+    nằm nhà, đảo chính, tranh ngôi, cấm vận, thừa nước đục thả câu; chuyền nước chữa cháy rừng, bàn giao ca gác;
+  - mỗi chuyện ghi nguyên nhân trong tin ("vì …", "do …").
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

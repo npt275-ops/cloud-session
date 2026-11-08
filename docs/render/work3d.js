@@ -76,6 +76,9 @@
     shelter: () => [['cower', null], ['sad', null]],
     hide: () => [['stand', null]],
     kneel: () => [['submit', null], ['surrender', null]],
+    // hệ sinh thái (logic/ecology.js): người ốm vì dịch nằm, ngồi ở nhà; chuyền nước chữa cháy rừng (cúi nhận, đưa lên)
+    sick: () => [['sick', null], ['sit', null]],
+    bucket: () => [['harvest', null], ['build', null]],
   };
   // cử chỉ thứ n của một việc cho một người (đổi lượt thì sang cử chỉ khác)
   function gestureOf(verb, level, pid, turn) {

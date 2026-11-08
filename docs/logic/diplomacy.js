@@ -184,6 +184,8 @@
     for (const v of [...W.visits]) {
       const S = W.islands[v.from], p = S.people.get(v.pid);
       if (!p || !p.alive) { W.visits.splice(W.visits.indexOf(v), 1); continue; }
+      // người chạy nạn (logic/ecology.js): tới nơi thì cả hộ ở lại đảo kia
+      if (v.kind === 'refugee') { if (day >= v.arrive) { W.visits.splice(W.visits.indexOf(v), 1); BK.Ecology.arrive(W, day, v); } continue; }
       if (v.stage === 'go' && day >= v.arrive) {
         v.stage = 'stay'; p.loc = v.to;
         // đầu cầu: hai đảo đang thù nhau thì có thể xô xát với lính gác, khách bị đuổi về

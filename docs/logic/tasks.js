@@ -60,6 +60,9 @@
       if (ph === 'noon') return job('eat', 'home', 'về nhà ăn trưa');
       return job('stroll', 'stroll', 'đi bộ dọc phố gặp dân');
     }
+    // sáng ra lính vừa gác đêm bàn giao ca cho lính gác giữ chốt (logic/guards.js), mỗi sáng một lần
+    const wasNight = p.lastPh === 'night'; p.lastPh = ph;
+    if (wasNight && ph === 'morning' && j === 'soldier' && p.id % 2 === 0 && BK.Guards) { const h = BK.Guards.handover(ctx); if (h) return h; }
     // đêm: ai cũng về nhà ngủ, trừ một nửa số lính ra các chốt cổng thay ca gác đêm (logic/guards.js)
     if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng'); const lodge = BK.Siege ? BK.Siege.lodging(S, p) : null; if (lodge != null) return job('sleep', 'homeSlot', 'nhà cháy, ở nhờ nhà hàng xóm', { slot: lodge }); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)

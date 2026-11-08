@@ -85,7 +85,7 @@
     const _o = new THREE.Object3D(), ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
     function placeTree(L, n) {
       const t = L.trees.list[n], T = L.trees, s = t.s;
-      if (t.hidden) { for (const k in t.slot) T[k].setMatrixAt(t.slot[k], ZERO); return; }
+      if (t.hidden || t.felled) { for (const k in t.slot) T[k].setMatrixAt(t.slot[k], ZERO); return; }
       _o.position.set(t.x, 0.05, t.z); _o.rotation.set(0, 0, 0); _o.scale.set(t.r * 1.15, 1, t.r * 1.15); _o.updateMatrix(); T.shadow.setMatrixAt(t.slot.shadow, _o.matrix);
       _o.position.set(t.x, 0, t.z); _o.rotation.set(t.tilt, t.rot, 0);
       const set = (k, sx, sy, sz, y) => { _o.position.y = y; _o.scale.set(sx, sy, sz); _o.updateMatrix(); T[k].setMatrixAt(t.slot[k], _o.matrix); };
@@ -122,7 +122,15 @@
       if (any) for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true;
     }
 
-    return { plantTrees, placeTree, treeColors, clearTrees };
+    // rừng thưa dần theo môi trường của đảo (logic/ecology.js S.env.forest, 0..1): cây bị đốn mất trước theo một thứ tự cố định,
+    // rừng mọc lại thì cây hiện lại đúng chỗ cũ; giữ ít nhất một phần năm số cây
+    function thinTrees(L, f) {
+      if (!L.trees || (L.treeF != null && Math.abs(L.treeF - f) < 0.02)) return; L.treeF = f;
+      const keep = 0.2 + 0.8 * f; let any = false;
+      L.trees.list.forEach((t, n) => { const fell = ((n * 0.6180339887) % 1) >= keep; if (!!t.felled !== fell) { t.felled = fell; placeTree(L, n); any = true; } });
+      if (any) for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true;
+    }
+    return { plantTrees, placeTree, treeColors, clearTrees, thinTrees };
   }
   BK.MapTrees = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

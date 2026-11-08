@@ -1,7 +1,7 @@
 // Bể Kính · test/strategy.test.js · Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 // so giao thương với sống riêng: tắt chiến tranh ở cả hai (chiến tranh cũng gây đói, test/war.test.js)
@@ -50,8 +50,11 @@ test('sắp hết lương thực thì không đợi kỳ xét: còn thương nh�
   const S = W.islands[1], st = BK.Economy.state(S); st.stock.food = 0; st.hunger = 1; st.stock.wood = 300; // có hàng để trả
   for (const j of [0, 2, 3, 4, 5]) BK.Economy.state(W.islands[j]).stock.food = 3000;
   W.caravans = [];
-  for (let k = 1; k <= 3; k++) BK.World.jump(W, 400 + k);
-  assert.ok(W.caravans.some((c) => c.a === 1 && c.get.food > 0), 'có đoàn đi mua lương thực trong 3 ngày');
+  // giữ kho cạn suốt 3 ngày (ruộng làm ra mỗi ngày có thể kéo đảo khỏi mức sắp hết)
+  for (let k = 1; k <= 3; k++) { st.stock.food = 0; st.hunger = 1; BK.World.jump(W, 400 + k); }
+  // đi hỏi mua ngay: có đoàn đi mua, hay đã hỏi mà đảo kia từ chối (đảo bán nhận hay không theo lời lãi, tin cậy, tính người đứng đầu)
+  const asked = S.log.some((e) => e.day > 400 && /từ chối đổi lương thực/.test(e.text));
+  assert.ok(W.caravans.some((c) => c.a === 1 && c.get.food > 0) || asked, 'đi hỏi mua lương thực trong 3 ngày');
 });
 
 test('đoàn buôn đi thật: hàng rời kho lúc đi, tới nơi mới nhận; qua cầu nhanh hơn đi thuyền', () => {

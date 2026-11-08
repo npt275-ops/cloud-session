@@ -1,7 +1,7 @@
 // Bể Kính · test/war.test.js · Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
@@ -51,7 +51,9 @@ test('đột kích: cướp kho rồi về, chiến lợi phẩm vào kho đảo
   assert.ok(E.state(B).stock.wood < 400, 'kho bên kia vơi đi');
   assert.ok(!W.wars.includes(w), 'quân đã về');
   assert.ok(w.troops.every((x) => !x.p.away), 'người về nhà');
-  assert.ok(Object.keys(w.loot).length > 0 && W.log.some((e) => /cướp kho/.test(e.text)));
+  // xông vào cướp kho, hay bên kia xin hoà nộp kho trước khi bị cướp (logic/war.js maybePeace): đều mang hàng về
+  assert.ok(Object.keys(w.loot).length > 0 && W.log.some((e) => /cướp kho|để được hoà/.test(e.text)), 'mang chiến lợi phẩm về');
+  assert.ok(E.state(A).stock.wood > 0, 'chiến lợi phẩm vào kho đảo mình');
 });
 
 test('người chết trận có thật, bên mất người thù bên kia', () => {

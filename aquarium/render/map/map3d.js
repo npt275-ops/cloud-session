@@ -57,7 +57,7 @@
       }
     }
 
-    return { lands, animate, seasons, LAND_R, RING, SC, clearTrees: TR.clearTrees, landOf: (i) => lands[i], shared: X };
+    return { lands, animate, seasons, LAND_R, RING, SC, clearTrees: TR.clearTrees, thinTrees: TR.thinTrees, landOf: (i) => lands[i], shared: X };
   }
   root.Lands3D = { create, LAND_R, RING, SC };
 })(typeof self !== 'undefined' ? self : globalThis);

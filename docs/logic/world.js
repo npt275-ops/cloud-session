@@ -35,11 +35,14 @@
     // giữa các đảo (logic/diplomacy.js, logic/strategy.js): quan hệ, đoàn buôn, hiệp ước, cầu; o.diplomacy === false thì sáu đảo
     // sống riêng; o.war === false thì có giao thương nhưng không ai đánh ai (để so sánh trong kiểm thử)
     W.diplomacy = o.diplomacy !== false && !!BK.Diplomacy; W.war = W.diplomacy && o.war !== false && !!BK.War; W.rng = BK.Rng.create(seed * 31 + 7);
-    if (W.diplomacy) { BK.Diplomacy.init(W); BK.War.init(W); }
+    if (W.diplomacy) { BK.Diplomacy.init(W); BK.War.init(W); if (BK.Ecology) BK.Ecology.init(W); }
     return W;
   }
   // sang ngày mới: việc giữa các đảo (đoàn buôn tới nơi, quan hệ phai dần, các trận đánh, người đứng đầu xét tình hình)
   function worldDay(W, day) {
+    // hệ sinh thái (logic/ecology.js): môi trường, chính trị trong đảo chạy cả khi sáu đảo sống riêng; chạy nạn, lấy vợ chồng
+    // khác đảo, dịch lây, cấm vận chỉ khi có qua lại giữa các đảo
+    if (BK.Ecology) BK.Ecology.dayTick(W, day, W.rng);
     if (!W.diplomacy) return;
     BK.Diplomacy.dayTick(W, day);
     if (W.war) BK.War.dayTick(W, day, W.rng);

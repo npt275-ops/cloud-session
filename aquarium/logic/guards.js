@@ -11,6 +11,7 @@
  *   kiểm đoàn    đoàn buôn vừa đi hay vừa về (nhật ký của đảo) thì lính cổng phụ ra xem hàng, chỉ đường
  *   ăn trưa      ăn tại chốt; người nhà mang cơm ra (người nhà đi từ nhà tới chốt, logic/tasks.js)
  *   chiều đông   xoa tay cho ấm
+ *   bàn giao ca  sáng ra, lính vừa gác đêm tới báo lại với lính gác giữ chốt (handover)
  *   giặc tới     logic/brain.js (S.situ.war) đưa lính ra cổng phía bị đánh
  * Không vẽ gì, chạy được bằng Node. Cần: logic/people.js, logic/temper.js, logic/climate.js. */
 (function (root, factory) {
@@ -63,5 +64,11 @@
     const g = S.people.get(p.spouse); if (!g || !g.alive || g.away || !BK.Posts || !BK.Posts.of(g) || !BK.Posts.of(g).night) return null;
     return d('talk', { verb: 'bring', target: g.id, place: 'home', reason: 'mang cơm trưa ra cổng cho ' + BK.People.fullName(g), until: S.day + 0.25, phase: ph });
   }
-  return { pick, nightShift, bringMeal, styleOf };
+  // bàn giao ca: sáng ra, lính vừa gác đêm tới báo lại với một lính gác giữ chốt rồi mới về (logic/tasks.js gọi một lần mỗi sáng)
+  function handover(ctx) {
+    const { S, p, d, ph } = ctx, G = [...S.people.values()].filter((q) => q.alive && !q.away && (q.job === 'gatekeeper' || q.job === 'sideguard'));
+    if (!G.length) return null; const g = G[p.id % G.length];
+    return d('talk', { verb: 'report', target: g.id, place: 'nightGate', reason: 'bàn giao ca gác đêm cho ' + BK.People.fullName(g), until: S.day + 0.12, phase: ph });
+  }
+  return { pick, nightShift, bringMeal, handover, styleOf };
 });

@@ -307,7 +307,7 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 | 7c | Cầu do người đứng đầu quyết, dựng cầu thật, người qua lại, xô xát ở đầu cầu | 7.2 |
 | 7d ✅ | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh (mục 12) | 7.3 |
 | 7e ✅ | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể (mục 13) | 7.4 |
-| 7f | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân | 7.6 |
+| 7f ✅ | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân (mục 14) | 7.6 |
 | 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
 
 Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khung hình điện thoại, rồi commit, push, cập nhật artifact.
@@ -436,4 +436,49 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
 
   Đảo còn độc lập cuối trận: 6 đảo 4/20, 5 đảo 10/20, 4 đảo 4/20, 3 đảo 1/20, 1 đảo 1/20. Bể kính hỗn loạn hơn rõ; cân chỉnh ở 7g.
 - Chưa làm: lá chắn đánh chặn từ thời 9 (gợi ý trong mục 7.4, chưa chốt).
+
+## 14. Đã làm ở 7f
+
+Tệp mới `logic/ecology.js`, chạy mỗi ngày ở cấp cả bể. Môi trường và chính trị trong đảo chạy cả khi sáu đảo sống riêng; các vòng giữa các đảo chỉ chạy khi có qua lại. Mỗi chuyện ghi nguyên nhân ngay trong tin ("vì …", "do …"), nên đọc bảng tin là thấy được chuỗi.
+
+| Vòng | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Môi trường** | `S.env`:<ul><li>rừng hao theo phần dân đốn gỗ; rừng càng thưa càng mọc lại chậm;</li><li>mỏ hao theo phần dân đào, vỉa nghèo vẫn đào được ít (sàn 25%);</li><li>đất ruộng bạc màu, nghỉ thì hồi;</li><li>khói bụi từ thời 5, công nghệ sạch từ thời 9 thì bớt.</li></ul>Sản lượng theo đó: gỗ 50–100%, đá và kim loại 60–100%, lương thực 65–100% và trừ thêm khói bụi.<br>Người đứng đầu ham học, ít tham vọng thì giữ đất cho đời sau: hao 60%, làm ra 90%.<br>Phần vẽ: cây trên đảo thưa đi theo độ còn của rừng, mọc lại thì cây hiện lại đúng chỗ cũ. | `test/ecology.test.js`. Ảnh: rừng Thông Xanh còn 35%. |
+| **Chạy nạn** | Đói từ 8 ngày, giặc vào thành, hay vừa bị hạt nhân thì có khi cả một hộ chạy sang đảo khác: đảo không đánh nhau với mình, còn ăn, còn chỗ (tối đa 100 dân), tin nhất và gần nhất. Đi qua cầu hay đi thuyền thật; tới nơi thì ở lại, thành dân đảo kia. Người đứng đầu đa nghi, không tin đảo kia thì đóng cửa (bên bị đuổi thêm thù). Người chạy nạn từ đảo có dịch mang dịch theo. | `test/ecology.test.js`. Ảnh: người chạy nạn trên cầu. |
+| **Lấy vợ chồng khác đảo** | Khách đang ở đảo bên có thể cưới người độc thân ở đó rồi ở lại. Hai đảo thành họ hàng và tin nhau hơn; hai đảo có họ hàng mà đánh nhau thì có tin "gia đình bị chia cắt". | `test/ecology.test.js` |
+| **Dịch lây, đóng cầu** | Dịch (có sẵn trong `logic/climate.js`) lây theo khách, đoàn buôn, quân lính, người chạy nạn. Khỏi dịch thì có 60 ngày miễn dịch. Đảo có cầu sang đảo đang có dịch, người đứng đầu đa nghi hay sợ hãi, thì đóng cầu 30 ngày: không qua lại, không buôn bán, các đảo kia bớt tin. Đang có dịch thì khoảng 15% dân ốm nằm nhà. | `test/ecology.test.js`. Trình duyệt: 5 người ốm, 0 vi phạm. |
+| **Đảo chính, tranh ngôi** | Bất bình tăng theo: đói, dịch, hạt nhân, cấm vận, người chết nhiều; nguôi dần khi yên. Bất bình cao mà có tướng tham vọng thì đảo chính: lính vây nhà chính, dân đóng cửa ở trong nhà; xong thì tướng lên làm người đứng đầu, người cũ quỳ ở sân, chiến lược đổi hết. Người đứng đầu mất mà trong hội đồng có người rất tham vọng thì có khi tranh ngôi (cãi nhau to). | `test/ecology.test.js`. Ảnh: lính vây nhà chính. |
+| **Cấm vận** | Ba đảo trở lên mất tin và thù một đảo thì cùng cấm vận 120 ngày: không ai buôn bán với đảo đó. Đảo bị cấm vận túng quẫn, bất bình tăng, dễ liều đánh. | `test/ecology.test.js` |
+| **Chiến tranh lan rộng** | Kẻ mưu mô muốn đánh đảo đang bị đánh nơi khác hơn (thừa nước đục thả câu). Liên minh kéo đồng minh vào thì đã có từ trước. | Số đo 20 trận |
+| **Cảnh** | Cháy rừng: người lớn khoẻ (tối đa 14 người) xếp hàng từ giếng ra bãi gỗ chuyền nước. Sáng ra, lính vừa gác đêm tới bàn giao ca cho lính gác giữ chốt. | `test/ecology.test.js`. Trình duyệt: 14 người chuyền nước, 0 vi phạm. |
+
+**Bài kiểm thử cũ phải sửa (ghi rõ lý do):**
+
+| Bài | Vì sao trượt | Sửa thế nào |
+|---|---|---|
+| "giao thương giúp lên thời nhanh hơn" | So sánh lệch: bên sống riêng không chịu hệ sinh thái. | Sửa luật (môi trường, chính trị trong đảo giờ chạy ở mọi đảo), không sửa bài. |
+| "sắp hết lương thực thì đi mua ngay" | Lịch sử đảo đổi nên chuỗi may rủi đổi; ngày đầu ruộng làm ra đủ để thoát mức sắp hết, các ngày sau đảo kia từ chối bán. | Giữ kho cạn suốt 3 ngày, và tính cả lần hỏi mua bị từ chối là đã đi mua ngay. |
+| "đột kích cướp kho" | Lần này bên kia xin hoà, nộp kho trước khi bị cướp. | Chấp nhận cả hai kết cục, vẫn đòi chiến lợi phẩm vào kho đảo đi đánh. |
+
+**Số đo (20 trận 9 năm), trung bình mỗi trận:**
+
+| Vòng | Mỗi trận |
+|---|---|
+| Người chạy nạn | 41 |
+| Bị đóng cửa không nhận | 4,8 lần |
+| Đám cưới khác đảo | 1 |
+| Dịch lây sang đảo khác | 1,6 lần |
+| Đóng cầu vì dịch | 1,75 lần |
+| Đảo chính | 1,7 |
+| Tranh ngôi | 3 |
+| Cấm vận | gần như chưa có |
+
+- Môi trường cuối trận trung bình: rừng 90%, mỏ 83%, đất 75%, khói bụi 7%. Trong trận, rừng và mỏ có lúc xuống thấp hơn nhiều (Tuyết Trắng còn 5–18% rừng).
+- Thời trung bình cuối trận thấp hơn trước khoảng một bậc (8,4 so với 9,3).
+- Chiến tranh nhiều hơn.
+- Cân chỉnh tổng thể ở 7g.
+
+**Lần thử đầu quá nặng tay (đã sửa):** mỏ cạn tới 10% làm các đảo kẹt ở thời 7; 88 người chạy nạn mỗi trận; 11 lần tranh ngôi mỗi trận.
+
+**Chưa làm:** nội chiến chia hai phe, giá theo khan hiếm (giá hiện theo giá trị mỗi đảo tự định).
 

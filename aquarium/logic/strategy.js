@@ -109,7 +109,7 @@
   function tryVisit(W, a, day, rng, t) {
     const D = BK.Diplomacy, A = W.islands[a];
     for (const b of [(a + 1) % D.N, (a + D.N - 1) % D.N]) {
-      if (!D.alive(W, b) || !D.bridged(W, a, b) || W.rel[a][b].trust < 0.15 || (BK.War && BK.War.atWar(W, a))) continue;
+      if (!D.alive(W, b) || !D.bridged(W, a, b) || W.rel[a][b].trust < 0.15 || (BK.War && BK.War.atWar(W, a)) || (BK.Ecology && BK.Ecology.blocked(W, a, b, day))) continue; // đóng cầu vì dịch, cấm vận
       if (!rng.chance(0.3 + 0.4 * W.rel[a][b].trust - 0.3 * t.paranoia)) continue;
       // người đi: người đi đường, người làm, ưa giao thiệp (ít đa nghi), người lớn
       const P = BK.People, pool = BK.Island.living(A).filter((p) => !p.away && !p.role && (p.job === 'walker' || p.job === 'worker' || p.job === 'trader') && P.ageOf(p, day) >= 18 && P.traits(p).paranoia < 0.5);
@@ -147,7 +147,8 @@
       // muốn đánh (chưa tính sức): muốn mà quân chưa đủ thì tích quân trước (pol.warlust)
       const wantRaid = (0.5 * t.aggression + 0.25 * (1 - t.intellect) + 0.6 * need + 0.4 * grudge - 0.4 * t.fear - 0.3 * t.piety - 0.25) / far;
       const wantConquer = (0.55 * t.aggression + 0.55 * t.ambition + 0.35 * grudge + 0.15 * need - 0.4 * t.fear - 0.3 * t.meekness - 0.2) / far;
-      const k = T ? 0.4 : 1; lust = Math.max(lust, wantRaid * k, wantConquer * k);
+      // thừa nước đục thả câu: đảo b đang bị đánh nơi khác thì kẻ mưu mô muốn đánh hơn; bị cấm vận thì túng quẫn, dễ liều
+      const k = (T ? 0.4 : 1) * (Wr.atWar(W, b) && t.cunning > 0.55 ? 1.15 : 1) * (W.embargo && W.embargo[a] > day ? 1.25 : 1); lust = Math.max(lust, wantRaid * k, wantConquer * k);
       // chiếm cả đảo là phần thưởng lớn hơn một lần cướp kho (CONQUER_PRIZE)
       const raid = wantRaid * clamp((ratio - 1.0) / 1.2), conquer = CONQUER_PRIZE * wantConquer * clamp((ratio - 1.0) / 1.5);
       for (const [kind, sc] of [['raid', raid * k], ['conquer', conquer * k]]) if (sc > 0 && (!best || sc > best.sc)) best = { b, kind, sc };
@@ -167,7 +168,7 @@
     for (const y of wants.slice(0, 2)) {
       // đảo có dư thứ y, xếp theo lượng dư và tin cậy (ít thù hằn); bỏ qua đảo đang không đi được
       const partners = [];
-      for (let b = 0; b < D.N; b++) { if (b === a || !D.alive(W, b) || !D.canSend(W, b)) continue; const av = D.available(W.islands[b], y); if (av >= 10) partners.push([b, av * (1 + W.rel[a][b].trust - W.rel[a][b].grudge) / D.travelDays(W, a, b)]); }
+      for (let b = 0; b < D.N; b++) { if (b === a || !D.alive(W, b) || !D.canSend(W, b) || (BK.Ecology && BK.Ecology.blocked(W, a, b, day))) continue; const av = D.available(W.islands[b], y); if (av >= 10) partners.push([b, av * (1 + W.rel[a][b].trust - W.rel[a][b].grudge) / D.travelDays(W, a, b)]); }
       if (!partners.length) continue;
       partners.sort((p, q) => q[1] - p[1]);
       const b = partners[rng.next() < 0.75 || partners.length === 1 ? 0 : 1][0], B = W.islands[b];

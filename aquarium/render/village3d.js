@@ -162,6 +162,8 @@
       // trước cửa nhà người mất (đám tang, logic/scenes.js); hàng người nhận khẩu phần trước kho lúc đói (thứ tự trong hàng: qRank)
       if (mind.place === 'homeSlot' && PL && PL.homeSlots && PL.homeSlots[mind.slot]) return { p: Nav.offCarriage(PL.homeSlots[mind.slot].clone().add(f.jit)), face: PL.homeSlots[mind.slot] };
       if (mind.place === 'queue' && PL && PL.store && PL.store.length) { const s1 = PL.store[Math.min(1, PL.store.length - 1)], dir = s1.clone().negate().setY(0).normalize(); return { p: s1.clone().addScaledVector(dir, 0.9 * ((f.qRank || 0) + 1)), face: s1 }; }
+      // chuyền nước chữa cháy rừng (logic/ecology.js): hàng người từ giếng giữa làng ra bãi gỗ, mỗi người một chỗ theo thứ tự
+      if (mind.place === 'bucket' && PL) { const w0 = pickOf(PL.square, 0), f0 = pickOf(PL.wood, 0) || pickOf(PL.outer, 0) || pickOf(PL.guard, 0); if (w0 && f0) { const u = ((mind.rank || 0) + 0.5) / Math.max(1, mind.of || 1), at = w0.clone().lerp(f0, u), nx = w0.clone().lerp(f0, Math.min(1, u + 0.05)); return { p: at, face: nx }; } }
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình

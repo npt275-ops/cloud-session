@@ -43,6 +43,8 @@
         '<span>' + head + ' · ' + stance + (foe ? ' · <em>' + (war.kind === 'revolt' ? 'nổi dậy' : 'đánh nhau') + ' với ' + esc(foe) + '</em>' : '') + '</span>' +
         // kho vũ khí bắn xa (logic/missiles.js): tên lửa, hạt nhân, quả đang chế tạo; đảo từng bị bắn hạt nhân, đang nhiễm xạ
         (S.arms && (S.arms.missiles || S.arms.nukes || S.arms.nukeDone) || S.nukedTotal ? '<span>' + esc([S.arms && S.arms.missiles ? S.arms.missiles + ' tên lửa' : '', S.arms && S.arms.nukes ? S.arms.nukes + ' hạt nhân' : '', S.arms && S.arms.nukeDone ? 'đang chế tạo hạt nhân' : '', S.nukedTotal ? 'bị bắn ' + S.nukedTotal + ' quả hạt nhân' + (S.falloutUntil > W.day ? ', đang nhiễm xạ' : '') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
+        // hệ sinh thái (logic/ecology.js): rừng, mỏ, đất ruộng, khói bụi; đóng cầu, cấm vận, bất bình, giữ đất cho đời sau
+        (S.env ? '<span>' + esc(['rừng ' + Math.round(S.env.forest * 100) + '%', 'mỏ ' + Math.round(S.env.ore * 100) + '%', 'đất ' + Math.round(S.env.soil * 100) + '%', S.env.smog > 0.02 ? 'khói bụi ' + Math.round(S.env.smog * 100) + '%' : '', S.conserve ? 'giữ đất cho đời sau' : '', S.closed && S.closed.until > W.day ? 'đóng cầu (' + S.closed.why + ')' : '', W.embargo && W.embargo[i] > W.day ? 'bị cấm vận' : '', S.discontent > 0.3 ? 'bất bình ' + Math.round(S.discontent * 100) + '%' : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         (pacts.length || bridges.length ? '<span>' + esc([pacts.join(', '), bridges.length ? 'cầu sang ' + bridges.join(', ') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         '</button>';
     }
