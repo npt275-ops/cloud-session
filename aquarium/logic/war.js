@@ -507,7 +507,9 @@
     const L = living(S).filter((p) => !p.governor && P().ageOf(p, day) >= BK.Rules.ADULT_AGE);
     if (!L.length) return;
     const hot = L.reduce((s, p) => s + P().traits(p).aggression, 0) / L.length, g = W.rel[i][r].grudge;
-    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.004 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004));
+    // đảo cai quản là bá chủ (từ năm 6, tới thời 10: logic/strategy.js) giàu mạnh, quân đông: dân đảo bị chiếm ít dám nổi dậy
+    const boss = day >= 5 * 360 && Rr.level >= 10 ? 0.006 : 0;
+    S.unrest = Math.max(0, Math.min(1, (S.unrest || 0) + 0.004 * (g + hot) + (st.hunger ? 0.01 : 0) - 0.004 - boss));
     if ((Math.floor(day) + i * 3) % 10 !== 0 || atWar(W, i)) return;
     if (S.unrest > 0.45) reinforce(W, day, i, rng);
     if (day - S.annexDay < CALM_DAYS || (S.revoltFailed != null && day - S.revoltFailed < REVOLT_REST) || S.unrest < 0.55) return;
