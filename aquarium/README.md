@@ -195,6 +195,12 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   tù binh, khải hoàn; thời hoàng kim (cờ, đèn lồng), kỳ quan mọc dần, phát minh, suy tàn (cỏ dại), ngư trường chung; biên
   niên trong bảng Cuộc đua, nhân vật nổi bật có danh hiệu; cả bể yên quá lâu thì có người đứng đầu thấy bị sỉ nhục.
   100 trận: 9,1 trận đánh, 1,9 sáp nhập, thời trung bình 9,1, chết đói 4,0, hạt nhân ở 8% số trận, 4,5 chuyện lớn mỗi năm.
+- **Bước 9: chỉ bắn xa, máu, NPC có trật tự** (`design/chien-tranh-thinh-vuong.md` mục 8): bỏ cận chiến; hai bên xếp hàng
+  ngang hàng dọc mà bắn (quân đánh ngoài tường, quân giữ trong cổng, trước nhà chính); người có máu, trúng đạn mất máu, hết máu
+  thì ngã, rút về thì hồi; cổng và nhà chính có thanh máu, cổng hết máu thì vỡ, nhà chính hết máu thì mất thành; xe tăng bắn
+  đạn thẳng từ nòng. Không còn bước chân tại chỗ; làng lập ra có trẻ đủ lứa tuổi; trẻ nhỏ ở trong nhà, sáng ra sân chơi có
+  người già trông; người làm việc vặt đi chợ, ra kho mang đồ về nhà chứ không đi dạo vô định. 100 trận: 8,9 trận đánh, 1,75
+  sáp nhập, thời trung bình 9,5, chết đói 1,9, hạt nhân ở 6% số trận.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

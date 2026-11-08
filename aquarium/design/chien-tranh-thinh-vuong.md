@@ -158,3 +158,20 @@ có việc, có mục đích, nhìn vào thấy trật tự.
 | Lập làng đủ lứa tuổi | `logic/island.js` | Lứa con đầu tiên của tám người lập làng có tuổi từ 1 tới 10 (nhỏ hơn cha mẹ ít nhất 17 tuổi), không còn cả làng toàn trẻ sơ sinh |
 | Trẻ nhỏ | `logic/tasks.js`, `logic/brain.js`, `render/village3d.js` | Dưới 3 tuổi ở trong nhà với người lớn. 3–5 tuổi: buổi sáng ra sân chơi của làng (bãi trống ngoài một dãy nhà, xa nhà chính), có một nửa số người già ra trông; còn lại ở trong nhà (ăn trưa, ngủ trưa, ăn tối). Trẻ nhỏ không bị cuốn vào chuyện người lớn (chiến tranh, cãi nhau). Trẻ lớn buổi tối ở trong nhà ăn tối, học bài, không đứng chơi trước cửa |
 | Việc có mục đích | `logic/tasks.js`, `render/work3d.js` | Người làm việc vặt không còn đi dạo vô định hay vòng quanh nhà chính: mỗi chuyến ra chợ mua đồ mang về nhà, ra kho lĩnh phần cho nhà (chu trình mang hàng), hay ghé nhà hàng xóm. Thời chưa có chợ thì trao đổi ở kho, ở sân. Trưa hai phần ba số người về nhà ăn trong nhà, một phần ba ăn ngoài hiên |
+
+Cân chỉnh lại bằng 100 trận (hạt giống 1–100) sau khi đổi sang máu và lập làng đủ lứa tuổi:
+
+| Chỉ số | Mục tiêu | Trước (8f) | Sau (bước 9) |
+|---|---|---|---|
+| Trận đánh mỗi trận | 7–10 | 9,1 | 8,9 |
+| Sáp nhập | 1,2–2 | 1,91 | 1,75 |
+| Thời trung bình cả bể | 8,8–9,6 | 9,14 | 9,52 |
+| Có đảo kẹt dưới thời 6 | ≤ 10% | 6% | 0% |
+| Chết đói mỗi trận | ≤ 5 | 4,0 | 1,9 |
+| Trận có dùng hạt nhân | 5–15% | 8% | 6% |
+| Còn ≤ 2 đảo độc lập | thấp | 3% | 7% |
+
+Số đã chỉnh: `HITS` 6 (khả năng trúng mỗi đợt), `GATE_HIT` 1,2, `HALL_HIT` 0,04 (`logic/war.js`); lứa con đầu tiên 0–8 tuổi
+(`logic/island.js`); người đứng đầu chỉ muốn làm hạt nhân khi hiếu chiến trên 0,55 và tham vọng trên 0,5 (`logic/missiles.js`).
+Đầu hàng hiếm hơn trước (0,05 mỗi trận): nhà chính thường sụp trước khi người đứng đầu chịu hàng. Trẻ dưới 12 tuổi theo lịch
+riêng, không bị cuốn vào hạn hán, chiến tranh, cãi nhau của người lớn.

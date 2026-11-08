@@ -39,7 +39,8 @@ test('ở cổng: máy công thành phá cổng, tên lửa đốt làm cháy nh
 test('kịch bản: hải chiến khi đảo bị đánh ra chặn; đấu tướng hai tướng hiếu chiến; vây thành làm đảo bị vây gần như không làm ra lương thực', () => {
   // hải chiến
   let naval = 0, duel = 0, block = 0;
-  for (const seed of [2, 3, 4, 5, 6]) {
+  for (const seed of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) {
+    if (naval) break; // đủ một ca là được
     const W = world(seed, 5), A = W.islands[2], B = W.islands[4]; soldiers(A, 12); soldiers(B, 8);
     const w = BK.War.launch(W, W.day, 2, 4, 'conquer', 1, W.rng); if (!w) continue; w.by = 'boat';
     for (let k = 0; k < 12 * 20 && !(w.naval || (w.stage !== 'march' && w.stage !== 'muster')); k++) { temper(B, { aggression: 0.9, paranoia: 0.8 }); temper(A, { aggression: 0.9, cunning: 0.7 }); tick(W, 1); }
