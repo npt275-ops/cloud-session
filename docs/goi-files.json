@@ -180,6 +180,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/siege.js",
+  "src": "logic/siege.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/strategy.js",
   "src": "logic/strategy.js",
   "mode": 420
@@ -387,6 +392,11 @@
  {
   "path": "BeKinh/render/build/roads.js",
   "src": "render/build/roads.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/build/ruins3d.js",
+  "src": "render/build/ruins3d.js",
   "mode": 420
  },
  {

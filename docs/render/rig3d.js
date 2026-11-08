@@ -155,6 +155,7 @@
     put('cyl', n.wrR, M(0, -0.4, 0, 0.02, 1.1, 0.02), wood, 'tool:hoe'); put('box', n.wrR, M(0, -0.95, 0.1, 0.06, 0.04, 0.22), blade, 'tool:hoe');
     put('cyl', n.wrR, M(0, -0.1, 0, 0.02, 0.22, 0.02), wood, 'tool:sickle'); put('box', n.wrR, M(0, -0.28, 0.09, 0.02, 0.05, 0.2, 0.5, 0, 0), blade, 'tool:sickle');
     put('cyl', n.wrR, M(0, -0.12, 0, 0.02, 0.38, 0.02), wood, 'tool:hammer'); put('box', n.wrR, M(0, -0.3, 0, 0.16, 0.08, 0.08), blade, 'tool:hammer');
+    put('cyl', n.wrR, M(0, -0.1, 0, 0.022, 1.8, 0.022), wood, 'tool:spear'); put('box', n.wrR, M(0, 0.86, 0, 0.05, 0.16, 0.05), blade, 'tool:spear'); // giáo (đánh trận, logic/siege.js)
     put('cyl', n.wrR, M(0, -0.25, 0, 0.02, 0.75, 0.02), wood, 'tool:axe'); put('box', n.wrR, M(0, -0.58, 0.1, 0.05, 0.16, 0.2), blade, 'tool:axe');
     put('ball', n.chest, M(-0.24, 0.52, -0.06, 0.22, 0.2, 0.2), '#c9a46e', 'tool:sack');
     // hàng mang từ chỗ làm về kho (render/village3d.js, logic/tasks.js cycle): khúc gỗ vác vai, thúng đá hay quặng và thùng

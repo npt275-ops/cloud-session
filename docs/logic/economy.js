@@ -93,7 +93,7 @@
     allocate(S, workers, day, eat, councilFood);
     st.made = { food: councilFood }; // phần lương thực người trong hội đồng làm ra
     let farm = 0, farmers = 0;
-    for (const p of workers) { const r = p.res; if (!can(S, r)) continue; const v = BASE * skill(S, p) * richOf(S, r) * climate(S, r, day) * tech(S.level); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
+    for (const p of workers) { const r = p.res; if (!can(S, r)) continue; const v = BASE * skill(S, p) * richOf(S, r) * climate(S, r, day) * tech(S.level) * (BK.Siege ? BK.Siege.output(S, r) : 1); st.made[r] = (st.made[r] || 0) + v; if (r === 'food') { farm += v; farmers++; } }
     if (farmers) st.perFood = st.perFood ? st.perFood * 0.8 + (farm / farmers) * 0.2 : farm / farmers; // năng suất thật (cho allocate)
     // thợ cả, thương nhân góp thêm hàng quý từ thời có chợ (buôn bán trong đảo)
     if (can(S, 'luxury')) for (const p of live) if (p.job === 'trader' || p.role === 'merchant') st.made.luxury = (st.made.luxury || 0) + 0.4 * richOf(S, 'luxury') * tech(S.level);
@@ -121,5 +121,5 @@
   function progress(S) { const cost = nextCost(S); if (!cost) return 1; const st = state(S), ks = Object.keys(cost); return ks.reduce((a, r) => a + Math.min(1, st.stock[r] / cost[r]), 0) / ks.length; }
   // dev rà soát: đặt thẳng cấp cho một đảo (nút ◀ ▶), kho đủ ăn
   function devSetLevel(S, lv) { const st = state(S); S.level = lv; st.since = 0; st.hunger = 0; st.stock.food = Math.max(st.stock.food, 200); }
-  return { RES, NAME, WORKER, UNLOCK, RICH, CAP, MIN_DAYS, state, richOf, dayTick, progress, nextCost, devSetLevel };
+  return { RES, NAME, WORKER, UNLOCK, RICH, CAP, MIN_DAYS, state, richOf, can, dayTick, progress, nextCost, devSetLevel };
 });

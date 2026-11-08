@@ -305,7 +305,7 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 | 7a | Nền: người ở đâu (`p.loc`), chỗ làm thật cho mọi đảo, mọi thời, hoạt động có đầu vào và đầu ra, bỏ cử chỉ vô nghĩa, kiểm thử "không vô nghĩa"; kịch bản của người đứng đầu (7.7) và lính gác cổng (7.8) | 2, 3, 7.1, 7.7, 7.8 |
 | 7b | Cảnh: tang lễ, đói, lễ hội, thiên tai; khách trên đảo | 4, 7.5 |
 | 7c | Cầu do người đứng đầu quyết, dựng cầu thật, người qua lại, xô xát ở đầu cầu | 7.2 |
-| 7d | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh | 7.3 |
+| 7d ✅ | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh (mục 12) | 7.3 |
 | 7e | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể | 7.4 |
 | 7f | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân | 7.6 |
 | 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
@@ -368,3 +368,38 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
 - Tỉ lệ chiến tranh không đổi (20 trận: 1,3 sáp nhập mỗi trận; có trận chỉ còn 3 đảo).
 
 **Dời sang phần sau:** quân giặc tràn qua cầu bằng người thật, đánh nhau ở đầu cầu: làm ở 7d.
+
+## 12. Đã làm ở 7d
+
+| Việc | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Tiễn quân** | Gọi quân xong, quân tập hợp ở cổng 0,3 ngày rồi mới lên đường (`logic/war.js` sendOff). Quân đi thuyền thì ra cổng chính xuống bến, qua cầu thì ra cổng phụ. Người nhà (vợ chồng, con, cha mẹ) ra cổng vẫy tay, khóc. | `test/siege.test.js`. Trình duyệt: 24 người nhà tiễn, 0 vi phạm. |
+| **Đánh đúng cổng** | Quân tới qua cầu thì đánh cổng phụ đầu cầu, đi thuyền thì đổ bộ đánh cổng chính. Giữ cổng gồm lính, tướng ở nhà, lính gác đúng cổng đó (lính gác cổng khác giữ chốt) và dân tự nguyện: người nóng nảy, không nhát, từ 18 tới 50 tuổi, cầm đồ nghề làm vũ khí (sức bằng 0,3 lính). Mỗi người giữ nhắm một quân giặc. Người đứng đầu chỉ huy ở nhà chính, người sùng đạo cầu ở chỗ thờ, người khác vào nhà đóng cửa (người nhát thì chạy). | `test/siege.test.js` |
+| **Quân giặc là người thật** | Quân giặc, quân đồng minh tới giúp, quân đóng giữ đều là người thật trong làng, mặc màu đảo mình, cầm giáo (`logic/war.js` onIsland, `game/cities.js`). Đảo đang vẽ gần thì không vẽ thêm hình lính nhỏ. Người ngã xuống nằm lại đúng chỗ đã ngã tới hết trận (hai ngày, `S.fallen`). | Trình duyệt: 26–37 quân giặc đánh từng cặp ở cổng chính. |
+| **Công trình có độ bền** | `logic/siege.js` (tệp mới): `S.ruin[khoá]` là độ bền còn lại. Khoá là bãi làm việc (kho, xưởng, chỗ làm năng lượng, ruộng, bãi gỗ, mỏ đá), nhà dân, hay cổng. Cổng vỡ thì hư hẳn. Địch đốt phá lần lượt: kho, xưởng, chỗ làm năng lượng, ba nhà dân, ruộng, tối đa 2 ngày. Lính còn lại và dân nóng nảy đánh trên phố; dân khác dạt sang phía bên kia đảo. | Thử ép sẵn: cổng vỡ → đốt kho, xưởng, chỗ làm năng lượng, 2 nhà → vây nhà chính. |
+| **Hư thì kinh tế mất phần đó** | Kho cháy thì mất hàng ngay (tới một nửa). Bãi hư thì sản lượng thứ đó còn 30–100% theo độ bền. Nhà cháy (độ bền dưới 0,5) thì người nhà ở nhờ nhà gần nhất còn ở được. | `test/siege.test.js` |
+| **Vây nhà chính, đầu hàng** | Đội giữ thành gồm lính còn lại, người trong hội đồng, dân tự nguyện. Mất thành khi đội này ngã hết, hoặc người đứng đầu đầu hàng (xét mỗi ngày): người sợ hãi, nhu nhược hàng sớm để cứu dân; người hiếu chiến, tham vọng đánh tới cùng; bị vây quá 6 ngày thì hết lương phải hàng. Đội giữ thành cũng có thể đánh bật quân giặc. | `test/siege.test.js`: người nhát hàng hơn 30% mỗi ngày, người gan 0%. |
+| **Mất thành** | Người đứng đầu cũ bị dẫn ra quỳ ở sân nhà chính (`S.situ.kneel`). Cờ đảo cũ hạ xuống, cờ đảo thắng kéo lên trong một ngày (`render/war3d.js`). Quân đóng giữ là người thật, đi tuần trong làng. | Trình duyệt: vua cũ quỳ, cờ, người ngã. |
+| **Vẽ hư hại** | `render/build/ruins3d.js` (tệp mới): đống đổ nát cháy đen nhiều hay ít theo độ bền đã mất; lửa và khói đen khi còn giặc. Độ bền dưới 0,35 thì nhà sụp (ẩn đi, còn đống đổ) và bãi làm việc bị đè bẹp. Khi sửa thì có giàn giáo. | Ảnh kho cháy. |
+| **Sửa lại sau chiến tranh** | Hết giặc thì thợ xây ra kho lấy gỗ, đá mang tới chỗ hư nặng nhất mà sửa (`S.repairJob`, `logic/tasks.js`). Mỗi thợ sửa 0,06 độ bền mỗi ngày; thiếu vật liệu thì chỉ còn 30% tốc độ. Đảo bị sáp nhập giữ lại 60 gỗ, 60 đá để sửa, không nộp hết. Sửa xong thì công trình dựng lại. | `test/siege.test.js`. Thử ép sẵn: cổng và kho sửa xong sau khoảng 30 ngày. |
+| **Không vô nghĩa** | Tiễn quân, đánh ở cổng, đốt phá, vây nhà chính, sau khi mất thành đều nằm trong `audit()`. | 0 vi phạm ở mọi chặng trên trình duyệt. |
+
+**Ghi lại (cân bằng thay đổi):**
+- Đặt cùng 40 trận tổng tấn công ép sẵn (bên đánh mạnh hơn):
+
+  | | Bản 7c | Bản 7d |
+  |---|---|---|
+  | Chiếm được thành | 20 | 15 (12 lần là người đứng đầu đầu hàng) |
+  | Thua ở cổng | 18 | 21 |
+
+- Chạy 30 trận 9 năm tự nhiên:
+
+  | Mỗi trận | Trước 7d | Sau 7d |
+  |---|---|---|
+  | Trận đánh | 6,5 | 4,4 |
+  | Sáp nhập | 1,2 | 0,5 |
+
+  Đánh thành giờ khó hơn thật. Phần lớn số lần sáp nhập là do người đứng đầu đầu hàng (0,43 lần mỗi trận).
+- Người đứng đầu đảo đi đánh chỉ ước sức theo số lính giữ cổng, vì không biết trước bao nhiêu dân sẽ cầm vũ khí. Trước khi sửa như vậy, số trận đánh tụt xuống còn 1,9.
+- Cân chỉnh lại toàn cục để ở 7g (100 trận), như kế hoạch.
+

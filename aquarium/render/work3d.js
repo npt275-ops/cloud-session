@@ -70,6 +70,12 @@
     warm: () => [['rubHands', null]],
     nightWatch: () => [['lookAround', null], ['rubHands', null], ['guard', null]],
     doze: () => [['sway', null], ['stand', null]],
+    // đánh thành (logic/siege.js): người nhà ra cổng tiễn quân; dân dạt sang phía bên kia đảo co rúm lại; trốn trong nhà (không
+    // vẽ); người đứng đầu cũ quỳ ở sân nhà chính sau khi mất thành
+    farewell: () => [['wave', null], ['cry', null], ['sad', null]],
+    shelter: () => [['cower', null], ['sad', null]],
+    hide: () => [['stand', null]],
+    kneel: () => [['submit', null], ['surrender', null]],
   };
   // cử chỉ thứ n của một việc cho một người (đổi lượt thì sang cử chỉ khác)
   function gestureOf(verb, level, pid, turn) {

@@ -39,6 +39,8 @@
     const king = S.seats.king != null ? S.seats.king : null;
     const ph = BK.Schedule ? BK.Schedule.phase(S.tod) : null, night = ph === 'night';
     // đêm (trừ lúc có cãi nhau hay chiến tranh): mọi người về nhà ngủ, lính thay nhau gác (logic/tasks.js)
+    // trận trên đảo, tiễn quân, quỳ sau khi mất thành (logic/siege.js): ai có vai thì làm đúng vai, kể cả ban đêm, kể cả trẻ nhỏ
+    if (BK.Siege) { const sr = BK.Siege.roleOf(S, p, (state, o) => d(state, Object.assign({ phase: ph }, o))); if (sr) return sr; }
     const calm = !(X.quarrel && X.quarrel.until > day && (X.quarrel.a === p.id || X.quarrel.b === p.id)) && !(X.war > day);
     if (night && calm && BK.Tasks) return BK.Tasks.pick(S, p, rng, d, friendOf);
     if (age < 6) return d(rng.chance(0.5) ? 'walk' : 'idle', { place: 'home', intensity: 0.3, phase: ph }); // trẻ nhỏ quanh quẩn gần nhà

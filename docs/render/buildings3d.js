@@ -14,7 +14,8 @@
  * còn sót của thời trước nữa cũng mất. Mỗi đảo một lớp vẽ gộp khi ở xa máy quay (render/build/batch3d.js) cho nhẹ máy.
  * Bãi làm việc (kho, bãi gỗ, mỏ đá, chỗ làm năng lượng, xưởng, bãi tập; render/build/workyards3d.js) dựng cùng mỗi thời, sau
  * các công trình; places() trả cả chỗ làm của các bãi đó, và không còn chỗ thay thế vô nghĩa (design/npc-song-that.md mục 2).
- * Cần: three.js, render/build/kit3d.js, place3d.js, batch3d.js, life3d.js, workyards3d.js, các tệp kiểu công trình. */
+ * Công trình hư trong chiến tranh (logic/siege.js): cháy, đổ nát, sụp, giàn giáo khi sửa (setRuin, render/build/ruins3d.js).
+ * Cần: three.js, render/build/kit3d.js, place3d.js, batch3d.js, life3d.js, workyards3d.js, ruins3d.js, các tệp kiểu công trình. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Buildings3D = factory(BK);
@@ -282,6 +283,7 @@
           }
         }
         if (BK.Life3D) { if (!sh.smoke) sh.smoke = BK.Life3D.create(THREE, sh.L.g); sh.smoke.update(emit, ts); }
+        if (sh.ruins) sh.ruins.update(far ? [] : sh.ruinSites || [], ts); // chỗ hư trong chiến tranh: đống đổ, lửa, khói đen, giàn giáo
       }
     }
 
@@ -352,11 +354,40 @@
       roadCheck: (i, all) => { const sh = shown[i]; if (!sh) return null; return sh.pieces.filter((P) => P.baked && P.g.visible && !P.spec.town && !P.spec.gate).map((P) => { const m = P.g.children[0]; if (!m) return null; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1), z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all)); },
       batchInfo: (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) },
     };
+    /* ---------- Hư hại trong chiến tranh (logic/siege.js S.ruin; game/cities.js mỗi giây) ----------
+     * ruin: { khoá: độ bền 0..1 } (bãi làm việc, 'home:<số nhà>', cổng); burning: còn giặc trên đảo (đang cháy); fixing: khoá chỗ
+     * thợ đang sửa. Độ bền dưới COLLAPSE thì công trình sụp: ẩn đi, chỉ còn đống đổ nát (render/build/ruins3d.js); sửa xong thì
+     * dựng lại. Bãi làm việc sụp thì đè bẹp xuống. */
+    function siteOf(sh, i, key) {
+      if (sh.down && sh.down.has(key)) return sh.down.get(key);
+      const Y = sh.wy && sh.wy.yards.find((y) => y.kind === key);
+      if (Y) return { key, pos: Y.g.position, r: 3, yard: Y };
+      const done = (P) => P.g.visible && !P.gone && (P.progress == null || P.progress >= 1);
+      if (key.startsWith('home:')) { const n = +key.slice(5), P = sh.pieces.find((Q) => Q.home === n && done(Q)) || sh.standing.find((Q) => Q.home === n && done(Q)); return P ? { key, pos: P.g.position, r: Math.max(2, (P.clear || 3) * 0.6), piece: P } : null; }
+      if (key === 'gate') { const P = sh.pieces.find((Q) => Q.spec.gate && done(Q)); return P ? { key, pos: P.g.position, r: 3.5 } : null; } // cổng chính: đống đổ ở chỗ cổng, khung cổng đá còn đứng
+      const pl = places(i), g = pl && pl[key] && pl[key][0]; return g ? { key, pos: g.clone(), r: 2.5 } : null;
+    }
+    function collapse(sh, at, on) {
+      sh.down = sh.down || new Map();
+      if (at.yard) { at.yard.g.scale.y = on ? 0.3 : 1; if (on) sh.down.set(at.key, at); else sh.down.delete(at.key); return; }
+      if (!at.piece) return;
+      if (on && at.piece.g.visible) { at.piece.g.visible = false; sh.unbatch = true; sh.down.set(at.key, at); }
+      else if (!on && sh.down.has(at.key)) { at.piece.g.visible = !at.piece.gone && !at.piece.dead; sh.unbatch = true; sh.down.delete(at.key); }
+    }
+    function setRuin(i, ruin, burning, fixing) {
+      const sh = shown[i]; if (!sh || !BK.Ruins3D) return;
+      const keys = Object.keys(ruin || {}); if (!sh.ruins && !keys.length) return;
+      if (!sh.ruins) sh.ruins = BK.Ruins3D.create(THREE, sh.L.g);
+      const sites = [];
+      for (const key of keys) { const hp = ruin[key], at = siteOf(sh, i, key); if (!at) continue; collapse(sh, at, hp < BK.Ruins3D.COLLAPSE); sites.push({ x: at.pos.x, z: at.pos.z, r: at.r, hp, burning: !!burning, fixing: fixing === key }); }
+      if (sh.down) for (const [k, at] of [...sh.down]) if (!keys.includes(k)) collapse(sh, at, false); // sửa xong: dựng lại
+      sh.ruinSites = sites;
+    }
     // đống hàng trong kho của đảo i theo lượng hàng thật (ratio: 0..1 mỗi thứ, game/cities.js mỗi giây)
     const setStock = (i, ratio) => { if (shown[i] && shown[i].wy) WY.setStock(shown[i].wy.piles, ratio); };
     // số mộ trong bãi mộ của đảo i (logic/scenes.js S.graves)
     const setGraves = (i, n) => { if (shown[i] && shown[i].wy) WY.setGraves(shown[i].wy.graves, n); };
-    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setGraves, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
+    return { show, setProgress, setProgressByTime, animate, stats, places, setStock, setGraves, setRuin, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

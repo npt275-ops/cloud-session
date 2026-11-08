@@ -61,7 +61,7 @@
       return job('stroll', 'stroll', 'đi bộ dọc phố gặp dân');
     }
     // đêm: ai cũng về nhà ngủ, trừ một nửa số lính ra các chốt cổng thay ca gác đêm (logic/guards.js)
-    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng'); return job('sleep', 'home', 'về nhà ngủ'); }
+    if (ph === 'night') { if (j === 'soldier' && p.id % 2 === 0) return BK.Guards ? BK.Guards.nightShift(ctx) : job('guard', 'guard', 'gác đêm cho làng'); const lodge = BK.Siege ? BK.Siege.lodging(S, p) : null; if (lodge != null) return job('sleep', 'homeSlot', 'nhà cháy, ở nhờ nhà hàng xóm', { slot: lodge }); return job('sleep', 'home', 'về nhà ngủ'); }
     // trưa: về nhà ăn (người đứng đầu, lính gác, người bán hàng vẫn ở chỗ mình)
     if (ph === 'noon') {
       if (j === 'soldier' && p.id % 3 === 0) return job('guard', 'guard', 'gác thay ca trưa');
@@ -97,6 +97,10 @@
     // thợ xây đầu cầu (logic/diplomacy.js S.bridgeJob): một nửa số thợ ra cổng phụ phía cầu, lấy gỗ ở kho mang ra dựng cầu
     const bj = S.bridgeJob && S.bridgeJob.until > S.day ? S.bridgeJob : null;
     if (bj && (role === 'builder' || j === 'builder') && (!building || p.id % 2 === 0)) return job('build', bj.side ? 'bridgeR' : 'bridgeL', 'bắc cầu sang ' + bj.toName, { cycle: { item: 'wood', src: 'store', dst: bj.side ? 'bridgeR' : 'bridgeL', workAt: 'dst' } });
+    // sửa chỗ hư sau chiến tranh (logic/siege.js S.repairJob): thợ ra kho lấy gỗ, đá mang tới chỗ hư mà sửa (đang có công trình
+    // thì một nửa số thợ)
+    const rj = S.repairJob && S.repairJob.until > S.day ? S.repairJob : null;
+    if (rj && (role === 'builder' || j === 'builder') && (!building || p.id % 2 === 1)) return job('repair', 'ruin:' + rj.key, 'sửa ' + BK.Siege.nameOf(rj.key) + ' bị phá trong chiến tranh', { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'ruin:' + rj.key, workAt: 'dst' } });
     // thợ xây: ra kho lấy vật liệu (gỗ hay đá, người này người kia), mang tới công trình rồi dựng
     if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase(), { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'site', workAt: 'dst' } }) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
     if (j === 'trader') return job('trade', 'market', 'bán hàng ở chợ');

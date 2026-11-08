@@ -82,6 +82,8 @@
     BK.Epigen.dayTick(S, day);
     // cảnh theo sự kiện (logic/scenes.js): người mới mất thì có đám tang
     if (BK.Scenes) BK.Scenes.dayTick(S, day);
+    // chỗ hư sau chiến tranh (logic/siege.js): thợ xây sửa lại
+    if (BK.Siege) BK.Siege.repairDay(S, day);
     if (S.log.length > 600) S.log.splice(0, S.log.length - 600);
     S.day = saved;
   }

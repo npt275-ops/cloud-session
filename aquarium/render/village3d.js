@@ -59,6 +59,10 @@
       if (place === 'grave') return pickOf(PL.grave, p.id);
       if (place === 'bridgeL' || place === 'bridgeR') return pickOf(PL[place === 'bridgeL' ? 'gateL' : 'gateR'], p.id); // đầu cầu: cổng phụ phía cầu (logic/diplomacy.js)
       if (place === 'site') return pickOf(PL.site && PL.site.length ? PL.site : PL.all, p.id);
+      // đánh thành (logic/siege.js): chỗ đang bị phá hay đang sửa ('ruin:<khoá>'); chỗ dân dạt tới khi giặc vào thành: phía bên
+      // kia đảo so với cổng bị đánh
+      if (place && place.startsWith('ruin:')) return ruinSpot(place.slice(5), p.id);
+      if (place === 'refuge') return refugeOf(p.id);
       if (place === 'market') return pickOf(PL.market, k);
       if (place === 'shrine') return pickOf(PL.shrine, k);
       if (place === 'school') return pickOf(PL.school, k);
@@ -70,10 +74,38 @@
       if (place === 'patrol') return hop(PL.guard, 3);
       return null;
     }
+    // chỗ của một công trình theo khoá của logic/siege.js (bãi làm việc, nhà số, cổng)
+    function ruinSpot(key, k) {
+      if (key.startsWith('home:')) return (PL.homeSlots && PL.homeSlots[+key.slice(5)]) || pickOf(PL.homes, k);
+      return pickOf(key === 'farm' ? PL.field : PL[key], k) || pickOf(PL.all, k);
+    }
+    // phía bên kia đảo so với cổng đang bị đánh, rải theo người (trong tường thành)
+    function refugeOf(k) {
+      const sg = S.situ.siege, g = (sg && pickOf(PL[sg.gate], 0)) || pickOf(PL.gate, 0) || PL.hall, a = Math.atan2(-g.z, -g.x) + (((k * 37) % 100) / 100 - 0.5) * 1.1;
+      const R = L.rOf(a) * (0.42 + ((k * 13) % 20) / 100); const v = new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R); Nav.keepInside(v); return v;
+    }
     const setPlaces = (pl) => { PL = pl; Nav.reset(); };
     // khách từ đảo khác đang ở đảo này (game/cities.js mỗi giây, từ logic/diplomacy.js W.visits): [{ key, p, level, mind, enter }]
     let guests = [];
     const setGuests = (list) => { guests = list || []; }; // bục giữa sân có thể đổi theo thời: dựng lại mạng lối đi
+    // người ngã xuống trong trận (logic/war.js S.fallen, game/cities.js mỗi giây): nằm lại trên đất ở chỗ đã ngã, áo màu đảo mình,
+    // tới hết trận (hai ngày); người nhà đảo này thì có đám tang (logic/scenes.js)
+    const FALLEN_MAX = 80, fbG = new THREE.BoxGeometry(0.42, 0.26, 1.0), fhG = new THREE.SphereGeometry(0.17, 8, 6); fbG.translate(0, 0.13, 0); fhG.translate(0, 0.16, 0.66);
+    const fallenBody = new THREE.InstancedMesh(fbG, new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.8, flatShading: true }), FALLEN_MAX), fallenHead = new THREE.InstancedMesh(fhG, new THREE.MeshStandardMaterial({ color: '#d9a982', roughness: 0.8 }), FALLEN_MAX);
+    for (let k = 0; k < FALLEN_MAX; k++) fallenBody.setColorAt(k, new THREE.Color('#ffffff'));
+    for (const m of [fallenBody, fallenHead]) { m.count = 0; m.frustumCulled = false; scene.add(m); }
+    function setFallen(list) {
+      let n = 0; const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), c = new THREE.Color();
+      for (const x of list || []) {
+        if (n >= FALLEN_MAX || !PL) break;
+        const base = spot(x.at, { id: x.id, clan: null, home: null, post: x.id }); if (!base) continue;
+        const a = x.id * 2.39996, r = 0.8 + (x.id % 7) * 0.45; V.set(base.x + Math.cos(a) * r, 0.02, base.z + Math.sin(a) * r); Nav.keepInside(V); V.add(L.center); V.y = L.center.y + 0.02;
+        Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), a * 3.1); M.compose(V, Q, one);
+        fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++;
+      }
+      for (const m of [fallenBody, fallenHead]) { m.count = n; m.instanceMatrix.needsUpdate = true; m.visible = shownNow && n > 0; }
+      if (fallenBody.instanceColor) fallenBody.instanceColor.needsUpdate = true;
+    }
 
     /* ---------- Khối lặp cho từng loại bộ phận (tự nới chỗ khi làng đông lên) ---------- */
     const shapes = Rig.shapes(), mat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0 }), glowMat = new THREE.MeshBasicMaterial({ toneMapped: false });
@@ -220,7 +252,7 @@
         // tới nơi thì làm việc bằng cử chỉ trong thư viện (render/work3d.js); đang đi, hay đang có sự kiện thì cử động theo trạng thái
         // cử chỉ làm việc chỉ ở chỗ làm (bước 'work' của chu trình), không ở kho, không trên đường
         const verb = meetVerb || mind.verb, working = !moving && verb && verb !== 'sleep' && (!cyc || cyc.stage === 'work' || meetVerb) && (meetVerb || mind.state === 'work' || (mind.state === 'talk' && !mind.mood));
-        f.inside = !moving && verb === 'sleep'; // ngủ: vào trong nhà (không vẽ)
+        f.inside = !moving && (verb === 'sleep' || verb === 'hide'); // ngủ, trốn giặc: vào trong nhà (không vẽ)
         let tgt, gface = null;
         if (working && Work) {
           if (f.verb !== verb || gs > f.gEnd) { // đổi việc, hay hết một lượt cử chỉ: sang cử chỉ khác của việc đó (đồng hồ cử chỉ gs)
@@ -245,6 +277,8 @@
         if (kingF && kingF !== f && !moving && (mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR' || mind.place === 'nightGate') && kingF.moving && kingF.pos.distanceToSquared(f.pos) < 25 && !(ts < (f.salCool || 0))) { f.salUntil = gs + 1.6; f.salCool = ts + 15; }
         if (f.salUntil > gs) { const G = BK.Gestures3D.BY_KEY.bow; tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, Math.min(1, 1 - (f.salUntil - gs) / 1.6), gs, f.knobs); f.tool = null; f.gk = 'chào'; if (kingF) { _v.copy(kingF.pos).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); } }
         if (!tgt) { f.verb = null; f.tool = null; f.gk = null; tgt = Anim.target(mind.state, f.ph, gs, f.knobs, { habit: p.genome.habit, mood: mind.mood, moving }); }
+        // đánh trận: lính (cả quân đảo khác) cầm giáo; dân tự nguyện cầm đồ nghề của mình làm vũ khí
+        if (mind.state === 'attack' && (S.situ.siege || gst)) f.tool = gst || p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard' || /general/.test(p.role || '') ? 'spear' : p.job === 'builder' ? 'hammer' : p.res === 'wood' ? 'axe' : 'hoe';
         f.moving = moving; f.meetVerb = meetVerb;
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + 0.5 * Math.max(0, age) / 16;
@@ -308,6 +342,7 @@
     function setVisible(on) {
       if (on === shownNow) return; shownNow = on;
       for (const k in IM) IM[k].visible = on; if (!on) ring.visible = false;
+      fallenBody.visible = fallenHead.visible = on && fallenBody.count > 0;
       if (on) for (const [, f] of folks) { const mind = S.minds.get(f.p.id) || { state: 'idle' }, g = goalOf(f, mind); if (g) f.pos.copy(g.p); f.nav = null; f.route = null; f.meet = null; }
     }
     // kiểm thử "không vô nghĩa" (design/npc-song-that.md mục 7.1): ở khung hình vừa vẽ, ai làm cử chỉ không hợp với việc,
@@ -327,7 +362,7 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, setGuests, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
+    return { update, pick, select, audit, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; }, get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++; return n; } };
   }
 
   return { create, EXPR };

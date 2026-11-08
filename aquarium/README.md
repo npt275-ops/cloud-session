@@ -167,6 +167,12 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
     đói: dân xếp hàng ở kho nhận khẩu phần; lễ hội nhảy múa; lính gác cúi chào người đứng đầu (`logic/scenes.js`);
   - cầu do người đứng đầu quyết, thợ hai đảo xây thật (giàn giáo mọc dần), mỗi thời một kiểu cầu (quyết định xây lại), phá
     cầu khi bị đánh, cầu quân sự; người thật sang thăm đảo bên qua cầu (mặc áo màu đảo nhà), xô xát ở đầu cầu.
+- **NPC sống thật, phần 7d: đánh thành** (`design/npc-song-that.md` mục 12, `logic/siege.js`, `render/build/ruins3d.js`):
+  - người nhà ra cổng tiễn quân; quân tới qua cầu thì đánh cổng phụ, đi thuyền thì đánh cổng chính; lính gác đúng cổng và
+    dân nóng nảy ra giữ, dân khác vào nhà; quân giặc là người thật mặc màu đảo mình, người ngã nằm lại trên đất;
+  - cổng vỡ thì địch đốt phá kho, xưởng, nhà dân, ruộng (mất hàng, mất sản lượng, dân ở nhờ), dân dạt sang phía bên kia đảo;
+    rồi vây nhà chính, đội giữ thành đánh tới cùng hay người đứng đầu đầu hàng theo tính cách; mất thành thì vua cũ quỳ,
+    cờ hạ xuống kéo lên; hết giặc thì thợ xây sửa lại (giàn giáo).
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

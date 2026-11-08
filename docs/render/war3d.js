@@ -4,9 +4,11 @@
  *                       (render/build/bridges3d.js bridgePoint); tiến độ theo ngày lịch của trận.
  *   đánh ở cổng         quân đứng thành hai hàng cong trước cổng phụ hướng về đảo mình (L.landing[S.situ.warSide]),
  *                       xông tới lùi lại; số hình đúng số quân còn sống (tối đa MAX_SHOWN mỗi chiến dịch).
- *   vào thành           quân tiến dần từ cổng về nhà chính giữa đảo trong INSIDE_DAYS ngày.
+ *   vào thành           quân tiến dần từ cổng vào giữa thành (đốt phá xung quanh), rồi vây nhà chính.
  *   sáp nhập            cờ màu đảo cai quản cắm ở sân trước nhà chính của đảo bị sáp nhập (hallOf(đảo): chỗ đó, theo toạ độ
- *                       của đảo); cột cao hơn mái nhà; quân đóng giữ đứng quanh cờ.
+ *                       của đảo); cột cao hơn mái nhà; quân đóng giữ đứng quanh cờ. Vừa mất thành thì cờ đảo cũ hạ xuống,
+ *                       cờ đảo thắng kéo lên trong RAISE_DAYS ngày.
+ * Đảo đang vẽ gần (near): quân là người thật trong làng (render/village3d.js, logic/war.js onIsland), không vẽ hình nhỏ.
  * Người ở nhà (dân, lính giữ cổng) do render/village3d.js vẽ, theo bộ não (logic/brain.js đọc S.situ.war).
  * Lính vẽ bằng khối dựng sẵn dùng chung (InstancedMesh): thân, đầu, giáo, mỗi thứ một lần vẽ cho mọi người lính.
  * Cần: three.js, render/map/map3d.js (lands3d), render/build/bridges3d.js, logic/war.js. */
@@ -16,6 +18,7 @@
   const SEA_Y = -0.55;
   const MAX_SOLDIERS = 240, MAX_SHOWN = 24, PER_BOAT = 6, SHORE = 3;
   const INSIDE_DAYS = 3;
+  const RAISE_DAYS = 1, RAISE_H = 12.5;   // kéo cờ: một ngày, từ chân cột lên đỉnh
 
   function create(o) {
     const { THREE, scene, lands3d, bridges3d, colors } = o, lands = lands3d.lands, R = lands3d.LAND_R;
@@ -79,7 +82,9 @@
       }
     }
     // mỗi khung hình: W (logic/world.js), day (có phần lẻ), t (ms), hallOf(i): sân trước nhà chính của đảo i (toạ độ của đảo)
-    function update(W, day, t, hallOf) {
+    // near(i): làng đảo i đang được vẽ gần (người thật, render/village3d.js): không vẽ thêm hình lính nhỏ ở đó;
+    // gateAt(i): chỗ cổng đang bị đánh (toạ độ của đảo), không có thì cổng phụ phía đảo kia
+    function update(W, day, t, hallOf, near, gateAt) {
       n = 0; nb = 0; let nf = 0;
       for (const w of W.wars || []) {
         const cnt = Math.min(MAX_SHOWN, w.troops.filter((x) => x.p.alive).length); if (!cnt) continue;
@@ -89,14 +94,15 @@
           if (w.stage === 'march') march(w.a, w.b, u, cnt, c, t); else march(w.b, w.a, u, cnt, c, t);
           continue;
         }
+        if (w.stage === 'muster' || (near && near(w.b))) continue; // tập hợp ở nhà, hay đảo đang vẽ gần: người thật
         // trước cổng (hai hàng cong, xông tới lùi lại), hay đang tiến vào nhà chính
         const sideK = B.situ.warSide || 0, L = lands[w.b];
-        const f = w.stage === 'inside' ? Math.max(0, Math.min(1, (day - w.since) / INSIDE_DAYS)) : 0;
-        gate(w.b, sideK, 1.0, from); to.copy(L.center).setY(0);
+        const f = w.stage === 'inside' ? (w.siege === 'hall' ? 1 : Math.max(0, Math.min(0.6, (day - w.since) / INSIDE_DAYS))) : 0;
+        const ga = gateAt && gateAt(w.b); if (ga) from.copy(ga).add(L.center).setY(0); else gate(w.b, sideK, 1.0, from); to.copy(L.center).setY(0);
         dir.copy(to).sub(from).normalize(); side.set(dir.z, 0, -dir.x);
         const base = from.clone().lerp(to, f * 0.82);
         for (let k = 0; k < cnt; k++) {
-          const row = k % 2, col2 = (k >> 1) - (cnt >> 2), lunge = w.stage === 'gate' ? Math.max(0, Math.sin(t * 0.006 + k * 1.7)) * 0.6 : Math.sin(t * 0.01 + k) * 0.1;
+          const row = k % 2, col2 = (k >> 1) - (cnt >> 2), lunge = w.stage === 'gate' || w.stage === 'loot' ? Math.max(0, Math.sin(t * 0.006 + k * 1.7)) * 0.6 : Math.sin(t * 0.01 + k) * 0.1;
           tmp.copy(base).addScaledVector(side, col2 * 0.9).addScaledVector(dir, -row * 1.0 - Math.abs(col2) * 0.15 + lunge).setY(0);
           soldier(tmp, yawOf(dir), c);
         }
@@ -107,6 +113,11 @@
         const L = lands[i], g = flagAt(nf++); g.userData.flag.material = flagM[S.annexedBy];
         const h = hallOf && hallOf(i); if (h) tmp.copy(h).add(L.center).setY(0); else tmp.copy(L.center).addScaledVector(L.inw, 8).setY(0);
         g.position.copy(tmp); g.rotation.y = Math.sin(t * 0.0004) * 0.6;
+        // vừa mất thành: cờ đảo cũ hạ dần xuống, cờ đảo thắng kéo dần lên (một ngày)
+        const up = Math.max(0, Math.min(1, (day - (S.annexDay || 0)) / RAISE_DAYS));
+        g.userData.flag.position.y = -(1 - up) * RAISE_H;
+        if (up < 1) { const o = flagAt(nf++); o.userData.flag.material = flagM[i]; o.position.copy(tmp).add(side.set(0.6, 0, 0.6)); o.rotation.y = g.rotation.y; o.userData.flag.position.y = -up * RAISE_H; }
+        if (near && near(i)) return; // quân đóng giữ là người thật đi tuần trong làng
         const gar = S.garrison ? Math.min(MAX_SHOWN, S.garrison.troops.filter((x) => x.p.alive).length) : 0;
         for (let k = 0; k < gar; k++) { const a = (k / Math.max(1, gar)) * Math.PI * 2; side.set(Math.cos(a), 0, Math.sin(a)); from.copy(tmp).addScaledVector(side, 2.2); soldier(from, yawOf(side), S.annexedBy); }
       });

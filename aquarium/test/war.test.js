@@ -1,7 +1,7 @@
 // Bể Kính · test/war.test.js · Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js)
 const test = require('node:test');
 const assert = require('node:assert');
-for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
+for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper', 'posts', 'jobs', 'eras', 'schedule', 'scenes', 'leader', 'guards', 'tasks', 'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'brain', 'island', 'diplomacy', 'war', 'strategy', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
@@ -92,7 +92,7 @@ test('đảo bị sáp nhập bất bình thì nổi dậy (thắng hay thua kh�
 
 test('chạy thật 9 năm: các đảo tự đánh nhau theo tính cách; chiến tranh có làm đói thêm nhưng không thành nạn đói lớn', () => {
   let wars = 0, annex = 0, a = 0, b = 0;
-  // khoảng một nửa số trận có sáp nhập (100 trận đo ở bước 6): 5 trận thì khả năng không trận nào có chỉ khoảng 3%
+  // sáp nhập: khoảng 1,2 mỗi trận ở bước 6; sau 7d (đánh thành khó hơn) khoảng 0,5 mỗi trận, cân chỉnh lại ở 7g
   for (const seed of [1, 6, 16, 14, 17]) {
     const W = BK.World.create({ seed }), P = BK.World.create({ seed, war: false });
     BK.World.jump(W, 9 * 360); BK.World.jump(P, 9 * 360);
