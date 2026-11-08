@@ -306,7 +306,7 @@ Người nhút nhát, trẻ con, người già vào nhà hay chạy về phía n
 | 7b | Cảnh: tang lễ, đói, lễ hội, thiên tai; khách trên đảo | 4, 7.5 |
 | 7c | Cầu do người đứng đầu quyết, dựng cầu thật, người qua lại, xô xát ở đầu cầu | 7.2 |
 | 7d ✅ | Đánh thành: giữ cổng, công trình có độ bền và hư hại, vây nhà chính, đầu hàng, sửa lại sau chiến tranh (mục 12) | 7.3 |
-| 7e | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể | 7.4 |
+| 7e ✅ | Tên lửa (thời 7), hạt nhân (thời 8), hậu quả cho cả bể (mục 13) | 7.4 |
 | 7f | Hệ sinh thái: môi trường cạn dần, người chạy nạn, hôn nhân khác đảo, dịch bệnh, đảo chính, cấm vận, chiến tranh lan rộng, chuỗi nguyên nhân | 7.6 |
 | 7g | Cân chỉnh lại độ hỗn loạn bằng 100 trận | – |
 
@@ -402,4 +402,38 @@ Mỗi phần có kiểm thử Node, chuỗi ảnh trên trình duyệt, đo khun
   Đánh thành giờ khó hơn thật. Phần lớn số lần sáp nhập là do người đứng đầu đầu hàng (0,43 lần mỗi trận).
 - Người đứng đầu đảo đi đánh chỉ ước sức theo số lính giữ cổng, vì không biết trước bao nhiêu dân sẽ cầm vũ khí. Trước khi sửa như vậy, số trận đánh tụt xuống còn 1,9.
 - Cân chỉnh lại toàn cục để ở 7g (100 trận), như kế hoạch.
+
+## 13. Đã làm ở 7e
+
+| Việc | Làm thế nào | Kiểm chứng |
+|---|---|---|
+| **Chế tạo tên lửa theo kinh tế** | `logic/missiles.js` (tệp mới). Từ thời 7, đảo độc lập làm tên lửa. Mỗi quả tốn 60 kim loại, 80 năng lượng, và chỉ làm khi kho có ít nhất gấp ba giá một quả. Mỗi ngày người đứng đầu xét có làm thêm không, theo tính cách và mối đe doạ (sợ, thù đảo khác, đang có chiến tranh). Số giữ trong kho tối đa 6 (cộng 2 mỗi thời sau thời 7), nhân theo độ đầy của kho kim loại, năng lượng: kho đầy giữ đủ, kho vơi chỉ giữ khoảng 30%. | `test/missiles.test.js`: đảo giàu, người đứng đầu hiếu chiến làm nhiều hơn đảo nghèo hay người nhu nhược; thời 6 không có. |
+| **Bắn trước bộ binh** | Quân sắp tới cổng thì bắn trước, trúng lúc quân vừa tới. Số quả theo tính người đứng đầu. Hai quả đầu nhắm cổng: cổng hư thì người giữ mất chỗ dựa. Các quả sau nhắm kho, xưởng, nhà dân. Trúng thì công trình mất 0,45 độ bền; người đang ở đúng chỗ đó có thể chết (trốn trong nhà thì ít hơn), thi thể nằm lại. Tên lửa chỉ phá, bộ binh vẫn phải vào chiếm nhà chính. | `test/missiles.test.js` |
+| **Báo động** | Đảo bị bắn báo động. Ai không cầm vũ khí giữ chốt thì vào nhà trốn; nhà cháy thì trốn nhờ nhà hàng xóm. | Trình duyệt: 67/93 người trốn, 0 vi phạm. |
+| **Bắn trả** | Đảo bị đánh (hay đảo cai quản nó) có tên lửa và người đứng đầu không nhu nhược thì bắn trả tối đa 2 quả vào đảo kia. | `test/missiles.test.js` |
+| **Hạt nhân** | Từ thời 8. Mỗi quả tốn 400 kim loại, 700 năng lượng, chế tạo 40 ngày, tối đa 4 quả. Chỉ người đứng đầu hiếu chiến, tham vọng, ít sùng đạo, ít nhu nhược, đang bị đe doạ mới làm. Bắn khi:<ul><li>đang đánh nhau mà thua;</li><li>đang đánh mà thù rất sâu, hay quân mình núng thế ở cổng;</li><li>để trả đũa đảo vừa bắn hạt nhân vào mình;</li><li>thù tột đỉnh mà sợ đảo kia thì có khi bắn phủ đầu.</li></ul> | `test/missiles.test.js`: người hiếu chiến làm hạt nhân, người nhu nhược thì không. |
+| **Mỗi quả hạt nhân** | Một phần tư đảo thành đống đổ (5 nhà dân và một phần bãi làm việc); người ở đó chết, ở nơi khác trên đảo cũng có người chết. Đất nhiễm xạ 360 ngày, sản xuất kém. Cả bể: mọi đảo sợ và thù kẻ dùng hạt nhân; bụi che trời 90 ngày, mọi đảo mất mùa (lương thực còn 75%). | `test/missiles.test.js` |
+| **Bốn quả** | Đảo bị san phẳng: mọi công trình và nhà chính sụp. Đảo buộc phải đầu hàng và bị sáp nhập vào đảo bắn, dù còn quân hay không; quân đang đánh đảo đó thì quay về. | `test/missiles.test.js` |
+| **Vẽ** | `render/missiles3d.js` (tệp mới):<ul><li>tên lửa bay vòng cung tới đúng chỗ nhắm, có lửa đuôi và vệt khói;</li><li>trúng thì quả cầu lửa và khói đen;</li><li>hạt nhân: chớp trắng, sóng xung kích lan trên mặt đất, cột khói và mũ nấm đổi từ cam sang xám;</li><li>vùng bị phá cháy ba ngày rồi còn đống đổ;</li><li>trời xám nâu khi có bụi (`render/sky3d.js`).</li></ul>Bảng cuộc đua ghi số tên lửa, hạt nhân, quả đang chế tạo, và nếu đảo đang nhiễm xạ. | Ảnh: tên lửa bay, trúng xưởng, nấm hạt nhân, trời bụi. |
+
+**Thay đổi về chiến lược:** người đứng đầu có tên lửa, hạt nhân ước sức mình mạnh hơn: thêm 2% mỗi tên lửa (tối đa 6 quả), thêm 25% nếu có hạt nhân.
+
+**Ghi lại:**
+- Lỗi cũ từ 7d lộ ra khi chiến tranh nhiều hơn: hai đảo cùng đánh một đảo thì dùng chung một trạng thái trận, trận này xong xoá trạng thái của trận kia. Đã sửa: mỗi trận giữ trạng thái riêng (`w.sg`).
+- Kiểm thử phải giữ tính cách người đứng đầu ở mỗi bước, vì tính cách tính lại mỗi ngày theo ngoại gen.
+- 20 trận 9 năm (trước 7e / sau 7e):
+
+  | Mỗi trận | Trước 7e | Sau 7e |
+  |---|---|---|
+  | Trận đánh | 4,4 | 7,3 |
+  | Sáp nhập | 0,5 | 2,1 |
+  | Tên lửa làm ra | – | 44 |
+  | Tên lửa bắn | – | 13 |
+  | Chết vì tên lửa, hạt nhân | – | 25 |
+  | Hạt nhân làm ra | – | 0,65 |
+  | Hạt nhân được dùng | – | 0,1 (2 lần trong 20 trận) |
+  | Đảo bị san phẳng | – | chưa có |
+
+  Đảo còn độc lập cuối trận: 6 đảo 4/20, 5 đảo 10/20, 4 đảo 4/20, 3 đảo 1/20, 1 đảo 1/20. Bể kính hỗn loạn hơn rõ; cân chỉnh ở 7g.
+- Chưa làm: lá chắn đánh chặn từ thời 9 (gợi ý trong mục 7.4, chưa chốt).
 

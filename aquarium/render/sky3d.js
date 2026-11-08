@@ -72,6 +72,8 @@
       const bot = M ? M.bot.clone() : SKY.nightBot.clone().lerp(SKY.dayBot, day).lerp(SKY.dawnBot, gold * 0.75);
       const overcast = G.weather.stormK * 0.55 * 0.6; // giông trong bể làm trời sầm lại
       if (overcast > 0.001) { top.lerp(C('#7f8c99').lerp(C('#1d2531'), night), overcast * 0.7); bot.lerp(C('#bac4cb').lerp(C('#252e3b'), night), overcast * 0.7); sun.intensity *= 1 - 0.6 * overcast; }
+      // bụi sau vụ nổ hạt nhân (logic/missiles.js, game/cities.js G.dust): trời xám nâu, nắng yếu
+      if (G.dust > 0.001) { top.lerp(C('#857c70').lerp(C('#2a2622'), night), G.dust * 0.75); bot.lerp(C('#b0a493').lerp(C('#35302b'), night), G.dust * 0.75); sun.intensity *= 1 - 0.45 * G.dust; }
       if (G.weather.lightFlash > 0.001) { hemi.intensity += G.weather.lightFlash * 1.3; } // chớp loé sáng cả bể
       skyMat.uniforms.top.value.copy(top); skyMat.uniforms.bottom.value.copy(bot);
       skyMat.uniforms.sunDir.value.copy(sunDir); skyMat.uniforms.sunCol.value.copy(sun.color).multiplyScalar(day);

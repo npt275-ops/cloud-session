@@ -96,6 +96,13 @@
     // ui/race-dev.js)
     const travel = BK.Travel3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
     const war = BK.War3D.create({ THREE, scene, lands3d, bridges3d, colors: G.TERRAINS.map((T) => T.color) });
+    // tên lửa, hạt nhân (logic/missiles.js W.missiles): bay vòng cung tới đúng chỗ nhắm, nổ (render/missiles3d.js)
+    const missiles3d = BK.Missiles3D ? BK.Missiles3D.create({ THREE, scene, lands3d }) : null;
+    function spotAt(i, key) {
+      const pl = buildings.places(i); if (!pl) return null; const first = (a) => (a && a.length ? a[0] : null);
+      if (key.startsWith('home:')) return (pl.homeSlots && pl.homeSlots[+key.slice(5)]) || first(pl.homes);
+      return key === 'hall' ? pl.hall : first(key === 'farm' ? pl.field : pl[key]) || pl.hall;
+    }
     // kiểu cầu: theo thời lúc xây (logic/diplomacy.js b.era); lên thời thì người đứng đầu quyết có xây lại hay không
     const bridgeStyle = (b) => Math.max(0, Math.min(Eras.COUNT, b.era) - 1);
     const hallAt = [], hallOf = (i) => hallAt[i] || null;
@@ -141,7 +148,9 @@
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
       buildings.animate(dt, t, night, camera.position, speed);
-      if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf, (i) => !!(villages[i] && villages[i].visible), (i) => gateAt[i] || null); }
+      if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf, (i) => !!(villages[i] && villages[i].visible), (i) => gateAt[i] || null);
+        if (missiles3d) missiles3d.update(world.missiles, day, t, spotAt);
+        G.dust = BK.Missiles ? BK.Missiles.dust(world, day) : 0; } // bụi hạt nhân: trời xám (render/sky3d.js)
       for (let i = 0; i < N; i++) {
         const d = camera.position.distanceTo(lands[i].center), v = villages[i];
         if (d < NEAR || (v && v.visible && d < FAR)) { const vv = villageOf(i); vv.setVisible(true); vv.update(dt, t, speed); buildings.setPeds(i, vv.peds()); }
@@ -150,8 +159,9 @@
     }
     // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng
     function slow() { $('eraName').textContent = eraLabel(); syncWorld();
-      // đống hàng trong kho của từng đảo theo lượng hàng thật (render/build/workyards3d.js)
-      world.islands.forEach((S, i) => { const st = BK.Economy.state(S); buildings.setStock(i, Object.fromEntries(BK.Economy.RES.map((r) => [r, st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setRuin(i, S.ruin, !!S.situ.siege, S.repairJob && S.repairJob.key); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
+      // đống hàng trong kho của từng đảo theo lượng hàng thật (render/build/workyards3d.js); chỗ hư trong chiến tranh (đang cháy khi còn giặc,
+      // hay ba ngày sau khi bị hạt nhân)
+      world.islands.forEach((S, i) => { const st = BK.Economy.state(S); buildings.setStock(i, Object.fromEntries(BK.Economy.RES.map((r) => [r, st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setRuin(i, S.ruin, !!S.situ.siege || S.falloutUntil - world.day > 357, S.repairJob && S.repairJob.key); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
     Object.assign(G, { world, isle: isle(0), buildings, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
   }
   BK.GameCities = { setup, buildPlan };

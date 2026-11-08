@@ -129,7 +129,8 @@
   function tryWar(W, a, day, rng, t) {
     const D = BK.Diplomacy, E = BK.Economy, Wr = BK.War, A = W.islands[a], pol = A.policy;
     if (day < FIRST_WAR || Wr.atWar(W, a) || (pol.lastWar != null && day - pol.lastWar < WAR_REST)) return;
-    const off = Wr.offense(W, a, day); if (off < 3) return;
+    // tên lửa phá cổng trước, hạt nhân yểm trợ (logic/missiles.js): kẻ có vũ khí bắn xa ước sức mình mạnh hơn
+    const ar = W.islands[a].arms, off = Wr.offense(W, a, day) * (1 + (ar ? 0.02 * Math.min(6, ar.missiles) + 0.25 * Math.min(1, ar.nukes) : 0)); if (off < 3) return;
     const clamp = (x) => Math.max(0, Math.min(1, x));
     let best = null, lust = 0;
     for (let b = 0; b < D.N; b++) {

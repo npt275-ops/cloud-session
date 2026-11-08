@@ -117,6 +117,8 @@
     const X = S.situ, day = S.day, t = P().traits(p), age = P().ageOf(p, day), short = { until: day + 0.25 };
     const K = X.kneel; if (K && K.until > day && K.id === p.id) return d('work', { verb: 'kneel', place: 'hall', reason: 'bị dẫn ra quỳ ở sân nhà chính', until: K.until });
     const M = X.muster; if (M && M.until > day && M.family.includes(p.id)) return d('work', { verb: 'farewell', place: M.gate, reason: 'ra cổng tiễn người nhà đi đánh ' + M.to, until: M.until, intensity: 0.6 });
+    // báo động tên lửa (logic/missiles.js): ai không cầm vũ khí giữ chốt thì vào nhà trốn
+    if (X.alarm > day && !X.siege && !isGuard(p) && S.seats.king !== p.id) { const lodge = lodging(S, p); return d(t.fear > 0.6 ? 'panic' : 'work', Object.assign({ verb: 'hide', reason: 'báo động tên lửa, vào nhà trốn' }, lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' }, short)); }
     const sg = X.siege; if (!sg) return null;
     const di = sg.def.indexOf(p.id), n = sg.foes.length;
     const foe = (k) => (n ? 'w' + sg.foes[k % n].i + ':' + sg.foes[k % n].id : null);
@@ -149,7 +151,7 @@
     if (now >= 1) { delete S.ruin[key]; note(S, day, 'build', 'Sửa xong ' + nameOf(key) + ' sau chiến tranh.'); } else S.ruin[key] = now;
     S.repairJob = damaged(S).length ? { key: now >= 1 ? damaged(S).sort((a, b) => hp(S, a) - hp(S, b))[0] : key, until: day + 1.2 } : null;
   }
-  const NAME = { store: 'kho', craft: 'xưởng', power: 'chỗ làm năng lượng', farm: 'ruộng', wood: 'bãi gỗ', stone: 'mỏ đá', gate: 'cổng chính', gateL: 'cổng phụ trái', gateR: 'cổng phụ phải' };
+  const NAME = { hall: 'nhà chính', drill: 'bãi tập', store: 'kho', craft: 'xưởng', power: 'chỗ làm năng lượng', farm: 'ruộng', wood: 'bãi gỗ', stone: 'mỏ đá', gate: 'cổng chính', gateL: 'cổng phụ trái', gateR: 'cổng phụ phải' };
   const nameOf = (key) => (key.startsWith('home:') ? 'nhà số ' + (+key.slice(5) + 1) : NAME[key] || key);
 
   return { hp, hit, output, lodging, damaged, gateOf, gateGuards, volunteers, plan, ravage, hallTeam, surrender, roleOf, repairDay, nameOf, isGuard, HALL_DAYS, HOMELESS };

@@ -173,6 +173,11 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
   - cổng vỡ thì địch đốt phá kho, xưởng, nhà dân, ruộng (mất hàng, mất sản lượng, dân ở nhờ), dân dạt sang phía bên kia đảo;
     rồi vây nhà chính, đội giữ thành đánh tới cùng hay người đứng đầu đầu hàng theo tính cách; mất thành thì vua cũ quỳ,
     cờ hạ xuống kéo lên; hết giặc thì thợ xây sửa lại (giàn giáo).
+- **NPC sống thật, phần 7e: tên lửa, hạt nhân** (`design/npc-song-that.md` mục 13, `logic/missiles.js`, `render/missiles3d.js`):
+  - từ thời 7 đảo giàu làm tên lửa theo tính người đứng đầu; quân sắp tới thì bắn trước (cổng, kho, xưởng, nhà), báo động,
+    dân trốn vào nhà, đảo bị đánh bắn trả; tên lửa chỉ phá, bộ binh vẫn phải chiếm nhà chính;
+  - từ thời 8 người đứng đầu hiếu chiến, tham vọng có thể làm hạt nhân: mỗi quả san phẳng một phần tư đảo, nhiễm xạ, cả bể
+    sợ và mất mùa, trời xám bụi; bốn quả thì đảo bị san phẳng, buộc sáp nhập.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;

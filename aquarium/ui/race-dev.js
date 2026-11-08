@@ -41,6 +41,8 @@
         '<b>' + esc(S.name) + '</b> · thời ' + S.level + ' · ' + L.length + ' dân · ' + sold + ' lính' + (away ? ' (' + away + ' đang đi xa)' : '') + (st.hunger ? ' · <em>đang đói</em>' : '') +
         '<span>' + E.RES.map((r) => SHORT[r] + ' ' + Math.round(st.stock[r])).join(' · ') + '</span>' +
         '<span>' + head + ' · ' + stance + (foe ? ' · <em>' + (war.kind === 'revolt' ? 'nổi dậy' : 'đánh nhau') + ' với ' + esc(foe) + '</em>' : '') + '</span>' +
+        // kho vũ khí bắn xa (logic/missiles.js): tên lửa, hạt nhân, quả đang chế tạo; đảo từng bị bắn hạt nhân, đang nhiễm xạ
+        (S.arms && (S.arms.missiles || S.arms.nukes || S.arms.nukeDone) || S.nukedTotal ? '<span>' + esc([S.arms && S.arms.missiles ? S.arms.missiles + ' tên lửa' : '', S.arms && S.arms.nukes ? S.arms.nukes + ' hạt nhân' : '', S.arms && S.arms.nukeDone ? 'đang chế tạo hạt nhân' : '', S.nukedTotal ? 'bị bắn ' + S.nukedTotal + ' quả hạt nhân' + (S.falloutUntil > W.day ? ', đang nhiễm xạ' : '') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         (pacts.length || bridges.length ? '<span>' + esc([pacts.join(', '), bridges.length ? 'cầu sang ' + bridges.join(', ') : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
         '</button>';
     }

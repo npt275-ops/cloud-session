@@ -150,6 +150,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/logic/missiles.js",
+  "src": "logic/missiles.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/logic/people.js",
   "src": "logic/people.js",
   "mode": 420
@@ -462,6 +467,11 @@
  {
   "path": "BeKinh/render/map/water3d.js",
   "src": "render/map/water3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/missiles3d.js",
+  "src": "render/missiles3d.js",
   "mode": 420
  },
  {
