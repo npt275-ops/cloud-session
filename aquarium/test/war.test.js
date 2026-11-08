@@ -12,7 +12,8 @@ function setup(seed, a, b, kind) {
   if (a == null) a = [0, 1, 2, 3, 4, 5].filter((i) => i !== b).sort((x, y) => War.musterable(W, y, W.day).length - War.musterable(W, x, W.day).length)[0];
   for (const p of living(W.islands[b])) if (p.job === 'soldier' || p.job === 'sideguard' || p.job === 'gatekeeper' || /general/.test(p.role || '')) p.away = 'test';
   // tổng tấn công: bên đánh có đạo quân đủ mạnh (thêm 10 người làm lính) để kết quả không phụ thuộc may rủi
-  if (kind === 'conquer') living(W.islands[a]).filter((p) => p.job === 'worker').slice(0, 10).forEach((p) => { p.job = 'soldier'; });
+  // (bước 9: cổng chỉ vỡ khi hết máu, quân đánh cần mạnh hơn hẳn người giữ nên thêm 20 người)
+  if (kind === 'conquer') living(W.islands[a]).filter((p) => p.job === 'worker').slice(0, 20).forEach((p) => { p.job = 'soldier'; });
   const w = War.launch(W, W.day, a, b, kind, 1, W.rng);
   return { W, w, a };
 }
@@ -30,6 +31,9 @@ test('đi đánh là người thật rời đảo: không làm ở nhà, đi m�
 
 test('chiếm nhà chính thì sáp nhập: kho sang đảo thắng, người cai quản từ đảo thắng, dùng chung thời, có quân đóng giữ', () => {
   const { W, w } = setup(3, 2, 1, 'conquer'), A = W.islands[2], B = W.islands[1];
+  // (bước 9: cổng chỉ vỡ khi hết máu; người làm của đảo bị đánh đi vắng hết để không có dân tự nguyện giữ cổng, kết quả không
+  // phụ thuộc may rủi)
+  for (const p of living(B)) if (p.job === 'worker') p.away = 'test';
   E.state(B).stock.wood = 300; const wood0 = E.state(A).stock.wood, pop = living(B).length;
   run(W, 60); // (vây thành có thể kéo dài tới 24 ngày, logic/battles.js)
   assert.strictEqual(B.annexedBy, 2, 'Thông Xanh thuộc về Đá Mây');
@@ -82,7 +86,7 @@ test('phản bội: đang có hiệp ước mà đánh thì hiệp ước tan, c
 test('đảo bị sáp nhập bất bình thì nổi dậy (thắng hay thua không đoán trước)', () => {
   let revolts = 0;
   for (const seed of [3, 4, 6]) {
-    const { W } = setup(seed, 2, 1, 'conquer'); run(W, 30);
+    const { W } = setup(seed, 2, 1, 'conquer'); run(W, 60);
     const B = W.islands[1]; if (B.annexedBy == null) continue;
     for (const x of B.garrison ? B.garrison.troops : []) x.p.alive = false; // quân đóng giữ đã đi hết
     W.rel[1][2].grudge = 1;
