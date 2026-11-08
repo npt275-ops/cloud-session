@@ -109,3 +109,32 @@ Mỗi phần có:
 | 8d | `logic/prosperity.js`, `render/prosper3d.js` | Thời hoàng kim (dây cờ đuôi nheo, đèn lồng quanh nhà chính; làm ra thêm 10%), kỳ quan (đài nhiều tầng viền vàng, tầng đang dựng có giàn giáo, ngọn lửa trên đỉnh; chọn chỗ trống không chồng công trình, không trên đường), phát minh và gián điệp, đảo đầu tiên tới một thời, suy tàn (cỏ dại trước cửa nhà) và phục hưng, ngư trường và mỏ chung (thuyền đánh cá hai màu đảo, xô xát hay ký chia) |
 | 8e | `logic/chronicle.js`, `ui/race-dev.js`, `ui/village-ui.js` | Biên niên: mỗi năm ba chuyện lớn nhất trong bảng "Cuộc đua", bấm thì bay tới đảo; trạng thái thịnh vượng từng đảo; nhân vật nổi bật (anh hùng, kẻ phản bội, nhà phát minh, người đứng đầu huyền thoại) có danh hiệu trong thẻ người. Nhịp kịch tính: cả bể yên quá 200 ngày thì người đứng đầu tham vọng nhất thấy bị sỉ nhục (nguyên nhân thật: đảo giàu hơn hay mối thù cũ), muốn đánh hơn |
 | 8f | kiểm thử, 100 trận, ảnh | Xem mục 7 |
+
+## 7. Cân chỉnh 100 trận (8f)
+
+100 trận, hạt giống 1–100, chín năm mỗi trận.
+
+| Chỉ số | Mục tiêu | Kết quả |
+|---|---|---|
+| Trận đánh mỗi trận | 7–10 | 9,1 (5,1 đột kích, 4,0 tổng tấn công) |
+| Sáp nhập | 1,2–2 | 1,91 (đầu hàng 1,12; nổi dậy 0,77; độc lập lại 0,32) |
+| Thời trung bình cả bể | 8,8–9,6 | 9,14 |
+| Có đảo kẹt dưới thời 6 | ≤ 10% | 6% |
+| Chết đói mỗi trận | ≤ 5 | 4,0 |
+| Trận có dùng hạt nhân | 5–15% | 8% |
+| Còn ≤ 2 đảo độc lập | thấp | 3% |
+
+Kịch bản chiến tranh mỗi trận: đấu tướng 2,3 · khải hoàn 5,7 · tù binh 2,2 · tiền chuộc 2,4 · tưởng niệm 3,2 · hải chiến 1,9 ·
+chạy đua vũ trang 1,9 · đánh đêm 0,6 · vây thành 0,4 · đào ngũ 0,2 · nội gián 0,17 · cứu viện phút chót 0,09 · phục kích 0,06.
+Máy công thành 8,1 mỗi trận.
+
+Thịnh vượng mỗi trận: thời hoàng kim 5,3 · khởi công kỳ quan 4,5, dựng xong 2,5 · phát minh 9,6 · gián điệp 1,2 · đầu tiên
+tới một thời 9,5 · suy tàn 3,4, phục hưng 2,8 · xô xát ở tài nguyên chung 1,8.
+
+Nhịp kịch tính: 4,5 chuyện lớn (độ lớn từ 3) mỗi năm; 14 nhân vật nổi bật mỗi trận; nhịp kịch tính đẩy một nguyên nhân
+thật 3,8 lần mỗi trận. Khoảng lặng dài nhất trung bình 369 ngày (dài nhất 754): phần lớn nằm ở năm đầu, lúc các đảo
+còn ở thời đồ đá và nhịp kịch tính chưa can thiệp (từ ngày 300).
+
+Ảnh lúc đồng hồ chạy thật (xem chậm 1/16): đại bác thời 4, xe bọc thép thời 6, drone thời 8–9, pháo plasma thời 12 nã
+vào cổng; người bắn xa trong làng bắn tên, đạn; hải chiến; thời hoàng kim; kỳ quan đang dựng; cỏ dại lúc suy tàn; thuyền
+ở ngư trường chung; bảng biên niên. Kiểm "không vô nghĩa" (audit của làng) 0 vi phạm, không lỗi trang.

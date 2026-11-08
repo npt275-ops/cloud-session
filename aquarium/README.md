@@ -189,6 +189,12 @@ Năm đảo còn lại chưa có công trình, sẽ làm sau khi chốt Lúa Và
 - **Thấy được chiến tranh và drama** (`design/npc-song-that.md` mục 16): đảo đang xem có chuyện thì thời gian chậm lại 16
   lần; thanh dev có ◀ Năm x/9 ▶, "Trận đánh ⏭", "Drama ⏭" (tua tới chuyện kế tiếp và bay tới đó), bỏ nút Bay; biểu tình xếp
   hàng ngang hàng dọc trước nhà chính, cầm biển hô khẩu hiệu; quân đột kích đổ bộ ở cổng yếu nhất nên chiến tranh tới sớm hơn.
+- **Bước 8: chiến tranh theo thời, kịch bản chiến tranh, thịnh vượng và suy tàn** (`design/chien-tranh-thinh-vuong.md`):
+  vũ khí 12 thời (ná, cung, nỏ, hoả mai, súng trường, súng máy, súng tia…; máy bắn đá, đại bác, pháo, xe bọc thép, drone,
+  pháo plasma; cổng dịch chuyển, lá chắn) có đạn bay thật; hải chiến, phục kích, đánh đêm, nội gián, đấu tướng, vây thành,
+  tù binh, khải hoàn; thời hoàng kim (cờ, đèn lồng), kỳ quan mọc dần, phát minh, suy tàn (cỏ dại), ngư trường chung; biên
+  niên trong bảng Cuộc đua, nhân vật nổi bật có danh hiệu; cả bể yên quá lâu thì có người đứng đầu thấy bị sỉ nhục.
+  100 trận: 9,1 trận đánh, 1,9 sáp nhập, thời trung bình 9,1, chết đói 4,0, hạt nhân ở 8% số trận, 4,5 chuyện lớn mỗi năm.
 - **Kịch bản NPC: thành phố sống** (`design/kich-ban-npc.md`), ba lớp dùng chung cho mọi đảo:
   - vị trí cứng (`logic/posts.js`): 4 lính gác cổng chính, 2 cổng phụ trái, 2 cổng phụ phải, 1 người diễn thuyết, đời này qua đời khác;
   - tính cách nổi trội của từng người (`logic/temper.js`): nóng nảy, sùng đạo, hoạt ngôn, ham học, nhút nhát, tham vọng;
