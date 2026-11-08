@@ -176,14 +176,17 @@
         if (h.seq <= hitSeq) continue; hitSeq = h.seq;
         if (h.isle !== idx || !shownNow) continue;
         const v = folks.get(keyOf(h.i, h.id)); if (!v) continue;
+        // người bắn: người logic ghi lại nếu đang đứng trong tầm; không thì người gần nhất bên kia đang trong tầm (đạn không bay từ
+        // ngoài tầm vũ khí tới)
         let sh = h.by != null ? folks.get(keyOf(h.byI, h.by)) : null;
-        if (!sh || !sh.rig) { let bd = 1e9; for (const o2 of v.side === 'foe' ? sightDef : sightFoe) { const d = o2.pos.distanceToSquared(v.pos); if (d < bd) { bd = d; sh = o2; } } }
+        const inRange = (q) => q && q.rig && q.pos.distanceToSquared(v.pos) <= (q.range || SIGHT) ** 2;
+        if (!inRange(sh)) { sh = null; let bd = 1e9; for (const o2 of v.side === 'foe' ? sightDef : sightFoe) { const d = o2.pos.distanceToSquared(v.pos); if (d < bd && inRange(o2)) { bd = d; sh = o2; } } }
         const K = BK.Arms ? BK.Arms.kit(sh && sh.gst ? sh.gst.level : level) : null, kind = (K && BK.Shots3D && BK.Shots3D.OF[K.ranged]) || ['arrow'];
         const fly = BK.Shots3D && BK.Shots3D.FLIGHT ? BK.Shots3D.FLIGHT(kind[0]) : 0.5, now = lastRs;
         const to = v.pos.clone().add(L.center); to.y += 0.9 * SCALE;
         const from = sh ? sh.pos.clone().add(L.center) : to.clone().add(new THREE.Vector3(8, 0, 8)); from.y += 1.25 * SCALE;
         if (shots) shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] });
-        (v.pend || (v.pend = [])).push({ at: now + fly, dmg: h.dmg });
+        (v.pend || (v.pend = [])).push({ at: now + fly, dmg: h.dmg, from: sh ? sh.pos.clone() : null });
         if (h.kill) v.dieAt = now + fly;
       }
     }
@@ -196,7 +199,7 @@
      *   nhà chính    quân giữ hàng ngang trước cửa nhà chính; quân đánh hàng ngang cách đó một đoạn, phía cổng đã vỡ
      *   trên phố     quân đánh hàng ngang trước công trình đang bị phá; dân binh hàng ngang chắn bên sườn
      * mind.side: 'foe' (quân đánh) hay 'def' (bên giữ); mind.rank: thứ tự trong đội; mind.of: số người của đội. */
-    const FORM_GAP = 1.3, SIGHT = 13; // khoảng giữa hai người trong hàng; tầm nhìn thấy kẻ địch (gặp là bắn)
+    const FORM_GAP = 1.3, SIGHT = 13, FLINCH = 0.35; // khoảng giữa hai người trong hàng; tầm nhìn thấy kẻ địch (gặp là bắn)
     let sightFoe = [], sightDef = [];
     function gateAnchor() { const sg = S.situ.siege, k = sg && sg.gate; return k && PL && PL[k] && PL[k].length ? PL[k][0] : null; }
     function formation(f, mind) {
@@ -222,7 +225,9 @@
       const g = gateAnchor() || base.clone().multiplyScalar(1.6), out = g.clone().sub(base).setY(0); if (out.lengthSq() < 1e-3) out.set(1, 0, 0); out.normalize();
       const side = new THREE.Vector3(-out.z, 0, out.x), COLS = 8, row = Math.floor(k / COLS), col = k % COLS, cs = (col - (COLS - 1) / 2) * FORM_GAP;
       let c, back, face;
-      if (mind.place === 'hall') { c = foe ? base.clone().addScaledVector(out, 13) : base.clone().addScaledVector(out, 1.5); back = foe ? out : out.clone().negate(); face = foe ? base.clone().addScaledVector(out, 1.5) : base.clone().addScaledVector(out, 13); }
+      // nhà chính: quân đánh đứng cách hàng giữ vừa trong tầm bắn của cả hai bên (tầm ngắn thời đầu thì đứng gần hơn)
+      const rg = (lv) => (BK.Arms && BK.Arms.rangeOf ? BK.Arms.rangeOf(lv) : SIGHT), gap = Math.max(5, Math.min(13, rg(level) - 1.5, rg(f.gst ? f.gst.level : level) - 1.5) + 1.5);
+      if (mind.place === 'hall') { c = foe ? base.clone().addScaledVector(out, gap) : base.clone().addScaledVector(out, 1.5); back = foe ? out : out.clone().negate(); face = foe ? base.clone().addScaledVector(out, 1.5) : base.clone().addScaledVector(out, gap); }
       else { c = foe ? base.clone().addScaledVector(out, 3) : base.clone().addScaledVector(out, 3).addScaledVector(side, 12); back = foe ? out : side; face = foe ? base.clone().addScaledVector(out, 3).addScaledVector(side, 12) : base.clone().addScaledVector(out, 3); }
       const lat = foe || mind.place === 'hall' ? side : out;
       return { p: c.addScaledVector(lat, cs).addScaledVector(back, row * FORM_GAP), face, outside: false };
@@ -336,7 +341,9 @@
         if (camera && f0 && f0.rig && (frameNo + p.id) % 2 === 1 && !(f0.pend && f0.pend.length) && ((f0.side && !f0.moving) || (!f0.engage && f0.rig.root.position.distanceToSquared(camera.position) > LOD_FAR * LOD_FAR))) { f0.debt = Math.min(0.8, (f0.debt || 0) + sec); continue; }
         const age = P.ageOf(p, S.day), f = ensure(p, age, key, gst ? gst.level : level, gst ? spot(gst.enter, p) : null, gst && gst.color), mind = dying && f.lastMind ? f.lastMind : gst ? gst.mind : S.minds.get(p.id) || { state: 'idle' };
         f.lastMind = mind; f.gst = gst; f.color = gst && gst.color ? gst.color : f.color || ownColor; f.bodyKey = (gst ? (/^w(\d+):/.exec(key) || [0, idx])[1] : idx) + ':' + p.id;
-        if (f.pend && f.pend.length && rs >= f.pend[0].at) { const h = f.pend.shift(); f.hpShow = Math.max(0, (f.hpShow == null ? 100 : f.hpShow) - h.dmg); }
+        if (f.pend && f.pend.length && rs >= f.pend[0].at) { const h = f.pend.shift(); f.hpShow = Math.max(0, (f.hpShow == null ? 100 : f.hpShow) - h.dmg);
+          // trúng đạn: giật lùi nửa bước theo hướng đạn tới, khựng lại một chút (FLINCH giây)
+          if (h.from) { _v.copy(f.pos).sub(h.from).setY(0); if (_v.lengthSq() > 1e-4) { _v.normalize(); f.pos.addScaledVector(_v, 0.35); Nav.keepInside(f.pos); } } f.flinch = rs + FLINCH; }
         if (!f.pend || !f.pend.length) { f.hpShow = p.alive ? (p.hp == null ? 100 : p.hp) : 0; }
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
         const cyc = cycleOf(f, mind), aim = cyc ? cyc.aim : mind; // chu trình: đi tới chỗ của bước đang làm
@@ -349,7 +356,8 @@
         const armed = (mind.state === 'attack' && (S.situ.siege || gst)) || (!gst && !!S.situ.siege && (p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard'));
         f.side = armed ? (mind.side || (gst && gst.side === 'foe' ? 'foe' : 'def')) : null; f.engage = null;
         if (armed) {
-          let best = null, bd = SIGHT * SIGHT;
+          const R = BK.Arms && BK.Arms.rangeOf ? BK.Arms.rangeOf(gst ? gst.level : level) : SIGHT; f.range = R; // tầm bắn của vũ khí người này
+          let best = null, bd = R * R;
           for (const o2 of f.side === 'foe' ? seenDef : seenFoe) { const dd = (o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2; if (dd < bd) { bd = dd; best = o2; } }
           if (best) { f.engage = best; goal = null; } // dừng lại, quay về phía kẻ địch mà bắn
           (f.side === 'foe' ? sightFoe : sightDef).push(f);
@@ -439,15 +447,20 @@
           f.tool = K ? K.ranged : 'sling';
           if (K && !moving) {
             const draw = K.ranged === 'sling' || K.ranged === 'bow' || K.ranged === 'crossbow', G = BK.Gestures3D.BY_KEY[draw ? 'draw' : 'aim'];
-            if (G) { tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, 0, gs, f.knobs); f.gk = 'bắn'; }
-            const T = f.engage || (mind.target != null ? folks.get(mind.target) : null), aimAt = T ? T.pos : f.shootAt;
+            const hit = f.flinch > rs, Gh = hit && BK.Gestures3D.BY_KEY.startle; // vừa trúng đạn: khựng người, không bắn
+            if (Gh) { tgt = Anim.basePose(f.knobs); Gh.pose(tgt, f.ph, 0.5, gs, f.knobs); f.gk = 'trúng đạn'; }
+            else if (G) { tgt = Anim.basePose(f.knobs); G.pose(tgt, f.ph, 0, gs, f.knobs); f.gk = 'bắn'; }
+            // tầm bắn thật (design/ke-hoach-buoc-12.md mục 3.3): chỉ bắn kẻ địch đang trong tầm vũ khí; ngoài tầm thì giương
+            // vũ khí hướng về phía đó mà chờ, không bắn bâng quơ
+            const T0 = f.engage || (mind.target != null ? folks.get(mind.target) : null), Rg = f.range || (BK.Arms && BK.Arms.rangeOf ? BK.Arms.rangeOf(gst ? gst.level : level) : SIGHT);
+            const T = T0 && T0.rig && (T0.pos.x - f.pos.x) ** 2 + (T0.pos.z - f.pos.z) ** 2 <= Rg * Rg ? T0 : null, aimAt = T ? T.pos : T0 ? T0.pos : f.shootAt;
             if (aimAt) { _v.copy(aimAt).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), real); }
-            if (shots && aimAt && (rs > (f.nextShot || 0) || f.nextShot - rs > 5)) { // đồng hồ lùi (tải lại, tua): bắn lại ngay
+            if (shots && T && !hit && (rs > (f.nextShot || 0) || f.nextShot - rs > 5)) { // đồng hồ lùi (tải lại, tua): bắn lại ngay
               const kind = BK.Shots3D.OF[K.ranged] || ['arrow'], gap = K.ranged === 'mg' || K.ranged === 'autorifle' ? 0.35 : draw ? 1.8 : 1.1;
               f.nextShot = rs + gap * (0.7 + Math.random() * 0.8);
               const from = new THREE.Vector3().copy(L.center).add(f.pos); from.y += 1.25 * SCALE; from.x += Math.sin(f.yaw) * 0.5 * SCALE; from.z += Math.cos(f.yaw) * 0.5 * SCALE;
               // (phát trang trí cho nhịp bắn đều: luôn trượt, rơi cạnh người; phát trúng thật do logic quyết định: takeHits)
-              const to = new THREE.Vector3().copy(L.center).add(aimAt); to.y += 0.9 * SCALE; { const a = Math.random() * 6.283, r = T ? 1.4 + Math.random() * 1.2 : Math.random() * 2.5; to.x += Math.cos(a) * r; to.z += Math.sin(a) * r; }
+              const to = new THREE.Vector3().copy(L.center).add(T.pos); to.y += 0.9 * SCALE; { const a = Math.random() * 6.283, r = 1.4 + Math.random() * 1.2; to.x += Math.cos(a) * r; to.z += Math.sin(a) * r; }
               shots.fire(K.fire && Math.random() < 0.25 ? 'fire' : kind[0], from, to, rs, { color: kind[1], puff: kind[2] });
             }
           }

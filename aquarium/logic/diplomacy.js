@@ -31,7 +31,8 @@
   const PER_TRADER = 60;                                    // mỗi thương nhân chở được chừng này đơn vị một chuyến
   const BRIDGE_LEVEL = 3, BUILD_DAYS = 25;                  // cầu từ thời 3; thợ xây làm chừng này ngày
   // giá cả cây cầu theo thời (gỗ, đá; từ thời 5 thêm kim loại), hai đảo cùng góp
-  const bridgeCost = (era) => { const f = 1 + 0.35 * Math.max(0, era - 3); return Object.assign({ wood: Math.round(80 * f), stone: Math.round(80 * f) }, era >= 5 ? { metal: Math.round(60 * f) } : {}); };
+  // cầu quân sự (military): cầu tạm cho quân qua, một đảo tự làm, nửa giá (bước 12: quân chỉ sang đảo khác qua cầu)
+  const bridgeCost = (era, military) => { const f = (1 + 0.35 * Math.max(0, era - 3)) * (military ? 0.5 : 1); return Object.assign({ wood: Math.round(80 * f), stone: Math.round(80 * f) }, era >= 5 ? { metal: Math.round(60 * f) } : {}); };
   const STAY = [1.5, 4];                                    // khách ở lại đảo kia chừng này ngày
   const TRUST_TRADE = 0.06, DECAY = 0.003;                  // tin cậy tăng mỗi chuyến buôn trọn vẹn; quan hệ phai dần mỗi ngày
 
@@ -42,6 +43,15 @@
   const hops = (a, b) => { const d = Math.abs(a - b); return Math.min(d, N - d); };
   const pairKey = (a, b) => (a < b ? a + '-' + b : b + '-' + a);
   const bridged = (W, a, b) => hops(a, b) === 1 && W.bridges.some((x) => pairKey(x.a, x.b) === pairKey(a, b));
+  // đường bộ qua các cầu (design/ke-hoach-buoc-12.md mục 3.1): tìm đường ngắn nhất từ a tới b, mỗi chặng là một cây cầu đã
+  // xong; đảo ở giữa phải cho đi qua (pass(c)). Trả về các đảo trên đường [a, ..., b] hay null
+  function bridgeRoute(W, a, b, pass) {
+    const prev = new Map([[a, null]]), q = [a];
+    while (q.length) { const c = q.shift(); if (c === b) break;
+      for (const n of [(c + 1) % N, (c + N - 1) % N]) { if (prev.has(n) || !bridged(W, c, n) || (n !== b && !(pass && pass(n)))) continue; prev.set(n, c); q.push(n); } }
+    if (!prev.has(b)) return null;
+    const out = []; for (let c = b; c != null; c = prev.get(c)) out.unshift(c); return out;
+  }
   const travelDays = (W, a, b) => (bridged(W, a, b) ? BRIDGE_DAYS : BOAT_DAYS + HOP_DAYS * (hops(a, b) - 1));
   // các đảo nằm giữa đường đi thuyền từ a tới b (theo chiều ngắn hơn quanh vòng sáu đảo; ngang nhau thì theo chiều tăng)
   function path(a, b) { const fwd = (b - a + N) % N, dir = fwd <= N - fwd ? 1 : -1, out = []; for (let i = (a + dir + N) % N; i !== b; i = (i + dir + N) % N) out.push(i); return out; }
@@ -131,16 +141,21 @@
   const workOf = (W, a, b) => (W.bridgeWorks || []).find((x) => pairKey(x.a, x.b) === pairKey(a, b)) || null;
   // trả được không (by: cầu quân sự một bên chịu cả; không thì hai kho gộp lại)
   function canPay(W, a, b, era, by) {
-    const E = BK.Economy, c = bridgeCost(era), sa = E.state(W.islands[a]).stock, sb = E.state(W.islands[b]).stock;
-    return Object.keys(c).every((r) => (by != null ? E.state(W.islands[by]).stock[r] : sa[r] + sb[r]) >= c[r]);
+    const E = BK.Economy, c = bridgeCost(era, by != null), sa = E.state(W.islands[a]).stock, sb = E.state(W.islands[b]).stock;
+    if (by != null) { const sx = E.state(W.islands[by]).stock, need = Object.values(c).reduce((x, y) => x + y, 0); return MIL_RES.reduce((t, r) => t + sx[r], 0) >= need; }
+    return Object.keys(c).every((r) => sa[r] + sb[r] >= c[r]);
   }
+  // cầu quân sự dựng bằng thứ gì có trong kho (gỗ, đá, kim loại): trừ dần theo thứ nhiều nhất trước
+  const MIL_RES = ['wood', 'stone', 'metal'];
+  function payMilitary(sx, c) { let need = Object.values(c).reduce((x, y) => x + y, 0);
+    while (need > 0.5) { const r = MIL_RES.slice().sort((x, y) => sx[y] - sx[x])[0], k = Math.min(sx[r], Math.max(1, need / 3)); if (k <= 0) break; sx[r] -= k; need -= k; } }
   // mở công trình cầu: kind 'build' | 'rebuild' | 'military' (by: đảo tự xây)
   function startBridge(W, day, a, b, kind, by) {
     if (hops(a, b) !== 1 || workOf(W, a, b)) return null;
     const A = W.islands[a], B = W.islands[b], E = BK.Economy, era = Math.min(A.level, B.level, by != null ? W.islands[by].level : 99);
     if (era < BRIDGE_LEVEL || !canPay(W, a, b, era, kind === 'military' ? by : null)) return null;
-    const c = bridgeCost(era), sa = E.state(A).stock, sb = E.state(B).stock;
-    if (kind === 'military') { const sx = E.state(W.islands[by]).stock; for (const r in c) sx[r] -= c[r]; }
+    const c = bridgeCost(era, kind === 'military'), sa = E.state(A).stock, sb = E.state(B).stock;
+    if (kind === 'military') payMilitary(E.state(W.islands[by]).stock, c);
     else for (const r in c) { const fa = Math.min(sa[r], Math.max(c[r] / 2, c[r] - sb[r])); sa[r] -= fa; sb[r] -= c[r] - fa; }
     const [lo, hi] = ends(a, b), w = { a: lo, b: hi, kind, by: kind === 'military' ? by : null, era, progress: 0, from: day };
     W.bridgeWorks.push(w); W.bridgeStats[kind]++;
@@ -213,5 +228,5 @@
     for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) if (a !== b) { const R = W.rel[a][b]; R.trust *= 1 - DECAY; R.grudge *= 1 - DECAY * 0.5; }
     W.treaties = W.treaties.filter((t) => t.until > day || (say(W, day, 'Hiệp ước giữa ' + W.islands[t.a].name + ' và ' + W.islands[t.b].name + ' hết hạn.', [t.a, t.b]), false));
   }
-  return { N, init, hops, path, travelDays, bridged, alive, need, available, value, canSend, load, trade, gift, rob, treatyOf, sign, startBridge, destroyBridge, bridgeOf, workOf, canPay, bridgeCost, startVisit, dayTick, say, pairKey, BRIDGE_LEVEL, BUILD_DAYS };
+  return { N, init, hops, path, bridgeRoute, BRIDGE_DAYS, travelDays, bridged, alive, need, available, value, canSend, load, trade, gift, rob, treatyOf, sign, startBridge, destroyBridge, bridgeOf, workOf, canPay, bridgeCost, startVisit, dayTick, say, pairKey, BRIDGE_LEVEL, BUILD_DAYS };
 });

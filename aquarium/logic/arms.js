@@ -41,6 +41,10 @@
     plasma: { name: 'pháo plasma', gate: 1.0, kill: 0.8, cost: { energy: 120 } },
   };
   const NAME = { sling: 'ná', bow: 'cung', crossbow: 'nỏ', musket: 'súng hoả mai', rifle: 'súng trường', mg: 'súng máy', autorifle: 'súng tự động', shock: 'súng điện', spore: 'súng bào tử', ray: 'súng tia' };
+  // tầm bắn (đơn vị của đảo) của từng loại vũ khí bắn xa (design/ke-hoach-buoc-12.md mục 3.3): phần vẽ chỉ cho bắn khi kẻ địch
+  // trong tầm, đội hình hai bên đứng cách nhau vừa trong tầm (render/village3d.js)
+  const RANGE = { sling: 9, bow: 13, crossbow: 15, musket: 16, rifle: 20, mg: 22, autorifle: 22, shock: 18, spore: 18, ray: 24 };
+  const rangeOf = (lv) => RANGE[kit(lv).ranged] || 12;
   const RANGED_KILL = 0.05;   // mỗi ngày: khả năng một người giữ ngã vì tên đạn khi hai bên ngang sức bắn
   const WALL_COVER = 1.6;     // người bắn sau tường được che
   const MAX_ENGINES = 4, PER_ENGINE = 5; // mỗi máy cần chừng này lính trong đạo quân
@@ -53,9 +57,9 @@
   // của thời mình; không còn cận chiến
   const isRanged = () => true;
 
-  // máy không cần đường bộ (bay): đi thuyền vẫn mang theo được
+  // máy không cần đường bộ (bay): cầu gãy giữa đường vẫn bay theo quân
   const GROUND_FREE = new Set(['drone']);
-  // cầu bị phá, đổi sang đi thuyền: xe, máy công thành kẹt lại bên này biển
+  // cầu bị phá giữa đường: xe, máy công thành kẹt lại bên này cầu
   const strand = (w) => { if (w.engines) w.engines = w.engines.filter((e) => GROUND_FREE.has(e.kind)); };
   /* ---------- Ra quân: chia loại người, dựng máy công thành (tốn tài nguyên) ---------- */
   function equip(W, w) {
@@ -64,7 +68,6 @@
     w.kit = A.level; w.engines = [];
     const E0 = k.engine && ENGINE[k.engine]; if (!E0) return;
     // xe, máy công thành chỉ đi được qua cầu (design/chien-tranh-thinh-vuong.md mục 9); đi thuyền thì chỉ mang được drone
-    if (w.by !== 'bridge' && !GROUND_FREE.has(k.engine)) return;
     const st = E().state(A).stock, want = Math.min(MAX_ENGINES, Math.floor(w.troops.length / PER_ENGINE) * (w.kind === 'raid' ? 0.5 : 1));
     for (let n = 0; n < want; n++) {
       if (!Object.keys(E0.cost).every((r) => st[r] >= E0.cost[r] * 2)) break; // không vét sạch kho
@@ -126,5 +129,5 @@
   }
   // phần sức giữ cổng còn lại theo độ bền cổng (logic/war.js): cổng hư thì người giữ mất chỗ dựa
   const describe = (lv) => { const k = kit(lv); return (NAME[k.ranged] || k.ranged) + (k.engine ? ', ' + ENGINE[k.engine].name : ''); };
-  return { KIT, ENGINE, NAME, kit, equip, strand, gateTick, armOf, isRanged, describe };
+  return { KIT, ENGINE, NAME, RANGE, rangeOf, kit, equip, strand, gateTick, armOf, isRanged, describe };
 });

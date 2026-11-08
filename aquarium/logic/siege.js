@@ -112,7 +112,6 @@
 
   /* ---------- Vai của từng người trong trận (logic/brain.js hỏi trước mọi việc khác) ---------- */
   // d(state, o): tạo việc của logic/brain.js. Trả về null nếu p không có vai.
-  //   tiễn quân (S.situ.muster)   người nhà ra cổng tiễn quân, mặt buồn
   //   quỳ (S.situ.kneel)          người đứng đầu cũ quỳ ở sân nhà chính sau khi mất thành
   //   trận (S.situ.siege)         người giữ (sg.def) mỗi người nhắm một quân giặc, đánh ở cổng, trên phố, quanh nhà chính;
   //                               người đứng đầu chỉ huy ở nhà chính; người sùng đạo cầu ở chỗ thờ; người khác: lúc giặc ở cổng
@@ -120,7 +119,6 @@
   function roleOf(S, p, d) {
     const X = S.situ, day = S.day, t = P().traits(p), age = P().ageOf(p, day), short = { until: day + 0.25 };
     const K = X.kneel; if (K && K.until > day && K.id === p.id) return d('work', { verb: 'kneel', place: 'hall', reason: 'bị dẫn ra quỳ ở sân nhà chính', until: K.until });
-    const M = X.muster; if (M && M.until > day && M.family.includes(p.id)) return d('work', { verb: 'farewell', place: M.gate, reason: 'ra cổng tiễn người nhà đi đánh ' + M.to, until: M.until, intensity: 0.6 });
     // báo động tên lửa (logic/missiles.js): ai không cầm vũ khí giữ chốt thì vào nhà trốn
     if (X.alarm > day && !X.siege && !isGuard(p) && S.seats.king !== p.id) { const lodge = lodging(S, p); return d(t.fear > 0.6 ? 'panic' : 'work',
         Object.assign({ verb: 'hide', reason: 'báo động tên lửa, vào nhà trốn' }, lodge != null ? { place: 'homeSlot', slot: lodge } : { place: 'home' },

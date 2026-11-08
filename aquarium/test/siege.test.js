@@ -6,33 +6,35 @@ for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper
     'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
     'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, War = BK.War, Siege = BK.Siege, E = BK.Economy, living = BK.Island.living;
+const H = require('./helpers.js'); // (bước 12: quân chỉ đi qua cầu; H.launch bắc cầu dọc đường trước)
 
 // dựng sẵn: tới ngày 500, đảo a (thêm extra lính) đánh đảo b; weak: lính đảo b đi vắng hết
 function setup(seed, a, b, extra, weak) {
   const W = BK.World.create({ seed, war: false }); BK.World.jump(W, 500);
   if (weak) for (const p of living(W.islands[b])) if (Siege.isGuard(p)) p.away = 'test'; // chỉ còn dân tự nguyện giữ thành
   living(W.islands[a]).filter((p) => p.job === 'worker').slice(0, extra).forEach((p) => { p.job = 'soldier'; });
-  return { W, w: War.launch(W, W.day, a, b, 'conquer', 1, W.rng) };
+  return { W, w: H.launch(W, W.day, a, b, 'conquer', 1, W.rng) };
 }
 // chạy từng giờ (trận) cho tới khi cond đúng hay hết max giờ
 const until = (W, cond, max) => { for (let k = 0; k < max && !cond(); k++) { BK.World.tick(W); War.step(W, W.day, W.rng, 1 / 12); if (k % 12 === 11) War.dayTick(W, W.day, W.rng); } return cond(); };
 
-test('tiễn quân: quân tập hợp ở cổng, người nhà ra cổng tiễn rồi mới lên đường', () => {
+test('tập hợp quân: quân đứng ở cổng rồi mới lên đường; không ai ra tiễn (bước 12 bỏ cảnh tiễn quân)', () => {
   const { W, w } = setup(3, 2, 1, 10), A = W.islands[2], M = A.situ.muster;
   assert.strictEqual(w.stage, 'muster');
-  assert.ok(M && M.family.length >= 3 && M.troops.length >= 2, 'người nhà ' + (M && M.family.length));
+  assert.ok(M && M.troops.length >= 2 && !M.family, 'quân tập hợp');
   BK.World.tick(W);
-  const m = A.minds.get(M.family[0]);
-  assert.ok(m && m.verb === 'farewell' && m.place === M.gate, 'người nhà ra cổng tiễn: ' + JSON.stringify(m && [m.verb, m.place]));
+  assert.ok(![...A.minds.values()].some((m) => m.verb === 'farewell'), 'không ai tiễn');
   assert.ok(until(W, () => w.stage === 'march', 12), 'lên đường');
-  assert.ok(!A.situ.muster, 'tiễn xong');
+  assert.ok(!A.situ.muster, 'tập hợp xong');
 });
 
-test('đi thuyền thì đánh cổng chính, qua cầu thì đánh cổng phụ đầu cầu; người giữ cổng gồm lính gác đúng cổng và dân tự nguyện', () => {
+test('quân qua cầu đánh cổng phụ đầu cầu; người giữ cổng gồm lính gác đúng cổng và dân tự nguyện', () => {
   const { W, w } = setup(3, 2, 1, 10), B = W.islands[1];
-  // (qua cảnh đấu tướng, vây thành nếu có: logic/battles.js)
-  assert.ok(until(W, () => w.stage === 'gate' && !(w.duel && !w.duel.done) && !(w.blockade && !w.blockade.done), 12 * 60));
-  assert.strictEqual(w.gate, w.by === 'bridge' ? (BK.War.sideOf(1, 2) ? 'gateR' : 'gateL') : 'gate');
+  // (kiểm thử người giữ cổng: tắt các kịch bản lúc tới nơi như nội gián mở cổng, đấu tướng, vây thành; logic/battles.js có
+  // kiểm thử riêng)
+  const arrive = BK.Battles.onArrive; BK.Battles.onArrive = () => {};
+  try { assert.ok(until(W, () => w.stage === 'gate', 12 * 60)); } finally { BK.Battles.onArrive = arrive; }
+  assert.strictEqual(w.by, 'bridge'); assert.strictEqual(w.gate, BK.War.sideOf(1, 2) ? 'gateR' : 'gateL');
   const sg = B.situ.siege, def = sg.def.map((id) => B.people.get(id));
   assert.ok(def.length >= 3, 'người giữ ' + def.length);
   if (w.gate === 'gate') assert.ok(def.every((p) => p.job !== 'sideguard'), 'lính gác cổng phụ giữ chốt của mình');

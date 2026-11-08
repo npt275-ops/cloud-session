@@ -39,7 +39,7 @@
         for (const R of tries) {
           const q = u.clone().multiplyScalar(R);
           if (P.outer === 'sea') { if (!L.inside(q.x, q.y, -4) && free(q, r, 3)) { found = { p: q, dir: new THREE.Vector2(-u.y, u.x), r }; break; } continue; }
-          if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && !L.blockedWild(q.x, q.y, r) && (P.slot === 'gate' || !onRoad(L, q.x, q.y, r * 0.6)) && free(q, r, 3)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
+          if (P.outer === 'coast') { if (L.inside(q.x, q.y, 1.2) && (P.gate || !L.blockedWild(q.x, q.y, r)) && (P.slot === 'gate' || P.gate || !onRoad(L, q.x, q.y, r * 0.6)) && free(q, r, 3)) { found = { p: q, dir: u.clone(), r }; break; } continue; }
           if (W) { if (L.inside(q.x, q.y, r + 1) && !L.blockedWild(q.x, q.y, r * 0.8) && !onRoad(L, q.x, q.y, r * 0.85) && free(q, r, 1)) { found = { p: q, dir: u.clone().negate(), r }; break; } continue; }
           if (L.inside(q.x, q.y, r + 4) && !L.blockedWild(q.x, q.y, r + 0.5) && !onRoad(L, q.x, q.y, r * 0.7) && free(q, r, 3)) { found = { p: q, dir: u.clone().negate(), r }; break; }
         }
@@ -105,6 +105,26 @@
       const F = (fixed || []).find((x) => x.P === P.self); if (F) { F.x = q[0]; F.y = q[1]; F.r = Math.max(F.r, fp.r * k); } else if (fixed) fixed.push({ x: q[0], y: q[1], r: fp.r * k, P: P.self });
       return { x: q[0], z: q[1], fitS: P.fitS * k };
     }
+    // móng nằm trọn trong đảo (design/ke-hoach-buoc-12.md mục 2): mọi điểm của móng thật (footprint sau khi dựng hình) cách mép
+    // đảo ít nhất EDGE_M. Thò ra thì dời dần vào phía tâm đảo (không đè công trình khác, không đè đường); không được thì thu nhỏ
+    // (tới 60%); vẫn không được thì trả { drop: true }: không dựng, không bao giờ để nhà treo ngoài biển. Trong đảo sẵn: null
+    const EDGE_M = 1.5;
+    const outside = (L, fp, x, z) => fp.pts.some(([dx, dz]) => !L.inside(x + dx, z + dz, EDGE_M));
+    function keepOn(L, P, m, fixed) {
+      m.updateMatrixWorld(true);
+      const fp0 = footprint(m, P.rotY, P.fitS); if (!outside(L, fp0, P.x, P.z)) return null;
+      const ok = (fp, x, z) => !outside(L, fp, x, z) && !L.blockedWild(x, z, fp.r * 0.5) && !(L.roadSegs && blocks(L, fp, x, z))
+        && !(fixed || []).some((F) => F.P !== P.self && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.8 + fp.r * 0.8) ** 2);
+      const R = Math.hypot(P.x, P.z) || 1, ux = -P.x / R, uz = -P.z / R;
+      for (const k of [1, 0.9, 0.8, 0.7, 0.6]) {
+        const fp = k === 1 ? fp0 : scaled(fp0, k);
+        for (let d = 0; d <= 24; d += 1.5) for (const side of [0, 2, -2, 4, -4]) {
+          const x = P.x + ux * d - uz * side, z = P.z + uz * d + ux * side;
+          if (ok(fp, x, z)) { const F = (fixed || []).find((q) => q.P === P.self); if (F) { F.x = x; F.y = z; F.r = fp.r; } else if (fixed) fixed.push({ x, y: z, r: fp.r, P: P.self }); return { x, z, fitS: P.fitS * k }; }
+        }
+      }
+      return { drop: true };
+    }
     // chỗ trống bán kính r gần (x, z) cho chỗ dùng chung (sân chơi, bãi trao đổi, gốc cây kể chuyện; design/ke-hoach-khac-phuc.md
     // mục 6.2): xoắn ốc ra quanh điểm muốn đặt, tránh mép đảo, núi, hồ, sông, mặt đường và công trình đã có (fixed). null nếu hết chỗ
     function freeSpot(L, x, z, r, fixed) {
@@ -118,7 +138,7 @@
     }
     // chỗ (x, z) có chồng lên công trình nào trong fixed không (bỏ qua chính nó: tag); dùng cho bài kiểm tra tools/check-scene.js
     const overlaps = (x, z, r, fixed, tag) => (fixed || []).filter((F) => F.P !== tag && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r + r - 0.3) ** 2);
-    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad, freeSpot, overlaps };
+    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad, freeSpot, overlaps, keepOn, outside };
   }
   return { create };
 });

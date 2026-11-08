@@ -1,8 +1,6 @@
 /* Bể Kính · logic/battles.js · Kịch bản chiến tranh (design/chien-tranh-thinh-vuong.md mục 2)
  * Mỗi kịch bản có nguyên nhân thật (tính người đứng đầu, đường quân đi, thời, quan hệ) và một cảnh cho phần vẽ. logic/war.js
  * gọi vào ở từng chặng của trận:
- *   hải chiến        (sắp tới, đi thuyền, từ thời 3) đảo bị đánh có lính và người đứng đầu hiếu chiến, đa nghi thì ra chặn ngoài
- *                    biển: hai đội thuyền đánh nhau (w.naval); quân đi đánh mất nhiều quá thì quay về, không đổ bộ được
  *   phục kích        (tới nơi, qua cầu, không bị đánh úp) người đứng đầu bên giữ mưu mô: quân giặc bị bắn trên cầu
  *   đánh đêm         (tới nơi, đánh úp, trời tối) người giữ ra cổng còn ít hơn; lính gác ngủ gật thì cổng hư sẵn một phần
  *   nội gián         (tới nơi) bên đánh mưu mô, bên giữ có người đa nghi, nóng nảy, oán người đứng đầu: người đó mở cổng
@@ -24,7 +22,6 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.Battles;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const NAVAL_LV = 3, NAVAL_DAYS = 0.5, NAVAL_KILL = 0.25;
   const AMBUSH = [0.12, 0.28];
   const TRAITOR = 0.2;          // có người đủ lý do phản: khả năng bị mua chuộc mở cổng (nhân với độ mưu mô bên đánh)
   const AMBUSH_COVER = { forest: 0.15, mountain: 0.15 }; // đảo có rừng, núi sát cổng: dễ giấu quân phục kích
@@ -44,46 +41,17 @@
   const legend = (W, day, i, p, kind, text) => { if (BK.Chronicle) BK.Chronicle.legend(W, day, i, p, kind, text); };
   const big = (W, day, i, text, weight, at) => { if (BK.Chronicle) BK.Chronicle.add(W, day, i, text, weight, at); };
 
-  /* ---------- Sắp tới: hải chiến ---------- */
-  function beforeArrive(W, day, w, rng, fall) {
-    if (w.navalChecked || w.by !== 'boat' || w.surprise || day < w.arrive - NAVAL_DAYS - 0.2) return;
-    w.navalChecked = true;
-    const A = W.islands[w.a], r = Wr().rulerOf(W, w.b), R = W.islands[r], t = traitsOf(R);
-    if (A.level < NAVAL_LV || R.level < NAVAL_LV || !t || (t.aggression < 0.5 && t.paranoia < 0.6) || !rng.chance(0.6)) return;
-    const sailors = living(R).filter((p) => !p.away && p.job === 'soldier').slice(0, Math.ceil(w.troops.length * 0.7)); if (sailors.length < 3) return;
-    for (const p of sailors) p.away = 'navy';
-    w.naval = { from: day, until: day + NAVAL_DAYS, r, crew: sailors.map((p) => ({ i: r, p })) };
-    stat(W, 'naval');
-    say(W, day, 'Thuyền chiến ' + R.name + ' ra chặn quân ' + A.name + ' giữa biển.', [w.a, r]);
-  }
-  // mỗi đợt của hải chiến; trả về true nếu bên đánh thua trên biển (logic/war.js cho quân quay về)
-  function navalStep(W, day, w, rng, dt, fall) {
-    const N = w.naval; if (!N || N.done) return false;
-    const A = W.islands[w.a], R = W.islands[N.r];
-    const pa = w.troops.length * BK.Arms.kit(A.level).pow * (1 + 0.15 * A.level), pd = N.crew.filter((x) => x.p.alive).length * BK.Arms.kit(R.level).pow * (1 + 0.15 * R.level) * 1.2;
-    const ka = Math.min(0.4, dt * NAVAL_KILL * pd / Math.max(1, pa)), kd = Math.min(0.4, dt * NAVAL_KILL * pa / Math.max(1, pd));
-    const ch = fall.chance || ((k) => k); // một phát trúng mất máu (logic/war.js hurt)
-    for (const x of w.troops) if (x.p.alive && rng.chance(ch(ka))) fall(x, N.r, 'sea');
-    for (const x of N.crew) if (x.p.alive && rng.chance(ch(kd))) fall(x, w.a, 'sea');
-    w.troops = w.troops.filter((x) => x.p.alive);
-    if (day < N.until) return false;
-    N.done = true; for (const x of N.crew) if (x.p.alive) x.p.away = null;
-    if (w.troops.length < w.n0 * 0.55) { say(W, day, 'Quân ' + A.name + ' bị đánh tan trên biển, không đổ bộ được vào ' + W.islands[w.b].name + '.', [w.a, N.r]); big(W, day, N.r, 'Thắng trận hải chiến trước ' + A.name, 3, 'gate'); return true; }
-    say(W, day, 'Quân ' + A.name + ' vượt được vòng vây trên biển, còn ' + w.troops.length + ' người.', [w.a, N.r]);
-    return false;
-  }
-
   /* ---------- Tới nơi: phục kích, đánh đêm, nội gián, đấu tướng, vây thành ---------- */
   function onArrive(W, day, w, rng, fall) {
     const A = W.islands[w.a], B = W.islands[w.b], r = Wr().rulerOf(W, w.b), tb = traitsOf(W.islands[r]), ta = traitsOf(A);
-    // phục kích (design/ke-hoach-khac-phuc.md mục 5.1): trên cầu, hay ở bãi đổ bộ khi đảo có rừng, núi sát cổng; người đứng đầu
+    // phục kích (design/ke-hoach-khac-phuc.md mục 5.1): trên cầu, hay ở đầu cầu khi đảo có rừng, núi sát cổng; người đứng đầu
     // mưu mô thì hay bày, đảo rừng núi thì dễ giấu quân. Quân đánh úp (surprise) thì không ai kịp phục
     const cover = AMBUSH_COVER[B.key] || 0, wit = tb ? Math.max(0, tb.cunning - 0.45) * 0.6 : 0;
-    if (!w.surprise && tb && rng.chance(Math.min(0.8, (w.by === 'bridge' ? 0.15 : 0) + cover + wit))) {
+    if (!w.surprise && tb && rng.chance(Math.min(0.8, 0.15 + cover + wit))) {
       const k = rng.range(AMBUSH[0], AMBUSH[1]); let n = 0;
       for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate)) n++;
       w.troops = w.troops.filter((x) => x.p.alive); w.morale = Math.max(0, w.morale - 0.2); w.ambush = n; stat(W, 'ambush');
-      const where = w.by === 'bridge' ? 'trên cầu' : cover ? (B.key === 'forest' ? 'trong rừng sát bãi đổ bộ' : 'trên sườn núi sát bãi đổ bộ') : 'ở bãi đổ bộ';
+      const where = cover ? (B.key === 'forest' ? 'trong rừng sát đầu cầu' : 'trên sườn núi sát đầu cầu') : 'trên cầu';
       say(W, day, B.name + ' phục kích quân ' + A.name + ' ' + where + (wit > 0.1 ? ' (người đứng đầu mưu mô đoán trước đường quân tới)' : '') + ': ' + n + ' người ngã.', [w.a, w.b]);
     }
     // đánh đêm
@@ -243,5 +211,5 @@
   }
   // đảo i đang chạy đua vũ trang (logic/missiles.js làm tên lửa nhanh hơn)
   const racing = (W, i, day) => Object.entries(W.race || {}).some(([k, R]) => R.until > day && k.split('-').map(Number).includes(i));
-  return { beforeArrive, navalStep, onArrive, gateStep, onRepelled, onHome, dayTick, roleOf, racing, BLOCKADE_FOOD };
+  return { onArrive, gateStep, onRepelled, onHome, dayTick, roleOf, racing, BLOCKADE_FOOD };
 });

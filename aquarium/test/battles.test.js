@@ -6,6 +6,7 @@ for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper
     'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
     'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, Arms = BK.Arms, Siege = BK.Siege, living = BK.Island.living;
+const H = require('./helpers.js'); // (bước 12: quân chỉ đi qua cầu; H.launch bắc cầu dọc đường trước)
 const temper = (S, tr) => { for (const k of ['king', 'advisor', 'general1', 'general2']) { const p = S.seats[k] != null && S.people.get(S.seats[k]); if (p) p.traits = Object.assign({}, BK.People.traits(p), tr); } };
 const fill = (S, k) => { const st = E.state(S); for (const r of E.RES) st.stock[r] = E.CAP(S.level, r) * k; };
 function world(seed, lv) { const W = BK.World.create({ seed, war: false }); BK.World.jump(W, 500); if (lv) for (const S of W.islands) E.devSetLevel(S, lv); return W; }
@@ -17,40 +18,29 @@ test('vũ khí theo thời: thời đồ đá chỉ có ná; thời trung đại
   assert.strictEqual(Arms.kit(3).engine, 'catapult'); assert.strictEqual(Arms.kit(4).ranged, 'musket'); assert.ok(Arms.kit(11).portal && Arms.kit(12).shield);
   const W = world(3, 3), A = W.islands[2]; soldiers(A, 12); fill(A, 1);
   // (bước 10: xe, máy công thành chỉ đi qua cầu: cho đoàn quân đi qua cầu rồi trang bị lại)
-  const wood0 = E.state(A).stock.wood, w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w);
+  const wood0 = E.state(A).stock.wood, w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w);
   assert.ok(w.engines.length >= 1 && w.engines.every((e) => e.kind === 'catapult'), 'có máy bắn đá: ' + w.engines.length);
   assert.ok(E.state(A).stock.wood < wood0, 'tốn gỗ');
   // chỉ đánh bằng vũ khí bắn xa (mục 8): cả đoàn quân đều bắn xa
   assert.ok(w.troops.every((x) => x.arm === 'ranged'), 'cả đoàn quân bắn xa');
-  const W2 = world(3, 3), A2 = W2.islands[2]; soldiers(A2, 12); fill(A2, 0); const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng);
+  const W2 = world(3, 3), A2 = W2.islands[2]; soldiers(A2, 12); fill(A2, 0); const w2 = H.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng);
   assert.strictEqual(w2.engines.length, 0, 'kho trống: không có máy');
 });
 
 test('ở cổng: máy công thành phá cổng, tên lửa đốt làm cháy nhà; cổng dịch chuyển (thời 11) mở cổng từ bên trong', () => {
   const W = world(5, 4), A = W.islands[2], B = W.islands[1]; soldiers(A, 14); fill(A, 1);
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.sg = B.situ.siege = { war: w.id, from: 2, stage: 'gate', gate: 'gate', def: [], foes: [] };
+  const w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'bridge'; Arms.equip(W, w); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.sg = B.situ.siege = { war: w.id, from: 2, stage: 'gate', gate: 'gate', def: [], foes: [] };
   const def = Siege.gateGuards(B, 'gate').map((p) => ({ i: 1, p }));
   for (let k = 0; k < 24; k++) Arms.gateTick(W, W.day + k / 12, w, def, 1 / 12, W.rng, (x) => { x.p.alive = false; });
   assert.ok(Siege.hp(B, 'gate') < 1, 'cổng bị đại bác phá: ' + Siege.hp(B, 'gate'));
   assert.ok(w.armLog.volleys > 0, 'có bắn xa');
   const W3 = world(5, 11), A3 = W3.islands[2], B3 = W3.islands[1]; soldiers(A3, 14);
-  const w3 = BK.War.launch(W3, W3.day, 2, 1, 'conquer', 1, W3.rng); w3.stage = 'gate'; w3.since = W3.day - 1.1; w3.gate = 'gate';
+  const w3 = H.launch(W3, W3.day, 2, 1, 'conquer', 1, W3.rng); w3.stage = 'gate'; w3.since = W3.day - 1.1; w3.gate = 'gate';
   Arms.gateTick(W3, W3.day, w3, [], 1 / 12, W3.rng, () => {});
   assert.ok(w3.portal && Siege.hp(B3, 'gate') === 0, 'cổng dịch chuyển mở cổng');
 });
 
-test('kịch bản: hải chiến khi đảo bị đánh ra chặn; đấu tướng hai tướng hiếu chiến; vây thành làm đảo bị vây gần như không làm ra lương thực', () => {
-  // hải chiến (kiểm thử hành vi: đặt thẳng đoàn quân đi thuyền sắp tới, người đứng đầu bên bị đánh hiếu chiến; rng luôn "có")
-  { const W = world(2, 5), A = W.islands[2], B = W.islands[4]; soldiers(A, 12); soldiers(B, 8);
-    temper(B, { aggression: 0.9, paranoia: 0.8 });
-    const w = BK.War.launch(W, W.day, 2, 4, 'conquer', 1, W.rng); w.by = 'boat'; w.surprise = false;
-    const yes = Object.assign(Object.create(W.rng), { chance: () => true });
-    BK.Battles.beforeArrive(W, w.arrive, w, yes, () => false);
-    assert.ok(w.naval && w.naval.crew.length >= 3, 'có hải chiến: thuyền ' + B.name + ' ra chặn');
-    // thua trên biển (mất quá nửa quân) thì quay về, không đổ bộ
-    for (const x of w.troops.slice(0, Math.ceil(w.troops.length * 0.6))) x.p.alive = false;
-    const back = BK.Battles.navalStep(W, w.naval.until + 0.01, w, Object.assign(Object.create(W.rng), { chance: () => false }), 0.1, () => false);
-    assert.ok(back, 'mất quá nửa quân trên biển thì quay về'); }
+test('kịch bản: vây thành làm đảo bị vây gần như không làm ra lương thực (bước 12 bỏ hải chiến: quân chỉ đi qua cầu)', () => {
   // vây thành: lương thực đảo bị vây gần như không làm ra
   const W = world(7, 5), S = W.islands[1], st = E.state(S); BK.World.jump(W, W.day + 2);
   const made0 = st.made.food; S.situ.blockade = W.day + 10; BK.World.jump(W, W.day + 1);
@@ -59,7 +49,7 @@ test('kịch bản: hải chiến khi đảo bị đánh ra chặn; đấu tư�
 
 test('tù binh bị bắt khi bên đánh thua ở cổng, được chuộc về; quân thắng về thì diễu hành, dân ra mừng', () => {
   const W = world(3, 3), A = W.islands[2], B = W.islands[1]; soldiers(A, 6);
-  const w = BK.War.launch(W, W.day, 2, 1, 'raid', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.n0 = 10;
+  const w = H.launch(W, W.day, 2, 1, 'raid', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.n0 = 10;
   BK.Battles.onRepelled(W, W.day, w, W.rng);
   assert.ok(B.prisoners && B.prisoners.length >= 1, 'có tù binh');
   const q = B.prisoners[0], p = A.people.get(q.pid); assert.strictEqual(p.away, 'prisoner');
@@ -100,14 +90,14 @@ test('biên niên: chuyện lớn được ghi; cả bể yên quá lâu thì ng
 
 test('máu: trúng đạn mất máu, hết máu thì ngã; cổng hết máu thì vỡ; nhà chính hết máu thì mất thành; rút về thì hồi máu', () => {
   const W = world(4, 5), A = W.islands[2], B = W.islands[1]; soldiers(A, 30); fill(A, 1);
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
+  const w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
   let hurtSeen = 0, k = 0;
   for (; k < 12 * 30 && w.stage === 'gate'; k++) { tick(W, 1); hurtSeen = Math.max(hurtSeen, [...B.people.values(), ...A.people.values()].filter((p) => p.alive && p.hp != null && p.hp < 100).length); }
   assert.ok(hurtSeen > 0, 'có người bị thương mà chưa ngã');
   if (w.stage === 'inside') assert.ok(Siege.hp(B, 'gate') <= 0, 'cổng vỡ khi hết máu: ' + Siege.hp(B, 'gate'));
   // nhà chính hết máu thì mất thành
   const W2 = world(6, 5), A2 = W2.islands[2], B2 = W2.islands[1]; soldiers(A2, 30);
-  const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'hall'; w2.since = W2.day; w2.gate = 'gate'; w2.team = []; w2.team0 = 1; w2.sg = B2.situ.siege = { war: w2.id, from: 2, stage: 'hall', gate: 'gate', def: [], foes: [] };
+  const w2 = H.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'hall'; w2.since = W2.day; w2.gate = 'gate'; w2.team = []; w2.team0 = 1; w2.sg = B2.situ.siege = { war: w2.id, from: 2, stage: 'hall', gate: 'gate', def: [], foes: [] };
   Siege.hit(B2, 'hall', 0.99); const keep = BK.Siege.hallTeam(B2, W2.day); w2.team = keep.map((p) => p.id); w2.team0 = Math.max(1, keep.length);
   for (let n = 0; n < 12 * 3 && B2.annexedBy == null && W2.wars.includes(w2); n++) tick(W2, 1);
   assert.ok(B2.annexedBy === 2 || !W2.wars.includes(w2), 'trận nhà chính kết thúc');
@@ -115,23 +105,22 @@ test('máu: trúng đạn mất máu, hết máu thì ngã; cổng hết máu th
   const q = BK.Island.living(A)[0]; q.hp = 40; q.hurtAt = W.day - 2; BK.War.dayTick(W, W.day, W.rng); assert.ok(q.hp == null || q.hp > 40, 'hồi máu');
 });
 
-test('xe, máy công thành chỉ đi qua cầu: đi thuyền thì chỉ mang drone; cầu bị phá giữa đường thì máy kẹt lại', () => {
+test('xe, máy công thành đi qua cầu theo quân; cầu bị phá giữa đường thì máy kẹt lại', () => {
   const W = world(3, 5), A = W.islands[2]; soldiers(A, 14); fill(A, 1);
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.by = 'boat'; Arms.equip(W, w);
-  assert.strictEqual(w.engines.length, 0, 'đi thuyền: không có máy công thành');
-  w.by = 'bridge'; Arms.equip(W, w); assert.ok(w.engines.length >= 1, 'qua cầu: có máy');
+  const w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng);
+  assert.strictEqual(w.by, 'bridge'); assert.ok(w.engines.length >= 1, 'qua cầu: có máy');
   Arms.strand(w); assert.strictEqual(w.engines.length, 0, 'cầu bị phá: máy kẹt lại');
 });
 
 test('phát trúng ghi lại cho phần vẽ (ai bắn ai, trên đảo nào); đổi chặng gặp dân binh trên đường thì đánh, không đi qua', () => {
   const W = world(4, 5), A = W.islands[2], B = W.islands[1]; soldiers(A, 30); fill(A, 1);
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
+  const w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng); w.stage = 'gate'; w.since = W.day; w.gate = 'gate'; w.navalChecked = true; w.duelChecked = true;
   for (let k = 0; k < 12 * 3 && !(W.hitLog && W.hitLog.length); k++) tick(W, 1);
   assert.ok(W.hitLog && W.hitLog.length, 'có phát trúng được ghi');
   const h = W.hitLog[0]; assert.strictEqual(h.isle, 1); assert.ok(h.by != null && h.byI != null, 'biết người bắn');
   // đổi chặng: quân đang chạy tới nhà chính, dân binh còn đông trên đường thì chưa tới được nhà chính
   const W2 = world(6, 5), A2 = W2.islands[2], B2 = W2.islands[1]; soldiers(A2, 20);
-  const w2 = BK.War.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'move'; w2.since = W2.day; w2.moveUntil = W2.day; w2.gate = 'gate';
+  const w2 = H.launch(W2, W2.day, 2, 1, 'conquer', 1, W2.rng); w2.stage = 'inside'; w2.siege = 'move'; w2.since = W2.day; w2.moveUntil = W2.day; w2.gate = 'gate';
   w2.sg = B2.situ.siege = { war: w2.id, from: 2, stage: 'outer', gate: 'gate', def: [], foes: [] };
   const militia = Siege.gateGuards(B2, 'gate').length + living(B2).filter((p) => p.job === 'soldier' && !p.away).length;
   assert.ok(militia > 1, 'có dân binh, lính trên đường: ' + militia);
@@ -140,12 +129,12 @@ test('phát trúng ghi lại cho phần vẽ (ai bắn ai, trên đảo nào); �
 });
 
 // ---------- Bước 11e (design/ke-hoach-khac-phuc.md mục 5.1): kịch bản hiếm có nguyên nhân ghi trong tin ----------
-test('nội gián có lý do (nợ ân đảo kia); phục kích ở bãi đổ bộ của đảo rừng; cứu viện tới lúc nhà chính bị vây', () => {
+test('nội gián có lý do (nợ ân đảo kia); phục kích ở đầu cầu của đảo rừng; cứu viện tới lúc nhà chính bị vây', () => {
   const yes = { chance: () => true, next: () => 0.5, range: (a, b) => (a + b) / 2, int: (a) => a }, no = Object.assign({}, yes, { chance: () => false });
   // nội gián: một người Thông Xanh từng sang chợ Đá Mây được tiếp đãi
   { const W = world(3), B = W.islands[1]; temper(W.islands[2], { cunning: 0.8 });
     const tr = living(B).find((p) => !p.role && p.job !== 'soldier' && BK.People.ageOf(p, W.day) >= 18); tr.owes = { 2: W.day - 10 };
-    const w = { a: 2, b: 1, gate: 'gate', by: 'boat', surprise: true, troops: [], n0: 0, morale: 1, helpers: [] };
+    const w = { a: 2, b: 1, gate: 'gateR', by: 'bridge', surprise: true, troops: [], n0: 0, morale: 1, helpers: [] };
     const fall = Object.assign(() => false, { chance: (k) => k });
     // (rng chỉ nhận lần bốc thăm nội gián; phục kích không xét vì đánh úp)
     BK.Battles.onArrive(W, W.day, w, { chance: (p) => p > 0, next: () => 0.5, range: (a, b) => a, int: (a) => a }, fall);
@@ -154,14 +143,14 @@ test('nội gián có lý do (nợ ân đảo kia); phục kích ở bãi đổ 
   // phục kích: Thông Xanh (đảo rừng) phục quân trong rừng sát bãi đổ bộ
   { const W = world(3), A = W.islands[2]; soldiers(A, 10);
     const troops = living(A).filter((p) => p.job === 'soldier').map((p) => ({ i: 2, p }));
-    const w = { a: 2, b: 1, gate: 'gate', by: 'boat', surprise: false, troops, n0: troops.length, morale: 1, helpers: [] };
+    const w = { a: 2, b: 1, gate: 'gateR', by: 'bridge', surprise: false, troops, n0: troops.length, morale: 1, helpers: [] };
     const fall = Object.assign((x) => { x.p.alive = false; return true; }, { chance: (k) => k });
     BK.Battles.onArrive(W, W.day, w, yes, fall);
     assert.ok(w.ambush > 0, 'có người ngã vì phục kích');
-    assert.ok(W.log.some((e) => /phục kích quân Đá Mây trong rừng sát bãi đổ bộ/.test(e.text)), 'tin ghi chỗ phục kích'); }
+    assert.ok(W.log.some((e) => /phục kích quân Đá Mây trong rừng sát đầu cầu/.test(e.text)), 'tin ghi chỗ phục kích'); }
   // cứu viện: nhà chính bị vây, đảo tin cậy gửi quân gấp, tới thì vào đánh cùng đội giữ nhà chính
   { const W = world(3), B = W.islands[1]; W.rel[4][1].trust = 0.9; soldiers(W.islands[4], 12);
-    const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, no); assert.ok(w, 'có trận');
+    H.road(W, 4, 1); const w = H.launch(W, W.day, 2, 1, 'conquer', 1, no); assert.ok(w, 'có trận'); // (Cửa Sóng cần đường cầu sang Thông Xanh)
     w.stage = 'inside'; w.siege = 'move'; w.moveUntil = W.day; w.since = W.day - 5; w.sg = w.sg || { targets: [], at: 0, hit: [] };
     for (const p of living(B)) if (p.job === 'soldier' || /guard|keeper/.test(p.job || '')) p.away = 'test';
     BK.War.step(W, W.day, yes, 1 / 12);

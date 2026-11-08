@@ -12,7 +12,8 @@
  *   bắc cầu       (design/npc-song-that.md mục 7.2) muốn gần đảo bên cạnh: tin cậy, buôn bán nhiều, cùng sợ một kẻ thứ
  *                 ba, người quyết mưu mô hay trí tuệ; đa nghi, thù hằn thì ngại. Bên kia đồng ý hay không theo tính cách và
  *                 quan hệ. Lên thời thì xét xây lại cầu theo kiểu mới (tốn vật liệu). Kẻ hiếu chiến muốn đánh đảo bên cạnh mà
- *                 chưa có cầu thì tự bắc cầu quân sự. Bị đánh qua cầu thì người đa nghi có thể phá cầu (onAttacked).
+ *                 chưa có cầu thì bắc cầu quân sự trước: quân chỉ sang đảo khác qua cầu (đảo xa: mượn đường qua cầu của đảo
+ *                 mình cai quản hay có hiệp ước). Bị đánh thì người đa nghi có thể phá cầu (onAttacked): quân phải quay về.
  *   cho dân sang  đảo có cầu, tin nhau: vài người hoạt ngôn, ưa giao thiệp sang thăm chợ đảo bên (logic/diplomacy.js startVisit)
  *   cướp đoàn buôn  đoàn đi thuyền ngang qua đảo mình: người đứng đầu hiếu chiến, tham lam, đang thù hay đang đánh nhau với
  *                 một bên thì có thể cho thuyền ra chặn cướp (mỗi đoàn xét một lần); sùng đạo, sợ hãi thì thôi
@@ -34,7 +35,7 @@
   const EVERY = 10;
   const BASE_SOLDIERS = 0.25, MIN_SOLDIERS = 0.12, MAX_SOLDIERS = 0.5;
   const URGENT_DAYS = 20;
-  const FIRST_WAR = 300, WAR_REST = 210, WAR_RATE = 0.45; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
+  const FIRST_WAR = 300, WAR_REST = 150, WAR_RATE = 3; // chưa ai đánh ai trong năm đầu; đánh xong một trận thì nghỉ chừng này ngày
   // bá chủ (design/chien-tranh-thinh-vuong.md mục 9): từ năm HEGEMON_DAY, đảo đã tới thời HEGEMON_LV muốn thống trị các đảo
   // kém mình (thêm HEGEMON_WANT vào lòng muốn chiếm), nghỉ giữa hai trận HEGEMON_REST ngày nhưng mỗi trận đem gần hết quân (ít trận, trận lớn); cuối trận còn một, hai đảo
   // vô địch nắm cả bể, đảo bị chiếm nộp hết phần dư về đảo cai quản (logic/war.js vassalDay)
@@ -171,7 +172,8 @@
   function onAttacked(W, day, b, a, rng) {
     const D = BK.Diplomacy; if (!D.bridged(W, a, b) && !D.workOf(W, a, b)) return false;
     const M = mind(W.islands[b]); if (!M) return false;
-    const t = M.t; if (!rng.chance(Math.max(0, Math.min(0.9, -0.1 + 0.9 * t.paranoia + 0.3 * t.fear - 0.2 * t.aggression)))) return false;
+    // (bước 12: phá cầu là cắt hẳn đường sang, nên người đứng đầu chỉ làm khi rất đa nghi, sợ hãi)
+    const t = M.t; if (!rng.chance(Math.max(0, Math.min(0.6, 0.5 * (-0.1 + 0.9 * t.paranoia + 0.3 * t.fear - 0.2 * t.aggression))))) return false;
     return D.destroyBridge(W, day, a, b, b);
   }
 
@@ -186,6 +188,9 @@
     for (let b = 0; b < D.N; b++) {
       const B = W.islands[b], rb = Wr.rulerOf(W, b);
       if (b === a || rb === a || !BK.Island.living(B).length) continue;
+      // chỉ đánh qua cầu (design/ke-hoach-buoc-12.md mục 3.1): đảo kề chưa có cầu thì vẫn tính (bắc cầu quân sự trước); đảo xa
+      // mà không có đường cầu qua đất mình hay đảo cho mượn đường thì không đánh được
+      const road = Wr.warPath(W, a, b, day); if (!road && D.hops(a, b) !== 1) continue;
       // hiệp ước: liên minh thì không đánh; hiệp ước thường thì chỉ kẻ mưu mô, ít sùng đạo mới dám phản bội
       const T = D.treatyOf(W, a, rb, day);
       if (T && (T.kind === 'alliance' || t.cunning < 0.6 || t.piety > 0.45)) continue;
@@ -213,8 +218,8 @@
     }
     pol.warlust = clamp(lust);
     if (!best || !rng.chance(Math.min(0.5, best.sc * WAR_RATE))) return;
-    // kẻ hiếu chiến muốn đánh đảo bên cạnh mà chưa có cầu: tự bắc cầu quân sự trước (quân tràn sang nhanh hơn), đánh sau
-    if (D.hops(a, best.b) === 1 && !D.bridged(W, a, best.b) && !D.workOf(W, a, best.b) && t.aggression > 0.6 && rng.chance(0.5) && D.startBridge(W, day, a, best.b, 'military', a)) return;
+    // đảo bên cạnh chưa có cầu: bắc cầu quân sự trước (quân chỉ sang được qua cầu), xây xong mới đánh
+    if (!Wr.warPath(W, a, best.b, day)) { if (!D.workOf(W, a, best.b)) D.startBridge(W, day, a, best.b, 'military', a); return; }
     // người mưu mô đánh úp, không tuyên chiến
     if (Wr.launch(W, day, a, best.b, best.kind, best.kind === 'raid' ? 0.5 : hegemon(W, a, day) ? 0.95 : 0.8, rng, t.cunning > 0.6 && rng.chance(t.cunning))) pol.lastWar = day;
   }

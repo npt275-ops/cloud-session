@@ -18,6 +18,13 @@ Viết sau khi xem hai ảnh chụp trên điện thoại (Đá Mây bị tên l
 
 ## 1. Nguyên tắc mới cho cả bước 12
 
+**Bổ sung theo yêu cầu (trước khi làm):**
+1. Bỏ cảnh người nhà ra tiễn quân và kéo người bị thương: chiến tranh chưa xong thì không thêm thứ khó làm phình to.
+2. Bỏ định hướng "phim tự hành". **Cấm máy quay tự đổi góc**: máy quay chỉ bay khi người chơi bấm (tên đảo, tin, nút Trận
+   đánh, Drama); không tự bám theo trận, không tự đổi góc khi đổi chặng.
+3. NPC có tầm bắn nhất định theo vũ khí; ngoài tầm thì không bắn.
+4. Ưu tiên NPC: sau bước này không còn lỗi NPC nhìn thấy được.
+
 - **Mỗi thứ trên màn hình phải trả lời được "nó đang làm gì, vì sao".** Không trả lời được thì bỏ hoặc sửa, không giữ cho đông.
 - **Kiểm bằng video khung dọc điện thoại.** Mỗi cảnh quay 20–30 giây ở 390×844, xem lại từng clip, chấm theo bảng (mục 6).
   Clip gửi cho bạn xem trước khi báo xong.
@@ -45,7 +52,7 @@ Viết sau khi xem hai ảnh chụp trên điện thoại (Đá Mây bị tên l
 ### 3.2 Một trận là sáu chặng người xem nhận ra được
 Logic quyết định kết quả từng chặng; phần vẽ dựng chặng đó như cảnh phim, mỗi chặng có máy quay riêng:
 
-1. **Tập trung**: lính ra khỏi trại, xếp hàng ở sân, người nhà tiễn; tướng đứng trước hàng.
+1. **Tập trung**: lính ra khỏi trại, xếp hàng ở sân; tướng đứng trước hàng.
 2. **Hành quân**: đi theo đường làng ra đầu cầu, xe, máy công thành đi sau.
 3. **Qua cầu, áp cổng phụ**: bên giữ đứng trên tường và tháp canh hai bên cổng; bên đánh tiến từng đợt, nấp sau khiên, xe,
    máy công thành; tầm bắn thật, chỉ bắn khi thấy nhau.
@@ -57,7 +64,9 @@ Logic quyết định kết quả từng chặng; phần vẽ dựng chặng đ�
 - **Vai trong trận**: tiền tuyến, cung thủ hay xạ thủ, lính khiên, tướng, lính cứu thương (thời sau). Mỗi vai có chỗ đứng và
   cách cử động riêng.
 - **Vũ khí gắn vào tay thật** (khớp tay, ngắm theo mục tiêu); nạp đạn, giương, bắn, giật; đổi vũ khí theo thời.
-- **Trúng đạn có phản ứng**: giật lùi, khuỵu, bò về sau, ngã; người bị thương được kéo về sau.
+- **Trúng đạn có phản ứng**: giật lùi, ngã.
+- **Tầm bắn thật theo vũ khí từng thời**: chỉ bắn khi đối phương trong tầm; ngoài tầm thì tiến lại gần tới đúng tầm rồi mới
+  dừng bắn. Không ai đứng từ cổng bắn bâng quơ.
 - **Sĩ khí thấy được**: hàng nao núng thì lùi, có người bỏ chạy; tướng ngã thì cả hàng chững lại.
 - Mỗi phát trúng vẫn lấy từ logic (`W.hitLog`) như bước 11c, nhưng người bắn phải đứng trong tầm, có đường nhìn.
 
@@ -79,7 +88,7 @@ trại, trạm canh, trường, chợ, xưởng máy…) hoặc đổi việc. B
   thể chính nó làm người đứng hàng trông giật).
 - **Đo "đơ" bằng clip**: phần người trong khung hình không cử động trong 3 giây ≤ 5%.
 
-## 5. Định hướng "phim tự hành" (điều chưa có hay còn yếu)
+## 5. (Đã bỏ theo yêu cầu) Định hướng "phim tự hành" (điều chưa có hay còn yếu)
 
 | Định hướng | Hiện có | Cần làm |
 |---|---|---|
@@ -106,6 +115,5 @@ trại, trạm canh, trường, chợ, xưởng máy…) hoặc đổi việc. B
 | 12c | Logic chỉ đánh qua cầu, mượn đường, bỏ thuyền chở quân; cân lại 100 trận | Đổi luật lớn, cần trước phần vẽ trận |
 | 12d | Trận dựng theo sáu chặng, vai lính, vũ khí gắn tay, trúng đạn có phản ứng, máy quay theo chặng | Phần người xem chấm 1/10 |
 | 12e | Trạm việc cho mọi việc × thời × đảo, trại lính, tháp canh, cử động bớt đơ | Không NPC nào vô nghĩa |
-| 12f | Khung dọc, tự xem, cảnh lên thời, phả hệ và drama theo gen | Cảm giác "phim tự hành" |
 
 Mỗi bước kết thúc bằng clip khung dọc cho từng cảnh và bảng chấm, cộng các kiểm thử và cân chỉnh như bước 11.

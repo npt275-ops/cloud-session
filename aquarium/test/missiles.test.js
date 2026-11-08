@@ -5,6 +5,7 @@ for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper
     'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
     'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, M = BK.Missiles, E = BK.Economy, Siege = BK.Siege, living = BK.Island.living;
+const H = require('./helpers.js'); // (bước 12: quân chỉ đi qua cầu; H.launch bắc cầu dọc đường trước)
 const until = (W, cond, max) => { for (let k = 0; k < max && !cond(); k++) { BK.World.tick(W); BK.War.step(W, W.day, W.rng, 1 / 12); if (k % 12 === 11) BK.War.dayTick(W, W.day, W.rng); } return cond(); };
 // đặt người đứng đầu đảo S có tính cách tr (hội đồng cũng vậy, để logic/strategy.js mind ra đúng tính này)
 const temper = (S, tr) => { for (const k of ['king', 'advisor', 'general1', 'general2']) { const p = S.seats[k] != null && S.people.get(S.seats[k]); if (p) p.traits = Object.assign({}, BK.People.traits(p), tr); } };
@@ -31,7 +32,7 @@ test('quân sắp tới thì bắn trước: báo động, dân trốn vào nhà
   const W = world(3, 7), A = W.islands[2], B = W.islands[1];
   temper(A, HAWK); A.arms = { missiles: 5, nukes: 0, nukeDone: null, lastNuke: -1e9 }; B.arms = { missiles: 2, nukes: 0, nukeDone: null, lastNuke: -1e9 }; temper(B, HAWK);
   living(A).filter((p) => p.job === 'worker').slice(0, 10).forEach((p) => { p.job = 'soldier'; });
-  const w = BK.War.launch(W, W.day, 2, 1, 'conquer', 1, W.rng);
+  const w = H.launch(W, W.day, 2, 1, 'conquer', 1, W.rng);
   // (tính cách tính lại mỗi ngày theo ngoại gen, logic/epigen.js: giữ tính người đứng đầu hai bên trong lúc chờ)
   assert.ok(until(W, () => { temper(A, HAWK); temper(B, HAWK); return w.salvo; }, 12 * 30), 'bắn trước khi tới');
   assert.ok(A.arms.missiles < 5 && W.missiles.some((m) => m.to === 1), 'tên lửa đang bay sang');

@@ -20,7 +20,7 @@
     function begin() { n = 0; nf[0] = nf[1] = nf[2] = 0; }
     // pos: Vector3 thế giới (giữa thanh); frac: 0..1; w: bề ngang (đơn vị thế giới)
     function add(pos, frac, w) {
-      if (n >= MAX) return;
+      if (n >= MAX || !(frac > 0)) return; // hết máu (cổng đã vỡ, nhà chính đã sụp): không vẽ khung trống
       const f = Math.max(0, Math.min(1, frac)), h = Math.max(0.12, w * 0.13), q = camera.quaternion;
       R.set(1, 0, 0).applyQuaternion(q);
       S.set(w + h * 0.5, h * 1.6, 1); M.compose(pos, q, S); back.setMatrixAt(n, M);

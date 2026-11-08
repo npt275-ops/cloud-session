@@ -86,7 +86,7 @@
   // quân đảo a sắp tới cổng đảo b (logic/war.js, một lần mỗi trận): bắn trước; đảo b (hay đảo cai quản nó) có thể bắn trả
   function salvo(W, day, w) {
     const A = W.islands[w.a], aa = arms(A), t = traitsOf(A); if (!t || !aa.missiles) return;
-    const n = Math.min(aa.missiles, Math.max(1, Math.round(1 + 4 * militancy(t)))), B = W.islands[w.b], gate = G().gateOf(Wr().sideOf(w.b, w.a), w.by === 'bridge');
+    const n = Math.min(aa.missiles, Math.max(1, Math.round(1 + 4 * militancy(t)))), B = W.islands[w.b], gate = G().gateOf(Wr().sideOf(w.b, w.from != null ? w.from : w.a), true);
     const later = G().plan(B, W.rng);
     for (let k = 0; k < n; k++) fire(W, day, w.a, w.b, k < 2 ? gate : later[(k - 2) % later.length], 'missile');
     aa.missiles -= n; W.armStats.fired += n;

@@ -39,6 +39,7 @@ const GOAL = { idle: 0.1, nearHall: 8, inplace: 0, stuckPerMin: 1 };
             if (!v) { if (tag === 'playground' || lv <= 2) out.push({ lv, i, tag, miss: true }); continue; }
             const o = PL3.overlaps(v.x, v.z, r, pl.fixed, 'spot:' + tag); if (o.length) out.push({ lv, i, tag, n: o.length });
           }
+          for (const k of B.offIsland(i)) out.push({ lv, i, tag: 'móng ngoài đảo: ' + k });
           const w = G.prosper && G.prosper.spotOf(i, lv);
           if (w) { const o = PL3.overlaps(w.x, w.z, 2.5, pl.fixed, null).filter((F) => !String(F.P).startsWith('spot:')); if (o.length) out.push({ lv, i, tag: 'wonder', n: o.length }); }
         }

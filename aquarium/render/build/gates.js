@@ -5,7 +5,7 @@
  *   1 đá dựng có đá gác ngang · 2 cổng gỗ có chòi · 3 cổng thành đá hai tháp tròn · 4 cổng gạch có đồng hồ · 5 cổng vòm sắt
  *   6 cổng bê tông mái thép · 7 cột ra-đa trắng · 8 khung quét an ninh · 9 vòm cây sống · 10 vòm mặt trời · 11 cổng không gian
  *   12 cổng ánh sáng lơ lửng
- * Lối giữa cổng rộng 3,6 cho đường đi qua. BK.Gates3D.addTo(E, cấp, đảo) thêm cổng vào bố cục một thời. Cần: kit3d, common. */
+ * Lối giữa cổng rộng 3,6 cho đường đi qua. BK.Gates3D.addTo(E, cấp, đảo) thêm cổng chính và hai cổng phụ đầu cầu vào bố cục một thời. Cần: kit3d, common. */
 (function (root) {
   const BK = root.BK, K = BK.BuildKit, { B, Bc } = BK.Plains3D;
   const THREE = () => window.THREE;
@@ -139,6 +139,11 @@
     const at = Math.max(1, E.pieces.findIndex((x) => x.kind === 'hall') + 1);
     E.pieces.splice(at, 0, { kind: 'gate', x: 0, z: 0, outer: 'coast', a: 0, slot: 'gate', solo: true, clear: 4, isle, lv, gate: true });
     E.BUILD.gate = gate; E.NAME.gate = ERA_NAME[lv] + ' ' + ISLE_NAME[isle];
+    // hai cổng phụ ở hai chỗ hở tường nơi bắc cầu sang hai đảo bên cạnh (L.wallGaps[1], [2]; design/ke-hoach-buoc-12.md mục 2):
+    // cùng kiến trúc cổng chính của đảo và thời đó, nhỏ hơn (fit). Thêm vào cuối danh sách để khớp thứ tự công trình với logic
+    // (logic/construction.js: công trình ngoài danh sách của logic coi như đã dựng xong)
+    for (const [slot, gap] of [['gateL', 1], ['gateR', 2]]) E.pieces.push({ kind: 'gateSide', x: 0, z: 0, outer: 'coast', gap, slot, solo: true, clear: 3, isle, lv, gate: true, side: true, fit: 7.5 });
+    E.BUILD.gateSide = gate; E.NAME.gateSide = 'Cổng phụ ' + ISLE_NAME[isle];
   }
   BK.Gates3D = { ISLE, ARCH, gate, addTo, ERA_NAME };
   for (let lv = 1; lv <= 12; lv++) if (BK.Plains3D.ERA[lv]) addTo(BK.Plains3D.ERA[lv], lv, 'plains');

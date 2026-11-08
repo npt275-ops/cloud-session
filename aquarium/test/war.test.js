@@ -5,6 +5,7 @@ for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper
     'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
     'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, E = BK.Economy, War = BK.War, living = BK.Island.living;
+const H = require('./helpers.js'); // (bước 12: quân chỉ đi qua cầu; H.launch bắc cầu dọc đường trước)
 const starved = (W) => W.islands.reduce((a, S) => a + [...S.people.values()].filter((p) => p.cause === 'đói').length, 0);
 
 // một trận dựng sẵn: tới ngày 500, đảo b mất hết người giữ cổng (đi vắng), đảo a đem quân sang
@@ -16,7 +17,7 @@ function setup(seed, a, b, kind) {
   // tổng tấn công: bên đánh có đạo quân đủ mạnh (thêm 10 người làm lính) để kết quả không phụ thuộc may rủi
   // (bước 9: cổng chỉ vỡ khi hết máu, quân đánh cần mạnh hơn hẳn người giữ nên thêm 20 người)
   if (kind === 'conquer') living(W.islands[a]).filter((p) => p.job === 'worker').slice(0, 20).forEach((p) => { p.job = 'soldier'; });
-  const w = War.launch(W, W.day, a, b, kind, 1, W.rng);
+  const w = H.launch(W, W.day, a, b, kind, 1, W.rng);
   return { W, w, a };
 }
 // chạy tiếp days ngày: trận đánh theo từng giờ (War.step), việc đảo bị sáp nhập theo ngày (War.dayTick)
@@ -65,7 +66,7 @@ test('người chết trận có thật, bên mất người thù bên kia', () 
   const W = BK.World.create({ seed: 9, war: false }); BK.World.jump(W, 500);
   // Cửa Sóng có đủ quân (thêm 10 người làm lính), Tuyết Trắng giữ cổng thật: chắc chắn có trận
   living(W.islands[4]).filter((p) => p.job === 'worker').slice(0, 10).forEach((p) => { p.job = 'soldier'; });
-  const w = War.launch(W, W.day, 4, 3, 'conquer', 1, W.rng);
+  const w = H.launch(W, W.day, 4, 3, 'conquer', 1, W.rng);
   assert.ok(w, 'có quân xuất trận');
   run(W, 40);
   const deadOf = (i) => [...W.islands[i].people.values()].filter((p) => p.cause === 'chiến tranh').length;
@@ -79,7 +80,7 @@ test('phản bội: đang có hiệp ước mà đánh thì hiệp ước tan, c
   const W = BK.World.create({ seed: 2, war: false }); BK.World.jump(W, 500);
   BK.Diplomacy.sign(W, W.day, 0, 1, 'pact', 360);
   for (let j = 2; j < 6; j++) W.rel[j][0].trust = 0.5;
-  War.launch(W, W.day, 0, 1, 'raid', 1, W.rng);
+  H.launch(W, W.day, 0, 1, 'raid', 1, W.rng);
   assert.ok(!BK.Diplomacy.treatyOf(W, 0, 1, W.day), 'hiệp ước tan');
   assert.ok(W.rel[3][0].trust < 0.5 && W.rel[1][0].grudge >= 0.5);
 });

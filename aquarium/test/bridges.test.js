@@ -5,6 +5,7 @@ for (const f of ['rng', 'rules', 'genes', 'people', 'family', 'council', 'temper
     'dramas', 'economy', 'climate', 'epigen', 'construction', 'homes', 'siege', 'arms', 'missiles', 'ecology', 'brain', 'island', 'diplomacy', 'war',
     'battles', 'chronicle', 'prosperity', 'strategy', 'powers', 'goals', 'world']) require('../logic/' + f + '.js');
 const BK = globalThis.BK, D = BK.Diplomacy, E = BK.Economy, living = BK.Island.living;
+const H = require('./helpers.js'); // (bước 12: quân chỉ đi qua cầu; H.launch bắc cầu dọc đường trước)
 const ready = (seed) => { const W = BK.World.create({ seed, war: false }); BK.World.jump(W, 900); for (const S of W.islands) { const st = E.state(S).stock; st.wood = st.stone = st.metal = 2000; } return W; };
 
 test('không còn tự bắc cầu: cầu chỉ có khi được khởi công (người đứng đầu quyết), và chỉ tiến khi còn thợ xây', () => {
@@ -32,15 +33,21 @@ test('thợ xây ra đầu cầu làm (cổng phụ phía cầu), lấy gỗ ở
   assert.ok(m && m.cycle && m.cycle.src === 'store' && m.cycle.item === 'wood', 'thợ xây đầu cầu phía đảo 1 (cổng phải)');
 });
 
-test('bị đánh qua cầu: người đứng đầu đa nghi phá cầu, quân phải vòng đi thuyền', () => {
+test('bị đánh qua cầu: người đứng đầu đa nghi phá cầu, quân không còn đường sang thì quay về (bước 12: không đi thuyền)', () => {
   const W = ready(5); W.war = true; BK.War.init(W);
-  W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }];
   const king = W.islands[1].people.get(W.islands[1].seats.king); king.genome.traits.paranoia = 1; king.genome.traits.fear = 1; king.genome.traits.aggression = 0; BK.Epigen.express(king);
   living(W.islands[0]).filter((p) => p.job === 'worker').slice(0, 8).forEach((p) => { p.job = 'soldier'; });
-  let broke = 0; for (let k = 0; k < 6 && !broke; k++) { W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }]; W.wars = [];
-      for (const p of living(W.islands[0])) p.away = null; const w = BK.War.launch(W, W.day, 0, 1, 'raid', 0.5, W.rng); if (w && !D.bridged(W, 0,
-      1)) { broke++; assert.strictEqual(w.by, 'boat'); } }
-  assert.ok(broke, 'có lần phá cầu');
+  let w = null;
+  for (let k = 0; k < 6 && !w; k++) { W.bridges = [{ a: 0, b: 1, era: 3, day: W.day }]; W.wars = [];
+    for (const p of living(W.islands[0])) p.away = null; const x = BK.War.launch(W, W.day, 0, 1, 'raid', 0.5, W.rng); if (x && !D.bridged(W, 0, 1)) w = x; }
+  assert.ok(w, 'có lần phá cầu');
+  assert.strictEqual(w.by, 'bridge');
+  for (let k = 0; k < 12 * 6 && w.stage !== 'return'; k++) { BK.World.tick(W); BK.War.step(W, W.day, W.rng, 1 / 12); }
+  assert.strictEqual(w.stage, 'return', 'quân quay về');
+  assert.ok(W.log.some((e) => /Cầu sang .* bị phá, quân .* phải quay về/.test(e.text)));
+  // không có cầu thì không khởi binh được
+  W.wars = []; for (const p of living(W.islands[0])) p.away = null;
+  assert.strictEqual(BK.War.launch(W, W.day, 0, 1, 'raid', 0.5, W.rng), null, 'không có cầu thì không đánh được');
 });
 
 test('người qua lại: sang đảo bên, ở lại vài ngày rồi về; đi vắng thì không ở đảo nhà', () => {
