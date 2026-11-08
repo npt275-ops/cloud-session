@@ -244,3 +244,51 @@ Mỗi bước kết thúc bằng:
 - ảnh chụp lúc đồng hồ chạy bằng máy quay đạo diễn;
 - đo hiệu năng 4 cảnh;
 - tài liệu, đóng gói, commit, cập nhật artifact.
+
+---
+
+## 10. Đã làm (bước 11a–11g) và số đo cuối
+
+**Cân chỉnh 100 trận** (`node tools/calibrate.js 100`, hạt giống 1–100): cả 16 chỉ số đạt mục tiêu trong `tools/targets.json`.
+
+| Chỉ số | Kết quả | Mục tiêu |
+|---|---|---|
+| Trận đánh mỗi trận | 10,13 | 9–12 |
+| Trận có dùng hạt nhân | 13% | 8–15% |
+| Cuối trận còn 1–2 đảo độc lập | 60% | ≥ 55% |
+| Cuối năm 8 có ≥ 2 đảo từ thời 11 | 88% | ≥ 70% |
+| Khoảng lặng dài nhất (trung bình) | 161 ngày | ≤ 220 |
+| Chết đói mỗi trận | 2,83 | ≤ 5 |
+| Có đảo độc lập kẹt dưới thời 6 | 0% | ≤ 10% |
+| Phục kích / cứu viện phút chót / nội gián mỗi trận | 1,09 / 1,41 / 1,30 | ≥ 0,4 mỗi loại |
+| Đầu hàng mỗi trận | 1,08 | 0,8–1,5 |
+| Dân thường chết mỗi lần mất thành | 11,7% | 5–15% |
+| Dân đảo bị chiếm một năm sau | 151% | ≥ 85% |
+| Cầu xây xong / xây lại / lượt qua lại mỗi trận | 9,3 / 5,6 / 123 | ≥ 1 / ≥ 0,3 / ≥ 10 |
+
+Tham khảo: thời trung bình cuối trận 11,13 (cả bể), 11,65 (đảo độc lập); năm 7 có ≥ 2 đảo từ thời 11 ở 38% số trận.
+
+**Kiểm tra cảnh bằng trình duyệt** (`node tools/check-scene.js`): chỗ dùng chung không chồng ở 6 đảo × 12 thời (0 chỗ chồng,
+0 chỗ thiếu); dân ở 6 đảo × 4 buổi × 3 thời (1, 6, 12): đứng không lớn nhất 0%, tụ tập quanh nhà chính ngày thường lớn nhất 2
+người, bước tại chỗ 0, kẹt 0 lần mỗi phút. (Đài kỳ quan chỉ được kiểm khi đảo đó đang vẽ gần; chỗ của nó tìm cách xa mọi công
+trình nên chưa thấy chồng, nhưng bài kiểm tra chưa phủ hết 6 × 12.)
+
+**Kiểm thử**: 15 tệp trong `test/` đều đạt khi chạy từng tệp (thêm `save.test.js`, `powers.test.js`).
+
+**Những gì đã đổi theo từng bước**
+- 11a: kiểm thử hành vi thay cho kiểm thử dựa vào may rủi; bộ cân chỉnh có ngưỡng; tách dòng quá dài.
+- 11b: đo hiệu năng 4 cảnh (`G.frameTime`), lưu và tiếp tục trận (`logic/save.js`). Trên máy chạy thử (vẽ bằng phần mềm,
+  chậm 4 lần như điện thoại): làng thời 1 khoảng 14–20 ms mỗi khung hình phần JS, thời 12 khoảng 34–60 ms, trận ở cầu 63–130
+  ms, vây nhà chính 46–112 ms; máy bàn 6–35 ms. Trận đánh trên điện thoại yếu chưa đạt 33 ms; phần GPU chưa đo được ở đây.
+- 11c: mỗi phát trúng là một viên đạn thật từ người bắn tới người trúng (`W.hitLog`), người ngã nằm đúng chỗ, chặng đổi thấy được.
+- 11d: máy quay đạo diễn có góc theo từng loại cảnh, chuyện lớn nhất trên bảng tin, thanh máu gọn, hải chiến hai hàng thuyền.
+- 11e: năm đầu có chuyện thời đồ đá; nhịp kịch tính bằng việc thật (chặn bắt thuyền buôn, tối hậu thư của bá chủ); hạt nhân
+  là vũ khí răn đe; đảo nhỏ tự xin làm chư hầu; thời thật của đảo bị chiếm (chuyển công nghệ dần); đầu hàng có điều kiện; kịch
+  bản hiếm có nguyên nhân; cân càn quét. Sửa hai lỗi: đảo bị đảo số 0 chiếm vẫn bị coi là độc lập; đầu hàng xoá mất phần kho
+  được giữ. Thời muộn rẻ hơn (`logic/economy.js` LATE_*), nên khi các đảo sống riêng không giao thương (chỉ có trong kiểm thử)
+  nhiều đảo chạm thời 12 hơn trước (tối đa 4 thay vì 2).
+- 11f: chỗ dùng chung không chồng (`render/build/place3d.js` freeSpot), sân chơi, bãi trao đổi và gốc cây kể chuyện thời 1–2
+  có đồ dựng; trại vây tránh bến; gỡ người kẹt; số đo `auditStats`; suy tàn dễ thấy (vắng xe, nhà tắt đèn, cỏ dại cao, chợ đóng
+  cửa); nút dev đặt thời dựng lại công trình ngay.
+- 11g: `logic/powers.js` (mưa, ban phúc mùa màng, phép lạ, sấm sét, dịch bệnh; mỗi lần tốn niềm tin do dân dâng lên),
+  `logic/goals.js` (đưa một đảo thành bá chủ, giữ sáu đảo sống tới năm 9, không để ai dùng hạt nhân). Chưa có giao diện.

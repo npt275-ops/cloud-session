@@ -382,6 +382,18 @@ repo, không cần thư viện ngoài):
 nạp từ gói); chạy bản web qua máy chủ cục bộ trên cấu hình điện thoại Android, đợi bộ nhớ đệm lưu toàn bộ tệp, ngắt mạng rồi
 tải lại: game vẫn chạy.
 
+## Khắc phục nhược điểm (bước 11a–11g)
+
+Kế hoạch và số đo cuối: `design/ke-hoach-khac-phuc.md` (mục 10). Hai công cụ đo, chạy trong thư mục `aquarium/`:
+
+- `node tools/calibrate.js 100`: chạy 100 trận chín năm bằng Node, so với mục tiêu trong `tools/targets.json`, in ĐẠT / KHÔNG
+  ĐẠT (lần cuối: cả 16 chỉ số đạt).
+- `node tools/check-scene.js`: mở trang thật bằng trình duyệt không giao diện (cần Playwright, Chromium), kiểm tra chỗ dùng chung
+  không chồng ở 6 đảo × 12 thời và đo dân (đứng không, tụ tập quanh nhà chính, bước tại chỗ, kẹt).
+
+Phần logic cho vòng chơi đã có, chưa có giao diện: `logic/powers.js` (quyền năng tốn niềm tin), `logic/goals.js` (mục tiêu
+theo trận); lưu và tiếp tục trận: `logic/save.js`.
+
 ## Chạy khi phát triển
 
 Mở `aquarium/index.html` bằng trình duyệt (three.js tải từ CDN), hoặc chạy một máy chủ tĩnh ở thư mục gốc của repo
