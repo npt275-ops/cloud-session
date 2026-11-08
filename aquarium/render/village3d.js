@@ -26,6 +26,7 @@
     const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People, Work = BK.Work3D;
     const SCALE = Rig.PERSON_SCALE;
     const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
+    const camera = o.camera || null, LOD_FAR = 40; let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
     const bars = o.bars || null;   // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
@@ -252,7 +253,12 @@
       const base = spot(mind.place, f.p);
       if (mind.place === 'podium' && PL && PL.podium) return { p: base.clone(), face: PL.podiumFace }; // người diễn thuyết đứng giữa bục, nhìn ra sân
       const tight = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR'; // lính gác đứng sát chốt của mình
-      return base ? { p: Nav.offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit)), face: null } : null;
+      if (!base) return null;
+      // (nhớ kết quả né lòng đường theo chỗ đến, khỏi tính lại mỗi khung hình: design/ke-hoach-khac-phuc.md mục 1.3)
+      const oc = f.oc; if (oc && oc.x === base.x && oc.z === base.z && oc.t === tight && oc.j === f.jit.x) return { p: oc.p.clone(), face: null };
+      const q = Nav.offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit));
+      f.oc = { x: base.x, z: base.z, t: tight, j: f.jit.x, p: q.clone() };
+      return { p: q, face: null };
     }
     /* ---------- Chu trình đầu vào, đầu ra (logic/tasks.js cycle; design/npc-song-that.md mục 3) ----------
      * người làm ra tài nguyên (workAt 'src'): làm ở chỗ làm → mang sản phẩm tới kho → cúi đặt xuống → quay lại
@@ -300,7 +306,7 @@
     let gameT = 0, gestT = 0;
     function update(dt, t, speed) {
       dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
-      gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001; lastRs = rs;
+      gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001; lastRs = rs; frameNo++;
       // hàng nhận khẩu phần: thứ tự theo người tới trước (giữ thứ tự cũ, người mới đứng cuối)
       { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a,
           b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id);
@@ -319,6 +325,10 @@
         const f0 = folks.get(key);
         if (dying && f0 && rs >= f0.dieAt) { bodies.set(f0.bodyKey, { pos: f0.pos.clone(), yaw: f0.yaw, color: f0.color || '#cccccc' }); continue; } // đạn tới: ngã xuống
         alive.add(key);
+        // người ở xa máy quay (quá LOD_FAR) cập nhật cách một khung hình (design/ke-hoach-khac-phuc.md mục 1.3); thời gian bỏ qua
+        // dồn sang lần sau (debt) nên vẫn đi đúng quãng đường
+        // người đứng trong hàng bắn (không đi) cũng vậy: trận đông người thì nửa số người cập nhật mỗi khung hình
+        if (camera && f0 && f0.rig && (frameNo + p.id) % 2 === 1 && !(f0.pend && f0.pend.length) && ((f0.side && !f0.moving) || (!f0.engage && f0.rig.root.position.distanceToSquared(camera.position) > LOD_FAR * LOD_FAR))) { f0.debt = Math.min(0.8, (f0.debt || 0) + sec); continue; }
         const age = P.ageOf(p, S.day), f = ensure(p, age, key, gst ? gst.level : level, gst ? spot(gst.enter, p) : null, gst && gst.color), mind = dying && f.lastMind ? f.lastMind : gst ? gst.mind : S.minds.get(p.id) || { state: 'idle' };
         f.lastMind = mind; f.gst = gst; f.color = gst && gst.color ? gst.color : f.color || ownColor; f.bodyKey = (gst ? (/^w(\d+):/.exec(key) || [0, idx])[1] : idx) + ':' + p.id;
         if (f.pend && f.pend.length && rs >= f.pend[0].at) { const h = f.pend.shift(); f.hpShow = Math.max(0, (f.hpShow == null ? 100 : f.hpShow) - h.dmg); }
@@ -350,9 +360,12 @@
         f.strolling = (mind.place === 'stroll' || mind.place === 'hallLoop') && !meetVerb;
         // đi theo giờ game, từng bước con: mỗi bước tìm lại đích (lối đi, điểm kế tiếp trên phố), đi một đoạn, giữ trong tường thành
         let moving = false;
-        const n = Math.max(1, Math.ceil(sec / STEP)), h = sec / n;
+        const secF = sec + (f.debt || 0); f.debt = 0;
+        const n = Math.max(1, Math.min(6, Math.ceil(secF / STEP))), h = secF / n;
+        // đích chỉ tính lại giữa các bước con khi đích di động (đi theo người, nhắm người, đi dạo), không thì dùng lại
+        const moverGoal = aim.target != null || aim.follow != null || aim.place === 'stroll' || aim.place === 'hallLoop';
         for (let i = 0; i < n; i++) {
-          if (i) goal = meetGoal ? null : goalOf(f, aim);
+          if (i && moverGoal) goal = meetGoal ? null : goalOf(f, aim);
           let g = meetGoal || goal;
           if (g && !meetVerb && !g.road && !g.outside && !g.bridge) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
           if (!g) break;

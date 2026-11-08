@@ -32,11 +32,13 @@
     let last = performance.now(), lastSlow = 0;
     G.seasons.update(true);
     function frame(t) {
-      const f0 = performance.now(); // đo hiệu năng (G.frameTime: thời gian phần JS và phần vẽ mỗi khung hình, trung bình trượt; tools/ đo 4 cảnh)
+      const f0 = performance.now(); // đo hiệu năng (G.frameTime: thời gian phần JS (trong đó phần logic), phần vẽ mỗi khung hình, trung bình trượt; tools/ đo 4 cảnh)
       const raw = Math.max(0, Math.min(1000, t - last)), dt = Math.min(100, raw); last = t; // khung đầu có thể mang mốc giờ sớm hơn lúc khởi động: không để thời gian âm
       G.perf.govern(dt);
       // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
+      const l0 = performance.now();
       G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1)) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
+      const l1 = performance.now();
       const { night } = G.sky.applyTime();
       G.weather.night = night; G.weather.winter = G.seasons.winter();
       if (t - lastSlow > 1000) { lastSlow = t; G.seasons.update(false); G.hud.slow(); G.citiesRun.slow(); G.raceDev.slow(); }
@@ -53,7 +55,7 @@
       const f1 = performance.now();
       renderer.render(scene, camera);
       const f2 = performance.now(), FT = G.frameTime || (G.frameTime = { js: 0, gl: 0, n: 0 }), k = FT.n < 30 ? 1 / ++FT.n : 1 / 30;
-      FT.js += (f1 - f0 - FT.js) * k; FT.gl += (f2 - f1 - FT.gl) * k;
+      FT.js += (f1 - f0 - FT.js) * k; FT.gl += (f2 - f1 - FT.gl) * k; FT.logic = (FT.logic || 0) + (l1 - l0 - (FT.logic || 0)) * k;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
