@@ -46,7 +46,9 @@ async function shoot(p, tag, ms, slow, while_) {
 // cắt video của cả phiên thành từng đoạn .mp4 (sau khi đóng trang)
 async function cut(p) {
   const v = p.video(); await p.context().close(); const src = await v.path();
-  for (const g of SEGS) { const out = path.join(OUT, g.tag + '.mp4'); execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(g.start), '-to', String(g.end), '-i', src, '-pix_fmt', 'yuv420p', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', out]); console.log('clip', out, (g.end - g.start).toFixed(0) + ' giây'); }
+  for (const g of SEGS) { const out = path.join(OUT, g.tag + '.mp4'); execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(g.start), '-to',
+      String(g.end), '-i', src, '-pix_fmt', 'yuv420p', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', out]); console.log('clip', out,
+      (g.end - g.start).toFixed(0) + ' giây'); }
   fs.rmSync(RAW, { recursive: true, force: true });
 }
 const cam = (p, isle, at, off) => p.evaluate(([isle, at, off]) => { const G = __glass.G, T = __glass.THREE, L = G.lands[isle];
@@ -74,7 +76,9 @@ const cam = (p, isle, at, off) => p.evaluate(([isle, at, off]) => { const G = __
       await cam(p, i, [at[0] + at[2] * 7, 0, at[1] + at[3] * 7], [at[2] * 16 - at[3] * 8, 13, at[3] * 16 + at[2] * 8]);
       await p.waitForTimeout(1800); const f = path.join(OUT, 'gate-t' + LV + '-' + i + k + '.png'); await p.screenshot({ path: f }); files.push(f);
     }
-    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...files.flatMap((f) => ['-i', f]), '-filter_complex', 'xstack=inputs=' + files.length + ':layout=' + files.map((f, j) => (j % 6 ? Array.from({ length: j % 6 }, () => 'w0').join('+') : '0') + '_' + (j >= 6 ? 'h0' : '0')).join('|') + ',scale=1800:-1', path.join(OUT, 'gates-t' + LV + '.png')]);
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...files.flatMap((f) => ['-i', f]), '-filter_complex',
+        'xstack=inputs=' + files.length + ':layout=' + files.map((f, j) => (j % 6 ? Array.from({ length: j % 6 },
+        () => 'w0').join('+') : '0') + '_' + (j >= 6 ? 'h0' : '0')).join('|') + ',scale=1800:-1', path.join(OUT, 'gates-t' + LV + '.png')]);
     console.log('ảnh', path.join(OUT, 'gates-t' + LV + '.png'));
   } else if (KIND === 'war') {
     const info = await p.evaluate((LV) => { const G = __glass.G, W = G.world, L = BK.Island.living, E = BK.Economy; G.time.tps = 0; BK.World.jump(W, Math.max(400, 250 * (LV - 1) + 60)); G.goEra(LV);

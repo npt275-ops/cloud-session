@@ -117,7 +117,7 @@
         && !(fixed || []).some((F) => F.P !== P.self && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.8 + fp.r * 0.8) ** 2);
       const R = Math.hypot(P.x, P.z) || 1, ux = -P.x / R, uz = -P.z / R;
       for (const k of [1, 0.9, 0.8, 0.7, 0.6]) {
-        const fp = k === 1 ? fp0 : scaled(fp0, k);
+        const fp = k === 1 ? fp0 : footprint(m, P.rotY, P.fitS * k); // (đo lại ở cỡ mới: thu nhỏ thì phần sát đất khác đi)
         for (let d = 0; d <= 24; d += 1.5) for (const side of [0, 2, -2, 4, -4]) {
           const x = P.x + ux * d - uz * side, z = P.z + uz * d + ux * side;
           if (ok(fp, x, z)) { const F = (fixed || []).find((q) => q.P === P.self); if (F) { F.x = x; F.y = z; F.r = fp.r; } else if (fixed) fixed.push({ x, y: z, r: fp.r, P: P.self }); return { x, z, fitS: P.fitS * k }; }

@@ -28,7 +28,7 @@
     const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
     const camera = o.camera || null, LOD_FAR = 40; let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
     const bars = o.bars || null;   // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
-    const UNSTICK_S = 3, UNSTICK_D = 0.5; let stuckN = 0; // gỡ người kẹt: đi chừng này giây (giờ game) không tiến được chừng này đơn vị (đếm số lần cho auditStats)
+    const UNSTICK_S = 3, UNSTICK_D = 0.5, SEP = 0.6; let stuckN = 0; // gỡ người kẹt: đi chừng này giây (giờ game) không tiến được chừng này đơn vị (đếm số lần cho auditStats)
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
@@ -158,7 +158,9 @@
         folks.set(id, f);
       }
       // chỗ đứng lệch một chút quanh điểm đến (trước cửa, trước chỗ làm), không dồn đúng một điểm
-      { const r = 0.7 + Math.sqrt(Math.random()) * 1.5, a = Math.random() * Math.PI * 2; f.jit.set(Math.cos(a) * r, 0, Math.sin(a) * r); } // đứng ngay trước chỗ làm, cửa nhà
+      // đứng ngay trước chỗ làm, cửa nhà; mỗi người một chỗ quanh đó theo khoá riêng (người làng: mã; khách, quân đảo khác: 'w<đảo>:<mã>',
+      // vì mã người đánh theo từng đảo nên phải tính cả đảo), xếp theo góc vàng để hai người cùng chỗ không đứng chồng lên nhau
+      { let n = 0; for (const ch of String(id)) n = (n * 31 + ch.charCodeAt(0)) % 9973; const r = 0.8 + ((n % 11) / 11) * 1.5, a = n * 2.39996; f.jit.set(Math.cos(a) * r, 0, Math.sin(a) * r); }
       f.rig = rig; f.key = key; return f;
     }
 
@@ -320,6 +322,14 @@
     function update(dt, t, speed) {
       dt = Math.max(0, dt || 0); const k = speed || 1, real = Math.min(0.1, dt / 1000), sec = real * k, alive = new Set(), X = BK.Island.situNow(S);
       gameT += sec; gestT += real * Math.min(k, GESTURE_MAX); const ts = gameT, gs = gestT, rs = t * 0.001; lastRs = rs; frameNo++;
+      // không ai đứng chồng lên ai (design/ke-hoach-buoc-12.md mục 4): người đang đứng yên mà sát người khác hơn SEP thì đẩy nhẹ ra
+      // (theo vị trí khung trước; người đang đi tự tránh nhau theo lối đi, người trong nhà không tính)
+      if (shownNow && frameNo % 2 === 0) { const st = []; for (const f of folks.values()) if (f.rig && !f.inside && !f.moving && !f.dieAt) st.push(f);
+        for (let a = 0; a < st.length; a++) for (let b = a + 1; b < st.length; b++) { const A = st[a].pos, B = st[b].pos, dx = B.x - A.x, dz = B.z - A.z, d2 = dx * dx + dz * dz;
+          if (d2 >= SEP * SEP) continue; const d = Math.sqrt(d2) || 1e-3, push = (SEP - d) * 0.25, ux = d2 > 1e-6 ? dx / d : Math.cos(a * 2.4), uz = d2 > 1e-6 ? dz / d : Math.sin(a * 2.4);
+          A.x -= ux * push; A.z -= uz * push; B.x += ux * push; B.z += uz * push;
+          // dời luôn chỗ đứng riêng của hai người (jit), để lần sau đi tới không quay lại đứng chồng (không giằng co qua lại)
+          st[a].jit.x -= ux * push; st[a].jit.z -= uz * push; st[b].jit.x += ux * push; st[b].jit.z += uz * push; st[a].oc = st[b].oc = null; } }
       // hàng nhận khẩu phần: thứ tự theo người tới trước (giữ thứ tự cũ, người mới đứng cuối)
       { const q = []; for (const [id] of folks) { const m = S.minds.get(id); if (m && m.place === 'queue') q.push(id); } q.sort((a,
           b) => (folks.get(a).qSince || 0) - (folks.get(b).qSince || 0) || a - b); q.forEach((id, n) => { const f = folks.get(id);

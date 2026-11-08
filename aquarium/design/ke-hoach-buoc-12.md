@@ -137,6 +137,10 @@ Mỗi bước kết thúc bằng clip khung dọc cho từng cảnh và bảng c
 - Thanh máu người chỉ hiện khi bị thương.
 - Xem chậm cả lúc quân qua cầu tới đảo đang xem.
 - Người đứng chờ, đứng gác: liếc nhìn, chuyển trọng tâm, thỉnh thoảng nhìn quanh.
+- Không ai đứng chồng lên ai: mỗi người một chỗ riêng quanh chỗ làm (theo khoá riêng, tính cả đảo của khách), người đứng yên
+  quá sát thì được đẩy nhẹ ra và dời luôn chỗ đứng riêng.
+- Bộ đo cuối (tools/check-scene.js, 6 đảo × 4 buổi × 3 thời): đứng không lớn nhất 4%, quanh nhà chính 0, bước tại chỗ 0,
+  người đứng chồng 0 cặp, kẹt 0; chỗ dùng chung không chồng và móng trong đảo ở 6 đảo × 12 thời: 0 lỗi.
 - Công cụ: `tools/clip.js` quay video thời gian thực khung dọc điện thoại theo từng chặng trận, ảnh cổng phụ sáu đảo.
 
 **Chưa làm (còn lại cho bước sau)**
