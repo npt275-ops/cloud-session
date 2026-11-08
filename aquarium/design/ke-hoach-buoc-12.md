@@ -117,3 +117,29 @@ trại, trạm canh, trường, chợ, xưởng máy…) hoặc đổi việc. B
 | 12e | Trạm việc cho mọi việc × thời × đảo, trại lính, tháp canh, cử động bớt đơ | Không NPC nào vô nghĩa |
 
 Mỗi bước kết thúc bằng clip khung dọc cho từng cảnh và bảng chấm, cộng các kiểm thử và cân chỉnh như bước 11.
+
+---
+
+## 8. Đã làm trong phiên này (và chưa làm)
+
+**Đã làm**
+- Máy quay không tự đổi góc: bỏ việc tự bay theo chặng trận; chỉ bay khi người chơi bấm.
+- Bỏ cảnh người nhà ra tiễn quân.
+- Chỉ đánh qua cầu: bỏ thuyền chở quân và hải chiến; đảo xa phải mượn đường qua cầu của đảo cho đi qua (đất của mình, có
+  hiệp ước, tin hay sợ bên đánh); cầu trên đường bị phá thì quân quay về; đảo kề chưa có cầu thì bắc cầu quân sự trước (nửa
+  giá, dùng gỗ, đá, kim loại). 100 trận vẫn đạt cả 16 chỉ số (trận đánh 10,8; hạt nhân 15%; vô địch 89%).
+- Cổng phụ thật ở hai đầu cầu, theo kiến trúc từng đảo, từng thời; hết máu thì cổng đổ.
+- Cục đen ở cổng: là khung nền của thanh máu cổng khi cổng hết máu. Hết máu thì không vẽ nữa; thanh nhỏ lại.
+- Một cục lính đen: quân đóng trại vây, đứng xem đấu tướng, tập hợp quân trước khi lên đường cùng đi vào một điểm. Nay mỗi
+  người một chỗ trong hàng; bộ đo đếm người đứng chồng lên nhau.
+- Móng công trình nằm trọn trong đảo (kiểm từng điểm của móng thật): dời vào, thu nhỏ, hay không dựng.
+- Tầm bắn theo vũ khí từng thời; chỉ bắn kẻ địch trong tầm; đạn bay từ người bắn đứng trong tầm; trúng thì giật lùi, khựng.
+- Thanh máu người chỉ hiện khi bị thương.
+- Xem chậm cả lúc quân qua cầu tới đảo đang xem.
+- Người đứng chờ, đứng gác: liếc nhìn, chuyển trọng tâm, thỉnh thoảng nhìn quanh.
+- Công cụ: `tools/clip.js` quay video thời gian thực khung dọc điện thoại theo từng chặng trận, ảnh cổng phụ sáu đảo.
+
+**Chưa làm (còn lại cho bước sau)**
+- Tháp canh trên tường có lính đứng trên cao; trại lính riêng.
+- Lính nấp sau vật che, lùi về điểm nấp trong thành; máy húc cổng; hình cổng gãy đổ theo từng thời (hiện là ẩn cổng, để đống đổ).
+- Bảng việc × thời × đảo kiểm tự động (thống kê một trận cho thấy mọi việc đều có chỗ thật, nhưng chưa thành bài kiểm tra).

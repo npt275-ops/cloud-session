@@ -561,8 +561,9 @@
       }
       // người đứng chồng lên nhau (gần hơn 0,45, cả hai đứng yên): lỗi nhìn thấy được (một cục người)
       const still = [...folks.values()].filter((f) => f.rig && !f.inside && !f.moving); let overlap = 0;
-      for (let a = 0; a < still.length; a++) for (let b = a + 1; b < still.length; b++) if ((still[a].pos.x - still[b].pos.x) ** 2 + (still[a].pos.z - still[b].pos.z) ** 2 < 0.2) overlap++;
-      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, overlap, hallWhy: why }; stuckN = 0; return r;
+      const ow = (f) => { const m = f.gst ? f.gst.mind : S.minds.get(f.p.id) || {}; return (m.verb || m.state) + '@' + (m.place || '-'); }, overWhy = [];
+      for (let a = 0; a < still.length; a++) for (let b = a + 1; b < still.length; b++) if ((still[a].pos.x - still[b].pos.x) ** 2 + (still[a].pos.z - still[b].pos.z) ** 2 < 0.2) { overlap++; if (overWhy.length < 4) overWhy.push(ow(still[a]) + '+' + ow(still[b])); }
+      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, overlap, overWhy, hallWhy: why }; stuckN = 0; return r;
     }
     function audit() {
       const bad = [];

@@ -208,7 +208,7 @@
       if (!P.spec.town && !P.spec.gate && !P.outer) {
         const q = PL.keepOn(sh.L, { x: P.x, z: P.z, rotY: P.g.rotation.y, fitS: P.fitS, self: P.spec }, m, sh.fixed);
         if (q && q.drop) { sh.dropped = (sh.dropped || 0) + 1; P.dead = true; P.g.visible = false; m.userData.dropped = true; }
-        else if (q) { sh.inward = (sh.inward || 0) + 1; P.x = q.x; P.z = q.z; P.fitS = q.fitS; P.g.position.x = q.x; P.g.position.z = q.z; }
+        else if (q) { sh.inward = (sh.inward || 0) + 1; P.inward = true; P.x = q.x; P.z = q.z; P.fitS = q.fitS; P.g.position.x = q.x; P.g.position.z = q.z; }
       }
       P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
@@ -408,8 +408,10 @@
     function offIsland(i) {
       const sh = shown[i]; if (!sh) return [];
       return [...sh.pieces, ...sh.standing].filter((P) => P.g.visible && !P.gone && !P.dead && P.baked && !P.spec.town && !P.spec.gate && !P.outer && P.g.children.length)
-        .filter((P) => { const m = P.g.children[P.g.children.length - 1]; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return PL.outside(sh.L, fp, P.x, P.z); })
-        .map((P) => P.kind);
+        .map((P) => { const m = P.g.children[P.g.children.length - 1]; P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m);
+          const worst = Math.min(...fp.pts.map(([dx, dz]) => { const x = P.x + dx, z = P.z + dz; return sh.L.rOf(Math.atan2(z, x)) - Math.hypot(x, z); }));
+          return PL.outside(sh.L, fp, P.x, P.z) ? P.kind + ' (thò ' + Math.max(0, 1.5 - worst).toFixed(1) + ' tại ' + P.x.toFixed(0) + ',' + P.z.toFixed(0) + ' cỡ ' + P.fitS.toFixed(2) + (P.inward ? ' đã dời' : '') + ')' : null; })
+        .filter(Boolean);
     }
     // chỉ cho bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng), trạng thái gộp khối của một đảo
     const debug = {
