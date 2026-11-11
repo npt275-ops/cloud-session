@@ -147,6 +147,7 @@
       }
       if (k.b.length) meshOf(k, bodyMat, L.g, 0, 0, 0);
       L.detail = new THREE.Group(); L.g.add(L.detail); if (kD.b.length) meshOf(kD, bodyMat, L.detail, 0, 0, 0);
+      if (L.collectWater) L.collectWater(); // (mặt nước khoét đất xuống: render/map/height3d.js)
       W2.mergeFlat(L);
     }
 

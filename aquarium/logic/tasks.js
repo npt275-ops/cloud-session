@@ -112,8 +112,8 @@
     // thì một nửa số thợ)
     const rj = S.repairJob && S.repairJob.until > S.day ? S.repairJob : null;
     if (rj && (role === 'builder' || j === 'builder') && (!building || p.id % 2 === 1)) return job('repair', 'ruin:' + rj.key, 'sửa ' + BK.Siege.nameOf(rj.key) + ' bị phá trong chiến tranh', { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'ruin:' + rj.key, workAt: 'dst' } });
-    // thợ xây: ra kho lấy vật liệu (gỗ hay đá, người này người kia), mang tới công trình rồi dựng
-    if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase(), { cycle: { item: p.id % 2 ? 'wood' : 'stone', src: 'store', dst: 'site', workAt: 'dst' } }) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
+    // thợ xây: tới công trình đang dựng, mỗi người đứng một góc nhà mà gõ (render/buildings3d.js places().site), nhà lên dần
+    if (role === 'builder' || j === 'builder') return building ? job('build', 'site', 'dựng ' + building.name.toLowerCase()) : job('repair', 'repair', 'đi sửa, tu bổ nhà cửa trong làng');
     if (j === 'trader') return job('trade', 'market', 'bán hàng ở chợ');
     if (j === 'soldier') { const drillFirst = t.aggression > t.paranoia; return drillFirst === morning ? job('drill', 'drill', 'luyện võ ở bãi tập') : rng.chance(0.5) ? job('guard', 'guard', 'canh gác làng') : job('patrol', 'patrol', 'đi tuần quanh làng'); }
     // người làm ra tài nguyên: làm đúng thứ kinh tế giao (p.res, logic/economy.js), ở đúng chỗ của thứ đó

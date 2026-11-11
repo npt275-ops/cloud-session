@@ -87,7 +87,7 @@
       for (const e of list) {
         if (!BUILD[e.kind]) continue;
         const g = take(e.kind), U = g.userData, since = e.shot != null ? t - e.shot : 9;
-        g.position.copy(e.at); if (e.face) { V.copy(e.face).sub(e.at); g.rotation.y = Math.atan2(V.x, V.z); }
+        g.position.copy(e.at); if (BK.groundAt) g.position.y = Math.max(e.at.y, BK.groundAt(e.at.x, e.at.z)); if (e.face) { V.copy(e.face).sub(e.at); g.rotation.y = Math.atan2(V.x, V.z); }
         if (U.arm) U.arm.rotation.x = since < 0.5 ? -1.6 * Math.sin(Math.min(1, since / 0.25) * Math.PI / 2) : -1.6 * Math.max(0, 1 - (since - 0.5) / 2); // vung cần rồi hạ về
         if (U.barrel && e.kind !== 'armor') { if (U.bz == null) U.bz = U.barrel.position.z; U.barrel.position.z = U.bz - (since < 0.3 ? 0.25 * (1 - since / 0.3) : 0); } // giật lùi
         if (e.kind === 'armor') { g.position.addScaledVector(V.normalize(), Math.sin(t * 0.4 + e.at.x) * 0.6); if (U.barrel) U.barrel.rotation.y = Math.sin(t * 0.7) * 0.3; }

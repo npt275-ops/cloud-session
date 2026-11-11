@@ -313,12 +313,13 @@
           { const goal = inTown && !st.passed ? gw : at, d = goal.distanceTo(st.pos), stepLen = Math.min(d, GEAR_SPEED * Math.max(0, Math.min(0.1, now - (st.t || now)))); st.t = now;
             if (d > 0.05) st.pos.addScaledVector(goal.clone().sub(st.pos).normalize(), stepLen); if (inTown && !st.passed && st.pos.distanceTo(gw) < 1.5) st.passed = true; if (!inTown) st.passed = false; }
           const moving = st.pos.distanceTo(at) > 0.6; at = st.pos.clone(); if (moving) face = (inTown && !st.passed ? gw : aimW);
+          if (BK.groundAt) at.y = Math.max(at.y, BK.groundAt(at.x, at.z)); // đảo nhấp nhô: xe đứng trên mặt đất chỗ nó tới
           // vây thành: vẫn nã vào cổng nhưng thưa hơn; đồng hồ lùi (tua năm) thì bắn lại ngay
           const siegeOnly = w.blockade && !w.blockade.done;
           if (st.next - now > 10) st.next = now;
           if ((w.stage === 'gate' || inTown) && !moving && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
-            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(), tip = MUZZLE[e.kind] || [0, 1.6]; from.addScaledVector(face.clone().sub(at).setY(0).normalize(), tip[0]); from.y += tip[1]; const to = face.clone(); to.y += 2;
+            const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(), tip = MUZZLE[e.kind] || [0, 1.6]; from.addScaledVector(face.clone().sub(at).setY(0).normalize(), tip[0]); from.y += tip[1]; const to = face.clone(); to.y += 2 + (BK.groundAt ? BK.groundAt(to.x, to.z) : 0);
             shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2], src: 'gear' }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
           }
           list.push({ kind: e.kind, at, face, shot: st.shot, isle: i, from: w.from != null ? w.from : w.a });
@@ -416,6 +417,7 @@
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       if (bars) bars.begin(); // thanh máu: hải chiến (render/war3d.js), cổng, nhà chính, người trong làng
       for (let i = 0; i < N; i++) { syncEra(i, true); buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level); }
+      for (let i = 0; i < N; i++) buildings.setCrew(i, villages[i] && villages[i].visible ? villages[i].siteCrew() : -1); // thợ đã tới góc nhà (đảo không vẽ người: −1, không chờ)
       buildings.animate(dt, t, night, camera.position, speed);
       if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf, (i) => !!(villages[i] && villages[i].visible), (i) => gateAt[i] || null);
         if (missiles3d) missiles3d.update(world.missiles, day, t, spotAt);

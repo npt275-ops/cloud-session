@@ -27,12 +27,13 @@
   function withTraffic(k, lv, N, anim) { const F = V3().fleet(k, lv, N.loop, N.spokes); return Object.assign(anim || {}, F || {}); }
   // tường bao kín sát mép đảo (từ thời 2), chỉ hở ba chỗ: cổng thành chính giữa mép trước (góc 0) và hai chỗ sau này bắc cầu
   // sang hai đảo bên cạnh (o.land.gaps, render/buildings3d.js tính từ L.landing). Tường chạy liền qua cả chỗ núi, hồ, sông;
-  // hai đầu mỗi lỗ hở có trụ (gateEnd). Mỗi đoạn (seg) đặt theo mép thật của đảo.
+  // hai đầu mỗi lỗ hở có trụ (gateEnd). Mỗi đoạn (seg) đặt theo mép thật của đảo (chỗ mép lượn gấp: theo chỗ hẹp nhất của
+  // đoạn, để hai đầu đoạn tường không thò ra ngoài).
   function edgeWall(k, o, st) {
     const L = o.land; if (!L) return;
     const n = st.n || 120, inset = st.inset || 3.5, gaps = L.gaps || [0], half = (a) => (a === gaps[0] ? 0.13 : 0.085);
     const gapAt = (a) => gaps.some((g) => Math.abs(Math.atan2(Math.sin(a - g), Math.cos(a - g))) < half(g));
-    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; if (gapAt(a)) continue; const R = L.edge(a) - inset; st.seg(k, a, Math.sin(a) * R, Math.cos(a) * R, i); }
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; if (gapAt(a)) continue; const R = Math.min(L.edge(a), L.edge(a - Math.PI / n), L.edge(a + Math.PI / n)) - inset; st.seg(k, a, Math.sin(a) * R, Math.cos(a) * R, i); }
     // trụ hai đầu chỗ hở cầu (cổng chính có cổng thành riêng, render/build/gates.js)
     if (st.gate) for (const g of gaps.slice(1)) for (const s of [-1, 1]) { const a = g + s * (half(g) + 0.01), R = L.edge(a) - inset; st.gate(k, a, Math.sin(a) * R, Math.cos(a) * R); }
   }

@@ -88,9 +88,10 @@
     function placeTree(L, n) {
       const t = L.trees.list[n], T = L.trees, s = t.s;
       if (t.hidden || t.felled) { for (const k in t.slot) T[k].setMatrixAt(t.slot[k], ZERO); return; }
-      _o.position.set(t.x, 0.05, t.z); _o.rotation.set(0, 0, 0); _o.scale.set(t.r * 1.15, 1, t.r * 1.15); _o.updateMatrix(); T.shadow.setMatrixAt(t.slot.shadow, _o.matrix);
+      const gy = L.surfAt ? L.surfAt(t.x, t.z) : 0; // (đảo nhấp nhô: render/map/height3d.js)
+      _o.position.set(t.x, gy + 0.05, t.z); _o.rotation.set(0, 0, 0); _o.scale.set(t.r * 1.15, 1, t.r * 1.15); _o.updateMatrix(); T.shadow.setMatrixAt(t.slot.shadow, _o.matrix);
       _o.position.set(t.x, 0, t.z); _o.rotation.set(t.tilt, t.rot, 0);
-      const set = (k, sx, sy, sz, y) => { _o.position.y = y; _o.scale.set(sx, sy, sz); _o.updateMatrix(); T[k].setMatrixAt(t.slot[k], _o.matrix); };
+      const set = (k, sx, sy, sz, y) => { _o.position.y = gy + y; _o.scale.set(sx, sy, sz); _o.updateMatrix(); T[k].setMatrixAt(t.slot[k], _o.matrix); };
       if (t.kind === 'conifer' || t.kind === 'snowpine') { set('trunks', s, 1.1 * s, s, 0); set('cones', 0.95 * s, 2.6 * s, 0.95 * s, 0.85 * s); }
       else if (t.kind === 'round' || t.kind === 'blossom' || t.kind === 'snowround') { set('fat', s, 1.7 * s, s, 0); set('rounds', 1.55 * s, 1.35 * s, 1.55 * s, 2.9 * s); }
       else if (t.kind === 'tall') { set('fat', 0.8 * s, 1.4 * s, 0.8 * s, 0); set('talls', 1.15 * s, 1.55 * s, 1.15 * s, 3.1 * s); }

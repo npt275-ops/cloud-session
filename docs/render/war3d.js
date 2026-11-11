@@ -49,6 +49,7 @@
     // một người lính ở pos, quay mặt theo góc yaw, màu đảo c
     function soldier(pos, yaw, c) {
       if (n >= MAX_SOLDIERS) return;
+      if (BK.groundAt) pos.y = Math.max(pos.y, BK.groundAt(pos.x, pos.z)); // đảo nhấp nhô (render/map/height3d.js)
       Q.setFromAxisAngle(UP, yaw); M4.compose(pos, Q, S1);
       bodies.setMatrixAt(n, M4); heads.setMatrixAt(n, M4); spears.setMatrixAt(n, M4); bodies.setColorAt(n, col[c]); n++;
     }
@@ -111,6 +112,7 @@
         if (S.annexedBy == null) return;
         const L = lands[i], g = flagAt(nf++); g.userData.flag.material = flagM[S.annexedBy];
         const h = hallOf && hallOf(i); if (h) tmp.copy(h).add(L.center).setY(0); else tmp.copy(L.center).addScaledVector(L.inw, 8).setY(0);
+        if (BK.groundAt) tmp.y = BK.groundAt(tmp.x, tmp.z);
         g.position.copy(tmp); g.rotation.y = Math.sin(t * 0.0004) * 0.6;
         // vừa mất thành: cờ đảo cũ hạ dần xuống, cờ đảo thắng kéo dần lên (một ngày)
         const up = Math.max(0, Math.min(1, (day - (S.annexDay || 0)) / RAISE_DAYS));

@@ -37,7 +37,7 @@
         let i = 0; while (i < A.loop.length - 1 && A.cum[i + 1] < d) i++;
         const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length], u = (d - A.cum[i]) / Math.max(1e-6, A.cum[i + 1] - A.cum[i]);
         const x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u, hx = b[0] - a[0], hz = b[1] - a[1];
-        sub.position.set(x, y, z); sub.rotation.y = Math.atan2(hx, hz); return [x, z, hx / (Math.hypot(hx, hz) || 1), hz / (Math.hypot(hx, hz) || 1)];
+        sub.position.set(x, y + (p.liftAt ? p.liftAt(x, z) : 0), z); sub.rotation.y = Math.atan2(hx, hz); return [x, z, hx / (Math.hypot(hx, hz) || 1), hz / (Math.hypot(hx, hz) || 1)];
       };
       // xe chạy khắp mạng đường (road): đi theo đồ thị đường, tới ngã thì chọn đường khác đường vừa đi, cụt thì quay đầu
       const G = A.spokes && A.spokes.length ? graphOf(A) : null;
@@ -80,16 +80,17 @@
       if (v.t >= len) { // tới điểm: chọn đường tiếp theo (không quay lại đường vừa đi, trừ đường cụt)
         const nx = G.adj[v.b].filter((c) => c !== v.a); v.seed = (v.seed * 1103515245 + 12345) & 0x7fffffff;
         const c = nx.length ? nx[v.seed % nx.length] : v.a; v.t -= len; v.a = v.b; v.b = c; }
-      sub.position.set(x, y, z); sub.rotation.y = Math.atan2(hx, hz); v.pos = [x, z]; v.h = [hx, hz]; st.d[n] = v.d;
+      sub.position.set(x, y + (p.liftAt ? p.liftAt(x, z) : 0), z); sub.rotation.y = Math.atan2(hx, hz); v.pos = [x, z]; v.h = [hx, hz]; st.d[n] = v.d;
     }
     // chân con vật (vehicles.js leg): đặt theo xe, vung theo quãng đường đã đi; thân nhún nhẹ
     function legs(A, p, st) {
       for (const [n, , , y, , , L] of A.path) {
         if (!L || !L.length) continue; const sub = p.subs[n]; if (!sub) continue;
         const d = st.d[n] || 0, c = Math.cos(sub.rotation.y), s = Math.sin(sub.rotation.y), stride = d * 2.6;
-        sub.position.y = y + Math.abs(Math.sin(stride)) * 0.04;
+        const gy = p.liftAt ? p.liftAt(sub.position.x, sub.position.z) : 0; // đảo nhấp nhô
+        sub.position.y = y + gy + Math.abs(Math.sin(stride)) * 0.04;
         for (const [ln, lx, ly, lz, ph] of L) { const q = p.subs[ln]; if (!q) continue; q.visible = sub.visible; q.rotation.order = 'YXZ';
-          q.position.set(sub.position.x + lx * c + lz * s, ly, sub.position.z - lx * s + lz * c); q.rotation.set(Math.sin(stride + ph) * 0.3, sub.rotation.y, 0); }
+          q.position.set(sub.position.x + lx * c + lz * s, ly + gy, sub.position.z - lx * s + lz * c); q.rotation.set(Math.sin(stride + ph) * 0.3, sub.rotation.y, 0); }
       }
     }
     return { drive, setPeds, stalled };

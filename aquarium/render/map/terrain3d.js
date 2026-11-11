@@ -69,23 +69,19 @@
       if (L.ter === 'desert') for (let j = 0; j < 4; j++) for (let kk = 0; kk < 36; kk++) { const a = (kk / 36) * TAU, r = L.rOf(a) * (0.99 - j * 0.035), [x, , z] = at(a, r, 0); k.add(UBOX(), j % 2 ? '#d99a62' : '#a8603e', x, -3.4 - j * 1.6, z, 3.6, 0.35, 0.6, -a + Math.PI / 2); }
       if (k.b.length) meshOf(k, bodyMat, L.g, 0, 0, 0);
     }
-    function terrain(L) {
+    function terrain(L, HT) {
       const st = TSTYLE[L.ter];
       shapeOf(L);
       L.groundMat = new THREE.MeshStandardMaterial({ color: st.ground, flatShading: true, roughness: 0.95 });
       L.groundBase = new THREE.Color(st.ground);
       // mặt đảo theo đúng mép riêng của miền
-      const shp = new THREE.Shape();
-      for (let k = 0; k <= 144; k++) { const a = (k / 144) * TAU, r = L.rOf(a); if (k === 0) shp.moveTo(Math.cos(a) * r, Math.sin(a) * r); else shp.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
-      const slab = new THREE.ExtrudeGeometry(shp, { depth: 2.6, bevelEnabled: false, curveSegments: 1 });
-      slab.rotateX(Math.PI / 2);
-      const top = new THREE.Mesh(slab, [L.groundMat, new THREE.MeshStandardMaterial({ color: st.rock[0], flatShading: true, roughness: 0.95 })]);
-      top.receiveShadow = true; L.g.add(top);
+      // (mặt đảo nhấp nhô và vách quanh mép: render/map/height3d.js, dựng sau khi sông hồ đã có chỗ)
+      if (HT) HT.init(L);
       underside(L, st);
       L.waterMats = [];
       const water = (geo, x, z, ry, y, col, op) => {
         const m = new THREE.MeshStandardMaterial({ color: col || '#4aa3c7', roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, flatShading: true, transparent: op != null, opacity: op == null ? 1 : op });
-        const me = new THREE.Mesh(geo, m); me.rotation.x = -Math.PI / 2; me.rotation.z = ry || 0; me.position.set(x, y || 0.06, z); me.receiveShadow = true; L.g.add(me); L.waterMats.push(m); if (op == null) me.userData.flatPart = 'water'; return me;
+        const me = new THREE.Mesh(geo, m); me.rotation.x = -Math.PI / 2; me.rotation.z = ry || 0; me.position.set(x, y || 0.06, z); me.receiveShadow = true; L.g.add(me); L.waterMats.push(m); if (op == null) me.userData.flatPart = 'water'; else { me.userData.carve = true; me.userData.noDrape = true; } return me;
       };
       const flat = (geo, x, z, y, col, rough) => { const me = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col,
           roughness: rough == null ? 0.95 : rough, flatShading: true })); me.userData.flatPart = 'shore'; me.rotation.x = -Math.PI / 2; me.position.set(x, y,

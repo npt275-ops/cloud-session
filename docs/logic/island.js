@@ -68,7 +68,7 @@
     while (S.lastDay + 1 <= S.day) { S.lastDay++; dayTick(S, S.lastDay, rng); }
     BK.Dramas.update(S, days, rng); // drama trong thành phố: sang màn, tan, bốc thăm drama mới
     S.thinkAcc += days * R.THINK_PER_DAY;
-    if (S.thinkAcc >= 1 || S.situChanged) { S.thinkAcc = 0; B.think(S, rng); }
+    if (S.thinkAcc >= 1 || S.situChanged) { S.thinkAcc = 0; B.think(S, rng); if (K && K.note) K.note(S); } // (K.note: thợ có mặt ở công trường)
   }
   function dayTick(S, day, rng) {
     const saved = S.day; S.day = day;

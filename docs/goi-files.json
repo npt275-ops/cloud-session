@@ -490,6 +490,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/map/height3d.js",
+  "src": "render/map/height3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/map/map3d.js",
   "src": "render/map/map3d.js",
   "mode": 420

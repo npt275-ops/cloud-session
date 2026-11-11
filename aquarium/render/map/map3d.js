@@ -6,11 +6,11 @@
    * nước ở water3d.js), cây (trees3d.js). Không có công trình hay người ở đây: công trình ở render/buildings3d.js và
    * render/build/ (cả cầu: render/build/bridges3d.js), người ở render/ và logic/.
    * index.html gọi animate() mỗi khung hình và seasons() khi đổi mùa. Giữ tên Lands3D cho các tệp đang dùng.
-   * Cần: three.js, render/map/shared3d.js, mountains3d.js, terrain3d.js, water3d.js, relief3d.js, trees3d.js. */
+   * Cần: three.js, render/map/shared3d.js, mountains3d.js, height3d.js, terrain3d.js, water3d.js, relief3d.js, trees3d.js. */
   const { LAND_R, RING, SC } = BK.MapShared;
   function create(K) {
     const { scene, Sim } = K, X = BK.MapShared.create(K), { THREE, C, TSTYLE } = X;
-    const MT = BK.MapMountains.create(X), TE = BK.MapTerrain.create(X, MT), W2 = BK.MapWater.create(X), RE = BK.MapRelief.create(X, MT, W2), TR = BK.MapTrees.create(X);
+    const MT = BK.MapMountains.create(X), HT = BK.MapHeight.create(X), TE = BK.MapTerrain.create(X, MT), W2 = BK.MapWater.create(X), RE = BK.MapRelief.create(X, MT, W2), TR = BK.MapTrees.create(X);
 
     /* ---------- Một đảo ---------- */
     const lands = [];
@@ -24,11 +24,12 @@
       L.landing = [(i + 5) % 6, (i + 1) % 6].map((j) => { const a = Math.PI / 2 + j * (Math.PI / 3); return new THREE.Vector3(Math.cos(a) * RING - center.x, 0, Math.sin(a) * RING - center.z).normalize().multiplyScalar(LAND_R - 0.4); });
       L.neighbors = [(i + 5) % 6, (i + 1) % 6];
       L.world = (p) => p.clone().add(center);
-      TE.terrain(L);
+      TE.terrain(L, HT);
       RE.relief(L);
+      HT.finish(L, TSTYLE[L.ter]); // khoét nước, dựng mặt đảo nhấp nhô, phủ đá núi theo đất
       // chỗ cây không mọc: giữa đảo (nhà chính) và những khối lớn đã ghi trong L.props
       L.blocked = (x, z, r) => Math.hypot(x, z) < 6.6 + r;
-      TR.plantTrees(L);
+      TR.plantTrees(L); L.replant = () => { for (let n = 0; n < L.trees.list.length; n++) TR.placeTree(L, n); for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true; };
       lands.push(L);
       return L;
     }
@@ -58,7 +59,10 @@
       }
     }
 
-    return { lands, animate, seasons, LAND_R, RING, SC, clearTrees: TR.clearTrees, thinTrees: TR.thinTrees, landOf: (i) => lands[i], shared: X };
+    // cao độ mặt đất tại một điểm của thế giới (trên đảo nào thì theo đảo đó; ngoài đảo: 0)
+    const groundAt = (x, z) => { for (const L of lands) { const dx = x - L.center.x, dz = z - L.center.z; if (dx * dx + dz * dz < LAND_R * LAND_R * 1.5) return L.surfAt(dx, dz); } return 0; };
+    BK.groundAt = groundAt; // (quân, xe, đạn ở toạ độ thế giới: render/war3d.js, engines3d.js)
+    return { lands, animate, seasons, groundAt, LAND_R, RING, SC, clearTrees: TR.clearTrees, thinTrees: TR.thinTrees, landOf: (i) => lands[i], shared: X };
   }
   root.Lands3D = { create, LAND_R, RING, SC };
 })(typeof self !== 'undefined' ? self : globalThis);

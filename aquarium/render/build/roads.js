@@ -16,7 +16,8 @@
   const Y = 0.13; // độ cao mặt đường (render/build/lamps.js, neon.js, plains/town.js đặt đồ trên mặt đường theo mốc này)
   const polar = (a, r) => [Math.sin(a) * r, Math.cos(a) * r];
   const loopOf = (rOf, n) => Array.from({ length: n || 72 }, (_, i) => { const a = (i / (n || 72)) * TAU; return polar(a, rOf(a)); });
-  const spoke = (a, r0, edge, wob) => { const r1 = Math.max(r0 + 6, (edge ? edge(a) : 52) - 4), pts = []; for (let r = r0; r <= r1 + 0.01; r += 2) { const w = wob ? wob(r) : 0; pts.push([Math.sin(a) * r + Math.cos(a) * w, Math.cos(a) * r - Math.sin(a) * w]); } return pts; };
+  // (mép đảo lượn: lấy chỗ hẹp nhất quanh hướng đó, đầu đường không thò ra ngoài)
+  const spoke = (a, r0, edge, wob) => { const r1 = Math.max(r0 + 6, (edge ? Math.min(edge(a), edge(a - 0.06), edge(a + 0.06)) : 52) - 4), pts = []; for (let r = r0; r <= r1 + 0.01; r += 2) { const w = wob ? wob(r) : 0; pts.push([Math.sin(a) * r + Math.cos(a) * w, Math.cos(a) * r - Math.sin(a) * w]); } return pts; };
   const BACK = 20; // đường toả ra phía sau bắt đầu từ đây (sau lưng nhà chính, nhà chính các thời sau to tới bán kính ~18)
   const NETS = {
     plains: (edge) => ({ loop: loopOf(() => 24), spokes: [0, Math.PI, 0.6, -0.6].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),

@@ -25,7 +25,7 @@
     + 'float lkF(vec2 p, float s){ vec2 q = mat2(0.8, -0.6, 0.6, 0.8) * p; return 0.5 * (lkN(vec3(p * s, 1.7)) + lkN(vec3(q * s * 1.37, 4.3))); }\n';
   const BODY = {
     // công trình: mái dốc có lớp, tường loang và tối chân, mặt lát sát đất có mạch đá
-    build: 'vec3 n = normalize(cross(dFdx(lp), dFdy(lp))); float ny = abs(n.y), h = lp.y - lI.w, g = lkN(lp * 2.3), k = 1.0, snow = lK.y, win = 0.0, dr = 0.0;\n'
+    build: 'vec3 n = normalize(cross(dFdx(lp), dFdy(lp))); float ny = abs(n.y), h = vGy > 1.0 ? vGy - 50.0 : lp.y - lI.w, g = lkN(lp * 2.3), k = 1.0, snow = lK.y, win = 0.0, dr = 0.0;\n'
       + 'if (ny > 0.22 && ny < 0.94) {\n'
       + '  if (lK.w < 0.5) { float c = h * 2.6 + (g - 0.5) * 0.18, w = fwidth(c), e = 1.0 - smoothstep(0.0, 0.16 + w, fract(c)); k *= 1.0 - 0.2 * e * (1.0 - smoothstep(0.25, 0.6, w)); k *= 0.94 + 0.12 * lkN(lp * vec3(9.0, 2.0, 9.0)); }\n'
       + '  else { float c = (lp.x + lp.z) * 0.9, w = fwidth(c), e = 1.0 - smoothstep(0.0, 0.06 + w, abs(fract(c) - 0.5) * 2.0 - 0.9); k *= 1.0 - 0.08 * e * (1.0 - smoothstep(0.25, 0.6, w)); }\n'
@@ -74,9 +74,9 @@
       if (prev) prev(sh, r);
       sh.uniforms.uLook = U.uLook; sh.uniforms.uLookI = U.uLookI; sh.uniforms.uLookK = U.uLookK;
       const wall = kind === 'build'; // mảng tường lớn: thuộc tính aLk của khối công trình (khối không có thì bằng 0: không phải tường)
-      sh.vertexShader = 'varying vec3 vLookW;\n' + (wall ? 'attribute vec4 aLk;\nvarying vec4 vLk;\n' : '') + sh.vertexShader.replace('#include <project_vertex>',
-        '#include <project_vertex>\n{ vec4 lw = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n lw = instanceMatrix * lw;\n#endif\n vLookW = (modelMatrix * lw).xyz; }' + (wall ? '\nvLk = aLk;' : ''));
-      sh.fragmentShader = 'uniform float uLook;\nuniform vec4 uLookI[6];\nuniform vec4 uLookK[6];\nvarying vec3 vLookW;\n' + (wall ? 'varying vec4 vLk;\n' : '') + NOISE + sh.fragmentShader.replace('#include <color_fragment>',
+      sh.vertexShader = 'varying vec3 vLookW;\n' + (wall ? 'attribute vec4 aLk;\nattribute float aGy;\nvarying vec4 vLk;\nvarying float vGy;\n' : '') + sh.vertexShader.replace('#include <project_vertex>',
+        '#include <project_vertex>\n{ vec4 lw = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n lw = instanceMatrix * lw;\n#endif\n vLookW = (modelMatrix * lw).xyz; }' + (wall ? '\nvLk = aLk; vGy = aGy;' : ''));
+      sh.fragmentShader = 'uniform float uLook;\nuniform vec4 uLookI[6];\nuniform vec4 uLookK[6];\nvarying vec3 vLookW;\n' + (wall ? 'varying vec4 vLk;\nvarying float vGy;\n' : '') + NOISE + sh.fragmentShader.replace('#include <color_fragment>',
         '#include <color_fragment>\nif (uLook > 0.5) { vec4 lI = vec4(0.0), lK = vec4(0.0);\n'
         + ' for (int li = 0; li < 6; li++) { if (distance(vLookW.xz, uLookI[li].xy) < uLookI[li].z) { lI = uLookI[li]; lK = uLookK[li]; } }\n'
         + ' if (lK.x > 0.5) { vec3 lp = vLookW;\n' + BODY[kind] + '} }');
@@ -109,12 +109,12 @@
     let baseKey = '';
     // chân công trình: theo danh sách chỗ đã có công trình của các đảo đang vẽ gần (render/buildings3d.js places().fixed)
     function bases(shown) {
-      const key = shown.map((i) => (lands[i].snow > 0.5 ? 's' : '') + (G.levelOf(i) >= 10 ? 'n' : '')).join('') + '|' + shown.map((i) => { const pl = G.buildings.places(i), fx = (pl && pl.fixed) || []; if (!seen[i] || seen[i].ref !== fx || seen[i].n !== fx.length) seen[i] = { ref: fx, n: fx.length, v: (seen[i] ? seen[i].v : 0) + 1 }; return i + ':' + seen[i].v; }).join(',');
+      const key = shown.map((i) => (lands[i].hVer || 0) + (lands[i].snow > 0.5 ? 's' : '') + (G.levelOf(i) >= 10 ? 'n' : '')).join('') + '|' + shown.map((i) => { const pl = G.buildings.places(i), fx = (pl && pl.fixed) || []; if (!seen[i] || seen[i].ref !== fx || seen[i].n !== fx.length) seen[i] = { ref: fx, n: fx.length, v: (seen[i] ? seen[i].v : 0) + 1 }; return i + ':' + seen[i].v; }).join(',');
       if (key === baseKey) return; baseKey = key;
       let n = 0;
       for (const i of shown) { const L = lands[i], fx = seen[i].ref;
         for (const f of fx) { if (n >= BASE_MAX || !f || f.r == null || String(f.P || '').startsWith('spot:')) continue; const r = Math.min(7.5, f.r * 1.08 + 0.5);
-          V.set(L.center.x + f.x, L.center.y + 0.07, L.center.z + f.y); Sc.set(r, 1, r); M.compose(V, Q, Sc); baseB.setColorAt(n, shadeOf(i)); baseB.setMatrixAt(n++, M); } }
+          V.set(L.center.x + f.x, L.center.y + 0.07 + (L.surfAt ? L.surfAt(f.x, f.y) : 0), L.center.z + f.y); Sc.set(r, 1, r); M.compose(V, Q, Sc); baseB.setColorAt(n, shadeOf(i)); baseB.setMatrixAt(n++, M); } }
       baseB.count = n; baseB.instanceMatrix.needsUpdate = true; if (baseB.instanceColor) baseB.instanceColor.needsUpdate = true;
     }
     function update() {
@@ -130,7 +130,7 @@
       bases(shown);
       let n = 0;
       for (const i of shown) { const L = lands[i], c = shadeOf(i); for (const p of G.villages[i].peds()) { if (n >= PED_MAX) break; if (Math.abs(p.y) > 0.3) continue;
-        V.set(L.center.x + p.x, L.center.y + 0.09, L.center.z + p.z); Sc.set(0.42, 1, 0.42); M.compose(V, Q, Sc); pedB.setColorAt(n, c); pedB.setMatrixAt(n++, M); } }
+        V.set(L.center.x + p.x, L.center.y + 0.09 + (L.surfAt ? L.surfAt(p.x, p.z) : 0), L.center.z + p.z); Sc.set(0.42, 1, 0.42); M.compose(V, Q, Sc); pedB.setColorAt(n, c); pedB.setMatrixAt(n++, M); } }
       pedB.count = n; pedB.instanceMatrix.needsUpdate = true; if (pedB.instanceColor) pedB.instanceColor.needsUpdate = true;
     }
     G.look = { update };

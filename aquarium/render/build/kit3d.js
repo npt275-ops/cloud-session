@@ -79,17 +79,18 @@
     return (b.max.y - b.min.y) * sy < 0.12 && (y || 0) + b.max.y * sy < 0.3;
   }
   // gộp thành một BufferGeometry có màu theo đỉnh; chân sẫm hơn đỉnh (aoH: độ cao hết sẫm)
-  function merge(parts, aoH, more) {
+  function merge(parts, aoH, more, y0) {
     const THREE = T(); let n = 0; const gs = [];
     for (const P of parts) { const g = (P.geo.index ? P.geo.toNonIndexed() : P.geo.clone()); g.applyMatrix4(P.m); gs.push([g, P]); n += g.attributes.position.count; }
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), lk = new Float32Array(n * 4), all = parts.concat(more || []); let o = 0;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), lk = new Float32Array(n * 4), gy = new Float32Array(n), all = parts.concat(more || []); let o = 0;
     for (const [g, P] of gs) {
       const p = g.attributes.position, k = p.count; pos.set(p.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
       wallMark(P, lk, o, all);
+      for (let i = 0; i < k; i++) gy[o + i] = p.getY(i) + (y0 || 0) + 50; // độ cao so với chân công trình (+50: có ghi; render/look3d.js)
       for (let i = 0; i < k; i++) { const f = P.ao ? 0.72 + 0.28 * Math.min(1, Math.max(0, p.getY(i)) / aoH) : 1; col[(o + i) * 3] = P.color.r * f; col[(o + i) * 3 + 1] = P.color.g * f; col[(o + i) * 3 + 2] = P.color.b * f; }
       o += k; g.dispose();
     }
-    const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.setAttribute('aLk', new THREE.BufferAttribute(lk, 4)); out.computeBoundingSphere();
+    const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.setAttribute('aLk', new THREE.BufferAttribute(lk, 4)); out.setAttribute('aGy', new THREE.BufferAttribute(gy, 1)); out.computeBoundingSphere();
     return out;
   }
   // mảng tường lớn (render/look3d.js lớp 3 vẽ chân tường, gờ mái, trụ góc, cửa sổ, cửa ra vào lên đó): mảnh là hộp đứng thẳng,
@@ -143,14 +144,14 @@
   const neonMat = () => NEON || (NEON = new (T().LineBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
   const litMat = () => LIT || (LIT = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false }));
   // dựng một công trình thành nhóm: khối chính (đổ bóng) và khối sáng (nếu có)
-  Kit.prototype.bake = function (aoH) {
+  Kit.prototype.bake = function (aoH, y0) {
     const THREE = T(), g = new THREE.Group();
-    if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3, this.lit.concat(this.glow)), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.main = m; g.userData.tris = m.geometry.attributes.position.count / 3; }
-    if (this.flat.length) { const m = new THREE.Mesh(merge(this.flat, aoH || 3), mat()); m.receiveShadow = true; g.add(m); g.userData.flat = m; g.userData.tris = (g.userData.tris || 0) + m.geometry.attributes.position.count / 3; }
+    if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3, this.lit.concat(this.glow), y0), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.main = m; g.userData.tris = m.geometry.attributes.position.count / 3; }
+    if (this.flat.length) { const m = new THREE.Mesh(merge(this.flat, aoH || 3, null, y0), mat()); m.receiveShadow = true; g.add(m); g.userData.flat = m; g.userData.tris = (g.userData.tris || 0) + m.geometry.attributes.position.count / 3; }
     if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
     if (this.lit.length) { const m = new THREE.Mesh(merge(this.lit, 1), litMat()); m.renderOrder = 2; g.add(m); g.userData.lit = m; }
     g.userData.subs = {};
-    for (const k of this.subs) { const c = k.bake(aoH); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c;
+    for (const k of this.subs) { const c = k.bake(aoH, (y0 || 0) + (k.pivot[1] || 0)); c.position.set(...k.pivot); c.name = k.name; g.add(c); g.userData.subs[k.name] = c;
         g.userData.tris = (g.userData.tris || 0) + (c.userData.tris || 0);
         if (c.userData.glow) (g.userData.subGlows || (g.userData.subGlows = [])).push(c.userData.glow); }
     return g;
