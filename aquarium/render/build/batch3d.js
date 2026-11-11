@@ -18,9 +18,10 @@
     function mergeOf(list) {
       let n = 0; for (const [geo] of list) n += geo.attributes.position.count;
       if (!n) return null;
-      const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3); let o = 0;
+      const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), lk = new Float32Array(n * 4); let o = 0;
       for (const [geo, M] of list) {
         const P = geo.attributes.position, N = geo.attributes.normal, Cc = geo.attributes.color; nm.getNormalMatrix(M);
+        if (geo.attributes.aLk) lk.set(geo.attributes.aLk.array, o * 4); // mảng tường lớn (render/build/kit3d.js wallMark)
         for (let i = 0; i < P.count; i++, o++) {
           v.fromBufferAttribute(P, i).applyMatrix4(M); pos[o * 3] = v.x; pos[o * 3 + 1] = v.y; pos[o * 3 + 2] = v.z;
           if (N) { v.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); nor[o * 3] = v.x; nor[o * 3 + 1] = v.y; nor[o * 3 + 2] = v.z; }
@@ -28,7 +29,7 @@
         }
       }
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('aLk', new THREE.BufferAttribute(lk, 4));
       g.computeBoundingSphere(); return g;
     }
     // ma trận của một khối so với parent: đi ngược lên tới parent

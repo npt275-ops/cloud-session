@@ -138,3 +138,9 @@ chạy mượt trên điện thoại. Không tới mức tranh vẽ như ảnh �
 
 **Còn lại (theo thứ tự mục III):** lớp 3 phần hình khối (cửa, khung cửa sổ, mái hiên, gờ), lớp 4 tỉ lệ và mật độ vật nhỏ, lớp 5
 chuyển động nền và hiệu ứng trận, lớp 6 máy quay và vật che. Đo trên điện thoại thật.
+
+**Lớp 3, phần mặt tường** (`render/build/kit3d.js` wallMark, `render/look3d.js`): bộ dựng tự đánh dấu mọi mảng tường lớn (hộp đứng
+thẳng, cao từ 1,5, mặt bên rộng từ 1,8; mái và mảnh trang trí không tính) kèm toạ độ trên mặt tường; shader vẽ lên đó chân tường
+sẫm, gờ mái sáng có đường chỉ, trụ góc; khối cao từ hai tầng (từ 3,6) thêm mỗi tầng một hàng cửa sổ kính sẫm có khung sáng và
+bậu, số ô theo bề rộng mặt. Một quy tắc cho mọi nhà của 6 đảo × 12 thời, không thêm tam giác; khối gộp của đảo ở xa giữ thuộc
+tính này (`render/build/batch3d.js`). Cửa sổ vẽ bằng shader chưa sáng đèn về đêm (cửa sổ sáng đèn sẵn có vẫn như cũ).

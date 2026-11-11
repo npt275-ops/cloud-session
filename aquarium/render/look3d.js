@@ -25,16 +25,29 @@
     + 'float lkF(vec2 p, float s){ vec2 q = mat2(0.8, -0.6, 0.6, 0.8) * p; return 0.5 * (lkN(vec3(p * s, 1.7)) + lkN(vec3(q * s * 1.37, 4.3))); }\n';
   const BODY = {
     // công trình: mái dốc có lớp, tường loang và tối chân, mặt lát sát đất có mạch đá
-    build: 'vec3 n = normalize(cross(dFdx(lp), dFdy(lp))); float ny = abs(n.y), h = lp.y - lI.w, g = lkN(lp * 2.3), k = 1.0, snow = lK.y;\n'
+    build: 'vec3 n = normalize(cross(dFdx(lp), dFdy(lp))); float ny = abs(n.y), h = lp.y - lI.w, g = lkN(lp * 2.3), k = 1.0, snow = lK.y, win = 0.0;\n'
       + 'if (ny > 0.22 && ny < 0.94) {\n'
       + '  if (lK.w < 0.5) { float c = h * 2.6 + (g - 0.5) * 0.18, w = fwidth(c), e = 1.0 - smoothstep(0.0, 0.16 + w, fract(c)); k *= 1.0 - 0.2 * e * (1.0 - smoothstep(0.25, 0.6, w)); k *= 0.94 + 0.12 * lkN(lp * vec3(9.0, 2.0, 9.0)); }\n'
       + '  else { float c = (lp.x + lp.z) * 0.9, w = fwidth(c), e = 1.0 - smoothstep(0.0, 0.06 + w, abs(fract(c) - 0.5) * 2.0 - 0.9); k *= 1.0 - 0.08 * e * (1.0 - smoothstep(0.25, 0.6, w)); }\n'
       + '  k = mix(k, 1.0, snow * 0.6); }\n'
-      + 'else if (ny <= 0.22) { k *= mix(0.82, 1.0, smoothstep(0.0, 1.4, h)) * mix(0.92 + 0.16 * g, 0.98 + 0.04 * g, lK.w); }\n' // (thời muộn: tường kính, bê tông gần như phẳng)
+      + 'else if (ny <= 0.22) { k *= mix(0.82, 1.0, smoothstep(0.0, 1.4, h)) * mix(0.92 + 0.16 * g, 0.98 + 0.04 * g, lK.w);\n' // (thời muộn: tường kính, bê tông gần như phẳng)
+      // mảng tường lớn (render/build/kit3d.js wallMark; vLk: ngang từ giữa mặt, cao từ chân, bề rộng mặt, chiều cao): chân tường sẫm,
+      // gờ mái sáng có đường chỉ, trụ góc; khối cao từ hai tầng: từng tầng một hàng cửa sổ kính sẫm có khung sáng và bậu
+      + '  if (vLk.z > 0.5) { float u = vLk.x, v = vLk.y, W = vLk.z, H = vLk.w, px = fwidth(v), vis = 1.0 - smoothstep(0.12, 0.4, px);\n'
+      + '    k *= mix(1.0, 0.8, vis * (1.0 - smoothstep(0.2, 0.24 + px, v)));\n'
+      + '    k *= mix(1.0, 1.1, vis * smoothstep(H - 0.2 - px, H - 0.2, v)); k *= mix(1.0, 0.82, vis * smoothstep(H - 0.27 - px, H - 0.25, v) * (1.0 - smoothstep(H - 0.2, H - 0.2 + px, v)));\n'
+      + '    k *= mix(1.0, 0.9, vis * smoothstep(W * 0.5 - 0.17 - px, W * 0.5 - 0.15, abs(u)));\n'
+      + '    if (H >= 3.6) { float nf = max(1.0, floor(H / 2.3 + 0.5)), fh = (H - 0.5) / nf, nc = max(1.0, floor((W - 0.5) / 1.7)), cw = (W - 0.5) / nc;\n'
+      + '      vec2 q = vec2(fract((u + W * 0.5 - 0.25) / cw) - 0.5, fract((v - 0.3) / fh) - 0.5) * vec2(cw, fh); float inX = step(0.0, u + W * 0.5 - 0.25) * step(u, W * 0.5 - 0.25), inY = step(0.3, v) * step(v, H - 0.2);\n'
+      + '      vec2 hw = vec2(min(0.42, cw * 0.3), min(0.55, fh * 0.28)); float fr = (1.0 - smoothstep(hw.x + 0.07, hw.x + 0.07 + px, abs(q.x))) * (1.0 - smoothstep(hw.y + 0.07, hw.y + 0.07 + px, abs(q.y)));\n'
+      + '      float gl = (1.0 - smoothstep(hw.x - px, hw.x, abs(q.x))) * (1.0 - smoothstep(hw.y - px, hw.y, abs(q.y))), a = vis * inX * inY;\n'
+      + '      float sill = (1.0 - smoothstep(hw.x + 0.14, hw.x + 0.14 + px, abs(q.x))) * smoothstep(-hw.y - 0.15 - px, -hw.y - 0.15, q.y) * (1.0 - smoothstep(-hw.y - 0.07, -hw.y - 0.07 + px, q.y));\n'
+      + '      k *= mix(1.0, 1.14, a * max(fr, sill) * (1.0 - gl)); win = a * gl * (0.86 + 0.14 * step(0.0, q.x * q.y + 0.004 * sin(q.y * 40.0))); } } }\n'
       + 'else if (h < 0.7) { vec2 c = lp.xz * 1.5; c.x += 0.5 * mod(floor(c.y), 2.0); vec2 f = abs(fract(c) - 0.5); float w = fwidth(c.y), a = (1.0 - smoothstep(0.2, 0.55, w)) * (1.0 - snow * 0.85);\n'
       + '  k *= mix(1.0, (0.92 + 0.16 * lkH(vec3(floor(c), 2.0))) * (1.0 - 0.18 * smoothstep(0.42 - w, 0.5, max(f.x, f.y))), a); }\n'
       + 'else { k *= mix(0.94 + 0.12 * g, 0.98 + 0.04 * g, lK.w); }\n'
-      + 'diffuseColor.rgb *= k; float lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(vec3(lum), diffuseColor.rgb, 1.1);\n',
+      + 'diffuseColor.rgb *= k; float lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(vec3(lum), diffuseColor.rgb, 1.1);\n'
+      + 'diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.16, 0.22, 0.3), vec3(0.3, 0.42, 0.52), lK.w) * (0.8 + 0.4 * lkH(vec3(floor(lp.xz * 0.6), floor(lp.y * 0.45)))), win * 0.88);\n',
     // nền đảo: loang hai tông lớn, đốm vừa, lốm đốm nhỏ theo miền (cỏ, sỏi); tuyết thì thành gò mềm
     ground: 'float a = lkF(lp.xz, 0.11), b = lkF(lp.xz, 0.7), s = lkF(lp.xz, 3.1), snow = lK.y, grass = lK.z;\n'
       + 'float w = fwidth(lp.x * 3.1), fine = (1.0 - smoothstep(0.35, 0.8, w)) * (1.0 - snow);\n'
@@ -53,9 +66,10 @@
     m.onBeforeCompile = (sh, r) => {
       if (prev) prev(sh, r);
       sh.uniforms.uLook = U.uLook; sh.uniforms.uLookI = U.uLookI; sh.uniforms.uLookK = U.uLookK;
-      sh.vertexShader = 'varying vec3 vLookW;\n' + sh.vertexShader.replace('#include <project_vertex>',
-        '#include <project_vertex>\n{ vec4 lw = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n lw = instanceMatrix * lw;\n#endif\n vLookW = (modelMatrix * lw).xyz; }');
-      sh.fragmentShader = 'uniform float uLook;\nuniform vec4 uLookI[6];\nuniform vec4 uLookK[6];\nvarying vec3 vLookW;\n' + NOISE + sh.fragmentShader.replace('#include <color_fragment>',
+      const wall = kind === 'build'; // mảng tường lớn: thuộc tính aLk của khối công trình (khối không có thì bằng 0: không phải tường)
+      sh.vertexShader = 'varying vec3 vLookW;\n' + (wall ? 'attribute vec4 aLk;\nvarying vec4 vLk;\n' : '') + sh.vertexShader.replace('#include <project_vertex>',
+        '#include <project_vertex>\n{ vec4 lw = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n lw = instanceMatrix * lw;\n#endif\n vLookW = (modelMatrix * lw).xyz; }' + (wall ? '\nvLk = aLk;' : ''));
+      sh.fragmentShader = 'uniform float uLook;\nuniform vec4 uLookI[6];\nuniform vec4 uLookK[6];\nvarying vec3 vLookW;\n' + (wall ? 'varying vec4 vLk;\n' : '') + NOISE + sh.fragmentShader.replace('#include <color_fragment>',
         '#include <color_fragment>\nif (uLook > 0.5) { vec4 lI = vec4(0.0), lK = vec4(0.0);\n'
         + ' for (int li = 0; li < 6; li++) { if (distance(vLookW.xz, uLookI[li].xy) < uLookI[li].z) { lI = uLookI[li]; lK = uLookK[li]; } }\n'
         + ' if (lK.x > 0.5) { vec3 lp = vLookW;\n' + BODY[kind] + '} }');
