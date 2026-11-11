@@ -46,6 +46,7 @@
 
     /* ---------- Ngày đêm ---------- */
     const SKY = { nightTop: C('#0b1430'), nightBot: C('#1c2550'), dawnTop: C('#4a6aa8'), dawnBot: C('#f4a96c'), dayTop: C('#4c9fe0'), dayBot: C('#d4ecf7') };
+    const _shade = C('#3f4d74'); // màu bóng ngả lam của lát cắt mẫu
     const sunDir = new THREE.Vector3(), _moonP = new THREE.Vector3(), _sx = new THREE.Vector3(), _su = new THREE.Vector3(), _sv = new THREE.Vector3();
     function applyTime() {
       // mất mặt trời (render/neon3d.js): không còn ngày đêm, đèn sáng suốt; ánh sáng rọi từ trên
@@ -66,6 +67,8 @@
       document.body.classList.toggle('day', day > 0.55);
       if (M) { sun.intensity = M.sunI; sun.color.copy(M.sun); hemi.intensity = M.hemiI; hemi.color.copy(M.hemiSky); hemi.groundColor.copy(M.hemiGround); fill.intensity = M.fillI; fill.position.set(-sunDir.x * 100, 60, -sunDir.z * 100); }
       else { sun.intensity = 1.0 * day; sun.color.copy(C('#fff1d6')).lerp(C('#ffb36b'), gold * 0.8); hemi.intensity = 0.22 + 0.3 * day + 0.24 * night; hemi.color.copy(C('#dff1ff')).lerp(C('#8196d6'), night); }
+      // lát cắt mẫu hình ảnh (render/look3d.js lớp 1): nắng mạnh hơn, đèn trời và đèn hắt yếu đi, bóng ngả lam: sáng tối rõ
+      if (BK.Look3D && BK.Look3D.light() && !neon) { sun.intensity *= 1.22; hemi.intensity *= 0.7; fill.intensity *= 0.45; hemi.groundColor.lerp(_shade, 0.55); }
       moon.position.set(-sunDir.x * 100, 80, -sunDir.z * 100); moon.intensity = neon ? 0 : 0.46 * night; // trăng: đêm không tối mịt
       { const mp = _moonP.set(-sunDir.x, 0.62, -sunDir.z).normalize().multiplyScalar(1500); moonDisc.position.copy(mp); moonDisc.lookAt(camera.position);
           moonHalo.position.copy(mp); moonDisc.material.opacity = 0.95 * night; moonHalo.material.opacity = 0.55 * night;

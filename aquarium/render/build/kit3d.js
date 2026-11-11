@@ -92,7 +92,8 @@
     return out;
   }
   let MAT = null, GLOW = null, LIT = null, NEON = null;
-  const mat = () => MAT || (MAT = new (T().MeshStandardMaterial)({ vertexColors: true, flatShading: true, roughness: 0.88, metalness: 0.02 }));
+  const lookOf = (m) => { const L = (typeof self !== 'undefined' ? self : globalThis).BK.Look3D; return L ? L.hook(m, 'build') : m; }; // lát cắt mẫu hình ảnh (render/look3d.js)
+  const mat = () => MAT || (MAT = lookOf(new (T().MeshStandardMaterial)({ vertexColors: true, flatShading: true, roughness: 0.88, metalness: 0.02 })));
   const glowMat = () => GLOW || (GLOW = new (T().MeshBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.92, depthWrite: false }));
   // đường viền neon của thành phố neon (render/build/neon.js edges): màu theo đỉnh, dịu, không ghi độ sâu
   const neonMat = () => NEON || (NEON = new (T().LineBasicMaterial)({ vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
