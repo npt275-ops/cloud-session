@@ -24,7 +24,7 @@
     BK.CameraFly.setup(G);   // ui/camera-fly.js
     BK.LandBar.setup(G);     // ui/landbar.js
     BK.GameCities.setup(G);  // game/cities.js (sáu thành phố: logic của cả bể, công trình, người)
-    if (BK.Look3D) BK.Look3D.setup(G);        // render/look3d.js (lát cắt mẫu hình ảnh: Lúa Vàng thời 3)
+    if (BK.Look3D) BK.Look3D.setup(G);        // render/look3d.js (hình ảnh mô hình thu nhỏ: màu, vệt tối chân, chi tiết bề mặt)
     if (BK.NeonCity3D) BK.NeonCity3D.setup(G); // render/neon3d.js (mặt trời nhân tạo của thành phố neon, thời 10 trở đi)
     BK.Hud.setup(G);         // ui/hud.js
     BK.RaceDev.setup(G);     // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")

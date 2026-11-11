@@ -116,3 +116,25 @@ nhỏ**. Cả hai đều làm được bằng code, nhẹ, và hợp với cái 
 
 Làm hết sáu lớp, Bể Kính có thể tới mức mô hình thu nhỏ có phong cách, rõ ràng, sống động (kiểu Townscaper, Islanders, Bad North),
 chạy mượt trên điện thoại. Không tới mức tranh vẽ như ảnh Đà Lạt, và không cần.
+
+---
+
+## IV. Đã làm
+
+**Lát cắt mẫu (Lúa Vàng thời 3, lớp 1–3)** · người chơi duyệt, chốt phương án.
+
+**Nhân rộng ra cả 6 đảo × 12 thời** (`render/look3d.js`):
+- Shader tìm điểm ảnh thuộc đảo nào (so với tâm 6 đảo), mỗi đảo có thông số riêng: độ phủ cỏ theo miền (đồng bằng, rừng xanh;
+  núi, biển ít; băng nguyên, sa mạc không ngả xanh), tuyết (mùa đông, băng nguyên), thời muộn (từ thời 7 mái là tấm lợp phẳng có
+  đường nối thay cho lớp rơm, ngói; tường kính, bê tông gần như phẳng).
+- Sửa các chỗ thô của lát cắt: lớp mái là đường mảnh ở mép lớp (không còn gợn sóng); nhiễu hai lớp lệch góc (không còn ô vuông);
+  hoạ tiết nhỏ mờ dần khi ô nhỏ hơn vài điểm ảnh (từ xa không lấm tấm); tuyết mờ mạch lát, thành gò mềm ngả lam; tuyết của mùa
+  đông ngả lam nhạt thay cho trắng tinh (`render/map/map3d.js`).
+- Vệt tối chân công trình, chân người cho mọi làng đang vẽ gần (hai khối lặp cho cả bể); nhỏ hơn, và nhạt hơn trên tuyết và trên
+  nền tím thời neon.
+- Không gắn chi tiết bề mặt vào vật liệu của núi, đá (chỉ công trình, nền đảo, sân đất).
+- Bộ ảnh chuẩn 8 cảnh (6 đảo, mùa đông, thời neon) chụp trước / sau; 15 tệp kiểm thử đạt; không lỗi trang; số lượt vẽ tăng chừng
+  10, số tam giác không đổi (hoạ tiết vẽ trong shader).
+
+**Còn lại (theo thứ tự mục III):** lớp 3 phần hình khối (cửa, khung cửa sổ, mái hiên, gờ), lớp 4 tỉ lệ và mật độ vật nhỏ, lớp 5
+chuyển động nền và hiệu ứng trận, lớp 6 máy quay và vật che. Đo trên điện thoại thật.

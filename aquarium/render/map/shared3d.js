@@ -63,7 +63,6 @@
     }
     const bodyMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.86, metalness: 0.03 });
     const metalMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.35, metalness: 0.55 });
-    if (BK.Look3D) { BK.Look3D.hook(bodyMat, 'build'); BK.Look3D.hook(metalMat, 'build'); } // lát cắt mẫu hình ảnh (render/look3d.js)
     const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     const ghostMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false });
     // thân nhà và cửa sổ chung một khối: cửa sổ đánh dấu bằng thuộc tính aLit, sáng lên theo đèn của đảo (hay của cầu),
@@ -81,7 +80,7 @@
         sh.fragmentShader = 'uniform vec3 uLitC;\nuniform float uLitI;\nvarying float vLit;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uLitC * uLitI * vLit;');
       };
       m.customProgramCacheKey = () => 'bodyLit' + (metal ? 'm' : 'b');
-      if (BK.Look3D) BK.Look3D.hook(m, 'build');
+      if (BK.Look3D) BK.Look3D.hook(m, 'build'); // chi tiết bề mặt mô hình thu nhỏ (render/look3d.js; không gắn cho bodyMat: núi, đá)
       litMerged.set(key, m);
       return m;
     }

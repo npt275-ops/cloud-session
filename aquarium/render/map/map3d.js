@@ -48,11 +48,12 @@
       for (const L of lands) {
         const st = TSTYLE[L.ter];
         if (st.season) {
-          const g0 = L.groundBase, cs = [g0.clone().lerp(C('#a2d873'), 0.3), g0.clone(), g0.clone().lerp(C('#c2ad58'), 0.5), g0.clone().lerp(C('#eef3f6'), L.ter === 'coast' ? 0.4 : 0.8)];
+          // (mùa đông: tuyết ngả lam nhạt, không trắng tinh; render/look3d.js đọc L.snow vẽ gò tuyết, mờ mạch lát)
+          const g0 = L.groundBase, cs = [g0.clone().lerp(C('#a2d873'), 0.3), g0.clone(), g0.clone().lerp(C('#c2ad58'), 0.5), g0.clone().lerp(C('#dfe7ef'), L.ter === 'coast' ? 0.4 : 0.72)];
           tmp.setRGB(0, 0, 0); for (let s = 0; s < 4; s++) if (sw[s]) { tmp.r += cs[s].r * sw[s]; tmp.g += cs[s].g * sw[s]; tmp.b += cs[s].b * sw[s]; }
           if (drought) tmp.lerp(C('#cdb168'), drought * 0.6);
-          L.groundMat.color.copy(tmp);
-        }
+          L.groundMat.color.copy(tmp); L.snow = (sw[3] || 0) * (L.ter === 'coast' ? 0.5 : 1);
+        } else L.snow = L.ter === 'tundra' ? 1 : 0;
         TR.treeColors(L, sw);
       }
     }
