@@ -33,6 +33,7 @@
     function fire(kind, from, to, now, opt) {
       if (live.length >= MAX) live.shift();
       live.push({ kind, a: from.clone(), b: to.clone(), t0: now, color: opt && opt.color });
+      if (opt && opt.src) { if (log.length >= 400) log.shift(); log.push({ src: opt.src, d: Math.hypot(from.x - to.x, from.z - to.z), rg: opt.rg || 0, why: opt.why || null }); } // (tools/bug-hunt.js)
       if (opt && opt.puff) { if (puffs.length >= MAX) puffs.shift(); puffs.push({ p: from.clone(), t0: now, s: opt.puff }); }
     }
     const at = (s, u, out) => { const K = KIND[s.kind]; out.copy(s.a).lerp(s.b, u); out.y += Math.sin(Math.PI * u) * K[1] * Math.min(1, s.a.distanceTo(s.b) / 8); return out; };
@@ -58,7 +59,10 @@
       }
       for (const k in I) { I[k].count = n[k]; I[k].instanceMatrix.needsUpdate = true; I[k].visible = n[k] > 0; if (I[k].instanceColor) I[k].instanceColor.needsUpdate = true; }
     }
-    return { fire, update, get live() { return live.length; } };
+    const log = [];
+    // ghi một dòng cho bộ quét lỗi mà không vẽ gì (phát trúng không có người bắn trong tầm, render/village3d.js)
+    const note = (x) => { if (log.length >= 400) log.shift(); log.push(Object.assign({ d: 0, rg: 0 }, x)); };
+    return { fire, update, note, get live() { return live.length; }, drain() { return log.splice(0); } };
   }
   // kiểu đạn, màu, khói ở nòng theo vũ khí (logic/arms.js KIT ranged) và theo máy công thành
   const OF = {

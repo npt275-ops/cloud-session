@@ -46,6 +46,8 @@
     if (key === 'store' && E()) { const sb = E().state(S).stock, k = STORE_BURN * (was - now); for (const r in sb) sb[r] = Math.max(0, sb[r] * (1 - k)); }
     return now;
   }
+  // giữ máu của key không dưới floor (chỉ nâng lên, không làm hư thêm): logic/war.js giới hạn tốc độ phá cổng
+  function hold(S, key, floor) { if (hp(S, key) < floor) (S.ruin || (S.ruin = {}))[key] = Math.min(1, floor); }
   // phần sản lượng của tài nguyên r còn làm được (bãi làm ra nó hư thì làm ít đi)
   const output = (S, r) => { const k = YARD_OF[r]; return k ? FLOOR + (1 - FLOOR) * hp(S, k) : 1; };
   // nhà của p cháy thì ở nhờ nhà gần nhất còn ở được (số nhà); nhà mình ở được thì null
@@ -129,7 +131,7 @@
     if (sg.stage === 'blockade') return di >= 0 ? d('work', Object.assign({ verb: 'watch', place: sg.gate, reason: 'canh cổng, giặc dựng trại vây ngoài thành' }, short)) : null;
     // đấu tướng: tướng bên mình đánh tướng giặc, người giữ cổng đứng xem hò reo
     if (sg.stage === 'duel' && sg.duel) { if (p.id === sg.duel.b) return d('attack', Object.assign({ target: 'w' + sg.duel.ai + ':' + sg.duel.a,
-        place: sg.gate, reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate,
+        place: sg.gate, duel: 'def', reason: 'đấu tay đôi với tướng giặc' }, short)); if (di >= 0) return d('work', Object.assign({ verb: 'watchDuel', place: sg.gate,
         reason: 'xem hai tướng đấu tay đôi' }, short)); return null; }
     const foe = (k) => (n ? 'w' + sg.foes[k % n].i + ':' + sg.foes[k % n].id : null);
     // arm: người bắn xa hay cận chiến (logic/arms.js), cho phần vẽ: người bắn đứng lùi lại mà bắn
@@ -169,5 +171,5 @@
   const NAME = { hall: 'nhà chính', drill: 'bãi tập', store: 'kho', craft: 'xưởng', power: 'chỗ làm năng lượng', farm: 'ruộng', wood: 'bãi gỗ', stone: 'mỏ đá', gate: 'cổng chính', gateL: 'cổng phụ trái', gateR: 'cổng phụ phải' };
   const nameOf = (key) => (key.startsWith('home:') ? 'nhà số ' + (+key.slice(5) + 1) : NAME[key] || key);
 
-  return { hp, hit, output, lodging, damaged, gateOf, gateGuards, volunteers, plan, ravage, hallTeam, surrender, roleOf, repairDay, nameOf, isGuard, HALL_DAYS, HOMELESS };
+  return { hp, hit, hold, output, lodging, damaged, gateOf, gateGuards, volunteers, plan, ravage, hallTeam, surrender, roleOf, repairDay, nameOf, isGuard, HALL_DAYS, HOMELESS };
 });

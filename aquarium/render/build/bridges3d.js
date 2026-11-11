@@ -14,8 +14,9 @@
     // cầu rộng (ngang mặt cầu gấp WIDE lần dáng gốc): đủ chỗ cho quân lính, xe hàng, xe tăng đi hai làn
     const WIDE = 2.2;
     function bridgeEnds(b) {
-      const A = lands[b.a], B = lands[b.b];
-      const pa = A.world(A.landing[1]), pb = B.world(B.landing[0]);
+      // (landing[1]: bến phía đảo kế tiếp, landing[0]: phía đảo trước; logic ghi b = a + 1, nhưng cầu ghi ngược chiều vẫn nối đúng bến)
+      const A = lands[b.a], B = lands[b.b], fwd = b.b === (b.a + 1) % lands.length;
+      const pa = A.world(A.landing[fwd ? 1 : 0]), pb = B.world(B.landing[fwd ? 0 : 1]);
       return [pa, pb];
     }
     // độ cao mặt cầu dọc theo chiều dài (0..1)

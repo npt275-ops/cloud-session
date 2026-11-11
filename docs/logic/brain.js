@@ -115,6 +115,7 @@
     return true;
   }
 
+  const IDLE_SOCIAL = new Set(['chat', 'rest', 'tell']); // việc nhàn ở một chỗ, coi như cùng việc khi nghĩ lại (think)
   /* ---------- Mỗi nhịp nghĩ: ai hết việc thì chọn việc mới ---------- */
   function think(S, rng) {
     for (const p of S.people.values()) {
@@ -123,6 +124,9 @@
       const ph = BK.Schedule ? BK.Schedule.phase(S.tod) : null;
       if (m && m.until > S.day && !S.situChanged && (!m.phase || m.phase === ph)) continue;
       const n = decide(S, p, rng);
+      // nghĩ lại vì tình huống đổi (S.situChanged) mà vẫn ra cùng việc, hay cùng buổi cùng chỗ (ngồi nghỉ ↔ trò chuyện trước nhà),
+      // ngoài trận: giữ nguyên việc cũ (cùng người đang nói chuyện, cùng hạn), không bốc lại làm người đang đi giữa đường quay ngoắt
+      if (m && m.until > S.day && n.state !== 'attack' && m.state !== 'attack' && n.place === m.place && n.mood === m.mood && (n.verb === m.verb || (n.phase && n.phase === m.phase && IDLE_SOCIAL.has(n.verb) && IDLE_SOCIAL.has(m.verb)))) { m.stress = stressOf(S, p); continue; }
       n.stress = stressOf(S, p);
       S.minds.set(p.id, n);
     }

@@ -15,7 +15,9 @@
     if (p.spouse != null) return 'c' + Math.min(p.id, p.spouse);
     // người lớn chưa cưới ra ở riêng (khi làng còn nhà trống, xem assign); trẻ ở với bố mẹ
     if (!depth && BK.People.ageOf(p, S.day) >= BK.Rules.ADULT_AGE) return 's' + p.id;
-    if ((depth || 0) < 4) for (const id of p.parents || []) { const q = S.people.get(id); if (q && (q.alive || q.spouse != null)) return keyOf(S, q, (depth || 0) + 1); }
+    // (theo bố hay mẹ còn sống trước: một người mất, người kia tái hôn sang nhà mới thì con theo sang, không ở lại nhà cũ một mình)
+    if ((depth || 0) < 4) { const ps = (p.parents || []).map((id) => S.people.get(id)).filter(Boolean), q = ps.find((x) => x.alive) || ps.find((x) => x.spouse != null);
+      if (q) return keyOf(S, q, (depth || 0) + 1); }
     return 's' + p.id;
   }
   function assign(S) {

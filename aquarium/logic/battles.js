@@ -49,7 +49,7 @@
     const cover = AMBUSH_COVER[B.key] || 0, wit = tb ? Math.max(0, tb.cunning - 0.45) * 0.6 : 0;
     if (!w.surprise && tb && rng.chance(Math.min(0.8, 0.15 + cover + wit))) {
       const k = rng.range(AMBUSH[0], AMBUSH[1]); let n = 0;
-      for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate)) n++;
+      for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate, { i: w.b, ambush: true })) n++; // (người phục kích nấp ở đầu cầu: phần vẽ cho đạn bay ra từ đó)
       w.troops = w.troops.filter((x) => x.p.alive); w.morale = Math.max(0, w.morale - 0.2); w.ambush = n; stat(W, 'ambush');
       const where = cover ? (B.key === 'forest' ? 'trong rừng sát đầu cầu' : 'trên sườn núi sát đầu cầu') : 'trên cầu';
       say(W, day, B.name + ' phục kích quân ' + A.name + ' ' + where + (wit > 0.1 ? ' (người đứng đầu mưu mô đoán trước đường quân tới)' : '') + ': ' + n + ' người ngã.', [w.a, w.b]);

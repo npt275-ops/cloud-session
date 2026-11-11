@@ -11,20 +11,26 @@
     // xe chạy dọc vòng đường khép kín A.loop ([[x, z], ...] theo toạ độ của lớp đường): mỗi xe có quãng đường đã đi của riêng nó,
     // đầu xe quay theo hướng đoạn đường đang đi. Xe chạy dưới đất nhường người đi bộ: có người đang ở trên mặt đường ngay phía
     // trước (peds: toạ độ đảo, setPeds từ game/village.js) thì dừng chờ; toa bám theo đầu xe của nó; xe bay không phải dừng.
-    const pedsOf = [];
+    let lastBlock = null; // người vừa chặn xe (cho stalled: biết vì sao xe đứng)
+    const pedsOf = [], seen = new Map(); // seen: trạng thái chạy của từng lớp đường đang vẽ (cho stalled)
     function setPeds(i, list) { pedsOf[i] = list; }
+    // xe trên mạng đường đứng yên quá sec giây game liền (kẹt ở ngã, kẹt sau người đứng trên lòng đường): cho tools/bug-hunt.js
+    function stalled(sec) { const out = [], now = Date.now(); for (const [st, o] of seen) { if (now - o.at > 3000) { seen.delete(st); continue; } // (lớp đường không còn vẽ)
+      for (const n in st.r || {}) if ((st.r[n].still || 0) > sec) out.push({ isle: o.isle, n, still: st.r[n].still, pos: st.r[n].pos, why: st.r[n].why }); } return out; }
     function blockedAhead(isle, lv, p, x, z, hx, hz) {
       const list = pedsOf[isle]; if (!list || !list.length) return false;
       const c = Math.cos(p.g.rotation.y), s = Math.sin(p.g.rotation.y), X = p.g.position.x + x * c + z * s, Z = p.g.position.z - x * s + z * c, HX = hx * c + hz * s, HZ = -hx * s + hz * c;
-      const lane = ((BK.Plains3D.TOWN && BK.Plains3D.TOWN.ROAD_W[lv]) || 2.6) / 2 + 0.15; // chỉ người đang ở trên mặt đường (không tính người trên vỉa hè)
-      for (const q of list) { const dx = q.x - X, dz = q.z - Z, fwd = dx * HX + dz * HZ, lat = Math.abs(dx * HZ - dz * HX); if (fwd > 0.3 && fwd < 4.2 && lat < lane) return true; }
+      // chỉ người đứng trong bề ngang của chính chiếc xe (nửa thân xe và một khoảng hở) trên làn nó đi: người trên vỉa hè, bên làn kia
+      // không chặn xe (trước đây lấy nửa bề ngang cả con đường tính từ làn xe đã lệch sang phải, nên người trên vỉa hè cũng chặn)
+      const lane = Math.min(0.95, ((BK.Plains3D.TOWN && BK.Plains3D.TOWN.ROAD_W[lv]) || 2.6) / 2 - 0.1);
+      for (const q of list) { const dx = q.x - X, dz = q.z - Z, fwd = dx * HX + dz * HZ, lat = Math.abs(dx * HZ - dz * HX); if (fwd > 0.3 && fwd < 4.2 && lat < lane) { lastBlock = q; return true; } }
       return false;
     }
     // few: đảo đang suy tàn (logic/prosperity.js decline): đường vắng, chỉ một phần ba số xe còn chạy, số còn lại ẩn
     function drive(isle, lv, A, p, ts, few) {
       A.path.forEach(([n, , , , head], j) => { const sub = p.subs[n]; if (!sub) return; const k = head ? A.path.findIndex((x) => x[0] === head) : j; sub.visible = !few || k % 3 === 0; });
       if (!A.cum) { A.cum = [0]; for (let i = 0; i < A.loop.length; i++) { const a = A.loop[i], b = A.loop[(i + 1) % A.loop.length]; A.cum.push(A.cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); } A.len = A.cum[A.cum.length - 1]; }
-      const st = p.drive || (p.drive = { at: ts, d: {} }), total = Math.min(0.5, Math.max(0, ts - st.at)); st.at = ts; // ts: giờ game (giây)
+      const st = p.drive || (p.drive = { at: ts, d: {} }); seen.set(st, { isle, at: Date.now() }); const total = Math.min(0.5, Math.max(0, ts - st.at)); st.at = ts; // ts: giờ game (giây)
       const steps = Math.max(1, Math.ceil(total / STEP)), dt = total / steps; // bước con: ở 4× xe vẫn kịp thấy người và dừng
       const place = (sub, d, y) => {
         d %= A.len; if (d < 0) d += A.len;
@@ -70,7 +76,7 @@
       const ahead = Object.keys(R).some((m) => { if (m === n) return false; const o = R[m], q = o.pos;
           if (!q || !o.h || o.h[0] * hx + o.h[1] * hz < 0.3) return false; const dx = q[0] - x, dz = q[1] - z, f = dx * hx + dz * hz;
           return f > 0.3 && f < 3.2 && Math.abs(dx * hz - dz * hx) < 1.2; }); // (chỉ xe cùng chiều: xe ngược chiều đi làn bên kia)
-      if (!ahead && !blockedAhead(isle, lv, p, x, z, hx, hz)) { v.t += speed * dt; v.d += speed * dt; }
+      if (!ahead && !blockedAhead(isle, lv, p, x, z, hx, hz)) { v.t += speed * dt; v.d += speed * dt; v.still = 0; } else { v.still = (v.still || 0) + dt; v.why = ahead ? 'xe phía trước' : 'người ' + (lastBlock ? lastBlock.x.toFixed(1) + ',' + lastBlock.z.toFixed(1) + (lastBlock.who && lastBlock.who.doing ? ' ' + (lastBlock.who.doing.verb || lastBlock.who.doing.state) + '@' + (lastBlock.who.doing.place || '-') + (lastBlock.who.moving ? ' đang đi' : ' đứng') : '') : ''); }
       if (v.t >= len) { // tới điểm: chọn đường tiếp theo (không quay lại đường vừa đi, trừ đường cụt)
         const nx = G.adj[v.b].filter((c) => c !== v.a); v.seed = (v.seed * 1103515245 + 12345) & 0x7fffffff;
         const c = nx.length ? nx[v.seed % nx.length] : v.a; v.t -= len; v.a = v.b; v.b = c; }
@@ -86,7 +92,7 @@
           q.position.set(sub.position.x + lx * c + lz * s, ly, sub.position.z - lx * s + lz * c); q.rotation.set(Math.sin(stride + ph) * 0.3, sub.rotation.y, 0); }
       }
     }
-    return { drive, setPeds };
+    return { drive, setPeds, stalled };
   }
   BK.Traffic3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

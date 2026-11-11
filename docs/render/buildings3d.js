@@ -343,7 +343,8 @@
       }
       // vòng đi dạo quanh nhà chính: tâm và bán kính theo khung bao thật của nhà chính đang đứng
       { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
-        if (H) { const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
+        // (cập nhật ma trận trước khi đo: công trình vừa dựng chưa qua khung hình nào thì ma trận thế giới còn ở gốc toạ độ)
+        if (H) { H.g.updateWorldMatrix(true, true); const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
       // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
       // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra
@@ -459,7 +460,7 @@
     const setStock = (i, ratio) => { if (shown[i] && shown[i].wy) WY.setStock(shown[i].wy.piles, ratio); };
     // số mộ trong bãi mộ của đảo i (logic/scenes.js S.graves)
     const setGraves = (i, n) => { if (shown[i] && shown[i].wy) WY.setGraves(shown[i].wy.graves, n); };
-    return { show, setProgress, setProgressByTime, animate, stats, offIsland, places, setStock, setGraves, setRuin, setDecline, setPeds: (i, list) => traffic.setPeds(i, list), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
+    return { show, setProgress, setProgressByTime, animate, stats, offIsland, places, setStock, setGraves, setRuin, setDecline, setPeds: (i, list) => traffic.setPeds(i, list), stalled: (sec) => traffic.stalled(sec), flush, debug, queued: () => queue.length, cacheSize: () => BAKED.size };
   }
   return { create };
 });

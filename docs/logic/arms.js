@@ -96,19 +96,22 @@
     let dead = 0;
     if (pa > 0 && def.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pa / Math.max(1, def.length) * shield);
-      def.forEach((x, j) => { if (x.p.alive && rng.chance(ch(pk)) && fall(x, w.a, shooters[j % shooters.length])) dead++; });
+      // (người trúng, người bắn: hàng đầu hai bên, logic/war.js FRONT; số phát trúng như cũ)
+      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)), n = def.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
+      for (let k = 0; k < n; k++) { const fd = front(def), fs = front(shooters); if (!fd.length) break; if (fall(fd[k % fd.length], w.a, fs[k % fs.length])) dead++; }
       st.volleys++;
     }
     if (pd > 0 && w.troops.length) {
       const pk = Math.min(0.3, dt * RANGED_KILL * pd / Math.max(1, w.troops.length));
-      w.troops.forEach((x, j) => { if (x.p.alive && rng.chance(ch(pk))) fall(x, w.b, defShoot[j % defShoot.length]); });
+      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)), n = w.troops.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
+      for (let k = 0; k < n; k++) { const ft = front(w.troops), fd = front(defShoot); if (!ft.length) break; fall(ft[k % ft.length], w.b, fd[k % fd.length]); }
     }
     // máy công thành: phá cổng (lá chắn đỡ trước), bắn người giữ
     for (const e of w.engines || []) {
       const E0 = ENGINE[e.kind];
       if (kb.shield && B.shieldHp > 0) { B.shieldHp = Math.max(0, B.shieldHp - dt * E0.gate * 0.5); continue; }
       G().hit(B, w.gate, dt * E0.gate); st.gateDmg += dt * E0.gate;
-      if (E0.kill > 0) for (const x of def) if (x.p.alive && rng.chance(ch(Math.min(0.2, dt * 0.04 * E0.kill))) && fall(x, w.a)) dead++;
+      if (E0.kill > 0) for (const x of def) if (x.p.alive && rng.chance(ch(Math.min(0.2, dt * 0.04 * E0.kill))) && fall(x, w.a, { i: w.a, eng: true })) dead++; // (đạn từ máy công thành: phần vẽ cho bay từ xe)
     }
     // bên giữ: người bắn xa cũng nhắm máy công thành
     if (pd > 0) for (const e of w.engines || []) e.hp -= dt * 0.02 * pd / Math.max(1, (w.engines || []).length);

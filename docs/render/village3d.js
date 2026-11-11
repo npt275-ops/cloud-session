@@ -22,19 +22,37 @@
     fear: { eye: 1.3, tilt: -0.4, by: 0.02, mouth: 'open' }, surprise: { eye: 1.4, tilt: 0, by: 0.035, mouth: 'open' }, closed: { eye: 0.1, tilt: 0, by: -0.008, mouth: 'line' },
   };
 
+  // chỗ đứng trên mặt cầu khi đánh cổng (design/ke-hoach-buoc-12.md): quân hàng bốn người, hàng đầu cách cổng (tầm bắn − 5: hai hàng đầu
+  // hai bên bắn tới nhau), tức cách đầu cầu (tầm bắn − 5 − gap; gap: cổng phụ nằm sâu trong mép đảo chừng 7 đơn vị), không ra khỏi mặt cầu;
+  // xe, máy công thành hai làn sau hàng quân cuối. Cầu ngắn (hay quân đông, tầm xa ở thời cuối) thì các hàng, các xe đứng sít lại,
+  // còn thiếu chỗ thì hàng đầu tiến gần cổng hơn (vẫn trong tầm), để không ai bị dồn chồng lên nhau ở cuối cầu. len: dài mặt cầu; rg: tầm bắn; nT: số quân;
+  // nG: số xe (không kể drone); gap: khoảng từ cổng tới đầu cầu. Trả khoảng cách từ đầu cầu phía đảo bị đánh: troop(k), gear(k)
+  const DECK = { IN: 5, ROW: 1.3, ROW_MIN: 0.95, GEAR: 6, GEAR_MIN: 3.6, GEAR_IN: 3 };
+  function deckPlan(len, rg, nT, nG, gap) {
+    const R = Math.max(1, Math.ceil(nT / 4)), P = Math.ceil((nG || 0) / 2), avail = Math.max(4, len * 0.97 - 1);
+    let front = Math.max(0.5, rg - DECK.IN - (gap || 0)), row = DECK.ROW, gear = DECK.GEAR;
+    const need = () => front + (R - 1) * row + (P ? DECK.GEAR_IN + (P - 1) * gear : 0);
+    if (need() > avail) { const k = Math.max(0, (avail - front - (P ? DECK.GEAR_IN : 0)) / ((R - 1) * row + (P ? (P - 1) * gear : 0) || 1));
+      row = Math.max(DECK.ROW_MIN, row * Math.min(1, k)); gear = Math.max(DECK.GEAR_MIN, gear * Math.min(1, k)); }
+    if (need() > avail) front = Math.max(0.5, front - (need() - avail));
+    const last = front + (R - 1) * row;
+    return { troop: (k) => Math.min(avail, front + Math.floor(k / 4) * row), gear: (k) => Math.min(avail, last + DECK.GEAR_IN + Math.floor(k / 2) * gear) };
+  }
+
   function create(o) {
     const { THREE, scene, L, S } = o, Rig = BK.Rig3D, Anim = BK.Anim3D, Brain = BK.Brain, P = BK.People, Work = BK.Work3D;
     const SCALE = Rig.PERSON_SCALE;
     const shots = o.shots || null; // tên, đạn bay (render/shots3d.js, game/cities.js tạo dùng chung)
     const camera = o.camera || null, LOD_FAR = 40; let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
     const bars = o.bars || null;   // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
-    const UNSTICK_S = 3, UNSTICK_D = 0.5, SEP = 0.6; let stuckN = 0; // gỡ người kẹt: đi chừng này giây (giờ game) không tiến được chừng này đơn vị (đếm số lần cho auditStats)
+    const UNSTICK_S = 3, UNSTICK_D = 0.5, SEP = 0.6; let stuckN = 0, stuckHard = 0, phantom = 0; // gỡ người kẹt: đi chừng này giây (giờ game) không tiến được chừng này đơn vị (đếm số lần cho auditStats)
     let level = o.level || 1, PL = o.places || null;
     const Nav = BK.Nav3D.create({ THREE, L, level: () => level, places: () => PL }); // lối đi: render/nav3d.js
 
     /* ---------- Những chỗ trong làng ---------- */
     // chỗ ra giữ cổng khi có chiến tranh: cổng phụ phía quân địch tới (logic/war.js ghi S.situ.warSide)
     const bridges = L.landing.map((v) => v.clone().multiplyScalar(0.86));
+    const hopS = new WeakMap(); // đi vòng (spot hop): chỗ thứ mấy, tới lúc nào
     const pickOf = (arr, k) => (arr && arr.length ? arr[Math.abs(k) % arr.length] : null);
     function spot(place, p) {
       if (!PL) return null;
@@ -74,12 +92,19 @@
       if (place === 'market') return (S.decline ? null : pickOf(PL.market, k)) || pickOf(PL.store, k) || pickOf(PL.square, k); // thời chưa có chợ: trao đổi ở kho, ở sân; suy tàn: chợ đóng cửa, mua ở kho
       if (place === 'shrine') return pickOf(PL.shrine, k);
       if (place === 'school') return pickOf(PL.school, k);
-      // đi vòng: người đi đường, thợ đi tu bổ, thầy thuốc đi thăm từng nhà, lính đi tuần đổi chỗ theo thời gian
-      const hop = (arr, every) => pickOf(arr, p.id * 3 + Math.floor(S.day * every + (p.id % 7) * 0.13));
-      if (place === 'stroll') return hop(PL.all, 5);
-      if (place === 'repair') return hop(PL.all, 1.5);
-      if (place === 'visit') return hop(PL.homes, 2);
-      if (place === 'patrol') return hop(PL.guard, 3);
+      // đi vòng: người đi đường, thợ đi tu bổ, thầy thuốc đi thăm từng nhà, lính đi tuần: tới chỗ này, ở lại dwell giây game rồi mới
+      // sang chỗ kế tiếp (không đổi chỗ theo đồng hồ: chưa tới nơi đã đổi hướng thì người đi tới đi lui, bị coi là kẹt)
+      const hop = (arr, dwell) => {
+        if (!arr || !arr.length) return null;
+        let s = hopS.get(p); if (!s || s.place !== place) { s = { place, i: p.id * 3 + (p.id % 7), at: null }; hopS.set(p, s); }
+        const tgt = pickOf(arr, s.i), f = folkOf.get(p);
+        if (f && tgt && (f.pos.x - tgt.x) ** 2 + (f.pos.z - tgt.z) ** 2 < 9) { if (s.at == null) s.at = gameT; else if (gameT - s.at > dwell) { s.i++; s.at = null; } }
+        return pickOf(arr, s.i);
+      };
+      if (place === 'stroll') return hop(PL.all, 4);
+      if (place === 'repair') return hop(PL.all, 12);
+      if (place === 'visit') return hop(PL.homes, 10);
+      if (place === 'patrol') return hop(PL.guard, 6);
       return null;
     }
     // chỗ của một công trình theo khoá của logic/siege.js (bãi làm việc, nhà số, cổng)
@@ -90,7 +115,7 @@
     // phía bên kia đảo so với cổng đang bị đánh, rải theo người (trong tường thành)
     function refugeOf(k) {
       const sg = S.situ.siege, g = (sg && pickOf(PL[sg.gate], 0)) || pickOf(PL.gate, 0) || PL.hall, a = Math.atan2(-g.z, -g.x) + (((k * 37) % 100) / 100 - 0.5) * 1.1;
-      const R = L.rOf(a) * (0.42 + ((k * 13) % 20) / 100); const v = new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R); Nav.keepInside(v); return v;
+      const R = L.rOf(a) * (0.42 + ((k * 13) % 20) / 100); const v = new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R); Nav.keepInside(v); return Nav.offCarriage(v); // (không đứng giữa lòng đường, chặn xe)
     }
     const setPlaces = (pl) => { PL = pl; Nav.reset(); };
     // khách từ đảo khác đang ở đảo này (game/cities.js mỗi giây, từ logic/diplomacy.js W.visits): [{ key, p, level, mind, enter }]
@@ -112,6 +137,12 @@
         if (B) { keep.add(bk); V.copy(B.pos).add(L.center); V.y = L.center.y + 0.02 + Math.max(0, B.pos.y); Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0),
             B.yaw + Math.PI); M.compose(V, Q, one); fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++;
             continue; }
+        // quân đánh ngã trước cổng lúc không ai xem: nằm trên mặt cầu (chỗ quân đánh đứng nã cổng), không nằm trong thành
+        const sg = S.situ.siege, br = /^gate/.test(x.at) && x.i !== o.idx && o.deck ? (sg && sg.bridge != null ? sg.bridge : x.i) : null,
+          dk = br != null ? o.deck(br, 0.25 + ((x.id * 7) % 10) / 30) : null;
+        if (dk) { const nx = o.deck(br, 0.3), al = nx ? nx.clone().sub(dk).setY(0) : null; if (al && al.lengthSq() > 1e-6) dk.addScaledVector(new THREE.Vector3(-al.z, 0, al.x).normalize(), (((x.id * 13) % 7) - 3) * 0.4);
+          V.copy(dk).add(L.center); V.y = L.center.y + dk.y + 0.02; Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), x.id * 2.39996 * 3.1); M.compose(V, Q, one);
+          fallenBody.setMatrixAt(n, M); fallenHead.setMatrixAt(n, M); fallenBody.setColorAt(n, c.set(x.color)); n++; continue; }
         const base = spot(x.at, { id: x.id, clan: null, home: null, post: x.id }); if (!base) continue;
         const a = x.id * 2.39996, r = 0.8 + (x.id % 7) * 0.45; V.set(base.x + Math.cos(a) * r, 0.02, base.z + Math.sin(a) * r);
         // ngã ở cổng: chỗ đứng của chốt gác nằm trong khung cổng, dịch vào phía trong thành vài bước cho khỏi lẫn vào nhà cổng
@@ -140,7 +171,7 @@
     }
 
     /* ---------- Mỗi người: khung, tư thế, vị trí ---------- */
-    const folks = new Map();
+    const folks = new Map(), folkOf = new WeakMap(); // folkOf: người logic → người đang vẽ (spot: đi vòng theo chỗ đã tới)
     const ageBand = (a) => (a < 6 ? 'c' : a < 55 ? 'a' : 'o');
     function rigKey(p, age, lv) { return (lv || level) + '|' + p.role + '|' + p.job + '|' + ageBand(age); }
     // id: khoá trong folks (dân: mã số người; khách từ đảo khác: 'g' + đảo + ':' + mã số); lv: thời của đảo nhà người đó (trang phục);
@@ -157,6 +188,7 @@
         f = { fresh: true, p, cur: Anim.blank(), pos: at, yaw: Math.random() * 6.28, ph: Math.random() * 6, jit: new THREE.Vector3(), blinkAt: Math.random() * 4, blink: 0, guest: typeof id === 'string' };
         folks.set(id, f);
       }
+      folkOf.set(p, f); f.mid = id; // (khoá của người này trong folks: mind.target của người khác trỏ tới khoá này)
       // chỗ đứng lệch một chút quanh điểm đến (trước cửa, trước chỗ làm), không dồn đúng một điểm
       // đứng ngay trước chỗ làm, cửa nhà; mỗi người một chỗ quanh đó theo khoá riêng (người làng: mã; khách, quân đảo khác: 'w<đảo>:<mã>',
       // vì mã người đánh theo từng đảo nên phải tính cả đảo), xếp theo góc vàng để hai người cùng chỗ không đứng chồng lên nhau
@@ -184,11 +216,21 @@
         const inRange = (q) => q && q.rig && q.pos.distanceToSquared(v.pos) <= (q.range || SIGHT) ** 2;
         if (!inRange(sh)) { sh = null; let bd = 1e9; for (const o2 of v.side === 'foe' ? sightDef : sightFoe) { const d = o2.pos.distanceToSquared(v.pos); if (d < bd && inRange(o2)) { bd = d; sh = o2; } } }
         const K = BK.Arms ? BK.Arms.kit(sh && sh.gst ? sh.gst.level : level) : null, kind = (K && BK.Shots3D && BK.Shots3D.OF[K.ranged]) || ['arrow'];
-        const fly = BK.Shots3D && BK.Shots3D.FLIGHT ? BK.Shots3D.FLIGHT(kind[0]) : 0.5, now = lastRs;
         const to = v.pos.clone().add(L.center); to.y += 0.9 * SCALE;
-        const from = sh ? sh.pos.clone().add(L.center) : to.clone().add(new THREE.Vector3(8, 0, 8)); from.y += 1.25 * SCALE;
-        if (shots) shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] });
-        (v.pend || (v.pend = [])).push({ at: now + fly, dmg: h.dmg, from: sh ? sh.pos.clone() : null });
+        // trúng đạn máy công thành (logic/arms.js): đạn bay ra từ chiếc xe gần nhất (game/cities.js siegeGear, toạ độ thế giới)
+        let eng = null; if (!sh && h.eng && o.gear) { let bd = 1e9; for (const e of o.gear() || []) { if (!e.at || !BK.Shots3D.OF[e.kind]) continue; const d = e.at.distanceToSquared(to); if (d < bd) { bd = d; eng = e; } } }
+        // phục kích (logic/battles.js): người phục kích nấp trên bờ hai bên đầu cầu (không vẽ người), đạn bay ra từ chỗ nấp
+        let amb = null; if (!sh && !eng && h.ambush && o.deck) { const sg = S.situ.siege, br = sg && sg.bridge != null ? sg.bridge : h.i, e0 = o.deck(br, 0), e1 = o.deck(br, 0.1);
+          if (e0 && e1) { const al = e1.clone().sub(e0).setY(0).normalize(), side = ((h.seq % 2) * 2 - 1) * (3.5 + (h.seq % 3)); amb = e0.clone().addScaledVector(new THREE.Vector3(-al.z, 0, al.x), side).addScaledVector(al, -1.5).add(L.center); amb.y = L.center.y; } }
+        const ek = eng ? BK.Shots3D.OF[eng.kind] : kind, now = lastRs, fly = BK.Shots3D && BK.Shots3D.FLIGHT ? BK.Shots3D.FLIGHT(ek[0]) : 0.5;
+        const from = sh ? sh.pos.clone().add(L.center) : eng ? eng.at.clone().setY(eng.at.y + 1.6 - 1.25 * SCALE) : amb || to.clone().add(new THREE.Vector3(8, 0, 8)); from.y += 1.25 * SCALE;
+        let why = null; if (!sh && !eng && !amb) { phantom++; let bd = 1e9, bq = null; for (const o2 of v.side === 'foe' ? sightDef : sightFoe) { const d = o2.pos.distanceTo(v.pos); if (d < bd) { bd = d; bq = o2; } }
+          const vm = v.gst ? v.gst.mind : S.minds.get(v.p.id) || {}; why = (v.side || '-') + ' ' + (vm.verb || vm.state) + '@' + (vm.place || '-') + (h.eng ? ' (xe)' : '') + ' gần nhất ' + (bq ? bd.toFixed(1) + '/' + (bq.range || 0) : 'không có ai'); } // logic ghi một phát trúng mà không ai bên kia đứng trong tầm: bộ quét lỗi đếm
+        // (không ai bên kia đứng trong tầm: không vẽ viên đạn bay ra từ chỗ trống; phát không chết thì chỉ trừ máu, phát chết thì người
+        // đó gục xuống. Bộ quét lỗi vẫn đếm để biết logic và phần vẽ còn lệch nhau bao nhiêu)
+        if (why) { if (shots && shots.note) shots.note({ src: 'phantom', why: why + (h.kill ? ' (chết)' : '') }); (v.pend || (v.pend = [])).push({ at: now, dmg: h.dmg, from: null }); if (h.kill) v.dieAt = now + 0.2; continue; }
+        if (shots) shots.fire(ek[0], from, to, now, { color: ek[1], puff: ek[2], src: sh ? 'hit' : eng ? 'gear' : 'ambush', rg: sh ? sh.range || SIGHT : 0 });
+        (v.pend || (v.pend = [])).push({ at: now + fly, dmg: h.dmg, from: sh ? sh.pos.clone() : eng ? eng.at.clone().sub(L.center) : amb ? amb.clone().sub(L.center) : null });
         if (h.kill) v.dieAt = now + fly;
       }
     }
@@ -201,18 +243,23 @@
      *   nhà chính    quân giữ hàng ngang trước cửa nhà chính; quân đánh hàng ngang cách đó một đoạn, phía cổng đã vỡ
      *   trên phố     quân đánh hàng ngang trước công trình đang bị phá; dân binh hàng ngang chắn bên sườn
      * mind.side: 'foe' (quân đánh) hay 'def' (bên giữ); mind.rank: thứ tự trong đội; mind.of: số người của đội. */
-    const FORM_GAP = 1.3, SIGHT = 13, FLINCH = 0.35; // khoảng giữa hai người trong hàng; tầm nhìn thấy kẻ địch (gặp là bắn)
+    const FORM_GAP = 1.3, SIGHT = 13, FLINCH = 0.35;
+    const DEF_IN = 2.5; // bên giữ đứng sau cổng (phía trong thành) chừng này (quân đánh trên cầu: deckPlan)
     let sightFoe = [], sightDef = [];
     function gateAnchor() { const sg = S.situ.siege, k = sg && sg.gate; return k && PL && PL[k] && PL[k].length ? PL[k][0] : null; }
     function formation(f, mind) {
       // hành quân trên mặt cầu (game/cities.js): chỗ trên cầu theo ngày (u0 + du × số ngày), hàng bốn người, người sau lùi lại
       // theo chiều đi; quay mặt về phía trước
       if (mind.place === 'deck' && o.deck && mind.u0 != null) {
-        const dir = mind.du >= 0 ? 1 : -1, row = Math.floor((mind.rank || 0) / 4), col = (mind.rank || 0) % 4, uu = mind.u0 + mind.du * (S.day - mind.d0) - dir * row * 0.035;
-        const u1 = Math.max(0.02, Math.min(0.98, uu)), at = o.deck(mind.bridge, u1), nx = o.deck(mind.bridge, Math.max(0, Math.min(1, u1 + dir * 0.03)));
+        // (kẹp đầu đoàn trong mặt cầu; các hàng sau lùi theo đầu đoàn, hàng chưa lên cầu đứng trên đất ngay sau đầu cầu: không hàng
+        // nào bị dồn vào cùng một điểm ở cuối cầu)
+        const dir = mind.du >= 0 ? 1 : -1, row = Math.floor((mind.rank || 0) / 4), col = (mind.rank || 0) % 4, head = Math.max(0.02, Math.min(0.98, mind.u0 + mind.du * (S.day - mind.d0)));
+        const u1 = Math.max(-0.45, Math.min(1.45, head - dir * row * 0.035)), at = o.deck(mind.bridge, u1), nx = o.deck(mind.bridge, Math.max(0, Math.min(1, u1 + dir * 0.03)));
         if (!at || !nx) return null; const al = nx.clone().sub(at).setY(0); if (al.lengthSq() < 1e-6) al.set(0, 0, 1); al.normalize();
         at.addScaledVector(new THREE.Vector3(-al.z, 0, al.x), (col - 1.5) * 1.0); return { p: at, face: at.clone().addScaledVector(al, 5), bridge: true };
       }
+      if (mind.duel && PL) { const g = spot(mind.place, f.p); if (g) { const out = g.clone().setY(0).normalize(), at = g.clone().addScaledVector(out, mind.duel === 'foe' ? 4.6 : 2.4); at.y = 0;
+        return { p: at, face: g.clone().addScaledVector(out, mind.duel === 'foe' ? 2.4 : 4.6), outside: true }; } } // đấu tướng: gặp nhau trước cổng, giữa cổng và đầu cầu
       if ((mind.state !== 'attack' && !mind.camp && !mind.muster) || !mind.side || !PL || mind.rank == null) return null; // (camp: trại vây, đứng xem đấu tướng: đứng hàng, không bắn)
       // tập hợp quân trước khi lên đường: hàng ngang trong cổng mình, mỗi hàng 6 người, quay ra cổng (không dồn một chỗ)
       if (mind.muster) { const g = spot(mind.place, f.p); if (!g) return null; const a0 = Math.atan2(g.z, g.x), row = Math.floor(mind.rank / 6), col = mind.rank % 6, r = L.rOf(a0) - 8 - row * 1.3, a = a0 + ((col - 2.5) * 1.2) / r;
@@ -220,17 +267,18 @@
       const foe = mind.side === 'foe', k = mind.rank, base = mind.place === 'hall' ? PL.hall : spot(mind.place, f.p);
       if (!base) return null;
       const gateSide = mind.place === 'gate' || mind.place === 'gateL' || mind.place === 'gateR';
-      // trận ở cầu: một phần ba quân đánh đứng trên mặt cầu, đầu hàng sát cổng phụ, quay về cổng
-      if (gateSide && foe && !mind.camp && mind.bridge != null && k % 3 === 0 && o.deck) {
-        // cầu rộng (render/build/bridges3d.js WIDE): bốn người một hàng ngang, hàng sau cách 1,4 đơn vị
+      // trận ở cầu (design/ke-hoach-buoc-12.md): cả đạo quân đứng trên mặt cầu, hàng bốn người, hàng đầu cách cổng vừa trong tầm
+      // bắn (khoảng giữa cầu), nã vào cổng; cổng đổ mới tràn vào thành (chặng 'inside': nhánh khác). Trại vây cũng đứng trên cầu
+      if (gateSide && foe && mind.bridge != null && o.deck) {
         const a0 = o.deck(mind.bridge, 0), a1 = o.deck(mind.bridge, 1), len = a0 && a1 ? a0.distanceTo(a1) : 30;
-        const j = Math.floor(k / 3), row = Math.floor(j / 4), col = j % 4, u = Math.min(0.5, (2.5 + row * 1.4) / len), at = o.deck(mind.bridge, u), nx = o.deck(mind.bridge, u + 0.02);
-        if (at && nx) { const al = nx.clone().sub(at).setY(0).normalize(), pr = new THREE.Vector3(-al.z, 0, al.x); at.addScaledVector(pr, (col - 1.5) * 1.2); return { p: at, face: base, bridge: true }; }
+        const rg = BK.Arms && BK.Arms.rangeOf ? BK.Arms.rangeOf(f.gst ? f.gst.level : level) : SIGHT, plan = deckPlan(len, rg, mind.of || 8, mind.ng || 0, a0 ? Math.hypot(a0.x - base.x, a0.z - base.z) : 7);
+        const col = k % 4, u = plan.troop(k) / len, at = o.deck(mind.bridge, u), nx = o.deck(mind.bridge, Math.min(1, u + 0.02));
+        if (at && nx) { const al = nx.clone().sub(at).setY(0).normalize(), pr = new THREE.Vector3(-al.z, 0, al.x); at.addScaledVector(pr, (col - 1.5) * 1.0); return { p: at, face: base, bridge: true }; }
       }
       if (gateSide) {
         // dọc theo vòng tường: cột theo góc quanh cổng, hàng theo bán kính
         const a0 = Math.atan2(base.z, base.x), COLS = foe ? Math.max(4, Math.min(14, Math.ceil((mind.of || 8) / 2))) : 8, row = Math.floor(k / COLS), col = k % COLS;
-        const r = foe ? L.rOf(a0) - 0.9 - row * 1.15 : L.rOf(a0) - 6.4 - row * FORM_GAP;
+        const r = foe ? L.rOf(a0) - 0.9 - row * 1.15 : Math.hypot(base.x, base.z) - DEF_IN - row * FORM_GAP; // bên giữ: ngay sau cổng (phía trong thành), trong tầm bắn tới hàng đầu trên cầu
         const a = a0 + ((col - (COLS - 1) / 2) * FORM_GAP) / r, rr = foe ? L.rOf(a) - 0.9 - row * 1.15 : r;
         const at = new THREE.Vector3(Math.cos(a) * rr, 0, Math.sin(a) * rr), fr = foe ? L.rOf(a0) - 7 : L.rOf(a0) - 1;
         return { p: at, face: new THREE.Vector3(Math.cos(a0) * fr, 0, Math.sin(a0) * fr), outside: foe };
@@ -246,6 +294,19 @@
       return { p: c.addScaledVector(lat, cs).addScaledVector(back, row * FORM_GAP), face, outside: false };
     }
 
+    // vừa rời mặt cầu (cổng đổ: quân trên cầu tràn vào thành): đi dọc mặt cầu về đầu cầu, qua cổng rồi mới theo lối trong đảo
+    // (không bị kéo thẳng vào trong tường, trông như nhảy chỗ). Dùng cho cả bước chính lẫn các bước con trong một khung hình
+    function leaveDeck(f, aim, goal) {
+      if (goal && goal.bridge) { f.deckOf = aim.bridge; return goal; }
+      if (!goal || f.deckOf == null || !o.deck) return goal;
+      if (goal.outside) { f.deckOf = null; return goal; } // đích ngoài tường (đấu tướng trước cổng): đi thẳng từ cầu xuống, không qua cổng
+      const r = Math.hypot(f.pos.x, f.pos.z), e = r > L.rOf(Math.atan2(f.pos.z, f.pos.x)) - 5.6 ? o.deck(f.deckOf, 0) : null;
+      if (!e) { f.deckOf = null; return goal; }
+      const gA = gateAnchor(); if (gA && Math.hypot(e.x - gA.x, e.z - gA.z) < 15) e.set(gA.x, e.y, gA.z); else e.multiplyScalar(Math.max(0, L.rOf(Math.atan2(e.z, e.x)) - 5.8) / Math.max(1e-3, Math.hypot(e.x, e.z)));
+      // chân theo mặt cầu ở chỗ đang đứng (cầu vồng lên giữa nhịp): chiếu vị trí lên trục cầu
+      const a0 = o.deck(f.deckOf, 0), a1 = o.deck(f.deckOf, 1); if (a0 && a1) { const ax = a1.x - a0.x, az = a1.z - a0.z, u = Math.max(0, Math.min(1, ((f.pos.x - a0.x) * ax + (f.pos.z - a0.z) * az) / (ax * ax + az * az || 1))), on = o.deck(f.deckOf, u); if (on) f.pos.y = on.y; }
+      e.y = f.pos.y; return { p: e, face: goal.p, bridge: true, leave: true };
+    }
     /* ---------- Đi tới đâu ---------- */
     const _v = new THREE.Vector3();
     function goalOf(f, mind) {
@@ -254,8 +315,11 @@
       if (tgt && (mind.state === 'talk' || mind.state === 'attack')) {
         // đứng nghe, đứng xem (drama): toả thành vòng rộng quanh người nói; trò chuyện, cãi, đánh: đứng sát
         const K = f.knobs, gap = mind.verb === 'listen' ? 2.6 + (f.p.id % 5) * 0.55 : mind.state === 'attack' ? 7 + (f.p.id % 4) * 0.6 : 1.3 + (K.lean < 0 ? -K.lean * 0.6 : 0);
-        _v.copy(f.pos).sub(tgt.pos); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
-        return { p: tgt.pos.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
+        // rủ nói chuyện mà người kia đang đi chỗ khác (không rủ lại mình): tới chỗ người kia sắp tới mà đứng chờ, không đuổi theo từng
+        // bước (đuổi theo thì hai người đi vòng vòng, bị coi là kẹt)
+        const at = mind.state === 'talk' && tgt.moving && tgt.gp && !(tgt.doing && tgt.doing.target === f.mid) ? tgt.gp : tgt.pos;
+        _v.copy(f.pos).sub(at); if (_v.lengthSq() < 1e-4) _v.set(1, 0, 0);
+        return { p: at.clone().addScaledVector(_v.normalize(), gap), face: tgt.pos };
       }
       // đi theo một người (hộ vệ đi sau người đứng đầu, người nhà đi dạo cùng): đứng sau lưng người đó một chút
       if (mind.follow != null) { const tg = folks.get(mind.follow); if (tg) return { p: tg.pos.clone().add(new THREE.Vector3(-Math.sin(tg.yaw) * 1.5 + Math.cos(tg.yaw) * 0.6, 0, -Math.cos(tg.yaw) * 1.5 - Math.sin(tg.yaw) * 0.6)), face: null }; }
@@ -344,7 +408,10 @@
           if (!f.qSince) f.qSince = ts + n * 1e-3; f.qRank = n; }); for (const [, f] of folks) if (f.qSince && !q.includes(f.p.id)) f.qSince = 0; }
       const kingF = S.seats.king != null ? folks.get(S.seats.king) : null, hungry = S.food < 0.5;
       // người có mặt trên đảo: dân (trừ người đi vắng: đi đánh, đóng giữ, sang đảo khác) và khách từ đảo khác (setGuests)
-      const roster = []; for (const p of S.people.values()) if (p.alive && !p.away) roster.push([p.id, p, null]); for (const g of guests) roster.push([g.key, g.p, g]);
+      const roster = []; for (const p of S.people.values()) if (p.alive && !p.away) roster.push([p.id, p, null]);
+      // khách vừa chết ở logic (phục kích trên cầu, sấm sét…) mà danh sách khách chưa kịp làm mới (mỗi giây): ngã xuống ngay tại chỗ,
+      // không đi tiếp
+      for (const g of guests) { if (g.p.alive !== false) { roster.push([g.key, g.p, g]); continue; } const f = folks.get(g.key); if (f && f.rig && !f.dieAt) f.dieAt = rs; }
       // phát trúng thật (logic/war.js W.hitLog; design/ke-hoach-khac-phuc.md mục 2.1): mỗi phát là một viên đạn từ đúng người bắn tới
       // đúng người trúng; thanh máu tụt khi đạn tới; người hết máu vẫn đứng tới lúc viên đạn cuối tới rồi mới ngã, nằm đúng chỗ đó
       takeHits(rs);
@@ -364,14 +431,16 @@
         f.lastMind = mind; f.gst = gst; f.color = gst && gst.color ? gst.color : f.color || ownColor; f.bodyKey = (gst ? (/^w(\d+):/.exec(key) || [0, idx])[1] : idx) + ':' + p.id;
         if (f.pend && f.pend.length && rs >= f.pend[0].at) { const h = f.pend.shift(); f.hpShow = Math.max(0, (f.hpShow == null ? 100 : f.hpShow) - h.dmg);
           // trúng đạn: giật lùi nửa bước theo hướng đạn tới, khựng lại một chút (FLINCH giây)
-          if (h.from) { _v.copy(f.pos).sub(h.from).setY(0); if (_v.lengthSq() > 1e-4) { _v.normalize(); f.pos.addScaledVector(_v, 0.35); Nav.keepInside(f.pos); } } f.flinch = rs + FLINCH; }
+          if (h.from) { _v.copy(f.pos).sub(h.from).setY(0); if (_v.lengthSq() > 1e-4) { _v.normalize(); f.pos.addScaledVector(_v, 0.35); if (!f.onDeck) Nav.keepInside(f.pos); } } f.flinch = rs + FLINCH; } // (trên mặt cầu: không kéo vào trong đảo)
         if (!f.pend || !f.pend.length) { f.hpShow = p.alive ? (p.hp == null ? 100 : p.hp) : 0; }
         f.knobs = Object.assign(Brain.knobs(p.genome, mind.stress || 0, P.traits(p)), { seed: p.id * 1.7 }); // tính cách biểu hiện (logic/epigen.js)
         const cyc = cycleOf(f, mind), aim = cyc ? cyc.aim : mind; // chu trình: đi tới chỗ của bước đang làm
         let goal = goalOf(f, aim), meetVerb = null, meetGoal = null;
+        goal = leaveDeck(f, aim, goal);
         // quân đánh vừa tới: đứng ngay vào hàng ngoài tường (không đi xuyên tường); người đánh nhắm về phía bên kia
         if (goal && (goal.outside || goal.bridge) && f.fresh) f.pos.copy(goal.p);
-        if (goal && goal.bridge) f.pos.y = goal.p.y; else if (goal && f.pos.y) f.pos.y = 0; // đứng trên mặt cầu
+        f.onDeck = !!(goal && goal.bridge); f.gp = goal ? goal.p : null; f.doing = mind; // (đích, việc khung này: cho bộ quét lỗi)
+        if (goal && goal.bridge && !goal.leave) f.pos.y = goal.p.y; else if (goal && f.pos.y && !goal.leave) f.pos.y = 0; // đứng trên mặt cầu
         f.fresh = false; if (mind.state === 'attack' && goal && goal.face) f.shootAt = goal.face;
         // ai cầm súng lúc này: người ra trận, và lính, lính gác của đảo khi trên đảo có giặc
         const armed = (mind.state === 'attack' && (S.situ.siege || gst)) || (!gst && !!S.situ.siege && (p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard'));
@@ -380,7 +449,8 @@
           const R = BK.Arms && BK.Arms.rangeOf ? BK.Arms.rangeOf(gst ? gst.level : level) : SIGHT; f.range = R; // tầm bắn của vũ khí người này
           let best = null, bd = R * R;
           for (const o2 of f.side === 'foe' ? seenDef : seenFoe) { const dd = (o2.pos.x - f.pos.x) ** 2 + (o2.pos.z - f.pos.z) ** 2; if (dd < bd) { bd = dd; best = o2; } }
-          if (best) { f.engage = best; goal = null; } // dừng lại, quay về phía kẻ địch mà bắn
+          // (tướng ra đấu tay đôi: tới chỗ đấu trước cổng rồi mới đánh, không dừng giữa đường)
+          if (best && !(mind.duel && goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) > 1)) { f.engage = best; goal = null; } // dừng lại, quay về phía kẻ địch mà bắn
           (f.side === 'foe' ? sightFoe : sightDef).push(f);
         }
         // gặp người quen trên phố: hai người đang đi dạo gặp nhau thì dừng lại trò chuyện vài giây rồi đi tiếp
@@ -399,31 +469,41 @@
         // đích chỉ tính lại giữa các bước con khi đích di động (đi theo người, nhắm người, đi dạo), không thì dùng lại
         const moverGoal = aim.target != null || aim.follow != null || aim.place === 'stroll' || aim.place === 'hallLoop';
         for (let i = 0; i < n; i++) {
-          if (i && moverGoal) goal = meetGoal ? null : goalOf(f, aim);
+          if (i && moverGoal && !f.engage) goal = meetGoal ? null : leaveDeck(f, aim, goalOf(f, aim)); // (đang dừng bắn kẻ địch trong tầm: đứng yên cả các bước con)
           let g = meetGoal || goal;
-          if (g && !meetVerb && !g.road && !g.outside && !g.bridge) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
+          // (gỡ kẹt: đứng lại tại chỗ khi đích chưa đổi; đi thẳng tới đích, bỏ lối đi)
+          if (g && f.hold) { if (f.hold.distanceToSquared(g.p) < 4) g = { p: f.pos.clone(), face: g.face }; else f.hold = null; }
+          if (g && f.direct && f.direct.distanceToSquared(g.p) > 4) f.direct = null;
+          if (g && !meetVerb && !g.road && !g.outside && !g.bridge && !f.direct) g = Nav.follow(f, g); // đi theo lối đi, không xuyên tường, xuyên nhà (render/nav3d.js)
           if (!g) break;
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
-          const speed = (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) || mind.carryItem ? 0.85 : 1) * (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
-          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h); f.pos.addScaledVector(_v.normalize(), step);
+          // ra trận mà đích còn xa (chạy từ nhà ra cổng, đuổi theo dân chạy nạn sang phía kia đảo): chạy nước rút, tới kịp lúc logic
+          // cho vào trận (logic/war.js JOIN_DAYS, CIV_CHASE)
+          const sprint = mind.state === 'attack' && goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) > 18 ? 1.8 : 1;
+          const speed = sprint * (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) * f.knobs.tempo * (0.8 + 0.4 * f.knobs.stride) * (carrying(f) || mind.carryItem ? 0.85 : 1) * (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
+          if (d > 0.25) { moving = true; const step = Math.min(d, speed * h), r0 = Math.hypot(f.pos.x, f.pos.z); f.pos.addScaledVector(_v.normalize(), step);
+              // (ngoài tường: giữ trên đất, trừ khi đang từ mặt cầu bước xuống: r0 còn ngoài mép đảo)
               if (g.bridge) { /* trên cầu: không giữ trong đảo */ } else if (g.outside) { const a = Math.atan2(f.pos.z, f.pos.x), R = L.rOf(a) - 0.6,
-              r = Math.hypot(f.pos.x, f.pos.z); if (r > R) f.pos.multiplyScalar(R / r); } else Nav.keepInside(f.pos);
+              r = Math.hypot(f.pos.x, f.pos.z); if (r > R && r0 <= R + 0.05) f.pos.multiplyScalar(R / r); } else Nav.keepInside(f.pos);
               f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
         if (!moving) f.ph += real * 3 * f.knobs.tempo;
-        // gỡ người kẹt (design/ke-hoach-khac-phuc.md mục 6.3): đang đi mà UNSTICK_S giây không tiến được UNSTICK_D thì tìm lại đường;
-        // kẹt lần nữa thì nhảy sang điểm kế tiếp trên lối đi (hay tới đích). Bước tại chỗ: đang đi mà không nhích (đếm cho audit)
+        // gỡ người kẹt (design/ke-hoach-khac-phuc.md mục 6.3): đang đi tới đích còn xa (hơn 1,5) mà UNSTICK_S giây không tiến được
+        // UNSTICK_D thì tìm lại đường; kẹt lần hai thì đi thẳng tới đích (bỏ lối đi); lần ba thì đứng lại tại chỗ cho tới khi đích đổi.
+        // Không bao giờ dịch chuyển người (nhảy chỗ là lỗi nhìn thấy được). Bước tại chỗ: đang đi mà không nhích (đếm cho audit)
         // (đo bằng thời gian đi của chính người đó theo giờ game: xem chậm thì người đi chậm, không phải kẹt)
         if (moving) {
           const pr = f.prog || (f.prog = { x: f.pos.x, z: f.pos.z, t: 0, n: 0 }); pr.t += secF;
           f.inplace = !!f.lastP && secF > 0.02 && Math.abs(f.lastP.x - f.pos.x) + Math.abs(f.lastP.z - f.pos.z) < 1e-4;
           if (pr.t >= UNSTICK_S) {
-            if (Math.hypot(f.pos.x - pr.x, f.pos.z - pr.z) < UNSTICK_D) {
+            const far = goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) > 1.5;
+            if (far && Math.hypot(f.pos.x - pr.x, f.pos.z - pr.z) < UNSTICK_D) {
               stuckN++; pr.n++;
               if (pr.n === 1) f.nav = null;
-              else { const N = f.nav, nx = N && N.pts[Math.min(N.pts.length - 1, N.i + 1)]; f.pos.copy(nx || (goal && goal.p) || f.pos); Nav.keepInside(f.pos); f.nav = null; pr.n = 0; }
+              else if (pr.n === 2) { f.nav = null; f.direct = goal.p.clone(); stuckHard++; }
+              else { f.hold = goal.p.clone(); f.direct = null; pr.n = 0; }
             } else pr.n = 0;
             pr.x = f.pos.x; pr.z = f.pos.z; pr.t = 0;
           }
@@ -487,7 +567,7 @@
               const from = new THREE.Vector3().copy(L.center).add(f.pos); from.y += 1.25 * SCALE; from.x += Math.sin(f.yaw) * 0.5 * SCALE; from.z += Math.cos(f.yaw) * 0.5 * SCALE;
               // (phát trang trí cho nhịp bắn đều: luôn trượt, rơi cạnh người; phát trúng thật do logic quyết định: takeHits)
               const to = new THREE.Vector3().copy(L.center).add(T.pos); to.y += 0.9 * SCALE; { const a = Math.random() * 6.283, r = 1.4 + Math.random() * 1.2; to.x += Math.cos(a) * r; to.z += Math.sin(a) * r; }
-              shots.fire(K.fire && Math.random() < 0.25 ? 'fire' : kind[0], from, to, rs, { color: kind[1], puff: kind[2] });
+              shots.fire(K.fire && Math.random() < 0.25 ? 'fire' : kind[0], from, to, rs, { color: kind[1], puff: kind[2], src: 'npc', rg: Rg + 2.6 });
             }
           }
         }
@@ -551,7 +631,7 @@
     const drawCalls = () => Object.values(IM).filter((m) => m.count).length;
     // vị trí những người đang ở ngoài (toạ độ đảo) để xe nhường người đi bộ (render/buildings3d.js setPeds)
     const pedList = [];
-    function peds() { pedList.length = 0; for (const [, f] of folks) if (!f.inside) pedList.push(f.pos); return pedList; }
+    function peds() { pedList.length = 0; for (const [, f] of folks) if (!f.inside) { f.pos.who = f; pedList.push(f.pos); } return pedList; } // (who: cho bộ quét lỗi biết ai chặn xe)
     // ẩn, hiện cả làng (đảo xa máy quay thì không vẽ người, game/cities.js); hiện lại thì ai nấy đứng ngay chỗ đáng ra đang ở
     let shownNow = true;
     function setVisible(on) {
@@ -582,7 +662,16 @@
       const still = [...folks.values()].filter((f) => f.rig && !f.inside && !f.moving); let overlap = 0;
       const ow = (f) => { const m = f.gst ? f.gst.mind : S.minds.get(f.p.id) || {}; return (m.verb || m.state) + '@' + (m.place || '-'); }, overWhy = [];
       for (let a = 0; a < still.length; a++) for (let b = a + 1; b < still.length; b++) if ((still[a].pos.x - still[b].pos.x) ** 2 + (still[a].pos.z - still[b].pos.z) ** 2 < 0.2) { overlap++; if (overWhy.length < 4) overWhy.push(ow(still[a]) + '+' + ow(still[b])); }
-      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, overlap, overWhy, hallWhy: why }; stuckN = 0; return r;
+      const r = { people: out, idle: out ? idle / out : 0, noGoal, nearHall, inplace, stuck: stuckN, overlap, overWhy, hallWhy: why, phantom, stuckHard }; stuckN = 0; stuckHard = 0; phantom = 0; return r;
+    }
+    // trạng thái từng người cho bộ quét lỗi (tools/bug-hunt.js): vị trí (toạ độ đảo), đang đi, trong nhà, phe, việc, chỗ, đồ cầm,
+    // đứng trên mặt cầu
+    function inspect() {
+      const out = [];
+      for (const [key, f] of folks) { if (!f.rig) continue; const m = f.gst ? f.gst.mind : S.minds.get(f.p.id) || {};
+        out.push({ key, x: f.pos.x, y: f.pos.y, z: f.pos.z, moving: !!f.moving, inside: !!f.inside, side: f.side || (f.gst && f.gst.side) || null, guest: !!f.gst,
+          state: m.state, verb: m.verb, place: m.place, tool: f.tool || null, deck: !!f.onDeck, gx: f.gp ? f.gp.x : null, gz: f.gp ? f.gp.z : null, nav: f.nav ? f.nav.pts.map((q) => [+q.x.toFixed(1), +q.z.toFixed(1)]) : null, navI: f.nav ? f.nav.i : null, stuckN: f.prog ? f.prog.n : 0, dying: !!f.dieAt, alive: f.p.alive !== false }); }
+      return out;
     }
     function audit() {
       const bad = [];
@@ -598,10 +687,10 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, auditStats, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
+    return { update, pick, select, audit, auditStats, inspect, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
         get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++;
         return n; } };
   }
 
-  return { create, EXPR };
+  return { create, EXPR, deckPlan };
 });

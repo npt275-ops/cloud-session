@@ -147,3 +147,65 @@ Mỗi bước kết thúc bằng clip khung dọc cho từng cảnh và bảng c
 - Tháp canh trên tường có lính đứng trên cao; trại lính riêng.
 - Lính nấp sau vật che, lùi về điểm nấp trong thành; máy húc cổng; hình cổng gãy đổ theo từng thời (hiện là ẩn cổng, để đống đổ).
 - Bảng việc × thời × đảo kiểm tự động (thống kê một trận cho thấy mọi việc đều có chỗ thật, nhưng chưa thành bài kiểm tra).
+
+---
+
+## 9. Quân và xe nã cổng từ giữa cầu; quét lỗi trận chiến và NPC
+
+**Yêu cầu:** quân lính và xe công thành bắn cổng thành từ giữa cầu; cổng đổ thì quân và xe mới tràn vào thành. Tìm và sửa tất cả
+lỗi trong game, nhất là trận chiến và NPC.
+
+**Trận ở cầu (đã làm)**
+- Cả đạo quân đứng trên mặt cầu thành hàng bốn người; hàng đầu cách cổng (tầm bắn − 5), tức khoảng giữa cầu; xe, máy công thành
+  hai làn sau hàng quân cuối (render/village3d.js `deckPlan`, dùng chung cho người và xe). Cầu ngắn, quân đông thì các hàng, các
+  xe đứng sít lại rồi hàng đầu mới tiến gần cổng hơn, không ai bị dồn chồng ở cuối cầu. Bên giữ đứng ngay sau cổng (trong thành).
+  Cổng phụ nằm sâu trong mép đảo chừng 7 đơn vị: khoảng cách tính từ cổng, không từ đầu cầu (trước đây hàng đầu đứng xa cổng hơn
+  tầm bắn, hai bên không bắn tới nhau).
+- Cổng đứng ít nhất 1,2 ngày dưới làn đạn (logic/war.js `GATE_MIN_DAYS`; nội gián mở cổng, cổng dịch chuyển thời 12 thì không giới
+  hạn). Bên giữ chỉ xét xin hoà từ ngày thứ hai (trước đây có trận vừa tới đã nộp cống, không có trận nào).
+- Cổng đổ: quân đi dọc mặt cầu về đầu cầu, qua cổng rồi mới theo lối trong đảo; xe lăn tới cổng rồi vào thành.
+
+**Công cụ quét lỗi** `tools/bug-hunt.js`: mở trang thật, tự chạy từng khung hình (dt 50 ms, đúng nhịp xem chậm), máy quay đặt ở đầu
+cầu; mỗi trận bắt đầu từ trang mới. Đo: toạ độ hỏng, đứng ngoài đảo (không trên mặt cầu), lơ lửng, nhảy chỗ (> 2 đơn vị một khung),
+người chết còn đi, quân vào trong tường hay xe vào thành trước khi cổng đổ, xe dưới nước, hàng đầu ngoài tầm tới cổng, đạn quá tầm,
+phát trúng không có người bắn trong tầm, quân giặc còn lại sau trận, lính hành quân và người qua cầu đi trên nước, xe trên đường
+đứng yên quá 25 giây game, người đứng chồng, kẹt, làm sai việc, lỗi trang. Kèm số đếm (lượt quân trên cầu, đạn theo nguồn) để chắc
+là bộ quét thật sự thấy trận. Thử cấy lại một lỗi cũ (kéo lính từ cầu vào đảo): bộ quét bắt ngay.
+  Lưu ý thật thà: các lần quét đầu báo 0 lỗi là do bộ quét chưa đo đúng (máy quay giữa đảo, trận sau mang trạng thái trận trước);
+  sửa bộ quét xong mới lộ ra các lỗi dưới đây.
+
+**Lỗi tìm thấy và đã sửa**
+1. Lính trên cầu bị kéo thẳng vào trong tường khi cổng đổ (nhảy 16–24 đơn vị): đường rời cầu (`leaveDeck`) dùng cho cả các bước con
+   trong một khung hình; trúng đạn giật lùi trên cầu không kéo vào đảo.
+2. Gỡ kẹt dịch chuyển người (nhảy 5–13 đơn vị): bỏ hẳn dịch chuyển; kẹt lần 1 tìm đường lại, lần 2 đi thẳng, lần 3 đứng lại; chỉ
+   tính kẹt khi đích còn xa.
+3. Gốc của phần lớn "kẹt": lính tuần tra, thợ sửa nhà, thầy thuốc thăm nhà đổi chỗ theo đồng hồ (chưa tới nửa giây thật) nên đi tới
+   đi lui. Nay tới nơi, ở lại một lúc rồi mới sang chỗ kế tiếp.
+4. Người đang dừng bắn (thấy địch trong tầm) vẫn đi tiếp ở các bước con: nay đứng yên.
+5. Tướng đấu tay đôi đi vào trong cổng: nay hai tướng gặp nhau trước cổng, giữa cổng và đầu cầu, đi thẳng từ cầu xuống.
+6. Hàng hành quân trên cầu dồn vào một điểm ở cuối cầu: kẹp đầu đoàn, các hàng sau lùi theo.
+7. Người đã chết (phục kích trên cầu…) còn đi tiếp tới một giây: nay ngã ngay.
+8. Đạn bay ra từ chỗ trống khi không ai bên kia đứng trong tầm: nay không vẽ; phát không chết chỉ trừ máu, phát chết thì người đó gục.
+   Giảm tận gốc độ lệch giữa logic và phần vẽ:
+   - người trúng đạn và người bắn là hàng đầu hai bên (số phát trúng như cũ), hàng sau lên thay;
+   - người giữ cổng (trừ lính gác ở đó sẵn) chạy ra cổng một ngày mới vào trận; dân binh trong thành cũng vậy;
+   - người ra trận ở xa đích thì chạy nước rút;
+   - càn quét chỉ bắn dân đang chạy nạn ngoài đường (phần vẽ chỉ cho quân đuổi bắn người đó), sau 0,7 ngày đuổi;
+   - đạn máy công thành bay ra từ chiếc xe gần nhất; phục kích: đạn từ chỗ nấp hai bên đầu cầu.
+9. Thi thể quân đánh ngã trước cổng lúc không xem: nằm trên mặt cầu, không nằm trong thành.
+10. Cầu ghi ngược chiều (a > b) nối sai bến (logic luôn ghi đúng chiều, nhưng nay phần vẽ chịu được cả hai).
+11. Công cụ quay clip: lúc trang bận, video không ghi khung hình nên đoạn cắt bị lệch (đoạn "cổng" chiếu cảnh khác); nay lấy khung
+    hình thẳng từ trình duyệt cho từng đoạn. Góc máy đoạn cổng: cao, chếch bên hông cầu.
+12. Tâm vòng đi dạo quanh nhà chính lệch ra ngoài đảo (cách tâm đảo 136 đơn vị) ở thời ≥ 3: đo khung bao khi công trình vừa dựng
+    chưa có ma trận thế giới. Nay cập nhật ma trận trước khi đo; người đi dạo không còn dồn vào mép tường đứng kẹt.
+13. Rủ nói chuyện mà người kia đang đi chỗ khác: người rủ đuổi theo mãi, đi vòng vòng. Nay tới chỗ người kia sắp tới mà đứng chờ.
+14. Bộ não: mỗi lần tình huống đổi (đám đông bắt đầu, tan; công trình xong; tang lễ: chừng 5 giây một lần) cả làng nghĩ lại, ai
+    đang trò chuyện cũng bốc bạn khác, người đang đi giữa đường quay ngoắt. Nay nghĩ lại mà vẫn cùng việc, cùng chỗ (hay cùng buổi,
+    cùng chỗ, đều là việc nhàn: ngồi nghỉ, trò chuyện, kể chuyện) thì giữ việc cũ; vai trong trận vẫn đổi ngay. Đo một đảo thời 6
+    lúc chiều: đổi qua lại "nghỉ ↔ trò chuyện" từ 214 xuống 31 lần mỗi phút thật.
+15. Gia đình (logic/homes.js): bố hay mẹ mất, người kia tái hôn sang nhà mới thì con ở lại nhà cũ một mình. Nay con theo bố hay mẹ
+    còn sống.
+16. Dân chạy nạn đứng giữa lòng đường, xe đứng chờ mãi: chỗ tụ tập chạy nạn lùi ra vỉa hè.
+17. Hình lính nhỏ hành quân ở xa ngoại suy ra ngoài đầu cầu (xuống nước) khi cầu trước trên đường đã bị phá: kẹp trong mặt cầu.
+18. Bài kiểm thử kinh tế: "Cát Hồng (không có gỗ) kẹt lại" viết lại đúng ý (không cao hơn đảo thấp nhất còn lại, ≤ 10) thay cho
+    ngưỡng cứng ≤ 9; đo ba hạt giống ra 4, 8, 10 (dao động ngẫu nhiên, không phải lỗi).

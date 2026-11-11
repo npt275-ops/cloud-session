@@ -16,7 +16,9 @@ test('mỗi đảo lên cấp theo nhịp riêng khi chưa có giao thương: c�
     // (từ bước 11e thời muộn rẻ hơn, logic/economy.js LATE_*, để năm 8 có ≥ 2 đảo từ thời 11 khi có chiến tranh, giao thương;
     // sống riêng chín năm thì nhiều đảo chạm thời 12 hơn, nhưng không phải cả sáu: đảo thiếu hẳn một thứ vẫn kẹt)
     assert.ok(lv.filter((l) => l === 12).length <= 4, 'số đảo chạm thời 12: ' + lv.join(','));
-    assert.ok(BK.World.island(W, 'desert').level <= 9, 'Cát Hồng: ' + BK.World.island(W, 'desert').level);
+    // Cát Hồng (không có gỗ) kẹt lại sau mọi đảo khác; thời cuối dao động theo hạt giống (đo ở bước 12: 4, 8, 10), không vượt 10
+    const de = BK.World.island(W, 'desert').level, others = W.islands.filter((S) => S.key !== 'desert').map((S) => S.level);
+    assert.ok(de <= 10 && de <= Math.min(...others), 'Cát Hồng: ' + de + ' · các đảo khác: ' + others.join(','));
   }
 });
 

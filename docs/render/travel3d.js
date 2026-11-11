@@ -102,7 +102,9 @@
       }
       for (const k in pool) for (let i = used[k]; i < pool[k].length; i++) pool[k][i].visible = false;
     }
-    return { update };
+    // vị trí người đi bộ trên cầu đang vẽ (toạ độ thế giới), cho tools/bug-hunt.js
+    const figures = () => { const out = [], m = new THREE.Matrix4(), v = new THREE.Vector3(); for (let k = 0; k < walkers.count; k++) { walkers.getMatrixAt(k, m); out.push(v.setFromMatrixPosition(m).clone()); } return out; };
+    return { update, figures };
   }
   BK.Travel3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

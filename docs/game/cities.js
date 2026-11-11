@@ -84,7 +84,7 @@
     for (let i = 0; i < N; i++) { shownLv[i] = isle(i).level; buildings.show(i, shownLv[i], false); }
     // người và bảng làng của một đảo: dựng khi cần lần đầu
     function villageOf(i) {
-      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u), idx: i, color: G.TERRAINS[i].color, hits: () => world.hitLog, camera });
+      if (!villages[i]) villages[i] = BK.Village3D.create({ THREE, scene, L: lands[i], S: isle(i), level: shownLv[i], places: buildings.places(i), shots, bars, deck: (from, u) => deckAt(i, from, u), gear: () => G.gearNow || [], idx: i, color: G.TERRAINS[i].color, hits: () => world.hitLog, camera });
       return villages[i];
     }
     function uiOf(i) {
@@ -293,14 +293,17 @@
         const B = bridges3d.bridgeOf(i, w.from != null ? w.from : w.a), inTown = w.stage === 'inside', sg = isle(i).situ.siege;
         const hw = hallAt[i] || (buildings.places(i) || {}).hall, hallW = hw ? hw.clone().add(L.center) : L.center.clone();
         const aimW = inTown ? (w.siege === 'hall' || !sg || !sg.target ? hallW : (spotAt(i, sg.target) || hw || g).clone().add(L.center)) : gw;
+        const gearN = (w.engines || []).filter((e) => e.kind !== 'drone').length; let gk = 0; // xe trên cầu (không kể drone): thứ tự trong hàng xe
         (w.engines || []).forEach((e, k) => {
           let at, face = aimW;
           // trong thành: một hàng so le dọc đường từ cổng tới nhà chính, mỗi xe cách xe trước GEAR_GAP đơn vị
           if (e.kind !== 'drone' && inTown) { const dir = hallW.clone().sub(gw).setY(0).normalize(), sd = new THREE.Vector3(-dir.z, 0, dir.x); at = gw.clone().addScaledVector(dir, 7 + k * GEAR_GAP).addScaledVector(sd, k % 2 ? 1.6 : -1.6); at.y = L.center.y; }
-          // trên cầu: hai làn, mỗi cặp xe cách nhau GEAR_GAP đơn vị dọc mặt cầu, không chạm nhau
-          else if (e.kind !== 'drone' && B && B.pa) { const L2 = B.len || B.pa.distanceTo(B.pb), u = Math.min(0.9, (6 + Math.floor(k / 2) * GEAR_GAP) / L2),
+          // trên cầu: sau hàng quân cuối (render/village3d.js: hàng đầu cách đầu cầu tầm bắn − 5,5, mỗi hàng bốn người cách 1,3),
+          // hai làn, mỗi cặp xe cách nhau GEAR_GAP; nã vào cổng từ giữa cầu
+          else if (e.kind !== 'drone' && B && B.pa) { const L2 = B.len || B.pa.distanceTo(B.pb), rg = BK.Arms.rangeOf(isle(w.a).level),
+              e0 = bridges3d.bridgePoint(B, B.a === i ? 0 : 1, new THREE.Vector3()).sub(L.center), u = BK.Village3D.deckPlan(L2, rg, w.troops.length, gearN, Math.hypot(e0.x - g.x, e0.z - g.z)).gear(gk++) / L2,
               d = B.pb.clone().sub(B.pa).setY(0).normalize(); at = bridges3d.bridgePoint(B, B.a === i ? u : 1 - u,
-              new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), k % 2 ? 1.5 : -1.5); }
+              new THREE.Vector3()).addScaledVector(new THREE.Vector3(-d.z, 0, d.x), gk % 2 ? -1.5 : 1.5); }
           else at = ashore(L, g, side, (k % 2 ? 1 : -1) * (7.5 + Math.floor(k / 2) * 4.5));
           const key = w.id + ':' + k, st = engState.get(key) || { next: now + 1 + k * 0.7, shot: null }; engState.set(key, st);
           // đổi chặng (cầu → trong thành): xe lăn từ chỗ cũ tới cổng rồi theo đường vào chỗ mới, không nhảy chỗ
@@ -315,9 +318,9 @@
           if ((w.stage === 'gate' || inTown) && !moving && now > st.next && shots) {
             // xe bọc thép bắn từ đầu nòng tháp pháo, đạn đi thẳng (render/shots3d.js shell)
             const kind = BK.Shots3D.OF[e.kind] || ['ball'], from = at.clone(), tip = MUZZLE[e.kind] || [0, 1.6]; from.addScaledVector(face.clone().sub(at).setY(0).normalize(), tip[0]); from.y += tip[1]; const to = face.clone(); to.y += 2;
-            shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2] }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
+            shots.fire(kind[0], from, to, now, { color: kind[1], puff: kind[2], src: 'gear' }); st.shot = now; st.next = now + (2.5 + Math.random() * 1.5) * (siegeOnly ? 2.5 : 1);
           }
-          list.push({ kind: e.kind, at, face, shot: st.shot });
+          list.push({ kind: e.kind, at, face, shot: st.shot, isle: i, from: w.from != null ? w.from : w.a });
         });
         if (w.blockade && !w.blockade.done) for (const k of [-1, 1]) list.push({ kind: 'tent', at: tentAt(L, g, side, k), face: gw });
         if (w.portal) { const at = gw.clone().addScaledVector(out, -7); at.y = L.center.y; list.push({ kind: 'portal', at, face: L.center }); }
@@ -414,7 +417,7 @@
       buildings.animate(dt, t, night, camera.position, speed);
       if (world.diplomacy) { const day = world.day + world.acc / World.TICKS_PER_DAY; travel.update(world.caravans, day, t, G.levelOf, world.visits); war.update(world, day, t, hallOf, (i) => !!(villages[i] && villages[i].visible), (i) => gateAt[i] || null);
         if (missiles3d) missiles3d.update(world.missiles, day, t, spotAt);
-        if (engines3d) engines3d.update(siegeGear(t * 0.001), t * 0.001);
+        if (engines3d) engines3d.update(G.gearNow = siegeGear(t * 0.001), t * 0.001);
         if (shots) shots.update(t * 0.001);
         if (prosper) prosper.update(world, day, t * 0.001, (i) => !!(villages[i] && villages[i].visible), (i) => buildings.places(i), night || 0);
         G.dust = BK.Missiles ? BK.Missiles.dust(world, day) : 0; } // bụi hạt nhân: trời xám (render/sky3d.js)
@@ -451,7 +454,7 @@
           st.stock[r] / BK.Economy.CAP(S.level, r)]))); buildings.setGraves(i, (S.graves || []).length); buildings.setDecline(i, !!S.decline); buildings.setRuin(i, S.ruin,
           !!S.situ.siege || S.falloutUntil - world.day > 357, S.repairJob && S.repairJob.key); if (S.env && lands3d.thinTrees) lands3d.thinTrees(lands[i],
           S.env.forest); }); villages.forEach((v, i) => { if (v && v.visible) v.setPlaces(buildings.places(i)); }); uis.forEach((u) => u && u.render()); }
-    Object.assign(G, { world, isle: isle(0), buildings, prosper, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
+    Object.assign(G, { world, isle: isle(0), buildings, prosper, shots, deckAt, villages, war3d: war, travel3d: travel, village: villages[0], villageUi: uis[0], villageOf, jumpEra, goEra, citiesRun: { step, animate, slow } });
   }
   BK.GameCities = { setup, buildPlan };
 })(typeof self !== 'undefined' ? self : globalThis);

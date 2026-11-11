@@ -70,9 +70,11 @@
         let w = v;
         if (li > 0 && v < ACROSS) { // băng qua đảo s: từ cuối cầu trước tới đầu cầu này
           const P = bridges3d.bridgeOf(path[li - 1], s); if (P) { bridges3d.bridgePoint(P, P.a === s ? 0 : 1, endA); bridges3d.bridgePoint(B, fwd ? 0 : 1, tmp);
-            tmp.lerp(endA, 1 - v / ACROSS); dir.copy(tmp).sub(endA).setY(0); tmp.addScaledVector(perp, k % 2 ? 0.45 : -0.45); soldier(tmp, yawOf(dir.lengthSq() > 1e-4 ? dir : face), c); continue; }
+            // (đường cong vào phía trong đảo: mép đảo không tròn, đường thẳng giữa hai đầu cầu có đoạn thò ra mặt nước)
+            const q = v / ACROSS; tmp.lerp(endA, 1 - q); dir.copy(tmp).sub(endA).setY(0); const C = lands[s] && lands[s].center; if (C) { const y = tmp.y; tmp.lerp(C, 0.3 * Math.sin(Math.PI * q)); tmp.y = y; }
+            tmp.addScaledVector(perp, k % 2 ? 0.45 : -0.45); soldier(tmp, yawOf(dir.lengthSq() > 1e-4 ? dir : face), c); continue; }
         }
-        if (li > 0) w = (v - ACROSS) / (1 - ACROSS);
+        if (li > 0) w = Math.max(0, (v - ACROSS) / (1 - ACROSS)); // (cầu trước đã bị phá: không ngoại suy ra ngoài đầu cầu, xuống nước)
         bridges3d.bridgePoint(B, fwd ? w : 1 - w, tmp); tmp.addScaledVector(perp, (k % 2 ? 0.45 : -0.45) - 0.55 * (fwd ? 1 : -1));
         tmp.y += Math.abs(Math.sin(t * 0.012 + k)) * 0.06; soldier(tmp, yawOf(face), c);
       }
@@ -122,7 +124,9 @@
       for (const m of [bodies, heads, spears]) { m.count = n; m.instanceMatrix.needsUpdate = true; }
       if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true;
     }
-    return { update };
+    // vị trí các hình lính nhỏ đang vẽ (toạ độ thế giới), cho tools/bug-hunt.js
+    const figures = () => { const out = [], m = new THREE.Matrix4(), v = new THREE.Vector3(); for (let k = 0; k < bodies.count; k++) { bodies.getMatrixAt(k, m); out.push(v.setFromMatrixPosition(m).clone()); } return out; };
+    return { update, figures };
   }
   BK.War3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);
