@@ -283,7 +283,7 @@
     const GEAR_GAP = 6; // khoảng cách giữa hai xe, máy công thành (đơn vị thế giới; xe dài khoảng 3)
     const GEAR_SPEED = 5; // xe lăn bao nhiêu đơn vị mỗi giây thật khi đổi chỗ
     function siegeGear(now) {
-      const list = [];
+      const list = [], roofless = new Set();
       for (const w of world.wars) {
         if (w.kind === 'revolt' || !['gate', 'loot', 'inside'].includes(w.stage)) continue;
         const i = w.b, v = villages[i], g = gateAt[i]; if (!v || !v.visible || !g) continue;
@@ -291,6 +291,7 @@
         // xe, máy công thành chỉ đi qua cầu (logic/arms.js): ở cổng thì đứng trên mặt cầu sau hàng quân, nã vào cổng phụ; cổng vỡ
         // thì lăn vào thành theo đường từ cổng tới nhà chính, nã vào chỗ đang bị phá hay nhà chính. Drone bay lượn trên cổng
         const B = bridges3d.bridgeOf(i, w.from != null ? w.from : w.a), inTown = w.stage === 'inside', sg = isle(i).situ.siege;
+        if (B && B.roof && !inTown) roofless.add(B); // quân đứng trên cầu đánh cổng: ẩn mái nhà giữa cầu cho thấy người
         const hw = hallAt[i] || (buildings.places(i) || {}).hall, hallW = hw ? hw.clone().add(L.center) : L.center.clone();
         const aimW = inTown ? (w.siege === 'hall' || !sg || !sg.target ? hallW : (spotAt(i, sg.target) || hw || g).clone().add(L.center)) : gw;
         const gearN = (w.engines || []).filter((e) => e.kind !== 'drone').length; let gk = 0; // xe trên cầu (không kể drone): thứ tự trong hàng xe
@@ -327,6 +328,7 @@
       }
       world.islands.forEach((S, i) => { const v = villages[i]; if (v && v.visible && S.shieldHp > 0 && S.situ.siege) list.push({ kind: 'shield', at: lands[i].center.clone(), r: lands3d.LAND_R * 0.9, hp: S.shieldHp }); });
       if (engState.size > 200) engState.clear();
+      for (const B of bridges3d.bridges) if (B.roof) B.roof.visible = !roofless.has(B);
       return list;
     }
     // mặt cầu giữa đảo i và đảo from, u tính từ đầu cầu phía đảo i (0) sang đảo kia (1); toạ độ của đảo i (y là độ cao mặt cầu)

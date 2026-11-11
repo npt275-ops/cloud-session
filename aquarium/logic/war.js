@@ -329,7 +329,7 @@
       // tới nơi: đảo đó đã thuộc về mình (người khác đánh giúp) thì về
       if (rulerOf(W, w.b) === w.a) return goHome(W, day, w, 'Đảo ' + B.name + ' đã thuộc về ' + A.name + ', quân quay về.');
       // qua cầu thì đánh cổng phụ đầu cầu (logic/siege.js)
-      // (w.peaceDay: xin hoà chỉ xét từ ngày sau, khi cổng đã bị nã)
+      // (w.peaceDay, w.since: xin hoà chỉ xét khi cổng đã bị nã đủ một ngày)
       w.stage = 'gate'; w.since = day; w.peaceDay = Math.floor(day); B.situ.warSide = sideOf(w.b, w.from); w.gate = G().gateOf(B.situ.warSide, true); w.field = w.gate;
       // mỗi trận giữ trạng thái trận của mình (w.sg); trên đảo hiện trận đang diễn ra (hai đảo cùng đánh một đảo thì trận vừa
       // chạy đợt sau cùng)
@@ -390,7 +390,7 @@
         return;
       }
       // xin hoà: mỗi ngày xét một lần
-      if (Math.floor(day) !== w.peaceDay) { w.peaceDay = Math.floor(day); maybePeace(W, day, w, rng); }
+      if (Math.floor(day) !== w.peaceDay && day - w.since >= 1) { w.peaceDay = Math.floor(day); maybePeace(W, day, w, rng); } // (bị nã đủ một ngày rồi mới xét)
       return;
     }
     if (w.stage === 'loot') { if (day - w.since >= LOOT_DAYS) return loot(W, day, w); return; }

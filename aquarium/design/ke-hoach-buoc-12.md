@@ -209,3 +209,20 @@ là bộ quét thật sự thấy trận. Thử cấy lại một lỗi cũ (ké
 17. Hình lính nhỏ hành quân ở xa ngoại suy ra ngoài đầu cầu (xuống nước) khi cầu trước trên đường đã bị phá: kẹp trong mặt cầu.
 18. Bài kiểm thử kinh tế: "Cát Hồng (không có gỗ) kẹt lại" viết lại đúng ý (không cao hơn đảo thấp nhất còn lại, ≤ 10) thay cho
     ngưỡng cứng ≤ 9; đo ba hạt giống ra 4, 8, 10 (dao động ngẫu nhiên, không phải lỗi).
+19. Xe dừng chờ người đứng trên vỉa hè: bề ngang "có người phía trước" lấy nửa con đường tính từ làn xe (vốn đã lệch sang phải);
+    nay chỉ tính bề ngang của chính chiếc xe.
+20. Xin hoà chỉ xét khi cổng đã bị nã đủ một ngày (trước đây "từ ngày lịch sau": quân tới lúc gần hết ngày thì vài giây sau đã hoà).
+21. Cầu có nhà mái giữa nhịp (dáng thời 3, còn giữ tới khi xây lại): quân đứng dưới mái, nhìn từ trên chỉ thấy thanh máu. Nay mái là
+    khối riêng, ẩn khi có quân đứng trên cầu đánh cổng.
+
+**Số đo cuối (thật thà)**
+- 15 tệp kiểm thử đạt; 100 trận cân chỉnh đạt cả 16 chỉ số (trận đánh 10,6; hạt nhân 9%; dân thường chết khi mất thành 7,4%).
+- Chặng nã cổng (6 trận đo riêng): 1,17–1,67 ngày, một trận vây thành 24 ngày; không còn trận cổng đổ hay xin hoà trong vài giây.
+- Bộ quét 24 trận (12 thời × 2) và đời sống dân 12 thời × 6 đảo × 2 buổi: hết người đi trên nước, hết xe dưới nước, hết người chết
+  còn đi, hết nhảy chỗ lớn (còn 7 lần 2–3 đơn vị, lúc lính rời cầu bước vào trong tường), kẹt thật 6 lần trong 24 trận và 33 lần
+  trong 72 lượt đo đời sống, quân vào trong tường trước khi cổng đổ 6 lượt (đều là tướng đấu tay đôi đứng sát cổng).
+- Còn lại chưa sửa hết: "phát trúng không có người bắn trong tầm" chừng 60 phát mỗi trận (logic chọn người trúng mà phần vẽ chưa
+  có ai đứng trong tầm: người giữ thành ở xa chạy hơn một ngày mới tới cổng, dân chạy nạn sang tận phía kia đảo). Phần vẽ không còn
+  vẽ đạn bay ra từ chỗ trống; phát không chết chỉ trừ máu, phát chết thì người đó gục xuống. Hàng đầu quân trên cầu có lúc ngoài
+  tầm tới cổng (111 lượt trong 24 trận, lúc quân vừa tới còn đang vào hàng). check-scene: đứng không lớn nhất 4–19% tuỳ lần chạy
+  (bản trước phiên 2–8%), người đứng chồng 0–3 cặp (bản trước 1) — phép đo dao động, chưa tách được phần do thay đổi này.
