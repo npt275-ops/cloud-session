@@ -62,14 +62,14 @@ const GOAL = { idle: 0.1, nearHall: 8, inplace: 0, stuckPerMin: 1, overlap: 0 };
           G.camera.position.copy(h).add(new __glass.THREE.Vector3(0, 34, 30)); G.controls.update(); G.villageOf(i).auditStats(); }, [i, tod]);
         await p.waitForTimeout(4000);
         const r = await p.evaluate(([i]) => { const S = __glass.G.world.islands[i], st = __glass.G.villageOf(i).auditStats(); st.event = !!(S.situ.siege || S.situ.riot || S.situ.festival || BK.Dramas.active(S).length); return st; }, [i]);
-        agg.n++; agg.overlap = (agg.overlap || 0) + r.overlap; agg.idle = Math.max(agg.idle, r.idle); if (!r.event) agg.nearHall = Math.max(agg.nearHall, r.nearHall); agg.inplace += r.inplace; agg.stuck += r.stuck; agg.mins += 4 / 60;
+        agg.n++; agg.overlap = (agg.overlap || 0) + r.overlap; for (const w of r.overWhy || []) (agg.why || (agg.why = [])).push('thời ' + lv + ' đảo ' + i + ' buổi ' + tod + ': ' + w); agg.idle = Math.max(agg.idle, r.idle); if (!r.event) agg.nearHall = Math.max(agg.nearHall, r.nearHall); agg.inplace += r.inplace; agg.stuck += r.stuck; agg.mins += 4 / 60;
         if (process.env.VERBOSE) console.log('thời ' + lv + ' đảo ' + i + ' buổi ' + tod, JSON.stringify(r));
       }
     }
     say(agg.idle <= GOAL.idle, 'đứng không (lớn nhất trong ' + agg.n + ' lần đo): ' + (100 * agg.idle).toFixed(0) + '% · mục tiêu ≤ ' + 100 * GOAL.idle + '%');
     say(agg.nearHall <= GOAL.nearHall, 'quanh nhà chính ngày thường (lớn nhất): ' + agg.nearHall + ' người · mục tiêu ≤ ' + GOAL.nearHall);
     say(agg.inplace <= GOAL.inplace, 'bước tại chỗ (cộng dồn): ' + agg.inplace + ' · mục tiêu ' + GOAL.inplace);
-    say(agg.overlap <= GOAL.overlap, 'người đứng chồng lên nhau (cộng dồn): ' + agg.overlap + ' cặp · mục tiêu ' + GOAL.overlap);
+    say(agg.overlap <= GOAL.overlap, 'người đứng chồng lên nhau (cộng dồn): ' + agg.overlap + ' cặp · mục tiêu ' + GOAL.overlap + (agg.why ? ' · ' + agg.why.slice(0, 6).join(' | ') : ''));
     say(agg.stuck / agg.mins <= GOAL.stuckPerMin, 'kẹt: ' + (agg.stuck / agg.mins).toFixed(2) + ' lần mỗi phút · mục tiêu ≤ ' + GOAL.stuckPerMin);
   }
   if (errs.length) say(false, 'lỗi trang: ' + errs.slice(0, 3).join(' | '));

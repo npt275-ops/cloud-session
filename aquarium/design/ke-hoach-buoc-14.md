@@ -53,6 +53,25 @@ giàn giáo. (3) Thêm nhiều kiến trúc lạ cho sáu đảo qua 12 thời, 
   các thời; hai thời liền nhau ở cùng một chỗ luôn khác kiểu. Công trình cũ giữ nguyên.
 - Vào danh sách xây của logic như mọi công trình khác (thợ dựng lần lượt).
 
-## 5. Số đo
+## 5. Kết quả (số đo thật)
 
-Ghi ở cuối bước, sau khi chạy đủ các bộ kiểm chứng (mục "Kết quả" bên dưới).
+- `node --test`: 15 tệp đều đạt.
+- `tools/check-footing.js`: 0 món trên đất thò ra ngoài đảo (6 đảo × 12 thời); khoảng 230 lượt công trình ngoài khơi và cầu tàu
+  đứng trên nước có chủ ý.
+- `tools/calibrate.js 100`: 16/16 chỉ số đạt (10,61 trận đánh mỗi trận; 94% trận có từ hai đảo tới thời 11 cuối năm 8).
+- Kiến trúc lạ đặt được: 4/4 chỗ ở năm đảo, 3/4 ở Đá Mây (một chỗ vòng ngoài không còn đất trống) ở các thời 4, 8, 12 đã đo.
+- `tools/bug-hunt.js` (thời 6 và 11): không có lỗi trang, không ai lơ lửng hay đứng ngoài đảo, quân không vào thành trước khi cổng
+  đổ. Còn lại như trước bước này: phát trúng không có người bắn trong tầm (111 và 50 trong hai trận, không vẽ thành đạn), vài
+  cặp đứng chồng trong trận (ở chỗ trú, quanh nhà chính), kẹt thật 1–3 lần mỗi lượt quét.
+- `tools/check-scene.js`: chỗ không chồng, đủ chỗ, bước tại chỗ, kẹt đều đạt. Không đạt: "đứng không" 11–28% (dao động giữa hai
+  lần chạy, mục tiêu ≤ 10%) và 6–10 cặp người đứng chồng, đều ở thời 12 (ở đền, ở ruộng). Chưa xác định được do lỗi thật hay do
+  máy thử vẽ chậm hơn sau khi thêm lưới đất (ít khung hình hơn trong 4 giây đo).
+
+## 6. Chưa làm, còn hạn chế
+
+- Chưa đo trên điện thoại thật. Mặt đất thêm khoảng 13 nghìn tam giác mỗi đảo (6 đảo: khoảng 78 nghìn).
+- Trong làng đất chỉ thoải nhẹ (để đường, nhà, trận đánh không đổi); lồi lõm mạnh nằm ở vòng ngoài.
+- Bóng tròn dưới chân người là tấm phẳng, trên sườn dốc bị đất che một phần.
+- Đá, đồi dựng sẵn của bản đồ không theo nền công trình đổi qua từng thời nếu nằm sát nền (lệch nhỏ).
+- Các bug trận đánh người chơi báo (cổng đã vỡ vẫn bị bắn, xe xuyên cầu và xuyên lính, pháo plasma không có đạn, xe phải chậm
+  hơn lính) chưa sửa trong bước này.
