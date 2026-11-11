@@ -58,6 +58,7 @@
       P.OUTER.addTo(L, lv, tintTo(theme.accent, 0.25));
       if (BK.Gates3D) BK.Gates3D.addTo(L, lv, theme.key); // cổng thành riêng của đảo, giữa mép trước
       if (BK.Civic3D) BK.Civic3D.addTo(L, lv, pal, ORDER.indexOf(theme.key) + 1); // trường, thư viện, bảo tàng, bệnh viện…
+      if (BK.Marvels3D) BK.Marvels3D.addTo(L, lv, theme.key); // kiến trúc lạ riêng của đảo ở vòng ngoài làng (render/build/marvels.js)
       const w = E.wonder, wb = typeof w[0] === 'number' ? P.WONDERS.BUILD[w[0]] : A.WONDER[w[0]];
       const wpal = Object.assign({}, pal, theme.wonderPal || {});
       if (typeof w[0] === 'number') P.WONDERS.addTo(L, lv, wb, w[1], tintTo(theme.accent, 0.35));
