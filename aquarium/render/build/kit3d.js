@@ -79,35 +79,59 @@
     return (b.max.y - b.min.y) * sy < 0.12 && (y || 0) + b.max.y * sy < 0.3;
   }
   // gộp thành một BufferGeometry có màu theo đỉnh; chân sẫm hơn đỉnh (aoH: độ cao hết sẫm)
-  function merge(parts, aoH) {
+  function merge(parts, aoH, more) {
     const THREE = T(); let n = 0; const gs = [];
     for (const P of parts) { const g = (P.geo.index ? P.geo.toNonIndexed() : P.geo.clone()); g.applyMatrix4(P.m); gs.push([g, P]); n += g.attributes.position.count; }
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), lk = new Float32Array(n * 4); let o = 0;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), lk = new Float32Array(n * 4), all = parts.concat(more || []); let o = 0;
     for (const [g, P] of gs) {
       const p = g.attributes.position, k = p.count; pos.set(p.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
-      wallMark(P, lk, o);
+      wallMark(P, lk, o, all);
       for (let i = 0; i < k; i++) { const f = P.ao ? 0.72 + 0.28 * Math.min(1, Math.max(0, p.getY(i)) / aoH) : 1; col[(o + i) * 3] = P.color.r * f; col[(o + i) * 3 + 1] = P.color.g * f; col[(o + i) * 3 + 2] = P.color.b * f; }
       o += k; g.dispose();
     }
     const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.setAttribute('aLk', new THREE.BufferAttribute(lk, 4)); out.computeBoundingSphere();
     return out;
   }
-  // mảng tường lớn (render/look3d.js lớp 3 vẽ chân tường, gờ mái, trụ góc, cửa sổ lên đó): mảnh là hộp đứng thẳng, cao từ WALL_H,
-  // mặt bên rộng từ WALL_W. Ghi cho từng đỉnh của mặt bên: (toạ độ ngang tính từ giữa mặt, độ cao tính từ chân mảnh, bề rộng mặt,
-  // chiều cao mảnh); đỉnh khác để 0 (bề rộng 0: không phải tường)
-  const WALL_H = 1.5, WALL_W = 1.8;
-  function wallMark(P, lk, o) {
-    const geo = P.geo; if (!P.ao || geo.type !== 'BoxGeometry' || geo.userData.noWall) return;
+  // mảng tường lớn (render/look3d.js lớp 3 vẽ chân tường, gờ mái, trụ góc, cửa sổ, cửa ra vào lên đó): mảnh là hộp đứng thẳng,
+  // cao từ WALL_H, mặt bên rộng từ WALL_W, dày từ WALL_D (tường rào, thành mỏng không tính). Ghi cho từng đỉnh của mặt bên:
+  // (toạ độ ngang tính từ giữa mặt, độ cao tính từ chân mảnh, bề rộng mặt, chiều cao mảnh); đỉnh khác để 0 (không phải tường).
+  // Bề rộng ghi âm: mặt trước (+z của công trình) sát đất, có cửa ra vào. Chiều cao ghi âm: mặt đã có mảnh nhỏ dựng sẵn áp lên
+  // (cửa, ô cửa sổ, biển, ban công của chính công trình đó): không vẽ thêm cửa lên nữa.
+  const WALL_H = 1.5, WALL_W = 1.8, WALL_D = 1.4, DOOR_W = 2.2, NEAR = 0.35;
+  function wallDim(P) {
+    const geo = P.geo; if (!P.ao || geo.type !== 'BoxGeometry' || geo.userData.noWall) return null;
     const e = P.m.elements, sx = Math.hypot(e[0], e[1], e[2]), sy = Math.hypot(e[4], e[5], e[6]), sz = Math.hypot(e[8], e[9], e[10]);
-    if (e[5] / sy < 0.995) return; // nghiêng: không phải tường
+    if (e[5] / sy < 0.995) return null; // nghiêng: không phải tường
     if (!geo.boundingBox) geo.computeBoundingBox();
     const b = geo.boundingBox, w = (b.max.x - b.min.x) * sx, h = (b.max.y - b.min.y) * sy, d = (b.max.z - b.min.z) * sz;
-    if (h < WALL_H || Math.max(w, d) < WALL_W) return;
+    if (h < WALL_H || Math.max(w, d) < WALL_W || Math.min(w, d) < WALL_D) return null;
+    return { b, w, h, d, sx, sy, sz, e };
+  }
+  // tâm các mảnh không phải tường của cả công trình (tính một lần cho mỗi lần gộp, chỉ khi công trình có mảng tường)
+  function details(all) {
+    if (all.cen) return all.cen;
+    const THREE = T(), out = [];
+    for (const Q of all) { if (wallDim(Q)) continue; if (!Q.geo.boundingBox) Q.geo.computeBoundingBox(); out.push(Q.geo.boundingBox.getCenter(new THREE.Vector3()).applyMatrix4(Q.m)); }
+    return (all.cen = out);
+  }
+  function wallMark(P, lk, o, all) {
+    const D = wallDim(P); if (!D) return;
+    const THREE = T(), geo = P.geo, { b, w, h, d, sx, sy, sz, e } = D, inv = new THREE.Matrix4().copy(P.m).invert(), c = new THREE.Vector3();
+    // bốn mặt bên: 0 +x, 1 -x, 2 +z, 3 -z
+    const busy = [false, false, false, false], y0 = b.min.y + (0.12 * h) / sy, y1 = b.min.y + (0.92 * h) / sy;
+    for (const q of details(all)) {
+      c.copy(q).applyMatrix4(inv); if (c.y < y0 || c.y > y1) continue;
+      const inX = c.x > b.min.x && c.x < b.max.x, inZ = c.z > b.min.z && c.z < b.max.z;
+      if (inZ && Math.abs(c.x - b.max.x) * sx < NEAR) busy[0] = true; if (inZ && Math.abs(c.x - b.min.x) * sx < NEAR) busy[1] = true;
+      if (inX && Math.abs(c.z - b.max.z) * sz < NEAR) busy[2] = true; if (inX && Math.abs(c.z - b.min.z) * sz < NEAR) busy[3] = true;
+    }
+    const low = e[13] + b.min.y * sy < 0.8, front = [e[2] / sx, -e[2] / sx, e[10] / sz, -e[10] / sz]; // thành phần +z của pháp tuyến từng mặt
     const src = geo.index ? geo.toNonIndexed() : geo, p = src.attributes.position, nr = src.attributes.normal, cx = (b.max.x + b.min.x) / 2, cz = (b.max.z + b.min.z) / 2;
     for (let i = 0; i < p.count; i++) {
       const nx = Math.abs(nr.getX(i)), nz = Math.abs(nr.getZ(i)), ny = Math.abs(nr.getY(i)); if (ny > 0.5) continue;
       const alongZ = nx >= nz, fw = alongZ ? d : w; if (fw < WALL_W) continue;
-      const j = (o + i) * 4; lk[j] = alongZ ? (p.getZ(i) - cz) * sz : (p.getX(i) - cx) * sx; lk[j + 1] = (p.getY(i) - b.min.y) * sy; lk[j + 2] = fw; lk[j + 3] = h;
+      const side = alongZ ? (nr.getX(i) > 0 ? 0 : 1) : (nr.getZ(i) > 0 ? 2 : 3), door = low && front[side] > 0.7 && fw >= DOOR_W;
+      const j = (o + i) * 4; lk[j] = alongZ ? (p.getZ(i) - cz) * sz : (p.getX(i) - cx) * sx; lk[j + 1] = (p.getY(i) - b.min.y) * sy; lk[j + 2] = door ? -fw : fw; lk[j + 3] = busy[side] ? -h : h;
     }
     if (src !== geo) src.dispose();
   }
@@ -121,7 +145,7 @@
   // dựng một công trình thành nhóm: khối chính (đổ bóng) và khối sáng (nếu có)
   Kit.prototype.bake = function (aoH) {
     const THREE = T(), g = new THREE.Group();
-    if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.main = m; g.userData.tris = m.geometry.attributes.position.count / 3; }
+    if (this.parts.length) { const m = new THREE.Mesh(merge(this.parts, aoH || 3, this.lit.concat(this.glow)), mat()); m.castShadow = m.receiveShadow = true; g.add(m); g.userData.main = m; g.userData.tris = m.geometry.attributes.position.count / 3; }
     if (this.flat.length) { const m = new THREE.Mesh(merge(this.flat, aoH || 3), mat()); m.receiveShadow = true; g.add(m); g.userData.flat = m; g.userData.tris = (g.userData.tris || 0) + m.geometry.attributes.position.count / 3; }
     if (this.glow.length) { const m = new THREE.Mesh(merge(this.glow, 1), glowMat().clone()); m.renderOrder = 2; g.add(m); g.userData.glow = m; }
     if (this.lit.length) { const m = new THREE.Mesh(merge(this.lit, 1), litMat()); m.renderOrder = 2; g.add(m); g.userData.lit = m; }

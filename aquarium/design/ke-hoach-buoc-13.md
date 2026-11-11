@@ -144,3 +144,8 @@ thẳng, cao từ 1,5, mặt bên rộng từ 1,8; mái và mảnh trang trí kh
 sẫm, gờ mái sáng có đường chỉ, trụ góc; khối cao từ hai tầng (từ 3,6) thêm mỗi tầng một hàng cửa sổ kính sẫm có khung sáng và
 bậu, số ô theo bề rộng mặt. Một quy tắc cho mọi nhà của 6 đảo × 12 thời, không thêm tam giác; khối gộp của đảo ở xa giữ thuộc
 tính này (`render/build/batch3d.js`). Cửa sổ vẽ bằng shader chưa sáng đèn về đêm (cửa sổ sáng đèn sẵn có vẫn như cũ).
+
+**Lớp 3, hoàn tất mặt tường**: cửa sổ nay có cả ở nhà một tầng (tường cao từ 2,0); mặt trước (+z của công trình) sát đất có cửa
+ra vào kèm khung; thời 1–6 chân tường và gờ mái đậm hơn, thân tường có mạch ngang. Chống vẽ chồng: mặt tường nào đã có mảnh nhỏ
+dựng sẵn áp lên (cửa, ô cửa sổ, đai, biển, ban công) thì không vẽ cửa bằng shader nữa (`wallMark`, mảng `busy`). Tường mỏng dưới
+1,4 (tường rào, thành) không tính là mảng tường. Giới hạn: nhà không phải hộp (lều tròn, mái vòm thời 1–2) không nhận chi tiết này.
