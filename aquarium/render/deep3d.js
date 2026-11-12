@@ -219,7 +219,8 @@
         cam: new THREE.Vector3(Math.cos(t1) * TUN_RC, TUN_FLOOR + 9.5, Math.sin(t1) * TUN_RC),
       });
     }
-    const out = { animate, stops, heightAt: hAt, group: deep, FLOOR, tunnels: TUNNELS, TUN_RC, TUN_FLOOR };
+    // (citadel: số công trình mỗi loại của Thành Vỏ Ốc Xà Cừ, để kiểm)
+    const out = { animate, stops, heightAt: hAt, group: deep, FLOOR, tunnels: TUNNELS, TUN_RC, TUN_FLOOR, citadel: SITES[0].stats, citadelFree: SITES[0].free };
     return out;
   }
   BK.Deep3D = { create };

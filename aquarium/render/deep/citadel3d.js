@@ -6,6 +6,8 @@
  *   - ốc vặn tháp (xoắn nhọn lên cao): tháp cao 22–46, đường khớp sáng chạy theo vòng xoắn, đỉnh sáng.
  *   - vỏ sò quạt (gân toả, dựng đứng): đền sò lớn giữa vỏ chính và quảng trường, hai sò nhỏ cạnh lối vào quảng trường.
  *   - ốc tiền (thuôn, khe sáng): nhà nhỏ.
+ * Thêm kiến trúc (bước 22b): tháp ốc gai (thân thoi xoắn, hai hàng gai), tháp cầu thang xoắn, cầu dẫn nước trên dãy vòm,
+ * nhà hát vỏ sò (bậc ghế quay về một sò quạt), nhà sò ngọc trai, nhà nhím biển, cột ốc vặn hai bên lối vào quảng trường.
  * Thêm: ba vòng đá có hạt sáng quay chậm quanh vỏ chính, năm đảo đá lơ lửng nhấp nhô (động: D.anims); tháp pha lê xoắn;
  * quảng trường hoa hải quỳ quanh hồ sáng, nơi hai đường từ cửa hầm gặp nhau; cổng xương sườn dọc hai đường đó; nhà vòm bong
  * bóng, tháp nấm, vòm vỡ.
@@ -99,6 +101,8 @@
       gl = groups.glow,
       wd = groups.weed;
     D.reseed(1000);
+    const stats = {};
+    const count = (k) => (stats[k] = (stats[k] || 0) + 1);
     const PEARL = ['#efe6f2', '#dccfe8', '#f2e8da', '#d2e6ec'],
       SEAM = '#7ff6ff',
       VIOLET = '#c9a6ff';
@@ -131,11 +135,38 @@
       [CU, 0, 34],
       [ROAD_U, 0, 24],
     ];
-    const free = (u, v, r) =>
-      Math.hypot(u / S.A, v / S.B) < 0.9 &&
-      roads.every((R) => segDist(u, v, R) > r + 5) &&
+    // chỗ (u, v) rộng r còn trống: trong rãnh (tỉ lệ elip ell), cách đường từ cửa hầm roadGap, không chồng công trình đã có
+    const free = (u, v, r, ell = 0.9, roadGap = 5) =>
+      Math.hypot(u / S.A, v / S.B) < ell &&
+      roads.every((R) => segDist(u, v, R) > r + roadGap) &&
       occ.every(([a, b, q]) => Math.hypot(u - a, v - b) > r + q);
 
+    // chỗ trống rộng r xa mọi công trình đã có nhất (thử 500 điểm trong rãnh): công trình lớn rải đều, đặt trước nhà nhỏ
+    const spot = (r) => {
+      let best = null,
+        bestGap = -1;
+      for (let i = 0; i < 500; i++) {
+        const a = rnd() * TAU,
+          k = Math.sqrt(rnd()) * 0.88,
+          u = Math.cos(a) * S.A * k,
+          v = Math.sin(a) * S.B * k;
+        if (!free(u, v, r)) continue;
+        const gap = Math.min(...occ.map(([ou, ov, q]) => Math.hypot(u - ou, v - ov) - q));
+        if (gap > bestGap) {
+          bestGap = gap;
+          best = [u, v];
+        }
+      }
+      return best;
+    };
+    // dựng fn ở chỗ trống rộng r (nếu còn), ghi chỗ đã dùng
+    const placeFree = (r, fn) => {
+      const p = spot(r);
+      if (!p) return false;
+      fn(p[0], p[1]);
+      occ.push([p[0], p[1], r]);
+      return true;
+    };
     /* ---------- Quảng trường hoa hải quỳ, hồ sáng ---------- */
     {
       const u0 = ROAD_U;
@@ -196,6 +227,7 @@
     // ốc xoắn phẳng cao H ở (u, v), quay ry (ry = 0: mặt xoắn nhìn về +u); dẹt 0,78 theo bề dày. Khoang màu xà cừ thay nhau,
     // đường sáng ngăn khoang; miệng có viền tím và lõi sáng; vỏ lớn có gờ sáng dọc lưng. Trả tâm xoắn (u, y, v).
     function nautilus(u, v, H, ry) {
+      count('nautilus');
       const big = H > 30,
         N = big ? 150 : H > 12 ? 90 : 56,
         sides = big ? 14 : 10,
@@ -242,6 +274,7 @@
     }
     // ốc vặn tháp cao H ở (u, v): vòng xoắn màu xà cừ, đường khớp sáng theo vòng xoắn, miệng sáng ở chân, ngọc sáng ở đỉnh
     function turret(u, v, H, ry) {
+      count('turret');
       const n = H > 30 ? 150 : 110,
         pts = turretPts(H, n, 5.5),
         shade = rnd() * 4,
@@ -264,6 +297,7 @@
     // vỏ sò quạt cao H ở (u, v), dựng đứng, mặt quạt nhìn theo hướng ry (ry = π/2: nhìn về +u); gân toả từ bản lề, rãnh sáng
     // giữa các gân, hai tai bản lề, bệ đá
     function scallop(u, v, H, ry) {
+      count('scallop');
       const ribs = 13,
         hinge = H * 0.08;
       F.add(st, BOX(), '#a59cb8', u, 0, v, H * 0.5, hinge, H * 0.22, ry);
@@ -286,6 +320,7 @@
     }
     // ốc tiền: nhà nhỏ thuôn dài nửa vùi, đốm xà cừ trên lưng, khe sáng dọc một bên, cửa tối ở đầu
     function cowrie(u, v, r, ry) {
+      count('cowrie');
       F.add(st, BALL(), PEARL[Math.floor(rnd() * 4)], u, r * 0.35, v, r * 1.7, r * 0.95, r * 1.1, ry);
       for (let k = 0; k < 5; k++) {
         const [du, dv] = off(u, v, ry, (rnd() - 0.5) * r * 1.8, (rnd() - 0.5) * r * 0.8);
@@ -299,6 +334,8 @@
 
     /* ---------- Vỏ ốc chính, sảnh vỏ ốc, tháp ốc vặn, đền sò ---------- */
     const shellC = nautilus(CU, 0, 58, 0); // (tâm xoắn: tâm quay của ba vòng đá, phần động bên dưới)
+    // nhà hát vỏ sò cần chỗ rộng: chọn chỗ ngay sau vỏ chính và quảng trường, quay mặt về giữa rãnh
+    placeFree(19, (u, v) => theater(u, v, Math.atan2(-u, -v) + Math.PI / 2));
     // sảnh vỏ ốc cỡ vừa (quay mặt xoắn về phía giữa rãnh), tháp ốc vặn, đền sò: [u, v, cao, hướng]
     const HALLS = [
       [-72, 30, 18, 0.7],
@@ -355,26 +392,150 @@
       occ.push([u, v, 6]);
     }
 
-    /* ---------- Nhà nhỏ: vỏ ốc nhỏ, ốc tiền, vòm bong bóng, tháp nấm, vòm vỡ ---------- */
+    /* ---------- Thêm kiến trúc: ốc gai, tháp cầu thang xoắn, cầu dẫn nước, nhà hát vỏ sò, cột ốc vặn ---------- */
+    // ốc gai: thân hình thoi xoắn (các đốt côn xoay dần), hai hàng gai ở vai, khe miệng sáng dọc một bên, chóp nhọn
+    function conch(u, v, H, ry) {
+      count('conch');
+      const n = 9,
+        shade = Math.floor(rnd() * 4),
+        Rmax = H * 0.24,
+        rad = (t) => Rmax * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.15)), 0.75) + 0.3;
+      for (let i = 0; i < n; i++) {
+        const t0 = i / n,
+          t1 = (i + 1) / n,
+          r0 = rad(t0),
+          r1 = rad(t1),
+          ratio = Math.round((r1 / r0) * 20) / 20;
+        F.add(st, FRU(7, ratio), PEARL[(i + shade) % 4], u, t0 * H, v, r0, H / n + 0.05, r0, ry + i * 0.35);
+      }
+      for (const [t, k] of [
+        [0.34, 9],
+        [0.5, 7],
+      ])
+        for (let q = 0; q < k; q++) {
+          const a = (q / k) * TAU + t * 3,
+            r = rad(t),
+            [su, sv] = off(u, v, ry, Math.cos(a) * r, Math.sin(a) * r);
+          F.add(st, CONE(4), '#b9a4f0', su, t * H, sv, 0.5 + H * 0.02, 1.2 + H * 0.09, 0.5 + H * 0.02, ry - a, 0, -Math.PI / 2 + 0.35);
+        }
+      const [mu, mv] = off(u, v, ry, rad(0.35) * 0.98, 0);
+      F.add(gl, BOX(), SEAM, mu, H * 0.12, mv, 0.3, H * 0.42, 0.5 + H * 0.03, ry);
+      F.add(gl, GEM(), VIOLET, u, H * 0.98, v, 0.4, 0.9 + H * 0.03, 0.4);
+    }
+    // tháp cầu thang xoắn: cột giữa, bậc đá xoắn ba vòng quanh cột, đèn vòm trên đỉnh, đèn nhỏ dọc lan can
+    function rampTower(u, v, H) {
+      count('rampTower');
+      const steps = 54,
+        R = 3.8,
+        a0 = rnd() * TAU;
+      F.add(st, CYL(10), '#bfb6cf', u, 0, v, 2.1, H, 2.1);
+      for (let i = 0; i < steps; i++) {
+        const a = a0 + (i / steps) * 3 * TAU,
+          y = (i / steps) * H,
+          [su, sv] = off(u, v, 0, Math.cos(a) * R, Math.sin(a) * R);
+        F.add(st, BOX(), PEARL[i % 4], su, y, sv, 3.4, 0.45, 1.5, -a);
+        if (i % 6 === 0)
+          F.add(gl, GEM(), i % 12 ? SEAM : VIOLET, u + Math.cos(a) * (R + 1.6), y + 0.5, v + Math.sin(a) * (R + 1.6), 0.25, 0.6, 0.25);
+      }
+      F.add(st, CYL(12), '#d8cfe6', u, H, v, 3.4, 0.6, 3.4);
+      F.add(st, DOME(), PEARL[2], u, H + 0.6, v, 2.6, 2.4, 2.6);
+      F.add(gl, RINGG(), SEAM, u, H + 0.7, v, 2.7, 2.7, 2.7, 0, Math.PI / 2);
+      F.add(gl, GEM(), VIOLET, u, H + 3, v, 0.5, 1.4, 0.5);
+    }
+    // cầu dẫn nước: trụ, vòm và máng đá chạy theo một cung elip (k: tỉ lệ bán trục), dòng nước sáng trên máng; bỏ đoạn vướng
+    function aqueduct(a0, a1, k, h) {
+      const pts = [];
+      for (let a = a0; a <= a1 + 1e-6; a += (a1 - a0) / Math.max(2, Math.round((Math.abs(a1 - a0) * S.A * k) / 9)))
+        pts.push([Math.cos(a) * S.A * k, Math.sin(a) * S.B * k]);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [u0, v0] = pts[i],
+          [u1, v1] = pts[i + 1],
+          mu = (u0 + u1) / 2,
+          mv = (v0 + v1) / 2,
+          L = Math.hypot(u1 - u0, v1 - v0),
+          ry = -Math.atan2(v1 - v0, u1 - u0);
+        if (!free(mu, mv, L * 0.4)) continue;
+        for (const [pu, pv] of [pts[i], pts[i + 1]]) F.add(st, CYL(8), '#cfc6dc', pu, 0, pv, 1.2, h, 1.2);
+        F.add(st, ARCH(), PEARL[i % 4], mu, h * 0.15, mv, L / 2, h * 0.75, 2.4, ry);
+        F.add(st, BOX(), '#d8cfe6', mu, h, mv, L + 0.8, 1.2, 2.6, ry);
+        F.add(gl, BOX(), '#58e6ff', mu, h + 1.2, mv, L + 0.8, 0.2, 1.2, ry);
+        count('aqueduct');
+        occ.push([mu, mv, L * 0.45]);
+      }
+    }
+    // nhà hát vỏ sò: năm bậc ghế nửa vòng quay về một sò quạt làm phông, sân khấu tròn sáng
+    function theater(u, v, ry) {
+      count('theater');
+      for (let t = 0; t < 5; t++) {
+        const R = 7 + t * 2.4;
+        for (let j = 0; j < 12; j++) {
+          const ph = -Math.PI / 2 + ((j + 0.5) / 12) * Math.PI,
+            [su, sv] = off(u, v, ry, Math.cos(ph) * R, Math.sin(ph) * R);
+          F.add(st, BOX(), t % 2 ? PEARL[0] : PEARL[3], su, 0, sv, (Math.PI * R) / 12 + 0.3, 1 + t * 1.1, 2.3, ry - ph);
+        }
+      }
+      F.add(gl, CYL(20), '#7ff6ff', u, 0, v, 4.5, 0.4, 4.5);
+      const [bu, bv] = off(u, v, ry, -6.5, 0);
+      scallop(bu, bv, 14, ry - Math.PI / 2);
+    }
+    // nhà sò ngọc trai: hai mảnh vỏ sò mở, ngọc trai sáng ở giữa
+    function clam(u, v, r, ry) {
+      count('clam');
+      const col = PEARL[Math.floor(rnd() * 4)];
+      F.add(st, DOME(), col, u, r * 0.38, v, r, r * 0.38, r * 0.8, ry, Math.PI);
+      const [hu, hv] = off(u, v, ry, -r * 0.75, 0);
+      F.add(st, DOME(), col, hu, r * 0.38, hv, r, r * 0.42, r * 0.8, ry, 0, 0.95);
+      F.add(gl, BALL(), '#f4f0ff', u, r * 0.5, v, r * 0.38, r * 0.38, r * 0.38);
+    }
+    // nhà nhím biển: khối tròn tím sẫm, gai toả, vòng sáng ở chân
+    function urchin(u, v, r) {
+      count('urchin');
+      F.add(st, BALL(), '#5b4a78', u, r * 0.55, v, r, r * 0.8, r);
+      for (let q = 0; q < 16; q++)
+        F.add(st, CONE(4), '#7d68a4', u, r * 0.6, v, 0.22 * r, r * 1.6, 0.22 * r, rnd() * TAU, 0, -(0.2 + rnd() * 1.2));
+      F.add(gl, RINGG(), VIOLET, u, 0.3, v, r * 1.05, r * 1.05, r * 1.05, 0, Math.PI / 2);
+    }
+    // cột ốc vặn quanh quảng trường, ngoài mép cánh đá
+    for (const a of [0.55, -0.55, 2.4, -2.4, Math.PI]) {
+      const u = ROAD_U + Math.cos(a) * 27.5,
+        v = Math.sin(a) * 27.5;
+      if (free(u, v, 2)) {
+        turret(u, v, 13 + rnd() * 4, rnd() * TAU);
+        occ.push([u, v, 3.5]);
+      }
+    }
+    // nhà hát vỏ sò (quay mặt về giữa rãnh), tháp cầu thang xoắn, tháp ốc gai, tháp ốc vặn nhỏ: rải đều chỗ còn trống
+    for (const H of [26, 20, 22, 18]) placeFree(6, (u, v) => rampTower(u, v, H));
+    for (const H of [18, 14, 16, 12, 10, 11, 13, 9]) placeFree(H * 0.3 + 1.5, (u, v) => conch(u, v, H, rnd() * TAU));
+    for (const H of [20, 16, 18]) placeFree(H * 0.2 + 2.5, (u, v) => turret(u, v, H, rnd() * TAU));
+    aqueduct(1.9, 2.9, 0.86, 12);
+    aqueduct(-2.9, -1.95, 0.84, 11);
+
+    /* ---------- Nhà nhỏ: vỏ ốc nhỏ, ốc tiền, sò ngọc trai, nhím biển, vòm bong bóng, tháp nấm, vòm vỡ ---------- */
     let houses = 0;
-    for (let i = 0; i < 600 && houses < 54; i++) {
+    for (let i = 0; i < 1500 && houses < 120; i++) {
       const a = rnd() * TAU,
-        k = 0.35 + rnd() * 0.55,
+        k = 0.3 + rnd() * 0.65,
         u = Math.cos(a) * S.A * k,
         v = Math.sin(a) * S.B * k,
-        r = 2.4 + rnd() * 3.2;
-      if (!free(u, v, r)) continue;
+        r = 1.8 + rnd() * 2.6;
+      if (!free(u, v, r, 0.95, 3)) continue; // (nhà nhỏ: sát mép rãnh, sát đường hơn công trình lớn)
       houses++;
-      occ.push([u, v, r + 1.2]);
+      occ.push([u, v, r + 0.5]);
       const kind = rnd(),
         col = PEARL[Math.floor(rnd() * 4)];
-      if (kind < 0.24) {
+      if (kind < 0.18) {
         // nhà vỏ ốc nhỏ, quay mặt xoắn về phía giữa rãnh
         nautilus(u, v, r * 2.2, Math.atan2(-u, -v) - Math.PI / 2 + (rnd() - 0.5) * 0.8);
-      } else if (kind < 0.42) {
+      } else if (kind < 0.32) {
         cowrie(u, v, r * 0.8, rnd() * TAU);
-      } else if (kind < 0.66) {
+      } else if (kind < 0.44) {
+        clam(u, v, r * 0.9, rnd() * TAU);
+      } else if (kind < 0.55) {
+        urchin(u, v, r * 0.7);
+      } else if (kind < 0.72) {
         // vòm bong bóng: chân sáng, cửa tròn, có vòm chồng đôi
+        count('bubble');
         F.add(st, CYL(14), '#a59cb8', u, 0, v, r * 1.05, 0.6, r * 1.05);
         F.add(st, DOME(), col, u, 0.6, v, r, r * 1.05, r);
         F.add(gl, RINGG(), SEAM, u, 0.7, v, r * 1.02, r * 1.02, r * 1.02, 0, Math.PI / 2);
@@ -383,14 +544,16 @@
           F.add(st, DOME(), PEARL[(Math.floor(rnd() * 4) + 1) % 4], u, 0.6 + r * 0.85, v, r * 0.55, r * 0.6, r * 0.55);
           F.add(gl, GEM(), VIOLET, u, 0.6 + r * 1.4, v, 0.35, 0.9, 0.35);
         }
-      } else if (kind < 0.86) {
+      } else if (kind < 0.9) {
         // tháp nấm: thân mảnh, mũ rộng, vòng sáng dưới mũ
+        count('mushroom');
         const h = 7 + rnd() * 9;
         F.add(st, CYL(8), '#bfb6cf', u, 0, v, r * 0.28, h, r * 0.28);
         F.add(st, DOME(), col, u, h, v, r * 1.25, r * 0.6, r * 1.25);
         F.add(gl, RINGG(), rnd() < 0.5 ? SEAM : VIOLET, u, h - 0.1, v, r * 1.1, r * 1.1, r * 1.1, 0, Math.PI / 2);
       } else {
         // vòm vỡ: nửa vòm nghiêng, mảnh vỏ rơi
+        count('broken');
         F.add(st, CYL(14), '#a59cb8', u, 0, v, r, 0.6, r);
         F.add(st, DOME(), col, u + 1, 0.2, v, r, r * 0.9, r, rnd() * 3, 0.5 + rnd() * 0.4, 0.3);
         for (let q = 0; q < 3; q++)
@@ -493,6 +656,8 @@
       });
     });
 
+    S.free = free; // (chỗ còn trống: để kiểm)
+    S.stats = stats; // (số công trình mỗi loại: để kiểm, xem tools và design/ke-hoach-buoc-22.md)
     S.name = 'Thành Vỏ Ốc Xà Cừ';
     S.top = floorY + 60;
   }

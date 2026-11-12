@@ -31,3 +31,16 @@ Một nền văn minh biết uốn đá như vỏ ốc, màu xà cừ (trắng t
 - Đáy bể khoảng 304 nghìn tam giác (trước 235 nghìn). Máy thử, nhìn từ trên: 45,7 ms một khung so với 41,5 ms khi ẩn đáy bể.
 - 93 bài kiểm thử đạt; lặn đủ chín điểm, không lỗi trang.
 - Chưa đo trên điện thoại thật.
+
+## 3. Thêm kiến trúc (người chơi yêu cầu: nhiều công trình hơn nữa)
+
+- Kiểu mới: tháp ốc gai (thân thoi xoắn, hai hàng gai ở vai, khe miệng sáng), tháp cầu thang xoắn (bậc đá xoắn ba vòng quanh
+  cột, đèn vòm), cầu dẫn nước (trụ, vòm, máng có dòng nước sáng), nhà hát vỏ sò (năm bậc ghế quay về một sò quạt), nhà sò ngọc
+  trai (hai mảnh vỏ mở, ngọc sáng), nhà nhím biển (khối tím có gai), cột ốc vặn quanh quảng trường.
+- Đặt chỗ: công trình lớn chọn chỗ trống xa mọi công trình đã có nhất (thử 500 điểm), đặt trước nhà nhỏ; nhà hát chọn ngay
+  sau vỏ chính và quảng trường. Nhà nhỏ cỡ 1,8–4,4, được sát mép rãnh và sát đường hơn, tối đa 120.
+- Đếm thật (render/deep3d.js `citadel`): ốc xoắn phẳng 20 (vỏ chính, sảnh, nhà), ốc vặn tháp 11, sò quạt 4, nhà hát 1, tháp
+  cầu thang 4, ốc gai 8, đoạn cầu dẫn nước 2, sò ngọc trai 9, ốc tiền 7, nhím biển 14, vòm bong bóng 11, tháp nấm 10, vòm vỡ
+  14; cùng tháp pha lê, quảng trường, cổng xương sườn, vòng quay, đảo lơ lửng. Tổng khoảng 130 công trình.
+- Đáy bể khoảng 340 nghìn tam giác. Máy thử, nhìn từ trên: 53,1 ms một khung so với 47,8 ms khi ẩn đáy bể.
+- Cầu dẫn nước chỉ còn 2 đoạn (đoạn nào vướng công trình hay đường thì bỏ).
