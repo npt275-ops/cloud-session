@@ -41,7 +41,8 @@
     waterGeo.setAttribute('color', new THREE.Float32BufferAttribute(wcol, 3));
     waterGeo.setAttribute('aShore', new THREE.BufferAttribute(wsh, 2)); // (độ lớn sóng chỗ đó, khoảng cách tới bờ)
     // không bóng loáng, không nhận bóng đổ: hết những mảng lóe trắng khi xoay
-    const waterMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, flatShading: true, emissive: '#0b3550', emissiveIntensity: 0.28 });
+    // (hai mặt: lặn xuống đáy bể nhìn lên vẫn thấy mặt nước, render/deep3d.js)
+    const waterMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, flatShading: true, emissive: '#0b3550', emissiveIntensity: 0.28, side: THREE.DoubleSide });
     const U = { uT: { value: 0 }, uAmp: { value: 1 } };
     const glsl = (v) => v.toFixed(5), EG = glsl(EDGE_R);
     // độ cao sóng h (và độ dồn ngang off) tại p0 với độ lớn amp: dùng chung cho mặt nước và mép trên vách nước
@@ -74,7 +75,8 @@
     water.raycast = () => {};
     // Đáy bể là thuỷ tinh trong suốt: một chậu kính dưới vòm, nước xanh trong đựng bên trong,
     // nhìn từ ngoài thấy cả chân đá của sáu đảo chìm trong nước.
-    const BODY_H = 34, FLOOR_Y = SEA_Y - BODY_H, GLASS_R = EDGE_R + 0.35;
+    // đáy bể sâu 130 (design/ke-hoach-buoc-18.md): núi chìm, rãnh sâu, phế tích ở render/deep3d.js
+    const BODY_H = 130, FLOOR_Y = SEA_Y - BODY_H, GLASS_R = EDGE_R + 0.35;
     const seaBodyMat = new THREE.MeshStandardMaterial({ color: '#2a8fbf', roughness: 0.5, emissive: '#0b3550', emissiveIntensity: 0.3, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
     // Vách nước (mặt nước nhìn qua kính từ ngoài): mép trên lên xuống đúng con sóng ở mép mặt nước (420 múi, trùng đỉnh vòng
     // ngoài của mặt nước), dưới mép là dải bọt trắng sóng đập vào kính (sâu 1–2,2) và một vệt bọt chìm thấp hơn.
@@ -94,13 +96,12 @@
     };
     wallMat.customProgramCacheKey = () => 'seaWall';
     const wall = new THREE.Mesh(wallGeo, wallMat); wall.renderOrder = 3; sea.add(wall);
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(EDGE_R, 120), seaBodyMat); bottom.rotation.x = -Math.PI / 2; bottom.position.y = FLOOR_Y + 0.05; bottom.renderOrder = 3; sea.add(bottom);
     const glassMat = new THREE.MeshPhongMaterial({ color: 0xe8f6ff, transparent: true, opacity: 0.1, shininess: 160, specular: 0xffffff, side: THREE.DoubleSide, depthWrite: false });
     const glassWall = new THREE.Mesh(new THREE.CylinderGeometry(GLASS_R, GLASS_R, -FLOOR_Y + 0.6, 120, 1, true), glassMat); glassWall.position.y = (FLOOR_Y - 0.6) / 2; glassWall.renderOrder = 4; sea.add(glassWall);
     const glassFloor = new THREE.Mesh(new THREE.CircleGeometry(GLASS_R, 120), glassMat); glassFloor.rotation.x = -Math.PI / 2; glassFloor.position.y = FLOOR_Y - 0.6; glassFloor.renderOrder = 4; sea.add(glassFloor);
     const brass = new THREE.MeshStandardMaterial({ color: '#b08d57', metalness: 0.6, roughness: 0.35 });
     const footRing = new THREE.Mesh(new THREE.TorusGeometry(GLASS_R, 0.9, 8, 180), brass); footRing.rotation.x = Math.PI / 2; footRing.position.y = FLOOR_Y - 0.6; sea.add(footRing);
-    for (const m of [wall, bottom, glassWall, glassFloor, footRing]) m.raycast = () => {};
+    for (const m of [wall, glassWall, glassFloor, footRing]) m.raycast = () => {};
     function fitBody() { const top = SEA_Y + seaDy; wall.scale.y = top - FLOOR_Y; wall.position.y = (top + FLOOR_Y) / 2; UW.uSy.value = wall.scale.y; }
     fitBody();
 
@@ -115,7 +116,10 @@
       seaDy = dy; water.position.y = SEA_Y + dy; fitBody();
       water.rotation.x = tiltX || 0; water.rotation.z = tiltZ || 0;
     }
-    const out = { animate, setSea, heightAt, surface, SEA_Y, EDGE_R, get seaDy() { return seaDy; } };
+    // máy quay lặn dưới nước (render/deep3d.js): vách nước gần như đục, không thấy trời bên ngoài qua vách
+    let under = false;
+    function setUnder(on) { if (on === under) return; under = on; wallMat.opacity = on ? 0.94 : seaBodyMat.opacity; }
+    const out = { animate, setSea, setUnder, heightAt, surface, SEA_Y, EDGE_R, FLOOR_Y, get seaDy() { return seaDy; } };
     (root.BK || (root.BK = {})).seaAt = surface; // (thuyền, tàu nổi trên biển: render/travel3d.js, prosper3d.js, buildings3d.js)
     return out;
   }

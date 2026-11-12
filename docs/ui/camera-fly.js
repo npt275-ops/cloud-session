@@ -7,7 +7,8 @@
   function setup(G) {
     const { THREE, camera, controls, clamp, lerp, $ } = G;
     let tween = null;
-    function flyTo(p, dist, dir, y) { const k = camera.aspect < 0.8 ? 1.4 : 1; tween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(),
+    // exact: giữ đúng khoảng cách (không giãn trên màn hình dọc), như khi lặn xuống đáy bể (ui/landbar.js)
+    function flyTo(p, dist, dir, y, exact) { const k = !exact && camera.aspect < 0.8 ? 1.4 : 1; tween = { target: p.clone().setY(y == null ? 2 : y), t0: performance.now(),
         from: controls.target.clone(), dist: camera.position.distanceTo(controls.target), toDist: (dist || 30) * k,
         dirFrom: dir ? camera.position.clone().sub(controls.target).normalize() : null, dirTo: dir ? dir.clone().normalize() : null, dur: dir ? 1700 : 1200 }; }
 

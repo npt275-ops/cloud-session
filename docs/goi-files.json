@@ -470,6 +470,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/deep3d.js",
+  "src": "render/deep3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/engines3d.js",
   "src": "render/engines3d.js",
   "mode": 420
