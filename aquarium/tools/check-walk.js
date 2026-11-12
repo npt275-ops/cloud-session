@@ -26,7 +26,7 @@ const ISLES = (process.env.ISLES || '0,1,2,3,4,5').split(',').map(Number), FRAME
       const G = __glass.G, T = __glass.THREE, B = __glass.buildings, W = G.world, C = BK.World.CYCLE_DAYS, out = [];
       G.time.tps = 0; G.goEra(lv);
       const ray = new T.Raycaster(), down = new T.Vector3(0, -1, 0), o = new T.Vector3(), main = BK.BuildKit.mats().main, sides = new Map();
-      const kindOf = (m) => { for (let q = m; q; q = q.parent) if (q.userData && q.userData.kind) return q.userData.kind; return 'khối gộp'; };
+      const kindOf = (m) => { let sub = ''; for (let q = m; q; q = q.parent) { if (q.isGroup && q.name && !q.userData.kind && !sub) sub = q.name; if (q.userData && q.userData.kind) return q.userData.kind + (sub ? ' · ' + sub : ''); } return 'khối gộp'; }; // (sub: phần chuyển động của công trình, như xe trên đường làng)
       let t = performance.now() + lv * 1e7;
       for (const i of isles) {
         const L = G.lands[i], V = G.villageOf(i), PL = B.places(i), h = (PL.hallC || PL.hall).clone().add(L.center);
@@ -49,7 +49,7 @@ const ISLES = (process.env.ISLES || '0,1,2,3,4,5').split(',').map(Number), FRAME
               o.set(L.center.x + x.x, feet + 1.4, L.center.z + x.z); ray.set(o, down); ray.far = 0.95; // (mặt đường, đường ray, vỉa hè dưới 0,45: không tính)
               const hit = ray.intersectObjects(meshes, false)[0];
               if (hit) out.push({ lv, i, tod, who: x.key, king: x.key === W.islands[i].seats.king, doing: (x.verb || x.state) + '@' + (x.place || '-'), kind: (() => { const k = kindOf(hit.object); if (k !== 'khối gộp') return k; // khối gộp: chiếu lại vào hình riêng (đang ẩn) của từng công trình để biết là cái nào
-                const all = []; L.g.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material === main) all.push(m); }); for (const m of all) m.material.side = T.DoubleSide; const h2 = ray.intersectObjects(all, false).find((q) => kindOf(q.object) !== 'khối gộp'); return h2 ? kindOf(h2.object) : B.debug.pieceAt(i, x.x, x.z) || 'khối gộp'; })(), up: +(hit.point.y - feet).toFixed(2), at: [+x.x.toFixed(1), +x.z.toFixed(1)] });
+                const all = []; L.g.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material === main) all.push(m); }); for (const m of all) m.material.side = T.DoubleSide; const h2 = ray.intersectObjects(all, false).find((q) => kindOf(q.object) !== 'khối gộp'); return h2 ? kindOf(h2.object) : B.debug.pieceAt(i, x.x, x.z) || 'khối gộp'; })(), up: +(hit.point.y - feet).toFixed(2), at: [+x.x.toFixed(1), +x.z.toFixed(1)], inSolid: (B.places(i).solids || []).filter((S) => { const dx = x.x - S.x, dz = x.z - S.z, lx = dx * S.c - dz * S.s, lz = dx * S.s + dz * S.c; return lx > S.x0 && lx < S.x1 && lz > S.z0 && lz < S.z1; }).map((S) => S.kind).join(',') || '-', lv: W.islands[i].level, moving: x.moving });
             }
             for (const [mat, s] of sides) mat.side = s;
           }

@@ -249,7 +249,7 @@
       if (P.spec.town && sh.L.drape) { // lớp đường, tường, đèn: từng đỉnh phủ theo đất; phần chuyển động (xe, cối xay) nâng cả khối theo chỗ nó đứng
         const c = Math.cos(P.g.rotation.y), sn = Math.sin(P.g.rotation.y); P.liftAt = (x, z) => sh.L.surfAt(P.x + x * c + z * sn, P.z - x * sn + z * c);
         for (const n in m.userData.subs || {}) { const q = m.userData.subs[n]; q.traverse((o) => { o.userData.noDrape = true; }); q.position.y += P.liftAt(q.position.x, q.position.z); }
-        sh.L.drape(m); }
+        sh.L.drape(m, 1.1); }
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
       P.subs = m.userData.subs || {}; for (const n in P.subs) P.subs[n].userData.base = P.subs[n].position.clone();
       P.parts = { main: m.userData.main || null, flat: m.userData.flat || null, glow: m.userData.glow || null, lit: m.userData.lit || null, neon: m.children.find((c) => c.name === 'neon') || null };

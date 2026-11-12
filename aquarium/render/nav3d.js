@@ -142,12 +142,22 @@
     // khung nào chứa điểm (nới ra m): độ sâu vào trong và hướng ra ngắn nhất (theo trục khung)
     function inside(B, x, z, m) { const [lx, lz] = toL(B, x, z); if (lx <= B.x0 - m || lx >= B.x1 + m || lz <= B.z0 - m || lz >= B.z1 + m) return null;
       const o4 = [[lx - (B.x0 - m), -1, 0], [B.x1 + m - lx, 1, 0], [lz - (B.z0 - m), 0, -1], [B.z1 + m - lz, 0, 1]].sort((a, b) => a[0] - b[0])[0]; return { lx, lz, d: o4[0], ux: o4[1], uz: o4[2] }; }
+    // chỗ ra gần nhất từ (x, z) tới ngoài mọi khung (hai nhà đứng sát nhau: không đẩy từ nhà này vào nhà kia); null nếu không ở trong khung nào
+    function exitOf(x, z, farm) {
+      const all = solids(farm), inn = all.filter((B) => inside(B, x, z, PUSH)); if (!inn.length) return null;
+      let best = null, bd = 1e9, any = null, ad = 1e9;
+      for (const B of inn) { const [lx, lz] = toL(B, x, z);
+        for (const [tx, tz] of [[B.x0 - PUSH - 0.02, lz], [B.x1 + PUSH + 0.02, lz], [lx, B.z0 - PUSH - 0.02], [lx, B.z1 + PUSH + 0.02]]) {
+          const w = toW(B, tx, tz), d = Math.hypot(w.x - x, w.z - z); if (d < ad) { ad = d; any = w; }
+          if (d < bd && !all.some((C) => inside(C, w.x, w.z, PUSH - 0.01))) { bd = d; best = w; } } }
+      return best || any;
+    }
     function clearPt(v, farm) {
       let p = v;
-      for (let pass = 0; pass < 3; pass++) { let moved = false; for (const B of solids(farm)) { const h = inside(B, p.x, p.z, PUSH); if (!h) continue; p = toW(B, h.lx + h.ux * (h.d + 0.02), h.lz + h.uz * (h.d + 0.02), p.y); moved = true; } if (!moved) break; }
+      for (let pass = 0; pass < 4; pass++) { const e = exitOf(p.x, p.z, farm); if (!e) break; p = new THREE.Vector3(e.x, v.y, e.z); }
       return p;
     }
-    function pushOut(pos, max, farm) { for (const B of solids(farm)) { const h = inside(B, pos.x, pos.z, PUSH); if (!h) continue; const k = Math.min(h.d + 0.02, max), y = pos.y; pos.copy(toW(B, h.lx + h.ux * k, h.lz + h.uz * k, y)); } }
+    function pushOut(pos, max, farm) { const e = exitOf(pos.x, pos.z, farm); if (!e) return; const dx = e.x - pos.x, dz = e.z - pos.z, d = Math.hypot(dx, dz) || 1, k = Math.min(1, max / d); pos.x += dx * k; pos.z += dz * k; }
     // đoạn thẳng a→b (toạ độ khung) có cắt khung nới m không (Liang–Barsky)
     function cuts(B, a, b, m) { let t0 = 0, t1 = 1; const dx = b[0] - a[0], dz = b[1] - a[1];
       for (const [p, q] of [[-dx, a[0] - (B.x0 - m)], [dx, B.x1 + m - a[0]], [-dz, a[1] - (B.z0 - m)], [dz, B.z1 + m - a[1]]]) { if (Math.abs(p) < 1e-9) { if (q < 0) return false; continue; } const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } }
@@ -159,7 +169,8 @@
       const [B, a, b] = best; let pick = null, pd = 1e9;
       for (const [cx, cz] of [[B.x0 - CORNER, B.z0 - CORNER], [B.x1 + CORNER, B.z0 - CORNER], [B.x1 + CORNER, B.z1 + CORNER], [B.x0 - CORNER, B.z1 + CORNER]]) {
         const d0 = Math.hypot(cx - a[0], cz - a[1]); if (d0 < 0.3 || cuts(B, a, [cx, cz], SEG)) continue; // (góc đang đứng, góc phải đi xuyên khung mới tới: bỏ)
-        const d = d0 + Math.hypot(b[0] - cx, b[1] - cz) + (cuts(B, [cx, cz], b, SEG) ? 2 * CORNER : 0); if (d < pd) { pd = d; pick = [cx, cz]; } }
+        const w = toW(B, cx, cz), blocked = solids(farm).some((C) => C !== B && inside(C, w.x, w.z, PUSH)); // (góc nằm trong nhà bên cạnh: chỉ đi khi không còn góc nào khác)
+        const d = d0 + Math.hypot(b[0] - cx, b[1] - cz) + (cuts(B, [cx, cz], b, SEG) ? 2 * CORNER : 0) + (blocked ? 50 : 0); if (d < pd) { pd = d; pick = [cx, cz]; } }
       return pick ? toW(B, pick[0], pick[1], to.y) : null;
     }
     const reset = () => { NAV = null; };
