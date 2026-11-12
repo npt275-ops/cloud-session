@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 44952 dòng.
+Tổng: 155 tệp, 44972 dòng.
 
 ## (gốc)
 
@@ -114,7 +114,7 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/map/height3d.js` | 611 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
+| `render/map/height3d.js` | 631 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
 | `render/map/map3d.js` | 124 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
 | `render/map/mountains3d.js` | 322 | Núi của bản đồ | `BK.MapMountains` |  |
 | `render/map/relief3d.js` | 565 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép … | `BK.MapRelief` |  |

@@ -50,7 +50,7 @@
         const me = new THREE.Mesh(g, mat);
         me.receiveShadow = true;
         me.userData.noDrape = true;
-        me.userData.flatLift = true;
+        me.userData.flatPart = kind; // (vẫn là mặt nước, bờ: render/map/height3d.js finish nâng theo độ nâng của đất từng đỉnh)
         L.g.add(me);
       }
     }

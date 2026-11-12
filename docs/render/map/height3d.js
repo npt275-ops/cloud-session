@@ -596,9 +596,29 @@
       });
     }
     // xong phần thiên nhiên của một đảo: khoét nước, dựng lưới, phủ mọi khối tĩnh đã có trên đảo
+    const _fp = new THREE.Vector3(),
+      _fi = new THREE.Matrix4();
+    function liftFlat(L, o) {
+      o.updateMatrix();
+      _fi.copy(o.matrix).invert();
+      const P = o.geometry.attributes.position;
+      for (let q = 0; q < P.count; q++) {
+        _fp.fromBufferAttribute(P, q).applyMatrix4(o.matrix);
+        _fp.y += sample(L.hf, L.hf.lift, _fp.x, _fp.z);
+        _fp.applyMatrix4(_fi);
+        P.setXYZ(q, _fp.x, _fp.y, _fp.z);
+      }
+      P.needsUpdate = true;
+      o.geometry.computeVertexNormals();
+      o.geometry.computeBoundingSphere();
+    }
     function finish(L, st) {
-      // mặt nước, bờ (phẳng, không phủ theo đất) nâng lên cùng mặt đảo
-      for (const o of L.g.children) if (o.userData.flatPart || o.userData.flatLift || o.userData.carve) o.position.y += L.lift || 0;
+      // mặt nước, bờ (phẳng, không phủ theo đất) nâng theo độ nâng của đất tại từng đỉnh: giữa đảo nâng đủ L.lift, chỗ đất thoải
+      // xuống biển (cổng chính, hai đầu bến cầu, bãi biển) và vách mép đảo thì thấp dần: sông chảy dốc xuống theo, không lơ
+      // lửng trên chỗ đất thoải; phần nâng nguyên khối (cầu qua sông, khe núi) nâng đều L.lift
+      for (const o of L.g.children)
+        if (o.userData.flatPart && o.isMesh) liftFlat(L, o);
+        else if (o.userData.flatLift || o.userData.carve) o.position.y += L.lift || 0;
       carve(L);
       build(L, st);
       for (const o of L.g.children.slice())
