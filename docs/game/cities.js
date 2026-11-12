@@ -438,15 +438,15 @@
       world.islands.forEach((S, i) => {
         const sg = S.situ.siege, v = villages[i]; if (!sg || !v || !v.visible) return;
         const L = lands[i], pl = buildings.places(i); if (!pl) return;
-        const g = pl[sg.gate] && pl[sg.gate][0]; if (g) { const out = g.clone().setY(0).normalize(); bars.add(g.clone().addScaledVector(out, 3).add(L.center).setY(L.center.y + 7), BK.Siege.hp(S, sg.gate), 3.2); }
-        if (pl.hall && (sg.stage === 'hall' || sg.stage === 'outer' || BK.Siege.hp(S, 'hall') < 1)) bars.add(pl.hall.clone().add(L.center).setY(L.center.y + 12), BK.Siege.hp(S, 'hall'), 4);
+        const g = pl[sg.gate] && pl[sg.gate][0]; if (g) { const out = g.clone().setY(0).normalize(); bars.add(g.clone().addScaledVector(out, 3).add(L.center).setY(L.center.y + 7 + (L.surfAt ? L.surfAt(g.x, g.z) : 0)), BK.Siege.hp(S, sg.gate), 3.2); }
+        if (pl.hall && (sg.stage === 'hall' || sg.stage === 'outer' || BK.Siege.hp(S, 'hall') < 1)) bars.add(pl.hall.clone().add(L.center).setY(L.center.y + 12 + (L.surfAt ? L.surfAt(pl.hall.x, pl.hall.z) : 0)), BK.Siege.hp(S, 'hall'), 4);
         // thanh tổng của hai đội (quân còn lại so với lúc đầu), cho khi nhìn từ xa (design/ke-hoach-khac-phuc.md mục 3.3)
         const w = world.wars.find((x) => x.id === sg.war); if (!w || !g) return;
         sg.def0 = Math.max(sg.def0 || 0, sg.def.length); const out = g.clone().setY(0).normalize(), hall = sg.stage === 'hall' && pl.hall;
         const foeAt = hall ? pl.hall.clone().addScaledVector(out, 13) : g.clone().addScaledVector(out, 5), defAt = hall ? pl.hall.clone().addScaledVector(out, 2) : g.clone().addScaledVector(out, -5);
         const far = (v) => camera.position.distanceTo(v) > 40;
-        { const v = foeAt.add(L.center).setY(L.center.y + 6); if (far(v)) bars.add(v, w.troops.length / Math.max(1, w.n0), 3); }
-        { const v = defAt.add(L.center).setY(L.center.y + 6); if (far(v) && sg.def0) bars.add(v, sg.def.length / sg.def0, 3); }
+        { const gy = L.surfAt ? L.surfAt(foeAt.x, foeAt.z) : 0, v = foeAt.add(L.center).setY(L.center.y + 6 + gy); if (far(v)) bars.add(v, w.troops.length / Math.max(1, w.n0), 3); }
+        { const gy = L.surfAt ? L.surfAt(defAt.x, defAt.z) : 0, v = defAt.add(L.center).setY(L.center.y + 6 + gy); if (far(v) && sg.def0) bars.add(v, sg.def.length / sg.def0, 3); }
       });
     }
     // mỗi giây: nhãn thời kỳ, cầu giữa các đảo, chỗ đến của người (công trình vừa dựng xong, chỗ đang dựng), bảng làng

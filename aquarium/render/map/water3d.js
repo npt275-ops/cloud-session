@@ -24,7 +24,7 @@
         const mat = kind === 'water' ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0.2, emissive: '#0c3b52', emissiveIntensity: 0.3, side: THREE.DoubleSide })
           : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide });
         if (kind === 'water') L.waterMats.push(mat);
-        const me = new THREE.Mesh(g, mat); me.receiveShadow = true; me.userData.noDrape = true; L.g.add(me);
+        const me = new THREE.Mesh(g, mat); me.receiveShadow = true; me.userData.noDrape = true; me.userData.flatLift = true; L.g.add(me);
       }
     }
     return { mergeFlat };

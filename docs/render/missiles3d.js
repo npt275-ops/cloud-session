@@ -47,7 +47,7 @@
         const A = lands[m.from].center, B = lands[m.to].center;
         P0.copy(A).add(Q.copy(B).sub(A).setY(0).normalize().multiplyScalar(lands3d.LAND_R * 0.35)); P0.y = A.y + 2;
         let at = aim.get(m.id); if (!at) { const s = spotAt && spotAt(m.to, m.key); at = s ? s.clone() : new THREE.Vector3(); aim.set(m.id, at); } // nhớ chỗ nhắm (tính một lần)
-        P1.copy(B).add(at); P1.y = B.y + 0.5;
+        P1.copy(B).add(at); P1.y = B.y + 0.5 + (BK.groundAt ? BK.groundAt(P1.x, P1.z) : 0); // (nổ trên mặt đất: đảo cao trên mặt biển)
         const u = (day - m.launch) / Math.max(1e-6, m.hit - m.launch), big = m.kind === 'nuke' ? 2.2 : 1;
         if (u < 1) {
           // đang bay: thân hướng theo đường bay, vệt khói phía sau

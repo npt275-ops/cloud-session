@@ -64,6 +64,13 @@
       },
     };
 
+    /* ---------- Đảo cao trên mặt biển (design/ke-hoach-buoc-16.md) ----------
+     * Cả mặt đảo nâng lên LIFT so với mép (mép ở ngang mặt biển), quanh mép là vách dốc rộng CLIFF. Ở vài chỗ (cổng chính phía trước,
+     * hai đầu bến cầu, một hai bãi biển riêng của từng đảo: BEACH, góc tính từ phía trước, sang phải là dương) đất thoải dài RAMP
+     * xuống sát mặt biển. Sông, hồ, ao, đầm nâng theo (mặt nước ở LIFT); chỗ đỗ cầu tàu (dock) khoét lối thoải xuống nước. */
+    const LIFT = { plains: 3.4, forest: 3.8, mountain: 4.6, tundra: 3.6, coast: 2.6, desert: 3.2 };
+    const BEACH = { plains: [2.6], forest: [-0.55], mountain: [1.05], tundra: [-2.4], coast: [0.75, -1.95], desert: [2.2] };
+    const CLIFF = 1.8, RAMP = 16;
     function init(L) {
       const n = noiseOf(L.i * 7 + 11), shape = SHAPE[L.ter] || SHAPE.plains;
       const fx = L.inw.x, fz = L.inw.z, fl = Math.hypot(fx, fz) || 1, FX = fx / fl, FZ = fz / fl, RX = -FZ, RZ = FX; // trục làng: trước (ra biển trong), phải
@@ -74,18 +81,21 @@
       const soft = [Math.atan2(FZ, FX)];
       for (const v of L.landing || []) soft.push(Math.atan2(v.z, v.x));
       for (const s of segs) if (Math.hypot(s[2], s[3]) > L.rOf(Math.atan2(s[3], s[2])) - 7) soft.push(Math.atan2(s[3], s[2]));
+      const af = Math.atan2(FZ, FX), ramps = [af, ...(L.landing || []).map((v) => Math.atan2(v.z, v.x)), ...(BEACH[L.ter] || []).map((d) => af - d)], LF = LIFT[L.ter] || 3.4;
       const rj = new Float32Array(S), cj = new Float32Array(S), sj = new Float32Array(S);
       for (let j = 0; j < S; j++) { const a = j * DA; rj[j] = L.rOf(a); cj[j] = Math.cos(a); sj[j] = Math.sin(a); }
-      const NV = (K + 1) * S, nat = new Float32Array(NV), road = new Float32Array(NV), Hs = new Float32Array(NV), H = new Float32Array(NV), px = new Float32Array(NV), pz = new Float32Array(NV);
+      const NV = (K + 1) * S, lift = new Float32Array(NV), nat = new Float32Array(NV), road = new Float32Array(NV), Hs = new Float32Array(NV), H = new Float32Array(NV), px = new Float32Array(NV), pz = new Float32Array(NV);
       for (let k = 0; k <= K; k++) for (let j = 0; j < S; j++) {
         const v = k * S + j, u = k / K, x = u * rj[j] * cj[j], z = u * rj[j] * sj[j]; px[v] = x; pz[v] = z;
         const lx = x * RX + z * RZ, lz = x * FX + z * FZ, r = Math.hypot(x, z), a = j * DA, sh = shape(n, lx, lz, r, Math.atan2(lx, lz));
         const dR = roadD(x, z); road[v] = dR;
         let rim = sh.rim; for (const sa of soft) rim = Math.max(rim, lerp(10, rim, sstep(0.1, 0.32, angd(a, sa))));
         const A = sstep(HALF + 0.4, HALF + 6.5, dR), env = 0.3 + 0.7 * sstep(24, 38, r);
-        nat[v] = k === K ? 0 : sstep(0, rim, rj[j] - r) * Math.max(0.08, 0.9 + sh.M + A * (env * sh.W + sh.B));
+        let wr = 0; for (const ra of ramps) wr = Math.max(wr, 1 - sstep(0.07, 0.24, angd(a, ra))); // (chỗ thoải xuống biển)
+        lift[v] = k === K ? 0 : LF * sstep(0, lerp(CLIFF, RAMP, wr), rj[j] - r);
+        nat[v] = k === K ? 0 : lift[v] + sstep(0, rim, rj[j] - r) * Math.max(0.08, 0.9 + sh.M + A * (env * sh.W + sh.B));
       }
-      L.hf = { K, S, rj, cj, sj, nat, road, Hs, H, px, pz, tris: [], lines: [], pads: [], draped: [], mesh: null };
+      L.lift = LF; L.hf = { K, S, rj, cj, sj, lift, nat, road, Hs, H, px, pz, tris: [], lines: [], pads: [], draped: [], mesh: null };
       Hs.set(nat); H.set(nat);
       L.hVer = 0;
       L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
@@ -149,10 +159,10 @@
         if (F.tris.length) {
           const d = waterD(F, px[v], pz[v]);
           if (d < BANK) { const free = sstep(HALF * 0.7, HALF + 1.4, road[v]); // mặt đường giữ nguyên (đường qua sông như đập đất)
-            const tgt = d < 0 ? -0.4 : lerp(0.02, h, sstep(0, BANK, d)); h = lerp(h, Math.min(h, tgt), free); }
+            const tgt = d < 0 ? F.lift[v] - 0.4 : lerp(F.lift[v] + 0.02, h, sstep(0, BANK, d)); h = lerp(h, Math.min(h, tgt), free); }
         }
         for (const ln of F.lines) { let d = 1e9; for (let q = 0; q + 1 < ln.pts.length; q++) d = Math.min(d, segD(px[v], pz[v], ln.pts[q][0], ln.pts[q][1], ln.pts[q + 1][0], ln.pts[q + 1][1]));
-          if (d < ln.w / 2 + BANK) h = lerp(h, Math.min(h, lerp(ln.y, h, sstep(ln.w / 2, ln.w / 2 + BANK, d))), sstep(HALF * 0.7, HALF + 1.4, road[v])); }
+          if (d < ln.w / 2 + BANK) h = lerp(h, Math.min(h, lerp(ln.y + F.lift[v], h, sstep(ln.w / 2, ln.w / 2 + BANK, d))), sstep(HALF * 0.7, HALF + 1.4, road[v])); }
         Hs[v] = h;
       }
       F.H.set(Hs);
@@ -240,6 +250,8 @@
     }
     // xong phần thiên nhiên của một đảo: khoét nước, dựng lưới, phủ mọi khối tĩnh đã có trên đảo
     function finish(L, st) {
+      // mặt nước, bờ (phẳng, không phủ theo đất) nâng lên cùng mặt đảo
+      for (const o of L.g.children) if (o.userData.flatPart || o.userData.flatLift || o.userData.carve) o.position.y += L.lift || 0;
       carve(L); build(L, st);
       for (const o of L.g.children.slice()) if (o !== L.hf.mesh && !o.userData.noDrape && !o.userData.flatPart && !o.isInstancedMesh) L.drape(o);
     }

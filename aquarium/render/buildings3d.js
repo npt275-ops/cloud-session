@@ -173,7 +173,7 @@
       const pads = [], live = (P) => !P.dead && !P.gone && !P.spec.town && !P.spec.gate && P.outer !== 'sea';
       const padR = (P) => Math.max(1.5, P.box ? P.box.r + 0.4 : P.clear * 0.85); // (đã dựng hình: theo chân thật của công trình, phủ kín cả bệ)
       for (const P of sh.standing) if (live(P) && P.g.visible) pads.push({ x: P.x, z: P.z, r: padR(P), y: P.g.position.y });
-      for (const P of sh.pieces) if (live(P)) pads.push({ x: P.x, z: P.z, r: padR(P), y: P.outer === 'coast' ? 0.25 : undefined, blend: P.outer === 'coast' ? 4 : undefined });
+      for (const P of sh.pieces) if (live(P)) pads.push({ x: P.x, z: P.z, r: padR(P), y: P.kind === 'dock' ? 0.25 : undefined, blend: P.kind === 'dock' ? 9 : undefined }); // (cầu tàu: khoét lối thoải xuống mặt nước)
       if (sh.wy) for (const Y of sh.wy.yards) pads.push({ x: Y.g.position.x, z: Y.g.position.z, r: 3.2 });
       // sân làng sau cùng: cả mặt sân phẳng đúng một độ cao (nhà đứng trong sân, sát mép sân không làm lõm mặt sân: người không chìm
       // dưới tấm sân), độ cao theo đất tự nhiên chỗ đó
