@@ -70,7 +70,7 @@
     let n = 0;
     const put = (q, s) => {
       const x = q.x + q.n[0] * side * s, z = q.z + q.n[1] * side * s, d = [-q.n[0] * s, -q.n[1] * s]; // d: hướng từ đèn ra giữa đường
-      S(k, x, z, d, q.a, c);
+      S(k, x, z, d, q.a, c); if (k.mark) k.mark(x, z, 0.45); // (cột đèn: người đi vòng, render/nav3d.js)
       // vũng sáng trên mặt đường: vòng ngoài mờ, lõi trong sáng hơn một chút
       const px = x + d[0] * (side - 0.6), pz = z + d[1] * (side - 0.6);
       const py = R3().Y + 0.07; k.add(K.disc(POOL[lv], 16), pool[0], px, py, pz, { lit: true, ao: false }); k.add(K.disc(POOL[lv] * 0.5, 12), pool[1], px, py + 0.01, pz, { lit: true, ao: false });

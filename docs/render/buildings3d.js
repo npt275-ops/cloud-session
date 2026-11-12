@@ -37,7 +37,7 @@
     const shown = lands3d.lands.map(() => null);
     const yardOf = (lay, at) => { const p = at(lay.yard.x, lay.yard.z), yard = new THREE.Mesh(K.disc(lay.yard.r, 20),
         (BK.Look3D ? BK.Look3D.hook : (m) => m)(new THREE.MeshStandardMaterial({ color: lay.yard.color || '#c9b184', roughness: 1, flatShading: true }), 'dirt')); yard.position.set(p.x, 0.04, p.y);
-        yard.receiveShadow = true; return yard; };
+        yard.receiveShadow = true; yard.userData.yardPart = true; return yard; }; // (yardPart: tools/check-walk.js đo người chìm dưới mặt sân)
     const near = (P, Q) => { const rr = P.clear + Q.clear * 0.6 + 0.5; return (Q.x - P.x) ** 2 + (Q.z - P.z) ** 2 < rr * rr || (P.kind === 'hall' && Q.kind === 'hall'); };
     // bỏ một nhóm công trình: trả bộ nhớ hình, trừ hình dùng chung còn nằm trong kho BAKED
     const SHARED = new WeakSet();
@@ -159,6 +159,7 @@
       const pre = lay.pieces.filter((P) => lay.BUILD[P.kind] && P.pre).length;
       // bãi làm việc của thời này (sau các công trình, tránh chỗ của chúng)
       const wy = WY.build(L, group, fixed, f, level);
+      for (const Y of wy.yards) Y.g.userData.kind = 'bãi ' + Y.kind; // (tên để bộ đo gọi được: tools/check-walk.js)
       shown[i] = { level, pieces, standing, group, prevGroup, yard, pre, wy, tris: 0, count: pieces.length, name: lay.NAME.hall, yardR: lay.yard ? lay.yard.r : 12, L, fixed, batch: BK.Batch3D ? BK.Batch3D.create(THREE, L.g, K.mats()) : null, dirty: true, changedAt: -1e9, inBatch: [] };
       settle(shown[i]);
     }
@@ -170,10 +171,13 @@
     function settle(sh) {
       const L = sh.L; sh.resettle = false; if (!L.setPads) return;
       const pads = [], live = (P) => !P.dead && !P.gone && !P.spec.town && !P.spec.gate && P.outer !== 'sea';
-      if (sh.yard) pads.push({ x: sh.yard.position.x, z: sh.yard.position.z, r: sh.yardR + 1, blend: 4 });
-      for (const P of sh.standing) if (live(P) && P.g.visible) pads.push({ x: P.x, z: P.z, r: Math.max(1.5, P.clear * 0.85), y: P.g.position.y });
-      for (const P of sh.pieces) if (live(P)) pads.push({ x: P.x, z: P.z, r: Math.max(1.5, P.clear * 0.85), y: P.outer === 'coast' ? 0.25 : undefined, blend: P.outer === 'coast' ? 4 : undefined });
+      const padR = (P) => Math.max(1.5, P.box ? P.box.r + 0.4 : P.clear * 0.85); // (đã dựng hình: theo chân thật của công trình, phủ kín cả bệ)
+      for (const P of sh.standing) if (live(P) && P.g.visible) pads.push({ x: P.x, z: P.z, r: padR(P), y: P.g.position.y });
+      for (const P of sh.pieces) if (live(P)) pads.push({ x: P.x, z: P.z, r: padR(P), y: P.outer === 'coast' ? 0.25 : undefined, blend: P.outer === 'coast' ? 4 : undefined });
       if (sh.wy) for (const Y of sh.wy.yards) pads.push({ x: Y.g.position.x, z: Y.g.position.z, r: 3.2 });
+      // sân làng sau cùng: cả mặt sân phẳng đúng một độ cao (nhà đứng trong sân, sát mép sân không làm lõm mặt sân: người không chìm
+      // dưới tấm sân), độ cao theo đất tự nhiên chỗ đó
+      if (sh.yard) { const yx = sh.yard.position.x, yz = sh.yard.position.z; pads.push({ x: yx, z: yz, r: sh.yardR + 1, blend: 4, y: L.padY ? L.padY(yx, yz, sh.yardR) : undefined }); }
       L.setPads(pads);
       for (const P of sh.pieces) if (!P.spec.town && P.outer !== 'sea') P.g.position.y = L.surfAt(P.x, P.z);
       if (sh.yard) sh.yard.position.y = L.surfAt(sh.yard.position.x, sh.yard.position.z) + 0.04;
@@ -200,14 +204,14 @@
       if (P.baked) return; P.baked = true;
       const lv = P.spec.lv || sh.level, key = keyOf(P, lv, sh.L.ter), E = key && BAKED.get(key);
       let m;
-      if (E) { m = cloneBaked(E.tpl, E.base); P.anim = E.anim; P.fitS = E.fitS; }
+      if (E) { m = cloneBaked(E.tpl, E.base); P.anim = E.anim; P.fitS = E.fitS; P.marks = E.marks; }
       else {
         const k = new K.Kit(); if (P.tint) k.tint = P.tint;
         // đất quanh công trình; hàm dựng nào hỏi tới thì hình theo chỗ đặt, không cất vào kho
         const land0 = PL.landFor(sh.L, new THREE.Vector2(P.x, P.z), P.g.rotation.y); let usedLand = false;
         const land = { edge: (a) => { usedLand = true; return land0.edge(a); }, free: (x, z, r) => { usedLand = true; return land0.free(x, z, r); }, get gaps() { usedLand = true; return sh.L.wallGaps; } }; // chỗ hở của tường bao
         const opt = Object.assign(Object.create(P.spec), { lv, land });
-        P.anim = P.build(k, opt) || null;
+        P.anim = P.build(k, opt) || null; P.marks = k.marks.length ? k.marks : null;
         const src = k.bake(3);
         if (src.userData.main) sortUp(src.userData.main.geometry); // tam giác xếp từ thấp lên cao: lúc dựng hiện dần từ móng lên (stage)
         // thành phố neon (thời 10 tới 12): đường viền sáng chạy dọc các cạnh của công trình (render/build/neon.js edges)
@@ -217,7 +221,7 @@
         if (key && !usedLand) {
           const base = {}; for (const n in src.userData.subs || {}) base[n] = src.userData.subs[n].position.clone();
           src.traverse((o) => { if (o.isMesh || o.isLine) SHARED.add(o.geometry); });
-          BAKED.set(key, { tpl: src, base, anim: P.anim, fitS: P.fitS, lv });
+          BAKED.set(key, { tpl: src, base, anim: P.anim, fitS: P.fitS, lv, marks: P.marks });
           m = cloneBaked(src, base);
         } else m = src;
       }
@@ -233,6 +237,14 @@
         if (q && q.drop) { sh.dropped = (sh.dropped || 0) + 1; P.dead = true; P.g.visible = false; m.userData.dropped = true; }
         else if (q) { sh.inward = (sh.inward || 0) + 1; P.inward = true; P.x = q.x; P.z = q.z; P.fitS = q.fitS; P.g.position.x = q.x; P.g.position.z = q.z; sh.resettle = true; }
       }
+      // khung chân công trình theo trục của chính nó (x0..x1 ngang, z0..z1 trước sau, h cao): chỗ đứng trước cửa, nền đất, khối
+      // người phải tránh (places().solids, render/nav3d.js)
+      // (khung tính trên mọi phần thấp hơn tầm người 2,2: nhà sàn, nhà nấm, kim tự tháp ngược phình ra ở ngang người cũng là chỗ không đi qua)
+      if (!P.dead) { const top = BODY_H / (P.fitS || 1), v = new THREE.Vector3(); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, hmax = 0; m.updateMatrixWorld(true);
+        m.traverse((q) => { if (!q.isMesh || !q.geometry.attributes.position || q === m.userData.glow || q === m.userData.lit) return; const A = q.geometry.attributes.position; for (let j = 0; j < A.count; j++) { v.fromBufferAttribute(A, j).applyMatrix4(q.matrixWorld); if (v.y > hmax) hmax = v.y; if (v.y > top || v.y < -0.3) continue; if (v.x < x0) x0 = v.x; if (v.x > x1) x1 = v.x; if (v.z < z0) z0 = v.z; if (v.z > z1) z1 = v.z; } });
+        const s = P.fitS, fp = PL.footprint(m, P.g.rotation.y, P.fitS), old = P.box; if (x0 > x1) { x0 = x1 = z0 = z1 = 0; }
+        P.box = { x0: x0 * s, x1: x1 * s, z0: z0 * s, z1: z1 * s, h: hmax * s, r: Math.max(fp.r, Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)) * s * 0.85) };
+        if (!old || Math.abs(old.r - fp.r) > 0.3) sh.resettle = true; }
       P.g.add(m); sh.tris = (sh.tris || 0) + (m.userData.tris || 0);
       if (P.spec.town && sh.L.drape) { // lớp đường, tường, đèn: từng đỉnh phủ theo đất; phần chuyển động (xe, cối xay) nâng cả khối theo chỗ nó đứng
         const c = Math.cos(P.g.rotation.y), sn = Math.sin(P.g.rotation.y); P.liftAt = (x, z) => sh.L.surfAt(P.x + x * c + z * sn, P.z - x * sn + z * c);
@@ -311,7 +323,8 @@
     /* ---------- Mỗi khung hình ---------- */
     const LIT = K.litMat ? K.litMat() : null;
     const _v = new THREE.Vector3(), _Y = new THREE.Vector3(0, 1, 0);
-    let batchedThisFrame = false;
+    let batchedThisFrame = false, frameN = 0;
+    const BODY_H = 2.2; // tầm người: phần công trình thấp hơn chừng này là chỗ người không đi qua (khung chân công trình, P.box)
     // gộp phần đứng yên của cả đảo thành ít khối: đảo xa gộp hết, không đổ bóng; đảo gần gộp khối chính, mảnh dẹt, cửa sổ sáng,
     // viền neon (có đổ bóng), phần sáng nhấp nháy vẫn vẽ riêng. Gộp lại khi đảo đã yên (BATCH_GAP, NEAR_GAP giây không có công
     // trình nào xong thêm), mỗi khung hình nhiều nhất một đảo. Công trình mới xong thì tạm vẽ riêng; cái cũ trong khối gộp bị
@@ -338,8 +351,8 @@
     function animate(dt, t, night, cam, speed) {
       const ts = t * 0.001; batchedThisFrame = false; gameT += Math.min(0.1, Math.max(0, dt || 0) / 1000) * (speed || 1);
       if (queue.length) pump(cam);
-      { const d = Math.min(0.1, Math.max(0, dt || 0) / 1000); for (const sh of shown) if (sh) for (const P of sh.pieces) if (P.site) stage(sh, P, d); } // nhà đang dựng lên dần
-      settleAll();
+      frameN++; { const d = Math.min(0.1, Math.max(0, dt || 0) / 1000); for (const sh of shown) if (sh) for (const P of sh.pieces) if (P.site) stage(sh, P, d); } // nhà đang dựng lên dần
+      if (!queue.length || frameN % 30 === 0) settleAll(); // (đang dựng hình hàng loạt: dựng lại mặt đất nhiều nhất nửa giây một lần)
       if (LIT) { LIT.opacity = Math.max(0, Math.min(0.95, ((night || 0) - 0.15) * 1.4)); LIT.visible = LIT.opacity > 0.01; }
       for (const sh of shown) if (sh) {
         const far = !!cam && cam.distanceToSquared(sh.L.center) > FAR * FAR;
@@ -389,18 +402,20 @@
           const side = new THREE.Vector3(fwd.z, 0, -fwd.x), hx = (P.site ? P.site.hx : P.clear * 0.7) + 0.7, hz = (P.site ? P.site.hz : P.clear * 0.7) + 0.7;
           for (const [sx, sz] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) out.site.push(pos.clone().addScaledVector(side, sx * hx).addScaledVector(fwd, sz * hz)); out.siteC = pos.clone(); continue; }
         if ((!g.visible && !P.queued) || P.gone || NOT_A_PLACE.has(k)) continue; // đang chờ dựng hình (P.queued): đã xong, sắp hiện
-        const door = pos.clone().addScaledVector(fwd, Math.max(1.6, P.clear * 0.6));
+        const front = P.box ? P.box.z1 : null, door = pos.clone().addScaledVector(fwd, front != null ? Math.max(1.6, front + 0.9) : Math.max(1.6, P.clear * 0.6)); // (trước mặt tiền thật, không đứng trong nhà)
+        const outFront = (d) => (front != null ? Math.max(d, front + 0.8) : d);
         // cổng thành: bốn chốt gác đều ở PHÍA TRONG cổng (hai hàng, hai bên lối đi), không ai đứng ngoài tường hay ra khỏi đảo
-        if (P.spec.gate && !P.spec.side) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x); for (const [d, s2] of [[-2.4, 2.9], [-2.4, -2.9], [-4.9, 2.9], [-4.9, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
+        if (P.spec.gate && !P.spec.side) { const side = new THREE.Vector3(fwd.z, 0, -fwd.x), d1 = Math.min(-2.4, P.box ? P.box.z0 - 0.9 : -2.4), d2 = d1 - 2.5; // (sau lưng khối cổng: cổng dày thì lùi vào thêm, không đứng trong tháp cổng)
+          for (const [d, s2] of [[d1, 2.9], [d1, -2.9], [d2, 2.9], [d2, -2.9]]) out.gate.push(pos.clone().addScaledVector(fwd, d).addScaledVector(side, s2)); continue; }
         if (P.outer) { out.outer.push(P.outer === 'sea' ? null : P.outer === 'coast' ? pos.clone().addScaledVector(fwd, -2.5) : door); continue; }
         out.all.push(door);
-        if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, 6); }
-        else if (P.home != null || HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, 2.8 * P.fitS); out.homes.push(dv); if (P.home != null && (!out.homeSlots[P.home] || isNew)) out.homeSlots[P.home] = dv; }
+        if (k === 'hall') { if (!out.hall || isNew) out.hall = pos.clone().addScaledVector(fwd, front != null ? front + 2 : 6); } // (trước bậc nhà chính: nhà chính các thời sau to hơn 6)
+        else if (P.home != null || HOME.has(k)) { const dv = pos.clone().addScaledVector(fwd, outFront(2.8 * P.fitS)); out.homes.push(dv); if (P.home != null && (!out.homeSlots[P.home] || isNew)) out.homeSlots[P.home] = dv; }
         else if (FIELD.has(k)) out.field.push(pos.clone().addScaledVector(fwd, 0.5));
         else if (CRAFT.has(k)) out.craft.push(door);
-        else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, 2.2));
+        else if (SQUARE.has(k)) out.square.push(pos.clone().addScaledVector(fwd, outFront(2.2)));
         else if (MARKET.has(k)) out.market.push(door);
-        else if (SHRINE.has(k)) out.shrine.push(pos.clone().addScaledVector(fwd, 2));
+        else if (SHRINE.has(k)) out.shrine.push(pos.clone().addScaledVector(fwd, outFront(2)));
         else if (SCHOOL.has(k) || P.spec.civic === 'school' || P.spec.civic === 'library') out.school.push(door);
         else if (k === 'gate' || k === 'pad' || k === 'station') out.guard.push(pos.clone().addScaledVector(fwd, 3));
       }
@@ -416,6 +431,15 @@
       { const H = sh.pieces.find((P) => P.kind === 'hall' && P.g.visible) || sh.standing.find((P) => P.kind === 'hall' && P.g.visible && !P.gone);
         // (cập nhật ma trận trước khi đo: công trình vừa dựng chưa qua khung hình nào thì ma trận thế giới còn ở gốc toạ độ)
         if (H) { H.g.updateWorldMatrix(true, true); const bb = new THREE.Box3().setFromObject(H.g), c = bb.getCenter(new THREE.Vector3()).sub(L.g.position); out.hallC = new THREE.Vector3(c.x, 0, c.z); out.hallR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2; } }
+      // khối người phải đi vòng (render/nav3d.js): chân mọi công trình đang đứng hay đang dựng, cao từ 0,6 (ruộng, sân, đường,
+      // tường, cổng, cầu tàu, công trình ngoài khơi thì không: người đi trên, đi qua hay làm việc trong đó)
+      out.solids = [];
+      // ruộng, nhà kính là chỗ mềm (soft): người làm ruộng vào được, người khác đi vòng. Lớp đường của làng: cột đèn, gốc cây, chân
+      // vòm dọc phố (P.marks)
+      for (const P of [...sh.pieces, ...sh.standing]) { if (!P.g.visible || P.gone || P.dead) continue; const a = P.g.rotation.y, c = Math.cos(a), sn = Math.sin(a);
+        if (P.spec.town) { for (const [mx, mz, r] of P.marks || []) out.solids.push({ x: P.x + mx * c + mz * sn, z: P.z - mx * sn + mz * c, c, s: sn, x0: -r, x1: r, z0: -r, z1: r, kind: 'town' }); continue; }
+        if (!P.box || P.spec.gate || P.outer === 'sea' || P.kind === 'dock') continue; const soft = FIELD.has(P.kind); if (P.box.h < (soft ? 0.3 : 0.6)) continue;
+        out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft }); }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
       // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
       // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra
@@ -507,6 +531,10 @@
           P.g.remove(m); m.updateMatrixWorld(true); const fp = PL.footprint(m, P.g.rotation.y, P.fitS); P.g.add(m); return { kind: P.kind, x: +P.x.toFixed(1),
           z: +P.z.toFixed(1), r: +fp.r.toFixed(2), blocks: PL.blocks(sh.L, fp, P.x, P.z), fitS: +P.fitS.toFixed(2) }; }).filter((x) => x && (x.blocks || all));
           },
+      // công trình nào đang đứng ở chỗ (x, z) của đảo i (khung bao phần sát đất; tools/check-walk.js gọi tên khối gộp)
+      pieceAt: (i, x, z) => { const sh = shown[i]; if (!sh) return null; for (const P of [...sh.pieces, ...sh.standing]) { if (!P.baked || !P.g.visible || P.gone || P.dead) continue; const m = P.g.children[0]; if (!m) continue;
+          const fp = PL.footprint(m, P.g.rotation.y, P.fitS), q = fp.pts; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [dx, dz] of q) { x0 = Math.min(x0, dx); x1 = Math.max(x1, dx); z0 = Math.min(z0, dz); z1 = Math.max(z1, dz); }
+          if (x - P.x > x0 && x - P.x < x1 && z - P.z > z0 && z - P.z < z1) return P.kind + (P.site ? ' (đang dựng)' : ''); } if (sh.wy) for (const Y of sh.wy.yards) if (Y.g.visible && Math.hypot(x - Y.g.position.x, z - Y.g.position.z) < 4) return 'bãi ' + Y.kind; if (sh.yard && Math.hypot(x - sh.yard.position.x, z - sh.yard.position.z) < sh.yardR) return 'sân làng'; return null; },
       batchInfo: (i) => shown[i] && { mode: shown[i].batchMode, inBatch: shown[i].inBatch.length, dirty: shown[i].dirty, quiet: +(performance.now() * 0.001 - shown[i].changedAt).toFixed(1) },
     };
     /* ---------- Hư hại trong chiến tranh (logic/siege.js S.ruin; game/cities.js mỗi giây) ----------

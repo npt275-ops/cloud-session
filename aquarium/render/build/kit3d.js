@@ -56,7 +56,10 @@
   function disc(r, seg) { const THREE = T(); return new THREE.CircleGeometry(r, seg || 12).rotateX(-Math.PI / 2); }
 
   /* ---------- Gom mảnh và gộp ---------- */
-  function Kit() { this.parts = []; this.flat = []; this.glow = []; this.lit = []; this.subs = []; }
+  function Kit() { this.parts = []; this.flat = []; this.glow = []; this.lit = []; this.subs = []; this.marks = []; }
+  // chỗ người không đi xuyên qua được trong một công trình trải rộng (cột đèn, gốc cây, chân vòm dọc phố: render/build/lamps.js,
+  // plains/town.js, neon.js): [x, z, bán kính] theo toạ độ của công trình; render/buildings3d.js đưa vào places().solids
+  Kit.prototype.mark = function (x, z, r) { this.marks.push([x, z, r || 0.4]); return this; };
   // phần chuyển động (cánh quạt, khí cầu, nhà lơ lửng...): một Kit con, dựng thành khối riêng đặt ở điểm xoay pivot;
   // các mảnh vẽ vào Kit con theo toạ độ tính từ pivot. render/buildings3d.js làm nó quay hoặc nhấp nhô theo BUILD trả về.
   Kit.prototype.sub = function (name, pivot) { const k = new Kit(); k.name = name; k.pivot = pivot || [0, 0, 0]; k.tint = this.tint; this.subs.push(k); return k; };

@@ -15,7 +15,7 @@
    * có một nền phẳng ở cao độ chỗ nó đứng (đất quanh nền nối thoải vào đất tự nhiên).
    * Dùng:
    *   L.surfAt(x, z)   cao độ chỗ đứng (toạ độ đảo); trong lòng sông, hồ trả 0 (mặt nước); ngoài đảo trả 0
-   *   L.setPads(list)  nền công trình của thời đang vẽ: [{ x, z, r, y? (bỏ: lấy cao độ tự nhiên), blend? }]; dựng lại lưới, phủ
+   *   L.setPads(list)  nền công trình của thời đang vẽ: [{ x, z, r, y? (bỏ: lấy cao độ đất lúc đó, sau các nền trước), blend? }]; dựng lại lưới, phủ
    *                    lại các khối phủ theo đất (L.drape), đặt lại cây; tăng L.hVer (ai giữ cao độ thì theo số này mà cập nhật)
    *   L.drape(obj)     ghi một nhóm khối vẽ ở cao độ 0 (đá, núi, lớp đường, tường) để nâng từng đỉnh theo đất
    *   L.padY(x, z, r)  cao độ tự nhiên trung bình của một nền (chưa tính nền nào)
@@ -193,12 +193,15 @@
 
     /* ---------- Nền công trình và phủ lại ---------- */
     function rebuild(L) {
-      const F = L.hf, { Hs, H, road, px, pz } = F, HALF = L.roadW || 2.4;
+      const F = L.hf, { Hs, H, px, pz } = F;
       H.set(Hs);
+      // nền phẳng của từng công trình (cả chỗ có đường: đường phủ theo đất). Nền chưa có độ cao riêng thì lấy độ cao của đất lúc
+      // đó (đã có các nền trước: công trình đứng trong sân làng thì nền bằng mặt sân, không nổi lên hay chìm xuống giữa sân)
       for (const p of F.pads) {
-        const y = p.y != null ? p.y : L.padY(p.x, p.z, p.r), bl = p.blend || 2.6, R = p.r + bl; p.at = y;
-        for (let v = 0; v < H.length; v++) { const dx = px[v] - p.x, dz = pz[v] - p.z; if (dx > R || dx < -R || dz > R || dz < -R) continue; const d = Math.hypot(dx, dz); if (d >= R) continue;
-          const w = (1 - sstep(p.r, R, d)) * (p.road ? 1 : sstep(HALF * 0.8, HALF + 1.2, road[v])); if (v >= K * S) continue; H[v] = lerp(H[v], y, w); }
+        let y = p.y; if (y == null) { y = 0; let c = 0; for (let q = 0; q <= 6; q++) { const a = q * 1.0472, rr = q ? p.r * 0.6 : 0; y += Math.max(0, sample(F, H, p.x + Math.cos(a) * rr, p.z + Math.sin(a) * rr)); c++; } y /= c; }
+        const bl = p.blend || 2.6, R = p.r + bl; p.at = y;
+        for (let v = 0; v < K * S; v++) { const dx = px[v] - p.x, dz = pz[v] - p.z; if (dx > R || dx < -R || dz > R || dz < -R) continue; const d = Math.hypot(dx, dz); if (d >= R) continue;
+          H[v] = lerp(H[v], y, 1 - sstep(p.r, R, d)); }
       }
       if (F.mesh) refresh(L);
       for (let q = F.draped.length - 1; q >= 0; q--) { const o = F.draped[q]; let top = o; while (top.parent) top = top.parent; if (top.type !== 'Scene') { F.draped.splice(q, 1); continue; } drapeOne(L, o); }

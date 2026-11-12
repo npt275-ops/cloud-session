@@ -78,7 +78,7 @@
   T[6] = (k, o) => {
     const N = roads(k, o, { color: '#4a4a50', w: 3, line: '#f2f2ee', r0: 14 });
     edgeWall(k, o, { n: 130, inset: 2.6, seg: (k, a, x, z, i) => { k.add(B(3.1, 1.0, 1.6, 0.1), C.concrete[i % 3], x, 0, z, { rot: [0, a, 0] }); if (i % 6 === 0) { k.add(K.post(0.06, 3.2, 5), '#5a5a60', x, 1, z); k.add(B(0.6, 0.15, 0.3, 0.03), '#e8e6dc', x, 4.2, z); k.add(B(0.64, 0.17, 0.34, 0.03), '#fff2c8', x, 4.19, z, { lit: true }); } } });
-    beside(N, 6, 3.4, (a, x, z) => { k.add(K.post(0.12, 1.4, 5), '#6b5038', x, 0, z); k.add(K.ball(0.9, 1), pick(['#4f8a3f', '#5a9646'], a), x, 2.1, z); });
+    beside(N, 6, 3.4, (a, x, z) => { k.mark(x, z, 0.5); k.add(K.post(0.12, 1.4, 5), '#6b5038', x, 0, z); k.add(K.ball(0.9, 1), pick(['#4f8a3f', '#5a9646'], a), x, 2.1, z); });
     return withTraffic(k, 6, N);
   };
   // 7 · đường lớn hai làn, tàu một ray trên cao (cột đỡ, dầm vòng), toa tàu chạy
@@ -112,7 +112,7 @@
   T[11] = (k, o) => {
     const N = roads(k, o, { color: '#5a5a7a', w: 2.4 });
     edgeWall(k, o, { n: 100, seg: (k, a, x, z, i) => { if (i % 2 === 0) { k.add(new (THREE().OctahedronGeometry)(0.6, 0), '#7a7a98', x, 3 + (i % 3) * 0.6, z, { sc: [0.7, 1.5, 0.7] }); k.add(K.post(0.04, 3, 3), '#c8a8ff', x, 0, z, { glow: true }); } else k.add(Bc(3.2, 0.1, 0.05, 0.02), '#c8a8ff', x, 2.2, z, { rot: [0, a, 0], glow: true }); } });
-    beside(N, 14, 4.5, (a, x, z) => { k.add(K.post(2, 0.5, 8), '#6a6a88', x, 4, z); k.add(K.lathe([[0.001, -2], [2, -0.1], [2, 0]], 8), '#5a5a7a', x, 4, z); k.add(K.post(0.08, 4, 4), '#c8a8ff', x, 0, z, { glow: true }); });
+    beside(N, 14, 4.5, (a, x, z) => { k.mark(x, z, 0.4); k.add(K.post(2, 0.5, 8), '#6a6a88', x, 4, z); k.add(K.lathe([[0.001, -2], [2, -0.1], [2, 0]], 8), '#5a5a7a', x, 4, z); k.add(K.post(0.08, 4, 4), '#c8a8ff', x, 0, z, { glow: true }); });
     return withTraffic(k, 11, N, { pulse: true });
   };
   // 12 · ba vòng sáng tầng tầng lơ lửng trên làng, đường ánh sáng

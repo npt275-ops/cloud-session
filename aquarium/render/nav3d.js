@@ -7,6 +7,9 @@
  *   keepInside(pos)    không ai ra quá vòng tường thành
  *   strollGoal(f)      đi dạo dọc phố; hallGoal(f): đi dạo vòng quanh nhà chính
  *   reset()            chỗ trên đảo đổi (sang thời): dựng lại mạng lối đi
+ *   clearPt(v, farm)   chỗ đứng rơi vào trong chân một công trình thì ra ngoài mép (places().solids, render/buildings3d.js)
+ *   detour(from, to)   đường thẳng tới đích cắt qua một công trình: góc nhà để đi vòng qua (null: không vướng)
+ *   pushOut(pos, max)  người lỡ ở trong chân công trình (công trình vừa khởi công chỗ người đứng): bước dần ra ngoài
  * o: { THREE, L (đảo), level() (thời đang vẽ), places() (chỗ của công trình, render/buildings3d.js places) }.
  * Cần: three.js, render/build/roads.js, render/build/plains/town.js (ROAD_W, WALKS). */
 (function (root) {
@@ -127,8 +130,40 @@
       if (N.i === N.pts.length - 1) { N.pts[N.i] = goal.p; return goal; }
       return { p: N.pts[N.i], face: null };
     }
+    /* ---------- Không đi xuyên nhà (design/ke-hoach-buoc-14.md mục 7) ----------
+     * Mỗi công trình đang đứng là một khung chữ nhật theo trục của nó (places().solids). Đích nằm trong khung thì dời ra mép gần
+     * nhất; đường thẳng tới đích cắt qua khung thì đi tới góc khung (góc nào tổng đường ngắn nhất mà nhìn thấy được) rồi đi tiếp;
+     * ai lỡ ở trong khung thì bước dần ra (không nhảy chỗ). PUSH < SEG < CORNER để đi dọc mép khung không bị coi là cắt qua. */
+    const PUSH = 0.35, SEG = 0.5, CORNER = 0.85;
+    // farm: người làm ruộng (vào được chỗ mềm: ruộng, nhà kính)
+    const solids = (farm) => { const PL = o.places(), all = (PL && PL.solids) || []; return farm ? all.filter((B) => !B.soft) : all; };
+    const toL = (B, x, z) => { const dx = x - B.x, dz = z - B.z; return [dx * B.c - dz * B.s, dx * B.s + dz * B.c]; };
+    const toW = (B, lx, lz, y) => new THREE.Vector3(B.x + lx * B.c + lz * B.s, y || 0, B.z - lx * B.s + lz * B.c);
+    // khung nào chứa điểm (nới ra m): độ sâu vào trong và hướng ra ngắn nhất (theo trục khung)
+    function inside(B, x, z, m) { const [lx, lz] = toL(B, x, z); if (lx <= B.x0 - m || lx >= B.x1 + m || lz <= B.z0 - m || lz >= B.z1 + m) return null;
+      const o4 = [[lx - (B.x0 - m), -1, 0], [B.x1 + m - lx, 1, 0], [lz - (B.z0 - m), 0, -1], [B.z1 + m - lz, 0, 1]].sort((a, b) => a[0] - b[0])[0]; return { lx, lz, d: o4[0], ux: o4[1], uz: o4[2] }; }
+    function clearPt(v, farm) {
+      let p = v;
+      for (let pass = 0; pass < 3; pass++) { let moved = false; for (const B of solids(farm)) { const h = inside(B, p.x, p.z, PUSH); if (!h) continue; p = toW(B, h.lx + h.ux * (h.d + 0.02), h.lz + h.uz * (h.d + 0.02), p.y); moved = true; } if (!moved) break; }
+      return p;
+    }
+    function pushOut(pos, max, farm) { for (const B of solids(farm)) { const h = inside(B, pos.x, pos.z, PUSH); if (!h) continue; const k = Math.min(h.d + 0.02, max), y = pos.y; pos.copy(toW(B, h.lx + h.ux * k, h.lz + h.uz * k, y)); } }
+    // đoạn thẳng a→b (toạ độ khung) có cắt khung nới m không (Liang–Barsky)
+    function cuts(B, a, b, m) { let t0 = 0, t1 = 1; const dx = b[0] - a[0], dz = b[1] - a[1];
+      for (const [p, q] of [[-dx, a[0] - (B.x0 - m)], [dx, B.x1 + m - a[0]], [-dz, a[1] - (B.z0 - m)], [dz, B.z1 + m - a[1]]]) { if (Math.abs(p) < 1e-9) { if (q < 0) return false; continue; } const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } }
+      return t1 - t0 > 1e-4; }
+    function detour(from, to, farm) {
+      let best = null, bt = 1e9;
+      for (const B of solids(farm)) { const a = toL(B, from.x, from.z), b = toL(B, to.x, to.z); if (!cuts(B, a, b, SEG) || inside(B, from.x, from.z, PUSH)) continue; const t = Math.hypot(B.x - from.x, B.z - from.z); if (t < bt) { bt = t; best = [B, a, b]; } }
+      if (!best) return null;
+      const [B, a, b] = best; let pick = null, pd = 1e9;
+      for (const [cx, cz] of [[B.x0 - CORNER, B.z0 - CORNER], [B.x1 + CORNER, B.z0 - CORNER], [B.x1 + CORNER, B.z1 + CORNER], [B.x0 - CORNER, B.z1 + CORNER]]) {
+        const d0 = Math.hypot(cx - a[0], cz - a[1]); if (d0 < 0.3 || cuts(B, a, [cx, cz], SEG)) continue; // (góc đang đứng, góc phải đi xuyên khung mới tới: bỏ)
+        const d = d0 + Math.hypot(b[0] - cx, b[1] - cz) + (cuts(B, [cx, cz], b, SEG) ? 2 * CORNER : 0); if (d < pd) { pd = d; pick = [cx, cz]; } }
+      return pick ? toW(B, pick[0], pick[1], to.y) : null;
+    }
     const reset = () => { NAV = null; };
-    return { routeTo, follow, offCarriage, keepInside, strollGoal, hallGoal, reset, net: NET };
+    return { routeTo, follow, offCarriage, keepInside, strollGoal, hallGoal, reset, clearPt, detour, pushOut, net: NET };
   }
   BK.Nav3D = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

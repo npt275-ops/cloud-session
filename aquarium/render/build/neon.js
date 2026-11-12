@@ -47,7 +47,7 @@
     R3.along(N.loop, step, true).forEach((q, i) => {
       const arc = new T.TorusGeometry(R, 0.13, 6, 20, Math.PI); // vòm nửa vòng đứng ngang đường
       k.add(arc, i % 2 ? c.a : c.b, q.x, 0, q.z, { rot: [0, q.a, 0], glow: true });
-      for (const s of [-1, 1]) k.add(K.post(0.2, 0.35, 6), '#2a2440', q.x + q.n[0] * s * R, 0, q.z + q.n[1] * s * R);
+      for (const s of [-1, 1]) { k.add(K.post(0.2, 0.35, 6), '#2a2440', q.x + q.n[0] * s * R, 0, q.z + q.n[1] * s * R); if (k.mark) k.mark(q.x + q.n[0] * s * R, q.z + q.n[1] * s * R, 0.4); }
     });
   }
   BK.Neon3D = { LV, PAL, of, on, edges, street };
