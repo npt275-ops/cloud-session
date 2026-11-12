@@ -338,7 +338,7 @@
       batchedThisFrame = true; sh.dirty = false;
       if (sh.inBatch.length) unbatch(sh);
       const kinds = far ? null : NEAR_KINDS;
-      const list = [...sh.pieces, ...sh.standing].filter((P) => P.baked && P.g.visible && !P.gone && !P.site); // (đang dựng dở: vẽ riêng)
+      const list = [...sh.pieces, ...sh.standing].filter((P) => P.baked && P.g.visible && !P.gone && !P.site && !(P.outer === 'sea' && P.kind === 'boat')); // (đang dựng dở, thuyền nổi trên sóng: vẽ riêng)
       for (const P of list) P.g.updateMatrixWorld(true);
       sh.batch.rebuild(list, !far, kinds);
       for (const P of list) { P.inBatch = true; for (const k of kinds || Object.keys(P.parts)) if (P.parts[k]) P.parts[k].visible = false; }
@@ -360,6 +360,8 @@
         const emit = sh.emit || (sh.emit = []); emit.length = 0;
         for (const set of [sh.pieces, sh.standing]) for (const p of set) {
           if (!p.g.visible) continue;
+          // thuyền neo ngoài khơi nổi trên sóng (sea3d.js BK.seaAt); tuabin, vườn nổi đứng trên cọc thì không
+          if (p.outer === 'sea' && p.kind === 'boat' && BK.seaAt) { const L = sh.L, S = BK.seaAt(L.center.x + p.g.position.x, L.center.z + p.g.position.z), c = Math.cos(p.g.rotation.y), sn = Math.sin(p.g.rotation.y); p.g.position.y = S.y - L.center.y; p.g.rotation.x = Math.atan(S.tx * sn + S.tz * c) * 0.7; p.g.rotation.z = -Math.atan(S.tx * c - S.tz * sn) * 0.7; }
           const A = p.anim;
           if (A) {
             if (A.sway) for (const [n, axis, amp, v] of A.sway) if (p.subs[n]) p.subs[n].rotation[axis] = Math.sin(ts * v + p.ph) * amp;

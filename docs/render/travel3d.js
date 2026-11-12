@@ -11,6 +11,9 @@
   'use strict';
   const BK = root.BK || (root.BK = {});
   const SEA_Y = -0.55;                 // mặt biển (sea3d.js)
+  // thuyền nổi trên sóng (sea3d.js BK.seaAt): theo độ cao mặt biển chỗ thuyền, chòng chành theo độ nghiêng của con sóng
+  function floatOn(g, lift) { const S = BK.seaAt ? BK.seaAt(g.position.x, g.position.z) : null; if (!S) { g.position.y = SEA_Y + lift; return; }
+    g.position.y = S.y + lift; const c = Math.cos(g.rotation.y), s = Math.sin(g.rotation.y); g.rotation.x = Math.atan(S.tx * s + S.tz * c) * 0.8; g.rotation.z = -Math.atan(S.tx * c - S.tz * s) * 0.8; }
   const SHORE = 3;                     // thuyền cập cách mép đảo chừng này
   const MOTOR_LEVEL = 7;               // từ thời này thuyền chạy máy, không còn buồm
   const CART_SCALE = 1.5;              // xe hàng to hơn người một chút cho nhìn thấy từ xa
@@ -72,8 +75,8 @@
       side.copy(Bc).sub(A).setY(0).normalize();
       from.copy(A).addScaledVector(side, R + SHORE); to.copy(Bc).addScaledVector(side, -(R + SHORE));
       const g = take('boat'), bend = Math.sin(Math.PI * u) * 6;
-      g.position.copy(from).lerp(to, u).add(new THREE.Vector3(-side.z, 0, side.x).multiplyScalar(bend)).setY(SEA_Y + 0.05 + Math.sin(t * 0.003 + s) * 0.08);
-      g.rotation.y = -Math.atan2(side.z, side.x); g.rotation.x = Math.sin(t * 0.002 + d) * 0.05;
+      g.position.copy(from).lerp(to, u).add(new THREE.Vector3(-side.z, 0, side.x).multiplyScalar(bend)); g.rotation.y = -Math.atan2(side.z, side.x);
+      floatOn(g, 0.05);
       g.userData.sail.visible = level < MOTOR_LEVEL; g.userData.cabin.visible = level >= MOTOR_LEVEL;
       g.userData.crate.material = cargoMat[mainCargo(load)] || cargoMat.food;
     }

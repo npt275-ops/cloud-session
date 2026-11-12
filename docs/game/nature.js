@@ -17,7 +17,7 @@
     function animate(dt, t, night) {
       lands3d.animate(dt, t, night, G.camera.position);
       bridges3d.animate(night);
-      sea3d.animate(dt, t, night);
+      sea3d.animate(dt, t, night, G.weather.stormK); // (giông bão: sóng lớn hơn)
       clouds3d.update(dt, t, night);
       G.weather.lightFlash = Math.max(0, G.weather.lightFlash - dt / 200);
       G.weather.stormK += (Math.min(1, clouds3d.storms) - G.weather.stormK) * Math.min(1, dt / 4000);

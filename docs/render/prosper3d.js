@@ -121,7 +121,8 @@
         for (let k = 0; k < 4; k++) {
           const g = boat(nb++), isle = k % 2 ? c.b : c.a, a = t * 0.05 + k * 1.6 + c.a;
           g.userData.sail.material = sailM[isle % sailM.length];
-          g.position.set(C.x + Math.cos(a) * 5, SEA_Y + 0.2 + Math.sin(t * 1.7 + k) * 0.06, C.z + Math.sin(a) * 5); g.rotation.set(0, -a, Math.sin(t * 1.3 + k) * 0.05);
+          const px = C.x + Math.cos(a) * 5, pz = C.z + Math.sin(a) * 5, S = BK.seaAt ? BK.seaAt(px, pz) : null; // (nổi trên sóng: sea3d.js)
+          g.position.set(px, (S ? S.y : SEA_Y) + 0.2, pz); g.rotation.set(S ? Math.atan(S.tx * Math.sin(-a) + S.tz * Math.cos(-a)) * 0.8 : 0, -a, S ? -Math.atan(S.tx * Math.cos(-a) - S.tz * Math.sin(-a)) * 0.8 : Math.sin(t * 1.3 + k) * 0.05);
         }
       }
       for (const [I, n] of [[flags, nf], [lanterns, nl], [weeds, nw]]) { I.count = n; I.instanceMatrix.needsUpdate = true; I.visible = n > 0; }
