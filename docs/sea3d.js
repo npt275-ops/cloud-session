@@ -75,8 +75,8 @@
     water.raycast = () => {};
     // Đáy bể là thuỷ tinh trong suốt: một chậu kính dưới vòm, nước xanh trong đựng bên trong,
     // nhìn từ ngoài thấy cả chân đá của sáu đảo chìm trong nước.
-    // đáy bể sâu 130 (design/ke-hoach-buoc-18.md): núi chìm, rãnh sâu, phế tích ở render/deep3d.js
-    const BODY_H = 130, FLOOR_Y = SEA_Y - BODY_H, GLASS_R = EDGE_R + 0.35;
+    // đáy bể sâu 160 (design/ke-hoach-buoc-18.md, 19): núi chìm, rãnh sâu, phế tích, đường hầm ở render/deep3d.js
+    const BODY_H = 160, FLOOR_Y = SEA_Y - BODY_H, GLASS_R = EDGE_R + 0.35;
     const seaBodyMat = new THREE.MeshStandardMaterial({ color: '#2a8fbf', roughness: 0.5, emissive: '#0b3550', emissiveIntensity: 0.3, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
     // Vách nước (mặt nước nhìn qua kính từ ngoài): mép trên lên xuống đúng con sóng ở mép mặt nước (420 múi, trùng đỉnh vòng
     // ngoài của mặt nước), dưới mép là dải bọt trắng sóng đập vào kính (sâu 1–2,2) và một vệt bọt chìm thấp hơn.
