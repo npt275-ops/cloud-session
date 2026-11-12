@@ -24,6 +24,7 @@ const ROOT = path.join(__dirname, '..'), ONLY = process.argv[2] || '', ERAS = (p
   const errs = []; p.on('pageerror', (e) => errs.push(e.message));
   p.setDefaultTimeout(3600000);
   await p.goto('file://' + path.join(ROOT, 'index.html'));
+  if (process.env.NO_SOLIDS) await p.evaluate(() => { BK.NAV_SOLIDS = false; }); // (so sánh: tắt việc đi vòng công trình, render/nav3d.js)
   await p.waitForTimeout(3000);
   const setup = async () => {
   // bộ đo trong trang: chạy n khung (dt 50 ms) cho đảo i, đếm lỗi vào H (window.__hunt)

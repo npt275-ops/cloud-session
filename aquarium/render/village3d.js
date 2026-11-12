@@ -698,7 +698,7 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, auditStats, inspect, siteCrew, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
+    return { nav: Nav, update, pick, select, audit, auditStats, inspect, siteCrew, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
         get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++;
         return n; } };
   }
