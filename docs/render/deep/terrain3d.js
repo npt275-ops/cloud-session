@@ -143,6 +143,8 @@
     const tmpC = new THREE.Color(),
       deepC = new THREE.Color('#0f4a63');
     const depthTint = (c, y) => c.lerp(deepC, clamp((SEA_Y - y) / 150, 0, 1) * 0.42);
+    // màu cát của đáy (chỗ phẳng): sinh vật nằm vùi trong cát lấy màu này (render/deep/denizens3d.js)
+    const SAND_HEX = '#c4b48a';
     const matOf = (o) =>
       new THREE.MeshStandardMaterial(
         Object.assign(
@@ -163,7 +165,7 @@
         pos = [],
         col = [],
         idx = [];
-      const SAND = new THREE.Color('#c4b48a'),
+      const SAND = new THREE.Color(SAND_HEX),
         ROCK = new THREE.Color('#6c665c'),
         DARK = new THREE.Color('#47443f'),
         MOSS = new THREE.Color('#5c7652'),
@@ -390,6 +392,7 @@
       TUNNELS,
       hAt,
       depthTint,
+      SAND_HEX,
       matOf,
       noPick,
       ceilAt,

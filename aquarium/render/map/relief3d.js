@@ -214,7 +214,8 @@
           L.reliefStats.lakes++;
         }
         // sông được phép chảy qua đường (mặt đường cao hơn mặt nước)
-        for (let sI = 0; sI < pts.length; sI += 2) L.props.push({ x: pts[sI][0], z: pts[sI][1], r: W.riverW / 2 + 1.2, river: true });
+        // (cả dải bờ)
+        for (let sI = 0; sI < pts.length; sI += 2) L.props.push({ x: pts[sI][0], z: pts[sI][1], r: (W.riverW + 2.2) / 2 + 1, river: true });
       }
       // ao nhỏ rải rác
       for (let i = 0; i < W.ponds; i++) {
@@ -448,8 +449,113 @@
       L.detail = new THREE.Group();
       L.g.add(L.detail);
       if (kD.b.length) meshOf(kD, bodyMat, L.detail, 0, 0, 0);
+      riverBridges(L);
       if (L.collectWater) L.collectWater(); // (mặt nước khoét đất xuống: render/map/height3d.js)
       W2.mergeFlat(L);
+    }
+
+    /* =============== Cầu qua sông: chỗ sông cắt đường của đảo =============== */
+    // Lòng sông dưới đường khoét như mọi chỗ khác (render/map/height3d.js carve): sông chảy liền, không còn khối đất chắn ngang.
+    // Cầu bắc qua cả lòng sông lẫn bờ khoét, hai đầu gác lên đất, cột chân trong nước, lan can hai bên; gỗ hay đá theo miền.
+    // Ghi L.bridges để chỗ đứng (L.surfAt) trên cầu là mặt cầu: mặt đường, người, xe đi trên cầu chứ không lội lòng sông.
+    const BRIDGE = {
+      plains: { deck: '#9a7448', beam: '#6e5236', planks: true },
+      forest: { deck: '#7a5a3a', beam: '#4f3a26', planks: true },
+      mountain: { deck: '#8d877a', beam: '#6d675c' },
+      tundra: { deck: '#a7b4bf', beam: '#7f8c97' },
+      coast: { deck: '#b08c5c', beam: '#7d6240', planks: true },
+      desert: { deck: '#c09464', beam: '#8a6a44' },
+    };
+    // giao điểm hai đoạn thẳng (a→b, c→d), không cắt nhau: null
+    function segX(ax, az, bx, bz, cx, cz, dx, dz) {
+      const rx = bx - ax,
+        rz = bz - az,
+        sx = dx - cx,
+        sz = dz - cz,
+        den = rx * sz - rz * sx;
+      if (Math.abs(den) < 1e-9) return null;
+      const t = ((cx - ax) * sz - (cz - az) * sx) / den,
+        u = ((cx - ax) * rz - (cz - az) * rx) / den;
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? [ax + rx * t, az + rz * t] : null;
+    }
+    function riverBridges(L) {
+      if (!L.roadSegs) return;
+      // mỗi sông: dãy điểm, bề rộng dải bờ (sông sẵn có của đảo: L.riverBank, render/map/terrain3d.js)
+      const rivers = (L.river ? [[L.river, L.riverBank || 4]] : []).concat(
+        (L.rivers || []).map((pts) => [pts, WATERS[L.ter].riverW + 2.2]),
+      );
+      const B = BRIDGE[L.ter] || BRIDGE.plains,
+        kB = new Kit(),
+        LF = L.lift || 0,
+        hits = [];
+      L.bridges = [];
+      for (const [pts, bank] of rivers)
+        for (let q = 0; q + 1 < pts.length; q++)
+          for (const [x0, z0, x1, z1] of L.roadSegs) {
+            const [ax, az] = pts[q],
+              [bx, bz] = pts[q + 1],
+              hit = segX(ax, az, bx, bz, x0, z0, x1, z1);
+            if (!hit || hits.some(([x, z]) => Math.hypot(x - hit[0], z - hit[1]) < 6)) continue;
+            hits.push(hit);
+            const ul = Math.hypot(x1 - x0, z1 - z0) || 1,
+              ux = (x1 - x0) / ul,
+              uz = (z1 - z0) / ul,
+              rl = Math.hypot(bx - ax, bz - az) || 1,
+              sin = Math.abs((ux * (bz - az) - uz * (bx - ax)) / rl);
+            // nửa chiều dài: qua nửa dải bờ và phần bờ khoét (3,2) theo hướng đường; nửa bề ngang
+            const half = Math.min(6.5, (bank / 2 + 2.4) / Math.max(0.4, sin)),
+              hw = 1.7,
+              [cx, cz] = hit,
+              // cao độ mặt cầu ở hai đầu: gác lên đất tự nhiên, không thấp hơn mặt nước 0,45
+              e0 = Math.max(LF + 0.45, L.natAt(cx - ux * half, cz - uz * half) + 0.05),
+              e1 = Math.max(LF + 0.45, L.natAt(cx + ux * half, cz + uz * half) + 0.05),
+              deckY = (sl) => (e0 + e1) / 2 + ((e1 - e0) / 2) * (sl / half) - LF,
+              at = (sl, t) => [cx + ux * sl - uz * t, cz + uz * sl + ux * t],
+              ry = Math.atan2(ux, uz),
+              pitch = -Math.atan2(e1 - e0, 2 * half);
+            L.bridges.push({ x: cx, z: cz, ux, uz, half, hw, y0: e0, y1: e1 });
+            // mặt cầu: ván ngang (gỗ) hay phiến đá; hai dầm dọc bên dưới
+            const step = B.planks ? 0.42 : 0.9;
+            for (let sl = -half; sl < half; sl += step) {
+              const [x, z] = at(sl + step / 2, 0);
+              kB.add(
+                UBOX(),
+                B.planks && Math.round(sl / step) % 2 ? B.beam : B.deck,
+                x,
+                deckY(sl + step / 2) - 0.14,
+                z,
+                hw * 2,
+                0.14,
+                step * 0.92,
+                ry,
+              );
+            }
+            for (const t of [-hw * 0.6, hw * 0.6]) {
+              const [x, z] = at(0, t);
+              kB.add(UBOX(), B.beam, x, deckY(0) - 0.4, z, 0.22, 0.26, half * 2, ry, pitch);
+            }
+            // cột chân xuống lòng sông, lan can hai bên
+            for (const sl of [-half * 0.62, 0, half * 0.62])
+              for (const t of [-hw + 0.15, hw - 0.15]) {
+                const [x, z] = at(sl, t),
+                  h = deckY(sl) - 0.14 + 0.9;
+                kB.add(UCYL(6), B.beam, x, -0.9, z, 0.13, h, 0.13);
+              }
+            for (const t of [-hw + 0.08, hw - 0.08]) {
+              for (let sl = -half; sl <= half + 0.01; sl += half / Math.max(2, Math.round(half / 1.5))) {
+                const [x, z] = at(sl, t);
+                kB.add(UBOX(), B.beam, x, deckY(sl), z, 0.1, 0.6, 0.1, ry);
+              }
+              const [x, z] = at(0, t);
+              kB.add(UBOX(), B.deck, x, deckY(0) + 0.55, z, 0.1, 0.09, half * 2, ry, pitch);
+            }
+          }
+      if (!kB.b.length) return;
+      const g = new THREE.Group();
+      g.userData.noDrape = true; // (đã đặt theo cao độ riêng; render/map/height3d.js finish nâng cùng mặt đảo)
+      g.userData.flatLift = true;
+      L.g.add(g);
+      meshOf(kB, null, g, 0, 0, 0);
     }
 
     return { relief };

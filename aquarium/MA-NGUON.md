@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 44360 dòng.
+Tổng: 155 tệp, 44952 dòng.
 
 ## (gốc)
 
@@ -114,12 +114,12 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/map/height3d.js` | 595 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
+| `render/map/height3d.js` | 611 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
 | `render/map/map3d.js` | 124 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
 | `render/map/mountains3d.js` | 322 | Núi của bản đồ | `BK.MapMountains` |  |
-| `render/map/relief3d.js` | 459 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép … | `BK.MapRelief` |  |
+| `render/map/relief3d.js` | 565 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép … | `BK.MapRelief` |  |
 | `render/map/shared3d.js` | 315 | Phần dùng chung của bản đồ: hình học gốc dùng lại (hộp, trụ, nón, khối nhiều mặt...), bộ gom mảnh Kit (mỗi mảnh một màu … | `BK.MapShared` | `render/look3d.js` |
-| `render/map/terrain3d.js` | 815 | Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ và sông sẵn có của … | `BK.MapTerrain` | `render/build/roads.js` |
+| `render/map/terrain3d.js` | 821 | Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ và sông sẵn có của … | `BK.MapTerrain` | `render/build/roads.js` |
 | `render/map/trees3d.js` | 433 | Cây và bụi của sáu miền (FLORA): cây tán tròn ít mặt mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng … | `BK.MapTrees` |  |
 | `render/map/water3d.js` | 61 | Gộp mặt nước và bờ của một đảo: mỗi loại một khối, một lượt vẽ (màu theo đỉnh, giữ nguyên chỗ và dáng) | `BK.MapWater` |  |
 
@@ -129,12 +129,12 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/deep/beings3d.js` | 829 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
+| `render/deep/beings3d.js` | 1266 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
 | `render/deep/citadel3d.js` | 669 | Thành Vỏ Ốc Xà Cừ: phế tích trong rãnh dưới Thông Xanh … | `BK.DeepCitadel` |  |
-| `render/deep/denizens3d.js` | 815 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
-| `render/deep/kit3d.js` | 90 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
+| `render/deep/denizens3d.js` | 831 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
+| `render/deep/kit3d.js` | 98 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
 | `render/deep/ruins3d.js` | 484 | Hai phế tích dưới đáy bể … | `BK.DeepRuins` |  |
-| `render/deep/terrain3d.js` | 400 | Địa hình đáy bể … | `BK.DeepTerrain` |  |
+| `render/deep/terrain3d.js` | 403 | Địa hình đáy bể … | `BK.DeepTerrain` |  |
 | `render/deep/tunnels3d.js` | 445 | Ba đường hầm xuyên ba núi trụ nối ba phế tích … | `BK.DeepTunnels` |  |
 
 ## render/build/

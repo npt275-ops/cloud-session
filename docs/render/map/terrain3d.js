@@ -403,6 +403,9 @@
         );
         ribbon(pts, 4.0, 0.08, waterMat());
         L.river = pts;
+        L.riverBank = 6.2; // (bề rộng dải bờ: cầu qua sông ở render/map/relief3d.js)
+        // lòng sông, cả dải bờ: cây, công trình tránh
+        for (let q = 0; q < pts.length; q += 2) L.props.push({ x: pts[q][0], z: pts[q][1], r: L.riverBank / 2 + 1, river: true });
         // hồ sen cuối sông: dáng quả thận, lá sen xanh và hoa hồng
         {
           const [ex, ez] = pts[pts.length - 1],
@@ -501,6 +504,9 @@
         );
         ribbon(pts, 2.0, 0.08, waterMat('#3f9cc6'));
         L.river = pts;
+        L.riverBank = 3.2;
+        // lòng sông, cả dải bờ: cây, công trình tránh
+        for (let q = 0; q < pts.length; q += 2) L.props.push({ x: pts[q][0], z: pts[q][1], r: L.riverBank / 2 + 1, river: true });
         // hồ rừng cuối suối: bờ lượn nhiều khúc, lau sậy, lá súng
         {
           const [ex, ez] = pts[pts.length - 1],

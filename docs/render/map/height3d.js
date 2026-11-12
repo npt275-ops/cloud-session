@@ -204,7 +204,8 @@
       Hs.set(nat);
       H.set(nat);
       L.hVer = 0;
-      L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
+      // (trên cầu qua sông: mặt cầu, render/map/relief3d.js ghi L.bridges)
+      L.surfAt = (x, z) => onBridge(L, x, z, Math.max(0, sample(L.hf, H, x, z)));
       L.natAt = (x, z) => Math.max(0, sample(L.hf, Hs, x, z));
       L.padY = (x, z, r) => {
         let s = L.natAt(x, z),
@@ -325,6 +326,18 @@
       }
       return inside === 0 ? -1 : out;
     }
+    // chỗ đứng trên cầu qua sông: cao hơn đất thì lấy mặt cầu (mặt cầu dốc đều từ đầu y0 tới đầu y1)
+    function onBridge(L, x, z, h) {
+      if (!L.bridges) return h;
+      for (const b of L.bridges) {
+        const dx = x - b.x,
+          dz = z - b.z,
+          sl = dx * b.ux + dz * b.uz,
+          t = -dx * b.uz + dz * b.ux;
+        if (Math.abs(sl) <= b.half && Math.abs(t) <= b.hw) h = Math.max(h, b.y0 + ((b.y1 - b.y0) * (sl / b.half + 1)) / 2);
+      }
+      return h;
+    }
     function carve(L) {
       const F = L.hf,
         { nat, Hs, road, px, pz } = F,
@@ -335,9 +348,10 @@
         if (F.tris.length) {
           const d = waterD(F, px[v], pz[v]);
           if (d < BANK) {
-            const free = sstep(HALF * 0.7, HALF + 1.4, road[v]); // mặt đường giữ nguyên (đường qua sông như đập đất)
-            const tgt = d < 0 ? F.lift[v] - 0.4 : lerp(F.lift[v] + 0.02, h, sstep(0, BANK, d));
-            h = lerp(h, Math.min(h, tgt), free);
+            // (cả dưới đường: sông chảy liền; đường qua sông đi trên cầu, render/map/relief3d.js riverBridges)
+            // (sát mép nước, trong 0,8, đất vẫn thấp hơn mặt nước: lưới đất thưa hơn bề rộng sông hẹp cũng không lấp sông)
+            const tgt = d < 0 ? F.lift[v] - 0.4 : lerp(F.lift[v] - 0.15, h, sstep(0.8, BANK, d));
+            h = Math.min(h, tgt);
           }
         }
         for (const ln of F.lines) {
@@ -485,6 +499,8 @@
           if (dx > R || dx < -R || dz > R || dz < -R) continue;
           const d = Math.hypot(dx, dz);
           if (d >= R) continue;
+          // (lòng sông, hồ đã khoét: nền công trình không lấp; mép công trình sát sông thì chìa ra trên mặt nước)
+          if (Hs[v] < F.lift[v] - 0.2) continue;
           H[v] = lerp(H[v], y, 1 - sstep(p.r, R, d));
         }
       }

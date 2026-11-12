@@ -7,7 +7,8 @@
  *   - Người Cá Đá (20, Đô Thị Đá): ở trong kim tự tháp, ra vào qua 12 cửa; thỉnh thoảng ra đi trên gờ các bậc tháp rồi vào lại.
  *     Kẻ địch tới gần tháp (RULES.army): cả 20 người chạy ra từ các cửa, xếp một hàng ngang trước tháp, rồi cả hàng bơi lao lên
  *     tấn công; kẻ địch đi xa thì về lại tháp.
- *   - Người Đuối Cát (bầy 6 con, mỗi phế tích 1–2 bầy): chỉ nằm sát mặt cát, không làm gì.
+ *   - Người Đuối Cát (bầy 6 con, mỗi phế tích 1–2 bầy): nằm vùi ở chỗ cát (không đá lát, không đường), màu như cát, không
+ *     làm gì.
  *   - Quái vật: Rồng Lươn Đen theo bầy (Thành Vỏ Ốc 4, Vườn Treo 4), Cá Mập Xương theo đàn (Vườn Treo 3, Đô Thị Đá 3), Bạch
  *     Tuộc Mắt Vực đơn lẻ (Thành Vỏ Ốc 1, Đô Thị Đá 1). Mỗi phế tích có hai trong ba loài.
  * Cảnh báo kẻ địch: kẻ địch là máy quay khi ở dưới nước (người chơi) và mọi vật trong D.threats ({ position }: tàu ngầm sau
@@ -236,25 +237,40 @@
       }
     // đội quân: calm (sống bình thường), muster (chạy ra xếp hàng), charge (cả hàng lao lên), back (về tháp)
     const army = { phase: 'calm', t: 0, away: 0, c: V(), dir: V(), perp: V() };
-    /* ---------- Người Đuối Cát: bầy 6 con nằm sát mặt cát (Thành Vỏ Ốc 2 bầy, Vườn Treo 1, Đô Thị Đá 2) ---------- */
+    /* ---------- Người Đuối Cát: bầy 6 con vùi trong cát (Thành Vỏ Ốc 2 bầy, Vườn Treo 1, Đô Thị Đá 2) ---------- */
+    // chỗ cát: đất phẳng (dốc dưới 0,25), không khối đá, không đá lát (kit3d: S.solid, S.paved), không đường (Thành Vỏ Ốc: S.free)
+    const paved = (R, u, v, m) => (R.S.paved || []).some((b) => u > b.u0 - m && u < b.u1 + m && v > b.v0 - m && v < b.v1 + m);
+    const sandy = (R, u, v) => {
+      if (!openGround(R, u, v, 1.5) || paved(R, u, v, 1.2)) return false;
+      const w = R.at(u, v);
+      return Math.hypot(hAt(w.x + 1.5, w.z) - hAt(w.x - 1.5, w.z), hAt(w.x, w.z + 1.5) - hAt(w.x, w.z - 1.5)) / 3 < 0.25;
+    };
+    // màu cát đúng chỗ nằm (render/deep/terrain3d.js: màu cát của đáy, ngả xanh theo độ sâu)
+    const sandAt = (y) => '#' + D.depthTint(new T.Color(D.SAND_HEX), y).getHexString();
     [
       [RU[0], 2],
       [RU[1], 1],
       [RU[2], 2],
     ].forEach(([R, n]) => {
       for (let k = 0; k < n; k++) {
-        const c = groundPoint(R, null, 0, 3),
-          yaw = rnd() * Math.PI * 2,
-          spots = [];
-        for (let i = 0; i < 300 && spots.length < 6; i++) {
+        let c = null;
+        for (let i = 0; i < 300 && !c; i++) {
+          const q = groundPoint(R, null, 0, 3);
+          if (sandy(R, q.u, q.v)) c = q;
+        }
+        if (!c) continue;
+        const yaw = rnd() * Math.PI * 2,
+          spots = [c],
+          sand = sandAt(worldOf(R, c).y);
+        for (let i = 0; i < 400 && spots.length < 6; i++) {
           const rr = 3 + i * 0.03,
             q = { u: c.u + (rnd() - 0.5) * 2 * rr, v: c.v + (rnd() - 0.5) * 2 * rr };
-          if (openGround(R, q.u, q.v, 1.2) && spots.every((o) => Math.hypot(o.u - q.u, o.v - q.v) > 3.4)) spots.push(q);
+          if (sandy(R, q.u, q.v) && spots.every((o) => Math.hypot(o.u - q.u, o.v - q.v) > 3.4)) spots.push(q);
         }
         for (const q of spots) {
-          const a = spawn('ray', R, BE.rayMan, 1, { state: 'rest', mode: 'rest', yaw: yaw + (rnd() - 0.5) * 0.8 });
+          // nằm vùi: thân rạp sát cát, gò cát phủ quanh mép, chỉ lộ mắt (kiểu 'curl' của rayMan)
+          const a = spawn('ray', R, () => BE.rayMan({ sand }), 1, { state: 'rest', mode: 'curl', yaw: yaw + (rnd() - 0.5) * 0.8 });
           a.pos.copy(worldOf(R, q));
-          a.pos.y += 0.25; // (nằm trên đá lát, sỏi thấp: không lún)
         }
       }
     });

@@ -68,8 +68,10 @@
     function frame(S) {
       const ry0 = Math.atan2(-S.uz, S.ux);
       const at = (u, v) => ({ x: S.x + S.ux * u - S.uz * v, z: S.z + S.uz * u + S.ux * v });
-      // khối đá đứng trên đất, cao hơn 1,2 (hộp bao theo u, v): sinh vật đáy bể tránh chỗ này (render/deep/denizens3d.js)
-      const solid = (S.solid = S.solid || []);
+      // khối đá đứng trên đất, cao hơn 1,2 (hộp bao theo u, v): sinh vật đáy bể tránh chỗ này (render/deep/denizens3d.js);
+      // khối thấp hơn (đá lát, bậc, gạch vụn): S.paved, chỗ không còn là cát
+      const solid = (S.solid = S.solid || []),
+        paved = (S.paved = S.paved || []);
       // đặt khối theo toạ độ riêng (u, v), y tính từ đáy rãnh tại đó (hoặc cao độ tuyệt đối khi abs)
       const add = (G, geo, color, u, y, v, su, sy, sv, ry, rx, rz, abs) => {
         const p = at(u, v);
@@ -78,8 +80,14 @@
         if (!geo.boundingBox) geo.computeBoundingBox();
         BE3.set(rx || 0, ry || 0, rz || 0);
         BB.copy(geo.boundingBox).applyMatrix4(BM.compose(BP.set(0, 0, 0), BQ.setFromEuler(BE3), BS.set(su, sy, sv)));
-        if (y + BB.min.y < 2 && y + BB.max.y > 1.2 && (BB.max.x - BB.min.x) * (BB.max.z - BB.min.z) > 0.5)
-          solid.push({ u0: u + BB.min.x, u1: u + BB.max.x, v0: v + BB.min.z, v1: v + BB.max.z, top: y + BB.max.y });
+        if (y + BB.min.y < 2 && (BB.max.x - BB.min.x) * (BB.max.z - BB.min.z) > 0.5)
+          (y + BB.max.y > 1.2 ? solid : paved).push({
+            u0: u + BB.min.x,
+            u1: u + BB.max.x,
+            v0: v + BB.min.z,
+            v1: v + BB.max.z,
+            top: y + BB.max.y,
+          });
       };
       return { at, add, ry0 };
     }
