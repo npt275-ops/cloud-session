@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 153 tệp, 42635 dòng.
+Tổng: 155 tệp, 43978 dòng.
 
 ## (gốc)
 
@@ -84,7 +84,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
 | `render/buildings3d.js` | 1485 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
-| `render/deep3d.js` | 228 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
+| `render/deep3d.js` | 246 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
 | `render/hpbars3d.js` | 72 | Thanh máu … | `BK.HpBars3D` |  |
@@ -129,8 +129,10 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/deep/citadel3d.js` | 666 | Thành Vỏ Ốc Xà Cừ: phế tích trong rãnh dưới Thông Xanh … | `BK.DeepCitadel` |  |
-| `render/deep/kit3d.js` | 76 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
+| `render/deep/beings3d.js` | 720 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
+| `render/deep/citadel3d.js` | 669 | Thành Vỏ Ốc Xà Cừ: phế tích trong rãnh dưới Thông Xanh … | `BK.DeepCitadel` |  |
+| `render/deep/denizens3d.js` | 588 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
+| `render/deep/kit3d.js` | 90 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
 | `render/deep/ruins3d.js` | 439 | Hai phế tích dưới đáy bể … | `BK.DeepRuins` |  |
 | `render/deep/terrain3d.js` | 400 | Địa hình đáy bể … | `BK.DeepTerrain` |  |
 | `render/deep/tunnels3d.js` | 445 | Ba đường hầm xuyên ba núi trụ nối ba phế tích … | `BK.DeepTunnels` |  |
@@ -290,115 +292,117 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 14. `render/deep/citadel3d.js`
 15. `render/deep/ruins3d.js`
 16. `render/deep/tunnels3d.js`
-17. `render/deep3d.js`
-18. `clouds3d.js`
-19. `logic/rng.js`
-20. `logic/rules.js`
-21. `logic/genes.js`
-22. `logic/people.js`
-23. `logic/family.js`
-24. `logic/council.js`
-25. `logic/temper.js`
-26. `logic/posts.js`
-27. `logic/jobs.js`
-28. `logic/eras.js`
-29. `logic/schedule.js`
-30. `logic/scenes.js`
-31. `logic/leader.js`
-32. `logic/guards.js`
-33. `logic/tasks.js`
-34. `logic/dramas.js`
-35. `logic/economy.js`
-36. `logic/climate.js`
-37. `logic/epigen.js`
-38. `logic/construction.js`
-39. `logic/homes.js`
-40. `logic/brain.js`
-41. `logic/island.js`
-42. `logic/diplomacy.js`
-43. `logic/siege.js`
-44. `logic/arms.js`
-45. `logic/missiles.js`
-46. `logic/ecology.js`
-47. `logic/war.js`
-48. `logic/battles.js`
-49. `logic/chronicle.js`
-50. `logic/prosperity.js`
-51. `logic/strategy.js`
-52. `logic/powers.js`
-53. `logic/goals.js`
-54. `logic/world.js`
-55. `logic/save.js`
-56. `render/outfits3d.js`
-57. `render/rig3d.js`
-58. `render/anim3d.js`
-59. `render/ik3d.js`
-60. `render/gestures3d.js`
-61. `render/work3d.js`
-62. `render/nav3d.js`
-63. `render/village3d.js`
-64. `ui/village-ui.js`
-65. `render/build/kit3d.js`
-66. `render/build/life3d.js`
-67. `render/build/place3d.js`
-68. `render/build/workyards3d.js`
-69. `render/build/ruins3d.js`
-70. `render/build/batch3d.js`
-71. `render/build/bridges3d.js`
-72. `render/travel3d.js`
-73. `render/war3d.js`
-74. `render/missiles3d.js`
-75. `render/shots3d.js`
-76. `render/engines3d.js`
-77. `render/prosper3d.js`
-78. `render/hpbars3d.js`
-79. `render/build/plains/common.js`
-80. `render/build/plains/e01.js`
-81. `render/build/plains/e02.js`
-82. `render/build/plains/e03.js`
-83. `render/build/plains/e04.js`
-84. `render/build/plains/e05.js`
-85. `render/build/plains/e06.js`
-86. `render/build/plains/e07.js`
-87. `render/build/plains/e08.js`
-88. `render/build/plains/e09.js`
-89. `render/build/plains/e10.js`
-90. `render/build/plains/e11.js`
-91. `render/build/plains/e12.js`
-92. `render/build/plains/outer.js`
-93. `render/build/plains/wonders.js`
-94. `render/build/roads.js`
-95. `render/build/lamps.js`
-96. `render/build/neon.js`
-97. `render/build/vehicles.js`
-98. `render/build/traffic3d.js`
-99. `render/build/plains/town.js`
-100. `render/build/gates.js`
-101. `render/build/isles/arch.js`
-102. `render/build/civic.js`
-103. `render/build/marvels.js`
-104. `render/build/isles/halls.js`
-105. `render/build/isles/halls-future.js`
-106. `render/build/isles/compose.js`
-107. `render/build/isles/forest.js`
-108. `render/build/isles/mountain.js`
-109. `render/build/isles/tundra.js`
-110. `render/build/isles/coast.js`
-111. `render/build/isles/desert.js`
-112. `render/buildings3d.js`
-113. `game/world.js`
-114. `render/scene3d.js`
-115. `render/mood3d.js`
-116. `render/sky3d.js`
-117. `render/neon3d.js`
-118. `render/perf3d.js`
-119. `render/tank3d.js`
-120. `game/nature.js`
-121. `game/seasons.js`
-122. `render/snow3d.js`
-123. `ui/camera-fly.js`
-124. `ui/landbar.js`
-125. `ui/race-dev.js`
-126. `game/cities.js`
-127. `ui/hud.js`
-128. `game/loop.js`
+17. `render/deep/beings3d.js`
+18. `render/deep/denizens3d.js`
+19. `render/deep3d.js`
+20. `clouds3d.js`
+21. `logic/rng.js`
+22. `logic/rules.js`
+23. `logic/genes.js`
+24. `logic/people.js`
+25. `logic/family.js`
+26. `logic/council.js`
+27. `logic/temper.js`
+28. `logic/posts.js`
+29. `logic/jobs.js`
+30. `logic/eras.js`
+31. `logic/schedule.js`
+32. `logic/scenes.js`
+33. `logic/leader.js`
+34. `logic/guards.js`
+35. `logic/tasks.js`
+36. `logic/dramas.js`
+37. `logic/economy.js`
+38. `logic/climate.js`
+39. `logic/epigen.js`
+40. `logic/construction.js`
+41. `logic/homes.js`
+42. `logic/brain.js`
+43. `logic/island.js`
+44. `logic/diplomacy.js`
+45. `logic/siege.js`
+46. `logic/arms.js`
+47. `logic/missiles.js`
+48. `logic/ecology.js`
+49. `logic/war.js`
+50. `logic/battles.js`
+51. `logic/chronicle.js`
+52. `logic/prosperity.js`
+53. `logic/strategy.js`
+54. `logic/powers.js`
+55. `logic/goals.js`
+56. `logic/world.js`
+57. `logic/save.js`
+58. `render/outfits3d.js`
+59. `render/rig3d.js`
+60. `render/anim3d.js`
+61. `render/ik3d.js`
+62. `render/gestures3d.js`
+63. `render/work3d.js`
+64. `render/nav3d.js`
+65. `render/village3d.js`
+66. `ui/village-ui.js`
+67. `render/build/kit3d.js`
+68. `render/build/life3d.js`
+69. `render/build/place3d.js`
+70. `render/build/workyards3d.js`
+71. `render/build/ruins3d.js`
+72. `render/build/batch3d.js`
+73. `render/build/bridges3d.js`
+74. `render/travel3d.js`
+75. `render/war3d.js`
+76. `render/missiles3d.js`
+77. `render/shots3d.js`
+78. `render/engines3d.js`
+79. `render/prosper3d.js`
+80. `render/hpbars3d.js`
+81. `render/build/plains/common.js`
+82. `render/build/plains/e01.js`
+83. `render/build/plains/e02.js`
+84. `render/build/plains/e03.js`
+85. `render/build/plains/e04.js`
+86. `render/build/plains/e05.js`
+87. `render/build/plains/e06.js`
+88. `render/build/plains/e07.js`
+89. `render/build/plains/e08.js`
+90. `render/build/plains/e09.js`
+91. `render/build/plains/e10.js`
+92. `render/build/plains/e11.js`
+93. `render/build/plains/e12.js`
+94. `render/build/plains/outer.js`
+95. `render/build/plains/wonders.js`
+96. `render/build/roads.js`
+97. `render/build/lamps.js`
+98. `render/build/neon.js`
+99. `render/build/vehicles.js`
+100. `render/build/traffic3d.js`
+101. `render/build/plains/town.js`
+102. `render/build/gates.js`
+103. `render/build/isles/arch.js`
+104. `render/build/civic.js`
+105. `render/build/marvels.js`
+106. `render/build/isles/halls.js`
+107. `render/build/isles/halls-future.js`
+108. `render/build/isles/compose.js`
+109. `render/build/isles/forest.js`
+110. `render/build/isles/mountain.js`
+111. `render/build/isles/tundra.js`
+112. `render/build/isles/coast.js`
+113. `render/build/isles/desert.js`
+114. `render/buildings3d.js`
+115. `game/world.js`
+116. `render/scene3d.js`
+117. `render/mood3d.js`
+118. `render/sky3d.js`
+119. `render/neon3d.js`
+120. `render/perf3d.js`
+121. `render/tank3d.js`
+122. `game/nature.js`
+123. `game/seasons.js`
+124. `render/snow3d.js`
+125. `ui/camera-fly.js`
+126. `ui/landbar.js`
+127. `ui/race-dev.js`
+128. `game/cities.js`
+129. `ui/hud.js`
+130. `game/loop.js`

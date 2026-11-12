@@ -59,13 +59,27 @@
       }
     }
     // khung riêng của một phế tích: u dọc trục (từ giữa bể ra vách kính), v ngang; at(u, v) cho toạ độ thế giới, cao độ đáy
+    const BB = new THREE.Box3(),
+      BM = new THREE.Matrix4(),
+      BP = new THREE.Vector3(),
+      BS = new THREE.Vector3(),
+      BQ = new THREE.Quaternion(),
+      BE3 = new THREE.Euler();
     function frame(S) {
       const ry0 = Math.atan2(-S.uz, S.ux);
       const at = (u, v) => ({ x: S.x + S.ux * u - S.uz * v, z: S.z + S.uz * u + S.ux * v });
+      // khối đá đứng trên đất, cao hơn 1,2 (hộp bao theo u, v): sinh vật đáy bể tránh chỗ này (render/deep/denizens3d.js)
+      const solid = (S.solid = S.solid || []);
       // đặt khối theo toạ độ riêng (u, v), y tính từ đáy rãnh tại đó (hoặc cao độ tuyệt đối khi abs)
       const add = (G, geo, color, u, y, v, su, sy, sv, ry, rx, rz, abs) => {
         const p = at(u, v);
         put(G, geo, color, p.x, abs ? y : hAt(p.x, p.z) - 0.3 + y, p.z, su, sy, sv, ry0 + (ry || 0), rx, rz);
+        if (G !== groups.stone || abs) return;
+        if (!geo.boundingBox) geo.computeBoundingBox();
+        BE3.set(rx || 0, ry || 0, rz || 0);
+        BB.copy(geo.boundingBox).applyMatrix4(BM.compose(BP.set(0, 0, 0), BQ.setFromEuler(BE3), BS.set(su, sy, sv)));
+        if (y + BB.min.y < 2 && y + BB.max.y > 1.2 && (BB.max.x - BB.min.x) * (BB.max.z - BB.min.z) > 0.5)
+          solid.push({ u0: u + BB.min.x, u1: u + BB.max.x, v0: v + BB.min.z, v1: v + BB.max.z, top: y + BB.max.y });
       };
       return { at, add, ry0 };
     }

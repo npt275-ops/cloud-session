@@ -470,8 +470,18 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/deep/beings3d.js",
+  "src": "render/deep/beings3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/deep/citadel3d.js",
   "src": "render/deep/citadel3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/deep/denizens3d.js",
+  "src": "render/deep/denizens3d.js",
   "mode": 420
  },
  {

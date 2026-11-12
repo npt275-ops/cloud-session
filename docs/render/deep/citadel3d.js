@@ -513,6 +513,7 @@
 
     /* ---------- Nhà nhỏ: vỏ ốc nhỏ, ốc tiền, sò ngọc trai, nhím biển, vòm bong bóng, tháp nấm, vòm vỡ ---------- */
     let houses = 0;
+    const homes = [];
     for (let i = 0; i < 1500 && houses < 120; i++) {
       const a = rnd() * TAU,
         k = 0.3 + rnd() * 0.65,
@@ -524,6 +525,7 @@
       occ.push([u, v, r + 0.5]);
       const kind = rnd(),
         col = PEARL[Math.floor(rnd() * 4)];
+      if (kind < 0.32) homes.push([u, v, r]); // (nhà vỏ ốc, ốc tiền: chỗ ở của Người Ốc, render/deep/denizens3d.js)
       if (kind < 0.18) {
         // nhà vỏ ốc nhỏ, quay mặt xoắn về phía giữa rãnh
         nautilus(u, v, r * 2.2, Math.atan2(-u, -v) - Math.PI / 2 + (rnd() - 0.5) * 0.8);
@@ -656,7 +658,8 @@
       });
     });
 
-    S.free = free; // (chỗ còn trống: để kiểm)
+    S.free = free; // (chỗ còn trống: để kiểm, và để sinh vật chọn chỗ đi lại)
+    S.homes = homes; // ([u, v, r] theo toạ độ riêng của phế tích)
     S.stats = stats; // (số công trình mỗi loại: để kiểm, xem tools và design/ke-hoach-buoc-22.md)
     S.name = 'Thành Vỏ Ốc Xà Cừ';
     S.top = floorY + 60;

@@ -5,9 +5,10 @@
  *   render/deep/citadel3d.js  phế tích dưới Thông Xanh: Thành Vỏ Ốc Xà Cừ (phần động: D.anims)
  *   render/deep/ruins3d.js    hai phế tích dưới Tuyết Trắng, Cát Hồng
  *   render/deep/tunnels3d.js  ba đường hầm, sáu cửa hầm
+ *   render/deep/denizens3d.js sinh vật đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch (hình và cử động: render/deep/beings3d.js)
  * Ở đây: rong trên sườn núi, gộp lưới (đá, đá sáng, lòng hầm, rong đung đưa), bọt khí, mỗi khung hình (máy quay dưới mặt nước:
  * sương nước sâu, góc nhìn rộng, vách nước gần như đục, lòng hầm chỉ vẽ khi ở dưới nước), các điểm lặn cho nút "Đáy bể"
- * (ui/landbar.js). Cần: three.js, render/map/map3d.js (đảo), sea3d.js, bốn tệp render/deep/ ở trên. */
+ * (ui/landbar.js). Cần: three.js, render/map/map3d.js (đảo), sea3d.js, các tệp render/deep/ ở trên. */
 (function (root) {
   'use strict';
   const BK = root.BK || (root.BK = {});
@@ -18,6 +19,7 @@
     BK.DeepCitadel.build(D);
     BK.DeepRuins.build(D);
     BK.DeepTunnels.build(D);
+    BK.DeepDenizens.build(D);
     const {
       anims,
       THREE,
@@ -188,6 +190,8 @@
         tunMesh.visible = under;
       }
       wasUnder = under;
+      // sinh vật đáy bể: chỉ chạy khi máy quay ở dưới nước (máy quay là người chơi: kẻ địch của chúng)
+      D.denizens.update(reduce ? 0 : Math.min(dt || 16, 100) / 1000, ts, cam, under);
       // dưới nước góc nhìn rộng ra (62°) để thấy trọn một phế tích dài 185 trong lòng rãnh; lên mặt nước trả lại góc thường
       // (góc thường theo render/scene3d.js resize: 34°, màn hẹp 50°)
       const base = window.innerWidth < 720 ? 50 : 34,
@@ -220,7 +224,21 @@
       });
     }
     // (citadel: số công trình mỗi loại của Thành Vỏ Ốc Xà Cừ, để kiểm)
-    const out = { animate, stops, heightAt: hAt, group: deep, FLOOR, tunnels: TUNNELS, TUN_RC, TUN_FLOOR, citadel: SITES[0].stats, citadelFree: SITES[0].free };
+    const out = {
+      animate,
+      stops,
+      heightAt: hAt,
+      group: deep,
+      FLOOR,
+      tunnels: TUNNELS,
+      TUN_RC,
+      TUN_FLOOR,
+      citadel: SITES[0].stats,
+      citadelFree: SITES[0].free,
+      // (sinh vật đáy bể; threats: thêm { position } của tàu ngầm sau này vào đây để sinh vật coi là kẻ địch)
+      denizens: D.denizens,
+      threats: D.threats,
+    };
     return out;
   }
   BK.Deep3D = { create };
