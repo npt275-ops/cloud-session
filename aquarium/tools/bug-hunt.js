@@ -201,12 +201,6 @@ const ROOT = path.join(__dirname, '..'),
               else if ((s.src === 'npc' || s.src === 'hit') && s.d > s.rg + 0.5)
                 bad('đạn NPC bay quá tầm', tag + ' ' + s.d.toFixed(1) + '/' + s.rg.toFixed(1));
             }
-          if (k % 100 === 99)
-            for (const x of __glass.buildings.stalled ? __glass.buildings.stalled(25) : [])
-              bad(
-                'xe đứng yên quá 25 giây game',
-                tag + ' ' + x.n + ' (' + (x.pos || []).map((u) => u.toFixed(1)).join(', ') + ') vì ' + x.why,
-              );
           if (k % 100 === 99) {
             const st = v.auditStats();
             if (st.overlap) bad('người đứng chồng lên nhau', tag + ' ' + st.overlap + ' cặp ' + st.overWhy.join(', '));

@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 156 tệp, 45295 dòng.
+Tổng: 155 tệp, 44198 dòng.
 
 ## (gốc)
 
@@ -26,9 +26,9 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `game/cities.js` | 1099 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
+| `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 105 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/seasons.js` `game/world.js` `render/look3d.js` `render/map/map3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/race-dev.js` |
-| `game/nature.js` | 61 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 8 dịch vụ | `clouds3d.js` `game/world.js` `render/birds3d.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
+| `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
@@ -43,7 +43,7 @@ Logic ngầm (chạy được trong Node, không vẽ): người, đảo, kinh t
 | `logic/brain.js` | 251 | Bộ não tình huống: đọc tình huống của đảo (hạn hán, lệnh chiến tranh, lễ hội, cãi nhau, tang) và gen của từng người … | `BK.Brain` | `logic/battles.js` `logic/climate.js` `logic/dramas.js` `logic/ecology.js` `logic/genes.js` `logic/people.js` `logic/rules.js` `logic/scenes.js` `logic/schedule.js` `logic/siege.js` `logic/tasks.js` |
 | `logic/chronicle.js` | 267 | Biên niên, nhân vật nổi bật, nhịp kịch tính … | `BK.Chronicle` | `logic/diplomacy.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/rules.js` `logic/strategy.js` |
 | `logic/climate.js` | 148 | Khí hậu và thiên tai của từng đảo (hệ thống tự sinh) | `BK.Climate` | `logic/island.js` `logic/people.js` `logic/rules.js` |
-| `logic/construction.js` | 90 | Dựng công trình trong mỗi thời | `BK.Construction` | `logic/eras.js` `logic/rules.js` `logic/schedule.js` |
+| `logic/construction.js` | 72 | Dựng công trình trong mỗi thời (design/ke-hoach-buoc-27.md) | `BK.Construction` | `logic/rules.js` `logic/schedule.js` |
 | `logic/council.js` | 121 | Hội đồng 8 ghế của một đảo: vua, hai tướng, quân sư, tư tế, thương chủ, thầy thuốc, thợ cả | `BK.Council` | `logic/people.js` `logic/rules.js` |
 | `logic/diplomacy.js` | 522 | Quan hệ giữa các đảo, giao thương, hiệp ước, cầu … | `BK.Diplomacy` | `logic/ecology.js` `logic/economy.js` `logic/island.js` `logic/people.js` |
 | `logic/dramas.js` | 417 | Drama trong thành phố … | `BK.Dramas` | `logic/people.js` `logic/posts.js` `logic/rules.js` `logic/schedule.js` `logic/temper.js` |
@@ -56,7 +56,7 @@ Logic ngầm (chạy được trong Node, không vẽ): người, đảo, kinh t
 | `logic/goals.js` | 60 | Mục tiêu theo trận cho người chơi … | `BK.Goals` | `logic/eras.js` `logic/island.js` |
 | `logic/guards.js` | 123 | Kịch bản của lính gác cổng … | `BK.Guards` | `logic/climate.js` `logic/people.js` `logic/posts.js` `logic/temper.js` |
 | `logic/homes.js` | 74 | Nhà riêng của từng hộ | `BK.Homes` | `logic/people.js` `logic/rules.js` |
-| `logic/island.js` | 239 | Trạng thái của một đảo và nhịp chạy theo ngày: 8 người đầu tiên, hội đồng, tuổi và cái chết, mốc thế hệ mỗi 1,5 năm … | `BK.Island` | `logic/brain.js` `logic/climate.js` `logic/construction.js` `logic/council.js` `logic/dramas.js` `logic/economy.js` `logic/epigen.js` `logic/eras.js` `logic/family.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rng.js` `logic/rules.js` `logic/scenes.js` `logic/siege.js` |
+| `logic/island.js` | 238 | Trạng thái của một đảo và nhịp chạy theo ngày: 8 người đầu tiên, hội đồng, tuổi và cái chết, mốc thế hệ mỗi 1,5 năm … | `BK.Island` | `logic/brain.js` `logic/climate.js` `logic/construction.js` `logic/council.js` `logic/dramas.js` `logic/economy.js` `logic/epigen.js` `logic/eras.js` `logic/family.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rng.js` `logic/rules.js` `logic/scenes.js` `logic/siege.js` |
 | `logic/jobs.js` | 96 | Việc của người không ngồi trong hội đồng, chọn theo tính cách: vị trí cứng (logic/posts.js: gác cổng chính, cổng phụ, diễn … | `BK.Jobs` | `logic/people.js` `logic/posts.js` `logic/rules.js` `logic/temper.js` |
 | `logic/leader.js` | 211 | Kịch bản của người đứng đầu đảo … | `BK.Leader` | `logic/climate.js` `logic/economy.js` `logic/people.js` `logic/temper.js` |
 | `logic/missiles.js` | 364 | Tên lửa (từ thời 7) và hạt nhân (từ thời 8) | `BK.Missiles` | `logic/battles.js` `logic/chronicle.js` `logic/diplomacy.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/siege.js` `logic/strategy.js` `logic/war.js` |
@@ -83,8 +83,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
-| `render/birds3d.js` | 117 | Đàn chim bay lượn trên sáu đảo … | `BK.Birds3D` |  |
-| `render/buildings3d.js` | 1485 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
+| `render/buildings3d.js` | 1354 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
 | `render/deep3d.js` | 247 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
@@ -105,7 +104,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1627 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1623 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -116,12 +115,12 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `render/map/height3d.js` | 631 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
-| `render/map/map3d.js` | 125 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
+| `render/map/map3d.js` | 124 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
 | `render/map/mountains3d.js` | 322 | Núi của bản đồ | `BK.MapMountains` |  |
 | `render/map/relief3d.js` | 565 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép … | `BK.MapRelief` |  |
 | `render/map/shared3d.js` | 315 | Phần dùng chung của bản đồ: hình học gốc dùng lại (hộp, trụ, nón, khối nhiều mặt...), bộ gom mảnh Kit (mỗi mảnh một màu … | `BK.MapShared` | `render/look3d.js` |
 | `render/map/terrain3d.js` | 821 | Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ và sông sẵn có của … | `BK.MapTerrain` | `render/build/roads.js` |
-| `render/map/trees3d.js` | 572 | Cây và bụi của sáu miền (FLORA): cây tán tròn ít mặt mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng … | `BK.MapTrees` | `render/scene3d.js` |
+| `render/map/trees3d.js` | 433 | Cây và bụi của sáu miền (FLORA): cây tán tròn ít mặt mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng … | `BK.MapTrees` |  |
 | `render/map/water3d.js` | 61 | Gộp mặt nước và bờ của một đảo: mỗi loại một khối, một lượt vẽ (màu theo đỉnh, giữ nguyên chỗ và dáng) | `BK.MapWater` |  |
 
 ## render/deep/
@@ -156,8 +155,8 @@ Công trình dùng chung mọi đảo: bộ ghép khối, đường, cổng, c�
 | `render/build/place3d.js` | 320 | Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ, sông, mép đảo và các công trình khác) … | `BK.Place3D` |  |
 | `render/build/roads.js` | 274 | Mạng đường của sáu đảo … | `BK.Roads3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/ruins3d.js` | 122 | Công trình hư hại trong chiến tranh … | `BK.Ruins3D` | `render/build/life3d.js` |
-| `render/build/traffic3d.js` | 522 | Xe chạy trên vòng đường và nhường người đi bộ … | `BK.Traffic3D` | `render/build/plains/common.js` |
-| `render/build/vehicles.js` | 282 | Xe cộ của từng thời … | `BK.Vehicles3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
+| `render/build/traffic3d.js` | 40 | Xe bay lượn vòng trên cao dọc vòng đường … | `BK.Traffic3D` |  |
+| `render/build/vehicles.js` | 90 | Xe bay của từng thời … | `BK.Vehicles3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/workyards3d.js` | 294 | Bãi làm việc của một đảo … | `BK.WorkYards3D` | `render/build/place3d.js` |
 
 ## render/build/plains/
@@ -241,7 +240,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `tools/bug-hunt.js` | 398 | Quét lỗi trận chiến và NPC bằng trình duyệt không giao diện … | `BK.NAV_SOLIDS` | `game/cities.js` `game/nature.js` `game/world.js` `logic/arms.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/nav3d.js` `render/scene3d.js` `ui/landbar.js` |
+| `tools/bug-hunt.js` | 392 | Quét lỗi trận chiến và NPC bằng trình duyệt không giao diện … | `BK.NAV_SOLIDS` | `game/cities.js` `game/nature.js` `game/world.js` `logic/arms.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/nav3d.js` `render/scene3d.js` `ui/landbar.js` |
 | `tools/calibrate.js` | 221 | Cân chỉnh bằng nhiều trận … |  | `logic/island.js` `logic/world.js` |
 | `tools/check-footing.js` | 73 | Quét công trình thò ra ngoài đảo: 6 đảo × 12 thời … |  | `game/cities.js` `game/world.js` |
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
@@ -263,7 +262,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `render/neon3d.js`: `G.neonCity`
 - `render/perf3d.js`: `G.perf`
 - `render/tank3d.js`: `G.DOME`, `G.tank`
-- `game/nature.js`: `G.lands3d`, `G.lands`, `G.bridges3d`, `G.sea3d`, `G.deep3d`, `G.clouds3d`, `G.birds3d`, `G.nature`
+- `game/nature.js`: `G.lands3d`, `G.lands`, `G.bridges3d`, `G.sea3d`, `G.deep3d`, `G.clouds3d`, `G.nature`
 - `game/seasons.js`: `G.seasons`
 - `render/snow3d.js`: `G.snow`
 - `ui/camera-fly.js`: `G.flyTo`, `G.cameraFly`
@@ -398,13 +397,12 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 119. `render/neon3d.js`
 120. `render/perf3d.js`
 121. `render/tank3d.js`
-122. `render/birds3d.js`
-123. `game/nature.js`
-124. `game/seasons.js`
-125. `render/snow3d.js`
-126. `ui/camera-fly.js`
-127. `ui/landbar.js`
-128. `ui/race-dev.js`
-129. `game/cities.js`
-130. `ui/hud.js`
-131. `game/loop.js`
+122. `game/nature.js`
+123. `game/seasons.js`
+124. `render/snow3d.js`
+125. `ui/camera-fly.js`
+126. `ui/landbar.js`
+127. `ui/race-dev.js`
+128. `game/cities.js`
+129. `ui/hud.js`
+130. `game/loop.js`

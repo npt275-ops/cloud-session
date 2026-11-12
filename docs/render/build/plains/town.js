@@ -36,7 +36,7 @@
   }
   // xe của thời chạy theo vòng đường (render/build/vehicles.js); gộp với phần chuyển động khác của lớp làng
   function withTraffic(k, lv, N, anim) {
-    const F = V3().fleet(k, lv, N.loop, N.spokes);
+    const F = V3().fleet(k, lv, N.loop);
     return Object.assign(anim || {}, F || {});
   }
   // tường bao kín sát mép đảo (từ thời 2), chỉ hở ba chỗ: cổng thành chính giữa mép trước (góc 0) và hai chỗ sau này bắc cầu

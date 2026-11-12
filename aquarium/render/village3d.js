@@ -1451,17 +1451,13 @@
       return f ? f.rig.root.position.clone() : null;
     };
     const drawCalls = () => Object.values(IM).filter((m) => m.count).length;
-    // vị trí những người đang ở ngoài (toạ độ đảo) để xe nhường người đi bộ (render/buildings3d.js setPeds)
+    // vị trí những người đang ở ngoài (toạ độ đảo): bóng dưới chân người (render/look3d.js)
     const pedList = [];
     function peds() {
       pedList.length = 0;
-      for (const [, f] of folks)
-        if (!f.inside) {
-          f.pos.who = f;
-          pedList.push(f.pos);
-        }
+      for (const [, f] of folks) if (!f.inside) pedList.push(f.pos);
       return pedList;
-    } // (who: cho bộ quét lỗi biết ai chặn xe)
+    }
     // ẩn, hiện cả làng (đảo xa máy quay thì không vẽ người, game/cities.js); hiện lại thì ai nấy đứng ngay chỗ đáng ra đang ở
     let shownNow = true;
     function setVisible(on) {

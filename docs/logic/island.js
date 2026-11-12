@@ -161,7 +161,6 @@
       BK.Dramas.onEra(S, rng);
       S.situChanged = true;
     }
-    if (K) K.dayTick(S, day);
     // ngoại gen (logic/epigen.js): nghịch cảnh hôm nay để lại dấu lên tính cách, yên ổn thì phai dần
     BK.Epigen.dayTick(S, day);
     // cảnh theo sự kiện (logic/scenes.js): người mới mất thì có đám tang

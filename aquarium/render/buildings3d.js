@@ -452,7 +452,6 @@
         P.anim = P.build(k, opt) || null;
         P.marks = k.marks.length ? k.marks : null;
         const src = k.bake(3);
-        if (src.userData.main) sortUp(src.userData.main.geometry); // tam giác xếp từ thấp lên cao: lúc dựng hiện dần từ móng lên (stage)
         // thành phố neon (thời 10 tới 12): đường viền sáng chạy dọc các cạnh của công trình (render/build/neon.js edges)
         const eg = BK.Neon3D && !P.spec.town && src.userData.main ? BK.Neon3D.edges(src.userData.main.geometry, sh.L.ter, lv) : null;
         if (eg) {
@@ -612,96 +611,45 @@
       sh.dirty = true;
       sh.changedAt = performance.now() * 0.001;
     }
-    /* ---------- Thợ dựng công trình (design/ke-hoach-buoc-14.md) ----------
-     * Công trình không tự hiện ra: tới lượt (tiến độ > 0, logic/construction.js: chỉ tăng khi thợ có mặt ở công trường) thì khởi
-     * công: cái cũ ở chỗ đó được dỡ, bốn thợ đứng bốn góc nhà mà gõ (places().site, render/village3d.js), khối nhà hiện dần từ
-     * móng lên theo tiến độ (tam giác đã xếp từ thấp lên cao, vẽ một phần: geometry.drawRange); xong thì cửa sổ sáng, phần
-     * chuyển động và viền neon mới hiện. Không có giàn giáo. */
-    // xếp lại tam giác của một khối theo độ cao tâm tam giác (mọi thuộc tính theo đỉnh đi cùng)
-    function sortUp(geo) {
-      const P = geo.attributes.position,
-        n = P.count / 3;
-      if (geo.index || n < 2) return;
-      const key = new Float32Array(n),
-        ord = new Uint32Array(n);
-      for (let t = 0; t < n; t++) {
-        key[t] = P.getY(t * 3) + P.getY(t * 3 + 1) + P.getY(t * 3 + 2);
-        ord[t] = t;
-      }
-      ord.sort((a, b) => key[a] - key[b]);
-      for (const name in geo.attributes) {
-        const A = geo.attributes[name],
-          sz = A.itemSize * 3,
-          src = A.array,
-          dst = new src.constructor(src.length);
-        for (let t = 0; t < n; t++) dst.set(src.subarray(ord[t] * sz, ord[t] * sz + sz), t * sz);
-        A.array = dst;
-        A.needsUpdate = true;
-      }
-    }
-    // khởi công một công trình: dựng hình, dỡ cái cũ ở chỗ đó, chỉ hiện nền; khối chính vẽ dần (hình riêng dùng chung dữ liệu đỉnh)
+    /* ---------- Thợ dựng công trình (design/ke-hoach-buoc-14.md, 27) ----------
+     * Công trình không tự hiện ra và không mọc dần: tới lượt (logic/construction.js khởi công) thì cái cũ ở chỗ đó vẫn đứng nguyên
+     * hình, bốn thợ tới đứng bốn góc nhà mà gõ (places().site, render/village3d.js). Đủ người (logic báo xong: đủ 4 thợ, hay đủ
+     * mọi thợ đảo đang có) và thợ đã đứng ở góc (sh.crew, render/village3d.js siteCrew) thì cái cũ biến mất, nhà mới hiện đủ hình
+     * ngay. Không có giàn giáo, không có thời gian chờ nhà lên. */
+    // khởi công một công trình: dựng sẵn hình (chưa hiện), ghi bốn góc cho thợ đứng; cái cũ ở chỗ đó vẫn đứng nguyên
     function begin(sh, P) {
       P.started = true;
       clearAround(sh, P);
       bakeOf(P, sh);
       if (P.dead) return;
-      for (const Q of P.replaces) {
-        if (Q.inBatch) sh.unbatch = true;
-        Q.g.visible = false;
-        Q.gone = true;
-      }
       const main = P.parts.main;
       if (main && !P.spec.town) {
-        const full = main.geometry,
-          part = new THREE.BufferGeometry();
-        for (const n in full.attributes) part.setAttribute(n, full.attributes[n]);
-        part.boundingSphere = full.boundingSphere;
-        if (!full.boundingBox) full.computeBoundingBox();
-        const bb = full.boundingBox; // (hx, hz: nửa bề ngang, nửa bề sâu của nhà: bốn góc cho thợ đứng)
+        if (!main.geometry.boundingBox) main.geometry.computeBoundingBox();
+        const bb = main.geometry.boundingBox; // (hx, hz: nửa bề ngang, nửa bề sâu của nhà: bốn góc cho thợ đứng)
         P.site = {
-          full,
-          part,
           hx: Math.min(P.clear * 1.2, Math.max(bb.max.x, -bb.min.x) * P.fitS),
           hz: Math.min(P.clear * 1.2, Math.max(bb.max.z, -bb.min.z) * P.fitS),
-          n: full.attributes.position.count,
-          shown: 0,
           target: 0,
-          idle: 0,
+          wait: 0,
         };
-        main.geometry = part;
-        part.setDrawRange(0, 3);
-        for (const k of ['glow', 'lit', 'neon']) if (P.parts[k]) P.parts[k].visible = false;
-        for (const n in P.subs) P.subs[n].visible = false;
       }
-      P.g.visible = true;
-      setS(P, 1, 1);
+      P.g.visible = false;
       sh.resettle = true;
       sh.dirty = true;
       sh.changedAt = performance.now() * 0.001;
     }
-    // một chặng dựng: phần khối đã lên (P.site.shown) đuổi theo tiến độ của logic (P.site.target), nhưng chỉ lên khi có thợ đã
-    // tới góc nhà đứng gõ (sh.crew, từ render/village3d.js siteCrew; −1: đảo không vẽ người, không chờ), mỗi giây lên nhiều nhất
-    // RISE. Logic báo xong mà thợ chưa tới: chờ thợ tối đa WAIT giây rồi mới cho xong.
-    const RISE = 0.22,
-      WAIT = 25;
+    // chờ đủ người: logic báo xong (P.site.target = 1) và đã có 4 thợ đứng ở góc nhà (sh.crew; null: đảo không vẽ người, không
+    // chờ) thì thành nhà mới ngay. Thợ đảo ít hơn 4 (logic vẫn báo xong khi mọi thợ đã tới): chờ thợ đứng vào góc tối đa WAIT giây.
+    const WAIT = 6;
     function stage(sh, P, dt) {
       const St = P.site;
-      if (!St) return;
-      const here = sh.crew == null || sh.crew !== 0;
-      if (here) St.idle = 0;
-      else St.idle = (St.idle || 0) + dt;
-      if (here || St.idle > WAIT) St.shown = Math.min(St.target, St.shown + RISE * dt);
-      St.part.setDrawRange(0, Math.max(3, Math.floor((St.n / 3) * Math.max(0.04, St.shown)) * 3));
-      if (St.target >= 1 && St.shown >= 1) finish(sh, P);
+      if (!St || St.target < 1) return;
+      St.wait += dt;
+      if (sh.crew == null || sh.crew >= 4 || St.wait > WAIT) finish(sh, P);
     }
-    // xong: trả hình đủ, hiện lại phần sáng và phần chuyển động
+    // xong: bỏ dấu công trường
     function endSite(sh, P) {
-      if (P.site) {
-        P.parts.main.geometry = P.site.full;
-        P.site = null;
-        for (const k of ['glow', 'lit', 'neon']) if (P.parts[k]) P.parts[k].visible = true;
-        for (const n in P.subs) P.subs[n].visible = true;
-      }
+      P.site = null;
     }
     function applyProgress(sh, P, pr) {
       if (pr === P.progress || P.dead) return;
@@ -709,7 +657,7 @@
       if (pr >= 1 && P.site && !sh.rush) {
         P.site.target = 1;
         return;
-      } // đang dựng dở: để phần hình lên nốt rồi mới xong (stage)
+      } // đã khởi công: chờ thợ đứng đủ ở bốn góc rồi mới thành nhà mới (stage)
       if (pr >= 1) {
         if (!P.started) {
           P.started = true;
@@ -786,7 +734,7 @@
       sh.batchMode = mode;
       sh.batch.show(true);
     }
-    // xe chạy, nhường người đi bộ: render/build/traffic3d.js
+    // xe bay lượn vòng trên cao: render/build/traffic3d.js
     const traffic = BK.Traffic3D.create();
     // speed: 1, 2, 4 — xe chạy theo giờ game (gameT); quạt quay, nhấp nhô, khói, đèn chập chờn theo giờ thực (ts)
     let gameT = 0;
@@ -839,7 +787,7 @@
                 if (A.slide)
                   for (const [n, axis, v, range] of A.slide)
                     if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-                if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT, !!sh.decline, sh.stops); // xe chạy dọc vòng đường, nhường người đi bộ; suy tàn thì vắng xe
+                if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT, !!sh.decline); // xe bay lượn vòng trên cao; suy tàn thì vắng xe
               }
               // suy tàn: hai phần ba nhà bỏ hoang, đèn tắt (design/ke-hoach-khac-phuc.md mục 6.4)
               const dark = !!sh.decline && Math.floor(p.ph * 97) % 3 !== 0;
@@ -906,7 +854,7 @@
           pos = new THREE.Vector3(g.position.x, 0, g.position.z),
           fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)),
           k = P.kind;
-        if (isNew && P.progress > 0 && P.progress < 1) {
+        if (isNew && ((P.progress > 0 && P.progress < 1) || P.site)) {
           // công trình đang dựng: bốn góc nhà cho bốn thợ đứng gõ, mặt quay vào giữa nhà (siteC)
           const side = new THREE.Vector3(fwd.z, 0, -fwd.x),
             hx = (P.site ? P.site.hx : P.clear * 0.7) + 0.7,
@@ -1029,83 +977,6 @@
         if (P.box.h < (soft ? 0.3 : 0.6)) continue;
         out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft, self: P });
       }
-      // chỗ đỗ xe (render/build/traffic3d.js tripStep, design/ke-hoach-buoc-15.md): trước mặt tiền nhà ở, chợ, nhà chính, kho, trường,
-      // xưởng, đền; xe đỗ sát góc phải mặt tiền, song song mặt nhà; người lái đi bộ từ xe vào cửa. Chỉ lấy chỗ đỗ không nằm trong
-      // công trình khác, trong đảo, và từ đường gần nhất chạy thẳng vào được không cắt qua nhà nào
-      out.stops = [];
-      {
-        const segD = (x, z) => {
-          let best = null,
-            bd = 1e9;
-          for (const [x0, z0, x1, z1] of L.roadSegs || []) {
-            const dx = x1 - x0,
-              dz = z1 - z0,
-              l2 = dx * dx + dz * dz || 1,
-              t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / l2)),
-              qx = x0 + dx * t,
-              qz = z0 + dz * t,
-              d = Math.hypot(x - qx, z - qz);
-            if (d < bd) {
-              bd = d;
-              best = [qx, qz];
-            }
-          }
-          return [best, bd];
-        };
-        const inSolid = (x, z, self, m) =>
-          out.solids.some((B) => {
-            if (B.self === self) return false;
-            const dx = x - B.x,
-              dz = z - B.z,
-              lx = dx * B.c - dz * B.s,
-              lz = dx * B.s + dz * B.c;
-            return lx > B.x0 - m && lx < B.x1 + m && lz > B.z0 - m && lz < B.z1 + m;
-          });
-        for (const P of sh.pieces) {
-          if (!P.box || !P.g.visible || P.gone || P.dead || P.site || P.spec.town || P.spec.gate || P.outer) continue;
-          const k = P.kind,
-            kind =
-              P.home != null || HOME.has(k)
-                ? 'home'
-                : MARKET.has(k)
-                  ? 'market'
-                  : k === 'hall'
-                    ? 'hall'
-                    : SCHOOL.has(k) || P.spec.civic
-                      ? 'civic'
-                      : CRAFT.has(k)
-                        ? 'craft'
-                        : SHRINE.has(k)
-                          ? 'shrine'
-                          : null;
-          if (!kind) continue;
-          const a = P.g.rotation.y,
-            fx = Math.sin(a),
-            fz = Math.cos(a),
-            sx = fz,
-            sz = -fx,
-            fr = P.box.z1;
-          for (const side of [1, -1]) {
-            const w = side > 0 ? P.box.x1 : -P.box.x0,
-              px = P.x + fx * (fr + 1.5) + sx * side * Math.max(0.6, w - 0.6),
-              pz = P.z + fz * (fr + 1.5) + sz * side * Math.max(0.6, w - 0.6);
-            if (!L.inside(px, pz, 4) || L.blockedWild(px, pz, 1.2) || inSolid(px, pz, P, 0.9)) continue; // (không đỗ xuống hồ, đầm, chân núi)
-            const [rd, dd] = segD(px, pz);
-            if (!rd || dd > 16) continue;
-            let ok = true;
-            for (let u = 0.1; u < 1; u += 0.1)
-              if (inSolid(rd[0] + (px - rd[0]) * u, rd[1] + (pz - rd[1]) * u, P, 0.5)) {
-                ok = false;
-                break;
-              }
-            if (!ok) continue;
-            out.stops.push({ kind, park: [px, pz], door: [P.x + fx * (fr + 0.2), P.z + fz * (fr + 0.2)] });
-            break;
-          }
-        }
-        out.stops.sort((p1, p2) => (p1.kind === 'home') - (p2.kind === 'home'));
-      } // (chỗ chung trước: xe nào cũng có lúc ghé chợ, nhà chính)
-      sh.stops = out.stops;
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
       // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
       // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra
@@ -1472,8 +1343,6 @@
       setGraves,
       setRuin,
       setDecline,
-      setPeds: (i, list) => traffic.setPeds(i, list),
-      stalled: (sec) => traffic.stalled(sec),
       flush,
       debug,
       queued: () => queue.length,

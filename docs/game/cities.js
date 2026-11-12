@@ -992,10 +992,8 @@
           const vv = villageOf(i);
           vv.setVisible(true);
           vv.update(dt, t, speed);
-          buildings.setPeds(i, vv.peds());
         } else if (v) {
           v.setVisible(false);
-          buildings.setPeds(i, []);
         }
       }
       if (bars) bars.end();

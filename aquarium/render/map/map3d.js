@@ -47,7 +47,6 @@
       L.replant = () => {
         for (let n = 0; n < L.trees.list.length; n++) TR.placeTree(L, n);
         for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true;
-        TR.replantGrass(L);
       };
       lands.push(L);
       return L;
