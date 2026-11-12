@@ -67,11 +67,10 @@
     edgeWall(k, o, { n: 130, seg: (k, a, x, z, i) => { k.add(B(3.1, 2.2, 1.2, 0.1), C.brick[i % 3], x, 0, z, { rot: [0, a, 0] }); k.add(B(3.2, 0.3, 1.4, 0.05), C.stone[2], x, 2.2, z, { rot: [0, a, 0] }); if (i % 16 === 0) { k.add(B(3, 3.4, 3, 0.15), C.brick[2], x, 0, z, { rot: [0, a, 0] }); k.add(K.post(0.2, 1.8, 6).rotateX(Math.PI / 2), '#3a3a3e', x, 3, z, { rot: [0, a + Math.PI / 2, 0] }); } }, gate: gateTowers(4.4, C.brick[1], C.tileD, 1.6) });
     return withTraffic(k, 4, N);
   };
-  // 5 · đường ray vòng (tà vẹt, hai ray), tàu hơi nước kéo toa; đường đá toả ra
+  // 5 · đường đá, ô tô hơi nước và xe đạp (đã bỏ đường ray, tàu hơi nước chạy vòng đảo)
   T[5] = (k, o) => {
     const N = roads(k, o, { color: '#9a9488', w: 2.0, r0: 14 });
     edgeWall(k, o, { n: 140, seg: (k, a, x, z, i) => { if (i % 4 === 0) k.add(B(0.7, 2.2, 0.7, 0.06), C.brick[1], x, 0, z); else { k.add(Bc(2.6, 0.08, 0.08, 0.02), '#2e2e32', x, 1.7, z, { rot: [0, a, 0] }); for (let j = -2; j <= 2; j++) k.add(K.post(0.03, 1.8, 3), '#2e2e32', x + Math.cos(a) * j * 0.5, 0, z - Math.sin(a) * j * 0.5); } }, gate: gateTowers(3.2, C.brick[0], '#3a3a3e', 1) });
-    for (const q of R3().along(N.loop, 0.7, true)) { k.add(Bc(1.8, 0.08, 0.25, 0.01), '#5a4636', q.x, R3().Y + 0.06, q.z, { rot: [0, q.a, 0], ao: false }); for (const d of [-0.55, 0.55]) k.add(Bc(0.1, 0.08, 0.75, 0.01), '#6a6a70', q.x + q.n[0] * d, R3().Y + 0.14, q.z + q.n[1] * d, { rot: [0, q.a, 0], ao: false }); }
     return withTraffic(k, 5, N);
   };
   // 6 · đường nhựa có vạch, cây xanh hai bên, ô tô chạy vòng
@@ -81,12 +80,10 @@
     beside(N, 6, 3.4, (a, x, z) => { k.mark(x, z, 0.5); k.add(K.post(0.12, 1.4, 5), '#6b5038', x, 0, z); k.add(K.ball(0.9, 1), pick(['#4f8a3f', '#5a9646'], a), x, 2.1, z); });
     return withTraffic(k, 6, N);
   };
-  // 7 · đường lớn hai làn, tàu một ray trên cao (cột đỡ, dầm vòng), toa tàu chạy
+  // 7 · đường lớn hai làn, xe buýt điện và ô tô (đã bỏ tàu một ray trên cao)
   T[7] = (k, o) => {
     const N = roads(k, o, { color: '#3e3e44', w: 3.6, line: '#f2d24a', r0: 14 });
     edgeWall(k, o, { n: 120, seg: (k, a, x, z, i) => { k.add(B(3.1, 3.2, 0.8, 0.3), C.white, x, 0, z, { rot: [0, a, 0] }); k.add(Bc(3.12, 0.15, 0.82, 0.03), '#3f7fb8', x, 2.6, z, { rot: [0, a, 0] }); }, gate: (k, a, x, z) => { k.add(K.post(1.6, 3, 10), C.white, x, 0, z); k.add(K.ball(1.6, 1), '#e2e0da', x, 3, z, { sc: [1, 0.8, 1] }); } });
-    for (const q of R3().along(N.loop, 8, true)) k.add(K.post(0.35, 4.7, 8), C.concrete[1], q.x, 0, q.z);
-    for (const q of R3().along(N.loop, 1.5, true)) k.add(Bc(1.2, 0.35, 1.7, 0.04), C.concrete[2], q.x, 4.8, q.z, { rot: [0, q.a, 0] });
     return withTraffic(k, 7, N);
   };
   // 8 · đường sáng (vạch xanh phát sáng), rô-bốt giao hàng chạy dưới, drone bay vòng trên cao

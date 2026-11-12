@@ -27,7 +27,25 @@
     coast: (edge) => ({ loop: loopOf((a) => { const rx = 31, rz = 21; return 1 / Math.sqrt(Math.pow(Math.sin(a) / rx, 2) + Math.pow(Math.cos(a) / rz, 2)); }, 80), spokes: [0, 0.95, -0.95, Math.PI].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),
     desert: (edge) => ({ loop: loopOf((a) => { const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)); return 22 / Math.max(c, s); }, 96), spokes: [0, Math.PI / 2, Math.PI, -Math.PI / 2].map((a) => spoke(a, a === Math.PI ? BACK : 12, edge)) }),
   };
-  function net(key, edge) { const N = (NETS[key] || NETS.plains)(edge); N.all = [[...N.loop, N.loop[0]], ...N.spokes]; return N; }
+  // Đường nhánh thêm của từng đảo (design/ke-hoach-buoc-15.md): những cung đường vòng ngoài nối các đường toả với nhau, để xe
+  // có nhiều lối đi khác nhau (không chỉ vòng trong và đường toả). Mỗi cung: [bán kính hay hàm bán kính theo góc, góc đầu, góc
+  // cuối]; cắt bớt chỗ ra quá gần mép đảo (cách mép ít nhất 7). Cung nối vào đường khác ở chỗ hai đường gặp nhau (graph: junctions).
+  const ARCS = {
+    plains: [[36, -1.15, 1.15]],                                   // Lúa Vàng: đường đê vòng ngoài phía trước, qua ruộng
+    forest: [[33, 2.15, 4.13], [31, -0.55, 0.55]],                 // Thông Xanh: lối vòng sau núi và một lối trước bìa rừng
+    mountain: [[(a) => 40 + 2.5 * Math.sin(a * 5), -1.35, 0.2]],   // Đá Mây: đường đèo lượn theo sườn núi bên trái
+    tundra: [[34, 1.85, 3.1], [34, -3.1, -1.85]],                  // Tuyết Trắng: hai lối vòng hai bên sau
+    coast: [[39, -1.55, 1.55]],                                    // Cửa Sóng: đường ven biển phía trước
+    desert: [[(a) => 33 / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a))), 0.3, 1.7], [(a) => 33 / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a))), -1.7, -0.3]], // Cát Hồng: hai góc vuông của ô phố ngoài
+  };
+  function arcsOf(key, edge) {
+    const out = [];
+    for (const [R, a0, a1] of ARCS[key] || []) { const rOf = typeof R === 'function' ? R : () => R, n = Math.max(4, Math.ceil((Math.abs(a1 - a0) * rOf(a0)) / 2)); let cur = [];
+      for (let i = 0; i <= n; i++) { const a = a0 + ((a1 - a0) * i) / n, r = rOf(a); if (edge && r > edge(a) - 7) { if (cur.length > 2) out.push(cur); cur = []; continue; } cur.push(polar(a, r)); }
+      if (cur.length > 2) out.push(cur); }
+    return out;
+  }
+  function net(key, edge) { const N = (NETS[key] || NETS.plains)(edge); N.arcs = arcsOf(key, edge); N.spokes.push(...N.arcs); N.all = [[...N.loop, N.loop[0]], ...N.spokes]; return N; }
   // các đoạn thẳng của mạng đường: [[x0, z0, x1, z1], ...]
   function segs(N) { const out = []; for (const pl of N.all) for (let i = 0; i + 1 < pl.length; i++) out.push([pl[i][0], pl[i][1], pl[i + 1][0], pl[i + 1][1]]); return out; }
   // vẽ mạng đường: mỗi đoạn một tấm phẳng (dài hơn một chút để nối liền), vạch giữa nếu có
@@ -61,7 +79,7 @@
     const rot = ([x, z]) => [x * c + z * sn, -x * sn + z * c];
     const edge = (a) => { const [X, Z] = rot([Math.sin(a), Math.cos(a)]); return L.rOf(Math.atan2(Z, X)); };
     const N = net(key || L.ter, edge);
-    return { loop: N.loop.map(rot), spokes: N.spokes.map((sp) => sp.map(rot)) };
+    return { loop: N.loop.map(rot), spokes: N.spokes.map((sp) => sp.map(rot)), arcs: N.arcs.map((sp) => sp.map(rot)) };
   }
   function isleSegs(L, key) { const N = isleNet(L, key); return segs({ all: [[...N.loop, N.loop[0]], ...N.spokes] }); }
   const segDist = (x, z, [x0, z0, x1, z1]) => { const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2)); return Math.hypot(x - x0 - dx * t, z - z0 - dz * t); };
@@ -102,5 +120,5 @@
     }
     return all;
   }
-  BK.Roads3D = { NETS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, crossIdx, dressWalks, HALF, WALK, Y };
+  BK.Roads3D = { NETS, ARCS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, crossIdx, dressWalks, HALF, WALK, Y };
 })(typeof self !== 'undefined' ? self : globalThis);

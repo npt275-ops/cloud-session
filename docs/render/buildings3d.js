@@ -367,7 +367,7 @@
             if (A.spin) for (const [n, axis, v] of A.spin) if (p.subs[n]) p.subs[n].rotation[axis] = ts * v + p.ph;
             if (A.bob) for (const [n, amp, v] of A.bob) if (p.subs[n]) p.subs[n].position.y = p.subs[n].userData.base.y + Math.sin(ts * v * 2 + p.ph) * amp;
             if (A.slide) for (const [n, axis, v, range] of A.slide) if (p.subs[n]) p.subs[n].position[axis] = p.subs[n].userData.base[axis] + Math.sin(ts * v * 0.3 + p.ph) * range;
-          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT, !!sh.decline); // xe chạy dọc vòng đường, nhường người đi bộ; suy tàn thì vắng xe
+          if (A.path) traffic.drive(shown.indexOf(sh), sh.level, A, p, gameT, !!sh.decline, sh.stops); // xe chạy dọc vòng đường, nhường người đi bộ; suy tàn thì vắng xe
           }
           // suy tàn: hai phần ba nhà bỏ hoang, đèn tắt (design/ke-hoach-khac-phuc.md mục 6.4)
           const dark = !!sh.decline && Math.floor(p.ph * 97) % 3 !== 0;
@@ -440,7 +440,22 @@
         // (cột mảnh dọc phố: lề nhỏ m, vỉa hè vẫn đi được)
         if (P.spec.town) { for (const [mx, mz, r] of P.marks || []) out.solids.push({ x: P.x + mx * c + mz * sn, z: P.z - mx * sn + mz * c, c, s: sn, x0: -r, x1: r, z0: -r, z1: r, kind: 'town', m: 0.08 }); continue; }
         if (!P.box || P.spec.gate || P.outer === 'sea' || P.kind === 'dock') continue; const soft = FIELD.has(P.kind); if (P.box.h < (soft ? 0.3 : 0.6)) continue;
-        out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft }); }
+        out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft, self: P }); }
+      // chỗ đỗ xe (render/build/traffic3d.js tripStep, design/ke-hoach-buoc-15.md): trước mặt tiền nhà ở, chợ, nhà chính, kho, trường,
+      // xưởng, đền; xe đỗ sát góc phải mặt tiền, song song mặt nhà; người lái đi bộ từ xe vào cửa. Chỉ lấy chỗ đỗ không nằm trong
+      // công trình khác, trong đảo, và từ đường gần nhất chạy thẳng vào được không cắt qua nhà nào
+      out.stops = [];
+      { const segD = (x, z) => { let best = null, bd = 1e9; for (const [x0, z0, x1, z1] of L.roadSegs || []) { const dx = x1 - x0, dz = z1 - z0, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / l2)), qx = x0 + dx * t, qz = z0 + dz * t, d = Math.hypot(x - qx, z - qz); if (d < bd) { bd = d; best = [qx, qz]; } } return [best, bd]; };
+        const inSolid = (x, z, self, m) => out.solids.some((B) => { if (B.self === self) return false; const dx = x - B.x, dz = z - B.z, lx = dx * B.c - dz * B.s, lz = dx * B.s + dz * B.c; return lx > B.x0 - m && lx < B.x1 + m && lz > B.z0 - m && lz < B.z1 + m; });
+        for (const P of sh.pieces) { if (!P.box || !P.g.visible || P.gone || P.dead || P.site || P.spec.town || P.spec.gate || P.outer) continue;
+          const k = P.kind, kind = P.home != null || HOME.has(k) ? 'home' : MARKET.has(k) ? 'market' : k === 'hall' ? 'hall' : SCHOOL.has(k) || P.spec.civic ? 'civic' : CRAFT.has(k) ? 'craft' : SHRINE.has(k) ? 'shrine' : null; if (!kind) continue;
+          const a = P.g.rotation.y, fx = Math.sin(a), fz = Math.cos(a), sx = fz, sz = -fx, fr = P.box.z1;
+          for (const side of [1, -1]) { const w = side > 0 ? P.box.x1 : -P.box.x0, px = P.x + fx * (fr + 1.5) + sx * side * Math.max(0.6, w - 0.6), pz = P.z + fz * (fr + 1.5) + sz * side * Math.max(0.6, w - 0.6);
+            if (!L.inside(px, pz, 4) || L.blockedWild(px, pz, 1.2) || inSolid(px, pz, P, 0.9)) continue; // (không đỗ xuống hồ, đầm, chân núi)
+            const [rd, dd] = segD(px, pz); if (!rd || dd > 16) continue; let ok = true; for (let u = 0.1; u < 1; u += 0.1) if (inSolid(rd[0] + (px - rd[0]) * u, rd[1] + (pz - rd[1]) * u, P, 0.5)) { ok = false; break; } if (!ok) continue;
+            out.stops.push({ kind, park: [px, pz], door: [P.x + fx * (fr + 0.2), P.z + fz * (fr + 0.2)] }); break; } }
+        out.stops.sort((p1, p2) => (p1.kind === 'home') - (p2.kind === 'home')); } // (chỗ chung trước: xe nào cũng có lúc ghé chợ, nhà chính)
+      sh.stops = out.stops;
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
       // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
       // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra

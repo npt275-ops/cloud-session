@@ -33,6 +33,8 @@
       const near = (id, list) => { let b = -1, bd = 1e18; for (const j of list) { const d = (pts[j][0] - pts[id][0]) ** 2 + (pts[j][1] - pts[id][1]) ** 2; if (d < bd) { bd = d; b = j; } } return [b, Math.sqrt(bd)]; };
       const spokes = NET.spokes.map((sp) => { const ids = sp.map(([x, z]) => add(x, z)); for (let i = 0; i + 1 < ids.length; i++) link(ids[i], ids[i + 1]); return ids; });
       for (const ids of spokes) for (const id of ids) { const [j, d] = near(id, loop); if (d < 3.2) link(id, j); } // chỗ đường toả cắt vòng đường
+      // chỗ hai đường toả (hay cung đường vòng ngoài, render/build/roads.js ARCS) gặp nhau
+      spokes.forEach((ids, a) => spokes.forEach((jds, b) => { if (b <= a) return; for (const id of ids) { const [j, d] = near(id, jds); if (d < 2.2) link(id, j); } }));
       const PL = o.places(), c0 = PL && PL.podium ? PL.podium : { x: 0, z: 0 }, center = add(c0.x, c0.z);
       for (const ids of spokes) if (Math.hypot(pts[ids[0]][0] - c0.x, pts[ids[0]][1] - c0.z) < 22) link(center, ids[0]); // sân giữa nối đầu trong các đường toả
       // hướng chuẩn của từng điểm (vòng: theo chiều tăng chỉ số; đường toả: hướng ra ngoài) để biết người đang ở vỉa hè bên nào
