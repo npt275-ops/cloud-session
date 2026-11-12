@@ -56,8 +56,8 @@ thời đồ đá, kiểu thành chìm, vườn treo) lớn hơn bề rộng m�
 
 - Nguyên nhân: mặt đáy chỉ là một lớp vỏ, bị vách kính cắt ngang thì hở ruột (nhìn từ ngoài bể thấy xuyên qua núi); đỉnh núi
   trụ gồ ghề theo nhiễu nên có chỗ thấp hơn đáy đảo cả chục bước (hở nước); ba đảo trên rãnh chỉ có khối đá nón ngược bên dưới.
-- Mặt cắt khối đất: vòng vách đất từ mép đất xuống đáy kính, tầng đất đá nâu xen nhau, ngay trong lớp kính (ngoài vách nước)
-  nên nhìn từ ngoài thấy đất đá chứ không thấy nước phủ lên; tấm đáy kín bên dưới; mặt đất vẽ hai mặt. Khe rãnh khép lại trước
+- Mặt cắt khối đất: vòng vách đất từ mép đất xuống đáy kính, tầng đất đá nâu xen nhau, nằm trọn bên trong vách nước (người
+  chơi yêu cầu: không lòi màu nâu ra ngoài bể, nước biển phủ xanh lên như mọi thứ khác trong bể); tấm đáy kín bên dưới; mặt đất vẽ hai mặt. Khe rãnh khép lại trước
   vách kính.
 - Núi trụ đỡ đảo: đỉnh bằng đúng theo mép đảo (rộng hơn 3%), sát mặt dưới đảo (-2,7), không gồ ghề; sườn đổ xuống đáy ở cách
   tâm đảo 100. Khối đá nón ngược dưới đảo nằm gọn trong núi.

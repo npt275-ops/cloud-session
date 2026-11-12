@@ -19,9 +19,9 @@
   function create(K) {
     const { THREE, scene, lands3d, sea3d, clamp, reduce, glowTex } = K;
     const SEA_Y = sea3d.SEA_Y, FLOOR = sea3d.FLOOR_Y, lands = lands3d.lands;
-    // khối đất phủ tới sát vách kính, ngoài vách nước (sea3d.js EDGE_R) một chút: nhìn từ ngoài bể thấy mặt cắt đất đá trước,
-    // không thấy nước phủ lên đất
-    const EDGE = sea3d.EDGE_R + 0.15;
+    // khối đất phủ tới sát vách kính nhưng nằm trọn bên trong vách nước (sea3d.js EDGE_R): nhìn từ ngoài bể, mặt cắt đất đá cũng
+    // được màu nước biển phủ lên như mọi thứ khác trong bể, không lòi ra ngoài kính
+    const EDGE = sea3d.EDGE_R - 0.3;
     const TOP_MAX = SEA_Y - 3.2; // ngoài chân đảo không gì ở đáy cao quá chừng này (đáy sóng sâu nhất khoảng -3)
     const ISLE_TOP = -2.7;       // đỉnh núi trụ và mặt trên khối đất đỡ đảo: sát mặt dưới đảo (vách đảo xuống tới -2,62)
     const deep = new THREE.Group(); deep.name = 'đáy bể'; scene.add(deep);
