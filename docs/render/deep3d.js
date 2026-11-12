@@ -186,6 +186,7 @@
     const DOME = () => U('dome', () => new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2));
     const RINGG = () => U('ring', () => new THREE.TorusGeometry(1, 0.06, 4, 32));
     const ARCH = () => U('arch', () => new THREE.TorusGeometry(1, 0.22, 4, 10, Math.PI));
+    const HALFDISC = () => U('halfdisc', () => new THREE.CylinderGeometry(1, 1, 1, 12, 1, false, -Math.PI / 2, Math.PI)); // (quay rx = −π/2: nửa đĩa đứng, mặt phẳng nằm dưới)
     const groups = { stone: { pos: [], col: [] }, glow: { pos: [], col: [] }, weed: { pos: [], col: [], sway: [] } };
     const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E3 = new THREE.Euler(0, 0, 0, 'YXZ'), P3 = new THREE.Vector3(), S3 = new THREE.Vector3(), V3 = new THREE.Vector3(), cc = new THREE.Color();
     let seed = 1; const rnd = () => hash(seed++);
@@ -526,7 +527,8 @@
       portalAt(TN, 0, rings[0]); portalAt(TN, 1, rings[NR]);
     }
     /* Cửa hầm ở một đầu (end 0: phía phế tích TN.from, bên +v; end 1: phía TN.to, bên −v): mặt đá dày có lỗ đúng hình lòng hầm,
-     * khung cột có đèn, vòm viền sáng, đà ngang, bảng khắc; hai cánh cửa đồng mở rộng vào trong hầm; ba bậc đá, hai lò đèn; đường
+     * khung cột có đèn, vòm viền sáng, đà ngang, bảng khắc; hai cánh cửa đồng chỉ hé (bước 22: khe hé mỗi cửa một khác, vừa một
+     * người lách vào; hai cửa đóng kín), tấm bán nguyệt bịt vòm phía trên cánh cửa; ba bậc đá, hai lò đèn; đường
      * lát đá có đèn từ cửa vào phế tích. Kiểu cửa theo phế tích bên đó. */
     function portalAt(TN, end, ring) {
       const S = SITES[end ? TN.to : TN.from], T = STYLE[S.k], st = groups.stone, gl = groups.glow, side = end ? -1 : 1;
@@ -546,10 +548,16 @@
       for (const q of [-1, 1]) { add(st, BOX(), T.frame, q * 10.6, -0.5, 1.4, 3, 24.5, 3); add(st, BOX(), T.trim, q * 10.6, 24, 1.4, 3.8, 1.4, 3.8); add(gl, GEM(), T.glow, q * 10.6, 25.4, 1.4, 0.9, 1.8, 0.9); }
       add(st, BOX(), T.frame, 0, 25.4, 1.6, 27, 3, 4); add(st, BOX(), T.trim, 0, 28.4, 1.2, 14, 2.2, 1.6); add(gl, BOX(), T.glow, 0, 29, 0.35, 10, 0.5, 0.2);
       add(st, ARCH(), T.trim, 0, TUN_WALL, 0.9, 9.4, 9.4, 3); add(gl, ARCH(), T.glow, 0, TUN_WALL, 0.5, 8.7, 8.7, 0.5); add(gl, RINGG(), T.glow, 0, 33, 0.2, 2.6, 2.6, 2.6);
-      // hai cánh cửa mở rộng vào trong hầm (bản lề ở hai mép lỗ)
-      for (const [q, ang] of [[-1, 1.35], [1, 1.2]]) {
-        const hinge = W(q * TUN_W, 0, -0.4), dir = Lt.clone().multiplyScalar(-q * Math.cos(ang)).addScaledVector(D, Math.sin(ang)), c = hinge.clone().addScaledVector(dir, 4), ry = Math.atan2(-dir.z, dir.x);
-        put(st, BOX(), T.door, c.x, TUN_FLOOR, c.z, 7.8, 14, 0.7, ry); put(gl, BOX(), T.glow, c.x, TUN_FLOOR + 6.5, c.z, 0.4, 7, 0.8, ry); put(st, BOX(), T.trim, c.x, TUN_FLOOR + 13.6, c.z, 7.9, 0.6, 0.85, ry);
+      // tấm bán nguyệt bịt vòm trên hai cánh cửa (chỉ còn khe giữa hai cánh thông vào hầm), viền sáng
+      add(st, HALFDISC(), T.door, 0, TUN_WALL, -0.4, TUN_W + 0.3, 0.7, TUN_W + 0.3, 0, -Math.PI / 2); add(gl, ARCH(), T.glow, 0, TUN_WALL, 0.05, 6, 6, 0.4);
+      add(st, BOX(), T.trim, 0, TUN_WALL - 0.4, -0.2, 2 * TUN_W + 0.6, 0.8, 1.1);
+      // hai cánh cửa (bản lề ở hai mép lỗ) chỉ hé vào trong hầm: khe hở giữa hai mép cánh (bước) theo từng cửa, chia cho hai cánh;
+      // người trong làng cao khoảng 2: khe 1,2–2,4 vừa một người lách vào; 0 là đóng kín
+      const GAP = [[1.6, 1, 0], [0, 0, 0], [2.4, 0.5, 0.5], [1.2, 0, 1], [0, 0, 0], [2, 1, 0]][TN.k * 2 + end];
+      const angOf = (g) => Math.acos(Math.max(-1, 1 - g / TUN_W)); // (cánh rộng 8: mép cánh lùi vào 8 (1 − cos a) = g)
+      for (const [q, ang] of [[-1, angOf(GAP[0] * GAP[1])], [1, angOf(GAP[0] * GAP[2])]]) {
+        const hinge = W(q * TUN_W, 0, -0.4), dir = Lt.clone().multiplyScalar(-q * Math.cos(ang)).addScaledVector(D, Math.sin(ang)), c = hinge.clone().addScaledVector(dir, TUN_W / 2), ry = Math.atan2(-dir.z, dir.x);
+        put(st, BOX(), T.door, c.x, TUN_FLOOR, c.z, 7.98, TUN_WALL - 0.4, 0.7, ry); put(gl, BOX(), T.glow, c.x, TUN_FLOOR + 6.5, c.z, 0.4, 7, 0.8, ry); put(st, BOX(), T.trim, c.x, TUN_FLOOR + 13.6, c.z, 7.9, 0.6, 0.85, ry);
       }
       for (let i = 0; i < 3; i++) add(st, BOX(), T.frame, 0, -0.6, 2.5 + i * 2, 21 - i * 2, 1.6 - i * 0.5, 2);
       // rong trước cửa hầm che nửa lối vào (bước 21): đám rong cao hai bên và lấn vào giữa, sợi rong rủ từ đà cửa xuống
@@ -640,7 +648,7 @@
       const TN = TUNNELS[S.k], t1 = TN.a + (TN.b - TN.a) * 0.3, t2 = TN.a + (TN.b - TN.a) * 0.5;
       stops.push({ name: 'Trong hầm dưới ' + lands[j].T.city, x: Math.cos(t2) * TUN_RC, z: Math.sin(t2) * TUN_RC, y: TUN_FLOOR + 6.5, cam: new THREE.Vector3(Math.cos(t1) * TUN_RC, TUN_FLOOR + 9.5, Math.sin(t1) * TUN_RC) });
     }
-    const out = { animate, stops, heightAt: hAt, group: deep, FLOOR };
+    const out = { animate, stops, heightAt: hAt, group: deep, FLOOR, tunnels: TUNNELS, TUN_RC, TUN_FLOOR };
     return out;
   }
   BK.Deep3D = { create };

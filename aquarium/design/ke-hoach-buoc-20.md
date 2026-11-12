@@ -48,3 +48,15 @@ trên hai bên tường; lối đi hình vòng cung, to và sâu; đưa máy qua
   quanh cụm đá sáng rõ, khoảng giữa hai cụm chìm trong tối; đi vào thấy vùng sáng vùng tối xen nhau rõ rệt.
 - Trước mỗi cửa hầm: 16 cây rong cao 9–19 hai bên và lấn vào giữa lối, 9 sợi rong rủ từ đà cửa xuống; che nửa kín nửa hở,
   đung đưa theo nước.
+
+## 7. Cửa hầm chỉ hé, mỗi cửa một khác, có cửa đóng (người chơi yêu cầu)
+
+- Hai cánh cửa cao bằng tường hầm (13,6), bản lề ở hai mép lòng hầm; tấm bán nguyệt màu cánh cửa bịt vòm phía trên, viền sáng,
+  đà ngang ở chân vòm: chỉ còn khe giữa hai mép cánh thông vào hầm.
+- Khe hở theo từng cửa (người trong làng cao khoảng 2, khe 1,2–2,4 vừa một người lách vào):
+  | Hầm | Cửa phía phế tích đi | Cửa phía phế tích đến |
+  |---|---|---|
+  | dưới Đá Mây | hé 1,6 (một cánh) | đóng |
+  | dưới Cửa Sóng | hé 2,4 (hai cánh) | hé 1,2 (một cánh) |
+  | dưới Lúa Vàng | đóng | hé 2,0 (một cánh) |
+- Máy quay "Trong hầm" vẫn đặt trong lòng hầm (không đi qua cửa).
