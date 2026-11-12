@@ -1,8 +1,9 @@
 /* Bể Kính · render/deep/beings3d.js · Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển
  * (design/de-xuat-sinh-vat-day-be.md, design/ke-hoach-buoc-23.md). Dùng chung cho game (render/deep/denizens3d.js) và trang
  * xem thử design/sinh-vat-day-be.html, nên không biết gì về đáy bể: mỗi hàm dựng trả { root, size, update(t, dt, mode, spd,
- * curve, camPos) }. mode: 'idle' đứng, 'move' đi hay bơi, 'chase' đuổi (dồn tốc lực), 'swim' (Người Ốc bơi), 'curl' (Người
- * Rêu Đá, Người San Hô nằm co ngụy trang). Khung người, mặt, cách đi dựng riêng cho từng loài (không dùng khung người trên đảo).
+ * curve, camPos) }. mode: 'idle' đứng, 'move' đi hay bơi, 'chase' đuổi (dồn tốc lực), 'swim' (Người Ốc, Người Canh Hầm bơi;
+ * Người Canh Hầm đuổi khi bơi: 'swimchase'), 'curl' (Người Cá Đá nằm áp đáy, Người Đuối Cát vùi dưới cát), 'rest' (Người Đuối
+ * Cát nằm sát mặt cát), 'grab' (Bạch Tuộc quấn con mồi ở .prey). Khung người, mặt, cách đi dựng riêng cho từng loài.
  * create({ lights }): lights = false thì không có đèn thật (đèn đá, cần câu, tim sáng chỉ tự sáng): game dùng thế cho nhẹ.
  * bake(root): gộp các mảnh tĩnh cùng vật liệu trên mỗi khớp thành một lưới (ít lần vẽ); mảnh đánh dấu keep thì giữ riêng.
  * Cần: three.js. */
@@ -114,23 +115,6 @@
         r.el[k].rotation.x = -(0.25 + 0.5 * a * Math.max(0, S(p))) + (o.elbowBias || 0);
       }
     }
-    // nằm co ngụy trang (c: 0 đứng … 1 co hẳn): ngồi xổm gập người, đùi ra trước, cẳng gập sát, tay ôm gối, đầu cúi gằm; nhìn
-    // xa như một tảng đá hay một bụi san hô. Gọi sau gait (trộn từ dáng đang có sang dáng co).
-    const mix = (a, b, c) => a + (b - a) * c;
-    function curlPose(r, c, hipH) {
-      if (c < 0.001) return;
-      r.hips.position.y = mix(r.hips.position.y, hipH * 0.28, c);
-      r.spine.rotation.x = mix(r.spine.rotation.x, 1.25, c);
-      r.neck.rotation.x = mix(r.neck.rotation.x, 0.9, c);
-      for (const k of [0, 1]) {
-        r.hip[k].rotation.x = mix(r.hip[k].rotation.x, -2.1, c);
-        r.knee[k].rotation.x = mix(r.knee[k].rotation.x, 2.55, c);
-        r.foot[k].rotation.x = mix(r.foot[k].rotation.x, -0.4, c);
-        r.sh[k].rotation.x = mix(r.sh[k].rotation.x, -0.35, c);
-        r.sh[k].rotation.z = mix(r.sh[k].rotation.z, (k ? 1 : -1) * -0.25, c);
-        r.el[k].rotation.x = mix(r.el[k].rotation.x, -1.5, c);
-      }
-    }
     // trộn mượt một giá trị về đích (khung nào cũng gọi): không có cú nhảy khi đổi kiểu chuyển động
     const ease = (cur, key, target, dt, k = 3) => (cur[key] = (cur[key] ?? target) + (target - (cur[key] ?? target)) * (1 - Math.exp(-dt * k)));
 
@@ -192,31 +176,6 @@
           r.stalks.forEach((st, k) => { st.rotation.x = -0.4 - (run ? 0.9 : 0) * 0.6 + 0.18 * S(t * 3.1 + k) - cur.a * 0.25 * S(cur.ph * 2); st.rotation.z = (k ? 1 : -1) * (0.35 + 0.1 * S(t * 2.3 + k * 2)); });
         },
       };
-    }
-
-    /* =============== Nhánh cong (san hô, rong): ống thon dần theo một đường cong ngẫu nhiên, chẻ nhánh =============== */
-    // trả về các lưới đặt vào p; gốc ở (0,0,0) của p, mọc theo hướng dir (Vector3). Đầu nhánh có hạt sáng (tipMat).
-    // (một khớp động cho cả cụm: nhánh con dựng thẳng vào cùng khớp, bake gộp lại thành một lưới)
-    function branch(p, dir, len, r0, depth, mat, tipMat, out, holder0, origin) {
-      const pts = [], d = dir.clone().normalize(), pos = origin ? origin.clone() : new T.Vector3(), n = 6;
-      for (let i = 0; i <= n; i++) {
-        const t = i / n;
-        pts.push({ x: pos.x, y: pos.y, z: pos.z, r: r0 * (1 - t * 0.55) });
-        d.x += (rnd() - 0.5) * 0.35; d.z += (rnd() - 0.5) * 0.35; d.y += 0.06; d.normalize();
-        pos.addScaledVector(d, len / n);
-      }
-      const holder = holder0 || J(p, 0, 0, 0);
-      add(holder, tube(pts, 6), mat);
-      if (!holder0) (out || []).push({ j: holder, d: depth });
-      if (depth > 0) {
-        const k = depth > 1 ? 3 : 2;
-        for (let i = 0; i < k; i++) {
-          const a = (i / k) * PI * 2 + rnd();
-          const nd = d.clone().add(new T.Vector3(C(a) * 0.9, 0.2, S(a) * 0.9)).normalize();
-          branch(p, nd, len * 0.72, r0 * 0.5, depth - 1, mat, tipMat, out, holder, pos);
-        }
-      } else if (tipMat) add(holder, GEO.ball, tipMat, pos.x, pos.y, pos.z, r0 * 0.9, r0 * 0.9, r0 * 0.9);
-      return holder;
     }
 
     /* =============== 2. Người Vây (làm lại) =============== */
@@ -305,65 +264,6 @@
           // giáo: đứng thì chĩa tới trước ngực, bơi thì chĩa theo hướng đầu (thân đã ngả ngang)
           spear.rotation.x = (PI / 2) * (1 - cur.tilt / 1.4) - (r.sh[1].rotation.x + r.el[1].rotation.x);
           cur.dash = dash;
-        },
-      };
-    }
-
-    /* =============== 3. Người San Hô (làm lại) =============== */
-    // thân gầy còng, da nâu xám như vỏ cây ngâm nước, váy tảo; san hô mọc xuyên từ vai, lưng, cẳng tay và nửa đầu: nhánh cong
-    // thon chẻ nhiều tầng, đầu nhánh sáng; nửa mặt bị san hô phủ, một hốc mắt đen trống, một mắt sáng đỏ; hàm trễ xuống. Đứng:
-    // đung đưa như rong, cành đưa trễ; đi: sải dài lắc lư; đuổi: đổ người tới, hai tay dài vươn ra quờ quạng.
-    function coralman() {
-      const r = humanoid({ hipH: 1.0, thigh: 0.5, shin: 0.52, legR: [0.055, 0.032], torso: 0.62, chestW: 0.16, upper: 0.42, fore: 0.42, armR: [0.04, 0.026], skin: '#6e6a58' });
-      const bark = flat('#57533f'), skin = r.skin;
-      for (const j of [r.spine, r.sh[0], r.hip[0]]) for (let i = 0; i < 2; i++) add(j, GEO.rock, bark, (rnd() - 0.5) * 0.08, (j === r.spine ? 0.4 : -0.12) - i * 0.09, 0.05, 0.035, 0.05, 0.025, rnd(), rnd(), 0);
-      for (let i = 0; i < 4; i++) add(r.spine, GEO.box, flat('#4e4a38'), 0, 0.48 - i * 0.07, 0.075, 0.22, 0.014, 0.02);
-      const RED = flat('#d2432f'), PINK = flat('#ff6f8a'), PURP = flat('#a64fd0'), ORNG = flat('#f08a3b'), tipM = glow('#ffd2e2');
-      const branches = [];
-      const V = (x, y, z) => new T.Vector3(x, y, z);
-      // (cụm san hô dày, ngắn: nhánh to, ba tầng chẻ, như san hô thật mọc trùm vai)
-      for (const [j, x, y, z, d, len, r0, col] of [
-        [r.chest, -0.12, 0.02, -0.03, V(-0.7, 1, -0.2), 0.16, 0.036, RED], [r.chest, -0.08, 0.04, -0.08, V(-0.2, 1, -0.8), 0.14, 0.03, ORNG],
-        [r.chest, 0.12, 0.03, -0.03, V(0.7, 1, -0.2), 0.16, 0.036, PURP], [r.chest, 0.08, 0.05, -0.08, V(0.3, 1, -0.7), 0.13, 0.03, PINK],
-        [r.spine, 0.0, 0.32, -0.09, V(0, 0.4, -1), 0.14, 0.03, RED], [r.spine, -0.04, 0.18, -0.08, V(-0.4, 0.2, -1), 0.11, 0.026, PURP],
-        [r.el[0], 0, -0.15, -0.03, V(-0.5, -0.2, -1), 0.11, 0.024, PINK],
-      ]) branch(J(j, x, y, z), d, len, r0, 3, col, tipM, branches);
-      // đầu: sọ hẹp, nửa trái bị san hô phủ
-      add(r.head, GEO.ball2, skin, 0, 0.08, 0.0, 0.08, 0.11, 0.09);
-      add(r.head, GEO.ball, skin, 0, 0.0, 0.04, 0.06, 0.05, 0.06);
-      add(r.head, GEO.rock, PURP, -0.05, 0.12, 0.02, 0.07, 0.08, 0.07);
-      branch(J(r.head, -0.04, 0.17, 0.0), V(-0.3, 1, 0.1), 0.12, 0.026, 3, PURP, tipM, branches);
-      branch(J(r.head, 0.03, 0.18, -0.03), V(0.4, 1, -0.3), 0.1, 0.022, 2, PINK, tipM, branches);
-      add(r.head, GEO.ball2, flat('#050607', { roughness: 0.2 }), 0.035, 0.085, 0.075, 0.025, 0.03, 0.02);
-      add(r.head, GEO.ball, glow('#ff4433'), 0.037, 0.085, 0.092, 0.007, 0.007, 0.004);
-      const jaw = J(r.head, 0, -0.01, 0.04);
-      add(jaw, GEO.box, flat('#1a120e'), 0, -0.02, 0.04, 0.06, 0.035, 0.02);
-      for (let k = 0; k < 5; k++) add(jaw, GEO.cone, flat('#d8ccb0'), (k - 2) * 0.012, 0.0, 0.05, 0.004, 0.018, 0.004, PI, 0, 0);
-      // ngón tay dài cong như rễ
-      for (const hd of r.hand) for (let f = 0; f < 4; f++) { const fj = J(hd, (f - 1.5) * 0.016, 0, 0); fj.rotation.x = -0.4; add(fj, limbGeo(0.008, 0.003, 4), bark, 0, 0, 0, 1, 0.16, 1); }
-      // váy tảo
-      const kelp = [];
-      for (let i = 0; i < 11; i++) { const a = (i / 11) * PI * 2, kj = J(r.hips, C(a) * 0.13, 0.02, S(a) * 0.09); add(kj, GEO.cone, flat(i % 2 ? '#2f5f38' : '#4a8040'), 0, 0, 0, 0.03, -0.42, 0.012, 0, -a, 0); kelp.push(kj); }
-      const cur = {};
-      return {
-        root: r.root, size: 2.0, eye: 1.4,
-        update(t, dt, m, spd) {
-          const run = m === 'chase';
-          if (m === 'curl') spd = 0;
-          ease(cur, 'a', m === 'idle' || m === 'curl' ? 0 : run ? 0.85 : 0.45, dt);
-          ease(cur, 'lean', run ? 0.6 : m === 'move' ? 0.22 : 0.18, dt);
-          cur.ph = (cur.ph || 0) + dt * (m === 'idle' || m === 'curl' ? 0 : 3.4 + spd * 1.3);
-          const sway = S(t * 0.7) * (m === 'idle' ? 0.1 : 0.05);
-          r.spine.rotation.set(cur.lean + 0.03 * S(t * 1.1), 0.1 * S(cur.ph) * cur.a, sway);
-          r.hips.position.y = 1.0 + Math.abs(S(cur.ph)) * 0.05 * cur.a - cur.lean * 0.1;
-          gait(r, cur.ph, cur.a, { hipBias: -cur.lean * 0.6, kneeBias: 0.1 + cur.lean * 0.3, arm: run ? 0.25 : 0.5, armBias: run ? -1.45 : -0.1, elbowBias: run ? 0.2 : -0.1 });
-          for (const k of [0, 1]) r.hand[k].rotation.x = (run ? -0.4 : 0) + 0.35 * S(t * (run ? 4 : 1.2) + k * 1.7);
-          r.head.rotation.set(-cur.lean * 0.6 + 0.06 * S(t * 0.5), 0.35 * S(t * 0.33) * (run ? 0.2 : 1), 0.3 * S(t * 0.47) - 0.15);
-          jaw.rotation.x = 0.15 + (run ? 0.25 * Math.max(0, S(t * 3)) : 0.04 * S(t * 0.9));
-          branches.forEach((b, i) => { b.j.rotation.x = 0.07 * S(t * 1.3 - b.d * 0.7 + i * 0.4) + cur.a * 0.08 * S(cur.ph * 2 - b.d); b.j.rotation.z = 0.05 * S(t * 0.9 + i); });
-          kelp.forEach((k, i) => (k.rotation.x = 0.15 * S(t * 1.5 + i) + cur.a * 0.3 * S(cur.ph + i * 0.3)));
-          ease(cur, 'curl', m === 'curl' ? 1 : 0, dt, m === 'curl' ? 1.6 : 3.5); // (đứng dậy nhanh hơn nằm xuống)
-          curlPose(r, cur.curl, 1.0);
         },
       };
     }
@@ -545,60 +445,6 @@
       };
     }
 
-    /* =============== 5. Người Rêu Đá =============== */
-    function mossGiant() {
-      // tay dài quá gối (sải tay khoảng 7), bàn tay đá to có bốn ngón móc: đủ nắm gọn một tàu ngầm nhỏ
-      const r = humanoid({ hipH: 2.6, hipW: 0.36, thigh: 1.3, shin: 1.35, legR: [0.32, 0.24], torso: 1.8, chestW: 0.62, upper: 1.6, fore: 1.55, armR: [0.3, 0.26], neck: 0.25, skin: '#6f7468', sides: 5 });
-      const moss = flat('#4f7a3a'), moss2 = flat('#6b9a46'), stone = r.skin;
-      add(r.spine, GEO.rock, stone, 0, 1.15, 0, 0.75, 0.75, 0.55);
-      for (let i = 0; i < 14; i++) {
-        const j = [r.spine, r.sh[0], r.sh[1], r.hip[0], r.hip[1], r.chest][i % 6];
-        add(j, GEO.ball, i % 2 ? moss : moss2, (rnd() - 0.5) * 0.5, -0.2 - rnd() * 0.6 + (j === r.spine ? 1.3 : 0), 0.22 + rnd() * 0.12, 0.22, 0.14, 0.12);
-      }
-      for (const sg of [-1, 1]) add(r.chest, GEO.rock, stone, sg * 0.62, 0.05, 0, 0.36, 0.3, 0.32);
-      for (let i = 0; i < 3; i++) add(r.spine, GEO.box, glow('#5fe0b0'), (i - 1) * 0.18, 1.1 - i * 0.2, 0.42, 0.03, 0.3, 0.02, 0, 0, (i - 1) * 0.5);
-      // đầu đá: mày nặng, mắt sáng lục, râu rêu dài
-      add(r.head, GEO.rock, stone, 0, 0.3, 0, 0.32, 0.36, 0.3);
-      add(r.head, GEO.box, flat('#5b6056'), 0, 0.42, 0.22, 0.42, 0.08, 0.12);
-      for (const sg of [-1, 1]) add(r.head, GEO.ball, glow('#8dff9a'), sg * 0.11, 0.32, 0.27, 0.04, 0.025, 0.02);
-      const beard = [];
-      for (let i = 0; i < 10; i++) { const bj = J(r.head, (i - 4.5) * 0.05, 0.12, 0.2 + Math.abs(i - 4.5) * -0.012); add(bj, GEO.cone, i % 2 ? moss : moss2, 0, 0, 0, 0.05, -(0.5 + rnd() * 0.35), 0.03); beard.push(bj); }
-      add(r.head, GEO.ball, moss, 0, 0.6, -0.05, 0.3, 0.1, 0.28);
-      const fingers = [];
-      for (const hd of r.hand) {
-        add(hd, GEO.rock, stone, 0, -0.32, 0.05, 0.42, 0.38, 0.3);
-        for (let f = 0; f < 4; f++) {
-          const fj = J(hd, (f - 1.5) * 0.17 + (f === 0 ? -0.1 : 0), -0.6, 0.12);
-          add(fj, limbGeo(0.09, 0.05, 5), stone, 0, 0, 0, 1, 0.55, 1);
-          add(fj, GEO.cone4, flat('#3f443c'), 0, -0.55, 0, 0.06, -0.25, 0.06);
-          fingers.push(fj);
-        }
-      }
-      const cur = {};
-      return {
-        root: r.root, size: 6.4, eye: 4.6,
-        update(t, dt, m, spd) {
-          const run = m === 'chase';
-          if (m === 'curl') spd = 0;
-          ease(cur, 'a', m === 'idle' || m === 'curl' ? 0 : run ? 0.7 : 0.38, dt, 2);
-          ease(cur, 'lean', run ? 0.32 : 0.05, dt, 2);
-          cur.ph = (cur.ph || 0) + dt * (m === 'idle' || m === 'curl' ? 0 : run ? 4.2 + spd * 0.5 : 1.6 + spd * 0.3);
-          const breathe = S(t * 0.9) * 0.02;
-          r.spine.rotation.set(cur.lean + breathe, 0.12 * S(cur.ph) * cur.a, 0.06 * S(cur.ph) * cur.a);
-          r.hips.position.y = 2.6 - cur.lean * 0.3 + (1 - Math.abs(C(cur.ph))) * 0.12 * cur.a;
-          gait(r, cur.ph, cur.a, { arm: 1.0, hipBias: -cur.lean * 0.5, kneeBias: 0.1 + cur.lean * 0.3, elbowBias: run ? -0.4 : 0 });
-          r.head.rotation.set(-cur.lean * 0.6 + 0.04 * S(t * 0.5), 0.25 * S(t * 0.21) * (run ? 0.1 : 1), 0);
-          beard.forEach((b, i) => (b.rotation.x = 0.08 * S(t * 1.3 + i * 0.5) - cur.a * 0.15 * S(cur.ph * 2)));
-          // đuổi: hai tay vươn ra trước, bàn tay mở ra rồi chộp lại theo nhịp
-          const grab = run ? pulse(t, 1.1, 2) : 0;
-          if (run) for (const k of [0, 1]) { r.sh[k].rotation.x = -1.25 - 0.25 * grab + 0.1 * S(cur.ph + k * PI); r.el[k].rotation.x = -0.25 - 0.5 * grab; }
-          fingers.forEach((f) => (f.rotation.x = run ? -0.2 + 1.3 * grab : 0.5));
-          ease(cur, 'curl', m === 'curl' ? 1 : 0, dt, m === 'curl' ? 1.4 : 3);
-          curlPose(r, cur.curl, 2.6);
-        },
-      };
-    }
-
     /* =============== Quái vật A: Rồng Lươn Đen (một con; bầy: eelPack) =============== */
     function eelDragon(scale = 1) {
       const outer = new T.Group(), root = J(outer, 0, 0, 0), N = 46, L = 1.55;
@@ -750,7 +596,7 @@
       return api;
     }
 
-    /* =============== Đề xuất thay Người Rêu Đá: Người Cá Đá =============== */
+    /* =============== 5. Người Cá Đá (thay Người Rêu Đá) =============== */
     // thân cá đá dẹt, to bè, sần sùi như tảng đá phủ rêu, vảy vỏ nâu đỏ; miệng rất rộng hếch lên, viền môi tua; hai mắt lồi đỏ
     // cam trên đỉnh đầu, mày đá; 12 gai lưng có nọc sáng (dựng lên khi chiến, rạp xuống khi nằm); hai vây ngực xoè như quạt; hai
     // tay ngắn có vuốt dưới cằm; hai chân ngắn có màng gập dưới bụng; đuôi dẹt dọc, vây đuôi tròn. Nằm: áp sát đáy, vây ngực
@@ -868,85 +714,7 @@
       };
     }
 
-    /* =============== Đề xuất thay Người San Hô: Người Chình Rạn =============== */
-    // nửa trên người gầy, còng, tay dài vuốt cong; đầu cá chình: mõm dài, hàm há lộ răng kim, mắt nhỏ vàng nhạt, và một hàm thứ
-    // hai trong họng phóng ra khi cắn; nửa dưới là thân chình dài khoảng 3,5, da cam tím lốm đốm, vây lưng chạy dọc; san hô mọc
-    // trên vai, lưng (giữ dáng san hô). Nấp: thân cuộn tròn trên đáy (hay trong khe đá), nửa người dựng lên đung đưa, miệng há
-    // khép như thở. Bơi: cả thân nằm ngang, uốn sóng sang hai bên. Chiến: uốn nhanh, vọt, hàm trong phóng ra.
-    function morayMan() {
-      const r = humanoid({ hipH: 0, torso: 0.55, chestW: 0.17, upper: 0.44, fore: 0.44, armR: [0.04, 0.028], neck: 0.16, skin: '#a8673e' });
-      for (const h of r.hip) r.hips.remove(h);
-      const skin = r.skin, skin2 = flat('#6e3f5e'), dark = flat('#0e0a0c'), memb = fin('#c0603a'), spotM = glow('#ffd36a');
-      const root = new T.Group(), pose = J(root, 0, 0.95, 0);
-      pose.add(r.root);
-      for (let i = 0; i < 5; i++) add(r.spine, GEO.box, flat('#8a5232'), 0, 0.46 - i * 0.07, 0.065, 0.2 - i * 0.012, 0.013, 0.025);
-      // san hô trên vai, lưng
-      const RED = flat('#d2432f'), PURP = flat('#a64fd0'), tipM = glow('#ffd2e2'), Vv = (x, y, z) => new T.Vector3(x, y, z), br = [];
-      for (const [j, x, y, z, d, col] of [[r.chest, -0.11, 0.03, -0.04, Vv(-0.6, 1, -0.3), RED], [r.chest, 0.11, 0.03, -0.04, Vv(0.6, 1, -0.3), PURP], [r.spine, 0, 0.3, -0.09, Vv(0, 0.5, -1), RED]])
-        branch(J(j, x, y, z), d, 0.13, 0.026, 2, col, tipM, br);
-      // đầu chình: mõm dài, mắt nhỏ, hàm dưới, hàm trong họng
-      r.head.scale.setScalar(1.35);
-      add(r.head, GEO.ball2, skin, 0, 0.06, 0.06, 0.08, 0.09, 0.17);
-      add(r.head, GEO.ball, skin2, 0, 0.1, 0.0, 0.07, 0.06, 0.1);
-      for (const sg of [-1, 1]) { add(r.head, GEO.ball, glow('#f2ffb0'), sg * 0.055, 0.1, 0.13, 0.014, 0.014, 0.012); add(r.head, GEO.box, dark, sg * 0.057, 0.1, 0.142, 0.004, 0.016, 0.004); }
-      for (let k = 0; k < 8; k++) add(r.head, GEO.cone, flat('#efe8d8'), (k % 2 ? 1 : -1) * 0.035, 0.02, 0.22 - k * 0.018, 0.005, 0.03, 0.005, PI, 0, 0);
-      const jaw = J(r.head, 0, 0.02, 0.02);
-      add(jaw, GEO.ball, skin, 0, -0.03, 0.12, 0.065, 0.025, 0.14);
-      for (let k = 0; k < 8; k++) add(jaw, GEO.cone, flat('#efe8d8'), (k % 2 ? 1 : -1) * 0.03, -0.01, 0.22 - k * 0.018, 0.005, 0.03, 0.005);
-      const inner = J(r.head, 0, 0.03, 0.02);
-      add(inner, GEO.ball, flat('#5a1c24'), 0, 0, 0.06, 0.035, 0.025, 0.08);
-      for (let k = 0; k < 4; k++) add(inner, GEO.cone, flat('#efe8d8'), (k - 1.5) * 0.015, 0.01, 0.13, 0.004, 0.025, 0.004, PI, 0, 0);
-      add(r.head, GEO.ball, dark, 0, 0.03, 0.14, 0.05, 0.03, 0.09);
-      // vuốt dài
-      for (const hd of r.hand) for (let f = 0; f < 4; f++) add(hd, GEO.cone, flat('#e8dcc0'), (f - 1.5) * 0.015, -0.03, 0.01, 0.006, 0.12, 0.006, PI - 0.3, 0, 0);
-      // thân chình: 16 khúc nối liền, đốm sáng, vây lưng
-      const NT = 18, TL = 0.2, segs = [], rad = (i) => 0.19 * Math.pow(1 - i / NT, 0.6) + 0.025;
-      let p = r.hips;
-      for (let i = 0; i < NT; i++) {
-        const j = J(p, 0, i ? -TL : 0.02, 0);
-        add(j, limbGeo(rad(i), rad(i + 1), 8), i % 3 === 1 ? skin2 : skin, 0, 0.02, 0, 1, TL + 0.02, 0.85);
-        if (i % 2 === 0) add(j, GEO.ball, spotM, (i % 4 ? 1 : -1) * rad(i) * 0.9, -TL * 0.5, 0, 0.018, 0.018, 0.018);
-        add(j, GEO.cone4, memb, 0, -TL * 0.5, -rad(i) * 0.8, 0.005, 0.06 + rad(i) * 0.3, TL * 0.55, -PI / 2, 0, 0);
-        segs.push(j);
-        p = j;
-      }
-      const cur = {};
-      return {
-        root, size: 3.6, eye: 1.2, frame: [[0, 0.75, 0], [2.6, 1.7, 3.6]],
-        update(t, dt, m, spd) {
-          const hide = m === 'curl' || m === 'idle', run = m === 'chase';
-          ease(cur, 'h', hide ? 1 : 0, dt, 2);
-          ease(cur, 'A', hide ? 0 : run ? 0.55 : 0.35, dt);
-          cur.ph = (cur.ph || 0) + dt * (hide ? 0.8 : run ? 10 + spd * 1.5 : 5 + spd);
-          const h = cur.h, A = cur.A, bite = run ? pulse(t, 1.2, 4) : 0;
-          // nấp: người dựng thẳng, thân cuộn tròn trên đáy; bơi: nằm ngang, uốn sóng sang hai bên
-          pose.rotation.x = (1 - h) * 1.45;
-          pose.position.y = 0.8 + 0.03 * S(t * 0.9);
-          r.spine.rotation.x = h * (0.25 + 0.06 * S(t * 0.7));
-          r.spine.rotation.z = h * 0.12 * S(t * 0.5);
-          segs.forEach((j, i) => {
-            // (khúc 0–3 thả xuống đất, khúc 4 gập nằm ngang, từ khúc 5 cuộn xoắn ốc chặt dần)
-            const coilX = i === 4 ? -PI / 2 : 0, coilZ = i > 4 ? 0.42 + (i - 5) * 0.03 : 0;
-            const wave = A * (0.25 + i * 0.03) * S(cur.ph - i * 0.55);
-            j.rotation.x = h * coilX;
-            j.rotation.z = h * coilZ + (1 - h) * wave;
-          });
-          r.neck.rotation.x = -(1 - h) * 1.2 + h * (-0.2 + 0.08 * S(t * 0.6));
-          r.head.rotation.y = h * 0.4 * S(t * 0.35);
-          // miệng há khép như thở; cắn: há to, hàm trong phóng ra
-          jaw.rotation.x = run ? 0.25 + 0.65 * bite : 0.15 + 0.12 * Math.max(0, S(t * 1.6));
-          inner.position.z = 0.02 + bite * 0.16;
-          for (const k of [0, 1]) {
-            const sg = k ? 1 : -1;
-            r.sh[k].rotation.x = run ? -1.6 - 0.3 * bite : (1 - h) * 0.35 + h * (-0.5 + 0.12 * S(t * 0.8 + k));
-            r.sh[k].rotation.z = sg * (run ? 0.3 : (1 - h) * 0.15 + h * 0.35);
-            r.el[k].rotation.x = run ? -0.3 + 0.4 * (1 - bite) : -0.5 - h * 0.6;
-          }
-        },
-      };
-    }
-
-    /* =============== Đề xuất khác: Người Đuối Cát =============== */
+    /* =============== 6. Người Đuối Cát (thay Người San Hô) =============== */
     // thân dẹt hình thoi màu cát lốm đốm, rộng khoảng 3; hai cánh là hai tay (vây xoè có xương ngón); phía trước giữa thân nhô
     // lên nửa người gầy, mặt hốc mắt đen, mắt sáng trắng; đuôi roi dài có ngạnh sáng. Nấp: nằm phẳng dưới lớp cát, chỉ lộ mắt.
     // Bơi: cánh vỗ thành sóng. Chiến: vỗ nhanh, nửa người chồm tới, đuôi cong lên trên lưng quất ngạnh tới trước.
@@ -1004,10 +772,11 @@
       return {
         root, size: 3.0, eye: 0.8,
         update(t, dt, m, spd) {
-          const hide = m === 'curl', run = m === 'chase';
+          // nằm sát mặt cát ('rest'): như nằm vùi nhưng không phủ cát, mép cánh gợn nhẹ, mắt đảo
+          const rest = m === 'rest', hide = m === 'curl' || rest, run = m === 'chase';
           ease(cur, 'h', hide ? 1 : 0, dt, 2);
-          ease(cur, 'A', hide ? 0 : m === 'idle' ? 0.12 : run ? 0.55 : 0.35, dt);
-          cur.ph = (cur.ph || 0) + dt * (hide ? 0 : m === 'idle' ? 1.5 : run ? 8 + spd : 3.5 + spd * 0.6);
+          ease(cur, 'A', rest ? 0.05 : hide ? 0 : m === 'idle' ? 0.12 : run ? 0.55 : 0.35, dt);
+          cur.ph = (cur.ph || 0) + dt * (rest ? 0.8 : hide ? 0 : m === 'idle' ? 1.5 : run ? 8 + spd : 3.5 + spd * 0.6);
           const h = cur.h, A = cur.A, stab = run ? pulse(t, 1.5, 4) : 0;
           pose.position.y = 0.6 - h * 0.48 + (1 - h) * 0.25 * S(cur.ph * 0.5);
           body.rotation.x = (1 - h) * (run ? -0.12 : -0.05);
@@ -1018,7 +787,7 @@
           claws.forEach(({ sh, el }, k) => { sh.rotation.x = run ? -1.4 - 0.3 * stab : -0.3 + 0.1 * S(t + k); sh.rotation.z = (k ? 1 : -1) * 0.25; el.rotation.x = run ? -0.4 : -0.9; });
           // đuôi: thả lơi phía sau; chiến: cong lên trên lưng, quất tới trước theo nhịp
           tail.forEach((j, i) => { j.rotation.z = (1 - h) * 0.12 * S(cur.ph * 0.7 - i * 0.6); j.rotation.x = run ? (0.22 + 0.06 * stab) * (i < 8 ? 1 : 0.5) : 0.02 * S(t + i); });
-          mounds.forEach((mm) => (mm.visible = h > 0.6));
+          sandCover.visible = h > 0.6 && !rest; // (cả cụm gò cát bật tắt cùng nhau: bake gộp chúng thành một lưới)
         },
       };
     }
@@ -1053,7 +822,7 @@
       });
       return rootObj;
     }
-    return { snailman, finman, coralman, keeper, mossGiant, eelDragon, eelPack, boneShark, abyssEye, stonefishMan, morayMan, rayMan, villager, bake, add, J, GEO, flat, glow, humanoid, PI, S, C, pulse };
+    return { snailman, finman, keeper, stonefishMan, rayMan, eelDragon, eelPack, boneShark, abyssEye, villager, bake, add, J, GEO, flat, glow, humanoid, PI, S, C, pulse };
   }
   BK.DeepBeings = { create };
 })(typeof self !== 'undefined' ? self : globalThis);

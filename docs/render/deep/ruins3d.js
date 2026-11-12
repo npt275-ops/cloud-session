@@ -232,7 +232,52 @@
       ].forEach(([r, h], i) => F.add(st, FRU(4, 0.86), i % 2 ? '#9a9f90' : '#8a8f80', cu, i * 7, 0, r, h, r, Math.PI / 4));
       F.add(gl, GEM(), '#7ef9ff', cu, 27, 0, 4, 6, 4);
       // vạch chữ sáng trên mặt trước từng bậc (bậc vuông xoay 45°: nửa cạnh = 0,707 bán kính, mặt hơi nghiêng vào)
-      [30, 23, 16, 9].forEach((r, i) => F.add(gl, BOX(), GLY, cu - r * 0.707 * 0.93 - 0.15, i * 7 + 3, 0, 0.2, 1, r * 0.85));
+      // (ba bậc dưới có cửa giữa mặt: vạch chia đôi, chừa chỗ cửa)
+      [30, 23, 16, 9].forEach((r, i) => {
+        const fu = cu - r * 0.707 * 0.93 - 0.15,
+          L = r * 0.85,
+          gap = i < 3 ? 6 : 0,
+          half = (L - gap) / 2;
+        if (!gap) F.add(gl, BOX(), GLY, fu, i * 7 + 3, 0, 0.2, 1, L);
+        else for (const q of [-1, 1]) F.add(gl, BOX(), GLY, fu, i * 7 + 3, q * (gap / 2 + half / 2), 0.2, 1, half);
+      });
+      // cửa kim tự tháp: giữa bốn mặt của ba bậc dưới (12 cửa), ô cửa tối sâu, hai trụ đá, mi cửa, vạch sáng trên mi;
+      // lối đi quanh tháp: vòng chân tháp và gờ trên mỗi bậc (Người Cá Đá sống trong tháp: render/deep/denizens3d.js)
+      const PY = [30, 23, 16],
+        g0 = hAt(F.at(cu, 0).x, F.at(cu, 0).z) - 0.3,
+        DOOR = [
+          [3.4, 4.6],
+          [2.8, 3.8],
+          [2.6, 3.4],
+        ],
+        doors = [],
+        levels = [{ y: 0, half: PY[0] * 0.707 + 2.6 }];
+      for (let L = 1; L < 3; L++) levels.push({ y: L * 7, half: (PY[L] * 0.707 + PY[L - 1] * 0.707 * 0.86) / 2 });
+      PY.forEach((r, L) => {
+        const [w, h] = DOOR[L],
+          hf = r * 0.707 * (1 - (0.14 * h) / 2 / 7),
+          y = g0 + L * 7;
+        for (const [nu, nv] of [
+          [1, 0],
+          [0, 1],
+          [-1, 0],
+          [0, -1],
+        ]) {
+          const at = (d, t) => [cu + nu * d - nv * t, nv * d + nu * t],
+            box = (G, c, d, t, yy, dep, wid, hh) => {
+              const [u, v] = at(d, t);
+              F.add(G, BOX(), c, u, yy, v, nu ? dep : wid, hh, nu ? wid : dep, 0, 0, 0, true);
+            };
+          box(st, '#0a0f12', hf, 0, y, 2, w, h);
+          for (const q of [-1, 1]) box(st, STONE, hf + 0.2, q * (w / 2 + 0.45), y, 2.4, 0.9, h + 0.4);
+          box(st, BAS, hf + 0.25, 0, y + h + 0.1, 2.6, w + 2.2, 1);
+          box(gl, GLY, hf + 1.56, 0, y + h + 0.45, 0.12, w + 1, 0.3);
+          const [ou, ov] = at(L ? levels[L].half : levels[0].half, 0),
+            [iu, iv] = at(hf - 2.5, 0);
+          doors.push({ level: L, nu, nv, u: at(hf + 1.2, 0)[0], v: at(hf + 1.2, 0)[1], out: { u: ou, v: ov }, in: { u: iu, v: iv } });
+        }
+      });
+      S.pyramid = { u: cu, v: 0, g: g0, top: 27, levels, doors };
       // đĩa đá lịch khổng lồ dựa vào chân tháp, vòng khắc sáng
       F.add(st, CYL(20), '#9aa093', cu - 28, 13, 26, 13, 2.4, 13, 0.6, Math.PI / 2 - 0.35);
       F.add(gl, RINGG(), GLY, cu - 28, 13.4, 26, 10, 10, 10, 0.6, -0.35);

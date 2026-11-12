@@ -136,7 +136,7 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
   vào `deep3d.threats` và đọc `denizens.info.attacks`.
 - Chưa đo trên điện thoại thật.
 
-## 7. Đề xuất thay Người Rêu Đá, Người San Hô (chờ duyệt)
+## 7. Đề xuất thay Người Rêu Đá, Người San Hô (đã duyệt: design/ke-hoach-buoc-24.md)
 
 Người chơi thấy Người Rêu Đá, Người San Hô chỉ đi bộ nên gần như không bắt được máy quay; người đá, người san hô mà bơi thì
 nặng nề, nên đề xuất thay bằng loài biết bơi mà vẫn giữ lối nấp ngụy trang. Hình đã dựng trong render/deep/beings3d.js, xem ở
