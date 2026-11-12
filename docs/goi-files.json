@@ -470,6 +470,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/deep/citadel3d.js",
+  "src": "render/deep/citadel3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/deep/kit3d.js",
   "src": "render/deep/kit3d.js",
   "mode": 420

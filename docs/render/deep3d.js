@@ -2,7 +2,8 @@
  * Thứ tự dựng (giữ nguyên: dãy ngẫu nhiên rnd chạy theo thứ tự này):
  *   render/deep/terrain3d.js  địa hình, rãnh, khối đất đỡ đảo, số học đường hầm
  *   render/deep/kit3d.js      bộ ghép khối (put, frame, nhóm gộp)
- *   render/deep/ruins3d.js    ba phế tích
+ *   render/deep/citadel3d.js  phế tích dưới Thông Xanh: Thành Vỏ Ốc Xà Cừ (phần động: D.anims)
+ *   render/deep/ruins3d.js    hai phế tích dưới Tuyết Trắng, Cát Hồng
  *   render/deep/tunnels3d.js  ba đường hầm, sáu cửa hầm
  * Ở đây: rong trên sườn núi, gộp lưới (đá, đá sáng, lòng hầm, rong đung đưa), bọt khí, mỗi khung hình (máy quay dưới mặt nước:
  * sương nước sâu, góc nhìn rộng, vách nước gần như đục, lòng hầm chỉ vẽ khi ở dưới nước), các điểm lặn cho nút "Đáy bể"
@@ -14,9 +15,11 @@
     const D = Object.assign({}, K);
     BK.DeepTerrain.build(D);
     BK.DeepKit.build(D);
+    BK.DeepCitadel.build(D);
     BK.DeepRuins.build(D);
     BK.DeepTunnels.build(D);
     const {
+      anims,
       THREE,
       scene,
       sea3d,
@@ -145,6 +148,7 @@
     function animate(dt, t, night, cam) {
       const ts = reduce ? 0 : t * 0.001;
       WU.uT.value = ts;
+      for (const f of anims) f(ts); // (phần động: đảo lơ lửng, vòng quay của Thành Vỏ Ốc Xà Cừ)
       glowMat.color.setScalar(0.8 + 0.2 * Math.sin(ts * 1.3));
       if (!reduce) {
         const s = Math.min(dt || 16, 100) / 1000;

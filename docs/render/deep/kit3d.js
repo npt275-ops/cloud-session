@@ -36,6 +36,12 @@
       cc = new THREE.Color();
     let seed = 1;
     const rnd = () => hash(seed++);
+    // mỗi phần (phế tích, hầm) bắt đầu dãy ngẫu nhiên riêng: sửa một phần không làm đổi hình phần khác
+    const reseed = (n) => {
+      seed = n;
+    };
+    // việc chạy mỗi khung hình của các phần động (đảo lơ lửng, vòng quay): fn(ts) với ts là giây; render/deep3d.js gọi
+    const anims = [];
     // một khối vào nhóm G: hình gốc geo, màu, toạ độ thế giới (x, y, z), cỡ (sx, sy, sz), góc quay (rx, ry, rz)
     function put(G, geo, color, x, y, z, sx, sy, sz, ry, rx, rz) {
       E3.set(rx || 0, ry || 0, rz || 0);
@@ -63,7 +69,7 @@
       };
       return { at, add, ry0 };
     }
-    Object.assign(D, { BOX, CYL, FRU, CONE, BALL, GEM, DOME, RINGG, ARCH, HALFDISC, groups, rnd, put, frame });
+    Object.assign(D, { reseed, anims, BOX, CYL, FRU, CONE, BALL, GEM, DOME, RINGG, ARCH, HALFDISC, groups, rnd, put, frame });
   }
   BK.DeepKit = { build };
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -58,6 +58,7 @@
     })();
     const GLOWS = ['#6ff6ff', '#8dffb0']; // (bước 21: hai màu lam, lục)
     const portals = [];
+    D.reseed(5000);
     const tri = (G, a, b, c, ca, cb, cc2) => {
       G.pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
       for (const k of [ca, cb, cc2]) G.col.push(k.r, k.g, k.b);
