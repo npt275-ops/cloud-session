@@ -91,7 +91,8 @@
       L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
       L.natAt = (x, z) => Math.max(0, sample(L.hf, Hs, x, z));
       L.padY = (x, z, r) => { let s = L.natAt(x, z), c = 1; for (let q = 0; q < 6; q++) { const a = q * 1.0472; s += L.natAt(x + Math.cos(a) * r * 0.6, z + Math.sin(a) * r * 0.6); c++; } return s / c; };
-      L.drape = (obj) => { L.hf.draped.push(obj); if (L.hf.mesh) drapeOne(L, obj); return obj; };
+      // fine: chia nhỏ tam giác dài hơn chừng này (theo mặt ngang) trước khi phủ, để mặt đường bám sát đất dốc (lớp đường của làng)
+      L.drape = (obj, fine) => { if (fine) obj.userData.fine = fine; L.hf.draped.push(obj); if (L.hf.mesh) drapeOne(L, obj); return obj; };
       L.setPads = (list) => { L.hf.pads = list || []; rebuild(L); };
       L.collectWater = () => collectWater(L);
     }
@@ -210,10 +211,26 @@
     }
     // nâng từng đỉnh của một nhóm khối theo đất (giữ cao độ gốc trong userData.y0); đỉnh thấp hơn −0,5 (phần dưới đảo) để nguyên
     const _v = new THREE.Vector3(), _inv = new THREE.Matrix4(), _mm = new THREE.Matrix4();
+    // chia đôi tam giác theo cạnh dài nhất (mặt ngang) tới khi mọi cạnh ngắn hơn max; mọi thuộc tính theo đỉnh nội suy theo
+    function finer(geo, max) {
+      if (geo.index || geo.userData.fined) return geo;
+      const names = Object.keys(geo.attributes), A = names.map((n) => geo.attributes[n]), out = names.map(() => []), P = geo.attributes.position, m2 = max * max;
+      const vert = (i) => A.map((a) => { const v = []; for (let c = 0; c < a.itemSize; c++) v.push(a.array[i * a.itemSize + c]); return v; });
+      const mid = (a, b) => a.map((x, k) => x.map((y, c) => (y + b[k][c]) / 2)), d2 = (a, b) => (a[0][0] - b[0][0]) ** 2 + (a[0][2] - b[0][2]) ** 2;
+      const emit = (t, depth) => { const e = [d2(t[0], t[1]), d2(t[1], t[2]), d2(t[2], t[0])], k = e.indexOf(Math.max(...e));
+        if (e[k] <= m2 || depth > 8) { for (const v of t) v.forEach((x, n) => out[n].push(...x)); return; }
+        const a = t[k], b = t[(k + 1) % 3], c = t[(k + 2) % 3], m = mid(a, b); emit([a, m, c], depth + 1); emit([m, b, c], depth + 1); };
+      if (A[names.indexOf('position')] !== P) return geo;
+      for (let i = 0; i < P.count; i += 3) emit([vert(i), vert(i + 1), vert(i + 2)], 0);
+      const g = new THREE.BufferGeometry(); names.forEach((n, k) => g.setAttribute(n, new THREE.BufferAttribute(new A[k].array.constructor(out[k]), A[k].itemSize)));
+      g.userData.fined = true; g.computeBoundingSphere(); return g;
+    }
     function drapeOne(L, obj) {
       L.g.updateMatrixWorld(true); _inv.copy(L.g.matrixWorld).invert();
+      const fine = obj.userData.fine;
       obj.traverse((o) => {
         if (!(o.isMesh || o.isLine) || o.isInstancedMesh || o.userData.noDrape || o.userData.flatPart || !o.geometry.attributes.position) return;
+        if (fine && o.isMesh && !o.geometry.userData.fined) { const g = finer(o.geometry, fine); if (g !== o.geometry) { o.geometry.dispose(); o.geometry = g; } }
         const P = o.geometry.attributes.position; let y0 = o.geometry.userData.y0;
         if (!y0 || y0.length !== P.count) { y0 = o.geometry.userData.y0 = new Float32Array(P.count); for (let q = 0; q < P.count; q++) y0[q] = P.getY(q); }
         _mm.multiplyMatrices(_inv, o.matrixWorld); const sy = Math.hypot(_mm.elements[4], _mm.elements[5], _mm.elements[6]) || 1;

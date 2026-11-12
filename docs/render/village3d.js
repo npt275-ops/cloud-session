@@ -348,7 +348,11 @@
       if (!base) return null;
       // (nhớ kết quả né lòng đường theo chỗ đến, khỏi tính lại mỗi khung hình: design/ke-hoach-khac-phuc.md mục 1.3)
       const oc = f.oc; if (oc && oc.x === base.x && oc.z === base.z && oc.t === tight && oc.j === f.jit.x) return { p: oc.p.clone(), face: null };
-      const q = Nav.offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit));
+      // (chỗ riêng của từng người quanh chỗ chung: rơi vào trong nhà thì xoay sang hướng khác quanh chỗ chung, không dồn cả đám
+      // lên cùng một mép tường rồi đứng chồng lên nhau)
+      let jv = tight ? f.jit.clone().multiplyScalar(0.15) : f.jit.clone();
+      if (!tight) for (let r = 0; r < 4; r++) { const t = base.clone().add(jv), c = Nav.clearPt(t); if (c === t) break; jv.set(-jv.z, 0, jv.x); }
+      const q = Nav.offCarriage(base.clone().add(jv));
       f.oc = { x: base.x, z: base.z, t: tight, j: f.jit.x, p: q.clone() };
       return { p: q, face: null };
     }
@@ -484,7 +488,7 @@
           if (!g) break;
           // không đi xuyên nhà (render/nav3d.js): đích trong chân công trình thì ra trước mép; đường thẳng cắt qua nhà thì đi vòng góc nhà
           const farm = mind.verb === 'farm' || aim.place === 'field' || aim.place === 'farmOut'; // (người làm ruộng vào được ruộng, nhà kính)
-          if (!g.bridge && !g.outside && !f.onDeck) { const cp = Nav.clearPt(g.p, farm); if (cp !== g.p) g = Object.assign({}, g, { p: cp }); const dv = Nav.detour(f.pos, g.p, farm); if (dv) g = { p: dv, face: null }; }
+          if (!g.bridge && !f.onDeck) { const cp = Nav.clearPt(g.p, farm); if (cp !== g.p) g = Object.assign({}, g, { p: cp }); const dv = Nav.detour(f.pos, g.p, farm, f); if (dv) g = { p: dv, face: null }; }
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           // ra trận mà đích còn xa (chạy từ nhà ra cổng, đuổi theo dân chạy nạn sang phía kia đảo): chạy nước rút, tới kịp lúc logic
@@ -494,7 +498,7 @@
           if (d > 0.25) { moving = true; const step = Math.min(d, speed * h), r0 = Math.hypot(f.pos.x, f.pos.z); f.pos.addScaledVector(_v.normalize(), step);
               // (ngoài tường: giữ trên đất, trừ khi đang từ mặt cầu bước xuống: r0 còn ngoài mép đảo)
               if (g.bridge) { /* trên cầu: không giữ trong đảo */ } else if (g.outside) { const a = Math.atan2(f.pos.z, f.pos.x), R = L.rOf(a) - 0.6,
-              r = Math.hypot(f.pos.x, f.pos.z); if (r > R && r0 <= R + 0.05) f.pos.multiplyScalar(R / r); } else { Nav.keepInside(f.pos); if (!f.onDeck) Nav.pushOut(f.pos, step + 0.05, farm); }
+              r = Math.hypot(f.pos.x, f.pos.z); if (r > R && r0 <= R + 0.05) f.pos.multiplyScalar(R / r); if (!f.onDeck) Nav.pushOut(f.pos, step + 0.05, farm); } else { Nav.keepInside(f.pos); if (!f.onDeck) Nav.pushOut(f.pos, step + 0.05, farm); }
               f.ph += step / ((0.55 + 0.3 * f.knobs.stride) * SCALE) * Math.PI; turnTo(f, Math.atan2(_v.x, _v.z), h); }
           else { if (g.face) { _v.copy(g.face).sub(f.pos); turnTo(f, Math.atan2(_v.x, _v.z), h); } break; }
         }
@@ -698,7 +702,7 @@
       }
       return bad;
     }
-    return { update, pick, select, audit, auditStats, inspect, siteCrew, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
+    return { nav: Nav, update, pick, select, audit, auditStats, inspect, siteCrew, setGuests, setFallen, worldPos, peds, setPlaces, setLevel, drawCalls, setVisible, get visible() { return shownNow; },
         get selected() { return selected; }, get count() { return folks.size; }, get indoors() { let n = 0; for (const [, f] of folks) if (f.inside) n++;
         return n; } };
   }

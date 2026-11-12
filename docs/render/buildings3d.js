@@ -249,7 +249,7 @@
       if (P.spec.town && sh.L.drape) { // lớp đường, tường, đèn: từng đỉnh phủ theo đất; phần chuyển động (xe, cối xay) nâng cả khối theo chỗ nó đứng
         const c = Math.cos(P.g.rotation.y), sn = Math.sin(P.g.rotation.y); P.liftAt = (x, z) => sh.L.surfAt(P.x + x * c + z * sn, P.z - x * sn + z * c);
         for (const n in m.userData.subs || {}) { const q = m.userData.subs[n]; q.traverse((o) => { o.userData.noDrape = true; }); q.position.y += P.liftAt(q.position.x, q.position.z); }
-        sh.L.drape(m); }
+        sh.L.drape(m, 1.1); }
       if (m.userData.glow) P.glows.push(m.userData.glow); if (m.userData.subGlows) P.glows.push(...m.userData.subGlows);
       P.subs = m.userData.subs || {}; for (const n in P.subs) P.subs[n].userData.base = P.subs[n].position.clone();
       P.parts = { main: m.userData.main || null, flat: m.userData.flat || null, glow: m.userData.glow || null, lit: m.userData.lit || null, neon: m.children.find((c) => c.name === 'neon') || null };
@@ -437,7 +437,8 @@
       // ruộng, nhà kính là chỗ mềm (soft): người làm ruộng vào được, người khác đi vòng. Lớp đường của làng: cột đèn, gốc cây, chân
       // vòm dọc phố (P.marks)
       for (const P of [...sh.pieces, ...sh.standing]) { if (!P.g.visible || P.gone || P.dead) continue; const a = P.g.rotation.y, c = Math.cos(a), sn = Math.sin(a);
-        if (P.spec.town) { for (const [mx, mz, r] of P.marks || []) out.solids.push({ x: P.x + mx * c + mz * sn, z: P.z - mx * sn + mz * c, c, s: sn, x0: -r, x1: r, z0: -r, z1: r, kind: 'town' }); continue; }
+        // (cột mảnh dọc phố: lề nhỏ m, vỉa hè vẫn đi được)
+        if (P.spec.town) { for (const [mx, mz, r] of P.marks || []) out.solids.push({ x: P.x + mx * c + mz * sn, z: P.z - mx * sn + mz * c, c, s: sn, x0: -r, x1: r, z0: -r, z1: r, kind: 'town', m: 0.08 }); continue; }
         if (!P.box || P.spec.gate || P.outer === 'sea' || P.kind === 'dock') continue; const soft = FIELD.has(P.kind); if (P.box.h < (soft ? 0.3 : 0.6)) continue;
         out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft }); }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)

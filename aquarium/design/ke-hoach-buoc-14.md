@@ -75,3 +75,20 @@ giàn giáo. (3) Thêm nhiều kiến trúc lạ cho sáu đảo qua 12 thời, 
 - Đá, đồi dựng sẵn của bản đồ không theo nền công trình đổi qua từng thời nếu nằm sát nền (lệch nhỏ).
 - Các bug trận đánh người chơi báo (cổng đã vỡ vẫn bị bắn, xe xuyên cầu và xuyên lính, pháo plasma không có đạn, xe phải chậm
   hơn lính) chưa sửa trong bước này.
+
+## 7. Người không đi xuyên nhà, không chìm dưới mặt sân (người chơi báo: Đá Mây thời cuối, Cửa Sóng, người đứng đầu)
+
+- Nguyên nhân 1 (chìm dưới "lớp phủ"): sân làng là tấm phẳng; nền nhà quanh sân lấy độ cao riêng nên làm lõm mặt đất dưới sân,
+  chỗ có đường thì nền không phủ tới. Sửa: nền của sân dựng sau cùng, phẳng một độ cao; nền mọi công trình phủ cả chỗ có đường,
+  lấy độ cao đất lúc đó; nền theo khung chân thật của công trình (cả bệ nhà chính rộng). Lớp đường chia nhỏ tam giác trước khi
+  phủ theo đất, mặt đường không nổi trên dốc.
+- Nguyên nhân 2 (đi xuyên nhà chính): chỗ "trước nhà chính" cố định cách tâm 6, nhà chính các thời sau to hơn; người đi thẳng
+  từ chỗ này sang chỗ khác không hề tránh nhà. Sửa: chỗ trước nhà chính, cửa nhà, chốt gác cổng tính theo mặt tiền thật
+  (render/buildings3d.js P.box); places().solids là khung chân mọi công trình tới tầm người (2,2), cột đèn, gốc cây dọc phố;
+  render/nav3d.js: đích trong khung thì ra mép (không đẩy sang nhà bên cạnh), đường thẳng vướng khung thì tìm đường trên lưới ô
+  0,5 (A*), ai lỡ ở trong thì bước dần ra. Ruộng, nhà kính là chỗ mềm: người làm ruộng vào được.
+- Đo: tools/check-walk.js (6 đảo × 12 thời, chiếu từ ngang ngực xuống chân, mặt công trình hay sân cắt qua người từ 0,45 trở
+  lên là đi xuyên). Trước khi sửa: khoảng 600 lượt, người đứng đầu 41 lượt (2 thời 2 đảo). Sau: 18 lượt cả 12 thời, người đứng
+  đầu 0. Còn lại: xe trên đường làng lướt qua người (khoảng một nửa), vài lượt người đi sát góc nhà hay công trình vừa khởi công
+  ngay chỗ người đứng.
+- tools/bug-hunt.js dân thời 6: bước tại chỗ 0, kẹt thật 13 (trước khi có việc đi vòng: 5–8).
