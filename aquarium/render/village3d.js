@@ -348,7 +348,11 @@
       if (!base) return null;
       // (nhớ kết quả né lòng đường theo chỗ đến, khỏi tính lại mỗi khung hình: design/ke-hoach-khac-phuc.md mục 1.3)
       const oc = f.oc; if (oc && oc.x === base.x && oc.z === base.z && oc.t === tight && oc.j === f.jit.x) return { p: oc.p.clone(), face: null };
-      const q = Nav.offCarriage(tight ? base.clone().addScaledVector(f.jit, 0.15) : base.clone().add(f.jit));
+      // (chỗ riêng của từng người quanh chỗ chung: rơi vào trong nhà thì xoay sang hướng khác quanh chỗ chung, không dồn cả đám
+      // lên cùng một mép tường rồi đứng chồng lên nhau)
+      let jv = tight ? f.jit.clone().multiplyScalar(0.15) : f.jit.clone();
+      if (!tight) for (let r = 0; r < 4; r++) { const t = base.clone().add(jv), c = Nav.clearPt(t); if (c === t) break; jv.set(-jv.z, 0, jv.x); }
+      const q = Nav.offCarriage(base.clone().add(jv));
       f.oc = { x: base.x, z: base.z, t: tight, j: f.jit.x, p: q.clone() };
       return { p: q, face: null };
     }
@@ -484,7 +488,7 @@
           if (!g) break;
           // không đi xuyên nhà (render/nav3d.js): đích trong chân công trình thì ra trước mép; đường thẳng cắt qua nhà thì đi vòng góc nhà
           const farm = mind.verb === 'farm' || aim.place === 'field' || aim.place === 'farmOut'; // (người làm ruộng vào được ruộng, nhà kính)
-          if (!g.bridge && !f.onDeck) { const cp = Nav.clearPt(g.p, farm); if (cp !== g.p) g = Object.assign({}, g, { p: cp }); const dv = Nav.detour(f.pos, g.p, farm); if (dv) g = { p: dv, face: null }; }
+          if (!g.bridge && !f.onDeck) { const cp = Nav.clearPt(g.p, farm); if (cp !== g.p) g = Object.assign({}, g, { p: cp }); const dv = Nav.detour(f.pos, g.p, farm, f); if (dv) g = { p: dv, face: null }; }
           _v.copy(g.p).sub(f.pos); _v.y = 0;
           const d = _v.length(), run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           // ra trận mà đích còn xa (chạy từ nhà ra cổng, đuổi theo dân chạy nạn sang phía kia đảo): chạy nước rút, tới kịp lúc logic

@@ -8,7 +8,7 @@
  *   strollGoal(f)      đi dạo dọc phố; hallGoal(f): đi dạo vòng quanh nhà chính
  *   reset()            chỗ trên đảo đổi (sang thời): dựng lại mạng lối đi
  *   clearPt(v, farm)   chỗ đứng rơi vào trong chân một công trình thì ra ngoài mép (places().solids, render/buildings3d.js)
- *   detour(from, to)   đường thẳng tới đích cắt qua một công trình: góc nhà để đi vòng qua (null: không vướng)
+ *   detour(from, to)   đường thẳng tới đích vướng công trình: điểm kế tiếp trên đường đi vòng (lưới ô, A*; null: không vướng)
  *   pushOut(pos, max)  người lỡ ở trong chân công trình (công trình vừa khởi công chỗ người đứng): bước dần ra ngoài
  * o: { THREE, L (đảo), level() (thời đang vẽ), places() (chỗ của công trình, render/buildings3d.js places) }.
  * Cần: three.js, render/build/roads.js, render/build/plains/town.js (ROAD_W, WALKS). */
@@ -132,10 +132,9 @@
     }
     /* ---------- Không đi xuyên nhà (design/ke-hoach-buoc-14.md mục 7) ----------
      * Mỗi công trình đang đứng là một khung chữ nhật theo trục của nó (places().solids). Đích nằm trong khung thì dời ra mép gần
-     * nhất; đường thẳng tới đích cắt qua khung thì đi tới góc khung (góc nào tổng đường ngắn nhất mà nhìn thấy được) rồi đi tiếp;
-     * ai lỡ ở trong khung thì bước dần ra (không nhảy chỗ). PUSH < SEG < CORNER để đi dọc mép khung không bị coi là cắt qua. */
-    // lề quanh khung: nhà 0,35 (B.m: cột đèn, gốc cây dọc phố thì lề nhỏ hơn); đi dọc mép xa hơn chút (SEG), góc đi vòng xa hơn nữa
-    const PUSH = 0.35, mOf = (B) => (B.m != null ? B.m : PUSH), SEG = (B) => mOf(B) + 0.15, CORNER = (B) => mOf(B) + 0.5;
+     * nhất (không đẩy sang nhà bên cạnh); đường thẳng tới đích vướng khung thì đi vòng theo lưới ô (detour); ai lỡ ở trong khung
+     * thì bước dần ra (không nhảy chỗ). Lề quanh khung: nhà 0,35; cột đèn, gốc cây dọc phố (B.m) lề nhỏ. */
+    const PUSH = 0.35, mOf = (B) => (B.m != null ? B.m : PUSH);
     // farm: người làm ruộng (vào được chỗ mềm: ruộng, nhà kính)
     // (BK.NAV_SOLIDS = false: tắt, để so khi đo)
     const solids = (farm) => { const PL = o.places(), all = (PL && PL.solids && BK.NAV_SOLIDS !== false && PL.solids) || []; return farm ? all.filter((B) => !B.soft) : all; };
@@ -160,21 +159,56 @@
       return p;
     }
     function pushOut(pos, max, farm) { const e = exitOf(pos.x, pos.z, farm); if (!e) return; const dx = e.x - pos.x, dz = e.z - pos.z, d = Math.hypot(dx, dz) || 1, k = Math.min(1, max / d); pos.x += dx * k; pos.z += dz * k; }
-    // đoạn thẳng a→b (toạ độ khung) có cắt khung nới m không (Liang–Barsky)
-    function cuts(B, a, b, m) { let t0 = 0, t1 = 1; const dx = b[0] - a[0], dz = b[1] - a[1];
-      for (const [p, q] of [[-dx, a[0] - (B.x0 - m)], [dx, B.x1 + m - a[0]], [-dz, a[1] - (B.z0 - m)], [dz, B.z1 + m - a[1]]]) { if (Math.abs(p) < 1e-9) { if (q < 0) return false; continue; } const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } }
-      return t1 - t0 > 1e-4; }
-    // (đứng sát mép, trong lề PUSH: vẫn đi vòng; chỉ người đã ở hẳn trong khung thì để pushOut đưa ra)
-    function detour(from, to, farm) {
-      let best = null, bt = 1e9;
-      for (const B of solids(farm)) { const a = toL(B, from.x, from.z), b = toL(B, to.x, to.z); if (!cuts(B, a, b, SEG(B)) || inside(B, from.x, from.z, 0)) continue; const t = Math.hypot(B.x - from.x, B.z - from.z); if (t < bt) { bt = t; best = [B, a, b]; } }
-      if (!best) return null;
-      const [B, a, b] = best; let pick = null, pd = 1e9;
-      const K = CORNER(B); for (const [cx, cz] of [[B.x0 - K, B.z0 - K], [B.x1 + K, B.z0 - K], [B.x1 + K, B.z1 + K], [B.x0 - K, B.z1 + K]]) {
-        const d0 = Math.hypot(cx - a[0], cz - a[1]); if (d0 < 0.3 || cuts(B, a, [cx, cz], SEG(B))) continue; // (góc đang đứng, góc phải đi xuyên khung mới tới: bỏ)
-        const w = toW(B, cx, cz), blocked = solids(farm).some((C) => C !== B && inside(C, w.x, w.z, mOf(C))); // (góc nằm trong nhà bên cạnh: chỉ đi khi không còn góc nào khác)
-        const d = d0 + Math.hypot(b[0] - cx, b[1] - cz) + (cuts(B, [cx, cz], b, SEG(B)) ? 2 * K : 0) + (blocked ? 50 : 0); if (d < pd) { pd = d; pick = [cx, cz]; } }
-      return pick ? toW(B, pick[0], pick[1], to.y) : null;
+    /* Đi vòng bằng lưới ô (0,5 đơn vị): ô bị chiếm là ô nằm trong lề của một khung. Đường thẳng tới đích vướng ô bị chiếm thì tìm
+     * đường ngắn nhất trên lưới (A*, tám hướng), rồi kéo thẳng (bỏ các điểm giữa nhìn thấy nhau được), đi lần lượt từng điểm.
+     * Hai nhà đứng sát nhau mà khe hẹp quá thì coi như liền một khối: người đi vòng ra ngoài, không chen vào khe rồi kẹt. Lưới dựng
+     * lại khi danh sách khung đổi (công trình mới dựng, sang thời). */
+    const CELL = 0.5, HALF_G = 76, NG = Math.ceil((2 * HALF_G) / CELL), grids = [null, null];
+    const cellOf = (v) => Math.floor((v + HALF_G) / CELL), centerOf = (i) => (i + 0.5) * CELL - HALF_G;
+    function gridOf(farm) {
+      const list = solids(farm); let h = list.length; for (const B of list) h += B.x * 3.1 + B.z * 7.3 + (B.x1 - B.x0) * 1.7 + (B.z1 - B.z0) * 0.9 + B.c;
+      const key = list.length + ':' + h.toFixed(3), G = grids[farm ? 1 : 0]; if (G && G.key === key) return G;
+      const g = new Uint8Array(NG * NG);
+      for (const B of list) { const m = mOf(B) + 0.1, cs = [[B.x0 - m, B.z0 - m], [B.x1 + m, B.z0 - m], [B.x1 + m, B.z1 + m], [B.x0 - m, B.z1 + m]].map(([lx, lz]) => toW(B, lx, lz));
+        const i0 = Math.max(0, cellOf(Math.min(...cs.map((q) => q.x)))), i1 = Math.min(NG - 1, cellOf(Math.max(...cs.map((q) => q.x)))), j0 = Math.max(0, cellOf(Math.min(...cs.map((q) => q.z)))), j1 = Math.min(NG - 1, cellOf(Math.max(...cs.map((q) => q.z))));
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (inside(B, centerOf(i), centerOf(j), m)) g[j * NG + i] = 1; }
+      return (grids[farm ? 1 : 0] = { key, g });
+    }
+    const blockedAt = (G, x, z) => { const i = cellOf(x), j = cellOf(z); return i >= 0 && j >= 0 && i < NG && j < NG && G.g[j * NG + i] === 1; };
+    // đi thẳng từ a tới b không vướng ô bị chiếm (bỏ qua đoạn đầu khi a đang đứng sát mép, trong lề)
+    function clearLine(G, a, b) { const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.25), s0 = blockedAt(G, a.x, a.z); for (let k = 1; k <= n; k++) { const u = k / n; if (s0 && u * d < 0.6) continue; if (blockedAt(G, a.x + (b.x - a.x) * u, a.z + (b.z - a.z) * u)) return false; } return true; }
+    function aStar(G, from, to) {
+      const si = cellOf(from.x), sj = cellOf(from.z); let gi = cellOf(to.x), gj = cellOf(to.z);
+      if (G.g[gj * NG + gi]) { let best = null, bd = 1e9; for (let r = 1; r < 8 && !best; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { const i = gi + di, j = gj + dj; if (i < 0 || j < 0 || i >= NG || j >= NG || G.g[j * NG + i]) continue; const d = di * di + dj * dj; if (d < bd) { bd = d; best = [i, j]; } } if (!best) return null; [gi, gj] = best; }
+      const N = NG * NG, cost = new Float32Array(N).fill(1e9), prev = new Int32Array(N).fill(-1), heap = [], start = sj * NG + si, goal = gj * NG + gi;
+      const push = (k, f) => { heap.push([f, k]); let c = heap.length - 1; while (c) { const p2 = (c - 1) >> 1; if (heap[p2][0] <= heap[c][0]) break; [heap[p2], heap[c]] = [heap[c], heap[p2]]; c = p2; } };
+      const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { const l = 2 * c + 1, r = l + 1; let m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
+      const hOf = (k) => Math.hypot((k % NG) - gi, Math.floor(k / NG) - gj);
+      cost[start] = 0; push(start, hOf(start)); let it = 0;
+      while (heap.length && it++ < 60000) { const [, k] = pop(); if (k === goal) break; const i = k % NG, j = Math.floor(k / NG);
+        for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= NG || nj >= NG) continue; const nk = nj * NG + ni; if (G.g[nk] && nk !== goal) continue;
+          if (di && dj && (G.g[j * NG + ni] || G.g[nj * NG + i])) continue; // (không lách chéo qua góc hai ô bị chiếm)
+          const c = cost[k] + (di && dj ? 1.414 : 1); if (c < cost[nk]) { cost[nk] = c; prev[nk] = k; push(nk, c + hOf(nk)); } } }
+      if (prev[goal] < 0 && goal !== start) return null;
+      const cells = []; for (let k = goal; k >= 0 && k !== start; k = prev[k]) cells.push(new THREE.Vector3(centerOf(k % NG), 0, centerOf(Math.floor(k / NG))));
+      cells.reverse(); cells.push(to.clone());
+      // kéo thẳng: từ chỗ đang đứng, đi thẳng tới điểm xa nhất còn nhìn thấy được
+      const out = []; let cur = from, i = 0; while (i < cells.length && out.length < 40) { let j = cells.length - 1; while (j > i && !clearLine(G, cur, cells[j])) j--; out.push(cells[j]); cur = cells[j]; i = j + 1; }
+      return out;
+    }
+    // mem (người đang đi): giữ đường đã tìm tới khi tới nơi hay đích đổi; null: đi thẳng được
+    function detour(from, to, farm, mem) {
+      const G = gridOf(farm);
+      if (mem && mem.path && mem.pathTo.distanceToSquared(to) < 1 && mem.pathKey === G.key) {
+        while (mem.pi < mem.path.length - 1 && Math.hypot(mem.path[mem.pi].x - from.x, mem.path[mem.pi].z - from.z) < 0.45) mem.pi++;
+        if (clearLine(G, from, to)) { mem.path = null; return null; }
+        return mem.path[mem.pi];
+      }
+      if (mem) mem.path = null;
+      if (clearLine(G, from, to)) return null;
+      const path = aStar(G, from, to); if (!path || !path.length) return null;
+      if (mem) { mem.path = path; mem.pi = 0; mem.pathTo = to.clone(); mem.pathKey = G.key; }
+      return path[0];
     }
     const reset = () => { NAV = null; };
     return { routeTo, follow, offCarriage, keepInside, strollGoal, hallGoal, reset, clearPt, detour, pushOut, net: NET };
