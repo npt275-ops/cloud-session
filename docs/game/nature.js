@@ -8,13 +8,38 @@
   function setup(G) {
     const { THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, audio } = G;
     const noop = () => {};
-    const lands3d = Lands3D.create({ THREE, scene, Sim, W, hash, C, clamp, lerp, reduce, glowTex, puff, clickable: noop, unclickable: noop });
+    const lands3d = Lands3D.create({
+      THREE,
+      scene,
+      Sim,
+      W,
+      hash,
+      C,
+      clamp,
+      lerp,
+      reduce,
+      glowTex,
+      puff,
+      clickable: noop,
+      unclickable: noop,
+    });
     const bridges3d = BK.Bridges3D.create({ scene, lands3d });
     const sea3d = Sea3D.create({ THREE, scene, lands3d, C, clamp, reduce });
     const deep3d = BK.Deep3D.create({ THREE, scene, lands3d, sea3d, clamp, reduce, glowTex }); // đáy bể: núi chìm, rãnh, phế tích
-    const clouds3d = Clouds3D.create({ THREE, scene, lands3d, dome: G.DOME, reduce, glowTex, audio,
-      flash: (k) => { G.weather.lightFlash = Math.max(G.weather.lightFlash, k); },
-      dayOfYear: () => ((W.day % 360) + 360) % 360, speed: () => G.time.tps / 0.75 });
+    const clouds3d = Clouds3D.create({
+      THREE,
+      scene,
+      lands3d,
+      dome: G.DOME,
+      reduce,
+      glowTex,
+      audio,
+      flash: (k) => {
+        G.weather.lightFlash = Math.max(G.weather.lightFlash, k);
+      },
+      dayOfYear: () => ((W.day % 360) + 360) % 360,
+      speed: () => G.time.tps / 0.75,
+    });
     // mỗi khung hình: mặt nước, cầu, biển, mây; trời sầm lại theo giông, chớp tắt dần
     function animate(dt, t, night) {
       lands3d.animate(dt, t, night, G.camera.position);

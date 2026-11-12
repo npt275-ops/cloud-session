@@ -48,21 +48,24 @@
 
   /* ---------- Hệ số lai tạo (sửa ở đây để đổi nhịp di truyền) ---------- */
   const TUNE = {
-    drift: 0.06,          // độ lệch thường của con so với trung bình cha mẹ
-    mutateChance: 0.05,   // xác suất một gen bị đột biến
-    mutateMin: 0.15, mutateMax: 0.35,
-    habitNew: 0.05,       // xác suất ra một thói quen mới
-    rareNew: 0.03,        // xác suất con mang một gen hiếm mới
-    rareKeep: 0.2,        // xác suất con giữ gen hiếm của cha hay mẹ
+    drift: 0.06, // độ lệch thường của con so với trung bình cha mẹ
+    mutateChance: 0.05, // xác suất một gen bị đột biến
+    mutateMin: 0.15,
+    mutateMax: 0.35,
+    habitNew: 0.05, // xác suất ra một thói quen mới
+    rareNew: 0.03, // xác suất con mang một gen hiếm mới
+    rareKeep: 0.2, // xác suất con giữ gen hiếm của cha hay mẹ
   };
 
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
-  const KEYS = TRAITS.map((t) => t.key), GKEYS = GAIT.map((g) => g.key);
+  const KEYS = TRAITS.map((t) => t.key),
+    GKEYS = GAIT.map((g) => g.key);
 
   /* ---------- Bộ gen ngẫu nhiên cho người đầu tiên hay người dân thường ---------- */
   // bias: nét chung của đảo, ví dụ { aggression: -0.1 } cho một đảo hiền
   function random(rng, bias) {
-    const traits = {}, gait = {};
+    const traits = {},
+      gait = {};
     for (const k of KEYS) traits[k] = clamp01(0.5 + rng.gauss() * 0.2 + ((bias && bias[k]) || 0));
     for (const k of GKEYS) gait[k] = clamp01(0.5 + rng.gauss() * 0.22);
     const g = { traits, gait, habit: rng.pick(HABITS).key, rare: null, mutations: [] };
@@ -70,7 +73,8 @@
     return g;
   }
   function giveRare(g, key) {
-    const R = RARE.find((r) => r.key === key); if (!R) return;
+    const R = RARE.find((r) => r.key === key);
+    if (!R) return;
     g.rare = key;
     for (const k in R.push) g.traits[k] = clamp01(g.traits[k] + R.push[k]);
   }
@@ -79,18 +83,28 @@
   // o.mutate: nhân tỉ lệ đột biến (con sinh ra lúc đảo đang khổ, logic/epigen.js mutateBoost)
   function cross(a, b, rng, o) {
     const mutate = TUNE.mutateChance * ((o && o.mutate) || 1);
-    const traits = {}, gait = {}, mutations = [];
+    const traits = {},
+      gait = {},
+      mutations = [];
     // Bước 1, lai chéo: trung bình cha mẹ cộng một chút lệch
     // Bước 2, đột biến: hiếm khi một gen lệch hẳn đi (cha mẹ hiền vẫn có thể sinh con rất hiếu chiến)
     for (const k of KEYS) {
       let v = (a.traits[k] + b.traits[k]) / 2 + rng.gauss() * TUNE.drift;
-      if (rng.chance(mutate)) { const d = rng.range(TUNE.mutateMin, TUNE.mutateMax) * (rng.chance(0.5) ? 1 : -1); v += d; mutations.push({ key: k, delta: +d.toFixed(2) }); }
+      if (rng.chance(mutate)) {
+        const d = rng.range(TUNE.mutateMin, TUNE.mutateMax) * (rng.chance(0.5) ? 1 : -1);
+        v += d;
+        mutations.push({ key: k, delta: +d.toFixed(2) });
+      }
       traits[k] = clamp01(v);
     }
     for (const k of GKEYS) gait[k] = clamp01((a.gait[k] + b.gait[k]) / 2 + rng.gauss() * TUNE.drift);
     // Bước 3, thừa hưởng cử chỉ: thói quen của cha hoặc mẹ, hiếm khi một thói quen mới
-    let habit = rng.chance(0.5) ? a.habit : b.habit, habitFrom = habit === a.habit ? 'a' : 'b';
-    if (rng.chance(TUNE.habitNew)) { habit = rng.pick(HABITS).key; habitFrom = 'new'; }
+    let habit = rng.chance(0.5) ? a.habit : b.habit,
+      habitFrom = habit === a.habit ? 'a' : 'b';
+    if (rng.chance(TUNE.habitNew)) {
+      habit = rng.pick(HABITS).key;
+      habitFrom = 'new';
+    }
     const child = { traits, gait, habit, habitFrom, rare: null, mutations };
     // gen hiếm: giữ của cha mẹ hoặc mới nảy ra
     const parentRare = [a.rare, b.rare].filter(Boolean);
@@ -101,12 +115,21 @@
 
   /* ---------- Tiện ích ---------- */
   // khác biệt trung bình giữa hai bộ gen tính cách (0 giống hệt, 1 trái ngược)
-  function distance(a, b) { let s = 0; for (const k of KEYS) s += Math.abs(a.traits[k] - b.traits[k]); return s / KEYS.length; }
+  function distance(a, b) {
+    let s = 0;
+    for (const k of KEYS) s += Math.abs(a.traits[k] - b.traits[k]);
+    return s / KEYS.length;
+  }
   const traitName = (k) => (TRAITS.find((t) => t.key === k) || {}).name || k;
   const habitName = (k) => (HABITS.find((h) => h.key === k) || {}).name || k;
   const rareName = (k) => (RARE.find((r) => r.key === k) || {}).name || '';
   // nét nổi nhất của một người: hai gen cao nhất, để viết nhật ký và thẻ người
-  function standout(g) { return KEYS.map((k) => [k, g.traits[k]]).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([k]) => traitName(k)); }
+  function standout(g) {
+    return KEYS.map((k) => [k, g.traits[k]])
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 2)
+      .map(([k]) => traitName(k));
+  }
 
   return { TRAITS, GAIT, HABITS, RARE, TUNE, KEYS, GKEYS, random, cross, distance, traitName, habitName, rareName, standout, clamp01 };
 });

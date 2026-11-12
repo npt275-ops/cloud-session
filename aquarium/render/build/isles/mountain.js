@@ -6,14 +6,18 @@
 (function (root) {
   const R = (home, homeName, hall, hallName, wonder, wonderName) => ({ home, homeName, hall, hallName, wonder: [wonder, wonderName] });
   root.BK.IslesCompose.define({
-    key: 'mountain', name: 'Đá Mây', accent: '#7a8aa8', yard: ['#9a9488', '#b8bcc4'],
+    key: 'mountain',
+    name: 'Đá Mây',
+    accent: '#7a8aa8',
+    yard: ['#9a9488', '#b8bcc4'],
     pal: [
       { a: '#9a9080', b: '#6d6359', c: '#b8582e', d: '#3a3430', g: '#ffb04a', w: '#ffd89a' },
       { a: '#b0a796', b: '#5a5a66', c: '#8a3e2a', d: '#33302c', g: '#ffd27a', w: '#ffe0a0' },
       { a: '#c8ccd4', b: '#5a6478', c: '#3f7fb8', d: '#2a2e38', g: '#bfe3ff', w: '#e8f4ff' },
-      { a: '#e0e6f2', b: '#8a98c0', c: '#b8c8ff', d: '#2e3450', g: '#d8e8ff', w: '#f0f6ff' }
+      { a: '#e0e6f2', b: '#8a98c0', c: '#b8c8ff', d: '#2e3450', g: '#d8e8ff', w: '#f0f6ff' },
     ],
-    eras: [null,
+    eras: [
+      null,
       R('tent', 'Lều da', 'cave', 'Hang Tổ Tiên', 1, 'Vòng Đá Đỉnh Núi'),
       R('dome', 'Nhà vòm đá', 'stoneHut', 'Nhà Đá Tròn Núi', 'obelisk', 'Cột Đá Khắc'),
       R('cliff', 'Nhà đá bám vách', 'keep', 'Thành Đá', 'monastery', 'Tu Viện Vách Đá'),

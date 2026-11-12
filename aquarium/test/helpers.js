@@ -4,15 +4,30 @@
 // đường trước.
 'use strict';
 function road(W, a, b) {
-  const BK = globalThis.BK, D = BK.Diplomacy, path = [a, ...D.path(a, b), b];
-  for (let k = 1; k < path.length; k++) { const x = path[k - 1], y = path[k]; if (!D.bridged(W, x, y)) { const [p, q] = y === (x + 1) % D.N ? [x, y] : [y, x]; // (đầu a: đảo đứng trước theo vòng)
-      W.bridges.push({ a: p, b: q, era: Math.max(3, W.islands[x].level), day: W.day || 0 }); } }
+  const BK = globalThis.BK,
+    D = BK.Diplomacy,
+    path = [a, ...D.path(a, b), b];
+  for (let k = 1; k < path.length; k++) {
+    const x = path[k - 1],
+      y = path[k];
+    if (!D.bridged(W, x, y)) {
+      const [p, q] = y === (x + 1) % D.N ? [x, y] : [y, x]; // (đầu a: đảo đứng trước theo vòng)
+      W.bridges.push({ a: p, b: q, era: Math.max(3, W.islands[x].level), day: W.day || 0 });
+    }
+  }
   for (const c of path.slice(1, -1)) if (!D.treatyOf(W, a, c, W.day)) D.sign(W, W.day, a, c, 'pact', 1e6);
   return path;
 }
 // (bên giữ không phá cầu lúc nghe tin: kiểm thử về trận đánh cần trận diễn ra; phá cầu có kiểm thử riêng, test/bridges.test.js)
 function launch(W, day, a, b, kind, share, rng, surprise) {
-  const S = globalThis.BK.Strategy, on = S.onAttacked; road(W, a, b); S.onAttacked = () => false;
-  try { return globalThis.BK.War.launch(W, day, a, b, kind, share, rng, surprise); } finally { S.onAttacked = on; }
+  const S = globalThis.BK.Strategy,
+    on = S.onAttacked;
+  road(W, a, b);
+  S.onAttacked = () => false;
+  try {
+    return globalThis.BK.War.launch(W, day, a, b, kind, share, rng, surprise);
+  } finally {
+    S.onAttacked = on;
+  }
 }
 module.exports = { road, launch };

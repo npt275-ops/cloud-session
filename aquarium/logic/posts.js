@@ -16,13 +16,57 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.Posts;
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
-  const guardScore = (t) => (1 - t.fear) * 0.45 + t.paranoia * 0.25 + (1 - t.meekness) * 0.2 + (1 - t.aggression) * 0.1; // gan dạ, hay để ý, vững vàng (người nóng nảy để lại cho đời thường)
+  // gan dạ, hay để ý, vững vàng (người nóng nảy để lại cho đời thường)
+  const guardScore = (t) => (1 - t.fear) * 0.45 + t.paranoia * 0.25 + (1 - t.meekness) * 0.2 + (1 - t.aggression) * 0.1;
   const POSTS = [
-    { key: 'gateMain', name: 'Lính gác cổng chính', count: () => BK.Rules.GATEKEEPERS, open: (S, adults) => S.level >= 2 && adults >= 14, job: 'gatekeeper', place: 'gate', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng thành chính' },
-    { key: 'gateLeft', name: 'Lính gác cổng phụ trái', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateL', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên trái' },
-    { key: 'gateRight', name: 'Lính gác cổng phụ phải', count: () => BK.Rules.SIDE_GUARDS, open: (S, adults) => S.level >= 2 && adults >= 24, job: 'sideguard', place: 'gateR', verb: 'guard', night: true, score: guardScore, why: 'canh gác cổng phụ bên phải' },
-    { key: 'orator', name: 'Người diễn thuyết', count: () => BK.Rules.ORATORS, open: (S, adults) => adults >= 18, job: 'orator', place: 'podium', verb: 'rule',
-        night: false, score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1, why: 'diễn thuyết trước dân' },
+    {
+      key: 'gateMain',
+      name: 'Lính gác cổng chính',
+      count: () => BK.Rules.GATEKEEPERS,
+      open: (S, adults) => S.level >= 2 && adults >= 14,
+      job: 'gatekeeper',
+      place: 'gate',
+      verb: 'guard',
+      night: true,
+      score: guardScore,
+      why: 'canh gác cổng thành chính',
+    },
+    {
+      key: 'gateLeft',
+      name: 'Lính gác cổng phụ trái',
+      count: () => BK.Rules.SIDE_GUARDS,
+      open: (S, adults) => S.level >= 2 && adults >= 24,
+      job: 'sideguard',
+      place: 'gateL',
+      verb: 'guard',
+      night: true,
+      score: guardScore,
+      why: 'canh gác cổng phụ bên trái',
+    },
+    {
+      key: 'gateRight',
+      name: 'Lính gác cổng phụ phải',
+      count: () => BK.Rules.SIDE_GUARDS,
+      open: (S, adults) => S.level >= 2 && adults >= 24,
+      job: 'sideguard',
+      place: 'gateR',
+      verb: 'guard',
+      night: true,
+      score: guardScore,
+      why: 'canh gác cổng phụ bên phải',
+    },
+    {
+      key: 'orator',
+      name: 'Người diễn thuyết',
+      count: () => BK.Rules.ORATORS,
+      open: (S, adults) => adults >= 18,
+      job: 'orator',
+      place: 'podium',
+      verb: 'rule',
+      night: false,
+      score: (t) => t.cunning * 0.35 + t.ambition * 0.35 + (1 - t.fear) * 0.2 + (1 - t.meekness) * 0.1,
+      why: 'diễn thuyết trước dân',
+    },
   ];
   const BY_KEY = Object.fromEntries(POSTS.map((X) => [X.key, X]));
   // gán chốt từ những người còn trống (pool: người lớn không ngồi hội đồng); trả lại pool đã bớt người
@@ -32,20 +76,41 @@
     S.postsOpen = []; // những chốt đang mở (bảng dev, bài kiểm tra)
     for (const X of POSTS) {
       if (!X.open(S, adults)) continue; // chốt chưa mở: chưa có tường thành (thời 2), làng còn nhỏ thì người lớn lo làm ăn trước
-      const n = X.count(); S.postsOpen.push(X.key);
+      const n = X.count();
+      S.postsOpen.push(X.key);
       const src = elders ? pool.concat(elders.filter((p) => p.job === 'elder')) : pool;
       // người đang giữ chốt mà còn trong pool: giữ nguyên
       const keep = src.filter((p) => p.postKey === X.key && p.post != null && p.post < n).sort((a, b) => a.post - b.post);
-      const used = new Set(); const kept = [];
-      for (const p of keep) { if (used.has(p.post)) continue; used.add(p.post); kept.push(p); }
-      const take = (p) => { const i = pool.indexOf(p); if (i >= 0) pool.splice(i, 1); };
-      for (const p of kept) { p.job = X.job; take(p); }
+      const used = new Set();
+      const kept = [];
+      for (const p of keep) {
+        if (used.has(p.post)) continue;
+        used.add(p.post);
+        kept.push(p);
+      }
+      const take = (p) => {
+        const i = pool.indexOf(p);
+        if (i >= 0) pool.splice(i, 1);
+      };
+      for (const p of kept) {
+        p.job = X.job;
+        take(p);
+      }
       // chốt còn trống: người hợp nhất (và chưa giữ chốt khác); thiếu người lớn thì (chốt nhận người già) lấy người già
-      const cand = src.filter((p) => !kept.includes(p) && (pool.includes(p) || p.job === 'elder')).sort((a, b) => (pool.includes(b) ? 1 : 0) - (pool.includes(a) ? 1 : 0) || X.score(BK.People.traits(b)) - X.score(BK.People.traits(a)));
+      const cand = src
+        .filter((p) => !kept.includes(p) && (pool.includes(p) || p.job === 'elder'))
+        .sort(
+          (a, b) => (pool.includes(b) ? 1 : 0) - (pool.includes(a) ? 1 : 0) || X.score(BK.People.traits(b)) - X.score(BK.People.traits(a)),
+        );
       for (let k = 0; k < n; k++) {
         if (used.has(k)) continue;
-        const p = cand.shift(); if (!p) break;
-        p.job = X.job; p.postKey = X.key; p.post = k; used.add(k); take(p);
+        const p = cand.shift();
+        if (!p) break;
+        p.job = X.job;
+        p.postKey = X.key;
+        p.post = k;
+        used.add(k);
+        take(p);
       }
     }
     return pool;

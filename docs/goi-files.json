@@ -470,6 +470,26 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/deep/kit3d.js",
+  "src": "render/deep/kit3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/deep/ruins3d.js",
+  "src": "render/deep/ruins3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/deep/terrain3d.js",
+  "src": "render/deep/terrain3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/deep/tunnels3d.js",
+  "src": "render/deep/tunnels3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/deep3d.js",
   "src": "render/deep3d.js",
   "mode": 420

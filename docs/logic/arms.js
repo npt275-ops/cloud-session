@@ -17,7 +17,8 @@
   'use strict';
   // theo thời (1..12): vũ khí cận chiến, bắn xa (tên, phần người bắn, sức), máy công thành, đặc biệt
   const K = (melee, ranged, share, pow, engine, o) => Object.assign({ melee, ranged, share, pow, engine }, o || {});
-  const KIT = [null,
+  const KIT = [
+    null,
     K('spear', 'sling', 0.25, 0.5, null),
     K('spear', 'bow', 0.35, 0.7, null),
     K('sword', 'crossbow', 0.4, 0.85, 'catapult', { fire: true }),
@@ -40,17 +41,31 @@
     drone: { name: 'drone', gate: 0.5, kill: 1.0, cost: { metal: 40, energy: 60 } },
     plasma: { name: 'pháo plasma', gate: 1.0, kill: 0.8, cost: { energy: 120 } },
   };
-  const NAME = { sling: 'ná', bow: 'cung', crossbow: 'nỏ', musket: 'súng hoả mai', rifle: 'súng trường', mg: 'súng máy', autorifle: 'súng tự động', shock: 'súng điện', spore: 'súng bào tử', ray: 'súng tia' };
+  const NAME = {
+    sling: 'ná',
+    bow: 'cung',
+    crossbow: 'nỏ',
+    musket: 'súng hoả mai',
+    rifle: 'súng trường',
+    mg: 'súng máy',
+    autorifle: 'súng tự động',
+    shock: 'súng điện',
+    spore: 'súng bào tử',
+    ray: 'súng tia',
+  };
   // tầm bắn (đơn vị của đảo) của từng loại vũ khí bắn xa (design/ke-hoach-buoc-12.md mục 3.3): phần vẽ chỉ cho bắn khi kẻ địch
   // trong tầm, đội hình hai bên đứng cách nhau vừa trong tầm (render/village3d.js)
   const RANGE = { sling: 9, bow: 13, crossbow: 15, musket: 16, rifle: 20, mg: 22, autorifle: 22, shock: 18, spore: 18, ray: 24 };
   const rangeOf = (lv) => RANGE[kit(lv).ranged] || 12;
-  const RANGED_KILL = 0.05;   // mỗi ngày: khả năng một người giữ ngã vì tên đạn khi hai bên ngang sức bắn
-  const WALL_COVER = 1.6;     // người bắn sau tường được che
-  const MAX_ENGINES = 4, PER_ENGINE = 5; // mỗi máy cần chừng này lính trong đạo quân
-  const FIRE = 0.35;          // mỗi ngày: khả năng tên lửa đốt trúng một nhà
-  const LIVING_WALL = 0.3;    // cổng sống tự vá mỗi ngày
-  const P = () => BK.People, G = () => BK.Siege, E = () => BK.Economy;
+  const RANGED_KILL = 0.05; // mỗi ngày: khả năng một người giữ ngã vì tên đạn khi hai bên ngang sức bắn
+  const WALL_COVER = 1.6; // người bắn sau tường được che
+  const MAX_ENGINES = 4,
+    PER_ENGINE = 5; // mỗi máy cần chừng này lính trong đạo quân
+  const FIRE = 0.35; // mỗi ngày: khả năng tên lửa đốt trúng một nhà
+  const LIVING_WALL = 0.3; // cổng sống tự vá mỗi ngày
+  const P = () => BK.People,
+    G = () => BK.Siege,
+    E = () => BK.Economy;
   const kit = (lv) => KIT[Math.max(1, Math.min(12, lv || 1))];
   // người này bắn xa không (theo mã người, cố định suốt trận; dân binh, dân tự nguyện đánh gần)
   // chỉ đánh bằng vũ khí bắn xa (design/chien-tranh-thinh-vuong.md mục 8): lính, dân binh, dân tự nguyện đều cầm vũ khí bắn xa
@@ -60,15 +75,21 @@
   // máy không cần đường bộ (bay): cầu gãy giữa đường vẫn bay theo quân
   const GROUND_FREE = new Set(['drone']);
   // cầu bị phá giữa đường: xe, máy công thành kẹt lại bên này cầu
-  const strand = (w) => { if (w.engines) w.engines = w.engines.filter((e) => GROUND_FREE.has(e.kind)); };
+  const strand = (w) => {
+    if (w.engines) w.engines = w.engines.filter((e) => GROUND_FREE.has(e.kind));
+  };
   /* ---------- Ra quân: chia loại người, dựng máy công thành (tốn tài nguyên) ---------- */
   function equip(W, w) {
-    const A = W.islands[w.a], k = kit(A.level);
+    const A = W.islands[w.a],
+      k = kit(A.level);
     for (const x of w.troops) x.arm = isRanged(x.p, W.islands[x.i].level, x.levy) ? 'ranged' : 'melee';
-    w.kit = A.level; w.engines = [];
-    const E0 = k.engine && ENGINE[k.engine]; if (!E0) return;
+    w.kit = A.level;
+    w.engines = [];
+    const E0 = k.engine && ENGINE[k.engine];
+    if (!E0) return;
     // xe, máy công thành chỉ đi được qua cầu (design/chien-tranh-thinh-vuong.md mục 9); đi thuyền thì chỉ mang được drone
-    const st = E().state(A).stock, want = Math.min(MAX_ENGINES, Math.floor(w.troops.length / PER_ENGINE) * (w.kind === 'raid' ? 0.5 : 1));
+    const st = E().state(A).stock,
+      want = Math.min(MAX_ENGINES, Math.floor(w.troops.length / PER_ENGINE) * (w.kind === 'raid' ? 0.5 : 1));
     for (let n = 0; n < want; n++) {
       if (!Object.keys(E0.cost).every((r) => st[r] >= E0.cost[r] * 2)) break; // không vét sạch kho
       for (const r in E0.cost) st[r] -= E0.cost[r];
@@ -84,53 +105,98 @@
   // fall(x, enemy): một phát trúng (logic/war.js hurt: mất máu, hết máu thì ngã); chance(k): khả năng trúng theo khả năng ngã k
   function gateTick(W, day, w, def, dt, rng, fall, chance) {
     const ch = chance || ((k) => k);
-    const A = W.islands[w.a], B = W.islands[w.b], ka = kit(w.kit || A.level), kb = kit(B.level);
-    const st = (w.armLog || (w.armLog = { volleys: 0, gateDmg: 0, fires: 0 }));
+    const A = W.islands[w.a],
+      B = W.islands[w.b],
+      ka = kit(w.kit || A.level),
+      kb = kit(B.level);
+    const st = w.armLog || (w.armLog = { volleys: 0, gateDmg: 0, fires: 0 });
     // lá chắn năng lượng (bên giữ thời 12): đỡ phần lớn đòn tới khi bị phá
     if (kb.shield && B.shieldHp == null) B.shieldHp = 1;
     const shield = kb.shield && B.shieldHp > 0 ? 0.3 : 1;
     // bắn xa: sức bắn hai bên (bên giữ được tường che)
     const shooters = w.troops.filter((x) => x.p.alive && x.arm === 'ranged');
     const defShoot = def.filter((x) => x.p.alive && armOf(W.islands[x.i], x.p) === 'ranged');
-    const pa = shooters.length * ka.pow, pd = defShoot.length * kb.pow * WALL_COVER;
+    const pa = shooters.length * ka.pow,
+      pd = defShoot.length * kb.pow * WALL_COVER;
     let dead = 0;
     if (pa > 0 && def.length) {
-      const pk = Math.min(0.3, dt * RANGED_KILL * pa / Math.max(1, def.length) * shield);
+      const pk = Math.min(0.3, ((dt * RANGED_KILL * pa) / Math.max(1, def.length)) * shield);
       // (người trúng, người bắn: hàng đầu hai bên, logic/war.js FRONT; số phát trúng như cũ)
-      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)), n = def.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
-      for (let k = 0; k < n; k++) { const fd = front(def), fs = front(shooters); if (!fd.length) break; if (fall(fd[k % fd.length], w.a, fs[k % fs.length])) dead++; }
+      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)),
+        n = def.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
+      for (let k = 0; k < n; k++) {
+        const fd = front(def),
+          fs = front(shooters);
+        if (!fd.length) break;
+        if (fall(fd[k % fd.length], w.a, fs[k % fs.length])) dead++;
+      }
       st.volleys++;
     }
     if (pd > 0 && w.troops.length) {
-      const pk = Math.min(0.3, dt * RANGED_KILL * pd / Math.max(1, w.troops.length));
-      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)), n = w.troops.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
-      for (let k = 0; k < n; k++) { const ft = front(w.troops), fd = front(defShoot); if (!ft.length) break; fall(ft[k % ft.length], w.b, fd[k % fd.length]); }
+      const pk = Math.min(0.3, (dt * RANGED_KILL * pd) / Math.max(1, w.troops.length));
+      const front = BK.WarFront || ((l) => l.filter((x) => x.p.alive)),
+        n = w.troops.filter((x) => x.p.alive && rng.chance(ch(pk))).length;
+      for (let k = 0; k < n; k++) {
+        const ft = front(w.troops),
+          fd = front(defShoot);
+        if (!ft.length) break;
+        fall(ft[k % ft.length], w.b, fd[k % fd.length]);
+      }
     }
     // máy công thành: phá cổng (lá chắn đỡ trước), bắn người giữ
     for (const e of w.engines || []) {
       const E0 = ENGINE[e.kind];
-      if (kb.shield && B.shieldHp > 0) { B.shieldHp = Math.max(0, B.shieldHp - dt * E0.gate * 0.5); continue; }
-      G().hit(B, w.gate, dt * E0.gate); st.gateDmg += dt * E0.gate;
-      if (E0.kill > 0) for (const x of def) if (x.p.alive && rng.chance(ch(Math.min(0.2, dt * 0.04 * E0.kill))) && fall(x, w.a, { i: w.a, eng: true })) dead++; // (đạn từ máy công thành: phần vẽ cho bay từ xe)
+      if (kb.shield && B.shieldHp > 0) {
+        B.shieldHp = Math.max(0, B.shieldHp - dt * E0.gate * 0.5);
+        continue;
+      }
+      G().hit(B, w.gate, dt * E0.gate);
+      st.gateDmg += dt * E0.gate;
+      if (E0.kill > 0)
+        for (const x of def)
+          if (x.p.alive && rng.chance(ch(Math.min(0.2, dt * 0.04 * E0.kill))) && fall(x, w.a, { i: w.a, eng: true })) dead++; // (đạn từ máy công thành: phần vẽ cho bay từ xe)
     }
     // bên giữ: người bắn xa cũng nhắm máy công thành
-    if (pd > 0) for (const e of w.engines || []) e.hp -= dt * 0.02 * pd / Math.max(1, (w.engines || []).length);
+    if (pd > 0) for (const e of w.engines || []) e.hp -= (dt * 0.02 * pd) / Math.max(1, (w.engines || []).length);
     if (w.engines) w.engines = w.engines.filter((e) => e.hp > 0);
     // tên lửa đốt: cháy nhà dân trong thành
     if (ka.fire && shooters.length && rng.chance(Math.min(0.9, dt * FIRE))) {
-      const homes = [...new Set(BK.Island.living(B).map((p) => p.home).filter((h) => h != null))];
-      if (homes.length) { const h = homes[Math.floor(rng.next() * homes.length)]; G().hit(B, 'home:' + h, 0.3); st.fires++; }
+      const homes = [
+        ...new Set(
+          BK.Island.living(B)
+            .map((p) => p.home)
+            .filter((h) => h != null),
+        ),
+      ];
+      if (homes.length) {
+        const h = homes[Math.floor(rng.next() * homes.length)];
+        G().hit(B, 'home:' + h, 0.3);
+        st.fires++;
+      }
     }
     // cổng sống tự vá (bên giữ thời 9)
-    if (kb.livingWall && B.ruin && B.ruin[w.gate] != null) { const v = Math.min(1, B.ruin[w.gate] + dt * LIVING_WALL); if (v >= 1) delete B.ruin[w.gate]; else B.ruin[w.gate] = v; }
+    if (kb.livingWall && B.ruin && B.ruin[w.gate] != null) {
+      const v = Math.min(1, B.ruin[w.gate] + dt * LIVING_WALL);
+      if (v >= 1) delete B.ruin[w.gate];
+      else B.ruin[w.gate] = v;
+    }
     // cổng dịch chuyển (bên đánh thời 11, tổng tấn công): sau một ngày ở cổng, một toán quân vào thẳng trong thành mở cổng
     if (ka.portal && w.kind === 'conquer' && !w.portal && day - w.since >= 1) {
-      w.portal = true; G().hit(B, w.gate, 1);
-      BK.Diplomacy.say(W, day, 'Một toán quân ' + A.name + ' đi qua cổng dịch chuyển vào thẳng trong thành ' + B.name + ', mở cổng từ bên trong.', [w.a, w.b]);
+      w.portal = true;
+      G().hit(B, w.gate, 1);
+      BK.Diplomacy.say(
+        W,
+        day,
+        'Một toán quân ' + A.name + ' đi qua cổng dịch chuyển vào thẳng trong thành ' + B.name + ', mở cổng từ bên trong.',
+        [w.a, w.b],
+      );
     }
     return dead;
   }
   // phần sức giữ cổng còn lại theo độ bền cổng (logic/war.js): cổng hư thì người giữ mất chỗ dựa
-  const describe = (lv) => { const k = kit(lv); return (NAME[k.ranged] || k.ranged) + (k.engine ? ', ' + ENGINE[k.engine].name : ''); };
+  const describe = (lv) => {
+    const k = kit(lv);
+    return (NAME[k.ranged] || k.ranged) + (k.engine ? ', ' + ENGINE[k.engine].name : '');
+  };
   return { KIT, ENGINE, NAME, RANGE, rangeOf, kit, equip, strand, gateTick, armOf, isRanged, describe };
 });

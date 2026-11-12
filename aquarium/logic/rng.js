@@ -10,7 +10,7 @@
 
   // mulberry32: nhanh, đủ đều cho trò chơi
   function create(seed) {
-    let s = (seed >>> 0) || 1;
+    let s = seed >>> 0 || 1;
     const next = () => {
       s = (s + 0x6d2b79f5) >>> 0;
       let t = s;
@@ -25,10 +25,20 @@
       chance: (p) => next() < p,
       pick: (arr) => arr[Math.floor(next() * arr.length)],
       // phân bố chuông (Box-Muller): phần lớn gần 0, hiếm khi xa
-      gauss: () => { let u = 0, v = 0; while (u === 0) u = next(); while (v === 0) v = next(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
+      gauss: () => {
+        let u = 0,
+          v = 0;
+        while (u === 0) u = next();
+        while (v === 0) v = next();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      },
       // lưu và nạp lại trạng thái (New Game+, lưu trận)
-      get state() { return s; },
-      set state(v) { s = v >>> 0; },
+      get state() {
+        return s;
+      },
+      set state(v) {
+        s = v >>> 0;
+      },
     };
     return R;
   }

@@ -9,68 +9,871 @@
  *   desert   Bệ Phóng Sa Mạc · Kim Tự Tháp Dữ Liệu · Xương Rồng Khổng Lồ · Tháp Gương Mặt Trời · Kim Tự Tháp Ngược · Kim Cương Mặt Trời Hồng
  * Mỗi hàm (k, o) tô theo bảng màu o.pal của đảo; trả phần chuyển động. Cần: kit3d, common, isles/arch.js. */
 (function (root) {
-  const BK = root.BK, K = BK.BuildKit, { B, Bc } = BK.Plains3D, A = BK.IslesArch;
+  const BK = root.BK,
+    K = BK.BuildKit,
+    { B, Bc } = BK.Plains3D,
+    A = BK.IslesArch;
   const THREE = () => window.THREE;
   const torus = (r, t, a) => new (THREE().TorusGeometry)(r, t, 8, 32, a);
   const oct = (sx, sy, sz) => new (THREE().OctahedronGeometry)(1, 0).scale(sx, sy, sz).translate(0, sy, 0);
   const ico = (r, d) => new (THREE().IcosahedronGeometry)(r, d || 1);
-  const plinth = (k, p, r, h, seg) => { k.add(K.post(r, h || 0.8, seg || 12, r), p.b, 0, 0, 0); k.add(K.post(r + 0.05, 0.12, seg || 12, r + 0.05), p.g, 0, h || 0.8, 0, { glow: true }); };
+  const plinth = (k, p, r, h, seg) => {
+    k.add(K.post(r, h || 0.8, seg || 12, r), p.b, 0, 0, 0);
+    k.add(K.post(r + 0.05, 0.12, seg || 12, r + 0.05), p.g, 0, h || 0.8, 0, { glow: true });
+  };
   // tên lửa: thân, vạch màu, mũi, bốn cánh, lửa đuôi; x, z: chỗ đặt; h: cao; body: màu thân
   function rocket(k, x, z, h, body, band, r) {
-    r = r || 1.4; k.add(K.post(r, h * 0.62, 12, r), body, x, h * 0.1, z); k.add(K.post(r * 1.02, h * 0.05, 12, r * 1.02), band, x, h * 0.42, z);
-    k.add(K.post(r * 0.8, h * 0.18, 12, r), body, x, h * 0.72, z); k.add(K.cone(r * 0.8, h * 0.2, 12), band, x, h * 0.9, z);
-    for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2; k.add(Bc(0.12, h * 0.16, r * 1.1, 0.03), band, x + Math.cos(a) * r, h * 0.16, z + Math.sin(a) * r, { rot: [0, -a, 0] }); }
+    r = r || 1.4;
+    k.add(K.post(r, h * 0.62, 12, r), body, x, h * 0.1, z);
+    k.add(K.post(r * 1.02, h * 0.05, 12, r * 1.02), band, x, h * 0.42, z);
+    k.add(K.post(r * 0.8, h * 0.18, 12, r), body, x, h * 0.72, z);
+    k.add(K.cone(r * 0.8, h * 0.2, 12), band, x, h * 0.9, z);
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2;
+      k.add(Bc(0.12, h * 0.16, r * 1.1, 0.03), band, x + Math.cos(a) * r, h * 0.16, z + Math.sin(a) * r, { rot: [0, -a, 0] });
+    }
     k.add(K.cone(r * 0.7, h * 0.1, 10), '#ffb04a', x, h * 0.1, z, { rot: [Math.PI, 0, 0], glow: true });
   }
-  const gantry = (k, x, z, h, col) => { for (const [dx, dz] of [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]]) k.add(K.post(0.1, h, 4), col, x + dx, 0, z + dz); for (let y = 2; y < h; y += 2.4) k.add(Bc(1.9, 0.12, 1.9, 0.02), col, x, y, z); };
+  const gantry = (k, x, z, h, col) => {
+    for (const [dx, dz] of [
+      [-0.9, -0.9],
+      [0.9, -0.9],
+      [-0.9, 0.9],
+      [0.9, 0.9],
+    ])
+      k.add(K.post(0.1, h, 4), col, x + dx, 0, z + dz);
+    for (let y = 2; y < h; y += 2.4) k.add(Bc(1.9, 0.12, 1.9, 0.02), col, x, y, z);
+  };
 
   const F = {
     forest: {
-      7(k, o) { const p = o.pal; plinth(k, p, 7); for (let i = 0; i < 9; i++) { const y = 1 + i * 2.6, r = 3.6 - Math.abs(i - 3) * 0.45; k.add(K.lathe([[r * 0.7, 0], [r, 1.2], [r * 0.8, 2.6]], 10), i % 2 ? '#8a6444' : '#6b4a30', 0, y, 0); } k.add(K.cone(1.6, 4, 10), '#4f8a3f', 0, 24.4, 0); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; rocket(k, Math.cos(a) * 5, Math.sin(a) * 5, 12, '#d8d8c8', '#3f8a4a', 0.8); } gantry(k, -6.4, 0, 22, '#d4a63a'); return { pulse: true }; },
-      8(k, o) { const p = o.pal; plinth(k, p, 8); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(K.post(0.9, 9, 8, 0.6), '#6b4a30', Math.cos(a) * 5, 0.8, Math.sin(a) * 5, { rot: [Math.sin(a) * 0.18, 0, -Math.cos(a) * 0.18] }); k.add(Bc(0.2, 0.06, 9, 0.02), p.g, Math.cos(a) * 9, 0.1, Math.sin(a) * 9, { rot: [0, -a + Math.PI / 2, 0], glow: true }); } k.add(ico(7, 1), '#3f7a4a', 0, 15, 0); k.add(ico(7.15, 1), p.g, 0, 15, 0, { lit: true }); const r = k.sub('ring', [0, 15, 0]); r.add(torus(8.4, 0.25), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); r.add(torus(8.4, 0.18), p.c, 0, 0, 0, { glow: true }); return { spin: [['ring', 'y', 0.3]], pulse: true }; },
-      9(k, o) { const p = o.pal; for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(K.post(1.1, 7, 6, 0.4), '#7a5a48', Math.cos(a) * 5.4, 0, Math.sin(a) * 5.4, { rot: [Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7] }); } k.add(K.lathe([[5, 0], [3.6, 3], [3.2, 16], [4.4, 22], [2, 25]], 12), '#8a6450', 0, 0, 0); k.add(B(2.6, 3.6, 0.4, 0.5), '#2a1a12', 0, 0, 4.2); for (const [x, y, z, r] of [[0, 30, 0, 9], [7, 25, 2, 5.5], [-7, 26, -2, 6], [2, 25, -7, 5], [-2, 24.5, 7, 5]]) k.add(ico(r, 1), '#5fae68', x, y, z, { sc: [1, 0.7, 1] }); for (let i = 0; i < 14; i++) { const a = i * 1.7, rr = 4 + (i % 4) * 1.6; k.add(K.ball(0.7, 1), i % 2 ? p.g : '#ffd27a', Math.cos(a) * rr, 18 + (i % 5) * 1.6, Math.sin(a) * rr, { glow: true }); } return { pulse: true }; },
-      10(k, o) { const p = o.pal; plinth(k, p, 7); k.add(K.post(1.4, 24, 10, 0.9), '#4f8a3f', 0, 0.8, 0); for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2; k.add(K.ball(2.2, 1), '#5a9646', Math.cos(a) * 1.8, 8 + i * 3.5, Math.sin(a) * 1.8, { sc: [1.6, 0.3, 0.8], rot: [0, -a, 0.3] }); } const petals = k.sub('petals', [0, 26, 0]); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; petals.add(K.ball(3, 1), i % 2 ? '#f2c46a' : '#e8a04a', Math.cos(a) * 5, 0.8, Math.sin(a) * 5, { sc: [1.6, 0.25, 0.7], rot: [0, -a, 0.45] }); } k.add(K.ball(3.6, 2), '#ffd27a', 0, 27.5, 0, { glow: true }); return { spin: [['petals', 'y', 0.12]], pulse: true }; },
-      11(k, o) { const p = o.pal; plinth(k, p, 8); for (let s = 0; s < 2; s++) for (let i = 0; i < 26; i++) { const a = i * 0.42 + s * Math.PI, y = 1 + i * 1.2; k.add(K.ball(1.5 - i * 0.025, 1), s ? '#7a5a48' : '#8a6450', Math.cos(a) * 2.6, y, Math.sin(a) * 2.6); if (i % 4 === 0) k.add(K.ball(2.2, 1), '#5fae68', Math.cos(a) * 4.6, y + 0.6, Math.sin(a) * 4.6, { sc: [1, 0.5, 1] }); } k.add(ico(4.4, 1), '#6ad890', 0, 34, 0, { glow: true }); const o1 = k.sub('seeds', [0, 18, 0]); o1.add(torus(10, 0.15), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] }); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; o1.add(K.ball(0.9, 1), '#f6e6b0', Math.cos(a) * 10, 0, Math.sin(a) * 10, { glow: true }); } return { spin: [['seeds', 'y', 0.25]], pulse: true }; },
+      7(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        for (let i = 0; i < 9; i++) {
+          const y = 1 + i * 2.6,
+            r = 3.6 - Math.abs(i - 3) * 0.45;
+          k.add(
+            K.lathe(
+              [
+                [r * 0.7, 0],
+                [r, 1.2],
+                [r * 0.8, 2.6],
+              ],
+              10,
+            ),
+            i % 2 ? '#8a6444' : '#6b4a30',
+            0,
+            y,
+            0,
+          );
+        }
+        k.add(K.cone(1.6, 4, 10), '#4f8a3f', 0, 24.4, 0);
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          rocket(k, Math.cos(a) * 5, Math.sin(a) * 5, 12, '#d8d8c8', '#3f8a4a', 0.8);
+        }
+        gantry(k, -6.4, 0, 22, '#d4a63a');
+        return { pulse: true };
+      },
+      8(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          k.add(K.post(0.9, 9, 8, 0.6), '#6b4a30', Math.cos(a) * 5, 0.8, Math.sin(a) * 5, {
+            rot: [Math.sin(a) * 0.18, 0, -Math.cos(a) * 0.18],
+          });
+          k.add(Bc(0.2, 0.06, 9, 0.02), p.g, Math.cos(a) * 9, 0.1, Math.sin(a) * 9, { rot: [0, -a + Math.PI / 2, 0], glow: true });
+        }
+        k.add(ico(7, 1), '#3f7a4a', 0, 15, 0);
+        k.add(ico(7.15, 1), p.g, 0, 15, 0, { lit: true });
+        const r = k.sub('ring', [0, 15, 0]);
+        r.add(torus(8.4, 0.25), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+        r.add(torus(8.4, 0.18), p.c, 0, 0, 0, { glow: true });
+        return { spin: [['ring', 'y', 0.3]], pulse: true };
+      },
+      9(k, o) {
+        const p = o.pal;
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          k.add(K.post(1.1, 7, 6, 0.4), '#7a5a48', Math.cos(a) * 5.4, 0, Math.sin(a) * 5.4, {
+            rot: [Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7],
+          });
+        }
+        k.add(
+          K.lathe(
+            [
+              [5, 0],
+              [3.6, 3],
+              [3.2, 16],
+              [4.4, 22],
+              [2, 25],
+            ],
+            12,
+          ),
+          '#8a6450',
+          0,
+          0,
+          0,
+        );
+        k.add(B(2.6, 3.6, 0.4, 0.5), '#2a1a12', 0, 0, 4.2);
+        for (const [x, y, z, r] of [
+          [0, 30, 0, 9],
+          [7, 25, 2, 5.5],
+          [-7, 26, -2, 6],
+          [2, 25, -7, 5],
+          [-2, 24.5, 7, 5],
+        ])
+          k.add(ico(r, 1), '#5fae68', x, y, z, { sc: [1, 0.7, 1] });
+        for (let i = 0; i < 14; i++) {
+          const a = i * 1.7,
+            rr = 4 + (i % 4) * 1.6;
+          k.add(K.ball(0.7, 1), i % 2 ? p.g : '#ffd27a', Math.cos(a) * rr, 18 + (i % 5) * 1.6, Math.sin(a) * rr, { glow: true });
+        }
+        return { pulse: true };
+      },
+      10(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        k.add(K.post(1.4, 24, 10, 0.9), '#4f8a3f', 0, 0.8, 0);
+        for (let i = 0; i < 4; i++) {
+          const a = (i / 4) * Math.PI * 2;
+          k.add(K.ball(2.2, 1), '#5a9646', Math.cos(a) * 1.8, 8 + i * 3.5, Math.sin(a) * 1.8, { sc: [1.6, 0.3, 0.8], rot: [0, -a, 0.3] });
+        }
+        const petals = k.sub('petals', [0, 26, 0]);
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          petals.add(K.ball(3, 1), i % 2 ? '#f2c46a' : '#e8a04a', Math.cos(a) * 5, 0.8, Math.sin(a) * 5, {
+            sc: [1.6, 0.25, 0.7],
+            rot: [0, -a, 0.45],
+          });
+        }
+        k.add(K.ball(3.6, 2), '#ffd27a', 0, 27.5, 0, { glow: true });
+        return { spin: [['petals', 'y', 0.12]], pulse: true };
+      },
+      11(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8);
+        for (let s = 0; s < 2; s++)
+          for (let i = 0; i < 26; i++) {
+            const a = i * 0.42 + s * Math.PI,
+              y = 1 + i * 1.2;
+            k.add(K.ball(1.5 - i * 0.025, 1), s ? '#7a5a48' : '#8a6450', Math.cos(a) * 2.6, y, Math.sin(a) * 2.6);
+            if (i % 4 === 0) k.add(K.ball(2.2, 1), '#5fae68', Math.cos(a) * 4.6, y + 0.6, Math.sin(a) * 4.6, { sc: [1, 0.5, 1] });
+          }
+        k.add(ico(4.4, 1), '#6ad890', 0, 34, 0, { glow: true });
+        const o1 = k.sub('seeds', [0, 18, 0]);
+        o1.add(torus(10, 0.15), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] });
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          o1.add(K.ball(0.9, 1), '#f6e6b0', Math.cos(a) * 10, 0, Math.sin(a) * 10, { glow: true });
+        }
+        return { spin: [['seeds', 'y', 0.25]], pulse: true };
+      },
       // Cây Thế Giới: thân cổ thụ khổng lồ có mạch sáng, ba tầng tán đĩa phát sáng, đảo nhỏ có cây bay quanh, hạt sáng
-      12(k, o) { const p = o.pal; for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; k.add(K.post(1.4, 9, 6, 0.4), '#6b4a30', Math.cos(a) * 7, 0, Math.sin(a) * 7, { rot: [Math.sin(a) * 0.75, 0, -Math.cos(a) * 0.75] }); } k.add(K.lathe([[7, 0], [4.6, 4], [3.8, 20], [4.6, 32], [3, 40]], 14), '#7a5438', 0, 0, 0); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(Bc(0.22, 34, 0.22, 0.03), '#9fffc8', Math.cos(a) * 4.3, 19, Math.sin(a) * 4.3, { glow: true, rot: [0, 0, Math.sin(i) * 0.05] }); } [[28, 16], [36, 12.5], [43, 8.5]].forEach(([y, r], i) => { k.add(K.lathe([[0.001, -1.4], [r, -0.4], [r * 1.02, 0.6], [r * 0.7, 1.6], [0.001, 2]], 18), ['#3f9a58', '#4fae68', '#6ad890'][i], 0, y, 0); k.add(K.post(r * 1.03, 0.25, 18, r * 1.03), '#c8ffd8', 0, y - 0.1, 0, { glow: true }); }); k.add(ico(3, 1), '#e8fff0', 0, 46, 0, { glow: true }); const isl = k.sub('isles', [0, 22, 0]); for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2, r = 20; isl.add(K.lathe([[0.001, -3], [2.6, -1], [3, 0]], 8), '#6b5038', Math.cos(a) * r, (i % 2) * 4, Math.sin(a) * r); isl.add(ico(1.8, 1), '#5fae68', Math.cos(a) * r, (i % 2) * 4 + 2, Math.sin(a) * r); isl.add(K.post(0.2, 1.6, 5), '#6b4a30', Math.cos(a) * r, (i % 2) * 4, Math.sin(a) * r); } for (let i = 0; i < 18; i++) { const a = i * 1.9, rr = 6 + (i % 5) * 2.2; k.add(K.ball(0.5, 1), i % 2 ? '#fff6c0' : '#9fffc8', Math.cos(a) * rr, 12 + (i % 7) * 4, Math.sin(a) * rr, { glow: true }); } return { spin: [['isles', 'y', 0.07]], pulse: true }; },
+      12(k, o) {
+        const p = o.pal;
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          k.add(K.post(1.4, 9, 6, 0.4), '#6b4a30', Math.cos(a) * 7, 0, Math.sin(a) * 7, {
+            rot: [Math.sin(a) * 0.75, 0, -Math.cos(a) * 0.75],
+          });
+        }
+        k.add(
+          K.lathe(
+            [
+              [7, 0],
+              [4.6, 4],
+              [3.8, 20],
+              [4.6, 32],
+              [3, 40],
+            ],
+            14,
+          ),
+          '#7a5438',
+          0,
+          0,
+          0,
+        );
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          k.add(Bc(0.22, 34, 0.22, 0.03), '#9fffc8', Math.cos(a) * 4.3, 19, Math.sin(a) * 4.3, {
+            glow: true,
+            rot: [0, 0, Math.sin(i) * 0.05],
+          });
+        }
+        [
+          [28, 16],
+          [36, 12.5],
+          [43, 8.5],
+        ].forEach(([y, r], i) => {
+          k.add(
+            K.lathe(
+              [
+                [0.001, -1.4],
+                [r, -0.4],
+                [r * 1.02, 0.6],
+                [r * 0.7, 1.6],
+                [0.001, 2],
+              ],
+              18,
+            ),
+            ['#3f9a58', '#4fae68', '#6ad890'][i],
+            0,
+            y,
+            0,
+          );
+          k.add(K.post(r * 1.03, 0.25, 18, r * 1.03), '#c8ffd8', 0, y - 0.1, 0, { glow: true });
+        });
+        k.add(ico(3, 1), '#e8fff0', 0, 46, 0, { glow: true });
+        const isl = k.sub('isles', [0, 22, 0]);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2,
+            r = 20;
+          isl.add(
+            K.lathe(
+              [
+                [0.001, -3],
+                [2.6, -1],
+                [3, 0],
+              ],
+              8,
+            ),
+            '#6b5038',
+            Math.cos(a) * r,
+            (i % 2) * 4,
+            Math.sin(a) * r,
+          );
+          isl.add(ico(1.8, 1), '#5fae68', Math.cos(a) * r, (i % 2) * 4 + 2, Math.sin(a) * r);
+          isl.add(K.post(0.2, 1.6, 5), '#6b4a30', Math.cos(a) * r, (i % 2) * 4, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 18; i++) {
+          const a = i * 1.9,
+            rr = 6 + (i % 5) * 2.2;
+          k.add(K.ball(0.5, 1), i % 2 ? '#fff6c0' : '#9fffc8', Math.cos(a) * rr, 12 + (i % 7) * 4, Math.sin(a) * rr, { glow: true });
+        }
+        return { spin: [['isles', 'y', 0.07]], pulse: true };
+      },
     },
     mountain: {
       // Đài Thiên Văn Đỉnh Núi: khối núi đá, chảo ra-đa khổng lồ xoay trên đỉnh, hai vòm quan sát, tia sóng lên trời
-      7(k, o) { const p = o.pal; k.add(K.lathe([[10, 0], [8, 5], [5.5, 11], [3.6, 14]], 7), '#8a8478', 0, 0, 0); k.add(K.post(3.8, 0.6, 7, 3.8), '#5a5248', 0, 14, 0); k.add(K.post(1, 4, 8, 0.7), '#d8d6d0', 0, 14.6, 0); const d = k.sub('dish', [0, 19.6, 0]); d.add(K.lathe([[0.001, 0], [4, 0.9], [6.4, 2.6], [7, 3.6]], 18), '#f2f2ee', 0, 0, 0, { rot: [0.75, 0, 0] }); d.add(K.post(0.12, 5, 4, 0.05), '#5a5a60', 0, 0, 0, { rot: [0.75, 0, 0] }); d.add(K.ball(0.4), '#ff5a4f', 0, 3.6, 3.4, { glow: true }); for (const [x, z] of [[-6, 4], [6, 3]]) { k.add(K.post(2.2, 2.4, 12), '#e8e6e0', x, 4.6, z); k.add(K.ball(2.2, 1), '#f4f4f0', x, 7, z, { sc: [1, 0.85, 1] }); k.add(Bc(0.5, 2.2, 0.2, 0.05), '#2a2e38', x, 7.6, z + 1.8, { rot: [0.5, 0, 0] }); } k.add(K.post(0.25, 24, 6, 0.05), p.g, 0, 24, 0, { glow: true }); for (let i = 0; i < 5; i++) k.add(B(0.8, 0.6, 0.4, 0.05), '#2a2e38', -2 + i, 2.6 + (i % 2) * 2, 8.6, { ao: false }); return { spin: [['dish', 'y', 0.25]], pulse: true }; },
-      8(k, o) { const p = o.pal; plinth(k, p, 8, 1, 6); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(B(1.6, 20, 1.6, 0.2), '#7a7468', Math.cos(a) * 6.4, 1, Math.sin(a) * 6.4, { rot: [Math.sin(a) * 0.08, a, -Math.cos(a) * 0.08] }); } k.add(oct(4, 8, 4), '#5fd8ff', 0, 3, 0, { glow: true }); k.add(oct(4.3, 8.4, 4.3), '#3a4a68', 0, 2.6, 0); k.add(B(15, 1.4, 15, 0.2), '#7a7468', 0, 20.6, 0, { rot: [0, Math.PI / 6, 0] }); const s = k.sub('scan', [0, 6, 0]); s.add(torus(6.6, 0.18), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); return { slide: [['scan', 'y', 1, 6]], pulse: true }; },
-      9(k, o) { const p = o.pal; k.add(K.lathe([[11, 0], [9, 4], [7, 10], [4.5, 18], [2, 24], [0.001, 26]], 8), '#7a8a68', 0, 0, 0); for (let i = 0; i < 7; i++) k.add(K.post(9.6 - i * 1.3, 0.4, 8, 9.6 - i * 1.3), i % 2 ? '#5a9646' : '#6aa850', 0, 2 + i * 3.4, 0); for (let i = 0; i < 12; i++) { const a = i * 1.3, y = 3 + (i % 6) * 3.4, r = 10 - (i % 6) * 1.25; k.add(Bc(0.3, 3, 0.3, 0.05), p.g, Math.cos(a) * r, y, Math.sin(a) * r, { glow: true, rot: [0.3, -a, 0] }); } k.add(B(2.6, 3.6, 0.4, 0.4), '#2a2a24', 0, 0, 10.6); k.add(oct(1.4, 3, 1.4), p.g, 0, 26, 0, { glow: true }); return { pulse: true }; },
+      7(k, o) {
+        const p = o.pal;
+        k.add(
+          K.lathe(
+            [
+              [10, 0],
+              [8, 5],
+              [5.5, 11],
+              [3.6, 14],
+            ],
+            7,
+          ),
+          '#8a8478',
+          0,
+          0,
+          0,
+        );
+        k.add(K.post(3.8, 0.6, 7, 3.8), '#5a5248', 0, 14, 0);
+        k.add(K.post(1, 4, 8, 0.7), '#d8d6d0', 0, 14.6, 0);
+        const d = k.sub('dish', [0, 19.6, 0]);
+        d.add(
+          K.lathe(
+            [
+              [0.001, 0],
+              [4, 0.9],
+              [6.4, 2.6],
+              [7, 3.6],
+            ],
+            18,
+          ),
+          '#f2f2ee',
+          0,
+          0,
+          0,
+          { rot: [0.75, 0, 0] },
+        );
+        d.add(K.post(0.12, 5, 4, 0.05), '#5a5a60', 0, 0, 0, { rot: [0.75, 0, 0] });
+        d.add(K.ball(0.4), '#ff5a4f', 0, 3.6, 3.4, { glow: true });
+        for (const [x, z] of [
+          [-6, 4],
+          [6, 3],
+        ]) {
+          k.add(K.post(2.2, 2.4, 12), '#e8e6e0', x, 4.6, z);
+          k.add(K.ball(2.2, 1), '#f4f4f0', x, 7, z, { sc: [1, 0.85, 1] });
+          k.add(Bc(0.5, 2.2, 0.2, 0.05), '#2a2e38', x, 7.6, z + 1.8, { rot: [0.5, 0, 0] });
+        }
+        k.add(K.post(0.25, 24, 6, 0.05), p.g, 0, 24, 0, { glow: true });
+        for (let i = 0; i < 5; i++) k.add(B(0.8, 0.6, 0.4, 0.05), '#2a2e38', -2 + i, 2.6 + (i % 2) * 2, 8.6, { ao: false });
+        return { spin: [['dish', 'y', 0.25]], pulse: true };
+      },
+      8(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8, 1, 6);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          k.add(B(1.6, 20, 1.6, 0.2), '#7a7468', Math.cos(a) * 6.4, 1, Math.sin(a) * 6.4, {
+            rot: [Math.sin(a) * 0.08, a, -Math.cos(a) * 0.08],
+          });
+        }
+        k.add(oct(4, 8, 4), '#5fd8ff', 0, 3, 0, { glow: true });
+        k.add(oct(4.3, 8.4, 4.3), '#3a4a68', 0, 2.6, 0);
+        k.add(B(15, 1.4, 15, 0.2), '#7a7468', 0, 20.6, 0, { rot: [0, Math.PI / 6, 0] });
+        const s = k.sub('scan', [0, 6, 0]);
+        s.add(torus(6.6, 0.18), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+        return { slide: [['scan', 'y', 1, 6]], pulse: true };
+      },
+      9(k, o) {
+        const p = o.pal;
+        k.add(
+          K.lathe(
+            [
+              [11, 0],
+              [9, 4],
+              [7, 10],
+              [4.5, 18],
+              [2, 24],
+              [0.001, 26],
+            ],
+            8,
+          ),
+          '#7a8a68',
+          0,
+          0,
+          0,
+        );
+        for (let i = 0; i < 7; i++) k.add(K.post(9.6 - i * 1.3, 0.4, 8, 9.6 - i * 1.3), i % 2 ? '#5a9646' : '#6aa850', 0, 2 + i * 3.4, 0);
+        for (let i = 0; i < 12; i++) {
+          const a = i * 1.3,
+            y = 3 + (i % 6) * 3.4,
+            r = 10 - (i % 6) * 1.25;
+          k.add(Bc(0.3, 3, 0.3, 0.05), p.g, Math.cos(a) * r, y, Math.sin(a) * r, { glow: true, rot: [0.3, -a, 0] });
+        }
+        k.add(B(2.6, 3.6, 0.4, 0.4), '#2a2a24', 0, 0, 10.6);
+        k.add(oct(1.4, 3, 1.4), p.g, 0, 26, 0, { glow: true });
+        return { pulse: true };
+      },
       // lò mặt trời: dải sáng mỗi bậc lớn hơn và thấp hơn mặt khối, tách hẳn ra để không nhấp nháy khi xoay máy quay
-      10(k, o) { const p = o.pal; for (let i = 0; i < 6; i++) { const w = 18 - i * 2.6; k.add(B(w, 2.6, w, 0.2), i % 2 ? '#8a8478' : '#9a9488', 0, i * 2.6, 0); k.add(Bc(w + 0.5, 0.18, w + 0.5, 0.03), '#ffb04a', 0, i * 2.6 + 2.2, 0, { glow: true }); } k.add(K.ball(4, 2), '#ffd27a', 0, 20.6, 0, { glow: true }); const r = k.sub('rays', [0, 20.6, 0]); for (let i = 0; i < 8; i++) r.add(Bc(0.25, 0.25, 7, 0.02), '#fff0b0', 0, 0, 0, { rot: [0, (i / 8) * Math.PI, 0.3], glow: true }); return { spin: [['rays', 'y', 0.4]], pulse: true }; },
-      11(k, o) { const p = o.pal; plinth(k, p, 7, 1, 6); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; k.add(Bc(0.15, 14, 0.15, 0.02), p.g, Math.cos(a) * 3, 8, Math.sin(a) * 3, { glow: true }); } const m = k.sub('peak', [0, 24, 0]); m.add(K.lathe([[0.001, -12], [3, -8], [7, -3], [9, 0], [9, 0.8]], 7), '#8a8478', 0, 0, 0); m.add(K.disc(9, 7), '#6aa850', 0, 0.85, 0); for (let i = 0; i < 4; i++) m.add(K.cone(1.6, 4 + i, 6), '#e8eef4', Math.cos(i * 1.6) * 4, 0.8, Math.sin(i * 1.6) * 4); const rk = k.sub('rocks', [0, 18, 0]); for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; rk.add(ico(1 + (i % 3) * 0.4, 0), '#7a7468', Math.cos(a) * 12, (i % 3) * 1.6, Math.sin(a) * 12); } return { bob: [['peak', 0.7, 0.3]], spin: [['rocks', 'y', 0.2]], pulse: true }; },
-      12(k, o) { const p = o.pal; plinth(k, p, 9, 1, 6); const H = [36, 26, 22, 18, 24, 20, 16]; H.forEach((h, i) => { const a = (i / 6) * Math.PI * 2, r = i ? 4.6 : 0; k.add(oct(i ? 1.6 : 2.8, h / 2, i ? 1.6 : 2.8), i % 2 ? '#c8b8ff' : '#e6f0ff', Math.cos(a) * r, 1, Math.sin(a) * r, { rot: [Math.sin(a) * 0.12 * (i ? 1 : 0), 0, -Math.cos(a) * 0.12 * (i ? 1 : 0)] }); }); k.add(oct(1.2, 16, 1.2), p.g, 0, 3, 0, { glow: true }); const h1 = k.sub('h1', [0, 30, 0]); h1.add(torus(8, 0.25), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); const h2 = k.sub('h2', [0, 22, 0]); h2.add(torus(10, 0.2), '#e6d6ff', 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] }); return { spin: [['h1', 'y', 0.3], ['h2', 'y', -0.2]], pulse: true }; },
+      10(k, o) {
+        const p = o.pal;
+        for (let i = 0; i < 6; i++) {
+          const w = 18 - i * 2.6;
+          k.add(B(w, 2.6, w, 0.2), i % 2 ? '#8a8478' : '#9a9488', 0, i * 2.6, 0);
+          k.add(Bc(w + 0.5, 0.18, w + 0.5, 0.03), '#ffb04a', 0, i * 2.6 + 2.2, 0, { glow: true });
+        }
+        k.add(K.ball(4, 2), '#ffd27a', 0, 20.6, 0, { glow: true });
+        const r = k.sub('rays', [0, 20.6, 0]);
+        for (let i = 0; i < 8; i++) r.add(Bc(0.25, 0.25, 7, 0.02), '#fff0b0', 0, 0, 0, { rot: [0, (i / 8) * Math.PI, 0.3], glow: true });
+        return { spin: [['rays', 'y', 0.4]], pulse: true };
+      },
+      11(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7, 1, 6);
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          k.add(Bc(0.15, 14, 0.15, 0.02), p.g, Math.cos(a) * 3, 8, Math.sin(a) * 3, { glow: true });
+        }
+        const m = k.sub('peak', [0, 24, 0]);
+        m.add(
+          K.lathe(
+            [
+              [0.001, -12],
+              [3, -8],
+              [7, -3],
+              [9, 0],
+              [9, 0.8],
+            ],
+            7,
+          ),
+          '#8a8478',
+          0,
+          0,
+          0,
+        );
+        m.add(K.disc(9, 7), '#6aa850', 0, 0.85, 0);
+        for (let i = 0; i < 4; i++) m.add(K.cone(1.6, 4 + i, 6), '#e8eef4', Math.cos(i * 1.6) * 4, 0.8, Math.sin(i * 1.6) * 4);
+        const rk = k.sub('rocks', [0, 18, 0]);
+        for (let i = 0; i < 7; i++) {
+          const a = (i / 7) * Math.PI * 2;
+          rk.add(ico(1 + (i % 3) * 0.4, 0), '#7a7468', Math.cos(a) * 12, (i % 3) * 1.6, Math.sin(a) * 12);
+        }
+        return { bob: [['peak', 0.7, 0.3]], spin: [['rocks', 'y', 0.2]], pulse: true };
+      },
+      12(k, o) {
+        const p = o.pal;
+        plinth(k, p, 9, 1, 6);
+        const H = [36, 26, 22, 18, 24, 20, 16];
+        H.forEach((h, i) => {
+          const a = (i / 6) * Math.PI * 2,
+            r = i ? 4.6 : 0;
+          k.add(oct(i ? 1.6 : 2.8, h / 2, i ? 1.6 : 2.8), i % 2 ? '#c8b8ff' : '#e6f0ff', Math.cos(a) * r, 1, Math.sin(a) * r, {
+            rot: [Math.sin(a) * 0.12 * (i ? 1 : 0), 0, -Math.cos(a) * 0.12 * (i ? 1 : 0)],
+          });
+        });
+        k.add(oct(1.2, 16, 1.2), p.g, 0, 3, 0, { glow: true });
+        const h1 = k.sub('h1', [0, 30, 0]);
+        h1.add(torus(8, 0.25), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+        const h2 = k.sub('h2', [0, 22, 0]);
+        h2.add(torus(10, 0.2), '#e6d6ff', 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] });
+        return {
+          spin: [
+            ['h1', 'y', 0.3],
+            ['h2', 'y', -0.2],
+          ],
+          pulse: true,
+        };
+      },
     },
     tundra: {
       // Trạm Vệ Tinh Cực: cụm vòm ra-đa tròn trên nền băng, cột ăng-ten cao có đèn, ba vệ tinh bay vòng quanh
-      7(k, o) { const p = o.pal; k.add(K.lathe([[12, 0], [12, 1], [10.6, 1.4], [10, 0.4]], 24), '#e8eef4', 0, 0, 0); for (const [x, z, r] of [[0, 0, 5], [-7, -3, 3.2], [7, -3, 3.2], [-4, 6, 2.6], [5, 6, 2.6]]) { k.add(K.post(r, r * 0.5, 14), '#cfd8e2', x, 1, z); k.add(ico(r, 2), '#f6f8fa', x, 1 + r * 0.5, z, { sc: [1, 0.95, 1] }); } k.add(K.post(0.5, 26, 6, 0.15), '#9aa4ae', 0, 7, 0); for (let y = 10; y < 32; y += 4) k.add(Bc(3 - y * 0.06, 0.12, 0.12, 0.02), '#9aa4ae', 0, y, 0); k.add(K.ball(0.5), '#ff5a4f', 0, 33.2, 0, { glow: true }); const sat = k.sub('sats', [0, 22, 0]); sat.add(torus(13, 0.08), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] }); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; sat.add(B(1, 1, 1, 0.1), '#d4a63a', Math.cos(a) * 13, Math.sin(a) * 13 * 0.3, Math.sin(a) * 13); sat.add(Bc(3.4, 0.06, 1, 0.02), '#2f4a8b', Math.cos(a) * 13, Math.sin(a) * 13 * 0.3 + 0.5, Math.sin(a) * 13); } return { spin: [['sats', 'y', 0.3]], pulse: true }; },
-      8(k, o) { const p = o.pal; plinth(k, p, 7); k.add(K.post(2.4, 8, 12, 1.6), '#9ab8d8', 0, 0.8, 0); k.add(ico(7, 2), '#bfe8ff', 0, 15, 0); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; k.add(Bc(0.12, 6, 0.12, 0.02), p.g, Math.cos(a) * 6.6, 15, Math.sin(a) * 6.6, { glow: true, rot: [0, -a, 0.6] }); } const r1 = k.sub('r1', [0, 15, 0]); r1.add(torus(9, 0.22), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.4, 0, 0] }); const r2 = k.sub('r2', [0, 15, 0]); r2.add(torus(10, 0.16), p.c, 0, 0, 0, { glow: true, rot: [Math.PI / 2 + 0.5, 0, 0] }); return { spin: [['r1', 'y', 0.35], ['r2', 'y', -0.28]], pulse: true }; },
-      9(k, o) { const p = o.pal; plinth(k, p, 7); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(oct(1.6, 9 + (i % 2) * 3, 0.8), i % 2 ? '#bfe8ff' : '#e6f6ff', Math.cos(a) * 4, 0.8, Math.sin(a) * 4, { rot: [Math.sin(a) * 0.6, -a, -Math.cos(a) * 0.6] }); } k.add(oct(2.4, 12, 2.4), '#dff4ff', 0, 0.8, 0); k.add(K.ball(2.4, 2), p.g, 0, 14, 0, { glow: true }); for (let i = 0; i < 6; i++) k.add(K.ball(0.5), p.g, Math.cos(i) * 7, 10 + (i % 3), Math.sin(i) * 7, { glow: true }); return { pulse: true }; },
-      10(k, o) { const p = o.pal; plinth(k, p, 8, 1, 3); k.add(oct(5, 15, 5).rotateY(Math.PI / 6), '#dff4ff', 0, 1, 0); k.add(oct(5.2, 15.4, 5.2).rotateY(Math.PI / 6), p.w, 0, 0.6, 0, { lit: true }); k.add(K.ball(4, 2), '#ffd27a', 0, 34, 0, { glow: true }); const au = k.sub('aurora', [0, 22, 0]); for (let i = 0; i < 3; i++) au.add(torus(9 + i * 2, 0.35), ['#7ff0c8', '#a0c8ff', '#c8a8ff'][i], 0, i * 1.5, 0, { glow: true, rot: [Math.PI / 2 - 0.35 + i * 0.1, 0, i * 0.4] }); return { spin: [['aurora', 'y', 0.12]], pulse: true }; },
-      11(k, o) { const p = o.pal; plinth(k, p, 8); for (let i = 0; i < 12; i++) k.add(oct(4.4 - i * 0.25, 1.6, 4.4 - i * 0.25).rotateY(i * 0.3), i % 2 ? '#bfe8ff' : '#e6f6ff', 0, 1 + i * 2.4, 0); const pr = k.sub('portal', [0, 18, 0]); pr.add(torus(8, 0.6), '#a0c8ff', 0, 0, 0, { glow: true }); pr.add(new (THREE().CircleGeometry)(7.2, 28), '#c8a8ff', 0, 0, 0, { glow: true }); const sh = k.sub('shards', [0, 14, 0]); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; sh.add(oct(0.6, 1.6, 0.6), '#e6f6ff', Math.cos(a) * 12, (i % 3) * 2, Math.sin(a) * 12, { glow: true }); } return { spin: [['portal', 'y', 0.25], ['shards', 'y', -0.2]], pulse: true }; },
-      12(k, o) { const p = o.pal; plinth(k, p, 7); k.add(K.post(0.6, 20, 8, 0.25), p.g, 0, 0.8, 0, { glow: true }); const c = k.sub('palace', [0, 26, 0]); c.add(K.lathe([[0.001, -8], [6, -4], [11, -1], [11.4, 0]], 16), '#bfe8ff', 0, 0, 0); c.add(K.disc(11.4, 20), '#f4f8ff', 0, 0.05, 0); [16, 10, 10, 8, 8, 12, 12].forEach((h, i) => { const a = (i / 6) * Math.PI * 2, r = i ? 6.4 : 0; c.add(oct(i ? 1.4 : 2.4, h / 2, i ? 1.4 : 2.4), i % 2 ? '#dff4ff' : '#ffffff', Math.cos(a) * r, 0, Math.sin(a) * r); }); c.add(torus(12.5, 0.3), '#7ff0c8', 0, 4, 0, { glow: true, rot: [Math.PI / 2 - 0.2, 0, 0] }); return { bob: [['palace', 0.8, 0.28]], pulse: true }; },
+      7(k, o) {
+        const p = o.pal;
+        k.add(
+          K.lathe(
+            [
+              [12, 0],
+              [12, 1],
+              [10.6, 1.4],
+              [10, 0.4],
+            ],
+            24,
+          ),
+          '#e8eef4',
+          0,
+          0,
+          0,
+        );
+        for (const [x, z, r] of [
+          [0, 0, 5],
+          [-7, -3, 3.2],
+          [7, -3, 3.2],
+          [-4, 6, 2.6],
+          [5, 6, 2.6],
+        ]) {
+          k.add(K.post(r, r * 0.5, 14), '#cfd8e2', x, 1, z);
+          k.add(ico(r, 2), '#f6f8fa', x, 1 + r * 0.5, z, { sc: [1, 0.95, 1] });
+        }
+        k.add(K.post(0.5, 26, 6, 0.15), '#9aa4ae', 0, 7, 0);
+        for (let y = 10; y < 32; y += 4) k.add(Bc(3 - y * 0.06, 0.12, 0.12, 0.02), '#9aa4ae', 0, y, 0);
+        k.add(K.ball(0.5), '#ff5a4f', 0, 33.2, 0, { glow: true });
+        const sat = k.sub('sats', [0, 22, 0]);
+        sat.add(torus(13, 0.08), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.3, 0, 0] });
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          sat.add(B(1, 1, 1, 0.1), '#d4a63a', Math.cos(a) * 13, Math.sin(a) * 13 * 0.3, Math.sin(a) * 13);
+          sat.add(Bc(3.4, 0.06, 1, 0.02), '#2f4a8b', Math.cos(a) * 13, Math.sin(a) * 13 * 0.3 + 0.5, Math.sin(a) * 13);
+        }
+        return { spin: [['sats', 'y', 0.3]], pulse: true };
+      },
+      8(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        k.add(K.post(2.4, 8, 12, 1.6), '#9ab8d8', 0, 0.8, 0);
+        k.add(ico(7, 2), '#bfe8ff', 0, 15, 0);
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          k.add(Bc(0.12, 6, 0.12, 0.02), p.g, Math.cos(a) * 6.6, 15, Math.sin(a) * 6.6, { glow: true, rot: [0, -a, 0.6] });
+        }
+        const r1 = k.sub('r1', [0, 15, 0]);
+        r1.add(torus(9, 0.22), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.4, 0, 0] });
+        const r2 = k.sub('r2', [0, 15, 0]);
+        r2.add(torus(10, 0.16), p.c, 0, 0, 0, { glow: true, rot: [Math.PI / 2 + 0.5, 0, 0] });
+        return {
+          spin: [
+            ['r1', 'y', 0.35],
+            ['r2', 'y', -0.28],
+          ],
+          pulse: true,
+        };
+      },
+      9(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          k.add(oct(1.6, 9 + (i % 2) * 3, 0.8), i % 2 ? '#bfe8ff' : '#e6f6ff', Math.cos(a) * 4, 0.8, Math.sin(a) * 4, {
+            rot: [Math.sin(a) * 0.6, -a, -Math.cos(a) * 0.6],
+          });
+        }
+        k.add(oct(2.4, 12, 2.4), '#dff4ff', 0, 0.8, 0);
+        k.add(K.ball(2.4, 2), p.g, 0, 14, 0, { glow: true });
+        for (let i = 0; i < 6; i++) k.add(K.ball(0.5), p.g, Math.cos(i) * 7, 10 + (i % 3), Math.sin(i) * 7, { glow: true });
+        return { pulse: true };
+      },
+      10(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8, 1, 3);
+        k.add(oct(5, 15, 5).rotateY(Math.PI / 6), '#dff4ff', 0, 1, 0);
+        k.add(oct(5.2, 15.4, 5.2).rotateY(Math.PI / 6), p.w, 0, 0.6, 0, { lit: true });
+        k.add(K.ball(4, 2), '#ffd27a', 0, 34, 0, { glow: true });
+        const au = k.sub('aurora', [0, 22, 0]);
+        for (let i = 0; i < 3; i++)
+          au.add(torus(9 + i * 2, 0.35), ['#7ff0c8', '#a0c8ff', '#c8a8ff'][i], 0, i * 1.5, 0, {
+            glow: true,
+            rot: [Math.PI / 2 - 0.35 + i * 0.1, 0, i * 0.4],
+          });
+        return { spin: [['aurora', 'y', 0.12]], pulse: true };
+      },
+      11(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8);
+        for (let i = 0; i < 12; i++)
+          k.add(oct(4.4 - i * 0.25, 1.6, 4.4 - i * 0.25).rotateY(i * 0.3), i % 2 ? '#bfe8ff' : '#e6f6ff', 0, 1 + i * 2.4, 0);
+        const pr = k.sub('portal', [0, 18, 0]);
+        pr.add(torus(8, 0.6), '#a0c8ff', 0, 0, 0, { glow: true });
+        pr.add(new (THREE().CircleGeometry)(7.2, 28), '#c8a8ff', 0, 0, 0, { glow: true });
+        const sh = k.sub('shards', [0, 14, 0]);
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          sh.add(oct(0.6, 1.6, 0.6), '#e6f6ff', Math.cos(a) * 12, (i % 3) * 2, Math.sin(a) * 12, { glow: true });
+        }
+        return {
+          spin: [
+            ['portal', 'y', 0.25],
+            ['shards', 'y', -0.2],
+          ],
+          pulse: true,
+        };
+      },
+      12(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        k.add(K.post(0.6, 20, 8, 0.25), p.g, 0, 0.8, 0, { glow: true });
+        const c = k.sub('palace', [0, 26, 0]);
+        c.add(
+          K.lathe(
+            [
+              [0.001, -8],
+              [6, -4],
+              [11, -1],
+              [11.4, 0],
+            ],
+            16,
+          ),
+          '#bfe8ff',
+          0,
+          0,
+          0,
+        );
+        c.add(K.disc(11.4, 20), '#f4f8ff', 0, 0.05, 0);
+        [16, 10, 10, 8, 8, 12, 12].forEach((h, i) => {
+          const a = (i / 6) * Math.PI * 2,
+            r = i ? 6.4 : 0;
+          c.add(oct(i ? 1.4 : 2.4, h / 2, i ? 1.4 : 2.4), i % 2 ? '#dff4ff' : '#ffffff', Math.cos(a) * r, 0, Math.sin(a) * r);
+        });
+        c.add(torus(12.5, 0.3), '#7ff0c8', 0, 4, 0, { glow: true, rot: [Math.PI / 2 - 0.2, 0, 0] });
+        return { bob: [['palace', 0.8, 0.28]], pulse: true };
+      },
     },
     coast: {
       // Cảng Phi Thuyền: dốc phóng cong như ván trượt hướng ra biển, phi thuyền cánh tam giác trên dốc, tháp điều khiển đầu đĩa
-      7(k, o) { const p = o.pal; k.add(B(20, 1, 14, 0.3), '#5a6478', 0, 0, 0); for (let i = 0; i < 12; i++) { const t = i / 11, y = 1 + Math.pow(t, 2) * 14, z = -8 + t * 16; k.add(Bc(4, 0.6, 1.8, 0.1), '#e8eaee', -2, y, z, { rot: [-Math.atan(2 * t * 14 / 16), 0, 0] }); if (i % 2) k.add(K.post(0.3, y - 1, 6), '#9aa4ae', -2, 1, z); } const ship = k.sub('ship', [-2, 3, -5]); ship.add(K.post(0.9, 6, 10, 0.3).rotateX(Math.PI / 2), '#f4f4f0', 0, 0, 0); ship.add(Bc(6, 0.2, 3, 0.05), '#3f7fb8', 0, -0.3, -1); ship.add(Bc(0.1, 1.6, 1.4, 0.03), '#3f7fb8', 0, 0.8, -2.4); ship.add(K.cone(0.6, 1, 8), '#ffb04a', 0, 0, -3.4, { rot: [-Math.PI / 2, 0, 0], glow: true }); k.add(K.post(1.2, 16, 10, 0.8), '#e8eaee', 6.4, 1, 2); k.add(K.lathe([[0.001, 0], [4, 0.6], [4.2, 1.6], [2.6, 2.6], [0.001, 2.9]], 16), '#f4f4f0', 6.4, 17, 2); k.add(K.post(4.25, 0.6, 16, 4.25), p.w, 6.4, 18, 2, { lit: true }); k.add(K.post(4.3, 0.15, 16, 4.3), p.g, 6.4, 17.5, 2, { glow: true }); return { bob: [['ship', 0.15, 0.6]], pulse: true }; },
-      8(k, o) { const p = o.pal; plinth(k, p, 8); k.add(K.lathe([[0.001, 0], [7, 0.6], [8, 2.6], [7.4, 3.4]], 18), '#e8d8c8', 0, 0.8, 0); const sh = k.sub('shell', [0, 4, -5.5]); sh.add(K.lathe([[0.001, 0], [7, 0.6], [8, 2.6], [7.4, 3.4]], 18), '#f2e4d4', 0, 0, 5.5, { rot: [-1.1, 0, 0] }); k.add(K.ball(4.6, 2), '#f6f6ff', 0, 8, 0); k.add(K.ball(4.8, 2), p.w, 0, 8, 0, { lit: true }); const r = k.sub('data', [0, 8, 0]); for (let i = 0; i < 3; i++) r.add(torus(6 + i * 0.8, 0.12), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 + (i - 1) * 0.4, 0, i * 0.5] }); return { spin: [['data', 'y', 0.4]], pulse: true }; },
-      9(k, o) { const p = o.pal; plinth(k, p, 7); k.add(K.post(1.2, 14, 8, 1.0), '#c8e8f0', 0, 0.8, 0); const b = k.sub('bell', [0, 22, 0]); b.add(K.lathe([[0.001, 6], [5, 5], [8.5, 1.5], [9, -0.5], [8, -1]], 18), '#c8a8ff', 0, 0, 0, { glow: true }); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; b.add(Bc(0.2, 8 + (i % 3) * 2, 0.2, 0.05), i % 2 ? '#7ff0e0' : '#e6d6ff', Math.cos(a) * 7, -5, Math.sin(a) * 7, { glow: true, rot: [0, 0, Math.sin(i) * 0.15] }); } return { bob: [['bell', 1, 0.25]], pulse: true }; },
-      10(k, o) { const p = o.pal; k.add(B(12, 1.4, 12, 0.2), p.b, 0, 0, 0); for (let i = 0; i < 8; i++) k.add(K.post(3.4 - i * 0.18, 3.4, 12, 3.2 - i * 0.18), i % 2 ? '#3f7fb8' : '#f2f2ee', 0, 1.4 + i * 3.4, 0); k.add(K.post(2.6, 0.4, 12), '#2a3440', 0, 28.6, 0); k.add(K.ball(3, 2), '#ffd27a', 0, 32, 0, { glow: true }); const L = k.sub('beam', [0, 32, 0]); L.add(Bc(0.8, 0.8, 22, 0.05), '#fff6c0', 0, 0, 11, { glow: true }); L.add(Bc(0.8, 0.8, 22, 0.05), '#fff6c0', 0, 0, -11, { glow: true }); return { spin: [['beam', 'y', 0.5]], pulse: true }; },
-      11(k, o) { const p = o.pal; plinth(k, p, 9); for (const sx of [-1, 1]) k.add(B(2, 12, 3, 0.3), '#5a6478', sx * 10, 1, 0); const w = k.sub('swirl', [0, 13, 0]); for (let i = 0; i < 40; i++) { const t = i / 40, a = t * Math.PI * 6, r = 9 * (1 - t * 0.8); w.add(K.ball(0.9 - t * 0.5, 1), i % 2 ? '#5fd8e0' : '#3f9ac0', Math.cos(a) * r, Math.sin(a) * r, 0, { glow: i % 3 === 0 }); } w.add(torus(9.6, 0.5), '#bff0ff', 0, 0, 0, { glow: true }); return { spin: [['swirl', 'z', 0.6]], pulse: true }; },
+      7(k, o) {
+        const p = o.pal;
+        k.add(B(20, 1, 14, 0.3), '#5a6478', 0, 0, 0);
+        for (let i = 0; i < 12; i++) {
+          const t = i / 11,
+            y = 1 + Math.pow(t, 2) * 14,
+            z = -8 + t * 16;
+          k.add(Bc(4, 0.6, 1.8, 0.1), '#e8eaee', -2, y, z, { rot: [-Math.atan((2 * t * 14) / 16), 0, 0] });
+          if (i % 2) k.add(K.post(0.3, y - 1, 6), '#9aa4ae', -2, 1, z);
+        }
+        const ship = k.sub('ship', [-2, 3, -5]);
+        ship.add(K.post(0.9, 6, 10, 0.3).rotateX(Math.PI / 2), '#f4f4f0', 0, 0, 0);
+        ship.add(Bc(6, 0.2, 3, 0.05), '#3f7fb8', 0, -0.3, -1);
+        ship.add(Bc(0.1, 1.6, 1.4, 0.03), '#3f7fb8', 0, 0.8, -2.4);
+        ship.add(K.cone(0.6, 1, 8), '#ffb04a', 0, 0, -3.4, { rot: [-Math.PI / 2, 0, 0], glow: true });
+        k.add(K.post(1.2, 16, 10, 0.8), '#e8eaee', 6.4, 1, 2);
+        k.add(
+          K.lathe(
+            [
+              [0.001, 0],
+              [4, 0.6],
+              [4.2, 1.6],
+              [2.6, 2.6],
+              [0.001, 2.9],
+            ],
+            16,
+          ),
+          '#f4f4f0',
+          6.4,
+          17,
+          2,
+        );
+        k.add(K.post(4.25, 0.6, 16, 4.25), p.w, 6.4, 18, 2, { lit: true });
+        k.add(K.post(4.3, 0.15, 16, 4.3), p.g, 6.4, 17.5, 2, { glow: true });
+        return { bob: [['ship', 0.15, 0.6]], pulse: true };
+      },
+      8(k, o) {
+        const p = o.pal;
+        plinth(k, p, 8);
+        k.add(
+          K.lathe(
+            [
+              [0.001, 0],
+              [7, 0.6],
+              [8, 2.6],
+              [7.4, 3.4],
+            ],
+            18,
+          ),
+          '#e8d8c8',
+          0,
+          0.8,
+          0,
+        );
+        const sh = k.sub('shell', [0, 4, -5.5]);
+        sh.add(
+          K.lathe(
+            [
+              [0.001, 0],
+              [7, 0.6],
+              [8, 2.6],
+              [7.4, 3.4],
+            ],
+            18,
+          ),
+          '#f2e4d4',
+          0,
+          0,
+          5.5,
+          { rot: [-1.1, 0, 0] },
+        );
+        k.add(K.ball(4.6, 2), '#f6f6ff', 0, 8, 0);
+        k.add(K.ball(4.8, 2), p.w, 0, 8, 0, { lit: true });
+        const r = k.sub('data', [0, 8, 0]);
+        for (let i = 0; i < 3; i++)
+          r.add(torus(6 + i * 0.8, 0.12), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2 + (i - 1) * 0.4, 0, i * 0.5] });
+        return { spin: [['data', 'y', 0.4]], pulse: true };
+      },
+      9(k, o) {
+        const p = o.pal;
+        plinth(k, p, 7);
+        k.add(K.post(1.2, 14, 8, 1.0), '#c8e8f0', 0, 0.8, 0);
+        const b = k.sub('bell', [0, 22, 0]);
+        b.add(
+          K.lathe(
+            [
+              [0.001, 6],
+              [5, 5],
+              [8.5, 1.5],
+              [9, -0.5],
+              [8, -1],
+            ],
+            18,
+          ),
+          '#c8a8ff',
+          0,
+          0,
+          0,
+          { glow: true },
+        );
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          b.add(Bc(0.2, 8 + (i % 3) * 2, 0.2, 0.05), i % 2 ? '#7ff0e0' : '#e6d6ff', Math.cos(a) * 7, -5, Math.sin(a) * 7, {
+            glow: true,
+            rot: [0, 0, Math.sin(i) * 0.15],
+          });
+        }
+        return { bob: [['bell', 1, 0.25]], pulse: true };
+      },
+      10(k, o) {
+        const p = o.pal;
+        k.add(B(12, 1.4, 12, 0.2), p.b, 0, 0, 0);
+        for (let i = 0; i < 8; i++)
+          k.add(K.post(3.4 - i * 0.18, 3.4, 12, 3.2 - i * 0.18), i % 2 ? '#3f7fb8' : '#f2f2ee', 0, 1.4 + i * 3.4, 0);
+        k.add(K.post(2.6, 0.4, 12), '#2a3440', 0, 28.6, 0);
+        k.add(K.ball(3, 2), '#ffd27a', 0, 32, 0, { glow: true });
+        const L = k.sub('beam', [0, 32, 0]);
+        L.add(Bc(0.8, 0.8, 22, 0.05), '#fff6c0', 0, 0, 11, { glow: true });
+        L.add(Bc(0.8, 0.8, 22, 0.05), '#fff6c0', 0, 0, -11, { glow: true });
+        return { spin: [['beam', 'y', 0.5]], pulse: true };
+      },
+      11(k, o) {
+        const p = o.pal;
+        plinth(k, p, 9);
+        for (const sx of [-1, 1]) k.add(B(2, 12, 3, 0.3), '#5a6478', sx * 10, 1, 0);
+        const w = k.sub('swirl', [0, 13, 0]);
+        for (let i = 0; i < 40; i++) {
+          const t = i / 40,
+            a = t * Math.PI * 6,
+            r = 9 * (1 - t * 0.8);
+          w.add(K.ball(0.9 - t * 0.5, 1), i % 2 ? '#5fd8e0' : '#3f9ac0', Math.cos(a) * r, Math.sin(a) * r, 0, { glow: i % 3 === 0 });
+        }
+        w.add(torus(9.6, 0.5), '#bff0ff', 0, 0, 0, { glow: true });
+        return { spin: [['swirl', 'z', 0.6]], pulse: true };
+      },
       // Tháp Ốc Ngọc: vỏ ốc xoắn cao vút màu xà cừ, ngọc sáng trên đỉnh, ba vòng nước sáng xoay ở ba độ cao, thác sáng đổ xuống
-      12(k, o) { const p = o.pal; k.add(K.lathe([[12, 0], [12, 0.8], [9, 1.6], [7, 1.2]], 20), '#e8d8e8', 0, 0, 0); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; k.add(K.ball(1.6, 1), i % 2 ? '#ff9ad0' : '#7ff0e0', Math.cos(a) * 10.4, 1, Math.sin(a) * 10.4, { sc: [1, 0.5, 1] }); } const n = 44; for (let i = 0; i < n; i++) { const t = i / n, a = t * Math.PI * 9, r = 7.4 * (1 - t * 0.86), y = 1.4 + t * 40; const col = ['#f6eef8', '#e0f4fa', '#f2e0f0', '#d8f0ec'][i % 4]; k.add(K.ball(2.4 * (1 - t * 0.75) + 0.4, 1), col, Math.cos(a) * r, y, Math.sin(a) * r, { sc: [1.25, 0.8, 1.25] }); if (i % 3 === 0) k.add(Bc(0.9, 0.5, 0.04, 0.01), p.w, Math.cos(a) * (r + 2), y, Math.sin(a) * (r + 2), { rot: [0, -a + Math.PI / 2, 0], lit: true }); } k.add(K.ball(2.6, 2), '#f8f4ff', 0, 44, 0, { glow: true }); for (let j = 0; j < 3; j++) { const y = 12 + j * 11, r = 13 - j * 2.6, w = k.sub('ring' + j, [0, y, 0]); w.add(torus(r, 0.45), '#7ff0ff', 0, 0, 0, { glow: true, rot: [Math.PI / 2 + (j - 1) * 0.18, 0, 0] }); for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2; w.add(Bc(0.5, y - 1.5, 0.12, 0.02), '#b8f8ff', Math.cos(a) * r, -(y - 1.5) / 2, Math.sin(a) * r, { glow: true }); } } return { spin: [['ring0', 'y', 0.25], ['ring1', 'y', -0.2], ['ring2', 'y', 0.3]], pulse: true }; },
+      12(k, o) {
+        const p = o.pal;
+        k.add(
+          K.lathe(
+            [
+              [12, 0],
+              [12, 0.8],
+              [9, 1.6],
+              [7, 1.2],
+            ],
+            20,
+          ),
+          '#e8d8e8',
+          0,
+          0,
+          0,
+        );
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          k.add(K.ball(1.6, 1), i % 2 ? '#ff9ad0' : '#7ff0e0', Math.cos(a) * 10.4, 1, Math.sin(a) * 10.4, { sc: [1, 0.5, 1] });
+        }
+        const n = 44;
+        for (let i = 0; i < n; i++) {
+          const t = i / n,
+            a = t * Math.PI * 9,
+            r = 7.4 * (1 - t * 0.86),
+            y = 1.4 + t * 40;
+          const col = ['#f6eef8', '#e0f4fa', '#f2e0f0', '#d8f0ec'][i % 4];
+          k.add(K.ball(2.4 * (1 - t * 0.75) + 0.4, 1), col, Math.cos(a) * r, y, Math.sin(a) * r, { sc: [1.25, 0.8, 1.25] });
+          if (i % 3 === 0)
+            k.add(Bc(0.9, 0.5, 0.04, 0.01), p.w, Math.cos(a) * (r + 2), y, Math.sin(a) * (r + 2), {
+              rot: [0, -a + Math.PI / 2, 0],
+              lit: true,
+            });
+        }
+        k.add(K.ball(2.6, 2), '#f8f4ff', 0, 44, 0, { glow: true });
+        for (let j = 0; j < 3; j++) {
+          const y = 12 + j * 11,
+            r = 13 - j * 2.6,
+            w = k.sub('ring' + j, [0, y, 0]);
+          w.add(torus(r, 0.45), '#7ff0ff', 0, 0, 0, { glow: true, rot: [Math.PI / 2 + (j - 1) * 0.18, 0, 0] });
+          for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI * 2;
+            w.add(Bc(0.5, y - 1.5, 0.12, 0.02), '#b8f8ff', Math.cos(a) * r, -(y - 1.5) / 2, Math.sin(a) * r, { glow: true });
+          }
+        }
+        return {
+          spin: [
+            ['ring0', 'y', 0.25],
+            ['ring1', 'y', -0.2],
+            ['ring2', 'y', 0.3],
+          ],
+          pulse: true,
+        };
+      },
     },
     desert: {
-      7(k, o) { const p = o.pal; k.add(B(16, 1.2, 16, 0.2), '#d8b498', 0, 0, 0); for (const [x, z] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) { k.add(K.post(1.2, 18, 4, 0.6), '#e8c09a', x, 1.2, z, { rot: [0, Math.PI / 4, 0] }); k.add(K.cone(0.8, 2.4, 4), '#e6c04a', x, 19.2, z, { rot: [0, Math.PI / 4, 0] }); } rocket(k, 0, 0, 30, '#f4ece0', '#c87a5a', 1.8); gantry(k, 3.6, 0, 27, '#5fb8c8'); return { smoke: [[0, 4, 0, 2.6]], pulse: true }; },
-      8(k, o) { const p = o.pal; k.add(K.cone(12, 20, 4), '#2e2a36', 0, 0, 0, { rot: [0, Math.PI / 4, 0] }); for (let i = 1; i < 8; i++) { const r = 12 * (1 - i / 8) * 1.414; k.add(Bc(r * 1.41, 0.15, r * 1.41, 0.02), p.g, 0, i * 2.5, 0, { glow: true, sc: [1, 1, 1] }); } const e = k.sub('eye', [0, 22, 0]); e.add(oct(1.6, 2, 1.6), '#ffd27a', 0, -2, 0, { glow: true }); e.add(torus(3, 0.2), p.g, 0, 0, 0, { glow: true }); return { spin: [['eye', 'y', 0.5]], pulse: true }; },
-      9(k, o) { const p = o.pal; k.add(K.post(3, 26, 10, 2.4), '#5a9a5a', 0, 0, 0); for (const [h, sx] of [[10, 1], [15, -1], [19, 1]]) { k.add(K.post(1.4, 5, 8).rotateZ(sx * Math.PI / 2), '#5a9a5a', sx * 4, h, 0); k.add(K.post(1.4, 6, 8), '#5a9a5a', sx * 6.5, h, 0); k.add(K.ball(1.2, 1), '#ff9ad0', sx * 6.5, h + 6.4, 0, { glow: true }); } for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; k.add(Bc(0.15, 26, 0.15, 0.02), '#3f7a4a', Math.cos(a) * 2.9, 13, Math.sin(a) * 2.9); } k.add(K.ball(3.2, 2), '#ff9ad0', 0, 27, 0, { glow: true, sc: [1, 0.7, 1] }); return { pulse: true }; },
-      10(k, o) { const p = o.pal; k.add(K.post(1.8, 30, 10, 1.2), '#e8dcc8', 0, 0, 0); k.add(K.post(2.6, 4, 12), '#3a3a3e', 0, 30, 0); k.add(K.ball(2.8, 2), '#ffd27a', 0, 32, 0, { glow: true }); for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2 + ring * 0.2, r = 8 + ring * 3.6; k.add(K.post(0.08, 1.4, 4), '#5a5a60', Math.cos(a) * r, 0, Math.sin(a) * r); k.add(Bc(1.6, 0.06, 1.6, 0.02), '#cfe8ff', Math.cos(a) * r, 1.5, Math.sin(a) * r, { rot: [0.6, -a + Math.PI / 2, 0], glow: true }); } return { pulse: true }; },
-      11(k, o) { const p = o.pal; k.add(K.cone(10, 9, 4), '#e8c09a', 0, 0, 0, { rot: [0, Math.PI / 4, 0] }); k.add(K.post(1.2, 8, 8, 0.4), p.g, 0, 9, 0, { glow: true }); const ip = k.sub('inv', [0, 24, 0]); ip.add(K.cone(10, 12, 4), '#ffb0d0', 0, 0, 0, { rot: [Math.PI, Math.PI / 4, 0] }); ip.add(K.cone(10.2, 0.6, 4), p.g, 0, 0.2, 0, { rot: [0, Math.PI / 4, 0], glow: true }); return { bob: [['inv', 0.8, 0.3]], spin: [['inv', 'y', 0.08]], pulse: true }; },
+      7(k, o) {
+        const p = o.pal;
+        k.add(B(16, 1.2, 16, 0.2), '#d8b498', 0, 0, 0);
+        for (const [x, z] of [
+          [-6, -6],
+          [6, -6],
+          [-6, 6],
+          [6, 6],
+        ]) {
+          k.add(K.post(1.2, 18, 4, 0.6), '#e8c09a', x, 1.2, z, { rot: [0, Math.PI / 4, 0] });
+          k.add(K.cone(0.8, 2.4, 4), '#e6c04a', x, 19.2, z, { rot: [0, Math.PI / 4, 0] });
+        }
+        rocket(k, 0, 0, 30, '#f4ece0', '#c87a5a', 1.8);
+        gantry(k, 3.6, 0, 27, '#5fb8c8');
+        return { smoke: [[0, 4, 0, 2.6]], pulse: true };
+      },
+      8(k, o) {
+        const p = o.pal;
+        k.add(K.cone(12, 20, 4), '#2e2a36', 0, 0, 0, { rot: [0, Math.PI / 4, 0] });
+        for (let i = 1; i < 8; i++) {
+          const r = 12 * (1 - i / 8) * 1.414;
+          k.add(Bc(r * 1.41, 0.15, r * 1.41, 0.02), p.g, 0, i * 2.5, 0, { glow: true, sc: [1, 1, 1] });
+        }
+        const e = k.sub('eye', [0, 22, 0]);
+        e.add(oct(1.6, 2, 1.6), '#ffd27a', 0, -2, 0, { glow: true });
+        e.add(torus(3, 0.2), p.g, 0, 0, 0, { glow: true });
+        return { spin: [['eye', 'y', 0.5]], pulse: true };
+      },
+      9(k, o) {
+        const p = o.pal;
+        k.add(K.post(3, 26, 10, 2.4), '#5a9a5a', 0, 0, 0);
+        for (const [h, sx] of [
+          [10, 1],
+          [15, -1],
+          [19, 1],
+        ]) {
+          k.add(K.post(1.4, 5, 8).rotateZ((sx * Math.PI) / 2), '#5a9a5a', sx * 4, h, 0);
+          k.add(K.post(1.4, 6, 8), '#5a9a5a', sx * 6.5, h, 0);
+          k.add(K.ball(1.2, 1), '#ff9ad0', sx * 6.5, h + 6.4, 0, { glow: true });
+        }
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          k.add(Bc(0.15, 26, 0.15, 0.02), '#3f7a4a', Math.cos(a) * 2.9, 13, Math.sin(a) * 2.9);
+        }
+        k.add(K.ball(3.2, 2), '#ff9ad0', 0, 27, 0, { glow: true, sc: [1, 0.7, 1] });
+        return { pulse: true };
+      },
+      10(k, o) {
+        const p = o.pal;
+        k.add(K.post(1.8, 30, 10, 1.2), '#e8dcc8', 0, 0, 0);
+        k.add(K.post(2.6, 4, 12), '#3a3a3e', 0, 30, 0);
+        k.add(K.ball(2.8, 2), '#ffd27a', 0, 32, 0, { glow: true });
+        for (let ring = 0; ring < 2; ring++)
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2 + ring * 0.2,
+              r = 8 + ring * 3.6;
+            k.add(K.post(0.08, 1.4, 4), '#5a5a60', Math.cos(a) * r, 0, Math.sin(a) * r);
+            k.add(Bc(1.6, 0.06, 1.6, 0.02), '#cfe8ff', Math.cos(a) * r, 1.5, Math.sin(a) * r, {
+              rot: [0.6, -a + Math.PI / 2, 0],
+              glow: true,
+            });
+          }
+        return { pulse: true };
+      },
+      11(k, o) {
+        const p = o.pal;
+        k.add(K.cone(10, 9, 4), '#e8c09a', 0, 0, 0, { rot: [0, Math.PI / 4, 0] });
+        k.add(K.post(1.2, 8, 8, 0.4), p.g, 0, 9, 0, { glow: true });
+        const ip = k.sub('inv', [0, 24, 0]);
+        ip.add(K.cone(10, 12, 4), '#ffb0d0', 0, 0, 0, { rot: [Math.PI, Math.PI / 4, 0] });
+        ip.add(K.cone(10.2, 0.6, 4), p.g, 0, 0.2, 0, { rot: [0, Math.PI / 4, 0], glow: true });
+        return { bob: [['inv', 0.8, 0.3]], spin: [['inv', 'y', 0.08]], pulse: true };
+      },
       // Kim Cương Mặt Trời Hồng: viên kim cương khổng lồ lơ lửng trên kim tự tháp, tia sáng nối từ bốn góc, vành cát sáng quay
-      12(k, o) { const p = o.pal; k.add(K.cone(13, 12, 4), '#e8b898', 0, 0, 0, { rot: [0, Math.PI / 4, 0] }); for (let i = 1; i < 6; i++) k.add(K.cone(13 * (1 - i / 6) + 0.25, 0.25, 4), '#ffd0e8', 0, i * 2, 0, { rot: [0, Math.PI / 4, 0], glow: true }); for (const [x, z] of [[-9.2, 0], [9.2, 0], [0, -9.2], [0, 9.2]]) { const dx = -x, dz = -z, L = Math.hypot(dx, 30, dz); k.add(Bc(0.3, L, 0.3, 0.02), '#ffe0f4', x / 2, 15, z / 2, { glow: true, rot: [Math.atan2(dz, 30), 0, -Math.atan2(dx, 30)] }); } const d = k.sub('gem', [0, 32, 0]); d.add(oct(8, 9, 8).translate(0, -9, 0), '#ffb0d8', 0, 0, 0); d.add(oct(8.2, 3, 8.2).rotateX(Math.PI).translate(0, 3, 0), '#ffe0f0', 0, 0, 0); d.add(oct(3, 6, 3).translate(0, -6, 0), '#fff4fa', 0, 0, 0, { glow: true }); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; d.add(Bc(0.12, 0.6, 0.04, 0.01), p.w, Math.cos(a) * 6, -2, Math.sin(a) * 6, { rot: [0, -a + Math.PI / 2, 0], lit: true }); } const r = k.sub('sand', [0, 32, 0]); r.add(torus(15, 0.5), '#ffd0a0', 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.15, 0, 0] }); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; r.add(oct(0.6, 1.2, 0.6), '#ffe0c0', Math.cos(a) * 15, 0, Math.sin(a) * 15, { glow: true }); } return { bob: [['gem', 0.8, 0.25]], spin: [['gem', 'y', 0.1], ['sand', 'y', 0.18]], pulse: true }; },
+      12(k, o) {
+        const p = o.pal;
+        k.add(K.cone(13, 12, 4), '#e8b898', 0, 0, 0, { rot: [0, Math.PI / 4, 0] });
+        for (let i = 1; i < 6; i++)
+          k.add(K.cone(13 * (1 - i / 6) + 0.25, 0.25, 4), '#ffd0e8', 0, i * 2, 0, { rot: [0, Math.PI / 4, 0], glow: true });
+        for (const [x, z] of [
+          [-9.2, 0],
+          [9.2, 0],
+          [0, -9.2],
+          [0, 9.2],
+        ]) {
+          const dx = -x,
+            dz = -z,
+            L = Math.hypot(dx, 30, dz);
+          k.add(Bc(0.3, L, 0.3, 0.02), '#ffe0f4', x / 2, 15, z / 2, { glow: true, rot: [Math.atan2(dz, 30), 0, -Math.atan2(dx, 30)] });
+        }
+        const d = k.sub('gem', [0, 32, 0]);
+        d.add(oct(8, 9, 8).translate(0, -9, 0), '#ffb0d8', 0, 0, 0);
+        d.add(oct(8.2, 3, 8.2).rotateX(Math.PI).translate(0, 3, 0), '#ffe0f0', 0, 0, 0);
+        d.add(oct(3, 6, 3).translate(0, -6, 0), '#fff4fa', 0, 0, 0, { glow: true });
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          d.add(Bc(0.12, 0.6, 0.04, 0.01), p.w, Math.cos(a) * 6, -2, Math.sin(a) * 6, { rot: [0, -a + Math.PI / 2, 0], lit: true });
+        }
+        const r = k.sub('sand', [0, 32, 0]);
+        r.add(torus(15, 0.5), '#ffd0a0', 0, 0, 0, { glow: true, rot: [Math.PI / 2 - 0.15, 0, 0] });
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          r.add(oct(0.6, 1.2, 0.6), '#ffe0c0', Math.cos(a) * 15, 0, Math.sin(a) * 15, { glow: true });
+        }
+        return {
+          bob: [['gem', 0.8, 0.25]],
+          spin: [
+            ['gem', 'y', 0.1],
+            ['sand', 'y', 0.18],
+          ],
+          pulse: true,
+        };
+      },
     },
   };
   const NAME = {
@@ -78,10 +881,19 @@
     mountain: [null, 'Đài Thiên Văn Đỉnh Núi', 'Lõi Đá Tư Duy', 'Núi Sống', 'Lò Mặt Trời', 'Núi Ngược Lơ Lửng', 'Ngọn Thạch Anh Vĩnh Cửu'],
     tundra: [null, 'Trạm Vệ Tinh Cực', 'Bộ Óc Băng', 'Hoa Băng Sống', 'Lăng Kính Mặt Trời', 'Lăng Kính Không Gian', 'Cung Điện Băng Bay'],
     coast: [null, 'Cảng Phi Thuyền', 'Ngọc Trai Trí Tuệ', 'Sứa Khổng Lồ', 'Hải Đăng Mặt Trời', 'Cổng Xoáy Nước', 'Tháp Ốc Ngọc'],
-    desert: [null, 'Bệ Phóng Sa Mạc', 'Kim Tự Tháp Dữ Liệu', 'Xương Rồng Khổng Lồ', 'Tháp Gương Mặt Trời', 'Kim Tự Tháp Ngược', 'Kim Cương Mặt Trời Hồng'],
+    desert: [
+      null,
+      'Bệ Phóng Sa Mạc',
+      'Kim Tự Tháp Dữ Liệu',
+      'Xương Rồng Khổng Lồ',
+      'Tháp Gương Mặt Trời',
+      'Kim Tự Tháp Ngược',
+      'Kim Cương Mặt Trời Hồng',
+    ],
   };
   // hàm dựng nhà chính thời 7..12 của một đảo (null nếu không có)
-  const of = (key, lv) => (F[key] && F[key][lv] ? (k, o) => F[key][lv](k, Object.assign(Object.create(o), { pal: o.pal || A.pal(o) })) : null);
+  const of = (key, lv) =>
+    F[key] && F[key][lv] ? (k, o) => F[key][lv](k, Object.assign(Object.create(o), { pal: o.pal || A.pal(o) })) : null;
   const nameOf = (key, lv) => (NAME[key] && lv >= 7 ? NAME[key][lv - 6] : null);
   BK.IslesHallsFuture = { F, NAME, of, nameOf };
 })(typeof self !== 'undefined' ? self : globalThis);

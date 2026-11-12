@@ -23,40 +23,81 @@
 })(typeof self !== 'undefined' ? self : globalThis, function (BK) {
   'use strict';
   const AMBUSH = [0.12, 0.28];
-  const TRAITOR = 0.2;          // có người đủ lý do phản: khả năng bị mua chuộc mở cổng (nhân với độ mưu mô bên đánh)
+  const TRAITOR = 0.2; // có người đủ lý do phản: khả năng bị mua chuộc mở cổng (nhân với độ mưu mô bên đánh)
   const AMBUSH_COVER = { forest: 0.15, mountain: 0.15 }; // đảo có rừng, núi sát cổng: dễ giấu quân phục kích
   const DUEL_DAYS = 0.5;
-  const BLOCKADE_DAYS = 24, BLOCKADE_FOOD = 0.3;
-  const PRISONERS = 3, PRISON_DAYS = 360, RANSOM = 40;
+  const BLOCKADE_DAYS = 24,
+    BLOCKADE_FOOD = 0.3;
+  const PRISONERS = 3,
+    PRISON_DAYS = 360,
+    RANSOM = 40;
   const TRIUMPH_DAYS = 1;
   const RACE_DAYS = 180;
-  const P = () => BK.People, D = () => BK.Diplomacy, G = () => BK.Siege, Wr = () => BK.War;
+  const P = () => BK.People,
+    D = () => BK.Diplomacy,
+    G = () => BK.Siege,
+    Wr = () => BK.War;
   const living = (S) => BK.Island.living(S);
   const say = (W, day, text, isles) => D().say(W, day, text, isles);
   const note = (S, day, kind, text, ids) => S.log.push({ day: Math.floor(day), kind, ids: ids || [], text });
-  const traitsOf = (S) => { const M = BK.Strategy.mind(S); return M ? M.t : null; };
-  const stat = (W, k) => { W.battleStats = W.battleStats || {}; W.battleStats[k] = (W.battleStats[k] || 0) + 1; };
+  const traitsOf = (S) => {
+    const M = BK.Strategy.mind(S);
+    return M ? M.t : null;
+  };
+  const stat = (W, k) => {
+    W.battleStats = W.battleStats || {};
+    W.battleStats[k] = (W.battleStats[k] || 0) + 1;
+  };
   const night = (day) => BK.Schedule.phase(BK.World.todOf(day)) === 'night';
   // ghi người nổi bật (logic/chronicle.js)
-  const legend = (W, day, i, p, kind, text) => { if (BK.Chronicle) BK.Chronicle.legend(W, day, i, p, kind, text); };
-  const big = (W, day, i, text, weight, at) => { if (BK.Chronicle) BK.Chronicle.add(W, day, i, text, weight, at); };
+  const legend = (W, day, i, p, kind, text) => {
+    if (BK.Chronicle) BK.Chronicle.legend(W, day, i, p, kind, text);
+  };
+  const big = (W, day, i, text, weight, at) => {
+    if (BK.Chronicle) BK.Chronicle.add(W, day, i, text, weight, at);
+  };
 
   /* ---------- Tới nơi: phục kích, đánh đêm, nội gián, đấu tướng, vây thành ---------- */
   function onArrive(W, day, w, rng, fall) {
-    const A = W.islands[w.a], B = W.islands[w.b], r = Wr().rulerOf(W, w.b), tb = traitsOf(W.islands[r]), ta = traitsOf(A);
+    const A = W.islands[w.a],
+      B = W.islands[w.b],
+      r = Wr().rulerOf(W, w.b),
+      tb = traitsOf(W.islands[r]),
+      ta = traitsOf(A);
     // phục kích (design/ke-hoach-khac-phuc.md mục 5.1): trên cầu, hay ở đầu cầu khi đảo có rừng, núi sát cổng; người đứng đầu
     // mưu mô thì hay bày, đảo rừng núi thì dễ giấu quân. Quân đánh úp (surprise) thì không ai kịp phục
-    const cover = AMBUSH_COVER[B.key] || 0, wit = tb ? Math.max(0, tb.cunning - 0.45) * 0.6 : 0;
+    const cover = AMBUSH_COVER[B.key] || 0,
+      wit = tb ? Math.max(0, tb.cunning - 0.45) * 0.6 : 0;
     if (!w.surprise && tb && rng.chance(Math.min(0.8, 0.15 + cover + wit))) {
-      const k = rng.range(AMBUSH[0], AMBUSH[1]); let n = 0;
-      for (const x of w.troops) if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate, { i: w.b, ambush: true })) n++; // (người phục kích nấp ở đầu cầu: phần vẽ cho đạn bay ra từ đó)
-      w.troops = w.troops.filter((x) => x.p.alive); w.morale = Math.max(0, w.morale - 0.2); w.ambush = n; stat(W, 'ambush');
+      const k = rng.range(AMBUSH[0], AMBUSH[1]);
+      let n = 0;
+      // (người phục kích nấp ở đầu cầu: phần vẽ cho đạn bay ra từ đó)
+      for (const x of w.troops)
+        if (x.p.alive && rng.chance(fall.chance ? fall.chance(k) : k) && fall(x, w.b, w.gate, { i: w.b, ambush: true })) n++;
+      w.troops = w.troops.filter((x) => x.p.alive);
+      w.morale = Math.max(0, w.morale - 0.2);
+      w.ambush = n;
+      stat(W, 'ambush');
       const where = cover ? (B.key === 'forest' ? 'trong rừng sát đầu cầu' : 'trên sườn núi sát đầu cầu') : 'trên cầu';
-      say(W, day, B.name + ' phục kích quân ' + A.name + ' ' + where + (wit > 0.1 ? ' (người đứng đầu mưu mô đoán trước đường quân tới)' : '') + ': ' + n + ' người ngã.', [w.a, w.b]);
+      say(
+        W,
+        day,
+        B.name +
+          ' phục kích quân ' +
+          A.name +
+          ' ' +
+          where +
+          (wit > 0.1 ? ' (người đứng đầu mưu mô đoán trước đường quân tới)' : '') +
+          ': ' +
+          n +
+          ' người ngã.',
+        [w.a, w.b],
+      );
     }
     // đánh đêm
     if (w.surprise && night(day)) {
-      w.night = true; stat(W, 'night');
+      w.night = true;
+      stat(W, 'night');
       const dozing = living(B).filter((p) => p.job === 'soldier' && P().traits(p).meekness > 0.62).length;
       if (dozing) G().hit(B, w.gate, 0.15 * Math.min(3, dozing));
       say(W, day, 'Quân ' + A.name + ' cầm đuốc đánh đêm vào ' + B.name + (dozing ? ', lính gác đêm ngủ gật' : '') + '.', [w.a, w.b]);
@@ -66,28 +107,51 @@
     // đứng đầu bên đánh càng mưu mô càng hay mua chuộc được
     if (ta && !w.forceGate) {
       const sour = (B.discontent || 0) + (B.unrest || 0);
-      const why = (p) => { const t = P().traits(p); return p.owes && p.owes[w.a] != null && day - p.owes[w.a] < 3 * 360 ? 'nợ ân ' + A.name
-          : sour > 0.3 && t.aggression > 0.55 ? 'bất bình với ' + B.name : t.paranoia > 0.65 && t.aggression > 0.5 ? 'nuôi oán người đứng đầu' : null; };
+      const why = (p) => {
+        const t = P().traits(p);
+        return p.owes && p.owes[w.a] != null && day - p.owes[w.a] < 3 * 360
+          ? 'nợ ân ' + A.name
+          : sour > 0.3 && t.aggression > 0.55
+            ? 'bất bình với ' + B.name
+            : t.paranoia > 0.65 && t.aggression > 0.5
+              ? 'nuôi oán người đứng đầu'
+              : null;
+      };
       const tr = living(B).find((p) => !p.away && !p.role && p.job !== 'soldier' && P().ageOf(p, day) >= 18 && why(p));
       if (tr && rng.chance(TRAITOR * (0.4 + ta.cunning))) {
         const cause = why(tr);
-        w.traitor = tr.id; w.forceGate = true; G().hit(B, w.gate, 1); stat(W, 'traitor');
+        w.traitor = tr.id;
+        w.forceGate = true;
+        G().hit(B, w.gate, 1);
+        stat(W, 'traitor');
         say(W, day, P().fullName(tr) + ' (' + cause + ') lén mở cổng ' + B.name + ' cho quân ' + A.name + '.', [w.a, w.b]);
         legend(W, day, w.b, tr, 'traitor', 'mở cổng cho quân ' + A.name);
       }
     }
     // đấu tướng
     const gA = w.gen != null ? A.people.get(w.gen) : null;
-    const gB = ['general1', 'general2'].map((k) => B.seats[k]).filter((id) => id != null).map((id) => B.people.get(id)).find((p) => p && p.alive && !p.away);
+    const gB = ['general1', 'general2']
+      .map((k) => B.seats[k])
+      .filter((id) => id != null)
+      .map((id) => B.people.get(id))
+      .find((p) => p && p.alive && !p.away);
     if (gA && gA.alive && gB && P().traits(gA).aggression > 0.6 && P().traits(gB).aggression > 0.6 && rng.chance(0.7)) {
-      w.duel = { a: gA.id, b: gB.id, until: day + DUEL_DAYS }; stat(W, 'duel');
-      say(W, day, 'Tướng ' + P().fullName(gA) + ' (' + A.name + ') và tướng ' + P().fullName(gB) + ' (' + B.name + ') ra đấu tay đôi trước cổng.', [w.a, w.b]);
+      w.duel = { a: gA.id, b: gB.id, until: day + DUEL_DAYS };
+      stat(W, 'duel');
+      say(
+        W,
+        day,
+        'Tướng ' + P().fullName(gA) + ' (' + A.name + ') và tướng ' + P().fullName(gB) + ' (' + B.name + ') ra đấu tay đôi trước cổng.',
+        [w.a, w.b],
+      );
     }
     // vây thành cắt lương
     if (w.kind === 'conquer' && ta && ta.cunning > 0.55 && ta.aggression < 0.6 && !w.forceGate) {
       const ratio = Wr().offense(W, w.a, day) / Math.max(0.5, Wr().defense(W, w.b, w.a));
       if (ratio < 1.3 && rng.chance(0.7)) {
-        w.blockade = { since: day, until: day + BLOCKADE_DAYS }; B.situ.blockade = w.blockade.until; stat(W, 'blockade');
+        w.blockade = { since: day, until: day + BLOCKADE_DAYS };
+        B.situ.blockade = w.blockade.until;
+        stat(W, 'blockade');
         say(W, day, 'Quân ' + A.name + ' dựng trại vây ' + B.name + ', cắt đường lương thực.', [w.a, w.b]);
       }
     }
@@ -96,15 +160,20 @@
   /* ---------- Ở cổng: đấu tướng, vây thành, đào ngũ, cứu viện ---------- */
   // trả về 'hold' nếu đợt này chưa áp sát (đang đấu tướng, đang vây), 'surrender' nếu bên bị vây đầu hàng, null thì đánh như thường
   function gateStep(W, day, w, rng, dt, fall, def) {
-    const A = W.islands[w.a], B = W.islands[w.b];
+    const A = W.islands[w.a],
+      B = W.islands[w.b];
     // đấu tướng: hai quân đứng xem tới khi xong
     if (w.duel && !w.duel.done) {
       if (day < w.duel.until) return 'hold';
       w.duel.done = true;
-      const a = A.people.get(w.duel.a), b = B.people.get(w.duel.b); if (!a || !b || !a.alive || !b.alive) return null;
-      const sa = (0.7 + 0.6 * P().traits(a).aggression) * (1 + 0.15 * A.level) * rng.range(0.6, 1.4), sb = (0.7 + 0.6 * P().traits(b).aggression) * (1 + 0.15 * B.level) * rng.range(0.6, 1.4);
+      const a = A.people.get(w.duel.a),
+        b = B.people.get(w.duel.b);
+      if (!a || !b || !a.alive || !b.alive) return null;
+      const sa = (0.7 + 0.6 * P().traits(a).aggression) * (1 + 0.15 * A.level) * rng.range(0.6, 1.4),
+        sb = (0.7 + 0.6 * P().traits(b).aggression) * (1 + 0.15 * B.level) * rng.range(0.6, 1.4);
       const [win, lose, wi, li] = sa >= sb ? [a, b, w.a, w.b] : [b, a, w.b, w.a];
-      const lx = w.troops.find((x) => x.p === lose) || { i: li, p: lose }; (fall.kill || fall)(lx, wi, w.gate);
+      const lx = w.troops.find((x) => x.p === lose) || { i: li, p: lose };
+      (fall.kill || fall)(lx, wi, w.gate);
       w.morale = Math.max(0, Math.min(1.2, w.morale + (wi === w.a ? 0.3 : -0.3)));
       say(W, day, 'Tướng ' + P().fullName(win) + ' thắng trận đấu tay đôi, tướng ' + P().fullName(lose) + ' ngã xuống.', [w.a, w.b]);
       legend(W, day, wi, win, 'hero', 'thắng trận đấu tướng trước cổng ' + B.name);
@@ -113,12 +182,25 @@
     // vây thành: chưa áp sát; bên giữ hiếu chiến có khi đánh ra; hết lương thì có khi đầu hàng
     if (w.blockade && !w.blockade.done) {
       B.situ.blockade = w.blockade.until;
-      if (day >= w.blockade.until) { w.blockade.done = true; B.situ.blockade = 0; say(W, day, 'Hết kiên nhẫn, quân ' + A.name + ' công thành ' + B.name + '.', [w.a, w.b]); return null; }
+      if (day >= w.blockade.until) {
+        w.blockade.done = true;
+        B.situ.blockade = 0;
+        say(W, day, 'Hết kiên nhẫn, quân ' + A.name + ' công thành ' + B.name + '.', [w.a, w.b]);
+        return null;
+      }
       if (Math.floor(day) !== w.blockade.checked) {
         w.blockade.checked = Math.floor(day);
         const tb = traitsOf(B);
-        if (tb && tb.aggression > 0.6 && rng.chance(0.15)) { w.blockade.sortie = day + 0.3; say(W, day, B.name + ' mở cổng đánh ra phá vòng vây.', [w.a, w.b]); }
-        if (BK.Economy.state(B).hunger && tb && rng.chance(0.08 + 0.2 * tb.fear + 0.1 * tb.meekness)) { stat(W, 'starved'); w.blockade.done = true; B.situ.blockade = 0; return 'surrender'; }
+        if (tb && tb.aggression > 0.6 && rng.chance(0.15)) {
+          w.blockade.sortie = day + 0.3;
+          say(W, day, B.name + ' mở cổng đánh ra phá vòng vây.', [w.a, w.b]);
+        }
+        if (BK.Economy.state(B).hunger && tb && rng.chance(0.08 + 0.2 * tb.fear + 0.1 * tb.meekness)) {
+          stat(W, 'starved');
+          w.blockade.done = true;
+          B.situ.blockade = 0;
+          return 'surrender';
+        }
       }
       return w.blockade.sortie > day ? null : 'hold';
     }
@@ -127,24 +209,38 @@
       const run = w.troops.filter((x) => x.p.alive && x.p.id !== w.gen && P().traits(x.p).fear > 0.6 && rng.chance(dt * 0.5));
       if (run.length) {
         for (const x of run) x.p.away = null; // chạy về thuyền, về nhà
-        w.troops = w.troops.filter((x) => !run.includes(x)); w.deserted = (w.deserted || 0) + run.length;
-        if (!w.desertSaid) { w.desertSaid = true; stat(W, 'desert'); say(W, day, 'Quân ' + A.name + ' nản, ' + run.length + ' người bỏ chạy về thuyền.', [w.a, w.b]); }
+        w.troops = w.troops.filter((x) => !run.includes(x));
+        w.deserted = (w.deserted || 0) + run.length;
+        if (!w.desertSaid) {
+          w.desertSaid = true;
+          stat(W, 'desert');
+          say(W, day, 'Quân ' + A.name + ' nản, ' + run.length + ' người bỏ chạy về thuyền.', [w.a, w.b]);
+        }
       }
     }
     // cứu viện phút chót: quân đồng minh vừa tới mà cổng sắp vỡ
-    for (const h of w.helpers) if (!h.told && h.arrive <= day) {
-      h.told = true;
-      const dp = def.filter((x) => x.p.alive).length, ap = w.troops.length;
-      if (dp < ap * 0.8) { w.morale = Math.max(0, w.morale - 0.25); stat(W, 'rescue'); say(W, day, 'Quân ' + W.islands[h.c].name + ' tới cứu viện ' + B.name + ' đúng lúc cổng sắp vỡ.', [h.c, w.b, w.a]); big(W, day, w.b, 'Được ' + W.islands[h.c].name + ' cứu viện phút chót', 3, w.gate); }
-    }
+    for (const h of w.helpers)
+      if (!h.told && h.arrive <= day) {
+        h.told = true;
+        const dp = def.filter((x) => x.p.alive).length,
+          ap = w.troops.length;
+        if (dp < ap * 0.8) {
+          w.morale = Math.max(0, w.morale - 0.25);
+          stat(W, 'rescue');
+          say(W, day, 'Quân ' + W.islands[h.c].name + ' tới cứu viện ' + B.name + ' đúng lúc cổng sắp vỡ.', [h.c, w.b, w.a]);
+          big(W, day, w.b, 'Được ' + W.islands[h.c].name + ' cứu viện phút chót', 3, w.gate);
+        }
+      }
     return null;
   }
 
   /* ---------- Kết thúc trận: tù binh ---------- */
   function onRepelled(W, day, w, rng) {
-    const B = W.islands[w.b], A = W.islands[w.a];
+    const B = W.islands[w.b],
+      A = W.islands[w.a];
     if (!w.troops.length || (w.blockade && !w.blockade.done)) return;
-    const n = Math.min(PRISONERS, Math.floor(w.troops.length * 0.25)); if (n < 1) return;
+    const n = Math.min(PRISONERS, Math.floor(w.troops.length * 0.25));
+    if (n < 1) return;
     const caught = w.troops.filter((x) => x.p.id !== w.gen).slice(-n);
     for (const x of caught) x.p.away = 'prisoner';
     w.troops = w.troops.filter((x) => !caught.includes(x));
@@ -152,17 +248,28 @@
     stat(W, 'prisoners');
     say(W, day, B.name + ' bắt ' + caught.length + ' tù binh ' + A.name + '.', [w.a, w.b]);
     // anh hùng giữ cổng: người giữ còn sống đánh hăng nhất
-    const hero = living(B).filter((p) => !p.away && (p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard')).sort((x, y) => P().traits(y).aggression - P().traits(x).aggression)[0];
+    const hero = living(B)
+      .filter((p) => !p.away && (p.job === 'soldier' || p.job === 'gatekeeper' || p.job === 'sideguard'))
+      .sort((x, y) => P().traits(y).aggression - P().traits(x).aggression)[0];
     if (hero && w.n0 >= 6) legend(W, day, w.b, hero, 'hero', 'giữ được cổng trước quân ' + A.name);
   }
   // quân về tới nhà: khải hoàn hay đón trong im lặng
   function onHome(W, day, w) {
-    const A = W.islands[w.a], ids = w.troops.filter((x) => x.i === w.a && x.p.alive).map((x) => x.p.id); if (!ids.length) return;
+    const A = W.islands[w.a],
+      ids = w.troops.filter((x) => x.i === w.a && x.p.alive).map((x) => x.p.id);
+    if (!ids.length) return;
     A.situ.homecoming = { war: w.id, won: !!w.won, until: day + TRIUMPH_DAYS, troops: ids };
     // kẻ mở cổng theo quân về đảo này
-    if (w.traitor != null && BK.Ecology) { const tp = W.islands[w.b].people.get(w.traitor); if (tp && tp.alive && !tp.away) BK.Ecology.settle(W, day, w.b, w.a, [tp.id], 'mở cổng cho giặc rồi theo quân ' + A.name + ' về'); }
-    A.situChanged = true; stat(W, w.won ? 'triumph' : 'mourning');
-    if (!w.won && w.n0 - w.troops.length >= 3) { (A.graves || (A.graves = [])).push({ id: -w.id, day: Math.floor(day), memorial: true }); note(A, day, 'war', 'Dựng bia tưởng niệm những người ngã xuống trong trận với ' + W.islands[w.b].name + '.'); }
+    if (w.traitor != null && BK.Ecology) {
+      const tp = W.islands[w.b].people.get(w.traitor);
+      if (tp && tp.alive && !tp.away) BK.Ecology.settle(W, day, w.b, w.a, [tp.id], 'mở cổng cho giặc rồi theo quân ' + A.name + ' về');
+    }
+    A.situChanged = true;
+    stat(W, w.won ? 'triumph' : 'mourning');
+    if (!w.won && w.n0 - w.troops.length >= 3) {
+      (A.graves || (A.graves = [])).push({ id: -w.id, day: Math.floor(day), memorial: true });
+      note(A, day, 'war', 'Dựng bia tưởng niệm những người ngã xuống trong trận với ' + W.islands[w.b].name + '.');
+    }
   }
 
   /* ---------- Mỗi ngày: tù binh, chạy đua vũ trang ---------- */
@@ -170,43 +277,83 @@
     W.islands.forEach((B, b) => {
       if (!B.prisoners || !B.prisoners.length) return;
       B.prisoners = B.prisoners.filter((q) => {
-        const H = W.islands[q.i], p = H.people.get(q.pid); if (!p || !p.alive) return false;
+        const H = W.islands[q.i],
+          p = H.people.get(q.pid);
+        if (!p || !p.alive) return false;
         // chuộc: đảo nhà còn đủ ăn thì có khi trả hàng chuộc về
         const st = BK.Economy.state(H).stock;
-        if (!Wr().atWar(W, q.i) && st.food > RANSOM * 4 && rng.chance(0.03)) { st.food -= RANSOM; BK.Economy.state(B).stock.food += RANSOM; p.away = null; stat(W, 'ransom'); say(W, day, H.name + ' chuộc ' + P().fullName(p) + ' về từ ' + B.name + '.', [q.i, b]); return false; }
+        if (!Wr().atWar(W, q.i) && st.food > RANSOM * 4 && rng.chance(0.03)) {
+          st.food -= RANSOM;
+          BK.Economy.state(B).stock.food += RANSOM;
+          p.away = null;
+          stat(W, 'ransom');
+          say(W, day, H.name + ' chuộc ' + P().fullName(p) + ' về từ ' + B.name + '.', [q.i, b]);
+          return false;
+        }
         // ở lâu thì ở lại làm dân
-        if (day - q.since > PRISON_DAYS && BK.Ecology) { BK.Ecology.settle(W, day, q.i, b, [q.pid], 'tù binh ở lại làm dân ' + B.name); stat(W, 'stayed'); return false; }
+        if (day - q.since > PRISON_DAYS && BK.Ecology) {
+          BK.Ecology.settle(W, day, q.i, b, [q.pid], 'tù binh ở lại làm dân ' + B.name);
+          stat(W, 'stayed');
+          return false;
+        }
         return true;
       });
     });
     // chạy đua vũ trang: hai đảo độc lập thù nhau, cùng từ thời 4, cùng giàu
     W.race = W.race || {};
-    for (let a = 0; a < W.islands.length; a++) for (let b = a + 1; b < W.islands.length; b++) {
-      const A = W.islands[a], B = W.islands[b], key = a + '-' + b;
-      if (A.annexedBy != null || B.annexedBy != null || A.level < 4 || B.level < 4) continue;
-      const R = W.race[key];
-      if (R && R.until > day) continue;
-      if (R && !R.ended) {
-        R.ended = true; const ta = traitsOf(A), tb = traitsOf(B);
-        if (ta && tb && ta.intellect + tb.intellect > 1.2 && rng.chance(0.5)) { D().sign(W, day, a, b, 'pact', 360); say(W, day, A.name + ' và ' + B.name + ' dừng chạy đua vũ trang, ký hiệp ước.', [a, b]); }
-        else { for (const S of [A, B]) if (S.policy) S.policy.provoked = day + 120; say(W, day, 'Cuộc chạy đua vũ trang giữa ' + A.name + ' và ' + B.name + ' làm hai bên càng muốn đánh nhau.', [a, b]); }
-        continue;
+    for (let a = 0; a < W.islands.length; a++)
+      for (let b = a + 1; b < W.islands.length; b++) {
+        const A = W.islands[a],
+          B = W.islands[b],
+          key = a + '-' + b;
+        if (A.annexedBy != null || B.annexedBy != null || A.level < 4 || B.level < 4) continue;
+        const R = W.race[key];
+        if (R && R.until > day) continue;
+        if (R && !R.ended) {
+          R.ended = true;
+          const ta = traitsOf(A),
+            tb = traitsOf(B);
+          if (ta && tb && ta.intellect + tb.intellect > 1.2 && rng.chance(0.5)) {
+            D().sign(W, day, a, b, 'pact', 360);
+            say(W, day, A.name + ' và ' + B.name + ' dừng chạy đua vũ trang, ký hiệp ước.', [a, b]);
+          } else {
+            for (const S of [A, B]) if (S.policy) S.policy.provoked = day + 120;
+            say(W, day, 'Cuộc chạy đua vũ trang giữa ' + A.name + ' và ' + B.name + ' làm hai bên càng muốn đánh nhau.', [a, b]);
+          }
+          continue;
+        }
+        if (W.rel[a][b].grudge > 0.4 && W.rel[b][a].grudge > 0.4 && rng.chance(0.01)) {
+          W.race[key] = { since: day, until: day + RACE_DAYS };
+          stat(W, 'race');
+          say(W, day, A.name + ' và ' + B.name + ' chạy đua vũ trang.', [a, b]);
+          big(W, day, a, 'Chạy đua vũ trang với ' + B.name, 2, null);
+        }
       }
-      if (W.rel[a][b].grudge > 0.4 && W.rel[b][a].grudge > 0.4 && rng.chance(0.01)) {
-        W.race[key] = { since: day, until: day + RACE_DAYS }; stat(W, 'race');
-        say(W, day, A.name + ' và ' + B.name + ' chạy đua vũ trang.', [a, b]); big(W, day, a, 'Chạy đua vũ trang với ' + B.name, 2, null);
-      }
-    }
   }
   // vai trong cảnh quân về (logic/brain.js hỏi sau logic/ecology.js): thắng thì quân diễu hành qua sân, dân ra mừng; thua thì quân
   // lặng lẽ ở cổng, người nhà ra đón trong im lặng
   function roleOf(S, p, d, ph) {
-    const H = S.situ.homecoming; if (!H || H.until <= S.day || ph === 'night') return null;
+    const H = S.situ.homecoming;
+    if (!H || H.until <= S.day || ph === 'night') return null;
     const short = { until: Math.min(H.until, S.day + 0.25), phase: ph };
-    if (H.troops.includes(p.id)) return d('work', Object.assign(H.won ? { verb: 'parade', place: 'square', reason: 'khải hoàn, diễu hành qua sân' } : { verb: 'mourn', place: 'gate', reason: 'thua trận trở về' }, short));
-    const kin = H.troops.some((id) => { const q = S.people.get(id); return q && (q.spouse === p.id || q.parents.includes(p.id) || q.children.includes(p.id)); });
-    if (H.won && !p.role && !p.away && (kin || p.id % 3 === 0) && BK.People.ageOf(p, S.day) >= 6) return d('work', Object.assign({ verb: 'celebrate', place: 'square', reason: 'ra sân mừng quân thắng trận về' }, short));
-    if (!H.won && kin) return d('work', Object.assign({ verb: 'mourn', place: 'gate', reason: 'ra cổng đón người nhà thua trận về, lặng im' }, short));
+    if (H.troops.includes(p.id))
+      return d(
+        'work',
+        Object.assign(
+          H.won
+            ? { verb: 'parade', place: 'square', reason: 'khải hoàn, diễu hành qua sân' }
+            : { verb: 'mourn', place: 'gate', reason: 'thua trận trở về' },
+          short,
+        ),
+      );
+    const kin = H.troops.some((id) => {
+      const q = S.people.get(id);
+      return q && (q.spouse === p.id || q.parents.includes(p.id) || q.children.includes(p.id));
+    });
+    if (H.won && !p.role && !p.away && (kin || p.id % 3 === 0) && BK.People.ageOf(p, S.day) >= 6)
+      return d('work', Object.assign({ verb: 'celebrate', place: 'square', reason: 'ra sân mừng quân thắng trận về' }, short));
+    if (!H.won && kin)
+      return d('work', Object.assign({ verb: 'mourn', place: 'gate', reason: 'ra cổng đón người nhà thua trận về, lặng im' }, short));
     return null;
   }
   // đảo i đang chạy đua vũ trang (logic/missiles.js làm tên lửa nhanh hơn)

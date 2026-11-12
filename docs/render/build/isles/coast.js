@@ -6,14 +6,18 @@
 (function (root) {
   const R = (home, homeName, hall, hallName, wonder, wonderName) => ({ home, homeName, hall, hallName, wonder: [wonder, wonderName] });
   root.BK.IslesCompose.define({
-    key: 'coast', name: 'Cửa Sóng', accent: '#3f9ac0', yard: ['#d8c8a0', '#c8d8d8'],
+    key: 'coast',
+    name: 'Cửa Sóng',
+    accent: '#3f9ac0',
+    yard: ['#d8c8a0', '#c8d8d8'],
     pal: [
       { a: '#c8b088', b: '#7a5a3a', c: '#3f8ab8', d: '#3a2c20', g: '#ffb04a', w: '#ffd89a' },
       { a: '#e8dcc4', b: '#3f6a8a', c: '#c94f3a', d: '#2a3038', g: '#ffd27a', w: '#ffe0a0' },
       { a: '#f2f2ee', b: '#3f7fb8', c: '#5fd8e0', d: '#2a3440', g: '#bff0ff', w: '#e8f8ff' },
-      { a: '#e8f8ff', b: '#5fa8d8', c: '#7ff0e0', d: '#1f3a50', g: '#a0fff0', w: '#f0ffff' }
+      { a: '#e8f8ff', b: '#5fa8d8', c: '#7ff0e0', d: '#1f3a50', g: '#a0fff0', w: '#f0ffff' },
     ],
-    eras: [null,
+    eras: [
+      null,
       R('stilt', 'Nhà sàn biển', 'boatHall', 'Nhà Thuyền Úp', 1, 'Vòng Đá Ven Biển'),
       R('longhouse', 'Nhà dài mái cong biển', 'lodge', 'Nhà Vỏ Cây Ven Biển', 'colossus', 'Tượng Thần Biển'),
       R('pagoda', 'Nhà mái chùa biển', 'temple', 'Đền Sóng', 'giantLight', 'Hải Đăng Lớn'),

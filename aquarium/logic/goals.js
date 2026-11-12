@@ -16,19 +16,40 @@
   const end = () => (BK.Eras && BK.Eras.MATCH_DAYS) || 3240;
   function add(W, kind, o) {
     if (!NAME[kind]) return null;
-    const g = { kind, name: NAME[kind], isle: o && o.isle != null ? o.isle : null, status: 'active', from: Math.floor(W.day || 0), at: null };
+    const g = {
+      kind,
+      name: NAME[kind],
+      isle: o && o.isle != null ? o.isle : null,
+      status: 'active',
+      from: Math.floor(W.day || 0),
+      at: null,
+    };
     (W.goals || (W.goals = [])).push(g);
     return g;
   }
-  const finish = (g, status, day, why) => { g.status = status; g.at = Math.floor(day); g.why = why; };
+  const finish = (g, status, day, why) => {
+    g.status = status;
+    g.at = Math.floor(day);
+    g.why = why;
+  };
   function dayTick(W, day) {
     for (const g of W.goals || []) {
       if (g.status !== 'active') continue;
-      if (g.kind === 'noNuke' && W.armStats && W.armStats.nukes > 0) { finish(g, 'failed', day, 'có đảo đã dùng hạt nhân'); continue; }
-      if (g.kind === 'allAlive') { const dead = W.islands.find((S) => !BK.Island.living(S).length); if (dead) { finish(g, 'failed', day, dead.name + ' không còn ai'); continue; } }
+      if (g.kind === 'noNuke' && W.armStats && W.armStats.nukes > 0) {
+        finish(g, 'failed', day, 'có đảo đã dùng hạt nhân');
+        continue;
+      }
+      if (g.kind === 'allAlive') {
+        const dead = W.islands.find((S) => !BK.Island.living(S).length);
+        if (dead) {
+          finish(g, 'failed', day, dead.name + ' không còn ai');
+          continue;
+        }
+      }
       if (day < end()) continue;
       if (g.kind === 'hegemon') {
-        const S = W.islands[g.isle], n = W.islands.filter((V) => V.annexedBy === g.isle).length;
+        const S = W.islands[g.isle],
+          n = W.islands.filter((V) => V.annexedBy === g.isle).length;
         if (S.annexedBy == null && n >= HEGEMON_VASSALS) finish(g, 'done', day, S.name + ' cai quản ' + n + ' đảo');
         else finish(g, 'failed', day, S.annexedBy != null ? S.name + ' bị chiếm' : S.name + ' chỉ cai quản ' + n + ' đảo');
       } else finish(g, 'done', day, 'giữ được tới hết trận');

@@ -6,14 +6,18 @@
 (function (root) {
   const R = (home, homeName, hall, hallName, wonder, wonderName) => ({ home, homeName, hall, hallName, wonder: [wonder, wonderName] });
   root.BK.IslesCompose.define({
-    key: 'tundra', name: 'Tuyết Trắng', accent: '#7fc8e8', yard: ['#d8e2ea', '#e8f2f8'],
+    key: 'tundra',
+    name: 'Tuyết Trắng',
+    accent: '#7fc8e8',
+    yard: ['#d8e2ea', '#e8f2f8'],
     pal: [
       { a: '#eef4f8', b: '#8a6a4a', c: '#c94f3a', d: '#3a4048', g: '#ffb04a', w: '#ffd89a' },
       { a: '#c8a888', b: '#5a6a7a', c: '#b8462e', d: '#33383e', g: '#ffd27a', w: '#ffe0a0' },
       { a: '#e8eef4', b: '#4a6a8a', c: '#5fc8e8', d: '#2a3440', g: '#bff0ff', w: '#e8f8ff' },
-      { a: '#dff4ff', b: '#7fa8d8', c: '#a0f0e0', d: '#2a3a50', g: '#c8fff0', w: '#f0ffff' }
+      { a: '#dff4ff', b: '#7fa8d8', c: '#a0f0e0', d: '#2a3a50', g: '#c8fff0', w: '#f0ffff' },
     ],
-    eras: [null,
+    eras: [
+      null,
       R('igloo', 'Nhà băng tròn', 'snowHall', 'Nhà Băng Lớn', 'iceSpire', 'Mũi Băng Thiêng'),
       R('tent', 'Lều da tuần lộc', 'greatTent', 'Lều Da Lớn', 1, 'Vòng Đá Băng'),
       R('dome', 'Nhà vòm tuyết', 'longhall', 'Nhà Rông Băng', 'colossus', 'Tượng Băng'),

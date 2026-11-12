@@ -9,171 +9,1335 @@
  *   WONDER kỳ quan thêm (ngoài 12 kỳ quan của Lúa Vàng dùng lại với màu khác): cây thiêng, tượng lớn, kim tự tháp…
  * Cần: render/build/kit3d.js, render/build/plains/common.js (B, Bc, COMMON). */
 (function (root) {
-  const BK = root.BK, K = BK.BuildKit, { B, Bc, pick, COMMON } = BK.Plains3D;
+  const BK = root.BK,
+    K = BK.BuildKit,
+    { B, Bc, pick, COMMON } = BK.Plains3D;
   const THREE = () => window.THREE;
   const oct = (sx, sy, sz) => new (THREE().OctahedronGeometry)(1, 0).scale(sx, sy, sz).translate(0, sy, 0);
   const torus = (r, t) => new (THREE().TorusGeometry)(r, t, 6, 24);
   const pal = (o) => o.pal || { a: '#d8c8a8', b: '#9a6a44', c: '#c94f3a', d: '#3e2c20', g: '#ffd27a', w: '#ffe0a0' };
   // một hàng cửa sổ quanh thân tròn hoặc vuông (dark: ô kính ban ngày, lit: sáng về đêm)
-  const winsBox = (k, p, w, d, y, n, o) => { for (let i = 0; i < n; i++) { const x = -w / 2 + (w * (i + 0.5)) / n; k.add(Bc(w / n * 0.6, 0.6, 0.05, 0.02), p.d, x, y, d / 2 + 0.01, { ao: false }); if ((i + (o.v || 0) + Math.round(y)) % 3) k.add(Bc(w / n * 0.5, 0.5, 0.03, 0.01), p.w, x, y, d / 2 + 0.05, { lit: true }); } };
+  const winsBox = (k, p, w, d, y, n, o) => {
+    for (let i = 0; i < n; i++) {
+      const x = -w / 2 + (w * (i + 0.5)) / n;
+      k.add(Bc((w / n) * 0.6, 0.6, 0.05, 0.02), p.d, x, y, d / 2 + 0.01, { ao: false });
+      if ((i + (o.v || 0) + Math.round(y)) % 3) k.add(Bc((w / n) * 0.5, 0.5, 0.03, 0.01), p.w, x, y, d / 2 + 0.05, { lit: true });
+    }
+  };
 
   /* ---------- Nhà riêng ---------- */
   const HOME = {
     // lều lá dựng nghiêng, bếp nhỏ trước cửa
-    lean(k, o) { const p = pal(o); for (let i = 0; i < 7; i++) k.add(K.post(0.06, 3, 4), p.b, -1.5 + i * 0.5, 0, -0.8, { rot: [-0.65, 0, 0] }); k.add(Bc(3.6, 0.06, 2.6, 0.02), p.a, 0, 1.15, 0.05, { rot: [-0.65, 0, 0] }); k.add(K.cone(0.25, 0.5, 5), p.g, 0, 0, 1.9, { glow: true }); },
+    lean(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 7; i++) k.add(K.post(0.06, 3, 4), p.b, -1.5 + i * 0.5, 0, -0.8, { rot: [-0.65, 0, 0] });
+      k.add(Bc(3.6, 0.06, 2.6, 0.02), p.a, 0, 1.15, 0.05, { rot: [-0.65, 0, 0] });
+      k.add(K.cone(0.25, 0.5, 5), p.g, 0, 0, 1.9, { glow: true });
+    },
     // lều nón da thú
-    tent(k, o) { const p = pal(o); k.add(K.cone(1.9, 3.4, 8), pick([p.a, p.b], o.v * 0.4), 0, 0, 0); for (let i = 0; i < 5; i++) k.add(K.post(0.04, 1, 4), p.d, Math.cos(i * 1.25) * 0.25, 3.1, Math.sin(i * 1.25) * 0.25, { rot: [Math.cos(i) * 0.4, 0, Math.sin(i) * 0.4] }); k.add(B(0.8, 1.2, 0.1, 0.04), p.d, 0, 0, 1.55, { rot: [-0.45, 0, 0] }); },
+    tent(k, o) {
+      const p = pal(o);
+      k.add(K.cone(1.9, 3.4, 8), pick([p.a, p.b], o.v * 0.4), 0, 0, 0);
+      for (let i = 0; i < 5; i++)
+        k.add(K.post(0.04, 1, 4), p.d, Math.cos(i * 1.25) * 0.25, 3.1, Math.sin(i * 1.25) * 0.25, {
+          rot: [Math.cos(i) * 0.4, 0, Math.sin(i) * 0.4],
+        });
+      k.add(B(0.8, 1.2, 0.1, 0.04), p.d, 0, 0, 1.55, { rot: [-0.45, 0, 0] });
+    },
     // nhà băng tròn có lối vào vòm
-    igloo(k, o) { const p = pal(o); k.add(K.lathe([[2.2, 0], [2.1, 0.8], [1.6, 1.7], [0.8, 2.15], [0.001, 2.25]], 10), p.a, 0, 0, 0); k.add(K.lathe([[0.75, 0], [0.75, 0.6], [0.5, 1.0], [0.001, 1.05]], 8), p.a, 0, 0, 2.1, { rot: [Math.PI / 2, 0, 0], sc: [1, 1, 0.9] }); k.add(B(0.7, 0.8, 0.1, 0.06), p.d, 0, 0, 2.7); k.add(B(0.4, 0.4, 0.04, 0.02), p.w, 1.3, 1.1, 1.6, { lit: true, rot: [0, 0.6, 0] }); },
+    igloo(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [2.2, 0],
+            [2.1, 0.8],
+            [1.6, 1.7],
+            [0.8, 2.15],
+            [0.001, 2.25],
+          ],
+          10,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+      );
+      k.add(
+        K.lathe(
+          [
+            [0.75, 0],
+            [0.75, 0.6],
+            [0.5, 1.0],
+            [0.001, 1.05],
+          ],
+          8,
+        ),
+        p.a,
+        0,
+        0,
+        2.1,
+        { rot: [Math.PI / 2, 0, 0], sc: [1, 1, 0.9] },
+      );
+      k.add(B(0.7, 0.8, 0.1, 0.06), p.d, 0, 0, 2.7);
+      k.add(B(0.4, 0.4, 0.04, 0.02), p.w, 1.3, 1.1, 1.6, { lit: true, rot: [0, 0.6, 0] });
+    },
     // nhà sàn cột cao, mái lá dốc
-    stilt(k, o) { const p = pal(o); for (const [x, z] of [[-1.4, -1.1], [1.4, -1.1], [-1.4, 1.1], [1.4, 1.1]]) k.add(K.post(0.1, 1.6, 5), p.d, x, 0, z); k.add(B(3.4, 0.2, 2.8, 0.04), p.b, 0, 1.6, 0); k.add(B(3, 1.6, 2.4, 0.06), p.a, 0, 1.8, 0); k.add(K.roof(3.8, 1.6, 3.2, 0.1, 3.6, 0.2), p.b, 0, 3.4, 0); for (let i = 0; i < 5; i++) k.add(Bc(0.9, 0.06, 0.08, 0.02), p.d, 0, 0.3 + i * 0.32, 1.7); k.add(B(0.6, 1.1, 0.06, 0.02), p.d, 0, 1.8, 1.22); },
+    stilt(k, o) {
+      const p = pal(o);
+      for (const [x, z] of [
+        [-1.4, -1.1],
+        [1.4, -1.1],
+        [-1.4, 1.1],
+        [1.4, 1.1],
+      ])
+        k.add(K.post(0.1, 1.6, 5), p.d, x, 0, z);
+      k.add(B(3.4, 0.2, 2.8, 0.04), p.b, 0, 1.6, 0);
+      k.add(B(3, 1.6, 2.4, 0.06), p.a, 0, 1.8, 0);
+      k.add(K.roof(3.8, 1.6, 3.2, 0.1, 3.6, 0.2), p.b, 0, 3.4, 0);
+      for (let i = 0; i < 5; i++) k.add(Bc(0.9, 0.06, 0.08, 0.02), p.d, 0, 0.3 + i * 0.32, 1.7);
+      k.add(B(0.6, 1.1, 0.06, 0.02), p.d, 0, 1.8, 1.22);
+    },
     // nhà vòm đất tròn, mái bằng có lỗ khói
-    dome(k, o) { const p = pal(o); k.add(K.lathe([[2.0, 0], [2.0, 1.2], [1.5, 2.2], [0.6, 2.6], [0.001, 2.65]], 10), p.a, 0, 0, 0); k.add(B(0.8, 1.4, 0.1, 0.05), p.d, 0, 0, 1.98); k.add(K.post(0.25, 0.5, 6), p.b, 0.6, 2.3, -0.3); k.add(Bc(0.4, 0.4, 0.04, 0.01), p.w, -1.3, 1.2, 1.45, { lit: true, rot: [0, -0.7, 0] }); return { smoke: [[0.6, 2.9, -0.3, 0.5]] }; },
+    dome(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [2.0, 0],
+            [2.0, 1.2],
+            [1.5, 2.2],
+            [0.6, 2.6],
+            [0.001, 2.65],
+          ],
+          10,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+      );
+      k.add(B(0.8, 1.4, 0.1, 0.05), p.d, 0, 0, 1.98);
+      k.add(K.post(0.25, 0.5, 6), p.b, 0.6, 2.3, -0.3);
+      k.add(Bc(0.4, 0.4, 0.04, 0.01), p.w, -1.3, 1.2, 1.45, { lit: true, rot: [0, -0.7, 0] });
+      return { smoke: [[0.6, 2.9, -0.3, 0.5]] };
+    },
     // nhà đá xếp tầng bám vách núi, mái bằng
-    cliff(k, o) { const p = pal(o); k.add(B(3.6, 2.2, 3, 0.15), p.a, 0, 0, 0); k.add(B(2.6, 1.8, 2.2, 0.15), pick([p.a, p.b], o.v * 0.5), -0.4, 2.2, -0.3); k.add(B(3.8, 0.2, 3.2, 0.05), p.b, 0, 2.2, 0); k.add(B(0.8, 1.5, 0.08, 0.03), p.d, 0.8, 0, 1.52); winsBox(k, p, 2.2, 2.2, 3.2, 2, o); return { smoke: [[-1, 4.2, -0.8, 0.5]] }; },
+    cliff(k, o) {
+      const p = pal(o);
+      k.add(B(3.6, 2.2, 3, 0.15), p.a, 0, 0, 0);
+      k.add(B(2.6, 1.8, 2.2, 0.15), pick([p.a, p.b], o.v * 0.5), -0.4, 2.2, -0.3);
+      k.add(B(3.8, 0.2, 3.2, 0.05), p.b, 0, 2.2, 0);
+      k.add(B(0.8, 1.5, 0.08, 0.03), p.d, 0.8, 0, 1.52);
+      winsBox(k, p, 2.2, 2.2, 3.2, 2, o);
+      return { smoke: [[-1, 4.2, -0.8, 0.5]] };
+    },
     // nhà gạch đất mái bằng, đầu xà gỗ thò ra (kiểu sa mạc)
-    adobe(k, o) { const p = pal(o); k.add(B(3.6, 2.6, 3, 0.2), p.a, 0, 0, 0); for (let i = 0; i < 4; i++) k.add(K.post(0.07, 0.6, 4).rotateX(Math.PI / 2), p.d, -1.2 + i * 0.8, 2.3, 1.6); k.add(B(3.7, 0.3, 3.1, 0.12), p.b, 0, 2.6, 0); k.add(B(0.8, 1.6, 0.08, 0.05), p.d, -0.6, 0, 1.52); k.add(Bc(0.5, 0.5, 0.04, 0.01), p.w, 0.8, 1.6, 1.53, { lit: true }); if (o.v % 2) k.add(B(1.8, 1.4, 1.6, 0.15), p.a, 0.6, 2.9, -0.5); },
+    adobe(k, o) {
+      const p = pal(o);
+      k.add(B(3.6, 2.6, 3, 0.2), p.a, 0, 0, 0);
+      for (let i = 0; i < 4; i++) k.add(K.post(0.07, 0.6, 4).rotateX(Math.PI / 2), p.d, -1.2 + i * 0.8, 2.3, 1.6);
+      k.add(B(3.7, 0.3, 3.1, 0.12), p.b, 0, 2.6, 0);
+      k.add(B(0.8, 1.6, 0.08, 0.05), p.d, -0.6, 0, 1.52);
+      k.add(Bc(0.5, 0.5, 0.04, 0.01), p.w, 0.8, 1.6, 1.53, { lit: true });
+      if (o.v % 2) k.add(B(1.8, 1.4, 1.6, 0.15), p.a, 0.6, 2.9, -0.5);
+    },
     // nhà dài mái cong hai đầu (kiểu rừng, cảng)
-    longhouse(k, o) { const p = pal(o); k.add(B(4.6, 1.8, 2.6, 0.08), p.a, 0, 0, 0); k.add(K.roof(5.4, 1.8, 3.4, 0.12, 5.6, 0.2, 0.5), p.b, 0, 1.8, 0); k.add(B(0.8, 1.4, 0.08, 0.03), p.d, 0, 0, 1.32); for (const sx of [-1, 1]) k.add(Bc(0.5, 0.45, 0.04, 0.01), p.w, sx * 1.4, 1.1, 1.33, { lit: true }); },
+    longhouse(k, o) {
+      const p = pal(o);
+      k.add(B(4.6, 1.8, 2.6, 0.08), p.a, 0, 0, 0);
+      k.add(K.roof(5.4, 1.8, 3.4, 0.12, 5.6, 0.2, 0.5), p.b, 0, 1.8, 0);
+      k.add(B(0.8, 1.4, 0.08, 0.03), p.d, 0, 0, 1.32);
+      for (const sx of [-1, 1]) k.add(Bc(0.5, 0.45, 0.04, 0.01), p.w, sx * 1.4, 1.1, 1.33, { lit: true });
+    },
     // nhà mái chùa hai tầng
-    pagoda(k, o) { const p = pal(o); k.add(B(3.4, 2, 3, 0.08), p.a, 0, 0, 0); k.add(K.roof(4.4, 0.8, 4, 0.12, 2.6, 2.2, 0.5), p.b, 0, 2, 0); k.add(B(2.4, 1.4, 2.1, 0.08), p.a, 0, 2.8, 0); k.add(K.roof(3.4, 0.9, 3.1, 0.12, 0.3, 0.3, 0.5), p.b, 0, 4.2, 0); k.add(B(0.8, 1.5, 0.08, 0.03), p.c, 0, 0, 1.52); winsBox(k, p, 2, 2.1, 3.4, 2, o); },
+    pagoda(k, o) {
+      const p = pal(o);
+      k.add(B(3.4, 2, 3, 0.08), p.a, 0, 0, 0);
+      k.add(K.roof(4.4, 0.8, 4, 0.12, 2.6, 2.2, 0.5), p.b, 0, 2, 0);
+      k.add(B(2.4, 1.4, 2.1, 0.08), p.a, 0, 2.8, 0);
+      k.add(K.roof(3.4, 0.9, 3.1, 0.12, 0.3, 0.3, 0.5), p.b, 0, 4.2, 0);
+      k.add(B(0.8, 1.5, 0.08, 0.03), p.c, 0, 0, 1.52);
+      winsBox(k, p, 2, 2.1, 3.4, 2, o);
+    },
     // nhà khung gỗ hai tầng, mái dốc nhọn
-    timber(k, o) { const p = pal(o); k.add(B(3.4, 4, 3, 0.06), p.a, 0, 0, 0); for (const y of [0.1, 2, 3.9]) k.add(Bc(3.44, 0.14, 3.04, 0.02), p.d, 0, y, 0); for (const x of [-1.6, 0, 1.6]) k.add(Bc(0.14, 4, 0.06, 0.02), p.d, x, 2, 1.52); k.add(K.roof(3.8, 2.4, 3.4, 0.1, 3.6, 0.2), p.b, 0, 4, 0); winsBox(k, p, 3, 3, 1.3, 2, o); winsBox(k, p, 3, 3, 3.0, 2, o); return o.v % 3 ? null : { smoke: [[1, 6, -0.8, 0.5]] }; },
+    timber(k, o) {
+      const p = pal(o);
+      k.add(B(3.4, 4, 3, 0.06), p.a, 0, 0, 0);
+      for (const y of [0.1, 2, 3.9]) k.add(Bc(3.44, 0.14, 3.04, 0.02), p.d, 0, y, 0);
+      for (const x of [-1.6, 0, 1.6]) k.add(Bc(0.14, 4, 0.06, 0.02), p.d, x, 2, 1.52);
+      k.add(K.roof(3.8, 2.4, 3.4, 0.1, 3.6, 0.2), p.b, 0, 4, 0);
+      winsBox(k, p, 3, 3, 1.3, 2, o);
+      winsBox(k, p, 3, 3, 3.0, 2, o);
+      return o.v % 3 ? null : { smoke: [[1, 6, -0.8, 0.5]] };
+    },
     // nhà phố hẹp ba tầng có ban công
-    townhouse(k, o) { const p = pal(o); k.add(B(3, 6, 3, 0.08), pick([p.a, p.c], o.v * 0.37), 0, 0, 0); for (let f = 0; f < 3; f++) { winsBox(k, p, 2.6, 3, 1.1 + f * 2, 2, o); if (f) k.add(B(2.4, 0.12, 0.6, 0.03), p.d, 0, f * 2, 1.75); } k.add(K.roof(3.3, 1.2, 3.3, 0.08, 3.2, 0.4), p.b, 0, 6, 0); },
+    townhouse(k, o) {
+      const p = pal(o);
+      k.add(B(3, 6, 3, 0.08), pick([p.a, p.c], o.v * 0.37), 0, 0, 0);
+      for (let f = 0; f < 3; f++) {
+        winsBox(k, p, 2.6, 3, 1.1 + f * 2, 2, o);
+        if (f) k.add(B(2.4, 0.12, 0.6, 0.03), p.d, 0, f * 2, 1.75);
+      }
+      k.add(K.roof(3.3, 1.2, 3.3, 0.08, 3.2, 0.4), p.b, 0, 6, 0);
+    },
     // chung cư 5 đến 7 tầng, ban công mỗi tầng
-    block(k, o) { const p = pal(o), n = 5 + (o.v % 3); k.add(B(4.2, n * 1.7, 3.6, 0.08), p.a, 0, 0, 0); for (let f = 0; f < n; f++) { winsBox(k, p, 3.8, 3.6, 0.9 + f * 1.7, 3, o); if (f) k.add(B(3.2, 0.1, 0.5, 0.02), p.c, 0, f * 1.7, 2.05); } k.add(B(4.4, 0.3, 3.8, 0.05), p.b, 0, n * 1.7, 0); },
+    block(k, o) {
+      const p = pal(o),
+        n = 5 + (o.v % 3);
+      k.add(B(4.2, n * 1.7, 3.6, 0.08), p.a, 0, 0, 0);
+      for (let f = 0; f < n; f++) {
+        winsBox(k, p, 3.8, 3.6, 0.9 + f * 1.7, 3, o);
+        if (f) k.add(B(3.2, 0.1, 0.5, 0.02), p.c, 0, f * 1.7, 2.05);
+      }
+      k.add(B(4.4, 0.3, 3.8, 0.05), p.b, 0, n * 1.7, 0);
+    },
     // cao ốc kính 10 đến 14 tầng
-    glass(k, o) { const p = pal(o), n = 10 + (o.v % 5); k.add(B(3.8, n * 1.6, 3.8, 0.12), p.a, 0, 0, 0); for (let f = 0; f < n; f++) for (let s = 0; s < 4; s++) { const a = (s * Math.PI) / 2; k.add(Bc(3.82, 0.6, 0.06, 0.02), p.c, Math.sin(a) * 1.92, 0.9 + f * 1.6, Math.cos(a) * 1.92, { rot: [0, a, 0], ao: false }); if ((f + s + o.v) % 3) k.add(Bc(3.2, 0.5, 0.03, 0.01), p.w, Math.sin(a) * 1.96, 0.9 + f * 1.6, Math.cos(a) * 1.96, { rot: [0, a, 0], lit: true }); } k.add(K.post(0.06, 2.4, 4), p.d, 1, n * 1.6, 1); k.add(K.ball(0.12), '#ff5a4f', 1, n * 1.6 + 2.4, 1, { glow: true }); },
+    glass(k, o) {
+      const p = pal(o),
+        n = 10 + (o.v % 5);
+      k.add(B(3.8, n * 1.6, 3.8, 0.12), p.a, 0, 0, 0);
+      for (let f = 0; f < n; f++)
+        for (let s = 0; s < 4; s++) {
+          const a = (s * Math.PI) / 2;
+          k.add(Bc(3.82, 0.6, 0.06, 0.02), p.c, Math.sin(a) * 1.92, 0.9 + f * 1.6, Math.cos(a) * 1.92, { rot: [0, a, 0], ao: false });
+          if ((f + s + o.v) % 3)
+            k.add(Bc(3.2, 0.5, 0.03, 0.01), p.w, Math.sin(a) * 1.96, 0.9 + f * 1.6, Math.cos(a) * 1.96, { rot: [0, a, 0], lit: true });
+        }
+      k.add(K.post(0.06, 2.4, 4), p.d, 1, n * 1.6, 1);
+      k.add(K.ball(0.12), '#ff5a4f', 1, n * 1.6 + 2.4, 1, { glow: true });
+    },
     // tháp thon nhọn 16 đến 22 tầng, đỉnh kim
-    spire(k, o) { const p = pal(o), H = 22 + (o.v % 4) * 3; k.add(K.post(2.2, H, 8, 0.7), p.a, 0, 0, 0); for (let f = 1; f < H / 2; f++) { const r = 2.2 - (1.5 * f * 2) / H; k.add(K.post(r + 0.02, 0.18, 8, r + 0.02), p.c, 0, f * 2, 0, { glow: f % 4 === 0 }); if ((f + o.v) % 2) k.add(Bc(r * 0.9, 0.8, 0.04, 0.01), p.w, 0, f * 2 + 1, r * 0.92, { lit: true }); } k.add(K.post(0.08, 5, 4, 0.02), p.d, 0, H, 0); },
+    spire(k, o) {
+      const p = pal(o),
+        H = 22 + (o.v % 4) * 3;
+      k.add(K.post(2.2, H, 8, 0.7), p.a, 0, 0, 0);
+      for (let f = 1; f < H / 2; f++) {
+        const r = 2.2 - (1.5 * f * 2) / H;
+        k.add(K.post(r + 0.02, 0.18, 8, r + 0.02), p.c, 0, f * 2, 0, { glow: f % 4 === 0 });
+        if ((f + o.v) % 2) k.add(Bc(r * 0.9, 0.8, 0.04, 0.01), p.w, 0, f * 2 + 1, r * 0.92, { lit: true });
+      }
+      k.add(K.post(0.08, 5, 4, 0.02), p.d, 0, H, 0);
+    },
     // tháp cây sống: thân lớn, các khoang tròn mọc như quả, tán trên đỉnh
-    bio(k, o) { const p = pal(o), H = 16 + (o.v % 3) * 2; k.add(K.lathe([[1.8, 0], [1.1, 2], [1.0, H - 2], [1.4, H]], 9), p.b, 0, 0, 0); for (let i = 0; i < 7; i++) { const a = i * 1.9 + o.v, y = 3 + i * (H - 5) / 7; k.add(K.ball(1.2, 1), p.a, Math.cos(a) * 1.6, y, Math.sin(a) * 1.6, { sc: [1, 0.8, 1] }); k.add(Bc(0.6, 0.4, 0.04, 0.01), p.w, Math.cos(a) * 2.6, y, Math.sin(a) * 2.6, { lit: true, rot: [0, -a + Math.PI / 2, 0] }); } k.add(K.ball(2.6, 1), p.c, 0, H + 1.4, 0, { sc: [1, 0.7, 1] }); for (let i = 0; i < 4; i++) k.add(K.ball(0.3), p.g, Math.cos(i * 1.6) * 2, H + 0.6, Math.sin(i * 1.6) * 2, { glow: true }); return { pulse: true }; },
+    bio(k, o) {
+      const p = pal(o),
+        H = 16 + (o.v % 3) * 2;
+      k.add(
+        K.lathe(
+          [
+            [1.8, 0],
+            [1.1, 2],
+            [1.0, H - 2],
+            [1.4, H],
+          ],
+          9,
+        ),
+        p.b,
+        0,
+        0,
+        0,
+      );
+      for (let i = 0; i < 7; i++) {
+        const a = i * 1.9 + o.v,
+          y = 3 + (i * (H - 5)) / 7;
+        k.add(K.ball(1.2, 1), p.a, Math.cos(a) * 1.6, y, Math.sin(a) * 1.6, { sc: [1, 0.8, 1] });
+        k.add(Bc(0.6, 0.4, 0.04, 0.01), p.w, Math.cos(a) * 2.6, y, Math.sin(a) * 2.6, { lit: true, rot: [0, -a + Math.PI / 2, 0] });
+      }
+      k.add(K.ball(2.6, 1), p.c, 0, H + 1.4, 0, { sc: [1, 0.7, 1] });
+      for (let i = 0; i < 4; i++) k.add(K.ball(0.3), p.g, Math.cos(i * 1.6) * 2, H + 0.6, Math.sin(i * 1.6) * 2, { glow: true });
+      return { pulse: true };
+    },
     // tháp mặt trời: thân trắng, vương miện tấm hứng nắng, quả cầu sáng
-    sun(k, o) { const p = pal(o), H = 18 + (o.v % 4) * 2; k.add(K.post(1.6, H, 10, 1.0), p.a, 0, 0, 0); for (let f = 1; f < H / 2.2; f++) if ((f + o.v) % 2) k.add(Bc(0.9, 0.7, 0.05, 0.02), p.w, 0, f * 2.2, 1.4 - f * 0.03, { lit: true }); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(Bc(1.4, 0.06, 0.8, 0.02), p.c, Math.cos(a) * 1.7, H + 0.4, Math.sin(a) * 1.7, { rot: [0.6 * Math.sin(a), -a, 0.6 * Math.cos(a)] }); } k.add(K.ball(0.8, 1), p.g, 0, H + 1.2, 0, { glow: true }); const s = k.sub('ring', [0, H * 0.55, 0]); s.add(K.post(2.6, 0.3, 14, 2.6), p.b, 0, 0, 0); return { bob: [['ring', 0.4, 0.5]], pulse: true }; },
+    sun(k, o) {
+      const p = pal(o),
+        H = 18 + (o.v % 4) * 2;
+      k.add(K.post(1.6, H, 10, 1.0), p.a, 0, 0, 0);
+      for (let f = 1; f < H / 2.2; f++) if ((f + o.v) % 2) k.add(Bc(0.9, 0.7, 0.05, 0.02), p.w, 0, f * 2.2, 1.4 - f * 0.03, { lit: true });
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        k.add(Bc(1.4, 0.06, 0.8, 0.02), p.c, Math.cos(a) * 1.7, H + 0.4, Math.sin(a) * 1.7, {
+          rot: [0.6 * Math.sin(a), -a, 0.6 * Math.cos(a)],
+        });
+      }
+      k.add(K.ball(0.8, 1), p.g, 0, H + 1.2, 0, { glow: true });
+      const s = k.sub('ring', [0, H * 0.55, 0]);
+      s.add(K.post(2.6, 0.3, 14, 2.6), p.b, 0, 0, 0);
+      return { bob: [['ring', 0.4, 0.5]], pulse: true };
+    },
     // tháp xoắn: tấm sàn xoay lệch dần
-    twist(k, o) { const p = pal(o), n = 13 + (o.v % 4), tw = 0.15 + (o.v % 3) * 0.05; for (let i = 0; i < n; i++) { const rot = i * tw; k.add(B(3.6 - i * 0.05, 1.5, 3 - i * 0.04, 0.2), p.a, 0, i * 1.6, 0, { rot: [0, rot, 0] }); k.add(Bc(3.66 - i * 0.05, 0.12, 3.06 - i * 0.04, 0.03), p.c, 0, i * 1.6 + 1.45, 0, { rot: [0, rot, 0], glow: true }); if ((i + o.v) % 3) k.add(Bc(1.6, 0.6, 0.05, 0.02), p.w, Math.sin(rot) * 1.52, i * 1.6 + 0.8, Math.cos(rot) * 1.52, { rot: [0, rot, 0], lit: true }); } const s = k.sub('orb', [0, n * 1.6 + 1.2, 0]); s.add(new (THREE().OctahedronGeometry)(0.8, 0), p.g, 0, 0, 0, { glow: true }); return { spin: [['orb', 'y', 1.2]] }; },
+    twist(k, o) {
+      const p = pal(o),
+        n = 13 + (o.v % 4),
+        tw = 0.15 + (o.v % 3) * 0.05;
+      for (let i = 0; i < n; i++) {
+        const rot = i * tw;
+        k.add(B(3.6 - i * 0.05, 1.5, 3 - i * 0.04, 0.2), p.a, 0, i * 1.6, 0, { rot: [0, rot, 0] });
+        k.add(Bc(3.66 - i * 0.05, 0.12, 3.06 - i * 0.04, 0.03), p.c, 0, i * 1.6 + 1.45, 0, { rot: [0, rot, 0], glow: true });
+        if ((i + o.v) % 3)
+          k.add(Bc(1.6, 0.6, 0.05, 0.02), p.w, Math.sin(rot) * 1.52, i * 1.6 + 0.8, Math.cos(rot) * 1.52, { rot: [0, rot, 0], lit: true });
+      }
+      const s = k.sub('orb', [0, n * 1.6 + 1.2, 0]);
+      s.add(new (THREE().OctahedronGeometry)(0.8, 0), p.g, 0, 0, 0, { glow: true });
+      return { spin: [['orb', 'y', 1.2]] };
+    },
     // tháp đĩa nổi: các đĩa sàn tách rời nhau, nhấp nhô quanh cột sáng
-    float(k, o) { const p = pal(o), n = 6; k.add(K.post(0.4, n * 2.8 + 2, 8, 0.25), p.g, 0, 0, 0, { glow: true }); const A = { bob: [] }; for (let i = 0; i < n; i++) { const s = k.sub('d' + i, [0, 2 + i * 2.8, 0]), r = 2.4 - (i % 2) * 0.4; s.add(K.lathe([[0.001, -0.8], [r, -0.2], [r, 0.4], [r * 0.8, 1.2], [0.001, 1.3]], 10), p.a, 0, 0, 0); s.add(K.post(r + 0.02, 0.1, 10, r + 0.02), p.c, 0, 0.1, 0, { glow: true }); s.add(Bc(0.8, 0.4, 0.04, 0.01), p.w, 0, 0.6, r * 0.9, { lit: true }); A.bob.push(['d' + i, 0.2, 0.4 + i * 0.07]); } return A; },
+    float(k, o) {
+      const p = pal(o),
+        n = 6;
+      k.add(K.post(0.4, n * 2.8 + 2, 8, 0.25), p.g, 0, 0, 0, { glow: true });
+      const A = { bob: [] };
+      for (let i = 0; i < n; i++) {
+        const s = k.sub('d' + i, [0, 2 + i * 2.8, 0]),
+          r = 2.4 - (i % 2) * 0.4;
+        s.add(
+          K.lathe(
+            [
+              [0.001, -0.8],
+              [r, -0.2],
+              [r, 0.4],
+              [r * 0.8, 1.2],
+              [0.001, 1.3],
+            ],
+            10,
+          ),
+          p.a,
+          0,
+          0,
+          0,
+        );
+        s.add(K.post(r + 0.02, 0.1, 10, r + 0.02), p.c, 0, 0.1, 0, { glow: true });
+        s.add(Bc(0.8, 0.4, 0.04, 0.01), p.w, 0, 0.6, r * 0.9, { lit: true });
+        A.bob.push(['d' + i, 0.2, 0.4 + i * 0.07]);
+      }
+      return A;
+    },
     // tháp pha lê màu rực
-    crystal(k, o) { const p = pal(o), H = 20 + (o.v % 4) * 2.5; k.add(K.post(2.6, 0.5, 12), p.b, 0, 0, 0); k.add(oct(1.8, H / 2, 1.8), p.a, 0, 0.5, 0); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2 + o.v; k.add(oct(0.8, H / 5, 0.8), p.c, Math.cos(a) * 1.8, 0.5, Math.sin(a) * 1.8, { rot: [Math.sin(a) * 0.2, 0, -Math.cos(a) * 0.2] }); } k.add(oct(0.55, H / 2.4, 0.55), p.g, 0, 1, 0, { glow: true }); for (let f = 1; f < H / 2.6; f++) if ((f + o.v) % 2) k.add(Bc(0.8 - f * 0.03, 0.5, 0.05, 0.02), p.w, 0, f * 2.4, 1.75 - f * 0.1, { lit: true }); return { pulse: true }; },
+    crystal(k, o) {
+      const p = pal(o),
+        H = 20 + (o.v % 4) * 2.5;
+      k.add(K.post(2.6, 0.5, 12), p.b, 0, 0, 0);
+      k.add(oct(1.8, H / 2, 1.8), p.a, 0, 0.5, 0);
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 + o.v;
+        k.add(oct(0.8, H / 5, 0.8), p.c, Math.cos(a) * 1.8, 0.5, Math.sin(a) * 1.8, { rot: [Math.sin(a) * 0.2, 0, -Math.cos(a) * 0.2] });
+      }
+      k.add(oct(0.55, H / 2.4, 0.55), p.g, 0, 1, 0, { glow: true });
+      for (let f = 1; f < H / 2.6; f++)
+        if ((f + o.v) % 2) k.add(Bc(0.8 - f * 0.03, 0.5, 0.05, 0.02), p.w, 0, f * 2.4, 1.75 - f * 0.1, { lit: true });
+      return { pulse: true };
+    },
     // tháp băng: cột băng nhiều mũi
-    ice(k, o) { const p = pal(o), H = 18 + (o.v % 4) * 2; k.add(oct(1.6, H / 2, 1.6), p.a, 0, 0, 0); for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + o.v; k.add(oct(0.7, H / 4 + (i % 2) * 2, 0.7), pick([p.a, p.c], i * 0.3), Math.cos(a) * 1.6, 0, Math.sin(a) * 1.6, { rot: [Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25] }); } for (let f = 1; f < H / 2.6; f++) if ((f + o.v) % 2) k.add(Bc(0.7, 0.5, 0.05, 0.02), p.w, 0, f * 2.4, 1.6 - f * 0.12, { lit: true }); },
+    ice(k, o) {
+      const p = pal(o),
+        H = 18 + (o.v % 4) * 2;
+      k.add(oct(1.6, H / 2, 1.6), p.a, 0, 0, 0);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + o.v;
+        k.add(oct(0.7, H / 4 + (i % 2) * 2, 0.7), pick([p.a, p.c], i * 0.3), Math.cos(a) * 1.6, 0, Math.sin(a) * 1.6, {
+          rot: [Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25],
+        });
+      }
+      for (let f = 1; f < H / 2.6; f++) if ((f + o.v) % 2) k.add(Bc(0.7, 0.5, 0.05, 0.02), p.w, 0, f * 2.4, 1.6 - f * 0.12, { lit: true });
+    },
     // tháp buồm (kiểu cảng): thân cong như cánh buồm căng gió
-    sail(k, o) { const p = pal(o), H = 20 + (o.v % 4) * 2; k.add(K.lathe([[2.2, 0], [2.0, H * 0.3], [1.3, H * 0.75], [0.2, H]], 3), p.a, 0, 0, 0, { sc: [1, 1, 0.5] }); k.add(K.post(0.08, H + 3, 4), p.d, -1.6, 0, 0); for (let f = 1; f < H / 2; f++) if ((f + o.v) % 2) k.add(Bc(1.6 - f * 0.08, 0.5, 0.04, 0.01), p.w, 0.3, f * 2, 1.05 - f * 0.05, { lit: true }); k.add(Bc(0.1, H * 0.6, 0.05, 0.02), p.c, 0.9, H * 0.3, 0.9, { glow: true }); },
+    sail(k, o) {
+      const p = pal(o),
+        H = 20 + (o.v % 4) * 2;
+      k.add(
+        K.lathe(
+          [
+            [2.2, 0],
+            [2.0, H * 0.3],
+            [1.3, H * 0.75],
+            [0.2, H],
+          ],
+          3,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+        { sc: [1, 1, 0.5] },
+      );
+      k.add(K.post(0.08, H + 3, 4), p.d, -1.6, 0, 0);
+      for (let f = 1; f < H / 2; f++)
+        if ((f + o.v) % 2) k.add(Bc(1.6 - f * 0.08, 0.5, 0.04, 0.01), p.w, 0.3, f * 2, 1.05 - f * 0.05, { lit: true });
+      k.add(Bc(0.1, H * 0.6, 0.05, 0.02), p.c, 0.9, H * 0.3, 0.9, { glow: true });
+    },
     // tháp bậc thang (kiểu sa mạc): các khối lùi dần, vườn treo mỗi bậc
-    stepped(k, o) { const p = pal(o), n = 7 + (o.v % 3); for (let i = 0; i < n; i++) { const w = 4.4 - i * 0.4; k.add(B(w, 2, w, 0.15), p.a, 0, i * 2, 0); k.add(B(w + 0.1, 0.2, w + 0.1, 0.05), p.c, 0, i * 2 + 1.9, 0); if (i % 2) for (const s of [-1, 1]) k.add(K.ball(0.4, 0), '#6aa850', s * (w / 2 - 0.3), i * 2 + 2.2, w / 2 - 0.3); winsBox(k, p, w - 0.8, w, i * 2 + 1, 2, o); } k.add(K.ball(0.5), p.g, 0, n * 2 + 0.5, 0, { glow: true }); },
+    stepped(k, o) {
+      const p = pal(o),
+        n = 7 + (o.v % 3);
+      for (let i = 0; i < n; i++) {
+        const w = 4.4 - i * 0.4;
+        k.add(B(w, 2, w, 0.15), p.a, 0, i * 2, 0);
+        k.add(B(w + 0.1, 0.2, w + 0.1, 0.05), p.c, 0, i * 2 + 1.9, 0);
+        if (i % 2) for (const s of [-1, 1]) k.add(K.ball(0.4, 0), '#6aa850', s * (w / 2 - 0.3), i * 2 + 2.2, w / 2 - 0.3);
+        winsBox(k, p, w - 0.8, w, i * 2 + 1, 2, o);
+      }
+      k.add(K.ball(0.5), p.g, 0, n * 2 + 0.5, 0, { glow: true });
+    },
     // cao ốc vườn mái (rừng): khối tầng ốp gỗ, mỗi vài tầng một sân vườn cây xanh
-    terrace(k, o) { const p = pal(o), n = 8 + (o.v % 3); for (let f = 0; f < n; f++) { const w = 4 - (f % 3 === 2 ? 0.6 : 0); k.add(B(w, 1.6, 3.6, 0.08), f % 2 ? p.a : p.b, 0, f * 1.7, 0); winsBox(k, p, w - 0.4, 3.6, f * 1.7 + 0.9, 3, o); if (f % 3 === 2) for (let j = 0; j < 3; j++) k.add(K.ball(0.5, 0), '#5a9646', -1.3 + j * 1.3, f * 1.7 + 2, 1.6); } k.add(K.ball(1.4, 1), '#4f8a3f', 0, n * 1.7 + 0.8, 0, { sc: [1.4, 0.7, 1.2] }); },
+    terrace(k, o) {
+      const p = pal(o),
+        n = 8 + (o.v % 3);
+      for (let f = 0; f < n; f++) {
+        const w = 4 - (f % 3 === 2 ? 0.6 : 0);
+        k.add(B(w, 1.6, 3.6, 0.08), f % 2 ? p.a : p.b, 0, f * 1.7, 0);
+        winsBox(k, p, w - 0.4, 3.6, f * 1.7 + 0.9, 3, o);
+        if (f % 3 === 2) for (let j = 0; j < 3; j++) k.add(K.ball(0.5, 0), '#5a9646', -1.3 + j * 1.3, f * 1.7 + 2, 1.6);
+      }
+      k.add(K.ball(1.4, 1), '#4f8a3f', 0, n * 1.7 + 0.8, 0, { sc: [1.4, 0.7, 1.2] });
+    },
     // tháp bám đá (núi): chân là khối đá lớn, thân cao ốc mọc lên từ đá
-    rockTower(k, o) { const p = pal(o), n = 9 + (o.v % 4); k.add(K.ball(3, 0), p.b, 0, 1.2, 0, { sc: [1, 0.7, 0.9] }); k.add(B(3.2, n * 1.6, 3.2, 0.12), p.a, 0.3, 2, 0); for (let f = 0; f < n; f++) winsBox(k, p, 2.8, 3.2, 2.9 + f * 1.6, 3, o); k.add(B(3.6, 0.3, 3.6, 0.05), p.c, 0.3, 2 + n * 1.6, 0); },
+    rockTower(k, o) {
+      const p = pal(o),
+        n = 9 + (o.v % 4);
+      k.add(K.ball(3, 0), p.b, 0, 1.2, 0, { sc: [1, 0.7, 0.9] });
+      k.add(B(3.2, n * 1.6, 3.2, 0.12), p.a, 0.3, 2, 0);
+      for (let f = 0; f < n; f++) winsBox(k, p, 2.8, 3.2, 2.9 + f * 1.6, 3, o);
+      k.add(B(3.6, 0.3, 3.6, 0.05), p.c, 0.3, 2 + n * 1.6, 0);
+    },
     // tháp vòm chồng (băng, cát): các vòm tròn chồng lên nhau, mỗi vòm một vòng cửa sáng
-    domeTower(k, o) { const p = pal(o), n = 6 + (o.v % 3); for (let i = 0; i < n; i++) { const r = 2.4 - i * 0.12, y = i * 2.6; k.add(K.lathe([[r, 0], [r, 1.4], [r * 0.8, 2.3], [r * 0.5, 2.6]], 12), i % 2 ? p.a : p.b, 0, y, 0); for (let j = 0; j < 4; j++) if ((i + j + o.v) % 2) { const a = (j / 4) * Math.PI * 2; k.add(Bc(0.7, 0.5, 0.04, 0.01), p.w, Math.sin(a) * r * 0.98, y + 0.9, Math.cos(a) * r * 0.98, { rot: [0, a, 0], lit: true }); } } k.add(K.ball(0.6, 1), p.g, 0, n * 2.6 + 0.3, 0, { glow: true }); },
+    domeTower(k, o) {
+      const p = pal(o),
+        n = 6 + (o.v % 3);
+      for (let i = 0; i < n; i++) {
+        const r = 2.4 - i * 0.12,
+          y = i * 2.6;
+        k.add(
+          K.lathe(
+            [
+              [r, 0],
+              [r, 1.4],
+              [r * 0.8, 2.3],
+              [r * 0.5, 2.6],
+            ],
+            12,
+          ),
+          i % 2 ? p.a : p.b,
+          0,
+          y,
+          0,
+        );
+        for (let j = 0; j < 4; j++)
+          if ((i + j + o.v) % 2) {
+            const a = (j / 4) * Math.PI * 2;
+            k.add(Bc(0.7, 0.5, 0.04, 0.01), p.w, Math.sin(a) * r * 0.98, y + 0.9, Math.cos(a) * r * 0.98, { rot: [0, a, 0], lit: true });
+          }
+      }
+      k.add(K.ball(0.6, 1), p.g, 0, n * 2.6 + 0.3, 0, { glow: true });
+    },
     // tháp ban công sóng (biển): các tầng ban công lượn như sóng
-    wave(k, o) { const p = pal(o), n = 10 + (o.v % 4); k.add(K.post(1.7, n * 1.6, 10), p.a, 0, 0, 0); for (let f = 0; f < n; f++) { const off = Math.sin(f * 0.7 + o.v) * 0.5; k.add(K.lathe([[0.001, 0], [2.6, 0], [2.6, 0.18], [0.001, 0.18]], 12), p.c, off, f * 1.6 + 1.4, 0, { sc: [1, 1, 0.8] }); if ((f + o.v) % 2) k.add(Bc(1.2, 0.6, 0.04, 0.01), p.w, 0, f * 1.6 + 0.8, 1.72, { lit: true }); } },
+    wave(k, o) {
+      const p = pal(o),
+        n = 10 + (o.v % 4);
+      k.add(K.post(1.7, n * 1.6, 10), p.a, 0, 0, 0);
+      for (let f = 0; f < n; f++) {
+        const off = Math.sin(f * 0.7 + o.v) * 0.5;
+        k.add(
+          K.lathe(
+            [
+              [0.001, 0],
+              [2.6, 0],
+              [2.6, 0.18],
+              [0.001, 0.18],
+            ],
+            12,
+          ),
+          p.c,
+          off,
+          f * 1.6 + 1.4,
+          0,
+          { sc: [1, 1, 0.8] },
+        );
+        if ((f + o.v) % 2) k.add(Bc(1.2, 0.6, 0.04, 0.01), p.w, 0, f * 1.6 + 0.8, 1.72, { lit: true });
+      }
+    },
     // toà sân trong có tháp gió (sa mạc): khối vuông dày, tháp hút gió trên mái, cửa vòm
-    courtyard(k, o) { const p = pal(o), n = 5 + (o.v % 3); k.add(B(4.4, n * 1.8, 4.4, 0.2), p.a, 0, 0, 0); for (let f = 0; f < n; f++) { winsBox(k, p, 3.8, 4.4, 1 + f * 1.8, 3, o); k.add(Bc(4.42, 0.12, 4.42, 0.02), p.b, 0, f * 1.8 + 1.75, 0); } for (const [x, z] of [[-1.4, -1.4], [1.4, 1.4]]) { k.add(B(1, 3, 1, 0.1), p.b, x, n * 1.8, z); k.add(Bc(0.6, 0.8, 1.02, 0.02), p.d, x, n * 1.8 + 2.4, z, { ao: false }); } },
+    courtyard(k, o) {
+      const p = pal(o),
+        n = 5 + (o.v % 3);
+      k.add(B(4.4, n * 1.8, 4.4, 0.2), p.a, 0, 0, 0);
+      for (let f = 0; f < n; f++) {
+        winsBox(k, p, 3.8, 4.4, 1 + f * 1.8, 3, o);
+        k.add(Bc(4.42, 0.12, 4.42, 0.02), p.b, 0, f * 1.8 + 1.75, 0);
+      }
+      for (const [x, z] of [
+        [-1.4, -1.4],
+        [1.4, 1.4],
+      ]) {
+        k.add(B(1, 3, 1, 0.1), p.b, x, n * 1.8, z);
+        k.add(Bc(0.6, 0.8, 1.02, 0.02), p.d, x, n * 1.8 + 2.4, z, { ao: false });
+      }
+    },
     /* nhà nhỏ đứng xen giữa cao ốc */
     // biệt thự mái bằng: hai khối lệch nhau, mảng kính lớn, hồ bơi nhỏ trước cửa
-    villa(k, o) { const p = pal(o); k.add(B(4, 2.2, 3, 0.1), p.a, 0, 0, 0); k.add(B(3, 2, 2.6, 0.1), p.a, 0.8, 2.2, -0.3); k.add(Bc(2.6, 1.4, 0.06, 0.02), p.c, -0.4, 1.1, 1.52, { ao: false }); k.add(Bc(2.4, 1.2, 0.04, 0.01), p.w, -0.4, 1.1, 1.56, { lit: true }); k.add(B(3.3, 0.2, 2.9, 0.04), p.b, 0.8, 4.2, -0.3); k.add(B(1.8, 0.1, 1.2, 0.02), '#4aa3c7', 1, 0, 2.4, { ao: false }); },
+    villa(k, o) {
+      const p = pal(o);
+      k.add(B(4, 2.2, 3, 0.1), p.a, 0, 0, 0);
+      k.add(B(3, 2, 2.6, 0.1), p.a, 0.8, 2.2, -0.3);
+      k.add(Bc(2.6, 1.4, 0.06, 0.02), p.c, -0.4, 1.1, 1.52, { ao: false });
+      k.add(Bc(2.4, 1.2, 0.04, 0.01), p.w, -0.4, 1.1, 1.56, { lit: true });
+      k.add(B(3.3, 0.2, 2.9, 0.04), p.b, 0.8, 4.2, -0.3);
+      k.add(B(1.8, 0.1, 1.2, 0.02), '#4aa3c7', 1, 0, 2.4, { ao: false });
+    },
     // nhà con nhộng: khoang tròn dài đặt trên chân, cửa sổ tròn
-    capsule(k, o) { const p = pal(o); for (const sx of [-1, 1]) k.add(K.post(0.12, 1.2, 5), p.d, sx * 1.2, 0, 0); k.add(K.ball(1.6, 1), p.a, 0, 2.4, 0, { sc: [1.5, 0.85, 1] }); k.add(K.post(0.5, 0.08, 10, 0.5).rotateX(Math.PI / 2), p.c, 0.6, 2.5, 1.38, { glow: true }); k.add(K.post(0.4, 0.06, 10, 0.4).rotateX(Math.PI / 2), p.w, -0.8, 2.5, 1.36, { lit: true }); },
+    capsule(k, o) {
+      const p = pal(o);
+      for (const sx of [-1, 1]) k.add(K.post(0.12, 1.2, 5), p.d, sx * 1.2, 0, 0);
+      k.add(K.ball(1.6, 1), p.a, 0, 2.4, 0, { sc: [1.5, 0.85, 1] });
+      k.add(K.post(0.5, 0.08, 10, 0.5).rotateX(Math.PI / 2), p.c, 0.6, 2.5, 1.38, { glow: true });
+      k.add(K.post(0.4, 0.06, 10, 0.4).rotateX(Math.PI / 2), p.w, -0.8, 2.5, 1.36, { lit: true });
+    },
     // nhà cầu: ba khối lập phương chồng lệch như đồ chơi xếp hình, mỗi khối một màu
-    cubeStack(k, o) { const p = pal(o); const C3 = [p.a, p.c, p.b]; for (let i = 0; i < 3; i++) { k.add(B(2.4, 2.2, 2.4, 0.15), C3[(i + o.v) % 3], ((i % 2) - 0.5) * 1.2, i * 2.2, ((i + 1) % 2 - 0.5) * 0.8, { rot: [0, i * 0.4, 0] }); k.add(Bc(1, 0.8, 0.04, 0.01), p.w, ((i % 2) - 0.5) * 1.2, i * 2.2 + 1.1, ((i + 1) % 2 - 0.5) * 0.8 + 1.22, { rot: [0, i * 0.4, 0], lit: true }); } },
+    cubeStack(k, o) {
+      const p = pal(o);
+      const C3 = [p.a, p.c, p.b];
+      for (let i = 0; i < 3; i++) {
+        k.add(B(2.4, 2.2, 2.4, 0.15), C3[(i + o.v) % 3], ((i % 2) - 0.5) * 1.2, i * 2.2, (((i + 1) % 2) - 0.5) * 0.8, {
+          rot: [0, i * 0.4, 0],
+        });
+        k.add(Bc(1, 0.8, 0.04, 0.01), p.w, ((i % 2) - 0.5) * 1.2, i * 2.2 + 1.1, (((i + 1) % 2) - 0.5) * 0.8 + 1.22, {
+          rot: [0, i * 0.4, 0],
+          lit: true,
+        });
+      }
+    },
     // nhà cầu tròn: quả cầu đặt trên một chân, ban công vòng
-    sphereHouse(k, o) { const p = pal(o); k.add(K.post(0.5, 2.4, 8), p.d, 0, 0, 0); k.add(K.ball(2, 2), p.a, 0, 4, 0); k.add(K.post(2.4, 0.15, 14, 2.4), p.c, 0, 3.5, 0); for (let j = 0; j < 4; j++) { const a = (j / 4) * Math.PI * 2 + o.v; k.add(Bc(0.7, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 2, 4.2, Math.cos(a) * 2, { rot: [0, a, 0], lit: true }); } },
+    sphereHouse(k, o) {
+      const p = pal(o);
+      k.add(K.post(0.5, 2.4, 8), p.d, 0, 0, 0);
+      k.add(K.ball(2, 2), p.a, 0, 4, 0);
+      k.add(K.post(2.4, 0.15, 14, 2.4), p.c, 0, 3.5, 0);
+      for (let j = 0; j < 4; j++) {
+        const a = (j / 4) * Math.PI * 2 + o.v;
+        k.add(Bc(0.7, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 2, 4.2, Math.cos(a) * 2, { rot: [0, a, 0], lit: true });
+      }
+    },
     /* toà dáng lạ */
     // cao ốc cánh hẫng: các khối tầng lồi ra lệch hẳn sang hai bên
-    cantilever(k, o) { const p = pal(o), n = 7; for (let i = 0; i < n; i++) { const off = (i % 2 ? 1 : -1) * (0.6 + (i % 3) * 0.4); k.add(B(3.6, 2.4, 3, 0.1), i % 2 ? p.a : p.c, off, i * 2.5, 0); k.add(Bc(3, 1, 0.04, 0.01), p.w, off, i * 2.5 + 1.2, 1.52, { lit: (i + o.v) % 2 === 0 }); } k.add(B(1.4, n * 2.5, 1.4, 0.1), p.d, 0, 0, -0.4); },
+    cantilever(k, o) {
+      const p = pal(o),
+        n = 7;
+      for (let i = 0; i < n; i++) {
+        const off = (i % 2 ? 1 : -1) * (0.6 + (i % 3) * 0.4);
+        k.add(B(3.6, 2.4, 3, 0.1), i % 2 ? p.a : p.c, off, i * 2.5, 0);
+        k.add(Bc(3, 1, 0.04, 0.01), p.w, off, i * 2.5 + 1.2, 1.52, { lit: (i + o.v) % 2 === 0 });
+      }
+      k.add(B(1.4, n * 2.5, 1.4, 0.1), p.d, 0, 0, -0.4);
+    },
     // tháp đôi có cầu nối trên cao
-    twin(k, o) { const p = pal(o), H = 22 + (o.v % 3) * 3; for (const sx of [-1, 1]) { k.add(B(2, H, 2, 0.12), p.a, sx * 1.8, 0, 0); for (let f = 1; f < H / 2; f++) if ((f + o.v + (sx > 0 ? 1 : 0)) % 2) k.add(Bc(1.4, 0.6, 0.04, 0.01), p.w, sx * 1.8, f * 2, 1.03, { lit: true }); k.add(K.cone(0.9, 2.6, 4), p.c, sx * 1.8, H, 0, { rot: [0, Math.PI / 4, 0] }); } k.add(B(3.8, 1.2, 1.4, 0.1), p.c, 0, H * 0.62, 0); k.add(Bc(3.4, 0.4, 0.04, 0.01), p.g, 0, H * 0.62 + 0.6, 0.72, { glow: true }); },
+    twin(k, o) {
+      const p = pal(o),
+        H = 22 + (o.v % 3) * 3;
+      for (const sx of [-1, 1]) {
+        k.add(B(2, H, 2, 0.12), p.a, sx * 1.8, 0, 0);
+        for (let f = 1; f < H / 2; f++)
+          if ((f + o.v + (sx > 0 ? 1 : 0)) % 2) k.add(Bc(1.4, 0.6, 0.04, 0.01), p.w, sx * 1.8, f * 2, 1.03, { lit: true });
+        k.add(K.cone(0.9, 2.6, 4), p.c, sx * 1.8, H, 0, { rot: [0, Math.PI / 4, 0] });
+      }
+      k.add(B(3.8, 1.2, 1.4, 0.1), p.c, 0, H * 0.62, 0);
+      k.add(Bc(3.4, 0.4, 0.04, 0.01), p.g, 0, H * 0.62 + 0.6, 0.72, { glow: true });
+    },
     // tháp nghiêng: thân cao nghiêng hẳn về một phía, chân đỡ chéo
-    tilt(k, o) { const p = pal(o), H = 20 + (o.v % 3) * 2, t = 0.18; k.add(B(3, H, 3, 0.15), p.a, 0, 0, 0, { rot: [0, 0, t] }); for (let f = 1; f < H / 2; f++) if ((f + o.v) % 2) k.add(Bc(2.4, 0.6, 0.04, 0.01), p.w, -Math.sin(t) * f * 2, f * 2 * Math.cos(t), 1.53, { rot: [0, 0, t], lit: true }); k.add(Bc(0.5, H * 0.6, 0.5, 0.05), p.c, 2.2, H * 0.28, 0, { rot: [0, 0, -0.32] }); k.add(Bc(3.2, 0.3, 3.2, 0.05), p.c, -Math.sin(t) * H, H * Math.cos(t), 0, { rot: [0, 0, t] }); },
+    tilt(k, o) {
+      const p = pal(o),
+        H = 20 + (o.v % 3) * 2,
+        t = 0.18;
+      k.add(B(3, H, 3, 0.15), p.a, 0, 0, 0, { rot: [0, 0, t] });
+      for (let f = 1; f < H / 2; f++)
+        if ((f + o.v) % 2)
+          k.add(Bc(2.4, 0.6, 0.04, 0.01), p.w, -Math.sin(t) * f * 2, f * 2 * Math.cos(t), 1.53, { rot: [0, 0, t], lit: true });
+      k.add(Bc(0.5, H * 0.6, 0.5, 0.05), p.c, 2.2, H * 0.28, 0, { rot: [0, 0, -0.32] });
+      k.add(Bc(3.2, 0.3, 3.2, 0.05), p.c, -Math.sin(t) * H, H * Math.cos(t), 0, { rot: [0, 0, t] });
+    },
     // tháp nấm: thân mảnh, tán lớn trên cao có các tầng ở trong tán
-    mushroom(k, o) { const p = pal(o), H = 14 + (o.v % 3) * 2; k.add(K.post(1.0, H, 8, 0.7), p.b, 0, 0, 0); k.add(K.lathe([[0.7, 0], [4, 0.6], [4.4, 1.8], [3, 3.2], [0.001, 3.8]], 14), p.a, 0, H, 0); for (let j = 0; j < 8; j++) { const a = (j / 8) * Math.PI * 2; k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 4.3, H + 1.2, Math.cos(a) * 4.3, { rot: [0, a, 0], lit: true }); } for (let i = 0; i < 5; i++) k.add(K.ball(0.3), p.g, Math.cos(i * 1.3) * 3, H + 0.3, Math.sin(i * 1.3) * 3, { glow: true }); return { pulse: true }; },
+    mushroom(k, o) {
+      const p = pal(o),
+        H = 14 + (o.v % 3) * 2;
+      k.add(K.post(1.0, H, 8, 0.7), p.b, 0, 0, 0);
+      k.add(
+        K.lathe(
+          [
+            [0.7, 0],
+            [4, 0.6],
+            [4.4, 1.8],
+            [3, 3.2],
+            [0.001, 3.8],
+          ],
+          14,
+        ),
+        p.a,
+        0,
+        H,
+        0,
+      );
+      for (let j = 0; j < 8; j++) {
+        const a = (j / 8) * Math.PI * 2;
+        k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 4.3, H + 1.2, Math.cos(a) * 4.3, { rot: [0, a, 0], lit: true });
+      }
+      for (let i = 0; i < 5; i++) k.add(K.ball(0.3), p.g, Math.cos(i * 1.3) * 3, H + 0.3, Math.sin(i * 1.3) * 3, { glow: true });
+      return { pulse: true };
+    },
     // kim tự tháp ngược: các tầng to dần lên trên, đứng trên một lõi nhỏ
-    inverted(k, o) { const p = pal(o); k.add(B(1.6, 4, 1.6, 0.1), p.d, 0, 0, 0); for (let i = 0; i < 6; i++) { const w = 2 + i * 0.6; k.add(B(w, 1.6, w, 0.12), i % 2 ? p.a : p.c, 0, 4 + i * 1.7, 0); k.add(Bc(w * 0.7, 0.6, 0.04, 0.01), p.w, 0, 4.8 + i * 1.7, w / 2 + 0.02, { lit: (i + o.v) % 2 === 0 }); } k.add(K.ball(0.5), p.g, 0, 14.6, 0, { glow: true }); },
+    inverted(k, o) {
+      const p = pal(o);
+      k.add(B(1.6, 4, 1.6, 0.1), p.d, 0, 0, 0);
+      for (let i = 0; i < 6; i++) {
+        const w = 2 + i * 0.6;
+        k.add(B(w, 1.6, w, 0.12), i % 2 ? p.a : p.c, 0, 4 + i * 1.7, 0);
+        k.add(Bc(w * 0.7, 0.6, 0.04, 0.01), p.w, 0, 4.8 + i * 1.7, w / 2 + 0.02, { lit: (i + o.v) % 2 === 0 });
+      }
+      k.add(K.ball(0.5), p.g, 0, 14.6, 0, { glow: true });
+    },
     // tháp vòng: tháp đứng giữa một vòng tầng tròn treo lửng
-    ringTower(k, o) { const p = pal(o), H = 22; k.add(K.post(1.2, H, 8, 0.8), p.a, 0, 0, 0); for (const y of [H * 0.4, H * 0.75]) { k.add(torus(3.4, 0.9), p.c, 0, y, 0, { rot: [Math.PI / 2, 0, 0] }); for (let j = 0; j < 8; j++) { const a = (j / 8) * Math.PI * 2; k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 4.3, y, Math.cos(a) * 4.3, { rot: [0, a, 0], lit: true }); } } k.add(K.ball(0.7), p.g, 0, H + 0.6, 0, { glow: true }); },
+    ringTower(k, o) {
+      const p = pal(o),
+        H = 22;
+      k.add(K.post(1.2, H, 8, 0.8), p.a, 0, 0, 0);
+      for (const y of [H * 0.4, H * 0.75]) {
+        k.add(torus(3.4, 0.9), p.c, 0, y, 0, { rot: [Math.PI / 2, 0, 0] });
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * Math.PI * 2;
+          k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.sin(a) * 4.3, y, Math.cos(a) * 4.3, { rot: [0, a, 0], lit: true });
+        }
+      }
+      k.add(K.ball(0.7), p.g, 0, H + 0.6, 0, { glow: true });
+    },
     // tháp xoắn ốc: một dải sàn quấn quanh lõi lên tới đỉnh
-    helix(k, o) { const p = pal(o), n = 26; k.add(K.post(1, n * 0.9 + 2, 8, 0.6), p.d, 0, 0, 0); for (let i = 0; i < n; i++) { const a = i * 0.55, y = i * 0.9; k.add(B(2.2, 0.8, 1.6, 0.15), i % 3 ? p.a : p.c, Math.sin(a) * 2, y, Math.cos(a) * 2, { rot: [0, a, 0] }); if ((i + o.v) % 3 === 0) k.add(Bc(1.2, 0.4, 0.04, 0.01), p.w, Math.sin(a) * 2.82, y + 0.4, Math.cos(a) * 2.82, { rot: [0, a, 0], lit: true }); } k.add(oct(0.6, 1.6, 0.6), p.g, 0, n * 0.9 + 2, 0, { glow: true }); },
+    helix(k, o) {
+      const p = pal(o),
+        n = 26;
+      k.add(K.post(1, n * 0.9 + 2, 8, 0.6), p.d, 0, 0, 0);
+      for (let i = 0; i < n; i++) {
+        const a = i * 0.55,
+          y = i * 0.9;
+        k.add(B(2.2, 0.8, 1.6, 0.15), i % 3 ? p.a : p.c, Math.sin(a) * 2, y, Math.cos(a) * 2, { rot: [0, a, 0] });
+        if ((i + o.v) % 3 === 0)
+          k.add(Bc(1.2, 0.4, 0.04, 0.01), p.w, Math.sin(a) * 2.82, y + 0.4, Math.cos(a) * 2.82, { rot: [0, a, 0], lit: true });
+      }
+      k.add(oct(0.6, 1.6, 0.6), p.g, 0, n * 0.9 + 2, 0, { glow: true });
+    },
   };
 
   /* ---------- Nhà chính ---------- */
   const HALL = {
     // hang đá lớn: khối đá tròn có cửa hang, lửa trong hang
-    cave(k, o) { const p = pal(o); k.add(K.ball(6, 1), p.b, 0, 1.5, 0, { sc: [1.2, 0.8, 1] }); k.add(K.ball(3.5, 0), p.a, 3.5, 1, -1, { sc: [1, 0.8, 1] }); k.add(K.lathe([[1.8, 0], [1.8, 1.6], [1.2, 2.8], [0.001, 3.2]], 8), p.d, 0, 0, 5.4, { sc: [1, 1, 0.4] }); k.add(K.cone(0.6, 1.2, 6), p.g, 0, 0, 5.6, { glow: true }); for (let i = 0; i < 5; i++) k.add(Bc(0.5, 0.06, 0.04, 0.01), p.c, -2 + i, 3 + (i % 2) * 0.6, 5.6 - Math.abs(i - 2) * 0.4, { ao: false }); return { smoke: [[0, 1.6, 5.6, 0.8]] }; },
+    cave(k, o) {
+      const p = pal(o);
+      k.add(K.ball(6, 1), p.b, 0, 1.5, 0, { sc: [1.2, 0.8, 1] });
+      k.add(K.ball(3.5, 0), p.a, 3.5, 1, -1, { sc: [1, 0.8, 1] });
+      k.add(
+        K.lathe(
+          [
+            [1.8, 0],
+            [1.8, 1.6],
+            [1.2, 2.8],
+            [0.001, 3.2],
+          ],
+          8,
+        ),
+        p.d,
+        0,
+        0,
+        5.4,
+        { sc: [1, 1, 0.4] },
+      );
+      k.add(K.cone(0.6, 1.2, 6), p.g, 0, 0, 5.6, { glow: true });
+      for (let i = 0; i < 5; i++)
+        k.add(Bc(0.5, 0.06, 0.04, 0.01), p.c, -2 + i, 3 + (i % 2) * 0.6, 5.6 - Math.abs(i - 2) * 0.4, { ao: false });
+      return { smoke: [[0, 1.6, 5.6, 0.8]] };
+    },
     // nhà băng lớn: vòm băng to có đường hầm vào, cột băng hai bên
-    snowHall(k, o) { const p = pal(o); k.add(K.lathe([[6, 0], [5.8, 2], [4.4, 4.4], [2, 5.8], [0.001, 6]], 14), p.a, 0, 0, 0); k.add(K.lathe([[1.8, 0], [1.8, 1.4], [1.2, 2.4], [0.001, 2.6]], 10), p.a, 0, 0, 5.6, { rot: [Math.PI / 2, 0, 0], sc: [1, 1, 0.8] }); k.add(B(1.6, 2, 0.1, 0.08), p.d, 0, 0, 7.4); for (const sx of [-1, 1]) k.add(oct(0.6, 2.5, 0.6), p.c, sx * 3.4, 0, 6); },
+    snowHall(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [6, 0],
+            [5.8, 2],
+            [4.4, 4.4],
+            [2, 5.8],
+            [0.001, 6],
+          ],
+          14,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+      );
+      k.add(
+        K.lathe(
+          [
+            [1.8, 0],
+            [1.8, 1.4],
+            [1.2, 2.4],
+            [0.001, 2.6],
+          ],
+          10,
+        ),
+        p.a,
+        0,
+        0,
+        5.6,
+        { rot: [Math.PI / 2, 0, 0], sc: [1, 1, 0.8] },
+      );
+      k.add(B(1.6, 2, 0.1, 0.08), p.d, 0, 0, 7.4);
+      for (const sx of [-1, 1]) k.add(oct(0.6, 2.5, 0.6), p.c, sx * 3.4, 0, 6);
+    },
     // nhà thuyền úp: thân thuyền lớn úp ngược làm mái, cột gỗ, lưới phơi
-    boatHall(k, o) { const p = pal(o); k.add(K.lathe([[0.001, -6], [2.4, -4], [3.2, 0], [2.4, 4], [0.001, 6]], 10), p.b, 0, 3.4, 0, { rot: [Math.PI / 2, 0, 0], sc: [1.3, 1, 0.9] }); for (const z of [-3.5, 0, 3.5]) for (const sx of [-1, 1]) k.add(K.post(0.18, 3.4, 5), p.d, sx * 2.6, 0, z); for (let i = 0; i < 4; i++) k.add(Bc(0.04, 1.6, 1.8, 0.01), p.c, 4.6, 1.2, -3 + i * 2, { ao: false }); k.add(K.cone(0.4, 0.8, 5), p.g, 0, 0, 0, { glow: true }); },
+    boatHall(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [0.001, -6],
+            [2.4, -4],
+            [3.2, 0],
+            [2.4, 4],
+            [0.001, 6],
+          ],
+          10,
+        ),
+        p.b,
+        0,
+        3.4,
+        0,
+        { rot: [Math.PI / 2, 0, 0], sc: [1.3, 1, 0.9] },
+      );
+      for (const z of [-3.5, 0, 3.5]) for (const sx of [-1, 1]) k.add(K.post(0.18, 3.4, 5), p.d, sx * 2.6, 0, z);
+      for (let i = 0; i < 4; i++) k.add(Bc(0.04, 1.6, 1.8, 0.01), p.c, 4.6, 1.2, -3 + i * 2, { ao: false });
+      k.add(K.cone(0.4, 0.8, 5), p.g, 0, 0, 0, { glow: true });
+    },
     // nhà đá tròn lớn: tường đá xếp tròn, mái rơm nón
-    stoneHut(k, o) { const p = pal(o); k.add(K.post(5, 2.6, 14), p.a, 0, 0, 0); for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; k.add(B(1.2, 0.5, 0.5, 0.1), p.b, Math.sin(a) * 5, 1 + (i % 2) * 0.8, Math.cos(a) * 5, { rot: [0, a, 0] }); } k.add(K.cone(6, 4.6, 14), p.c, 0, 2.6, 0); k.add(B(1.4, 2, 0.1, 0.05), p.d, 0, 0, 5.02); return { smoke: [[0, 7.4, 0, 0.8]] }; },
+    stoneHut(k, o) {
+      const p = pal(o);
+      k.add(K.post(5, 2.6, 14), p.a, 0, 0, 0);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        k.add(B(1.2, 0.5, 0.5, 0.1), p.b, Math.sin(a) * 5, 1 + (i % 2) * 0.8, Math.cos(a) * 5, { rot: [0, a, 0] });
+      }
+      k.add(K.cone(6, 4.6, 14), p.c, 0, 2.6, 0);
+      k.add(B(1.4, 2, 0.1, 0.05), p.d, 0, 0, 5.02);
+      return { smoke: [[0, 7.4, 0, 0.8]] };
+    },
     // nhà vỏ cây: khung cây uốn vòm phủ vỏ cây, cửa treo da
-    lodge(k, o) { const p = pal(o); k.add(K.lathe([[0.001, -5], [3, -3.6], [3.6, 0], [3, 3.6], [0.001, 5]], 10), p.a, 0, 0, 0, { rot: [Math.PI / 2, 0, 0], sc: [1.2, 1, 0.8] }); for (let i = 0; i < 6; i++) k.add(torus(3.6, 0.1), p.d, 0, 0, -4 + i * 1.6, { sc: [1.2, 0.8, 1] }); k.add(B(1.4, 2.2, 0.1, 0.05), p.c, 0, 0, 4.6); },
-    greatTent(k, o) { const p = pal(o); k.add(K.cone(5, 6, 10), p.a, 0, 0, 0); for (let i = 0; i < 8; i++) k.add(K.post(0.08, 2.4, 4), p.d, Math.cos(i * 0.8) * 0.5, 5.4, Math.sin(i * 0.8) * 0.5, { rot: [Math.cos(i) * 0.4, 0, Math.sin(i) * 0.4] }); k.add(B(1.6, 2.4, 0.1, 0.05), p.d, 0, 0, 4.2, { rot: [-0.6, 0, 0] }); for (let i = 0; i < 6; i++) k.add(Bc(0.9, 0.5, 0.04, 0.02), pick([p.c, p.b], i * 0.4), Math.cos(i) * 3.6, 2.2, Math.sin(i) * 3.6, { rot: [0, -i + Math.PI / 2, 0.3] }); },
-    longhall(k, o) { const p = pal(o); k.add(B(10, 3, 5, 0.1), p.a, 0, 0, 0); k.add(K.roof(11, 3, 6, 0.15, 11.4, 0.3, 0.7), p.b, 0, 3, 0); for (const sx of [-1, 1]) k.add(K.post(0.25, 6.2, 6), p.c, sx * 5.4, 0, 2.8); k.add(B(1.8, 2.2, 0.1, 0.04), p.d, 0, 0, 2.52); },
-    temple(k, o) { const p = pal(o); k.add(B(11, 1, 8, 0.1), p.b, 0, 0, 0); for (let i = 0; i < 6; i++) k.add(K.post(0.4, 5, 10), p.a, -4.5 + i * 1.8, 1, 3.2); k.add(B(9, 5, 5, 0.1), p.a, 0, 1, -1); k.add(K.roof(11, 2.4, 8, 0.12, 0.4, 7.6), p.c, 0, 6, 0); k.add(B(1.8, 3, 0.1, 0.05), p.d, 0, 1, 1.52); },
-    pagoda(k, o) { const p = pal(o); for (let f = 0; f < 4; f++) { const s = 1 - f * 0.18, y = f * 3; k.add(B(7 * s, 2.4, 7 * s, 0.1), p.a, 0, y, 0); k.add(K.roof(9 * s, 0.9, 9 * s, 0.12, 6 * s, 6 * s, 0.6), p.b, 0, y + 2.4, 0); winsBox(k, p, 5 * s, 7 * s, y + 1.2, 3, o); } k.add(K.post(0.1, 2.5, 5), p.c, 0, 12.3, 0); },
-    keep(k, o) { const p = pal(o); k.add(B(9, 6, 9, 0.12), p.a, 0, 0, 0); for (const [x, z] of [[-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5]]) { k.add(K.post(1.4, 9, 10), p.a, x, 0, z); k.add(K.cone(1.8, 3.2, 10), p.b, x, 9, z); } for (let i = 0; i < 8; i++) k.add(B(0.7, 0.8, 0.7, 0.05), p.a, -3.5 + i, 6, 4.4); k.add(B(2.2, 3, 0.2, 0.05), p.d, 0, 0, 4.55); },
-    domeHall(k, o) { const p = pal(o); k.add(K.post(6, 4, 16), p.a, 0, 0, 0); k.add(K.lathe([[6, 0], [5.6, 2], [4, 4], [1.6, 5.2], [0.001, 5.4]], 16), p.b, 0, 4, 0); k.add(K.post(0.6, 2, 8), p.c, 0, 9.4, 0); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; k.add(Bc(0.9, 1.6, 0.06, 0.02), p.d, Math.sin(a) * 6.02, 2, Math.cos(a) * 6.02, { rot: [0, a, 0], ao: false }); k.add(Bc(0.8, 1.4, 0.04, 0.02), p.w, Math.sin(a) * 6.06, 2, Math.cos(a) * 6.06, { rot: [0, a, 0], lit: true }); } },
-    ziggurat(k, o) { const p = pal(o); for (let i = 0; i < 5; i++) { const w = 12 - i * 2.2; k.add(B(w, 2.2, w, 0.15), pick([p.a, p.b], i * 0.5), 0, i * 2.2, 0); } k.add(Bc(2, 11, 0.3, 0.05), p.c, 0, 5.5, 6, { rot: [0.75, 0, 0] }); k.add(B(2.4, 2.4, 2.4, 0.1), p.c, 0, 11, 0); k.add(K.cone(0.6, 1.6, 6), p.g, 0, 13.4, 0, { glow: true }); },
-    clock(k, o) { const p = pal(o); k.add(B(9, 5, 6, 0.1), p.a, 0, 0, 0); k.add(K.roof(9.6, 1.6, 6.6, 0.15, 9, 0.3), p.b, 0, 5, 0); winsBox(k, p, 8, 6, 1.6, 5, o); winsBox(k, p, 8, 6, 3.6, 5, o); k.add(B(3, 8, 3, 0.1), p.a, 0, 5, 0); for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2; k.add(new (THREE().CylinderGeometry)(1, 1, 0.12, 14).rotateX(Math.PI / 2), '#f2f2ee', Math.sin(a) * 1.52, 11.5, Math.cos(a) * 1.52, { rot: [0, a, 0], ao: false }); } k.add(K.cone(2.2, 3.6, 4), p.b, 0, 13, 0, { rot: [0, Math.PI / 4, 0] }); },
-    mill(k, o) { const p = pal(o); k.add(B(12, 5, 7, 0.1), p.a, 0, 0, 0); for (let i = 0; i < 4; i++) k.add(K.roof(3, 1.6, 7, 0.05, 0.2, 7), p.b, -4.5 + i * 3, 5, 0); winsBox(k, p, 11, 7, 2.4, 6, o); for (const x of [-3, 3]) k.add(K.post(0.8, 14, 10, 0.6), p.c, x, 0, -2.6); return { smoke: [[-3, 14.3, -2.6, 1.6], [3, 14.3, -2.6, 1.6]] }; },
+    lodge(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [0.001, -5],
+            [3, -3.6],
+            [3.6, 0],
+            [3, 3.6],
+            [0.001, 5],
+          ],
+          10,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+        { rot: [Math.PI / 2, 0, 0], sc: [1.2, 1, 0.8] },
+      );
+      for (let i = 0; i < 6; i++) k.add(torus(3.6, 0.1), p.d, 0, 0, -4 + i * 1.6, { sc: [1.2, 0.8, 1] });
+      k.add(B(1.4, 2.2, 0.1, 0.05), p.c, 0, 0, 4.6);
+    },
+    greatTent(k, o) {
+      const p = pal(o);
+      k.add(K.cone(5, 6, 10), p.a, 0, 0, 0);
+      for (let i = 0; i < 8; i++)
+        k.add(K.post(0.08, 2.4, 4), p.d, Math.cos(i * 0.8) * 0.5, 5.4, Math.sin(i * 0.8) * 0.5, {
+          rot: [Math.cos(i) * 0.4, 0, Math.sin(i) * 0.4],
+        });
+      k.add(B(1.6, 2.4, 0.1, 0.05), p.d, 0, 0, 4.2, { rot: [-0.6, 0, 0] });
+      for (let i = 0; i < 6; i++)
+        k.add(Bc(0.9, 0.5, 0.04, 0.02), pick([p.c, p.b], i * 0.4), Math.cos(i) * 3.6, 2.2, Math.sin(i) * 3.6, {
+          rot: [0, -i + Math.PI / 2, 0.3],
+        });
+    },
+    longhall(k, o) {
+      const p = pal(o);
+      k.add(B(10, 3, 5, 0.1), p.a, 0, 0, 0);
+      k.add(K.roof(11, 3, 6, 0.15, 11.4, 0.3, 0.7), p.b, 0, 3, 0);
+      for (const sx of [-1, 1]) k.add(K.post(0.25, 6.2, 6), p.c, sx * 5.4, 0, 2.8);
+      k.add(B(1.8, 2.2, 0.1, 0.04), p.d, 0, 0, 2.52);
+    },
+    temple(k, o) {
+      const p = pal(o);
+      k.add(B(11, 1, 8, 0.1), p.b, 0, 0, 0);
+      for (let i = 0; i < 6; i++) k.add(K.post(0.4, 5, 10), p.a, -4.5 + i * 1.8, 1, 3.2);
+      k.add(B(9, 5, 5, 0.1), p.a, 0, 1, -1);
+      k.add(K.roof(11, 2.4, 8, 0.12, 0.4, 7.6), p.c, 0, 6, 0);
+      k.add(B(1.8, 3, 0.1, 0.05), p.d, 0, 1, 1.52);
+    },
+    pagoda(k, o) {
+      const p = pal(o);
+      for (let f = 0; f < 4; f++) {
+        const s = 1 - f * 0.18,
+          y = f * 3;
+        k.add(B(7 * s, 2.4, 7 * s, 0.1), p.a, 0, y, 0);
+        k.add(K.roof(9 * s, 0.9, 9 * s, 0.12, 6 * s, 6 * s, 0.6), p.b, 0, y + 2.4, 0);
+        winsBox(k, p, 5 * s, 7 * s, y + 1.2, 3, o);
+      }
+      k.add(K.post(0.1, 2.5, 5), p.c, 0, 12.3, 0);
+    },
+    keep(k, o) {
+      const p = pal(o);
+      k.add(B(9, 6, 9, 0.12), p.a, 0, 0, 0);
+      for (const [x, z] of [
+        [-4.5, -4.5],
+        [4.5, -4.5],
+        [-4.5, 4.5],
+        [4.5, 4.5],
+      ]) {
+        k.add(K.post(1.4, 9, 10), p.a, x, 0, z);
+        k.add(K.cone(1.8, 3.2, 10), p.b, x, 9, z);
+      }
+      for (let i = 0; i < 8; i++) k.add(B(0.7, 0.8, 0.7, 0.05), p.a, -3.5 + i, 6, 4.4);
+      k.add(B(2.2, 3, 0.2, 0.05), p.d, 0, 0, 4.55);
+    },
+    domeHall(k, o) {
+      const p = pal(o);
+      k.add(K.post(6, 4, 16), p.a, 0, 0, 0);
+      k.add(
+        K.lathe(
+          [
+            [6, 0],
+            [5.6, 2],
+            [4, 4],
+            [1.6, 5.2],
+            [0.001, 5.4],
+          ],
+          16,
+        ),
+        p.b,
+        0,
+        4,
+        0,
+      );
+      k.add(K.post(0.6, 2, 8), p.c, 0, 9.4, 0);
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        k.add(Bc(0.9, 1.6, 0.06, 0.02), p.d, Math.sin(a) * 6.02, 2, Math.cos(a) * 6.02, { rot: [0, a, 0], ao: false });
+        k.add(Bc(0.8, 1.4, 0.04, 0.02), p.w, Math.sin(a) * 6.06, 2, Math.cos(a) * 6.06, { rot: [0, a, 0], lit: true });
+      }
+    },
+    ziggurat(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 5; i++) {
+        const w = 12 - i * 2.2;
+        k.add(B(w, 2.2, w, 0.15), pick([p.a, p.b], i * 0.5), 0, i * 2.2, 0);
+      }
+      k.add(Bc(2, 11, 0.3, 0.05), p.c, 0, 5.5, 6, { rot: [0.75, 0, 0] });
+      k.add(B(2.4, 2.4, 2.4, 0.1), p.c, 0, 11, 0);
+      k.add(K.cone(0.6, 1.6, 6), p.g, 0, 13.4, 0, { glow: true });
+    },
+    clock(k, o) {
+      const p = pal(o);
+      k.add(B(9, 5, 6, 0.1), p.a, 0, 0, 0);
+      k.add(K.roof(9.6, 1.6, 6.6, 0.15, 9, 0.3), p.b, 0, 5, 0);
+      winsBox(k, p, 8, 6, 1.6, 5, o);
+      winsBox(k, p, 8, 6, 3.6, 5, o);
+      k.add(B(3, 8, 3, 0.1), p.a, 0, 5, 0);
+      for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI) / 2;
+        k.add(
+          new (THREE().CylinderGeometry)(1, 1, 0.12, 14).rotateX(Math.PI / 2),
+          '#f2f2ee',
+          Math.sin(a) * 1.52,
+          11.5,
+          Math.cos(a) * 1.52,
+          { rot: [0, a, 0], ao: false },
+        );
+      }
+      k.add(K.cone(2.2, 3.6, 4), p.b, 0, 13, 0, { rot: [0, Math.PI / 4, 0] });
+    },
+    mill(k, o) {
+      const p = pal(o);
+      k.add(B(12, 5, 7, 0.1), p.a, 0, 0, 0);
+      for (let i = 0; i < 4; i++) k.add(K.roof(3, 1.6, 7, 0.05, 0.2, 7), p.b, -4.5 + i * 3, 5, 0);
+      winsBox(k, p, 11, 7, 2.4, 6, o);
+      for (const x of [-3, 3]) k.add(K.post(0.8, 14, 10, 0.6), p.c, x, 0, -2.6);
+      return {
+        smoke: [
+          [-3, 14.3, -2.6, 1.6],
+          [3, 14.3, -2.6, 1.6],
+        ],
+      };
+    },
     // trụ sở kính: sảnh rộng có mái đua, thân kính sáng lùi tầng ba khúc, vương miện có ăng-ten, dải đèn ở mỗi khúc
-    hq(k, o) { const p = pal(o); k.add(B(11, 3, 8, 0.12), p.a, 0, 0, 0); k.add(B(12, 0.4, 9, 0.06), p.c, 0, 3, 0); const parts = [[6.4, 8, 3.4], [5, 6, 11.4], [3.6, 5, 17.4]]; for (const [w, h, y] of parts) { k.add(B(w, h, w, 0.15), p.a, 0, y, -0.5); for (let s2 = 0; s2 < 4; s2++) { const a = (s2 * Math.PI) / 2; for (let f = 0; f < h / 1.6; f++) { k.add(Bc(w * 0.86, 0.9, 0.05, 0.02), p.c, Math.sin(a) * (w / 2 + 0.01), y + 0.9 + f * 1.6, -0.5 + Math.cos(a) * (w / 2 + 0.01), { rot: [0, a, 0], ao: false }); if ((f + s2 + o.v) % 3) k.add(Bc(w * 0.7, 0.7, 0.03, 0.01), p.w, Math.sin(a) * (w / 2 + 0.05), y + 0.9 + f * 1.6, -0.5 + Math.cos(a) * (w / 2 + 0.05), { rot: [0, a, 0], lit: true }); } } k.add(Bc(w + 0.1, 0.18, w + 0.1, 0.03), p.g, 0, y + h, -0.5, { glow: true }); } k.add(K.cone(1.6, 3.4, 4), p.b, 0, 22.4, -0.5, { rot: [0, Math.PI / 4, 0] }); k.add(K.post(0.08, 4, 4), p.d, 0, 25.6, -0.5); k.add(K.ball(0.2), '#ff5a4f', 0, 29.6, -0.5, { glow: true }); return { pulse: true }; },
-    arcology(k, o) { const p = pal(o); for (let i = 0; i < 6; i++) { const r = 7 - i * 1.0; k.add(K.post(r, 4, 12, r * 0.92), pick([p.a, p.b], i * 0.5), 0, i * 4, 0); k.add(K.post(r + 0.05, 0.2, 12, r + 0.05), p.c, 0, i * 4 + 3.8, 0, { glow: true }); for (let j = 0; j < 8; j++) if ((i + j) % 2) { const a = (j / 8) * Math.PI * 2; k.add(Bc(1.4, 1.2, 0.04, 0.01), p.w, Math.sin(a) * r * 0.96, i * 4 + 2, Math.cos(a) * r * 0.96, { rot: [0, a, 0], lit: true }); } } k.add(K.ball(1.4, 1), p.g, 0, 25, 0, { glow: true }); return { pulse: true }; },
-    orb(k, o) { const p = pal(o); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; k.add(B(1.2, 12, 1.2, 0.2), p.a, Math.cos(a) * 3.4, 0, Math.sin(a) * 3.4, { rot: [Math.sin(a) * 0.15, 0, -Math.cos(a) * 0.15] }); } k.add(K.ball(4.2, 2), p.b, 0, 14, 0); k.add(K.post(4.25, 0.5, 18), p.c, 0, 13.8, 0, { glow: true }); const r = k.sub('ring', [0, 14, 0]); r.add(torus(5.6, 0.2), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); return { spin: [['ring', 'y', 0.4]], pulse: true }; },
-    spireHall(k, o) { const p = pal(o); k.add(K.post(7, 1.2, 14), p.b, 0, 0, 0); k.add(oct(2.6, 16, 2.6), p.a, 0, 1.2, 0); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(oct(1, 5 + (i % 2) * 2, 1), p.c, Math.cos(a) * 4.2, 1.2, Math.sin(a) * 4.2); } k.add(oct(0.8, 12, 0.8), p.g, 0, 2, 0, { glow: true }); return { pulse: true }; },
+    hq(k, o) {
+      const p = pal(o);
+      k.add(B(11, 3, 8, 0.12), p.a, 0, 0, 0);
+      k.add(B(12, 0.4, 9, 0.06), p.c, 0, 3, 0);
+      const parts = [
+        [6.4, 8, 3.4],
+        [5, 6, 11.4],
+        [3.6, 5, 17.4],
+      ];
+      for (const [w, h, y] of parts) {
+        k.add(B(w, h, w, 0.15), p.a, 0, y, -0.5);
+        for (let s2 = 0; s2 < 4; s2++) {
+          const a = (s2 * Math.PI) / 2;
+          for (let f = 0; f < h / 1.6; f++) {
+            k.add(
+              Bc(w * 0.86, 0.9, 0.05, 0.02),
+              p.c,
+              Math.sin(a) * (w / 2 + 0.01),
+              y + 0.9 + f * 1.6,
+              -0.5 + Math.cos(a) * (w / 2 + 0.01),
+              { rot: [0, a, 0], ao: false },
+            );
+            if ((f + s2 + o.v) % 3)
+              k.add(
+                Bc(w * 0.7, 0.7, 0.03, 0.01),
+                p.w,
+                Math.sin(a) * (w / 2 + 0.05),
+                y + 0.9 + f * 1.6,
+                -0.5 + Math.cos(a) * (w / 2 + 0.05),
+                { rot: [0, a, 0], lit: true },
+              );
+          }
+        }
+        k.add(Bc(w + 0.1, 0.18, w + 0.1, 0.03), p.g, 0, y + h, -0.5, { glow: true });
+      }
+      k.add(K.cone(1.6, 3.4, 4), p.b, 0, 22.4, -0.5, { rot: [0, Math.PI / 4, 0] });
+      k.add(K.post(0.08, 4, 4), p.d, 0, 25.6, -0.5);
+      k.add(K.ball(0.2), '#ff5a4f', 0, 29.6, -0.5, { glow: true });
+      return { pulse: true };
+    },
+    arcology(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 6; i++) {
+        const r = 7 - i * 1.0;
+        k.add(K.post(r, 4, 12, r * 0.92), pick([p.a, p.b], i * 0.5), 0, i * 4, 0);
+        k.add(K.post(r + 0.05, 0.2, 12, r + 0.05), p.c, 0, i * 4 + 3.8, 0, { glow: true });
+        for (let j = 0; j < 8; j++)
+          if ((i + j) % 2) {
+            const a = (j / 8) * Math.PI * 2;
+            k.add(Bc(1.4, 1.2, 0.04, 0.01), p.w, Math.sin(a) * r * 0.96, i * 4 + 2, Math.cos(a) * r * 0.96, { rot: [0, a, 0], lit: true });
+          }
+      }
+      k.add(K.ball(1.4, 1), p.g, 0, 25, 0, { glow: true });
+      return { pulse: true };
+    },
+    orb(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        k.add(B(1.2, 12, 1.2, 0.2), p.a, Math.cos(a) * 3.4, 0, Math.sin(a) * 3.4, { rot: [Math.sin(a) * 0.15, 0, -Math.cos(a) * 0.15] });
+      }
+      k.add(K.ball(4.2, 2), p.b, 0, 14, 0);
+      k.add(K.post(4.25, 0.5, 18), p.c, 0, 13.8, 0, { glow: true });
+      const r = k.sub('ring', [0, 14, 0]);
+      r.add(torus(5.6, 0.2), p.g, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+      return { spin: [['ring', 'y', 0.4]], pulse: true };
+    },
+    spireHall(k, o) {
+      const p = pal(o);
+      k.add(K.post(7, 1.2, 14), p.b, 0, 0, 0);
+      k.add(oct(2.6, 16, 2.6), p.a, 0, 1.2, 0);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        k.add(oct(1, 5 + (i % 2) * 2, 1), p.c, Math.cos(a) * 4.2, 1.2, Math.sin(a) * 4.2);
+      }
+      k.add(oct(0.8, 12, 0.8), p.g, 0, 2, 0, { glow: true });
+      return { pulse: true };
+    },
     // kim tự tháp kính: khung kim loại, mặt kính, sáng về đêm từ bên trong
-    glassPyramid(k, o) { const p = pal(o); k.add(B(13, 0.8, 13, 0.1), p.b, 0, 0, 0); k.add(K.cone(8.4, 12, 4), p.c, 0, 0.8, 0, { rot: [0, Math.PI / 4, 0] }); k.add(K.cone(7.6, 10.8, 4), p.w, 0, 0.9, 0, { rot: [0, Math.PI / 4, 0], lit: true }); for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2; k.add(Bc(0.2, 14.4, 0.2, 0.04), p.d, Math.sin(a) * 2.9, 6.6, Math.cos(a) * 2.9, { rot: [Math.cos(a) * 0.6, 0, -Math.sin(a) * 0.6] }); } },
+    glassPyramid(k, o) {
+      const p = pal(o);
+      k.add(B(13, 0.8, 13, 0.1), p.b, 0, 0, 0);
+      k.add(K.cone(8.4, 12, 4), p.c, 0, 0.8, 0, { rot: [0, Math.PI / 4, 0] });
+      k.add(K.cone(7.6, 10.8, 4), p.w, 0, 0.9, 0, { rot: [0, Math.PI / 4, 0], lit: true });
+      for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI) / 2;
+        k.add(Bc(0.2, 14.4, 0.2, 0.04), p.d, Math.sin(a) * 2.9, 6.6, Math.cos(a) * 2.9, {
+          rot: [Math.cos(a) * 0.6, 0, -Math.sin(a) * 0.6],
+        });
+      }
+    },
     // nhà vòng nổi: một vòng nhà lớn nổi trên chân sáng, giữa vòng là quả cầu
-    ringHall(k, o) { const p = pal(o); k.add(K.post(5, 1, 16), p.b, 0, 0, 0); for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; k.add(K.post(0.3, 9, 6), p.g, Math.cos(a) * 3.6, 1, Math.sin(a) * 3.6, { glow: true }); } const r = k.sub('ring', [0, 11, 0]); r.add(torus(6, 1.6), p.a, 0, 0, 0, { rot: [Math.PI / 2, 0, 0] }); for (let j = 0; j < 12; j++) { const a = (j / 12) * Math.PI * 2; r.add(Bc(1.4, 0.9, 0.05, 0.02), p.w, Math.sin(a) * 7.6, 0, Math.cos(a) * 7.6, { rot: [0, a, 0], lit: true }); } k.add(K.ball(2.2, 1), p.c, 0, 11, 0, { glow: true }); return { spin: [['ring', 'y', 0.15]], pulse: true }; },
+    ringHall(k, o) {
+      const p = pal(o);
+      k.add(K.post(5, 1, 16), p.b, 0, 0, 0);
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        k.add(K.post(0.3, 9, 6), p.g, Math.cos(a) * 3.6, 1, Math.sin(a) * 3.6, { glow: true });
+      }
+      const r = k.sub('ring', [0, 11, 0]);
+      r.add(torus(6, 1.6), p.a, 0, 0, 0, { rot: [Math.PI / 2, 0, 0] });
+      for (let j = 0; j < 12; j++) {
+        const a = (j / 12) * Math.PI * 2;
+        r.add(Bc(1.4, 0.9, 0.05, 0.02), p.w, Math.sin(a) * 7.6, 0, Math.cos(a) * 7.6, { rot: [0, a, 0], lit: true });
+      }
+      k.add(K.ball(2.2, 1), p.c, 0, 11, 0, { glow: true });
+      return { spin: [['ring', 'y', 0.15]], pulse: true };
+    },
     // nhà cây sống: thân cây lớn rỗng làm sảnh, các nhánh đỡ khoang, tán phát sáng
-    bioHall(k, o) { const p = pal(o); k.add(K.lathe([[7, 0], [5, 1.5], [3.6, 6], [4.4, 12]], 12), p.b, 0, 0, 0); k.add(B(2.6, 3.4, 0.4, 0.4), p.d, 0, 0, 6.2); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(K.ball(2, 1), p.a, Math.cos(a) * 5, 9 + (i % 2) * 2, Math.sin(a) * 5, { sc: [1, 0.75, 1] }); k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.cos(a) * 6.8, 9 + (i % 2) * 2, Math.sin(a) * 6.8, { rot: [0, -a + Math.PI / 2, 0], lit: true }); } k.add(K.ball(5, 1), p.c, 0, 15, 0, { sc: [1, 0.6, 1] }); for (let i = 0; i < 8; i++) k.add(K.ball(0.4), p.g, Math.cos(i * 0.8) * 4, 13, Math.sin(i * 0.8) * 4, { glow: true }); return { pulse: true }; },
+    bioHall(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [7, 0],
+            [5, 1.5],
+            [3.6, 6],
+            [4.4, 12],
+          ],
+          12,
+        ),
+        p.b,
+        0,
+        0,
+        0,
+      );
+      k.add(B(2.6, 3.4, 0.4, 0.4), p.d, 0, 0, 6.2);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        k.add(K.ball(2, 1), p.a, Math.cos(a) * 5, 9 + (i % 2) * 2, Math.sin(a) * 5, { sc: [1, 0.75, 1] });
+        k.add(Bc(0.8, 0.5, 0.04, 0.01), p.w, Math.cos(a) * 6.8, 9 + (i % 2) * 2, Math.sin(a) * 6.8, {
+          rot: [0, -a + Math.PI / 2, 0],
+          lit: true,
+        });
+      }
+      k.add(K.ball(5, 1), p.c, 0, 15, 0, { sc: [1, 0.6, 1] });
+      for (let i = 0; i < 8; i++) k.add(K.ball(0.4), p.g, Math.cos(i * 0.8) * 4, 13, Math.sin(i * 0.8) * 4, { glow: true });
+      return { pulse: true };
+    },
   };
 
   /* ---------- Công trình nhỏ trong làng ---------- */
   const EXTRA = {
-    fire: COMMON.fire, well: COMMON.well, field: COMMON.field, hay: COMMON.hay, stones: COMMON.stones,
-    totem(k, o) { const p = pal(o); k.add(K.post(0.35, 5, 6), p.d, 0, 0, 0); for (let i = 0; i < 4; i++) k.add(B(0.9, 0.9, 0.9, 0.1), [p.c, p.b, p.a, p.g][i % 4], 0, 1 + i * 1.05, 0); for (const sx of [-1, 1]) k.add(Bc(1.2, 0.2, 0.3, 0.05), p.c, sx * 0.9, 4.2, 0, { rot: [0, 0, sx * 0.3] }); },
-    stalls(k, o) { const p = pal(o); for (let i = 0; i < 3; i++) { const x = -3 + i * 3; k.add(B(2.2, 0.9, 1.2, 0.06), p.b, x, 0, 0); for (const sx of [-1, 1]) k.add(K.post(0.05, 2, 4), p.d, x + sx, 0, -0.5); k.add(Bc(2.6, 0.06, 1.6, 0.02), [p.c, p.a, p.g][i], x, 2.1, 0.1, { rot: [0.2, 0, 0] }); for (let j = 0; j < 3; j++) k.add(K.ball(0.16), ['#e05a3a', '#e8c24a', '#7fbf5a'][(i + j) % 3], x - 0.5 + j * 0.5, 1.05, 0.2); } },
-    windmill(k, o) { const p = pal(o); k.add(K.post(1.2, 6, 8, 0.8), p.a, 0, 0, 0); k.add(K.cone(1.2, 1.6, 8), p.b, 0, 6, 0); const r = k.sub('blades', [0, 5.6, 1.1]); for (let i = 0; i < 4; i++) r.add(Bc(0.5, 4.2, 0.06, 0.02), p.c, 0, 0, 0, { rot: [0, 0, (i * Math.PI) / 2] }); return { spin: [['blades', 'z', 0.8]] }; },
-    works(k, o) { const p = pal(o); k.add(B(6, 3.4, 4, 0.08), p.a, 0, 0, 0); k.add(K.roof(6.4, 1.2, 4.4, 0.08, 6.2, 0.3), p.b, 0, 3.4, 0); k.add(K.post(0.5, 9, 8, 0.4), p.c, 2, 0, -1.2); winsBox(k, p, 5, 4, 1.7, 4, o); return { smoke: [[2, 9.2, -1.2, 1.2]] }; },
-    antenna(k, o) { const p = pal(o); k.add(B(2, 0.6, 2, 0.06), p.b, 0, 0, 0); for (const [x, z] of [[-0.8, -0.8], [0.8, -0.8], [-0.8, 0.8], [0.8, 0.8]]) k.add(K.post(0.06, 9, 4, 0.02), p.d, x * (1 - 0.4), 0.6, z * (1 - 0.4), { rot: [z * -0.05, 0, x * 0.05] }); k.add(K.ball(0.25), '#ff4a3a', 0, 9.8, 0, { glow: true }); const d = k.sub('dish', [0, 6, 0.6]); d.add(K.lathe([[0.001, 0], [1.1, 0.25], [1.2, 0.5]], 10), '#f2f2ee', 0, 0, 0, { rot: [1.3, 0, 0] }); return { spin: [['dish', 'y', 0.3]] }; },
-    solar(k, o) { const p = pal(o); for (let i = 0; i < 6; i++) { const x = (i % 3) * 2.2 - 2.2, z = Math.floor(i / 3) * 2.4 - 1.2; k.add(K.post(0.06, 1, 4), p.d, x, 0, z); k.add(Bc(2, 0.06, 1.4, 0.02), '#2f4a8b', x, 1.1, z, { rot: [0.5, 0, 0] }); } },
-    dronePad(k, o) { const p = pal(o); k.add(K.post(2.4, 0.3, 12), p.b, 0, 0, 0); k.add(torus(2.1, 0.08), p.g, 0, 0.34, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); const d = k.sub('drone', [0, 2.6, 0]); d.add(B(1, 0.25, 1, 0.08), p.a, 0, 0, 0); for (const [x, z] of [[-0.7, -0.7], [0.7, -0.7], [-0.7, 0.7], [0.7, 0.7]]) d.add(K.disc(0.35, 8), p.c, x, 0.15, z); return { bob: [['drone', 0.6, 0.6]] }; },
-    pod(k, o) { const p = pal(o); k.add(K.ball(2, 1), p.a, 0, 1.4, 0, { sc: [1, 0.75, 1] }); k.add(K.post(2.05, 0.1, 12), p.g, 0, 1.4, 0, { glow: true }); for (let i = 0; i < 5; i++) k.add(K.ball(0.5, 0), '#6aa850', Math.cos(i * 1.3) * 2.3, 0.4, Math.sin(i * 1.3) * 2.3); },
-    beacon(k, o) { const p = pal(o); k.add(K.post(0.3, 6, 6, 0.15), p.a, 0, 0, 0); k.add(K.ball(0.6, 1), p.g, 0, 6.3, 0, { glow: true }); const s = k.sub('ring', [0, 4, 0]); s.add(torus(1.3, 0.08), p.c, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] }); return { bob: [['ring', 0.6, 0.5]], pulse: true }; },
-    shard(k, o) { const p = pal(o); const s = k.sub('s', [0, 3 + (o.v % 3), 0]); s.add(new (THREE().OctahedronGeometry)(0.9, 0), p.g, 0, 0, 0, { glow: true, sc: [0.6, 1.5, 0.6] }); k.add(K.disc(1.4, 10), p.b, 0, 0.03, 0); return { spin: [['s', 'y', 0.9]], bob: [['s', 0.4, 0.4]] }; },
-    fountain(k, o) { const p = pal(o); k.add(K.lathe([[1.8, 0], [2, 0], [2, 0.6], [1.8, 0.6]], 14), p.a, 0, 0, 0); k.add(K.disc(1.8, 14), '#4aa3c7', 0, 0.5, 0, { ao: false }); k.add(K.post(0.25, 1.8, 8), p.a, 0, 0, 0); k.add(K.cone(0.5, 0.9, 8), '#bfe3f2', 0, 1.8, 0, { glow: true }); },
-    lamp(k, o) { const p = pal(o); k.add(K.post(0.07, 2.8, 5), p.d, 0, 0, 0); k.add(B(0.4, 0.45, 0.4, 0.04), p.d, 0, 2.8, 0); k.add(B(0.28, 0.3, 0.28, 0.02), '#e8e2c8', 0, 2.86, 0); k.add(B(0.3, 0.32, 0.3, 0.02), p.g, 0, 2.85, 0, { lit: true }); },
+    fire: COMMON.fire,
+    well: COMMON.well,
+    field: COMMON.field,
+    hay: COMMON.hay,
+    stones: COMMON.stones,
+    totem(k, o) {
+      const p = pal(o);
+      k.add(K.post(0.35, 5, 6), p.d, 0, 0, 0);
+      for (let i = 0; i < 4; i++) k.add(B(0.9, 0.9, 0.9, 0.1), [p.c, p.b, p.a, p.g][i % 4], 0, 1 + i * 1.05, 0);
+      for (const sx of [-1, 1]) k.add(Bc(1.2, 0.2, 0.3, 0.05), p.c, sx * 0.9, 4.2, 0, { rot: [0, 0, sx * 0.3] });
+    },
+    stalls(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 3; i++) {
+        const x = -3 + i * 3;
+        k.add(B(2.2, 0.9, 1.2, 0.06), p.b, x, 0, 0);
+        for (const sx of [-1, 1]) k.add(K.post(0.05, 2, 4), p.d, x + sx, 0, -0.5);
+        k.add(Bc(2.6, 0.06, 1.6, 0.02), [p.c, p.a, p.g][i], x, 2.1, 0.1, { rot: [0.2, 0, 0] });
+        for (let j = 0; j < 3; j++) k.add(K.ball(0.16), ['#e05a3a', '#e8c24a', '#7fbf5a'][(i + j) % 3], x - 0.5 + j * 0.5, 1.05, 0.2);
+      }
+    },
+    windmill(k, o) {
+      const p = pal(o);
+      k.add(K.post(1.2, 6, 8, 0.8), p.a, 0, 0, 0);
+      k.add(K.cone(1.2, 1.6, 8), p.b, 0, 6, 0);
+      const r = k.sub('blades', [0, 5.6, 1.1]);
+      for (let i = 0; i < 4; i++) r.add(Bc(0.5, 4.2, 0.06, 0.02), p.c, 0, 0, 0, { rot: [0, 0, (i * Math.PI) / 2] });
+      return { spin: [['blades', 'z', 0.8]] };
+    },
+    works(k, o) {
+      const p = pal(o);
+      k.add(B(6, 3.4, 4, 0.08), p.a, 0, 0, 0);
+      k.add(K.roof(6.4, 1.2, 4.4, 0.08, 6.2, 0.3), p.b, 0, 3.4, 0);
+      k.add(K.post(0.5, 9, 8, 0.4), p.c, 2, 0, -1.2);
+      winsBox(k, p, 5, 4, 1.7, 4, o);
+      return { smoke: [[2, 9.2, -1.2, 1.2]] };
+    },
+    antenna(k, o) {
+      const p = pal(o);
+      k.add(B(2, 0.6, 2, 0.06), p.b, 0, 0, 0);
+      for (const [x, z] of [
+        [-0.8, -0.8],
+        [0.8, -0.8],
+        [-0.8, 0.8],
+        [0.8, 0.8],
+      ])
+        k.add(K.post(0.06, 9, 4, 0.02), p.d, x * (1 - 0.4), 0.6, z * (1 - 0.4), { rot: [z * -0.05, 0, x * 0.05] });
+      k.add(K.ball(0.25), '#ff4a3a', 0, 9.8, 0, { glow: true });
+      const d = k.sub('dish', [0, 6, 0.6]);
+      d.add(
+        K.lathe(
+          [
+            [0.001, 0],
+            [1.1, 0.25],
+            [1.2, 0.5],
+          ],
+          10,
+        ),
+        '#f2f2ee',
+        0,
+        0,
+        0,
+        { rot: [1.3, 0, 0] },
+      );
+      return { spin: [['dish', 'y', 0.3]] };
+    },
+    solar(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 6; i++) {
+        const x = (i % 3) * 2.2 - 2.2,
+          z = Math.floor(i / 3) * 2.4 - 1.2;
+        k.add(K.post(0.06, 1, 4), p.d, x, 0, z);
+        k.add(Bc(2, 0.06, 1.4, 0.02), '#2f4a8b', x, 1.1, z, { rot: [0.5, 0, 0] });
+      }
+    },
+    dronePad(k, o) {
+      const p = pal(o);
+      k.add(K.post(2.4, 0.3, 12), p.b, 0, 0, 0);
+      k.add(torus(2.1, 0.08), p.g, 0, 0.34, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+      const d = k.sub('drone', [0, 2.6, 0]);
+      d.add(B(1, 0.25, 1, 0.08), p.a, 0, 0, 0);
+      for (const [x, z] of [
+        [-0.7, -0.7],
+        [0.7, -0.7],
+        [-0.7, 0.7],
+        [0.7, 0.7],
+      ])
+        d.add(K.disc(0.35, 8), p.c, x, 0.15, z);
+      return { bob: [['drone', 0.6, 0.6]] };
+    },
+    pod(k, o) {
+      const p = pal(o);
+      k.add(K.ball(2, 1), p.a, 0, 1.4, 0, { sc: [1, 0.75, 1] });
+      k.add(K.post(2.05, 0.1, 12), p.g, 0, 1.4, 0, { glow: true });
+      for (let i = 0; i < 5; i++) k.add(K.ball(0.5, 0), '#6aa850', Math.cos(i * 1.3) * 2.3, 0.4, Math.sin(i * 1.3) * 2.3);
+    },
+    beacon(k, o) {
+      const p = pal(o);
+      k.add(K.post(0.3, 6, 6, 0.15), p.a, 0, 0, 0);
+      k.add(K.ball(0.6, 1), p.g, 0, 6.3, 0, { glow: true });
+      const s = k.sub('ring', [0, 4, 0]);
+      s.add(torus(1.3, 0.08), p.c, 0, 0, 0, { glow: true, rot: [Math.PI / 2, 0, 0] });
+      return { bob: [['ring', 0.6, 0.5]], pulse: true };
+    },
+    shard(k, o) {
+      const p = pal(o);
+      const s = k.sub('s', [0, 3 + (o.v % 3), 0]);
+      s.add(new (THREE().OctahedronGeometry)(0.9, 0), p.g, 0, 0, 0, { glow: true, sc: [0.6, 1.5, 0.6] });
+      k.add(K.disc(1.4, 10), p.b, 0, 0.03, 0);
+      return { spin: [['s', 'y', 0.9]], bob: [['s', 0.4, 0.4]] };
+    },
+    fountain(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [1.8, 0],
+            [2, 0],
+            [2, 0.6],
+            [1.8, 0.6],
+          ],
+          14,
+        ),
+        p.a,
+        0,
+        0,
+        0,
+      );
+      k.add(K.disc(1.8, 14), '#4aa3c7', 0, 0.5, 0, { ao: false });
+      k.add(K.post(0.25, 1.8, 8), p.a, 0, 0, 0);
+      k.add(K.cone(0.5, 0.9, 8), '#bfe3f2', 0, 1.8, 0, { glow: true });
+    },
+    lamp(k, o) {
+      const p = pal(o);
+      k.add(K.post(0.07, 2.8, 5), p.d, 0, 0, 0);
+      k.add(B(0.4, 0.45, 0.4, 0.04), p.d, 0, 2.8, 0);
+      k.add(B(0.28, 0.3, 0.28, 0.02), '#e8e2c8', 0, 2.86, 0);
+      k.add(B(0.3, 0.32, 0.3, 0.02), p.g, 0, 2.85, 0, { lit: true });
+    },
   };
 
   /* ---------- Kỳ quan thêm ---------- */
   const WONDER = {
     // cây thiêng: cây cổ thụ khổng lồ, rễ ôm đá, đèn treo
-    sacredTree(k, o) { const p = pal(o); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(K.post(0.8, 5, 6, 0.3), p.d, Math.cos(a) * 3, 0, Math.sin(a) * 3, { rot: [Math.sin(a) * 0.8, 0, -Math.cos(a) * 0.8] }); } k.add(K.lathe([[3, 0], [2, 2], [1.8, 10], [2.4, 14]], 10), p.d, 0, 0, 0); for (const [x, y, z, r] of [[0, 18, 0, 6], [5, 15, 1, 4], [-5, 15.5, -1, 4.2], [1, 15, -5, 3.8], [-1, 15, 5, 3.6]]) k.add(K.ball(r, 1), pick([p.a, p.b], (x + z) * 0.1), x, y, z, { sc: [1, 0.75, 1] }); for (let i = 0; i < 10; i++) { const a = i * 1.7, r = 4 + (i % 3); k.add(K.ball(0.35), p.g, Math.cos(a) * r, 12 + (i % 4), Math.sin(a) * r, { glow: true }); } return { pulse: true }; },
+    sacredTree(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        k.add(K.post(0.8, 5, 6, 0.3), p.d, Math.cos(a) * 3, 0, Math.sin(a) * 3, { rot: [Math.sin(a) * 0.8, 0, -Math.cos(a) * 0.8] });
+      }
+      k.add(
+        K.lathe(
+          [
+            [3, 0],
+            [2, 2],
+            [1.8, 10],
+            [2.4, 14],
+          ],
+          10,
+        ),
+        p.d,
+        0,
+        0,
+        0,
+      );
+      for (const [x, y, z, r] of [
+        [0, 18, 0, 6],
+        [5, 15, 1, 4],
+        [-5, 15.5, -1, 4.2],
+        [1, 15, -5, 3.8],
+        [-1, 15, 5, 3.6],
+      ])
+        k.add(K.ball(r, 1), pick([p.a, p.b], (x + z) * 0.1), x, y, z, { sc: [1, 0.75, 1] });
+      for (let i = 0; i < 10; i++) {
+        const a = i * 1.7,
+          r = 4 + (i % 3);
+        k.add(K.ball(0.35), p.g, Math.cos(a) * r, 12 + (i % 4), Math.sin(a) * r, { glow: true });
+      }
+      return { pulse: true };
+    },
     // tượng người khổng lồ đứng khoanh tay (khối vát)
-    colossus(k, o) { const p = pal(o); k.add(B(7, 2, 5, 0.15), p.b, 0, 0, 0); for (const sx of [-1, 1]) k.add(B(1.6, 6, 1.8, 0.3), p.a, sx * 1.2, 2, 0); k.add(B(4.6, 6, 2.6, 0.4), p.a, 0, 8, 0); k.add(B(5.4, 1.4, 1.8, 0.3), p.a, 0, 11, 1); k.add(B(2.2, 2.6, 2.2, 0.5), p.a, 0, 14, 0); k.add(B(2.6, 0.8, 2.6, 0.2), p.c, 0, 16.4, 0); for (const sx of [-1, 1]) k.add(Bc(0.4, 0.3, 0.1, 0.05), p.g, sx * 0.5, 15.2, 1.12, { glow: true }); },
+    colossus(k, o) {
+      const p = pal(o);
+      k.add(B(7, 2, 5, 0.15), p.b, 0, 0, 0);
+      for (const sx of [-1, 1]) k.add(B(1.6, 6, 1.8, 0.3), p.a, sx * 1.2, 2, 0);
+      k.add(B(4.6, 6, 2.6, 0.4), p.a, 0, 8, 0);
+      k.add(B(5.4, 1.4, 1.8, 0.3), p.a, 0, 11, 1);
+      k.add(B(2.2, 2.6, 2.2, 0.5), p.a, 0, 14, 0);
+      k.add(B(2.6, 0.8, 2.6, 0.2), p.c, 0, 16.4, 0);
+      for (const sx of [-1, 1]) k.add(Bc(0.4, 0.3, 0.1, 0.05), p.g, sx * 0.5, 15.2, 1.12, { glow: true });
+    },
     // kim tự tháp bậc có lối lên giữa
-    pyramid(k, o) { const p = pal(o); for (let i = 0; i < 8; i++) { const w = 16 - i * 2; k.add(B(w, 1.6, w, 0.1), p.a, 0, i * 1.6, 0); } k.add(Bc(2.4, 13, 0.3, 0.05), p.b, 0, 6.4, 8.2, { rot: [0.78, 0, 0] }); k.add(B(2.4, 2.4, 2.4, 0.1), p.c, 0, 12.8, 0); k.add(K.cone(0.7, 1.4, 4), p.g, 0, 15.2, 0, { glow: true }); },
+    pyramid(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 8; i++) {
+        const w = 16 - i * 2;
+        k.add(B(w, 1.6, w, 0.1), p.a, 0, i * 1.6, 0);
+      }
+      k.add(Bc(2.4, 13, 0.3, 0.05), p.b, 0, 6.4, 8.2, { rot: [0.78, 0, 0] });
+      k.add(B(2.4, 2.4, 2.4, 0.1), p.c, 0, 12.8, 0);
+      k.add(K.cone(0.7, 1.4, 4), p.g, 0, 15.2, 0, { glow: true });
+    },
     // cột tháp đá khắc nhọn đầu
-    obelisk(k, o) { const p = pal(o); k.add(B(6, 1.2, 6, 0.15), p.b, 0, 0, 0); k.add(K.post(1.6, 20, 4, 0.9), p.a, 0, 1.2, 0, { rot: [0, Math.PI / 4, 0] }); k.add(K.cone(1.3, 3, 4), p.c, 0, 21.2, 0, { rot: [0, Math.PI / 4, 0] }); for (let i = 0; i < 6; i++) k.add(Bc(0.8, 0.2, 0.05, 0.02), p.d, 0, 4 + i * 2.6, 1.16); },
+    obelisk(k, o) {
+      const p = pal(o);
+      k.add(B(6, 1.2, 6, 0.15), p.b, 0, 0, 0);
+      k.add(K.post(1.6, 20, 4, 0.9), p.a, 0, 1.2, 0, { rot: [0, Math.PI / 4, 0] });
+      k.add(K.cone(1.3, 3, 4), p.c, 0, 21.2, 0, { rot: [0, Math.PI / 4, 0] });
+      for (let i = 0; i < 6; i++) k.add(Bc(0.8, 0.2, 0.05, 0.02), p.d, 0, 4 + i * 2.6, 1.16);
+    },
     // cổng vòm khổng lồ
-    arch(k, o) { const p = pal(o); for (const sx of [-1, 1]) k.add(B(2.4, 14, 3, 0.2), p.a, sx * 6, 0, 0); k.add(torus(6, 1.2), p.a, 0, 14, 0); k.add(B(15, 1.6, 3.2, 0.2), p.b, 0, 19.5, 0); k.add(torus(6, 0.25), p.g, 0, 14, 1.4, { glow: true }); },
+    arch(k, o) {
+      const p = pal(o);
+      for (const sx of [-1, 1]) k.add(B(2.4, 14, 3, 0.2), p.a, sx * 6, 0, 0);
+      k.add(torus(6, 1.2), p.a, 0, 14, 0);
+      k.add(B(15, 1.6, 3.2, 0.2), p.b, 0, 19.5, 0);
+      k.add(torus(6, 0.25), p.g, 0, 14, 1.4, { glow: true });
+    },
     // mũi băng khổng lồ có lõi sáng
-    iceSpire(k, o) { const p = pal(o); k.add(oct(3, 12, 3), p.a, 0, 0, 0); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; k.add(oct(1.4, 5 + (i % 3) * 2, 1.4), p.c, Math.cos(a) * 3.2, 0, Math.sin(a) * 3.2, { rot: [Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3] }); } k.add(oct(1, 9, 1), p.g, 0, 2, 0, { glow: true }); return { pulse: true }; },
+    iceSpire(k, o) {
+      const p = pal(o);
+      k.add(oct(3, 12, 3), p.a, 0, 0, 0);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        k.add(oct(1.4, 5 + (i % 3) * 2, 1.4), p.c, Math.cos(a) * 3.2, 0, Math.sin(a) * 3.2, {
+          rot: [Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3],
+        });
+      }
+      k.add(oct(1, 9, 1), p.g, 0, 2, 0, { glow: true });
+      return { pulse: true };
+    },
     // hải đăng khổng lồ sọc, đèn quay
-    giantLight(k, o) { const p = pal(o); k.add(B(8, 1.2, 8, 0.2), p.b, 0, 0, 0); for (let i = 0; i < 6; i++) k.add(K.post(2.6 - i * 0.2, 3.4, 12, 2.4 - i * 0.2), i % 2 ? p.c : p.a, 0, 1.2 + i * 3.4, 0); k.add(B(3.4, 0.4, 3.4, 0.06), p.d, 0, 21.6, 0); k.add(K.post(1.2, 2, 10), p.g, 0, 22, 0, { glow: true }); k.add(K.cone(1.6, 1.8, 10), p.c, 0, 24, 0); const L = k.sub('beam', [0, 23, 0]); L.add(Bc(0.3, 0.3, 9, 0.02), '#fff6c0', 0, 0, 4.6, { glow: true }); return { spin: [['beam', 'y', 0.8]] }; },
+    giantLight(k, o) {
+      const p = pal(o);
+      k.add(B(8, 1.2, 8, 0.2), p.b, 0, 0, 0);
+      for (let i = 0; i < 6; i++) k.add(K.post(2.6 - i * 0.2, 3.4, 12, 2.4 - i * 0.2), i % 2 ? p.c : p.a, 0, 1.2 + i * 3.4, 0);
+      k.add(B(3.4, 0.4, 3.4, 0.06), p.d, 0, 21.6, 0);
+      k.add(K.post(1.2, 2, 10), p.g, 0, 22, 0, { glow: true });
+      k.add(K.cone(1.6, 1.8, 10), p.c, 0, 24, 0);
+      const L = k.sub('beam', [0, 23, 0]);
+      L.add(Bc(0.3, 0.3, 9, 0.02), '#fff6c0', 0, 0, 4.6, { glow: true });
+      return { spin: [['beam', 'y', 0.8]] };
+    },
     // tu viện trên vách: các khối nhà bám vào khối đá cao
-    monastery(k, o) { const p = pal(o); k.add(K.lathe([[6, 0], [5, 6], [3.6, 12], [2.6, 14]], 7), p.b, 0, 0, 0); for (let i = 0; i < 5; i++) { const a = i * 1.3, y = 2 + i * 2.6, r = 5.2 - i * 0.5; k.add(B(3, 2, 2.4, 0.08), p.a, Math.cos(a) * r, y, Math.sin(a) * r, { rot: [0, -a + Math.PI / 2, 0] }); k.add(K.roof(3.4, 1, 2.8, 0.1, 0.3, 2.6), p.c, Math.cos(a) * r, y + 2, Math.sin(a) * r, { rot: [0, -a + Math.PI / 2, 0] }); } k.add(B(2.4, 2.4, 2.4, 0.08), p.a, 0, 14, 0); k.add(K.cone(1.8, 2.6, 4), p.c, 0, 16.4, 0); },
+    monastery(k, o) {
+      const p = pal(o);
+      k.add(
+        K.lathe(
+          [
+            [6, 0],
+            [5, 6],
+            [3.6, 12],
+            [2.6, 14],
+          ],
+          7,
+        ),
+        p.b,
+        0,
+        0,
+        0,
+      );
+      for (let i = 0; i < 5; i++) {
+        const a = i * 1.3,
+          y = 2 + i * 2.6,
+          r = 5.2 - i * 0.5;
+        k.add(B(3, 2, 2.4, 0.08), p.a, Math.cos(a) * r, y, Math.sin(a) * r, { rot: [0, -a + Math.PI / 2, 0] });
+        k.add(K.roof(3.4, 1, 2.8, 0.1, 0.3, 2.6), p.c, Math.cos(a) * r, y + 2, Math.sin(a) * r, { rot: [0, -a + Math.PI / 2, 0] });
+      }
+      k.add(B(2.4, 2.4, 2.4, 0.08), p.a, 0, 14, 0);
+      k.add(K.cone(1.8, 2.6, 4), p.c, 0, 16.4, 0);
+    },
     // mái vòm kính khổng lồ có vườn bên trong
-    megaDome(k, o) { const p = pal(o); k.add(K.post(8, 1, 18), p.b, 0, 0, 0); for (let i = 0; i < 6; i++) k.add(K.ball(1.4, 1), '#5a9646', Math.cos(i) * 4, 1.6, Math.sin(i) * 4); k.add(K.lathe([[8, 0], [7.6, 3], [6, 6], [3.4, 8], [0.001, 8.6]], 18), p.a, 0, 1, 0); for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; k.add(Bc(0.12, 8, 0.12, 0.02), p.c, Math.sin(a) * 7, 4, Math.cos(a) * 7, { rot: [Math.cos(a) * -0.6, a, 0] }); } k.add(K.ball(0.8), p.g, 0, 9.4, 0, { glow: true }); },
+    megaDome(k, o) {
+      const p = pal(o);
+      k.add(K.post(8, 1, 18), p.b, 0, 0, 0);
+      for (let i = 0; i < 6; i++) k.add(K.ball(1.4, 1), '#5a9646', Math.cos(i) * 4, 1.6, Math.sin(i) * 4);
+      k.add(
+        K.lathe(
+          [
+            [8, 0],
+            [7.6, 3],
+            [6, 6],
+            [3.4, 8],
+            [0.001, 8.6],
+          ],
+          18,
+        ),
+        p.a,
+        0,
+        1,
+        0,
+      );
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * Math.PI * 2;
+        k.add(Bc(0.12, 8, 0.12, 0.02), p.c, Math.sin(a) * 7, 4, Math.cos(a) * 7, { rot: [Math.cos(a) * -0.6, a, 0] });
+      }
+      k.add(K.ball(0.8), p.g, 0, 9.4, 0, { glow: true });
+    },
     // thang máy vũ trụ: cột mảnh vút lên trời, khoang chạy lên xuống
-    elevator(k, o) { const p = pal(o); k.add(K.post(4, 2, 12), p.b, 0, 0, 0); k.add(K.post(0.35, 40, 6), p.a, 0, 2, 0); k.add(K.post(0.12, 40, 4), p.g, 0, 2, 0.4, { glow: true }); const c = k.sub('car', [0, 8, 0]); c.add(B(1.6, 1.4, 1.6, 0.2), p.c, 0, 0, 0.6); return { slide: [['car', 'y', 0.5, 6]], pulse: true }; },
+    elevator(k, o) {
+      const p = pal(o);
+      k.add(K.post(4, 2, 12), p.b, 0, 0, 0);
+      k.add(K.post(0.35, 40, 6), p.a, 0, 2, 0);
+      k.add(K.post(0.12, 40, 4), p.g, 0, 2, 0.4, { glow: true });
+      const c = k.sub('car', [0, 8, 0]);
+      c.add(B(1.6, 1.4, 1.6, 0.2), p.c, 0, 0, 0.6);
+      return { slide: [['car', 'y', 0.5, 6]], pulse: true };
+    },
     // vành quỹ đạo: vòng lớn lơ lửng trên bốn cột
-    orbitRing(k, o) { const p = pal(o); for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2; k.add(K.post(0.4, 14, 6, 0.2), p.a, Math.cos(a) * 6, 0, Math.sin(a) * 6); } const r = k.sub('ring', [0, 16, 0]); r.add(torus(7, 0.6), p.b, 0, 0, 0, { rot: [Math.PI / 2, 0, 0] }); r.add(torus(7, 0.2), p.g, 0, 0.3, 0, { rot: [Math.PI / 2, 0, 0], glow: true }); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; r.add(B(1.2, 0.8, 1.2, 0.2), p.c, Math.cos(a) * 7, 0.6, Math.sin(a) * 7); } return { spin: [['ring', 'y', 0.25]], pulse: true }; },
+    orbitRing(k, o) {
+      const p = pal(o);
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        k.add(K.post(0.4, 14, 6, 0.2), p.a, Math.cos(a) * 6, 0, Math.sin(a) * 6);
+      }
+      const r = k.sub('ring', [0, 16, 0]);
+      r.add(torus(7, 0.6), p.b, 0, 0, 0, { rot: [Math.PI / 2, 0, 0] });
+      r.add(torus(7, 0.2), p.g, 0, 0.3, 0, { rot: [Math.PI / 2, 0, 0], glow: true });
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        r.add(B(1.2, 0.8, 1.2, 0.2), p.c, Math.cos(a) * 7, 0.6, Math.sin(a) * 7);
+      }
+      return { spin: [['ring', 'y', 0.25]], pulse: true };
+    },
   };
 
   BK.IslesArch = { HOME, HALL, EXTRA, WONDER, pal };

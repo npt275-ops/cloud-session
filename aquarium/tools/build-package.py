@@ -148,7 +148,7 @@ LAUNCHERS = [('windows', LAUNCH_WIN, True), ('mac', LAUNCH_MAC, False), ('linux'
 LAUNCH_NAMES = [('windows', 'Choi Be Kinh (Windows).bat', 0o644), ('mac', 'Choi Be Kinh (Mac).command', 0o755), ('linux', 'choi-be-kinh-linux.sh', 0o755)]
 
 GUIDE = """BỂ KÍNH
-Chaos Sandbox: sáu đảo, mười hai thời đại, chín năm. Bản làm lại từ đầu: sáu đảo thô.
+Chaos Sandbox: sáu đảo, mười hai thời đại, chín năm.
 Phiên bản %(ver)s
 
 CÀI BẰNG MỘT LỆNH (tải toàn bộ mã nguồn, tạo phần mềm Bể Kính có biểu tượng, mở game)
@@ -180,11 +180,11 @@ CHƠI TRÊN ĐIỆN THOẠI
 ĐIỀU KHIỂN
  - Kéo chuột (hay một ngón tay) để xoay, cuộn (hay hai ngón) để phóng to, bấm tên đảo để bay tới.
  - Phím mũi tên hay W A S D: lướt tới, lùi, sang trái, sang phải. Page Up / Page Down (E / Q, Space / Shift): lên cao,
-   sà xuống. Trên điện thoại có sáu nút bay ở góc phải.
+   sà xuống.
  - Nút tốc độ: 1×, 2×, 4×. Một trận chín năm ở 1× hết khoảng 72 phút.
- - Làng Lúa Vàng: tám người lập làng và con cháu, cùng các công trình có sẵn. Bấm vào một người để xem thẻ (gen, cha mẹ, con cái).
- - Âm thanh, Bay (nút bay trên màn hình). Phím F: số khung hình.
- - Năm đảo còn lại là đảo thô: chỉ có thiên nhiên, mùa, mây và mưa. Logic mới (Chaos Sandbox) đang làm từ Lúa Vàng.
+ - Sáu đảo, mỗi đảo tám người lập làng và con cháu. Bấm vào một người để xem thẻ (gen, cha mẹ, con cái, việc đang làm).
+ - Nút "Đáy bể" trên thanh đảo: lặn xuống xem núi chìm, ba phế tích cổ và ba đường hầm xuyên núi.
+ - Nút Âm thanh. Phím F: số khung hình.
 
 GIẤY PHÉP
  - three.js r128: giấy phép MIT (vendor/LICENSE-three.txt).
