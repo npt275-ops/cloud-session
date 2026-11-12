@@ -3,7 +3,7 @@
  * riêng, và trạng thái chiến khi có kẻ địch.
  *   - Người Ốc (10, Thành Vỏ Ốc): ở trong nhà vỏ ốc; thỉnh thoảng ra đi vài vòng hay bơi một vòng trong phế tích rồi về.
  *   - Người Vây (10, Vườn Treo): ở trong vòm cuốn của các tầng vườn; thỉnh thoảng bơi ra một vòng rồi chui lại vào vòm.
- *   - Người Canh Hầm (mỗi hầm 1): đi qua lại trong lòng hầm, thỉnh thoảng ra sát cửa thò đầu nhìn ra. Không bơi.
+ *   - Người Canh Hầm (mỗi hầm 4, cao khoảng 2,7): đi hay bơi qua lại trong lòng hầm, thỉnh thoảng ra sát cửa thò đầu nhìn ra.
  *   - Người Rêu Đá (Đô Thị Đá 6, Thành Vỏ Ốc 2, Vườn Treo 1), Người San Hô (Đô Thị Đá 9): không bơi; phần lớn thời gian nằm co
  *     ngụy trang, thỉnh thoảng đứng dậy đi vài bước rồi co lại.
  *   - Quái vật: Rồng Lươn Đen theo bầy (Thành Vỏ Ốc 4, Vườn Treo 4), Cá Mập Xương theo đàn (Vườn Treo 3, Đô Thị Đá 3), Bạch
@@ -28,7 +28,7 @@
     //   roam: bán kính đi lại lúc bình thường;
     //   zone: bán kính cảnh báo: kẻ địch vào trong vòng này mới bị đuổi;
     //   đuổi không ra xa chỗ ở quá zone × leash; kẻ địch ra ngoài zone × leave quá calm giây thì thôi, về chỗ
-    zone: { snail: 14, fin: 16, keeper: 10, stone: 15, coral: 11, eel: 24, shark: 24, octo: 14 },
+    zone: { snail: 22, fin: 26, keeper: 20, stone: 24, coral: 18, eel: 36, shark: 36, octo: 22 },
     roam: { snail: 12, fin: 22, stone: 14, coral: 9, eel: 16, shark: 16, octo: 8 },
     leash: 1.6,
     leave: 1.4,
@@ -40,7 +40,7 @@
     speed: {
       snail: [0.9, 1.8, 5],
       fin: [0, 2.8, 7.5],
-      keeper: [1.4, 0, 5.5],
+      keeper: [1.4, 2.2, 6.5],
       stone: [1.1, 0, 7.5],
       coral: [0.9, 0, 6],
       eel: [0, 2.8, 9],
@@ -56,7 +56,7 @@
   }
 
   function build(D) {
-    const { THREE, SITES, TUNNELS, TUN_RC, TUN_FLOOR, hAt, deep } = D;
+    const { THREE, SITES, TUNNELS, TUN_RC, TUN_W, TUN_WALL, TUN_FLOOR, hAt, deep } = D;
     const T = THREE,
       V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
     const BE = BK.DeepBeings.create({ lights: false });
@@ -218,15 +218,37 @@
     camoAt('stone', RU[1], BE.mossGiant, 1);
     camoAt('stone', RU[2], BE.mossGiant, 6);
     camoAt('coral', RU[2], BE.coralman, 9);
-    /* ---------- Người Canh Hầm: mỗi hầm một người ---------- */
-    TUNNELS.forEach((TN, k) => {
-      const a = spawn('keeper', null, BE.keeper, 1, { tn: TN, s: 0.3 + rnd() * 0.4, sTarget: 0.5, state: 'patrol', timer: 2 });
-      a.pos.copy(tunnelPos(TN, a.s));
-      a.anchor = a.pos.clone();
+    /* ---------- Người Canh Hầm: mỗi hầm 4 người, to hơn người thường (cao khoảng 2,7), đi hay bơi trong lòng hầm ---------- */
+    TUNNELS.forEach((TN) => {
+      for (const s0 of [0.12, 0.38, 0.62, 0.88]) {
+        const a = spawn('keeper', null, BE.keeper, 1.6, {
+          tn: TN,
+          s: s0,
+          sTarget: s0,
+          lat: 0,
+          swimY: TUN_FLOOR,
+          state: 'patrol',
+          timer: 1 + rnd() * 6,
+        });
+        a.pos.copy(tunnelPos(TN, a.s));
+        a.anchor = a.pos.clone();
+      }
     });
-    function tunnelPos(TN, s) {
+    // điểm trong lòng hầm: s dọc hầm (0..1), lat lệch ngang theo bán kính, y cao độ
+    function tunnelPos(TN, s, lat = 0, y = TUN_FLOOR) {
       const th = TN.a + (TN.b - TN.a) * s;
-      return V(Math.cos(th) * TUN_RC, TUN_FLOOR, Math.sin(th) * TUN_RC);
+      return V(Math.cos(th) * (TUN_RC + lat), y, Math.sin(th) * (TUN_RC + lat));
+    }
+    // kéo một điểm vào trong lòng hầm (mặt cắt: sàn, hai vách, vòm tròn); trên sàn nếu không bơi
+    function intoTunnel(TN, p, swim) {
+      const s = Math.max(0.01, Math.min(0.99, angOff(Math.atan2(p.z, p.x), TN.a) / (TN.b - TN.a))),
+        W = TUN_W - 2,
+        lat = Math.max(-W, Math.min(W, Math.hypot(p.x, p.z) - TUN_RC)),
+        top = TUN_FLOOR + TUN_WALL + Math.sqrt(Math.max(0, W * W - lat * lat)) - 2.5;
+      return {
+        s,
+        q: tunnelPos(TN, s, swim ? lat : Math.max(-1, Math.min(1, lat)), swim ? Math.max(TUN_FLOOR + 0.8, Math.min(top, p.y)) : TUN_FLOOR),
+      };
     }
     /* ---------- Quái vật: bầy, đàn, đơn lẻ ---------- */
     // lãnh địa: mỗi bầy (hay con đơn lẻ) một vùng trong phế tích, xa lãnh địa của bầy khác nhất có thể
@@ -289,11 +311,9 @@
     }
     function confine(a) {
       if (a.kind === 'keeper') {
-        const th = Math.atan2(a.pos.z, a.pos.x),
-          s = Math.max(0.01, Math.min(0.99, angOff(th, a.tn.a) / (a.tn.b - a.tn.a))),
-          p = tunnelPos(a.tn, s);
+        const { s, q } = intoTunnel(a.tn, a.pos, a.swimming);
         a.s = s;
-        a.pos.copy(p);
+        a.pos.copy(q);
         return;
       }
       const L = a.R.loc(a.pos.x, a.pos.z),
@@ -372,14 +392,20 @@
           break;
         }
         case 'keeper': {
-          if (a.state === 'patrol' && rnd() < 0.35) {
-            // ra sát cửa gần hơn (đôi khi cửa xa), thò đầu nhìn ra
-            a.peekEnd = a.s > 0.5 !== rnd() < 0.2 ? 1 : 0;
+          if (a.state === 'patrol' && rnd() < 0.25 && (a.s < 0.25 || a.s > 0.75)) {
+            // ra sát cửa gần hơn (đi bộ trên sàn), thò đầu nhìn ra
+            a.peekEnd = a.s > 0.5 ? 1 : 0;
             a.sTarget = a.peekEnd ? 0.985 : 0.015;
+            a.swimming = false;
+            a.lat = 0;
+            a.swimY = TUN_FLOOR;
             a.state = 'toPeek';
           } else {
-            // đi qua lại một quãng (hầm dài: mỗi lần một phần năm lòng hầm)
+            // qua lại một quãng (tối đa một phần năm lòng hầm): 45% bơi lơ lửng ở giữa lòng hầm, còn lại đi bộ trên sàn
             a.sTarget = Math.max(0.05, Math.min(0.95, a.s + (rnd() - 0.5) * 0.4));
+            a.swimming = rnd() < 0.45;
+            a.lat = a.swimming ? (rnd() - 0.5) * 8 : 0;
+            a.swimY = a.swimming ? TUN_FLOOR + 3 + rnd() * 10 : TUN_FLOOR;
             a.state = 'patrol';
           }
           break;
@@ -470,7 +496,11 @@
             if (a.kind === 'snail' || a.kind === 'fin') a.route = [worldOf(a.R, a.door, a.kind === 'fin' ? a.homeY + 1 : null)];
             if (a.kind === 'stone' || a.kind === 'coral') a.route = [worldOf(a.R, a.home)];
             if (a.lead && isMonster(a)) a.route = [a.anchor.clone()];
-            if (a.kind === 'keeper') a.sTarget = a.s;
+            if (a.kind === 'keeper') {
+              a.sTarget = a.s;
+              a.lat = a.swimming ? Math.hypot(a.pos.x, a.pos.z) - TUN_RC : 0;
+              a.swimY = a.swimming ? a.pos.y : TUN_FLOOR;
+            }
           }
         } else a.calm = 0;
       }
@@ -484,8 +514,9 @@
         const lim = Z * RULES.leash;
         if (tmp.distanceTo(a.anchor) > lim) tmp.sub(a.anchor).setLength(lim).add(a.anchor);
         if (a.kind === 'keeper') {
-          const s = Math.max(0.01, Math.min(0.99, angOff(Math.atan2(tmp.z, tmp.x), a.tn.a) / (a.tn.b - a.tn.a)));
-          tmp.copy(tunnelPos(a.tn, s));
+          // bơi tới con mồi trong lòng hầm (con mồi sát sàn thì chạy)
+          a.swimming = tmp.y > TUN_FLOOR + 2;
+          tmp.copy(intoTunnel(a.tn, tmp, a.swimming).q);
         } else if (!isMonster(a) && a.kind !== 'fin') {
           a.swimming = a.kind === 'snail' && tmp.y > hAt(tmp.x, tmp.z) + 3;
         }
@@ -495,7 +526,7 @@
         else tmp.set(0, 0, 0);
         tmp.add(a.pos);
         steer(a, tmp, a.run || a.swimV * 3, dt, 3.2);
-        a.mode = grab ? 'grab' : 'chase';
+        a.mode = grab ? 'grab' : a.kind === 'keeper' && a.swimming ? 'swimchase' : 'chase';
         a.b.prey = grab ? seen.th.position : null;
         if (grab) info.held = true;
         if (d < reach * 1.6 || grab) info.attacks += dt;
@@ -553,8 +584,8 @@
           break;
         }
         case 'keeper': {
-          const goal = tunnelPos(a.tn, a.sTarget),
-            d = steer(a, goal, a.walk, dt, 4);
+          const goal = tunnelPos(a.tn, a.sTarget, a.lat, a.swimY),
+            d = steer(a, goal, a.swimming ? a.swimV : a.walk, dt, a.swimming ? 2 : 4);
           if (a.state === 'peek') {
             a.mode = 'idle';
             // nhìn ra cửa: quay mặt ra ngoài hầm
@@ -565,7 +596,7 @@
             confine(a);
             return;
           }
-          a.mode = d > 0.6 ? 'move' : 'idle';
+          a.mode = a.swimming ? 'swim' : d > 0.6 ? 'move' : 'idle';
           if (d <= 0.6) {
             if (a.state === 'toPeek') {
               a.state = 'peek';

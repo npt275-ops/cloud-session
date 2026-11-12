@@ -20,7 +20,7 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 | Thành Vỏ Ốc Xà Cừ | 10 Người Ốc, 2 Người Rêu Đá | bầy 4 Rồng Lươn Đen, 1 Bạch Tuộc Mắt Vực |
 | Vườn Treo Bậc Thang | 10 Người Vây, 1 Người Rêu Đá | bầy 4 Rồng Lươn Đen, đàn 3 Cá Mập Xương |
 | Đô Thị Đá Khổng Lồ | 6 Người Rêu Đá, 9 Người San Hô | đàn 3 Cá Mập Xương, 1 Bạch Tuộc Mắt Vực |
-| Ba đường hầm | mỗi hầm 1 Người Canh Hầm | không |
+| Ba đường hầm | mỗi hầm 4 Người Canh Hầm | không |
 
 - Người Ốc ở trong nhà vỏ ốc nhỏ của Thành Vỏ Ốc (citadel3d.js ghi chỗ các nhà vào `S.homes`). Thỉnh thoảng ra cửa nhà rồi:
   - đi bộ 2–4 chặng quanh nhà (6 trên 10 lần);
@@ -30,8 +30,13 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
   - bơi thẳng ra trước tầng vườn;
   - bơi 3–5 chặng trong phế tích (qua khối tầng vườn thì bơi cao trên 48);
   - quay về đúng vòm của mình.
-- Người Canh Hầm đi qua lại trong lòng hầm, mỗi lần một quãng (tối đa một phần năm lòng hầm). Thỉnh thoảng ra sát cửa gần
-  hơn, quay mặt ra ngoài, đứng nhìn 3–7 giây. Không bơi.
+- Người Canh Hầm (to gấp 1,6 người thường: cao khoảng 2,7):
+  - qua lại trong lòng hầm, mỗi lần một quãng (tối đa một phần năm lòng hầm);
+  - gần một nửa số lần thì bơi lơ lửng giữa lòng hầm (cao hơn sàn 3–13), còn lại đi bộ trên sàn;
+  - khi bơi: nằm ngang, đầu ngẩng nhìn tới, hai tay quạt rộng, chân đạp so le;
+  - người ở gần cửa thỉnh thoảng ra sát cửa, quay mặt ra ngoài, đứng nhìn 3–7 giây;
+  - khi chiến: con mồi lơ lửng thì bơi vọt tới (luôn ở trong mặt cắt lòng hầm: sàn, hai vách, vòm); con mồi sát sàn thì đổ
+    xuống bốn chân phi tới.
 - Người Rêu Đá, Người San Hô phần lớn thời gian nằm co (15–55 giây). Rồi đứng dậy (1,2 giây), đi 1–3 chặng, nằm co lại ở
   chỗ mới. Không bơi.
 - Quái vật theo bầy:
@@ -55,13 +60,13 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 
   | Loài | Vùng đi lại | Vùng cảnh báo |
   |---|---|---|
-  | Người Ốc | 12 | 14 |
-  | Người Vây | 22 | 16 |
-  | Người Canh Hầm | (trong hầm) | 10 |
-  | Người Rêu Đá | 14 | 15 |
-  | Người San Hô | 9 | 11 |
-  | Rồng Lươn Đen, Cá Mập Xương | 16 | 24 |
-  | Bạch Tuộc Mắt Vực | 8 | 14 |
+  | Người Ốc | 12 | 22 |
+  | Người Vây | 22 | 26 |
+  | Người Canh Hầm | (trong hầm) | 20 |
+  | Người Rêu Đá | 14 | 24 |
+  | Người San Hô | 9 | 18 |
+  | Rồng Lươn Đen, Cá Mập Xương | 16 | 36 |
+  | Bạch Tuộc Mắt Vực | 8 | 22 |
 
 - Khi chiến, sinh vật dồn tốc lực lao tới, dừng cách con mồi một tầm cắn và cắn xé (cử động chiến của từng loài).
   - Bạch Tuộc Mắt Vực tới gần con mồi (trong vòng 6,5) thì quấn xúc tu: mỗi xúc tu vươn thẳng tới một phía của con mồi, phần
@@ -77,7 +82,7 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
   |---|---|---|---|
   | Người Ốc | 0,9 | 1,8 | 5 |
   | Người Vây | – | 2,8 | 7,5 |
-  | Người Canh Hầm | 1,4 | – | 5,5 |
+  | Người Canh Hầm | 1,4 | 2,2 | 6,5 |
   | Người Rêu Đá | 1,1 | – | 7,5 |
   | Người San Hô | 0,9 | – | 6 |
   | Rồng Lươn Đen | – | 2,8 | 9 |
@@ -130,3 +135,21 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 - Chưa có tàu ngầm, chưa có máu người chơi: "cắn xé, phá tàu" mới là cử động. Tàu ngầm sau này chỉ cần thêm `{ position }`
   vào `deep3d.threats` và đọc `denizens.info.attacks`.
 - Chưa đo trên điện thoại thật.
+
+## 7. Đề xuất thay Người Rêu Đá, Người San Hô (chờ duyệt)
+
+Người chơi thấy Người Rêu Đá, Người San Hô chỉ đi bộ nên gần như không bắt được máy quay; người đá, người san hô mà bơi thì
+nặng nề, nên đề xuất thay bằng loài biết bơi mà vẫn giữ lối nấp ngụy trang. Hình đã dựng trong render/deep/beings3d.js, xem ở
+trang design/sinh-vat-day-be.html, nhóm "Đề xuất thay Người Rêu Đá, Người San Hô". Chưa đưa vào game.
+
+- Người Cá Đá (thay Người Rêu Đá):
+  - thân cá đá dẹt, to bè, dài 3,2, sần sùi như tảng đá phủ rêu;
+  - miệng rất rộng hếch lên, mắt lồi đỏ cam trên đỉnh đầu, 12 gai lưng có nọc sáng;
+  - vây ngực xoè quạt, tay ngắn có vuốt, chân ngắn có màng;
+  - nằm áp đáy nhìn như tảng đá; chiến thì vọt từng cú, há miệng, gai dựng.
+- Người Chình Rạn (thay Người San Hô):
+  - nửa trên người gầy, đầu cá chình có hàm thứ hai trong họng, nửa dưới thân chình dài 3,6;
+  - da cam tím lốm đốm, san hô mọc trên vai, lưng;
+  - nấp: thân cuộn tròn trong khe, nửa người dựng đung đưa; chiến thì uốn sóng vọt tới.
+- Người Đuối Cát (phương án khác): thân dẹt hình thoi màu cát, hai cánh là hai tay, nửa người nhô lên phía trước, đuôi roi có
+  ngạnh; nấp dưới cát, chỉ lộ mắt.
