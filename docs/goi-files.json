@@ -265,6 +265,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/birds3d.js",
+  "src": "render/birds3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/build/batch3d.js",
   "src": "render/build/batch3d.js",
   "mode": 420

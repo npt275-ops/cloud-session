@@ -236,21 +236,18 @@
     const THREE = T(),
       out = [];
     for (const Q of all) {
-      if (wallDim(Q)) continue;
+      if (wallDim(Q) || Q.deco) continue; // (ban công vẽ thêm không che cửa sổ: mặt tường vẫn có cửa)
       if (!Q.geo.boundingBox) Q.geo.computeBoundingBox();
       out.push(Q.geo.boundingBox.getCenter(new THREE.Vector3()).applyMatrix4(Q.m));
     }
     return (all.cen = out);
   }
-  function wallMark(P, lk, o, all) {
-    const D = wallDim(P);
-    if (!D) return;
+  // mặt nào của mảng tường đã có mảnh nhỏ dựng sẵn áp lên (cửa, ô cửa sổ, biển...): bốn mặt bên 0 +x, 1 −x, 2 +z, 3 −z
+  function faceBusy(P, D, all) {
     const THREE = T(),
-      geo = P.geo,
-      { b, w, h, d, sx, sy, sz, e } = D,
+      { b, h, sx, sy, sz } = D,
       inv = new THREE.Matrix4().copy(P.m).invert(),
       c = new THREE.Vector3();
-    // bốn mặt bên: 0 +x, 1 -x, 2 +z, 3 -z
     const busy = [false, false, false, false],
       y0 = b.min.y + (0.12 * h) / sy,
       y1 = b.min.y + (0.92 * h) / sy;
@@ -264,6 +261,14 @@
       if (inX && Math.abs(c.z - b.max.z) * sz < NEAR) busy[2] = true;
       if (inX && Math.abs(c.z - b.min.z) * sz < NEAR) busy[3] = true;
     }
+    return busy;
+  }
+  function wallMark(P, lk, o, all) {
+    const D = wallDim(P);
+    if (!D) return;
+    const geo = P.geo,
+      { b, w, h, d, sx, sy, sz, e } = D,
+      busy = faceBusy(P, D, all);
     const low = e[13] + b.min.y * sy < 0.8,
       front = [e[2] / sx, -e[2] / sx, e[10] / sz, -e[10] / sz]; // thành phần +z của pháp tuyến từng mặt
     const src = geo.index ? geo.toNonIndexed() : geo,
@@ -289,6 +294,59 @@
     }
     if (src !== geo) src.dispose();
   }
+  // ban công nhà tầng: mảng tường từ 2 tầng trở lên (khớp hàng cửa sổ render/look3d.js: mỗi tầng cao khoảng 2,3, ô cửa rộng
+  // khoảng 1,7), trên mặt chưa có mảnh nhỏ dựng sẵn, cứ cách một ô cửa thì một ban công so le giữa các tầng: sàn chìa ra, lan
+  // can trước và hai bên. Mảnh đánh dấu deco: không tính là mảnh áp tường (cửa sổ vẫn vẽ). Nhà thấp, tường rào, thành mỏng: không.
+  let UNIT = null;
+  function balconies(k) {
+    const THREE = T(),
+      G = UNIT || (UNIT = new THREE.BoxGeometry(1, 1, 1)),
+      q = new THREE.Quaternion(),
+      tp = new THREE.Vector3(),
+      sc = new THREE.Vector3(),
+      walls = k.parts.filter((P) => !P.deco);
+    G.userData.noWall = true;
+    walls.forEach((P, pi) => {
+      const D = wallDim(P);
+      if (!D || Math.min(D.w, D.d) < 3) return;
+      const nf = Math.round(D.h / 2.3);
+      if (nf < 2 || nf > 12) return;
+      const { b, h, sx, sy, sz } = D,
+        busy = faceBusy(P, D, walls),
+        fh = (h - 0.5) / nf,
+        slabC = P.color.clone().multiplyScalar(0.72),
+        railC = P.color.clone().multiplyScalar(0.42);
+      P.m.decompose(tp, q, sc);
+      const cx = (b.max.x + b.min.x) / 2,
+        cz = (b.max.z + b.min.z) / 2;
+      // một hộp: tâm theo (pháp tuyến n ra ngoài mặt, dọc mặt t, cao y) tính bằng đơn vị thật từ giữa mặt, cỡ (dọc mặt, cao, ra)
+      const put = (side, n, t, y, L, H, Dp, color) => {
+        const ax = side < 2,
+          sg = side % 2 ? -1 : 1,
+          gx = ax ? (sg > 0 ? b.max.x : b.min.x) + (sg * n) / sx : cx + t / sx,
+          gz = ax ? cz + t / sz : (sg > 0 ? b.max.z : b.min.z) + (sg * n) / sz,
+          pos = new THREE.Vector3(gx, b.min.y + y / sy, gz).applyMatrix4(P.m),
+          m = new THREE.Matrix4().compose(pos, q, new THREE.Vector3(ax ? Dp : L, H, ax ? L : Dp));
+        k.parts.push({ geo: G, color, m, ao: true, deco: true });
+      };
+      for (let side = 0; side < 4; side++) {
+        const fw = side < 2 ? D.d : D.w;
+        if (busy[side] || fw < 2.6) continue;
+        const nc = Math.max(1, Math.floor((fw - 0.5) / 1.7)),
+          cw = (fw - 0.5) / nc,
+          bw = Math.min(1.5, cw * 0.78);
+        for (let i = 1; i < nf; i++)
+          for (let c = 0; c < nc; c++) {
+            if ((c + i + pi + side) % 2) continue;
+            const t = -fw / 2 + 0.25 + (c + 0.5) * cw,
+              y = i * fh + 0.12;
+            put(side, 0.24, t, y, bw, 0.08, 0.48, slabC); // sàn
+            put(side, 0.46, t, y + 0.24, bw, 0.38, 0.05, railC); // lan can trước
+            for (const e of [-1, 1]) put(side, 0.24, t + (e * bw) / 2, y + 0.24, 0.05, 0.38, 0.46, railC); // hai bên
+          }
+      }
+    });
+  }
   let MAT = null,
     GLOW = null,
     LIT = null,
@@ -309,6 +367,10 @@
   Kit.prototype.bake = function (aoH, y0) {
     const THREE = T(),
       g = new THREE.Group();
+    if (!this.noBalcony && !this.balconied) {
+      balconies(this);
+      this.balconied = true; // (bake lần nữa: không thêm ban công lần hai)
+    }
     if (this.parts.length) {
       const m = new THREE.Mesh(merge(this.parts, aoH || 3, this.lit.concat(this.glow), y0), mat());
       m.castShadow = m.receiveShadow = true;

@@ -306,7 +306,136 @@
       for (let n = 0; n < N; n++) placeTree(L, n);
       for (const m of T.all) m.instanceMatrix.needsUpdate = true;
       treeColors(L, [0, 1, 0, 0]);
+      plantGrass(L);
     }
+
+    /* =============== Cỏ, hoa, sỏi: chi tiết nhỏ trên mặt đảo =============== */
+    // Mỗi miền một kiểu: đồng bằng cỏ xanh tươi nhiều hoa vàng, hồng, trắng; rừng cỏ sẫm, hoa tím; núi cỏ thưa, nhiều sỏi;
+    // băng nguyên cỏ úa bạc, sỏi băng; biển cỏ xanh nhạt, hoa trắng, vỏ sò; sa mạc bụi cỏ khô, sỏi đỏ. Rải thành đám ngoài sân
+    // giữa làng, không mọc trên đường, sông, hồ, núi, đá (L.props); chỗ đặt công trình thì dọn như cây (clearTrees).
+    const GRASS = {
+      plains: {
+        n: 700,
+        grass: ['#7fae4a', '#94bd55', '#6d9a40'],
+        flower: ['#f2d14a', '#e8678a', '#fbf6ee'],
+        fn: 200,
+        pebble: ['#a29a88'],
+        pn: 40,
+      },
+      forest: {
+        n: 650,
+        grass: ['#4f8a3c', '#5f9a45', '#3f7a33'],
+        flower: ['#b07fd8', '#f2f2e0', '#e86a5a'],
+        fn: 110,
+        pebble: ['#7d7563'],
+        pn: 60,
+      },
+      mountain: { n: 380, grass: ['#8a9a5a', '#7a8a4e'], flower: ['#e8e2f2'], fn: 40, pebble: ['#9a958a', '#7d786e', '#b0aa9e'], pn: 220 },
+      tundra: { n: 260, grass: ['#b8c6a0', '#c9d4b8', '#a8b49a'], flower: [], fn: 0, pebble: ['#d9e4ee', '#aebccb'], pn: 140 },
+      coast: { n: 560, grass: ['#8fbf5a', '#a5c96a'], flower: ['#f7f0e0', '#f0a0b0'], fn: 110, pebble: ['#efe2c8', '#f4d6c6'], pn: 110 },
+      desert: {
+        n: 200,
+        grass: ['#b9a060', '#a89055', '#c7ad6a'],
+        flower: ['#e05a7a'],
+        fn: 25,
+        pebble: ['#b48a5a', '#c9a06e', '#8f6a46'],
+        pn: 240,
+      },
+    };
+    // khóm cỏ: năm lá nhọn mảnh chụm gốc, xoè ra các phía, cao thấp khác nhau
+    let tuftGeo = null;
+    const tuft = () => {
+      if (tuftGeo) return tuftGeo;
+      const pos = [];
+      for (let i = 0; i < 5; i++) {
+        const hgt = 0.42 + (i % 3) * 0.12,
+          g = new THREE.ConeGeometry(0.07, hgt, 3).toNonIndexed();
+        g.translate(0, hgt / 2, 0);
+        g.rotateZ(0.22 + (i % 2) * 0.2);
+        g.rotateY((i / 5) * TAU + 0.4);
+        pos.push(...g.attributes.position.array);
+        g.dispose();
+      }
+      tuftGeo = new THREE.BufferGeometry();
+      tuftGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      // pháp tuyến hướng lên trời: lá cỏ sáng như mặt đất bên dưới, không sẫm đen ở mặt khuất nắng
+      tuftGeo.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
+      return tuftGeo;
+    };
+    function plantGrass(L) {
+      const W = GRASS[L.ter],
+        rng = landRng(L.i + 77),
+        list = [];
+      if (!W) return;
+      const ok = (x, z) => L.inside(x, z, 1.5) && Math.hypot(x, z) > 7.5 && !L.blockedWild(x, z, 0.3) && !(L.onRoad && L.onRoad(x, z, 0.4));
+      const spot = () => {
+        for (let i = 0; i < 30; i++) {
+          const a = rng() * TAU,
+            r = 8 + Math.sqrt(rng()) * (LAND_R - 8),
+            x = Math.cos(a) * r,
+            z = Math.sin(a) * r;
+          if (ok(x, z)) return [x, z];
+        }
+        return null;
+      };
+      // khóm cỏ mọc thành đám nhỏ (vài khóm chụm quanh một tâm); hoa, sỏi cũng rải theo đám
+      const scatter = (kind, n, cols, per) => {
+        for (let made = 0, tries = 0; made < n && tries < n * 3; tries++) {
+          const c = spot();
+          if (!c) continue;
+          for (let j = 0; j < per && made < n; j++) {
+            const x = c[0] + (rng() - 0.5) * 2.4,
+              z = c[1] + (rng() - 0.5) * 2.4;
+            if (!ok(x, z)) continue;
+            list.push({ kind, x, z, s: 0.8 + rng() * 0.7, rot: rng() * TAU, col: cols[Math.floor(rng() * cols.length)] });
+            made++;
+          }
+        }
+      };
+      scatter('grass', W.n, W.grass, 7);
+      if (W.fn) scatter('flower', W.fn, W.flower, 3);
+      if (W.pn) scatter('pebble', W.pn, W.pebble, 3);
+      // (Lambert: lá cỏ mảnh, mặt nào cũng sáng đủ, không sẫm đen như vật liệu có độ bóng)
+      const mat = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide }),
+        geos = { grass: tuft(), flower: new THREE.IcosahedronGeometry(0.075, 0), pebble: new THREE.DodecahedronGeometry(0.13, 0) },
+        G = { list, mesh: {} },
+        tmp = new THREE.Color();
+      for (const k of ['grass', 'flower', 'pebble']) {
+        const items = list.filter((t) => t.kind === k);
+        if (!items.length) continue;
+        const m = new THREE.InstancedMesh(geos[k], mat, items.length);
+        m.raycast = () => {}; // (chi tiết nhỏ: không chặn chuột)
+        items.forEach((t, i) => {
+          t.slot = i;
+          m.setColorAt(i, tmp.set(t.col));
+        });
+        G.mesh[k] = m;
+        L.g.add(m);
+      }
+      L.grass = G;
+      replantGrass(L);
+    }
+    // đặt lại cỏ, hoa, sỏi theo mặt đất (đất đổi cao độ khi có nền công trình: render/map/height3d.js)
+    function replantGrass(L) {
+      const G = L.grass;
+      if (!G) return;
+      for (const t of G.list) {
+        const m = G.mesh[t.kind];
+        if (t.hidden) {
+          m.setMatrixAt(t.slot, ZERO);
+          continue;
+        }
+        const y = L.surfAt ? L.surfAt(t.x, t.z) : 0;
+        _o.position.set(t.x, y + (t.kind === 'flower' ? 0.36 * t.s : t.kind === 'pebble' ? 0.02 : 0), t.z);
+        _o.rotation.set(t.kind === 'pebble' ? t.rot : 0, t.rot, 0);
+        if (t.kind === 'pebble') _o.scale.set(t.s * 1.2, t.s * 0.55, t.s);
+        else _o.scale.setScalar(t.s);
+        _o.updateMatrix();
+        m.setMatrixAt(t.slot, _o.matrix);
+      }
+      for (const k in G.mesh) G.mesh[k].instanceMatrix.needsUpdate = true;
+    }
+
     const _o = new THREE.Object3D(),
       ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
     function placeTree(L, n) {
@@ -407,6 +536,16 @@
         }
       });
       if (any) for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true;
+      // cỏ, hoa, sỏi chỗ đặt công trình cũng dọn đi
+      if (L.grass) {
+        let g = false;
+        for (const t of L.grass.list)
+          if (!t.hidden && (t.x - x) ** 2 + (t.z - z) ** 2 < (r + 0.3) ** 2) {
+            t.hidden = g = true;
+            L.grass.mesh[t.kind].setMatrixAt(t.slot, ZERO);
+          }
+        if (g) for (const k in L.grass.mesh) L.grass.mesh[k].instanceMatrix.needsUpdate = true;
+      }
     }
 
     // rừng thưa dần theo môi trường của đảo (logic/ecology.js S.env.forest, 0..1): cây bị đốn mất trước theo một thứ tự cố định,
@@ -426,7 +565,7 @@
       });
       if (any) for (const m of L.trees.all) m.instanceMatrix.needsUpdate = true;
     }
-    return { plantTrees, placeTree, treeColors, clearTrees, thinTrees };
+    return { plantTrees, placeTree, treeColors, clearTrees, thinTrees, replantGrass };
   }
   BK.MapTrees = { create };
 })(typeof self !== 'undefined' ? self : globalThis);
