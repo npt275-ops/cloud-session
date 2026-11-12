@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 43980 dòng.
+Tổng: 155 tệp, 44080 dòng.
 
 ## (gốc)
 
@@ -129,9 +129,9 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/deep/beings3d.js` | 720 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
+| `render/deep/beings3d.js` | 761 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
 | `render/deep/citadel3d.js` | 669 | Thành Vỏ Ốc Xà Cừ: phế tích trong rãnh dưới Thông Xanh … | `BK.DeepCitadel` |  |
-| `render/deep/denizens3d.js` | 589 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
+| `render/deep/denizens3d.js` | 648 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
 | `render/deep/kit3d.js` | 90 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
 | `render/deep/ruins3d.js` | 439 | Hai phế tích dưới đáy bể … | `BK.DeepRuins` |  |
 | `render/deep/terrain3d.js` | 400 | Địa hình đáy bể … | `BK.DeepTerrain` |  |

@@ -45,39 +45,57 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 - Kẻ địch là:
   - máy quay khi ở dưới mặt nước (người chơi);
   - mọi vật trong `deep3d.threats` (mỗi vật có `position`), để dành cho tàu ngầm sau này.
-- Sinh vật thấy kẻ địch trong tầm thì chuyển sang chiến. Tầm thấy:
-  - NPC biết bơi và Người Canh Hầm 26;
-  - Người Rêu Đá 34;
-  - quái vật 40.
-- Khi chiến, sinh vật dồn tốc lực lao tới, dừng cách con mồi một tầm cắn và cắn xé (cử động chiến của từng loài). Nó báo cho
-  đồng loại trong vòng 26: những con ấy cũng lao vào.
-- Tốc độ (đơn vị trên giây), xếp theo thứ tự đi / bơi / chiến (dấu "–" là loài không có kiểu đó):
+- Mỗi sinh vật có một chỗ ở `anchor`:
+  - Người Ốc, Người Vây: nhà;
+  - Người Rêu Đá, Người San Hô: chỗ nằm lúc đầu;
+  - bầy quái vật, bạch tuộc: lãnh địa riêng, chọn xa lãnh địa của bầy khác trong cùng phế tích;
+  - Người Canh Hầm: chỗ đang đứng.
+- Lúc bình thường sinh vật chỉ đi lại trong vùng `roam` quanh chỗ ở. Kẻ địch vào trong vùng cảnh báo `zone` quanh chỗ ở thì
+  sinh vật mới chuyển sang chiến. Máy quay chỉ vào phế tích mà không tới gần chỗ ở của con nào thì không bị đuổi.
+
+  | Loài | Vùng đi lại | Vùng cảnh báo |
+  |---|---|---|
+  | Người Ốc | 12 | 14 |
+  | Người Vây | 22 | 16 |
+  | Người Canh Hầm | (trong hầm) | 10 |
+  | Người Rêu Đá | 14 | 15 |
+  | Người San Hô | 9 | 11 |
+  | Rồng Lươn Đen, Cá Mập Xương | 16 | 24 |
+  | Bạch Tuộc Mắt Vực | 8 | 14 |
+
+- Khi chiến, sinh vật dồn tốc lực lao tới, dừng cách con mồi một tầm cắn và cắn xé (cử động chiến của từng loài).
+  - Bạch Tuộc Mắt Vực tới gần con mồi (trong vòng 6,5) thì quấn xúc tu: mỗi xúc tu vươn thẳng tới một phía của con mồi, phần
+    còn lại cuộn tròn quanh con mồi, giác hút quay vào trong, siết theo nhịp. Thân giữ cách con mồi 3,5.
+    `denizens.info.held` bật khi đang quấn (để tàu ngầm sau này biết mình bị giữ).
+  - Một con trong bầy thấy kẻ địch thì cả bầy cùng lao vào. NPC không báo cho nhau.
+- Đuổi không ra xa chỗ ở quá 1,6 lần vùng cảnh báo. Kẻ địch ra ngoài 1,4 lần vùng cảnh báo quá 2,5 giây thì sinh vật thôi
+  chiến và về chỗ: Người Ốc, Người Vây về nhà; người đá về chỗ nằm; bầy về lãnh địa.
+- Tốc độ (đơn vị trên giây), xếp theo thứ tự đi / bơi / chiến (dấu "–" là loài không có kiểu đó). Đã giảm sau lần chơi thử
+  (trước đây quá nhanh):
 
   | Loài | Đi | Bơi | Chiến |
   |---|---|---|---|
-  | Người Ốc | 1,3 | 2,6 | 9 |
-  | Người Vây | – | 4,5 | 15 |
-  | Người Canh Hầm | 2,2 | – | 9 |
-  | Người Rêu Đá | 1,7 | – | 14 |
-  | Người San Hô | 1,2 | – | 11 |
-  | Rồng Lươn Đen | – | 4,5 | 20 |
-  | Cá Mập Xương | – | 5 | 22 |
-  | Bạch Tuộc Mắt Vực | – | 2,2 | 10 |
+  | Người Ốc | 0,9 | 1,8 | 5 |
+  | Người Vây | – | 2,8 | 7,5 |
+  | Người Canh Hầm | 1,4 | – | 5,5 |
+  | Người Rêu Đá | 1,1 | – | 7,5 |
+  | Người San Hô | 0,9 | – | 6 |
+  | Rồng Lươn Đen | – | 2,8 | 9 |
+  | Cá Mập Xương | – | 3,2 | 10 |
+  | Bạch Tuộc Mắt Vực | – | 1,5 | 5,5 |
 
-  Người Rêu Đá, Người San Hô không bơi nhưng chạy nhanh. Người Ốc đang chiến mà con mồi ở cao thì bơi lên.
+  Người Rêu Đá, Người San Hô không bơi nhưng chạy nhanh hơn hẳn lúc đi. Người Ốc đang chiến mà con mồi ở cao thì bơi lên.
 - Giới hạn chỗ (sinh vật không ra khỏi phế tích, không lên mặt nước):
   - mỗi sinh vật chỉ ở trong elip của phế tích mình (0,9 với NPC, 0,92 với quái vật);
   - NPC biết bơi không lên cao quá đáy rãnh + 55, quái vật quá đáy rãnh + 30;
   - Người Canh Hầm chỉ ở trong lòng hầm của mình.
-- Kẻ địch ra khỏi phế tích (hay lên cao hơn trần + 25) thì sinh vật dừng ở mép. Kẻ địch xa hơn 1,8 lần tầm thấy quá 3 giây
-  thì sinh vật thôi chiến và về chỗ: Người Ốc, Người Vây về nhà; người đá nằm co lại.
 - Số chỉnh nằm ở đầu tệp (`RULES`).
 
 - Chỗ trống: mỗi khối đá đặt bằng `frame(S).add` (render/deep/kit3d.js) được ghi hộp bao theo (u, v) vào `S.solid`,
   nếu khối đó chạm đất và cao hơn 1,2. Có 570 khối ở Thành Vỏ Ốc, 188 ở Vườn Treo, 214 ở Đô Thị Đá.
   - Sinh vật trên đất chỉ chọn chỗ cách mọi khối ít nhất 1 (người đá 3,5) và đường đi thẳng không cắt khối nào. Thành Vỏ Ốc
     hỏi thêm `S.free` của citadel3d.js.
-  - Điểm bơi luôn cao hơn mái khối đá bên dưới ít nhất 5.
+  - Điểm bơi luôn cao hơn mái khối đá bên dưới ít nhất 3.
 
 ## 4. Hiệu năng
 
@@ -92,7 +110,13 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 - 57 sinh vật. Chạy nhanh 120 giây ở mỗi phế tích (máy quay ở xa): không có toạ độ hỏng, không con nào ra ngoài elip 0,93,
   không con nào lên cao quá trần. Người Ốc, Người Vây có ra vào nhà và có bơi, người đá có đứng dậy đi, Người Canh Hầm có ra
   cửa nhìn.
-- Máy quay đặt giữa mỗi phế tích:
+- Vùng cảnh báo (chạy nhanh từng tình huống):
+  - máy quay ở ba điểm lặn phế tích: không con nào đuổi;
+  - máy quay ở chỗ xa mọi chỗ ở nhất trong mỗi phế tích (gấp 3,5–4 lần vùng cảnh báo), sát đáy: không con nào đuổi;
+  - máy quay sát chỗ nằm của một Người Rêu Đá: chỉ con đó và một Người Rêu Đá nằm gần lao vào; không con nào ra xa chỗ ở quá
+    0,52 lần vùng cảnh báo;
+  - máy quay ở lãnh địa bạch tuộc: bạch tuộc quấn xúc tu 156 trên 160 khung hình, thân cách con mồi 3,3.
+- Lần đo trước khi có vùng cảnh báo, máy quay đặt giữa mỗi phế tích:
   - sinh vật chuyển sang chiến ngay;
   - Người Ốc, Người Vây tới sát máy quay (0,4–0,7) trong 8 giây;
   - đàn cá mập ở Đô Thị Đá tới cách 4,4.

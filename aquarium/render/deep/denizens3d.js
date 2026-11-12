@@ -9,9 +9,10 @@
  *   - Quái vật: Rồng Lươn Đen theo bầy (Thành Vỏ Ốc 4, Vườn Treo 4), Cá Mập Xương theo đàn (Vườn Treo 3, Đô Thị Đá 3), Bạch
  *     Tuộc Mắt Vực đơn lẻ (Thành Vỏ Ốc 1, Đô Thị Đá 1). Mỗi phế tích có hai trong ba loài.
  * Cảnh báo kẻ địch: kẻ địch là máy quay khi ở dưới nước (người chơi) và mọi vật trong D.threats ({ position }: tàu ngầm sau
- * này). Sinh vật nào gần kẻ địch trong phạm vi phế tích của nó thì chuyển sang chiến: dồn tốc lực lao tới, cắn xé (cử động
- * chiến), và báo cho đồng loại gần đó. Mọi sinh vật không ra khỏi phế tích của mình (hầm với Người Canh Hầm), không lên cao quá
- * trần của phế tích: kẻ địch ra ngoài thì chúng dừng ở mép, chờ một lúc rồi về.
+ * này). Mỗi sinh vật có một chỗ ở (nhà, chỗ nằm, lãnh địa của bầy) và một vùng cảnh báo quanh chỗ ở đó (RULES.zone): kẻ địch
+ * vào trong vùng thì nó mới chuyển sang chiến: dồn tốc lực lao tới, cắn xé (cử động chiến); bạch tuộc quấn xúc tu lấy con mồi;
+ * bầy quái vật cùng lao vào. Đuổi không xa chỗ ở quá zone × leash, không ra khỏi phế tích (hầm với Người Canh Hầm), không lên
+ * cao quá trần: kẻ địch ra ngoài thì chúng dừng lại, chờ một lúc rồi về chỗ.
  * Chỉ vẽ và cho chạy khi máy quay ở dưới nước, và chỉ những phế tích gần máy quay.
  * Cần: three.js, render/deep/terrain3d.js, citadel3d.js (S.homes, S.free), tunnels3d.js, beings3d.js. */
 (function (root) {
@@ -23,24 +24,28 @@
     // trần của phế tích tính từ đáy rãnh: NPC biết bơi, quái vật
     capNpc: 55,
     capMonster: 30,
-    // tầm phát hiện kẻ địch, tầm báo cho đồng loại
-    alertNpc: 26,
-    alertStone: 34,
-    alertMonster: 40,
-    spread: 26,
-    // kẻ địch đi xa hơn tầm phát hiện × leave thì thôi chiến (sau calm giây)
-    leave: 1.8,
-    calm: 3,
+    // vùng của mỗi sinh vật, tính từ chỗ ở (a.anchor: nhà, chỗ nằm, lãnh địa của bầy; Người Canh Hầm: chỗ đang đứng):
+    //   roam: bán kính đi lại lúc bình thường;
+    //   zone: bán kính cảnh báo: kẻ địch vào trong vòng này mới bị đuổi;
+    //   đuổi không ra xa chỗ ở quá zone × leash; kẻ địch ra ngoài zone × leave quá calm giây thì thôi, về chỗ
+    zone: { snail: 14, fin: 16, keeper: 10, stone: 15, coral: 11, eel: 24, shark: 24, octo: 14 },
+    roam: { snail: 12, fin: 22, stone: 14, coral: 9, eel: 16, shark: 16, octo: 8 },
+    leash: 1.6,
+    leave: 1.4,
+    calm: 2.5,
+    // bạch tuộc: tầm xúc tu (gần hơn thì quấn lấy con mồi), khoảng cách giữ thân khi quấn
+    octoGrab: 6.5,
+    octoHold: 3.5,
     // tốc độ (đơn vị / giây): đi, bơi, chiến
     speed: {
-      snail: [1.3, 2.6, 9],
-      fin: [0, 4.5, 15],
-      keeper: [2.2, 0, 9],
-      stone: [1.7, 0, 14],
-      coral: [1.2, 0, 11],
-      eel: [0, 4.5, 20],
-      shark: [0, 5, 22],
-      octo: [0, 2.2, 10],
+      snail: [0.9, 1.8, 5],
+      fin: [0, 2.8, 7.5],
+      keeper: [1.4, 0, 5.5],
+      stone: [1.1, 0, 7.5],
+      coral: [0.9, 0, 6],
+      eel: [0, 2.8, 9],
+      shark: [0, 3.2, 10],
+      octo: [0, 1.5, 5.5],
     },
   };
   // điểm (u, v) có nằm trong elip của phế tích (tỉ lệ e) không; kéo điểm ngoài về mép elip
@@ -91,23 +96,26 @@
       return true;
     };
     // chỗ đất trống ngẫu nhiên: khắp phế tích, hay quanh near trong bán kính radius (đi tới được bằng đường thẳng)
-    const groundPoint = (R, near, radius, m = 1) => {
+    // (c, cr: chỉ chọn trong vòng bán kính cr quanh c: vùng đi lại của sinh vật)
+    const groundPoint = (R, near, radius, m = 1, c, cr) => {
       for (let i = 0; i < 120; i++) {
         const a = rnd() * Math.PI * 2,
           d = Math.sqrt(rnd()) * radius,
           mm = i < 80 ? m : 0.5,
           u = near ? near.u + Math.cos(a) * d : Math.cos(a) * R.S.A * 0.85 * Math.sqrt(rnd()),
           v = near ? near.v + Math.sin(a) * d : Math.sin(a) * R.S.B * 0.85 * Math.sqrt(rnd());
+        if (c && Math.hypot(u - c.u, v - c.v) > cr) continue;
         if (openGround(R, u, v, mm) && (!near || clearPath(R, near, { u, v }, 0.6))) return { u, v };
       }
       return near || { u: 0, v: 0 };
     };
-    // điểm bơi: bất kỳ đâu trong phế tích, cao hơn đáy rãnh lo..hi, và cao hơn khối đá bên dưới 5 (không bơi xuyên mái)
-    // (lo, hi tính từ mặt đất tại điểm đó; trần cap tính từ đáy rãnh)
-    const swimPoint = (R, lo, hi, cap) => {
+    // điểm bơi trong vùng bán kính cr quanh c (trong phế tích), cao hơn mặt đất lo..hi, và cao hơn mái khối đá bên dưới 3
+    // (không bơi xuyên mái); trần cap tính từ đáy rãnh
+    const swimPoint = (R, lo, hi, cap, c, cr) => {
       const a = rnd() * Math.PI * 2,
-        r = 0.85 * Math.sqrt(rnd()),
-        p = { u: Math.cos(a) * R.S.A * r, v: Math.sin(a) * R.S.B * r },
+        d = Math.sqrt(rnd()) * cr,
+        [pu, pv] = clampEllipse(R.S, c.u + Math.cos(a) * d, c.v + Math.sin(a) * d, 0.85),
+        p = { u: pu, v: pv },
         w = R.at(p.u, p.v),
         g = hAt(w.x, w.z),
         top = Math.max(0, ...solids(R, p.u, p.v, 3).map((b) => b.top));
@@ -172,6 +180,7 @@
           door = { u: h[0] - (h[0] / dl) * (h[2] + 1), v: h[1] - (h[1] / dl) * (h[2] + 1) };
         const a = spawn('snail', R, BE.snailman, 1, { home: { u: h[0], v: h[1] }, door, state: 'home', timer: 3 + rnd() * 25 });
         a.pos.copy(worldOf(R, a.home));
+        a.anchor = a.pos.clone();
       }
     }
     /* ---------- Vườn Treo: 10 Người Vây trong vòm cuốn mặt trước các tầng ---------- */
@@ -193,14 +202,16 @@
           door = { u: ar.u + 2.2, v: ar.v };
         const a = spawn('fin', R, BE.finman, 1, { home, door, homeY: y(home), state: 'home', timer: 3 + rnd() * 25 });
         a.pos.copy(worldOf(R, home, a.homeY));
+        a.anchor = a.pos.clone();
       }
     }
     /* ---------- Người Rêu Đá, Người San Hô: nằm co ngụy trang ---------- */
     const camoAt = (kind, R, make, n) => {
       for (let i = 0; i < n; i++) {
         const p = groundPoint(R, null, 0, kind === 'stone' ? 3.5 : 1.5),
-          a = spawn(kind, R, make, 1, { state: 'camo', timer: 5 + rnd() * 30, mode: 'curl', spot: p });
+          a = spawn(kind, R, make, 1, { state: 'camo', timer: 5 + rnd() * 30, mode: 'curl', spot: p, home: p });
         a.pos.copy(worldOf(R, p));
+        a.anchor = a.pos.clone();
       }
     };
     camoAt('stone', RU[0], BE.mossGiant, 2);
@@ -211,22 +222,46 @@
     TUNNELS.forEach((TN, k) => {
       const a = spawn('keeper', null, BE.keeper, 1, { tn: TN, s: 0.3 + rnd() * 0.4, sTarget: 0.5, state: 'patrol', timer: 2 });
       a.pos.copy(tunnelPos(TN, a.s));
+      a.anchor = a.pos.clone();
     });
     function tunnelPos(TN, s) {
       const th = TN.a + (TN.b - TN.a) * s;
       return V(Math.cos(th) * TUN_RC, TUN_FLOOR, Math.sin(th) * TUN_RC);
     }
     /* ---------- Quái vật: bầy, đàn, đơn lẻ ---------- */
+    // lãnh địa: mỗi bầy (hay con đơn lẻ) một vùng trong phế tích, xa lãnh địa của bầy khác nhất có thể
+    function territory(R) {
+      R.terr = R.terr || [];
+      let best = null,
+        bd = -1;
+      for (let i = 0; i < 40; i++) {
+        const p = groundPoint(R, null, 0, 4),
+          e = ellipse(R.S, p.u, p.v),
+          d = Math.min(1e9, ...R.terr.map((q) => Math.hypot(p.u - q.u, p.v - q.v)));
+        if (e < 0.2 || e > 0.7) continue;
+        if (d > bd) ((bd = d), (best = p));
+      }
+      best = best || { u: 0, v: 0 };
+      R.terr.push(best);
+      return best;
+    }
     function pack(kind, R, make, scale, n) {
-      const leader = spawn(kind, R, make, scale, { state: 'roam', timer: 0, lead: true });
-      leader.pos.copy(swimPoint(R, 2, 8, RULES.capMonster - 4));
+      const home = territory(R),
+        leader = spawn(kind, R, make, scale, { state: 'roam', timer: 0, lead: true, home });
+      leader.pos.copy(swimPoint(R, 2, 8, RULES.capMonster - 4, home, RULES.roam[kind]));
+      leader.anchor = worldOf(R, home);
+      leader.anchor.y += 4;
+      leader.pack = [leader];
       for (let i = 1; i < n; i++) {
         const f = spawn(kind, R, make, scale, {
           state: 'follow',
           leader,
+          home,
+          anchor: leader.anchor,
           slot: V((i % 2 ? 1 : -1) * (2 + i * 1.2), (rnd() - 0.5) * 2, -3 - i * 2.5),
         });
         f.pos.copy(leader.pos).add(f.slot);
+        leader.pack.push(f);
       }
     }
     // quái vật: to gấp 3–4 lần NPC (dài khoảng 8–9), bơi sát đáy
@@ -236,8 +271,11 @@
     pack('shark', RU[1], BE.boneShark, 0.18, 3);
     pack('shark', RU[2], BE.boneShark, 0.18, 3);
     for (const R of [RU[0], RU[2]]) {
-      const o = spawn('octo', R, BE.abyssEye, 0.1, { state: 'roam', timer: 0, lead: true });
-      o.pos.copy(worldOf(R, groundPoint(R, null, 0, 6)));
+      const home = territory(R),
+        o = spawn('octo', R, BE.abyssEye, 0.1, { state: 'roam', timer: 0, lead: true, home });
+      o.pos.copy(worldOf(R, home));
+      o.anchor = o.pos.clone();
+      o.anchor.y += 3;
     }
 
     /* ---------- Giới hạn chỗ: trong phế tích, dưới trần; Người Canh Hầm trong lòng hầm ---------- */
@@ -284,8 +322,8 @@
             const pts = [];
             let p = a.door;
             for (let i = 0, n = 2 + Math.floor(rnd() * 3); i < n; i++) {
-              if (a.swimming) pts.push(swimPoint(R, 6, 24, RULES.capNpc - 2));
-              else pts.push(worldOf(R, (p = groundPoint(R, p, 14))));
+              if (a.swimming) pts.push(swimPoint(R, 3, 12, RULES.capNpc - 2, a.door, RULES.roam.snail));
+              else pts.push(worldOf(R, (p = groundPoint(R, p, 8, 1, a.door, RULES.roam.snail))));
             }
             pts.push(worldOf(R, a.door));
             a.route = pts;
@@ -304,7 +342,8 @@
             const gate = worldOf(R, a.door, a.homeY + 1),
               clear = worldOf(R, { u: a.door.u + 12, v: a.door.v }, a.homeY + 4),
               pts = [gate, clear];
-            for (let i = 0, n = 3 + Math.floor(rnd() * 3); i < n; i++) pts.push(swimPoint(R, 6, 20, RULES.capNpc - 2));
+            for (let i = 0, n = 3 + Math.floor(rnd() * 3); i < n; i++)
+              pts.push(swimPoint(R, 4, 14, RULES.capNpc - 2, a.door, RULES.roam.fin));
             pts.push(clear.clone(), gate.clone());
             a.route = pts;
             a.state = 'out';
@@ -321,7 +360,7 @@
             const pts = [];
             let p = a.spot;
             for (let i = 0, n = 1 + Math.floor(rnd() * 3); i < n; i++)
-              pts.push(worldOf(R, (p = groundPoint(R, p, a.kind === 'stone' ? 18 : 10, a.kind === 'stone' ? 3.5 : 1.5))));
+              pts.push(worldOf(R, (p = groundPoint(R, p, 8, a.kind === 'stone' ? 3.5 : 1.5, a.home, RULES.roam[a.kind]))));
             a.route = pts;
             a.state = 'walk';
             a.wake = 1.2; // (đứng dậy trước rồi mới đi)
@@ -348,7 +387,11 @@
         default: {
           // quái vật dẫn đầu (hay đơn lẻ): bơi tới một điểm ngẫu nhiên trong phế tích
           // (bạch tuộc bò, nổi sát mặt đất; lươn, cá mập bơi sát đáy, cao hơn mái nhà bên dưới)
-          a.route = [a.kind === 'octo' ? swimPoint(R, 0.3, 3, RULES.capMonster - 4) : swimPoint(R, 1.5, 9, RULES.capMonster - 4)];
+          a.route = [
+            a.kind === 'octo'
+              ? swimPoint(R, 0.3, 3, RULES.capMonster - 4, a.home, RULES.roam.octo)
+              : swimPoint(R, 1.5, 9, RULES.capMonster - 4, a.home, RULES.roam[a.kind]),
+          ];
           a.state = 'roam';
         }
       }
@@ -357,7 +400,7 @@
     /* ---------- Cảnh báo kẻ địch ---------- */
     const threats = (D.threats = D.threats || []);
     const camThreat = { position: V(), active: false, player: true };
-    const info = { fighting: 0, level: 0, attacks: 0 };
+    const info = { fighting: 0, level: 0, attacks: 0, held: false };
     function threatFor(a) {
       // kẻ địch gần nhất mà sinh vật này được phép đuổi (trong phế tích hay trong hầm của nó)
       let best = null,
@@ -372,12 +415,12 @@
           const L = a.R.loc(p.x, p.z);
           if (ellipse(a.R.S, L.u, L.v) > 1.15 || p.y > a.R.floor + (isMonster(a) ? RULES.capMonster : RULES.capNpc) + 25) continue;
         }
-        const d = p.distanceTo(a.pos);
-        if (d < bd) ((bd = d), (best = th));
+        // (kẻ địch gần chỗ ở nhất: dA; khoảng cách tới chính sinh vật: d)
+        const dA = p.distanceTo(a.anchor);
+        if (dA < bd) ((bd = dA), (best = th));
       }
-      return best ? { th: best, d: bd } : null;
+      return best ? { th: best, dA: bd, d: best.position.distanceTo(a.pos) } : null;
     }
-    const alertR = (a) => (isMonster(a) ? RULES.alertMonster : a.kind === 'stone' ? RULES.alertStone : RULES.alertNpc);
 
     /* ---------- Mỗi khung hình ---------- */
     const tmp = V(),
@@ -402,12 +445,14 @@
       } else a.yawRate *= 0.9;
     }
     function tick(a, dt, ts) {
-      // --- chiến (ở trong nhà vẫn nghe thấy kẻ địch)
-      const seen = threatFor(a);
-      a.seeing = !!seen && seen.d < alertR(a) * RULES.leave;
-      if (seen && seen.d < alertR(a)) a.fight = Math.max(a.fight, 1);
+      // --- chiến: kẻ địch vào vùng cảnh báo quanh chỗ ở (ở trong nhà vẫn nghe thấy)
+      if (a.kind === 'keeper' && !a.fight) a.anchor.copy(a.pos); // (Người Canh Hầm: vùng theo chỗ đang đứng)
+      const seen = threatFor(a),
+        Z = RULES.zone[a.kind];
+      a.seeing = !!seen && seen.dA < Z * RULES.leave;
+      if (seen && seen.dA < Z) a.fight = Math.max(a.fight, 1);
       if (a.fight > 0) {
-        if (!seen || seen.d > alertR(a) * RULES.leave) {
+        if (!a.seeing) {
           a.calm += dt;
           if (a.calm > RULES.calm) {
             a.fight = 0;
@@ -423,16 +468,21 @@
                       ? 'roam'
                       : 'follow';
             if (a.kind === 'snail' || a.kind === 'fin') a.route = [worldOf(a.R, a.door, a.kind === 'fin' ? a.homeY + 1 : null)];
-            if (a.kind === 'stone' || a.kind === 'coral') a.route = [a.pos.clone()];
+            if (a.kind === 'stone' || a.kind === 'coral') a.route = [worldOf(a.R, a.home)];
+            if (a.lead && isMonster(a)) a.route = [a.anchor.clone()];
             if (a.kind === 'keeper') a.sTarget = a.s;
           }
         } else a.calm = 0;
       }
       if (a.fight > 0 && seen) {
         a.wake = 0;
-        // lao tới, dừng cách con mồi một tầm cắn, cắn xé (cử động chiến)
-        const reach = Math.max(1.2, a.size * 0.18);
+        // lao tới, dừng cách con mồi một tầm cắn, cắn xé (cử động chiến); bạch tuộc tới gần thì quấn xúc tu
+        const grab = a.kind === 'octo' && seen.d < RULES.octoGrab,
+          reach = a.kind === 'octo' ? RULES.octoHold : Math.max(1.2, a.size * 0.18);
         tmp.copy(seen.th.position);
+        // không đuổi ra xa chỗ ở quá zone × leash
+        const lim = Z * RULES.leash;
+        if (tmp.distanceTo(a.anchor) > lim) tmp.sub(a.anchor).setLength(lim).add(a.anchor);
         if (a.kind === 'keeper') {
           const s = Math.max(0.01, Math.min(0.99, angOff(Math.atan2(tmp.z, tmp.x), a.tn.a) / (a.tn.b - a.tn.a)));
           tmp.copy(tunnelPos(a.tn, s));
@@ -445,8 +495,10 @@
         else tmp.set(0, 0, 0);
         tmp.add(a.pos);
         steer(a, tmp, a.run || a.swimV * 3, dt, 3.2);
-        a.mode = 'chase';
-        if (d < reach * 1.6) info.attacks += dt;
+        a.mode = grab ? 'grab' : 'chase';
+        a.b.prey = grab ? seen.th.position : null;
+        if (grab) info.held = true;
+        if (d < reach * 1.6 || grab) info.attacks += dt;
         confine(a);
         face(a, dt, isMonster(a) ? 3 : 9);
         // đối mặt con mồi khi ở gần
@@ -455,6 +507,7 @@
         return;
       }
       // --- nếp sống
+      a.b.prey = null;
       a.timer -= dt;
       switch (a.kind) {
         case 'snail':
@@ -549,6 +602,7 @@
     function update(dt, ts, cam, under) {
       group.visible = under;
       info.fighting = 0;
+      info.held = false;
       if (!under) return;
       dt = Math.min(dt, 0.05);
       camThreat.position.copy(cam.position);
@@ -565,10 +619,15 @@
         a.holder.visible = a.live;
         if (a.fight > 0) info.fighting++;
       }
-      // báo cho đồng loại gần đó (cùng phế tích hay cùng hầm)
-      for (const a of agents)
-        if (a.fight > 0 && a.seeing && a.R)
-          for (const o of a.R.agents) if (!o.fight && o.pos.distanceTo(a.pos) < RULES.spread && rnd() < dt * 2) o.fight = 0.5;
+      // báo cho cả bầy: một con trong bầy thấy kẻ địch trong vùng thì cả bầy cùng lao vào (NPC không báo cho nhau)
+      for (const a of agents) {
+        const L = a.leader || a;
+        if (a.fight > 0 && a.seeing && L.pack)
+          for (const o of L.pack) {
+            o.fight = Math.max(o.fight, 0.5);
+            o.calm = 0;
+          }
+      }
       // vẽ
       for (const a of agents) {
         if (!a.live) continue;

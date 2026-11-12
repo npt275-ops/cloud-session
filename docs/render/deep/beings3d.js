@@ -658,12 +658,46 @@
           if (i % 2 === 0) add(j, GEO.ball, suck, 0, -0.9, rr * 0.9, 0.16 + rr * 0.1, 0.16 + rr * 0.1, 0.08);
           segs.push(j); p = j;
         }
-        arms.push({ base, segs, k });
+        arms.push({ base, segs, k, ry: base.rotation.y });
       }
       const cur = {};
-      return {
-        root, size: 95, eye: 0, swimY: 0, monster: true, frame: [[0, 38, 0], [55, 34, 90]],
+      // quấn con mồi (mode 'grab', con mồi ở api.prey, toạ độ thế giới): mỗi xúc tu vươn thẳng tới một điểm sát con mồi (mỗi
+      // xúc tu một phía), rồi phần còn lại cuộn tròn quanh con mồi, giác hút quay vào trong, siết theo nhịp
+      const R0 = 3.2, SEG = 1.75, NEGY = new T.Vector3(0, -1, 0), UPV = new T.Vector3(0, 1, 0);
+      const gP = new T.Vector3(), gD = new T.Vector3(), gE1 = new T.Vector3(), gE2 = new T.Vector3(), gPerp = new T.Vector3(), gZ = new T.Vector3(), gW = new T.Vector3();
+      const qA = new T.Quaternion(), qT = new T.Quaternion(), qG = new T.Quaternion(), eD = new T.Euler();
+      function wrapArm(arm, P, r, g) {
+        const { base, segs, k } = arm;
+        gD.copy(P).sub(base.position).normalize();
+        gE1.crossVectors(gD, Math.abs(gD.y) > 0.95 ? gZ.set(1, 0, 0) : UPV).normalize();
+        gE2.crossVectors(gD, gE1);
+        const th = (k / 8) * PI * 2;
+        gPerp.copy(gE1).multiplyScalar(C(th)).addScaledVector(gE2, S(th));
+        // điểm bắt đầu cuộn: cạnh con mồi, cách r về phía của xúc tu này
+        gD.copy(P).addScaledVector(gPerp, r).sub(base.position);
+        const Ls = gD.length();
+        gD.normalize();
+        qA.setFromUnitVectors(NEGY, gD);
+        // xoay quanh trục xúc tu để mặt giác hút (+z của đốt) hướng về con mồi
+        gZ.set(0, 0, 1).applyQuaternion(qA);
+        gW.copy(gPerp).negate().addScaledVector(gD, gPerp.dot(gD));
+        if (gW.lengthSq() > 1e-6) gW.normalize();
+        const ang = Math.atan2(gE1.crossVectors(gZ, gW).dot(gD), gZ.dot(gW));
+        qT.setFromAxisAngle(gD, ang);
+        qG.copy(qA).premultiply(qT);
+        base.quaternion.slerp(qG, g);
+        const ns = Math.round(Ls / SEG);
+        segs.forEach((j, i) => {
+          const coil = i >= ns && i > 0 ? -SEG / r : 0;
+          j.rotation.x += (coil - j.rotation.x) * g;
+          j.rotation.z *= 1 - g;
+        });
+      }
+      const api = {
+        root, size: 95, eye: 0, swimY: 0, monster: true, frame: [[0, 38, 0], [55, 34, 90]], prey: null,
         update(t, dt, m, spd, curve, camPos) {
+          ease(cur, 'g', m === 'grab' && api.prey ? 1 : 0, dt, 2.2);
+          if (m === 'grab') m = 'chase';
           const run = m === 'chase';
           const jet = run ? pulse(t, 1.8, 2) : m === 'move' ? 0.3 * pulse(t, 3, 2) : 0;
           ease(cur, 'tilt', run ? 1.05 : m === 'move' ? 0.5 : 0, dt, 2);
@@ -671,16 +705,23 @@
           mantle.scale.set(1 - jet * 0.12, 1 + jet * 0.1, 1 - jet * 0.12);
           body.position.y = 24 + 0.6 * S(t * 0.5);
           // xúc tu: sóng cuộn chạy từ gốc ra ngọn, lệch pha nhau; khi phụt nước thì khép ra sau rồi xoè
-          arms.forEach(({ base, segs, k }) => {
-            base.rotation.x = -1.0 + jet * 0.7 + cur.tilt * 0.3; // (xoè ra như váy, ngọn cuộn vào; phụt nước thì khép lại)
+          arms.forEach(({ base, segs, k, ry }) => {
+            base.rotation.set(-1.0 + jet * 0.7 + cur.tilt * 0.3, ry, 0); // (xoè ra như váy, ngọn cuộn vào; phụt nước thì khép lại)
             segs.forEach((j, i) => { j.rotation.x = (m === 'idle' ? 0.14 : 0.08) * (1 + i * 0.08) * S(t * 1.6 - i * 0.45 + k * 0.8) + 0.06 * (1 - jet * 0.8); j.rotation.z = 0.05 * S(t * 1.1 - i * 0.3 + k); });
           });
+          if (cur.g > 0.01 && api.prey) {
+            body.updateWorldMatrix(true, false);
+            body.worldToLocal(gP.copy(api.prey));
+            const r = R0 * (1 - 0.14 * (0.5 + 0.5 * S(t * 4.5))); // (siết theo nhịp)
+            arms.forEach((arm) => wrapArm(arm, gP, r, cur.g));
+          }
           // mắt nhìn theo máy quay, chớp chậm
           if (camPos) { const lp = eyeJ.worldToLocal(camPos.clone()); iris.position.x = Math.max(-0.8, Math.min(0.8, lp.x * 0.02)); iris.position.y = Math.max(-0.8, Math.min(0.8, lp.y * 0.02)); }
           const blink = pulse(t + 1, 5.5, 30);
           lid.rotation.x = -1.5 + blink * 1.35;
         },
       };
+      return api;
     }
 
     function villager() { const r = humanoid({ hipH: 0.66, thigh: 0.33, shin: 0.33, torso: 0.4, chestW: 0.14, upper: 0.24, fore: 0.22, skin: '#8c8c86' }); add(r.head, GEO.ball, r.skin, 0, 0.08, 0, 0.1, 0.11, 0.1); return r.root; }
