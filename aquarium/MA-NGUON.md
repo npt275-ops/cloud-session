@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 43978 dòng.
+Tổng: 155 tệp, 43980 dòng.
 
 ## (gốc)
 
@@ -84,7 +84,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
 | `render/buildings3d.js` | 1485 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
-| `render/deep3d.js` | 246 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
+| `render/deep3d.js` | 247 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
 | `render/hpbars3d.js` | 72 | Thanh máu … | `BK.HpBars3D` |  |
@@ -131,7 +131,7 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 |---|---|---|---|---|
 | `render/deep/beings3d.js` | 720 | Dựng hình và cử động của sinh vật đáy bể: 5 loài NPC biến dị, 3 loài quái vật biển … | `BK.DeepBeings` |  |
 | `render/deep/citadel3d.js` | 669 | Thành Vỏ Ốc Xà Cừ: phế tích trong rãnh dưới Thông Xanh … | `BK.DeepCitadel` |  |
-| `render/deep/denizens3d.js` | 588 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
+| `render/deep/denizens3d.js` | 589 | Sinh vật sống dưới đáy bể: chỗ ở, nếp sống, cảnh báo kẻ địch … | `BK.DeepDenizens` | `render/deep/beings3d.js` |
 | `render/deep/kit3d.js` | 90 | Bộ ghép khối của đáy bể: hình gốc (hộp, trụ, nón, …), ba nhóm gộp (đá, đá sáng, rong), put (đặt một khối … | `BK.DeepKit` |  |
 | `render/deep/ruins3d.js` | 439 | Hai phế tích dưới đáy bể … | `BK.DeepRuins` |  |
 | `render/deep/terrain3d.js` | 400 | Địa hình đáy bể … | `BK.DeepTerrain` |  |

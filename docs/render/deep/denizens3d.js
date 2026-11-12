@@ -22,11 +22,11 @@
   const RULES = {
     // trần của phế tích tính từ đáy rãnh: NPC biết bơi, quái vật
     capNpc: 55,
-    capMonster: 70,
+    capMonster: 30,
     // tầm phát hiện kẻ địch, tầm báo cho đồng loại
     alertNpc: 26,
     alertStone: 34,
-    alertMonster: 48,
+    alertMonster: 40,
     spread: 26,
     // kẻ địch đi xa hơn tầm phát hiện × leave thì thôi chiến (sau calm giây)
     leave: 1.8,
@@ -38,9 +38,9 @@
       keeper: [2.2, 0, 9],
       stone: [1.7, 0, 14],
       coral: [1.2, 0, 11],
-      eel: [0, 7, 24],
-      shark: [0, 8, 27],
-      octo: [0, 3, 11],
+      eel: [0, 4.5, 20],
+      shark: [0, 5, 22],
+      octo: [0, 2.2, 10],
     },
   };
   // điểm (u, v) có nằm trong elip của phế tích (tỉ lệ e) không; kéo điểm ngoài về mép elip
@@ -103,12 +103,15 @@
       return near || { u: 0, v: 0 };
     };
     // điểm bơi: bất kỳ đâu trong phế tích, cao hơn đáy rãnh lo..hi, và cao hơn khối đá bên dưới 5 (không bơi xuyên mái)
+    // (lo, hi tính từ mặt đất tại điểm đó; trần cap tính từ đáy rãnh)
     const swimPoint = (R, lo, hi, cap) => {
       const a = rnd() * Math.PI * 2,
         r = 0.85 * Math.sqrt(rnd()),
         p = { u: Math.cos(a) * R.S.A * r, v: Math.sin(a) * R.S.B * r },
+        w = R.at(p.u, p.v),
+        g = hAt(w.x, w.z),
         top = Math.max(0, ...solids(R, p.u, p.v, 3).map((b) => b.top));
-      return worldOf(R, p, R.floor + Math.min(cap, Math.max(lo + rnd() * (hi - lo), top + 5)));
+      return worldOf(R, p, Math.min(R.floor + cap, Math.max(g + lo + rnd() * (hi - lo), g + top + 3)));
     };
     const worldOf = (R, p, y) => {
       const w = R.at(p.u, p.v);
@@ -216,32 +219,33 @@
     /* ---------- Quái vật: bầy, đàn, đơn lẻ ---------- */
     function pack(kind, R, make, scale, n) {
       const leader = spawn(kind, R, make, scale, { state: 'roam', timer: 0, lead: true });
-      leader.pos.copy(swimPoint(R, 20, 40, RULES.capMonster - 4));
+      leader.pos.copy(swimPoint(R, 2, 8, RULES.capMonster - 4));
       for (let i = 1; i < n; i++) {
         const f = spawn(kind, R, make, scale, {
           state: 'follow',
           leader,
-          slot: V((i % 2 ? 1 : -1) * (6 + i * 3), (rnd() - 0.5) * 6, -8 - i * 7),
+          slot: V((i % 2 ? 1 : -1) * (2 + i * 1.2), (rnd() - 0.5) * 2, -3 - i * 2.5),
         });
         f.pos.copy(leader.pos).add(f.slot);
       }
     }
-    const eel = () => BE.eelDragon(0.62);
-    pack('eel', RU[0], eel, 1, 4);
-    pack('eel', RU[1], eel, 1, 4);
-    pack('shark', RU[1], BE.boneShark, 0.7, 3);
-    pack('shark', RU[2], BE.boneShark, 0.7, 3);
+    // quái vật: to gấp 3–4 lần NPC (dài khoảng 8–9), bơi sát đáy
+    const eel = () => BE.eelDragon(1);
+    pack('eel', RU[0], eel, 0.12, 4);
+    pack('eel', RU[1], eel, 0.12, 4);
+    pack('shark', RU[1], BE.boneShark, 0.18, 3);
+    pack('shark', RU[2], BE.boneShark, 0.18, 3);
     for (const R of [RU[0], RU[2]]) {
-      const o = spawn('octo', R, BE.abyssEye, 1, { state: 'roam', timer: 0, lead: true });
-      o.pos.copy(worldOf(R, groundPoint(R, null, 0, 6), R.floor + 2));
+      const o = spawn('octo', R, BE.abyssEye, 0.1, { state: 'roam', timer: 0, lead: true });
+      o.pos.copy(worldOf(R, groundPoint(R, null, 0, 6)));
     }
 
     /* ---------- Giới hạn chỗ: trong phế tích, dưới trần; Người Canh Hầm trong lòng hầm ---------- */
     const isMonster = (a) => a.kind === 'eel' || a.kind === 'shark' || a.kind === 'octo';
     function yRange(a, x, z) {
       const g = hAt(x, z);
-      if (a.kind === 'octo') return [g, a.R.floor + 18];
-      if (isMonster(a)) return [g + 8, a.R.floor + RULES.capMonster];
+      if (a.kind === 'octo') return [g, g + 6];
+      if (isMonster(a)) return [g + 1.2, a.R.floor + RULES.capMonster];
       if (a.swimming || a.kind === 'fin') return [g + 0.6, a.R.floor + RULES.capNpc];
       return [g, g];
     }
@@ -343,11 +347,8 @@
         }
         default: {
           // quái vật dẫn đầu (hay đơn lẻ): bơi tới một điểm ngẫu nhiên trong phế tích
-          a.route = [
-            a.kind === 'octo'
-              ? worldOf(R, groundPoint(R, null, 0, 6), R.floor + 2 + rnd() * 8)
-              : swimPoint(R, 14, 54, RULES.capMonster - 4),
-          ];
+          // (bạch tuộc bò, nổi sát mặt đất; lươn, cá mập bơi sát đáy, cao hơn mái nhà bên dưới)
+          a.route = [a.kind === 'octo' ? swimPoint(R, 0.3, 3, RULES.capMonster - 4) : swimPoint(R, 1.5, 9, RULES.capMonster - 4)];
           a.state = 'roam';
         }
       }

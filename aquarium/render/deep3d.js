@@ -191,7 +191,8 @@
       }
       wasUnder = under;
       // sinh vật đáy bể: chỉ chạy khi máy quay ở dưới nước (máy quay là người chơi: kẻ địch của chúng)
-      D.denizens.update(reduce ? 0 : Math.min(dt || 16, 100) / 1000, ts, cam, under);
+      // (luôn cử động, kể cả khi máy bật "giảm chuyển động": sinh vật là phần chơi, không phải đồ trang trí)
+      D.denizens.update(Math.min(dt || 16, 100) / 1000, t * 0.001, cam, under);
       // dưới nước góc nhìn rộng ra (62°) để thấy trọn một phế tích dài 185 trong lòng rãnh; lên mặt nước trả lại góc thường
       // (góc thường theo render/scene3d.js resize: 34°, màn hẹp 50°)
       const base = window.innerWidth < 720 ? 50 : 34,

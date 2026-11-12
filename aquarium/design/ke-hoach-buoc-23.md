@@ -37,7 +37,8 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 - Quái vật theo bầy:
   - con đầu đàn bơi tới các điểm ngẫu nhiên trong phế tích;
   - các con khác giữ chỗ phía sau, hai bên con đầu đàn, lượn lệch pha.
-- Bạch Tuộc Mắt Vực đi một mình sát đáy (không lên cao quá 18).
+- Quái vật to gấp 3–4 lần NPC (dài khoảng 8–9) và bơi sát đáy: lươn, cá mập cao hơn mặt đất 1,5–9 (và cao hơn mái nhà bên
+  dưới 3); Bạch Tuộc Mắt Vực đi một mình, bò sát mặt đất (cao hơn đất tối đa 6).
 
 ## 3. Cảnh báo kẻ địch
 
@@ -47,7 +48,7 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 - Sinh vật thấy kẻ địch trong tầm thì chuyển sang chiến. Tầm thấy:
   - NPC biết bơi và Người Canh Hầm 26;
   - Người Rêu Đá 34;
-  - quái vật 48.
+  - quái vật 40.
 - Khi chiến, sinh vật dồn tốc lực lao tới, dừng cách con mồi một tầm cắn và cắn xé (cử động chiến của từng loài). Nó báo cho
   đồng loại trong vòng 26: những con ấy cũng lao vào.
 - Tốc độ (đơn vị trên giây), xếp theo thứ tự đi / bơi / chiến (dấu "–" là loài không có kiểu đó):
@@ -59,14 +60,14 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
   | Người Canh Hầm | 2,2 | – | 9 |
   | Người Rêu Đá | 1,7 | – | 14 |
   | Người San Hô | 1,2 | – | 11 |
-  | Rồng Lươn Đen | – | 7 | 24 |
-  | Cá Mập Xương | – | 8 | 27 |
-  | Bạch Tuộc Mắt Vực | – | 3 | 11 |
+  | Rồng Lươn Đen | – | 4,5 | 20 |
+  | Cá Mập Xương | – | 5 | 22 |
+  | Bạch Tuộc Mắt Vực | – | 2,2 | 10 |
 
   Người Rêu Đá, Người San Hô không bơi nhưng chạy nhanh. Người Ốc đang chiến mà con mồi ở cao thì bơi lên.
 - Giới hạn chỗ (sinh vật không ra khỏi phế tích, không lên mặt nước):
   - mỗi sinh vật chỉ ở trong elip của phế tích mình (0,9 với NPC, 0,92 với quái vật);
-  - NPC biết bơi không lên cao quá đáy rãnh + 55, quái vật quá đáy rãnh + 70;
+  - NPC biết bơi không lên cao quá đáy rãnh + 55, quái vật quá đáy rãnh + 30;
   - Người Canh Hầm chỉ ở trong lòng hầm của mình.
 - Kẻ địch ra khỏi phế tích (hay lên cao hơn trần + 25) thì sinh vật dừng ở mép. Kẻ địch xa hơn 1,8 lần tầm thấy quá 3 giây
   thì sinh vật thôi chiến và về chỗ: Người Ốc, Người Vây về nhà; người đá nằm co lại.
@@ -82,6 +83,8 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
 
 - Các bộ phận đứng yên của mỗi sinh vật được gộp lưới theo khớp và vật liệu (`bake`). Sinh vật trong game không có đèn riêng.
 - Chỉ chạy và vẽ khi máy quay ở dưới nước. Phế tích xa máy quay hơn 260 thì không chạy.
+- Sinh vật luôn cử động, kể cả khi máy bật "giảm chuyển động" (Windows: tắt hiệu ứng hoạt hình). Trước đây game coi sinh vật
+  là đồ trang trí nên dừng hết trong chế độ đó: người chơi thấy quái vật, NPC đứng đơ.
 - Người Ốc, Người Vây đang ở trong nhà thì không vẽ.
 
 ## 5. Số đo
@@ -93,7 +96,7 @@ design/sinh-vat-day-be.html) vào đáy bể, mỗi loài một nếp sống, c�
   - sinh vật chuyển sang chiến ngay;
   - Người Ốc, Người Vây tới sát máy quay (0,4–0,7) trong 8 giây;
   - đàn cá mập ở Đô Thị Đá tới cách 4,4.
-- Máy quay lên cao trên mặt nước: mọi sinh vật thôi chiến. Không con nào lên cao quá 48 trên đáy rãnh.
+- Máy quay lên cao trên mặt nước: mọi sinh vật thôi chiến. Không con nào lên cao quá trần.
 - 93 bài kiểm thử đạt.
 
 ## 6. Còn thiếu
