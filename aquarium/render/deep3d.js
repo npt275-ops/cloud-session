@@ -459,7 +459,7 @@
       for (let i = 3; i >= 1; i--) p.push([-TUN_W, (TUN_WALL * i) / 3, -1, 0]);
       return p;
     })();
-    const GLOWS = ['#6ff6ff', '#8dffb0', '#c69bff', '#ffc46b'];
+    const GLOWS = ['#6ff6ff', '#8dffb0']; // (bước 21: hai màu lam, lục)
     const portals = [];
     const tri = (G, a, b, c, ca, cb, cc2) => { G.pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); for (const k of [ca, cb, cc2]) G.col.push(k.r, k.g, k.b); };
     for (const TN of TUNNELS) {
@@ -483,20 +483,21 @@
       for (let s = 1.5; s < span * TUN_RC - 1; s += 3.2) { const th = TN.a + s / TUN_RC, p = at(th, 0, 0); put(TG, BOX(), hash(s * 7 + TN.k) < 0.5 ? '#a49a88' : '#958b7a', p.x, p.y, p.z, 12.5, 0.3, 2.9, Math.atan2(-Math.sin(th), Math.cos(th))); }
       // đá phát sáng: cụm ở chân hai tường mỗi 9 bước, đá treo trên trần mỗi 18 bước
       let n = 0;
-      for (let s = 6; s < span * TUN_RC - 4; s += 9, n++) for (const q of [-1, 1]) {
-        const th = TN.a + s / TUN_RC, col = GLOWS[(n + (q > 0 ? 1 : 3) + TN.k) % 4], p = at(th, q * (TUN_W - 1.3), 0), ry = Math.atan2(-Math.sin(th), Math.cos(th));
+      // (bước 21: cụm đá mỗi 16 bước, ánh toả hẹp: vùng sáng quanh cụm đá xen vùng tối rõ rệt)
+      for (let s = 7; s < span * TUN_RC - 4; s += 16, n++) for (const q of [-1, 1]) {
+        const th = TN.a + s / TUN_RC, col = GLOWS[(n + (q > 0 ? 1 : 0) + TN.k) % 2], p = at(th, q * (TUN_W - 1.3), 0), ry = Math.atan2(-Math.sin(th), Math.cos(th));
         put(groups.glow, GEM(), col, p.x, p.y, p.z, 0.9, 2.4, 0.9, ry, 0, q * 0.25);
         put(groups.glow, GEM(), col, p.x + Math.cos(th + 0.02) * 0.6, p.y, p.z + Math.sin(th + 0.02) * 0.6, 0.6, 1.5, 0.6, ry + 1, 0, -q * 0.4);
         put(groups.glow, GEM(), col, p.x - Math.sin(th) * 1.2, p.y, p.z + Math.cos(th) * 1.2, 0.5, 1.1, 0.5, ry + 2, 0.3, q * 0.5);
-        lights.push({ p: at(th, q * (TUN_W - 1.5), 2), c: new THREE.Color(col), I: 0.75 });
-        if (q > 0 && n % 2 === 0) { const t2 = th + 4.5 / TUN_RC, p2 = at(t2, 0, TUN_WALL + TUN_W - 0.4), c2c = GLOWS[(n + 2 + TN.k) % 4]; put(groups.glow, GEM(), c2c, p2.x, p2.y, p2.z, 1.1, -3.2, 1.1, ry); lights.push({ p: at(t2, 0, TUN_WALL + TUN_W - 3.5), c: new THREE.Color(c2c), I: 0.6 }); }
+        lights.push({ p: at(th, q * (TUN_W - 1.5), 2), c: new THREE.Color(col), I: 1.15 });
+        if (q > 0 && n % 2 === 0) { const t2 = th + 0.5 / TUN_RC, p2 = at(t2, 0, TUN_WALL + TUN_W - 0.4), c2c = GLOWS[(n + 1 + TN.k) % 2]; put(groups.glow, GEM(), c2c, p2.x, p2.y, p2.z, 1.1, -3.2, 1.1, ry); lights.push({ p: at(t2, 0, TUN_WALL + TUN_W - 3.5), c: new THREE.Color(c2c), I: 0.6 }); }
       }
       // ô chạm khắc hai bên tường: khung nổi, hình thù lạ bên trong; ô thứ ba có nét khắc tự sáng
       let pn = 0;
       for (let s = 10.5; s < span * TUN_RC - 8; s += 12) for (const q of [-1, 1]) {
-        const th = TN.a + s / TUN_RC, tx = -Math.sin(th), tz = Math.cos(th), ry = Math.atan2(-tz, tx), wall = at(th, q * (TUN_W - 0.55), 0), yc = 7.6, kind = (pn + TN.k * 2 + (q > 0 ? 3 : 0)) % 6, lit = pn % 3 === 0; pn++;
+        const th = TN.a + s / TUN_RC, tx = -Math.sin(th), tz = Math.cos(th), ry = Math.atan2(-tz, tx), wall = at(th, q * (TUN_W - 0.55), 0), yc = 7.6, kind = (pn + TN.k * 2 + (q > 0 ? 3 : 0)) % 6, lit = pn % 4 === 0; pn++;
         const el = (G, geo, color, a, b, sx, sy, sz, rz, depth) => { const dd = (depth || 0) * q; put(G, geo, color, wall.x + tx * a - Math.cos(th) * dd, wall.y + yc + b, wall.z + tz * a - Math.sin(th) * dd, sx, sy, sz, ry, 0, rz || 0); };
-        const C = '#cfc3a8', K = (a, b, sx, sy, sz, rz, geo) => { el(TG, geo || BOX(), C, a, b, sx, sy, sz || 0.5, rz); if (lit) el(groups.glow, geo || BOX(), GLOWS[(pn + TN.k) % 4], a, b, sx * 0.55, sy * 0.55, 0.2, rz, 0.32); };
+        const C = '#cfc3a8', K = (a, b, sx, sy, sz, rz, geo) => { el(TG, geo || BOX(), C, a, b, sx, sy, sz || 0.5, rz); if (lit) el(groups.glow, geo || BOX(), GLOWS[(pn + TN.k) % 2], a, b, sx * 0.55, sy * 0.55, 0.2, rz, 0.32); };
         // nền ô tối, khung nổi
         el(TG, BOX(), '#3e3630', 0, -4.4, 9.6, 8.8, 0.25, 0, -0.1);
         el(TG, BOX(), '#b5a98f', 0, 4.4, 10, 0.5, 0.6); el(TG, BOX(), '#b5a98f', 0, -4.6, 10, 0.5, 0.6); el(TG, BOX(), '#b5a98f', -5, -4.6, 0.5, 9.5, 0.6); el(TG, BOX(), '#b5a98f', 5, -4.6, 0.5, 9.5, 0.6);
@@ -508,17 +509,17 @@
         else { let a = -3.6, b = -3; for (let i = 0; i < 7; i++) { const h = i % 2 ? 1.6 : 0; K(a + 0.5, b + h, 1.2, 0.3, 0.5); K(a + 1.1, b + 0.8, 0.3, 1.6, 0.5); a += 1.1; b += 0.6; } for (const [a2, b2] of [[-2.6, 2.6], [2.6, 2.6], [2.8, -2.4]]) for (let i = 0; i < 4; i++) K(a2, b2, 0.3, 1.4, 0.5, (i * Math.PI) / 4); } // mê cung, sao
       }
       // ánh đá sáng tính sẵn vào màu lòng hầm (từ v0): giảm theo khoảng cách, mặt quay về phía đá sáng hơn (mặt khắc nổi khối)
-      const P = TG.pos, Cc = TG.col, AMB = [0.1, 0.11, 0.14], nv = new THREE.Vector3(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
+      const P = TG.pos, Cc = TG.col, AMB = [0.035, 0.04, 0.05], nv = new THREE.Vector3(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
       for (let t = v0; t < P.length / 3; t += 3) {
         e1.set(P[t * 3 + 3] - P[t * 3], P[t * 3 + 4] - P[t * 3 + 1], P[t * 3 + 5] - P[t * 3 + 2]); e2.set(P[t * 3 + 6] - P[t * 3], P[t * 3 + 7] - P[t * 3 + 1], P[t * 3 + 8] - P[t * 3 + 2]); nv.crossVectors(e1, e2).normalize();
         for (let v = t; v < t + 3; v++) {
           const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2]; let r = AMB[0], g = AMB[1], b = AMB[2];
           for (const L of lights) {
             const dx = L.p.x - x, dy = L.p.y - y, dz = L.p.z - z, d2 = dx * dx + dy * dy + dz * dz; if (d2 > 1600) continue;
-            const f = (L.I / (1 + d2 / 30)) * (0.3 + 0.7 * Math.abs(nv.x * dx + nv.y * dy + nv.z * dz) / Math.sqrt(d2 + 1e-6));
+            const f = (L.I / (1 + d2 / 6.5)) * (0.3 + 0.7 * Math.abs(nv.x * dx + nv.y * dy + nv.z * dz) / Math.sqrt(d2 + 1e-6));
             r += L.c.r * f; g += L.c.g * f; b += L.c.b * f;
           }
-          Cc[v * 3] *= Math.min(r, 1.25); Cc[v * 3 + 1] *= Math.min(g, 1.25); Cc[v * 3 + 2] *= Math.min(b, 1.25);
+          Cc[v * 3] *= Math.min(r, 1.2); Cc[v * 3 + 1] *= Math.min(g, 1.2); Cc[v * 3 + 2] *= Math.min(b, 1.2);
         }
       }
       // hai cửa hầm ở hai đầu
@@ -551,6 +552,13 @@
         put(st, BOX(), T.door, c.x, TUN_FLOOR, c.z, 7.8, 14, 0.7, ry); put(gl, BOX(), T.glow, c.x, TUN_FLOOR + 6.5, c.z, 0.4, 7, 0.8, ry); put(st, BOX(), T.trim, c.x, TUN_FLOOR + 13.6, c.z, 7.9, 0.6, 0.85, ry);
       }
       for (let i = 0; i < 3; i++) add(st, BOX(), T.frame, 0, -0.6, 2.5 + i * 2, 21 - i * 2, 1.6 - i * 0.5, 2);
+      // rong trước cửa hầm che nửa lối vào (bước 21): đám rong cao hai bên và lấn vào giữa, sợi rong rủ từ đà cửa xuống
+      const wd = groups.weed, WC = ['#3f8a52', '#5aa35a', '#2f6e44'];
+      for (let i = 0; i < 16; i++) {
+        const q = i % 2 ? 1 : -1, lat = q * (3 + rnd() * 10) - (i % 5 === 0 ? q * 6 : 0), d = 1.8 + rnd() * 6, h = 9 + rnd() * 10;
+        add(wd, CONE(4), WC[i % 3], lat, -0.4, d, 0.9 + rnd() * 0.7, h, 0.9 + rnd() * 0.7, rnd() * 3);
+      }
+      for (let i = 0; i < 9; i++) { const lat = -9 + rnd() * 11, len = 4 + rnd() * 7; add(wd, BOX(), WC[i % 3], lat, 24.6, 0.9 + rnd() * 0.6, 0.5 + rnd() * 0.5, -len, 0.25, rnd() * 3); }
       for (const q of [-1, 1]) { add(st, CYL(8), T.trim, q * 14, -0.5, 6, 1.2, 4.5, 1.2); add(st, CYL(8), T.frame, q * 14, 4, 6, 1.8, 0.8, 1.8); add(gl, GEM(), T.glow, q * 14, 4.8, 6, 1, 1.6, 1); }
       // đường lát đá có đèn từ cửa vào phế tích (tới gần phế tích: u = ROAD_U, |v| = 22, Vườn Treo 42)
       const F = frame(S), e = F.at(ROAD_U, side * (S.k === 1 ? 42 : 22)), st0 = W(0, 0, 9), dx = e.x - st0.x, dz = e.z - st0.z, Lr = Math.hypot(dx, dz), ryR = Math.atan2(dz, dx) * -1;

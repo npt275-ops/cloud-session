@@ -39,3 +39,12 @@ trên hai bên tường; lối đi hình vòng cung, to và sâu; đưa máy qua
 ## 5. Hạn chế
 
 - Chưa có cách đi bộ dọc hầm bằng phím riêng; xoay, kéo, bay bằng phím như thường (dễ ra khỏi lòng hầm).
+
+## 6. Bớt đá sáng, hầm tối hơn, rong che cửa (người chơi yêu cầu)
+
+- Đá phát sáng: cụm ba viên mỗi 16 bước ở hai bên tường (trước 9), đá treo trần mỗi 32 bước (trước 18); còn hai màu lam, lục
+  (trước bốn). Ô khắc tự sáng: một ô trong bốn (trước một trong ba).
+- Ánh trong hầm: nền rất tối (0,035–0,05 thay 0,10–0,14), ánh mỗi cụm đá toả hẹp (giảm một nửa ở khoảng 2,5 bước thay 5,5):
+  quanh cụm đá sáng rõ, khoảng giữa hai cụm chìm trong tối; đi vào thấy vùng sáng vùng tối xen nhau rõ rệt.
+- Trước mỗi cửa hầm: 16 cây rong cao 9–19 hai bên và lấn vào giữa lối, 9 sợi rong rủ từ đà cửa xuống; che nửa kín nửa hở,
+  đung đưa theo nước.
