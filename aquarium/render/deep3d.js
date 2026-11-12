@@ -18,8 +18,12 @@
   const BK = root.BK || (root.BK = {});
   function create(K) {
     const { THREE, scene, lands3d, sea3d, clamp, reduce, glowTex } = K;
-    const SEA_Y = sea3d.SEA_Y, FLOOR = sea3d.FLOOR_Y, EDGE = sea3d.EDGE_R - 0.3, lands = lands3d.lands;
-    const TOP_MAX = SEA_Y - 3.2; // không gì ở đáy cao quá chừng này (đáy sóng sâu nhất khoảng -3)
+    const SEA_Y = sea3d.SEA_Y, FLOOR = sea3d.FLOOR_Y, lands = lands3d.lands;
+    // khối đất phủ tới sát vách kính, ngoài vách nước (sea3d.js EDGE_R) một chút: nhìn từ ngoài bể thấy mặt cắt đất đá trước,
+    // không thấy nước phủ lên đất
+    const EDGE = sea3d.EDGE_R + 0.15;
+    const TOP_MAX = SEA_Y - 3.2; // ngoài chân đảo không gì ở đáy cao quá chừng này (đáy sóng sâu nhất khoảng -3)
+    const ISLE_TOP = -2.7;       // đỉnh núi trụ và mặt trên khối đất đỡ đảo: sát mặt dưới đảo (vách đảo xuống tới -2,62)
     const deep = new THREE.Group(); deep.name = 'đáy bể'; scene.add(deep);
     const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
@@ -31,11 +35,12 @@
     // ba rãnh có phế tích: dưới đảo 1, 3, 5, tâm cách giữa bể 130; trục dài theo bán kính (95), ngang 60
     const SITES = [1, 3, 5].map((j, k) => { const a = lands[j].ang, c = polar(a, 130); return { k, a, x: c.x, z: c.z, ux: Math.cos(a), uz: Math.sin(a), A: 95, B: 60 }; });
     const local = (S, x, z) => { const dx = x - S.x, dz = z - S.z; return { u: dx * S.ux + dz * S.uz, v: -dx * S.uz + dz * S.ux }; };
-    // núi: { x, z, R bán kính chân, top đỉnh, pl phần đỉnh bằng, p độ nhọn }
+    // núi: { x, z, R bán kính chân, top đỉnh, pl phần đỉnh bằng, p độ nhọn }; núi trụ đỡ đảo thêm isle: đỉnh bằng đúng theo mép
+    // đảo đó (L.rOf, rộng hơn 3%), sườn đổ xuống đáy ở cách tâm đảo 100; đỉnh không gồ ghề (đảo đặt kín lên núi, không hở nước)
     const PEAKS = [];
-    for (const j of [0, 2, 4]) { // núi trụ đỡ đảo: đỉnh bằng ngay dưới đáy đảo
+    for (const j of [0, 2, 4]) { // núi trụ đỡ đảo: đỉnh bằng ngay dưới đáy đảo (khối đá nón ngược dưới đảo nằm gọn trong núi)
       const a = lands[j].ang, c = lands[j].center;
-      PEAKS.push({ x: c.x, z: c.z, R: 92, top: TOP_MAX - 0.3, pl: 0.56, p: 1.15 });
+      PEAKS.push({ x: c.x, z: c.z, R: 100, top: ISLE_TOP, p: 1.15, isle: lands[j] });
       PEAKS.push(Object.assign(polar(a, 222), { R: 30, top: -15, pl: 0, p: 1.6 })); // mỏm sát vách kính
       for (const s of [-1, 1]) PEAKS.push(Object.assign(polar(a + s * 0.22, 112), { R: 30, top: -34, pl: 0, p: 1.7 }));
       PEAKS.push(Object.assign(polar(a, 44), { R: 34, top: -40, pl: 0, p: 1.5 }));
@@ -45,16 +50,20 @@
     function hAt(x, z) {
       let h = FLOOR + 24 + fbm(x, z) * 8; // nền đáy: gò đồi thấp
       for (const P of PEAKS) {
-        const d = Math.hypot(x - P.x, z - P.z) / P.R; if (d >= 1) continue;
-        const t = d <= P.pl ? 0 : (d - P.pl) / (1 - P.pl), f = Math.pow(1 - t, P.p);
-        h = Math.max(h, FLOOR + (P.top - FLOOR) * f * (0.88 + 0.12 * ridge(x, z)) + (t > 0 ? fbm(x * 1.9, z * 1.9) * 5 * f : 0));
+        const dd = Math.hypot(x - P.x, z - P.z); if (dd >= P.R) continue;
+        let t;
+        if (P.isle) { const r0 = P.isle.rOf(Math.atan2(z - P.z, x - P.x)) * 1.03; t = dd <= r0 ? 0 : (dd - r0) / (P.R - r0); }
+        else { const d = dd / P.R; t = d <= P.pl ? 0 : (d - P.pl) / (1 - P.pl); }
+        const f = Math.pow(1 - t, P.p), rough = 1 - 0.12 * (1 - ridge(x, z)) * Math.min(1, t * 4); // (đỉnh bằng không gồ ghề)
+        h = Math.max(h, FLOOR + (P.top - FLOOR) * f * rough + (t > 0 ? fbm(x * 1.9, z * 1.9) * 5 * f * Math.min(1, t * 4) : 0));
       }
-      for (const S of SITES) { // rãnh: đáy phẳng sát kính, vách dựng; một khe hẹp chạy tiếp dọc trục ra tới vách kính và vào giữa
+      for (const S of SITES) { // rãnh: đáy phẳng sát kính, vách dựng; một khe hẹp chạy tiếp dọc trục vào phía giữa bể
         const L = local(S, x, z), e = Math.hypot(L.u / S.A, L.v / S.B);
         h = Math.min(h, FLOOR + 1.4 + (e < 1 ? 0 : Math.pow(e - 1, 0.7) * 170) + fbm(x * 3, z * 3) * 0.5);
-        h = Math.min(h, FLOOR + 3 + Math.max(0, Math.abs(L.v) - 5) * 7 + Math.max(0, -L.u - S.A - 50) * 0.5);
+        // (phía vách kính khe nông dần và khép lại trước vách: nhìn từ ngoài bể chỉ thấy khối đất liền)
+        h = Math.min(h, FLOOR + 3 + Math.max(0, Math.abs(L.v) - 5) * 7 + Math.max(0, -L.u - S.A - 50) * 0.5 + Math.max(0, L.u - S.A + 5) * 6);
       }
-      return clamp(h, FLOOR + 0.8, TOP_MAX);
+      return clamp(h, FLOOR + 0.8, ISLE_TOP);
     }
 
     const tmpC = new THREE.Color(), deepC = new THREE.Color('#0f4a63');
@@ -77,7 +86,61 @@
       for (let j = 0; j < NS; j++) idx.push(0, id(1, j + 1), id(1, j));
       for (let k = 1; k < NR; k++) for (let j = 0; j < NS; j++) { const o = k % 2; idx.push(id(k, j), id(k + 1, j + 1 - o), id(k + 1, j - o), id(k, j), id(k, j + 1), id(k + 1, j + 1 - o)); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, matOf({ roughness: 0.97 })); m.name = 'đáy'; deep.add(noPick(m));
+      const m = new THREE.Mesh(g, matOf({ roughness: 0.97, side: THREE.DoubleSide })); m.name = 'đáy'; deep.add(noPick(m));
+      // mặt cắt khối đất sát vách kính: từ mép đất (đúng các đỉnh vòng ngoài) xuống đáy kính, tầng đất đá xen nhau; tấm đáy kín
+      // bên dưới. Đất, núi là một khối liền: nhìn từ ngoài bể không nhìn xuyên qua được.
+      const sp = [], sc = [], si = [], STRATA = ['#5a4a3b', '#6d5a45', '#4b4038', '#7a6650', '#55493e'].map((h) => new THREE.Color(h)), NL = 26;
+      for (let j = 0; j < NS; j++) {
+        const a = (j / NS) * Math.PI * 2, x = Math.cos(a) * EDGE, z = Math.sin(a) * EDGE, top = pos[(1 + (NR - 1) * NS + j) * 3 + 1];
+        for (let l = 0; l <= NL; l++) {
+          const y = top - (top - FLOOR) * (l / NL); sp.push(x, y, z);
+          const band = Math.floor((y - FLOOR + Math.sin(a * 7) * 3 + Math.sin(a * 23) * 1.2) / 5.5);
+          tmpC.copy(STRATA[((band % 5) + 5) % 5]).multiplyScalar(0.9 + hash(j * 13 + l) * 0.16);
+          if (l === 0) tmpC.lerp(new THREE.Color('#5c7652'), 0.35); sc.push(tmpC.r, tmpC.g, tmpC.b);
+        }
+      }
+      const sid = (j, l) => (((j % NS) + NS) % NS) * (NL + 1) + l;
+      for (let j = 0; j < NS; j++) for (let l = 0; l < NL; l++) si.push(sid(j, l), sid(j + 1, l), sid(j, l + 1), sid(j + 1, l), sid(j + 1, l + 1), sid(j, l + 1));
+      const cen = sp.length / 3; sp.push(0, FLOOR + 0.2, 0); sc.push(0.28, 0.24, 0.2);
+      const rimFloor = sp.length / 3;
+      for (let j = 0; j < NS; j++) { const a = (j / NS) * Math.PI * 2; sp.push(Math.cos(a) * EDGE, FLOOR + 0.2, Math.sin(a) * EDGE); sc.push(0.3, 0.25, 0.21); }
+      for (let j = 0; j < NS; j++) si.push(cen, rimFloor + j, rimFloor + ((j + 1) % NS));
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3)); sg.setIndex(si); sg.computeVertexNormals();
+      const sm = new THREE.Mesh(sg, matOf({ roughness: 1, side: THREE.DoubleSide, emissiveIntensity: 0.18 })); sm.name = 'mặt cắt đất'; deep.add(noPick(sm));
+    }
+
+    /* =============== Khối đất đỡ ba đảo nằm trên rãnh (Thông Xanh, Tuyết Trắng, Cát Hồng) ===============
+     * Một dải đất đá liền chạy theo vòng đảo từ núi trụ bên này sang núi trụ bên kia, đi qua ngay dưới đảo: mặt trên sát mặt
+     * dưới đảo (-2,7), võng xuống giữa hai đảo; dưới đảo dày tới -44 (bao trọn khối đá nón ngược dưới đảo), hai cánh đổ chéo
+     * xuống cắm vào sườn hai núi. Bên dưới vẫn hở: rãnh và phế tích nằm dưới vòm đất này. */
+    const SAD_R = lands3d.RING, SPAN = Math.PI / 3;
+    const sadW = (s) => { const q = Math.abs(s); return q < 0.42 ? 74 : 74 - (q - 0.42) / 0.58 * 26; };
+    const sadTop = (s) => { const q = Math.abs(s); return ISLE_TOP - 6 * Math.max(0, Math.sin(clamp((q - 0.42) / 0.5, 0, 1) * Math.PI)); };
+    const sadBot = (s) => { const q = Math.abs(s), k = clamp((q - 0.3) / 0.15, 0, 1), arm = -36 - 60 * Math.pow(clamp((q - 0.38) / 0.62, 0, 1), 1.3); return -44 + (arm + 44) * k * k * (3 - 2 * k); };
+    const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
+    // dưới khối đất đỡ đảo? trả cao độ mặt dưới khối đất (bọt khí tan ở đó), không thì null
+    const ceilAt = (x, z) => { const r = Math.hypot(x, z), a = Math.atan2(z, x); for (const S of SITES) { const s = angDiff(a, S.a) / SPAN; if (Math.abs(s) < 1 && Math.abs(r - SAD_R) < sadW(s)) return sadBot(s); } return null; };
+    {
+      const NSs = 96, NT = 44, pos = [], col = [], idx = [];
+      const ROCK = new THREE.Color('#6a6156'), DARK = new THREE.Color('#47403a'), MOSS = new THREE.Color('#5c7652');
+      for (const S of SITES) {
+        const base = pos.length / 3;
+        for (let i = 0; i <= NSs; i++) {
+          const s = -1 + (2 * i) / NSs, a = S.a + s * SPAN, nx = Math.cos(a), nz = Math.sin(a), W = sadW(s), top = sadTop(s), bot = sadBot(s), yc = (top + bot) / 2, hh = (top - bot) / 2;
+          for (let k = 0; k < NT; k++) {
+            const th = (k / NT) * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+            let t = Math.sign(c) * Math.pow(Math.abs(c), 0.35) * W, y = yc + Math.sign(sn) * Math.pow(Math.abs(sn), 0.45) * hh;
+            const wx = nx * (SAD_R + t), wz = nz * (SAD_R + t), onTop = sn > 0.2;
+            if (!onTop) { const n = fbm(wx * 1.6, wz * 1.6 + y * 0.3); t += n * 4 * Math.sign(c); y += n * 3 * (sn < -0.2 ? 1 : 0.4); } else y = Math.min(y, top);
+            const r = SAD_R + t; pos.push(nx * r, y, nz * r);
+            tmpC.copy(onTop ? MOSS : ROCK).lerp(DARK, onTop ? 0.1 : clamp(0.3 + fbm(wx * 3, y) * 0.5, 0, 0.8)).multiplyScalar(0.9 + hash(i * 57 + k + S.k * 7) * 0.15); depthTint(tmpC, y);
+            col.push(tmpC.r, tmpC.g, tmpC.b);
+          }
+        }
+        for (let i = 0; i < NSs; i++) for (let k = 0; k < NT; k++) { const a0 = base + i * NT + k, a1 = base + i * NT + ((k + 1) % NT), b0 = a0 + NT, b1 = a1 + NT; idx.push(a0, b0, a1, a1, b0, b1); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, matOf({ roughness: 0.96, side: THREE.DoubleSide })); m.name = 'khối đất đỡ đảo'; deep.add(noPick(m));
     }
 
     /* =============== Bộ ghép khối (gộp mọi khối của phế tích vào vài lưới) =============== */
@@ -260,8 +323,8 @@
     const NB = 360, bpos = new Float32Array(NB * 3), bsp = [], vents = [];
     for (const S of SITES) for (let k = 0; k < 4; k++) { const a = hash(S.k * 9 + k) * Math.PI * 2, r = 10 + hash(S.k * 5 + k) * 50; vents.push({ x: S.x + Math.cos(a) * r, z: S.z + Math.sin(a) * r * 0.6 }); }
     for (let k = 0; k < 6; k++) { const p = polar(k * 1.05 + 0.3, 60 + hash(k) * 150); vents.push(p); }
-    for (const v of vents) v.y = hAt(v.x, v.z);
-    for (let i = 0; i < NB; i++) { const v = vents[i % vents.length]; bpos[i * 3] = v.x + (hash(i) - 0.5) * 3; bpos[i * 3 + 1] = v.y + hash(i * 7) * (TOP_MAX - v.y); bpos[i * 3 + 2] = v.z + (hash(i * 3) - 0.5) * 3; bsp.push(3 + hash(i * 11) * 5); }
+    for (const v of vents) { v.y = hAt(v.x, v.z); const c = ceilAt(v.x, v.z); v.top = c == null ? TOP_MAX + 2.4 : c - 0.5; } // (dưới khối đất đỡ đảo: bọt tan ở mặt dưới khối đất)
+    for (let i = 0; i < NB; i++) { const v = vents[i % vents.length]; bpos[i * 3] = v.x + (hash(i) - 0.5) * 3; bpos[i * 3 + 1] = v.y + hash(i * 7) * (v.top - v.y); bpos[i * 3 + 2] = v.z + (hash(i * 3) - 0.5) * 3; bsp.push(3 + hash(i * 11) * 5); }
     const bgeo = new THREE.BufferGeometry(); bgeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3));
     const bubbles = new THREE.Points(bgeo, new THREE.PointsMaterial({ color: '#cfefff', size: 1.1, map: glowTex, transparent: true, opacity: 0.7, depthWrite: false }));
     bubbles.raycast = () => {}; bubbles.frustumCulled = false; deep.add(bubbles);
@@ -275,7 +338,7 @@
       glowMat.color.setScalar(0.8 + 0.2 * Math.sin(ts * 1.3));
       if (!reduce) {
         const s = Math.min(dt || 16, 100) / 1000;
-        for (let i = 0; i < NB; i++) { let y = bpos[i * 3 + 1] + bsp[i] * s; if (y > TOP_MAX + 2.4) { const v = vents[i % vents.length]; y = v.y; bpos[i * 3] = v.x + (hash(i + ts) - 0.5) * 3; bpos[i * 3 + 2] = v.z + (hash(i * 3 + ts) - 0.5) * 3; } bpos[i * 3 + 1] = y; bpos[i * 3] += Math.sin(ts * 2 + i) * 0.02; }
+        for (let i = 0; i < NB; i++) { const v = vents[i % vents.length]; let y = bpos[i * 3 + 1] + bsp[i] * s; if (y > v.top) { y = v.y; bpos[i * 3] = v.x + (hash(i + ts) - 0.5) * 3; bpos[i * 3 + 2] = v.z + (hash(i * 3 + ts) - 0.5) * 3; } bpos[i * 3 + 1] = y; bpos[i * 3] += Math.sin(ts * 2 + i) * 0.02; }
         bgeo.attributes.position.needsUpdate = true;
       }
       // máy quay dưới mặt nước: sương nước sâu, càng xuống càng tối
@@ -293,8 +356,8 @@
       if (Math.abs(cam.fov - want) > 0.05) { cam.fov += (want - cam.fov) * Math.min(1, (dt || 16) / 400); if (Math.abs(cam.fov - want) < 0.05) cam.fov = want; cam.updateProjectionMatrix(); }
     }
     // các phế tích cho nút "Đáy bể": tên, tâm, cao độ để máy quay nhìn vào
-    // máy quay: trên lòng rãnh phía vách kính (cách tâm 92 theo trục, cao -22), nhìn chếch vào phế tích
-    const sites = SITES.map((S) => { const y = hAt(S.x, S.z) + 12; return { name: S.name, x: S.x, z: S.z, y, ux: S.ux, uz: S.uz, cam: new THREE.Vector3(S.x + S.ux * 92, -22, S.z + S.uz * 92) }; });
+    // máy quay: trên lòng rãnh phía vách kính (cách tâm 92 theo trục, sâu 56: dưới khối đất đỡ đảo), nhìn chếch vào phế tích
+    const sites = SITES.map((S) => { const y = hAt(S.x, S.z) + 12; return { name: S.name, x: S.x, z: S.z, y, ux: S.ux, uz: S.uz, cam: new THREE.Vector3(S.x + S.ux * 92, -56, S.z + S.uz * 92) }; });
     const out = { animate, sites, heightAt: hAt, group: deep, FLOOR };
     return out;
   }
