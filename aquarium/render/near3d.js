@@ -149,7 +149,8 @@
     const lamp = new THREE.PointLight('#ffd9a8', 0, 7, 1.6);
     scene.add(lamp);
 
-    const st = { on: false, i: -1, cx: 1e9, cz: 1e9, fog0: null, k: 0 };
+    const st = { on: false, i: -1, cx: 1e9, cz: 1e9, fog0: null, k: 0, onAt: 0 };
+    const FADE = 1200; // (mili giây) sương, đèn bật dần lúc mở mắt, theo giờ thật: máy nhanh hay chậm cũng như nhau
     const M = new THREE.Matrix4(),
       Q = new THREE.Quaternion(),
       Sv = new THREE.Vector3(),
@@ -252,6 +253,7 @@
         st.on = true;
         st.fog0 = fog ? { near: fog.near, far: fog.far } : null;
         st.cx = st.cz = 1e9;
+        st.onAt = performance.now();
       }
       if (!on) {
         if (!st.on) return;
@@ -267,7 +269,7 @@
       }
       const L = G.lands[i];
       if (!L) return;
-      st.k = Math.min(1, st.k + 0.03); // (bật dần lúc mở mắt)
+      st.k = Math.min(1, (performance.now() - st.onAt) / FADE); // (bật dần lúc mở mắt)
       // sương kéo gần dần (máy quay dưới nước thì render/deep3d.js lo sương)
       const underSea = G.sea3d && G.camera.position.y < G.sea3d.SEA_Y + G.sea3d.seaDy;
       if (fog && st.fog0 && !underSea) {
