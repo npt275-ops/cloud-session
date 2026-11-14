@@ -20,10 +20,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
 .glass { background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
 body.day { --title: #13233a; --title-dim: rgba(19, 35, 58, 0.78); --glass: rgba(14, 22, 38, 0.6); }
-.brand, .clock { color: var(--title); transition: color 1.2s; pointer-events: none; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35); }
-body.day .brand, body.day .clock { text-shadow: 0 1px 12px rgba(255, 255, 255, 0.55); }
-.brand { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 18px); }
-.brand h1 { margin: 0; font: 700 clamp(30px, 4.4vw, 54px)/0.95 var(--font-display); letter-spacing: -0.01em; }
+.clock { color: var(--title); transition: color 1.2s; pointer-events: none; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35); }
+body.day .clock { text-shadow: 0 1px 12px rgba(255, 255, 255, 0.55); }
 .clock { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 20px); text-align: right; }
 .clock b { display: block; font: 500 clamp(26px, 3vw, 38px)/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .clock span { font-size: 13px; color: var(--title-dim); letter-spacing: 0.06em; text-transform: uppercase; }
@@ -66,10 +64,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .news b { color: var(--ink); font-weight: 600; }
 #fps { position: fixed; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); padding: 5px 10px; border-radius: 10px; font-size: 12px; }
 .err { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; }
-@media (max-width: 720px) { .brand h1 { font-size: 28px; } .lands { top: calc(env(safe-area-inset-top, 0px) + 64px); } .bar { gap: 0; } .bar button { padding: 8px 7px; } .bar .sep { margin: 6px 1px; } .bar .era span { min-width: 0; font-size: 11.5px; } .news { font-size: 11px; padding: 6px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); } }
+@media (max-width: 720px) { .lands { top: calc(env(safe-area-inset-top, 0px) + 64px); } .bar { gap: 0; } .bar button { padding: 8px 7px; } .bar .sep { margin: 6px 1px; } .bar .era span { min-width: 0; font-size: 11.5px; } .news { font-size: 11px; padding: 6px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); } }
 </style>
 <canvas id="scene" tabindex="0" aria-label="Bể kính với sáu hòn đảo"></canvas>
-<header class="brand"><h1>Bể Kính</h1></header>
 <div class="clock"><b id="time">07:00</b><span id="date">Cấp 1/12 · Mùa xuân · Ngày 1</span></div>
 <nav class="lands glass" id="landBar" aria-label="Sáu vùng đất"></nav>
 <div class="bar glass" role="toolbar" aria-label="Điều khiển">
