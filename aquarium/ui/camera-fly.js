@@ -125,6 +125,7 @@
     }
     // mỗi khung hình: bay tự do, hoặc trượt tiếp tới chỗ đã chọn
     function update(dt, now) {
+      if (G.possess && G.possess.active) return; // (đang nhập hồn: máy quay do game/possess.js đặt)
       if (flyStep(dt)) {
         tween = null;
         return;
