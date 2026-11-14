@@ -954,6 +954,7 @@
           f = ensure(p, age, key, gst ? gst.level : level, gst ? spot(gst.enter, p) : null, gst && gst.color),
           mind = dying && f.lastMind ? f.lastMind : gst ? gst.mind : S.minds.get(p.id) || { state: 'idle' };
         f.lastMind = mind;
+        f.age = age; // (thân mềm đọc tuổi: tỉ lệ, nét theo tuổi; render/body/traits3d.js)
         f.gst = gst;
         f.color = gst && gst.color ? gst.color : f.color || ownColor;
         f.bodyKey = (gst ? (/^w(\d+):/.exec(key) || [0, idx])[1] : idx) + ':' + p.id;
@@ -1337,6 +1338,11 @@
         f.moving = moving;
         f.meetVerb = meetVerb;
         if (f.motion && BK.Motion3D) BK.Motion3D.pose(f, tgt, real); // cử động có sức nặng (nhập hồn: render/body/motion3d.js)
+        if (age >= 62) {
+          // người già hơi còng: ngực ngả tới, đầu ngẩng bù lại
+          tgt.cx = (tgt.cx || 0) + 0.14;
+          tgt.hx = (tgt.hx || 0) - 0.08;
+        }
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + (0.5 * Math.max(0, age)) / 16;
         f.rig.root.position.copy(L.center).add(f.pos);
@@ -1344,6 +1350,12 @@
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ');
         if (f.motion && BK.Motion3D) BK.Motion3D.root(f); // (nghiêng khi rẽ, ngả khi tăng tốc, phanh)
         f.rig.root.scale.setScalar(sc * SCALE);
+        // nén giãn (render/body/motion3d.js: sq > 0 nén bẹt, < 0 kéo dài; giữ gần đúng thể tích)
+        if (f.motion && f.motion.sq) {
+          const q = f.motion.sq,
+            S3 = f.rig.root.scale;
+          S3.set(S3.x * (1 + q * 0.55), S3.y * (1 - q), S3.z * (1 + q * 0.55));
+        }
         f.rig.root.updateMatrixWorld(true);
         // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)
         // (thanh máu từng người: người đã mất máu, hay người ra trận ở gần máy quay; ở xa thì game/cities.js vẽ thanh tổng của cả đội)

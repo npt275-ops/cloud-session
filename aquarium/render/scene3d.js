@@ -19,7 +19,17 @@
     renderer.shadowMap.autoUpdate = false;
     // cách nén màu và độ phơi sáng (render/mood3d.js TONE)
     const T = (BK.Mood3D && BK.Mood3D.TONE) || {};
-    renderer.toneMapping = T.map === 'aces' ? THREE.ACESFilmicToneMapping : THREE.LinearToneMapping;
+    if (T.map === 'soft') {
+      // nén mềm vùng sáng: dưới ngưỡng giữ nguyên, trên ngưỡng cong về trắng theo kênh sáng nhất (giữ sắc màu, không cắt trắng)
+      const K = (T.knee || 0.7).toFixed(3);
+      THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars_fragment.replace(
+        'vec3 CustomToneMapping( vec3 color ) { return color; }',
+        'vec3 CustomToneMapping( vec3 color ) { color *= toneMappingExposure; float m = max(max(color.r, color.g), color.b);\n' +
+          ' if (m <= ' + K + ') return color; float k = ' + K + ', n = k + (1.0 - k) * (1.0 - exp(-(m - k) / (1.0 - k)));\n' +
+          ' return color * (n / m); }',
+      );
+      renderer.toneMapping = THREE.CustomToneMapping;
+    } else renderer.toneMapping = T.map === 'aces' ? THREE.ACESFilmicToneMapping : THREE.LinearToneMapping;
     renderer.toneMappingExposure = T.exposure || 1;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.12, 4200);

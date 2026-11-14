@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 167 tệp, 46707 dòng.
+Tổng: 172 tệp, 47203 dòng.
 
 ## (gốc)
 
@@ -92,7 +92,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/ik3d.js` | 100 | Tay tự tìm đúng chỗ chạm trên cơ thể (IK hai khúc: bắp tay, cẳng tay): chống hông, chống cằm, chắp tay, khoanh tay … | `BK.IK3D` |  |
 | `render/look3d.js` | 250 | Hình ảnh "mô hình thu nhỏ" … | `BK.Look3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` |
 | `render/missiles3d.js` | 191 | Tên lửa bay, vụ nổ, nấm hạt nhân … | `BK.Missiles3D` | `render/map/map3d.js` |
-| `render/mood3d.js` | 109 | Không khí ánh sáng ("chill") | `BK.Mood3D` |  |
+| `render/mood3d.js` | 111 | Không khí ánh sáng ("chill") | `BK.Mood3D` |  |
 | `render/nav3d.js` | 603 | Lối đi của người trên một đảo … | `BK.NAV_SOLIDS` `BK.Nav3D` | `render/build/plains/common.js` `render/build/roads.js` |
 | `render/near3d.js` | 308 | Cảnh vật gần sau cú nhập hồn … | `BK.Near3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `render/perf3d.js` `render/scene3d.js` |
 | `render/neon3d.js` | 272 | Mặt trời nhân tạo của thành phố neon (từ thời 10) | `BK.NeonCity3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `render/build/neon.js` `render/scene3d.js` |
@@ -100,13 +100,13 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/perf3d.js` | 139 | Mượt và nét: bộ điều tốc nhắm 60 khung hình mỗi giây (chậm thì hạ độ nét, vẽ bóng thưa hơn, rồi bỏ bóng; nhanh lại thì … | `BK.Perf3D` G: 1 dịch vụ | `game/world.js` |
 | `render/prosper3d.js` | 304 | Thịnh vượng và suy tàn thấy được … | `BK.Prosper3D` | `sea3d.js` |
 | `render/rig3d.js` | 468 | Bộ khung khớp của một người (hông, ngực, cổ, đầu, vai, khuỷu, cổ tay, hông, gối, cổ chân) và hình người theo nét đã … | `BK.Rig3D` | `render/outfits3d.js` |
-| `render/scene3d.js` | 125 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `render/mood3d.js` |
+| `render/scene3d.js` | 135 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `render/mood3d.js` |
 | `render/shots3d.js` | 210 | Tên, đạn, tia bay trên chiến trường … | `BK.Shots3D` |  |
 | `render/sky3d.js` | 222 | Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod) … | `BK.Sky3D` G: 5 dịch vụ | `game/cities.js` `game/world.js` `render/build/neon.js` `render/look3d.js` `render/mood3d.js` `render/perf3d.js` |
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1648 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1660 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -229,11 +229,13 @@ Kiểm thử: node --test test/*.js.
 | `test/helpers.js` | 34 | Dùng chung cho các tệp kiểm thử (không phải tệp kiểm thử) |  | `logic/diplomacy.js` `logic/strategy.js` `logic/war.js` |
 | `test/island.test.js` | 356 | Kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium |  | `logic/brain.js` `logic/dramas.js` `logic/homes.js` `logic/island.js` `logic/jobs.js` `logic/people.js` `logic/posts.js` `logic/rules.js` `logic/schedule.js` `logic/temper.js` |
 | `test/missiles.test.js` | 186 | Tên lửa (thời 7), hạt nhân (thời 8) (logic/missiles.js) |  | `logic/economy.js` `logic/island.js` `logic/missiles.js` `logic/people.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
+| `test/motion3d.test.js` | 46 | Nén giãn của nhân vật khi nhảy (render/body/motion3d.js; design/ke-hoach-buoc-34.md điểm 5) |  | `render/body/motion3d.js` |
 | `test/powers.test.js` | 141 | Quyền năng có giá, mục tiêu theo trận (logic/powers.js, logic/goals.js; design/ke-hoach-khac-phuc.md mục 8) |  | `logic/climate.js` `logic/economy.js` `logic/eras.js` `logic/goals.js` `logic/island.js` `logic/powers.js` `logic/siege.js` `logic/world.js` |
 | `test/save.test.js` | 84 | Lưu và nạp lại trận (logic/save.js) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` |
 | `test/scenes.test.js` | 147 | Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js) |  | `logic/economy.js` `logic/island.js` `logic/posts.js` `logic/schedule.js` `logic/world.js` |
 | `test/siege.test.js` | 224 | Đánh thành (logic/siege.js, logic/war.js): cổng theo đường tới, công trình hư, vây nhà chính … |  | `logic/battles.js` `logic/brain.js` `logic/dramas.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/strategy.test.js` | 227 | Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu … |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/missiles.js` `logic/strategy.js` `logic/world.js` |
+| `test/traits3d.test.js` | 57 | Nét riêng và tỉ lệ theo tuổi của thân mềm (render/body/traits3d.js; design/ke-hoach-buoc-34.md) |  | `render/body/traits3d.js` |
 | `test/war.test.js` | 269 | Chiến tranh, sáp nhập, nổi dậy (logic/war.js, quyết định ở logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/world.test.js` | 117 | Cả bể: sáu đảo có dân, một đồng hồ, kết quả không phụ thuộc tốc độ chạy … |  | `logic/island.js` `logic/people.js` `logic/posts.js` `logic/world.js` |
 
@@ -354,78 +356,81 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 63. `render/work3d.js`
 64. `render/nav3d.js`
 65. `render/body/motion3d.js`
-66. `render/body/softbody3d.js`
-67. `render/village3d.js`
-68. `ui/village-ui.js`
-69. `render/build/kit3d.js`
-70. `render/build/life3d.js`
-71. `render/build/place3d.js`
-72. `render/build/workyards3d.js`
-73. `render/build/ruins3d.js`
-74. `render/build/batch3d.js`
-75. `render/build/bridges3d.js`
-76. `render/travel3d.js`
-77. `render/war3d.js`
-78. `render/missiles3d.js`
-79. `render/shots3d.js`
-80. `render/engines3d.js`
-81. `render/prosper3d.js`
-82. `render/hpbars3d.js`
-83. `render/build/plains/common.js`
-84. `render/build/plains/e01.js`
-85. `render/build/plains/e02.js`
-86. `render/build/plains/e03.js`
-87. `render/build/plains/e04.js`
-88. `render/build/plains/e05.js`
-89. `render/build/plains/e06.js`
-90. `render/build/plains/e07.js`
-91. `render/build/plains/e08.js`
-92. `render/build/plains/e09.js`
-93. `render/build/plains/e10.js`
-94. `render/build/plains/e11.js`
-95. `render/build/plains/e12.js`
-96. `render/build/plains/outer.js`
-97. `render/build/plains/wonders.js`
-98. `render/build/roads.js`
-99. `render/build/lamps.js`
-100. `render/build/neon.js`
-101. `render/build/vehicles.js`
-102. `render/build/traffic3d.js`
-103. `render/build/plains/town.js`
-104. `render/build/gates.js`
-105. `render/build/isles/arch.js`
-106. `render/build/civic.js`
-107. `render/build/marvels.js`
-108. `render/build/isles/halls.js`
-109. `render/build/isles/halls-future.js`
-110. `render/build/isles/compose.js`
-111. `render/build/isles/forest.js`
-112. `render/build/isles/mountain.js`
-113. `render/build/isles/tundra.js`
-114. `render/build/isles/coast.js`
-115. `render/build/isles/desert.js`
-116. `render/buildings3d.js`
-117. `game/world.js`
-118. `render/scene3d.js`
-119. `render/mood3d.js`
-120. `render/sky3d.js`
-121. `render/neon3d.js`
-122. `render/perf3d.js`
-123. `render/tank3d.js`
-124. `game/nature.js`
-125. `game/seasons.js`
-126. `render/snow3d.js`
-127. `ui/camera-fly.js`
-128. `render/fx/post3d.js`
-129. `render/fx/particles3d.js`
-130. `render/fx/soul-audio.js`
-131. `render/fx/soul-fx.js`
-132. `render/near3d.js`
-133. `render/style/diorama3d.js`
-134. `ui/landbar.js`
-135. `ui/race-dev.js`
-136. `game/cities.js`
-137. `ui/hud.js`
-138. `game/possess.js`
-139. `ui/possess-ctl.js`
-140. `game/loop.js`
+66. `render/body/traits3d.js`
+67. `render/body/face3d.js`
+68. `render/body/feet3d.js`
+69. `render/body/softbody3d.js`
+70. `render/village3d.js`
+71. `ui/village-ui.js`
+72. `render/build/kit3d.js`
+73. `render/build/life3d.js`
+74. `render/build/place3d.js`
+75. `render/build/workyards3d.js`
+76. `render/build/ruins3d.js`
+77. `render/build/batch3d.js`
+78. `render/build/bridges3d.js`
+79. `render/travel3d.js`
+80. `render/war3d.js`
+81. `render/missiles3d.js`
+82. `render/shots3d.js`
+83. `render/engines3d.js`
+84. `render/prosper3d.js`
+85. `render/hpbars3d.js`
+86. `render/build/plains/common.js`
+87. `render/build/plains/e01.js`
+88. `render/build/plains/e02.js`
+89. `render/build/plains/e03.js`
+90. `render/build/plains/e04.js`
+91. `render/build/plains/e05.js`
+92. `render/build/plains/e06.js`
+93. `render/build/plains/e07.js`
+94. `render/build/plains/e08.js`
+95. `render/build/plains/e09.js`
+96. `render/build/plains/e10.js`
+97. `render/build/plains/e11.js`
+98. `render/build/plains/e12.js`
+99. `render/build/plains/outer.js`
+100. `render/build/plains/wonders.js`
+101. `render/build/roads.js`
+102. `render/build/lamps.js`
+103. `render/build/neon.js`
+104. `render/build/vehicles.js`
+105. `render/build/traffic3d.js`
+106. `render/build/plains/town.js`
+107. `render/build/gates.js`
+108. `render/build/isles/arch.js`
+109. `render/build/civic.js`
+110. `render/build/marvels.js`
+111. `render/build/isles/halls.js`
+112. `render/build/isles/halls-future.js`
+113. `render/build/isles/compose.js`
+114. `render/build/isles/forest.js`
+115. `render/build/isles/mountain.js`
+116. `render/build/isles/tundra.js`
+117. `render/build/isles/coast.js`
+118. `render/build/isles/desert.js`
+119. `render/buildings3d.js`
+120. `game/world.js`
+121. `render/scene3d.js`
+122. `render/mood3d.js`
+123. `render/sky3d.js`
+124. `render/neon3d.js`
+125. `render/perf3d.js`
+126. `render/tank3d.js`
+127. `game/nature.js`
+128. `game/seasons.js`
+129. `render/snow3d.js`
+130. `ui/camera-fly.js`
+131. `render/fx/post3d.js`
+132. `render/fx/particles3d.js`
+133. `render/fx/soul-audio.js`
+134. `render/fx/soul-fx.js`
+135. `render/near3d.js`
+136. `render/style/diorama3d.js`
+137. `ui/landbar.js`
+138. `ui/race-dev.js`
+139. `game/cities.js`
+140. `ui/hud.js`
+141. `game/possess.js`
+142. `ui/possess-ctl.js`
+143. `game/loop.js`

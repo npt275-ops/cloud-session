@@ -17,16 +17,18 @@
     [0.2, '#1a2350', '#5a4a86', '#c07aa0', 0.0, '#7a7ac0', '#2e2e48', 0.42, 0.1],
     [0.25, '#4a5a9a', '#f0a088', '#ff9a7a', 0.3, '#f0c8c8', '#5a4a50', 0.48, 0.14],
     [0.3, '#7096d4', '#ffd0a8', '#ffc08a', 0.8, '#ffe0d0', '#6a6050', 0.56, 0.18],
-    [0.4, '#62aee6', '#e4f2f4', '#fff2dc', 1.0, '#e8f4ff', '#7a8a60', 0.6, 0.2],
-    [0.5, '#58a8e6', '#eaf4f4', '#fff6e4', 1.05, '#eef6ff', '#808c62', 0.62, 0.2],
-    [0.64, '#6aa2d8', '#f6dcae', '#ffd89c', 0.95, '#fff0d8', '#7e6e4a', 0.6, 0.22],
+    [0.4, '#62aee6', '#e4f2f4', '#fff2dc', 0.9, '#e8f4ff', '#7a8a60', 0.6, 0.2],
+    [0.5, '#58a8e6', '#eaf4f4', '#fff6e4', 0.92, '#eef6ff', '#808c62', 0.62, 0.2],
+    [0.64, '#6aa2d8', '#f6dcae', '#ffd89c', 0.88, '#fff0d8', '#7e6e4a', 0.6, 0.22],
     [0.72, '#5a62a8', '#ffa070', '#ff9a60', 0.62, '#ffc8a8', '#6a5040', 0.54, 0.18],
     [0.78, '#323470', '#a8607e', '#d07090', 0.16, '#a088c0', '#3a3048', 0.46, 0.12],
     [0.86, '#121a3c', '#2e2c62', '#8a8ad8', 0.0, '#7080c8', '#2a2f48', 0.44, 0.1],
     [1.0, '#0d1733', '#262a5e', '#7a8ad8', 0.0, '#6f7fc8', '#2a2f48', 0.44, 0.1],
   ];
-  // map: 'linear' giữ đúng độ đậm của màu gốc (ACES làm màu nhạt đi); exposure: độ phơi sáng
-  const TONE = { map: 'linear', exposure: 1.0 };
+  // map: 'linear' giữ đúng độ đậm của màu gốc nhưng chỗ quá sáng bị cắt trắng (cháy sáng); 'aces' dịu nhưng nhạt màu;
+  // 'soft': như linear dưới ngưỡng knee (màu đậm nguyên), trên ngưỡng thì cong mềm về trắng theo độ sáng (giữ sắc màu, không
+  // cháy; render/scene3d.js). exposure: độ phơi sáng
+  const TONE = { map: 'soft', knee: 0.7, exposure: 1.0 };
   const SOFT = { hemiBoost: 0.82, fillBoost: 0.7, fillColor: '#cfe0ff' };
   // [trời trên, chân trời, ánh tím trên cao, độ, ánh trời, ánh đất, độ đèn trời, độ đèn hắt]
   const NEON = {

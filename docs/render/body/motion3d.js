@@ -8,6 +8,8 @@
  *   theo tốc độ (chân không trượt); hông nhún hai lần mỗi chu kỳ, xoay hông, vai xoay ngược hông, tay đánh theo chân;
  *   đầu giữ thăng bằng và nhìn trước vào hướng rẽ; đầu, ngực, hai tay đi qua lò xo (theo sau một nhịp rồi nảy lại);
  *   nhảy: co gối, tay dang lúc bay, chạm đất khuỵu gối và nén người rồi bật lại; đứng: thở, dồn trọng tâm sang một chân.
+ *   nén giãn (m.sq, render/village3d.js nhân vào tỉ lệ khung): bay lên kéo dài theo tốc độ dọc, chạm đất nén bẹt, mỗi bước
+ *   nhún nhẹ; đi qua lò xo nên nảy lại một chút như đồ chơi cao su.
  * Không đổi khung, không đổi cách vẽ người (render/rig3d.js), không biết logic. Cần: three.js, render/anim3d.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -18,8 +20,10 @@
   const RUN_FROM = 2.6, // (đơn vị mỗi giây) từ chừng này bắt đầu chạy hẳn, tới RUN_FROM + RUN_SPAN thì chạy hết sức
     RUN_SPAN = 1.8,
     LAND_T = 0.28; // (giây) khuỵu gối khi chạm đất
+  // nén giãn: mức kéo dài tối đa lúc bay, mức nén lúc chạm đất, mức nhún mỗi bước; lò xo (độ cứng, độ hãm)
+  const SQ = { STRETCH: 0.12, LAND: 0.17, STEP: 0.025, K: 170, D: 11, KICK: 2.4 };
   function state() {
-    return { spd: 0, ph: 0, lx: null, lz: 0, yaw: null, yawRate: 0, acc: 0, lean: 0, tilt: 0, air: false, land: 0, t: 0, sp: {} };
+    return { spd: 0, ph: 0, lx: null, lz: 0, yaw: null, yawRate: 0, acc: 0, lean: 0, tilt: 0, air: false, land: 0, t: 0, sp: {}, ly: 0, sq: 0, sqv: 0 };
   }
   function pose(f, tgt, dt) {
     const m = f.motion;
@@ -47,9 +51,11 @@
       c = Math.cos(m.ph);
     // nhảy, chạm đất
     const air = (f.lift || 0) > 0.02;
-    if (m.air && !air) m.land = LAND_T;
+    if (m.air && !air) {
+      m.land = LAND_T;
+      m.sqv += SQ.KICK; // (cú đẩy nén lúc chạm đất: máy chậm, khung hình dài hơn lúc khuỵu gối, vẫn thấy nén rồi nảy lại)
+    }
     m.air = air;
-    m.land = Math.max(0, m.land - dt);
     if (w > 0.02) {
       // chân: biên độ hông, gối theo tốc độ; gối gập lúc đưa chân lên trước; dồn trọng tâm theo chân trụ
       const ah = lerp(0.4, 0.78, r) * w,
@@ -102,6 +108,18 @@
       tgt.cx += 0.22 * k;
       tgt.szL = tgt.szR = Math.max(tgt.szL || 0, 0.35 * k);
     }
+    // nén giãn: đích theo tốc độ dọc (bay), chạm đất, bước; đi qua lò xo
+    const lift = f.lift || 0,
+      vy = (lift - m.ly) / dt;
+    m.ly = lift;
+    let sq = w * SQ.STEP * (Math.abs(c) - 0.5) * 2;
+    if (air) sq = -clamp(Math.abs(vy) * 0.03, 0, SQ.STRETCH);
+    else if (m.land > 0) sq = SQ.LAND * Math.sqrt(m.land / LAND_T); // (nén nhất ngay lúc chạm đất, nhả dần)
+    for (let n = Math.ceil(dt / 0.016), h = dt / n; n > 0; n--) {
+      // (chia bước nhỏ: máy chậm vẫn ổn định)
+      m.sqv += (SQ.K * (sq - m.sq) - SQ.D * m.sqv) * h;
+      m.sq = clamp(m.sq + m.sqv * h, -0.2, 0.25);
+    }
     // lò xo: đầu, ngực, hai tay theo sau một nhịp rồi nảy lại
     for (const key in SPRING) {
       const [kk, dd] = SPRING[key],
@@ -111,6 +129,7 @@
       sp.x += sp.v * dt;
       tgt[key] = sp.x;
     }
+    m.land = Math.max(0, m.land - dt); // (trừ ở cuối: khung chạm đất vẫn thấy đủ, kể cả máy chậm)
   }
   // gốc khung: nghiêng vào trong khi rẽ (theo tốc độ quay và tốc độ đi), ngả tới khi tăng tốc, ngả sau khi phanh
   function tilt(f) {

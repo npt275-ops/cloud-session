@@ -270,6 +270,16 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/body/face3d.js",
+  "src": "render/body/face3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/body/feet3d.js",
+  "src": "render/body/feet3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/body/motion3d.js",
   "src": "render/body/motion3d.js",
   "mode": 420
@@ -277,6 +287,11 @@
  {
   "path": "BeKinh/render/body/softbody3d.js",
   "src": "render/body/softbody3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/body/traits3d.js",
+  "src": "render/body/traits3d.js",
   "mode": 420
  },
  {
