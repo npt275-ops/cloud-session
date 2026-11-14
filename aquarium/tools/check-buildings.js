@@ -3,7 +3,8 @@
 //   chồng nhau          thân sát đất (cao 0,7–3 trên mặt đất) của hai công trình đè lên nhau quá 20% món nhỏ hơn (đo theo
 //                       từng tam giác, ô 0,5); không tính lớp đường, cổng, tường, bãi làm việc, công trình ngoài khơi
 //   lấn đường/hồ        móng thật lấn mặt đường hay lỗ hồ (render/buildings3d.js debug.roadCheck)
-//   thò ngoài đảo       móng công trình trong làng thò ra ngoài mép đảo (offIsland)
+//   thò ngoài đảo       móng công trình trong làng thò ra ngoài mép đảo (offIsland); còn trong đảo nhưng cách mép dưới 1,5
+//                       thì là 'sát mép đảo' (chỉ in để biết)
 //   kẹt đường, bỏ       không tìm được chỗ tránh đường; không có chỗ trên đảo nên không dựng (chỉ in để biết)
 //   không có hình, toạ độ hỏng, lỗi trang
 // Mã thoát 1 nếu: có lỗi trang, toạ độ hỏng, món không có hình, thò ngoài đảo, hay chồng nhau quá MAX_OVER (mặc định 5).
@@ -50,7 +51,8 @@ const ROOT = path.join(__dirname, '..'),
         if (st.stuck) out.push({ lv, i, t: 'kẹt đường', n: st.stuck });
         if (st.dropped) out.push({ lv, i, t: 'bỏ vì không có chỗ', n: st.dropped });
         for (const r of B.debug.roadCheck(i) || []) out.push({ lv, i, t: 'lấn đường/hồ', k: r.kind, at: [r.x, r.z] });
-        for (const r of B.offIsland(i)) out.push({ lv, i, t: 'thò ngoài đảo', k: r });
+        for (const r of B.offIsland(i))
+          out.push({ lv, i, t: +(/thò ([\d.]+)/.exec(r) || [0, 9])[1] > 1.5 ? 'thò ngoài đảo' : 'sát mép đảo', k: r });
         L.g.updateMatrixWorld(true);
         inv.copy(L.g.matrixWorld).invert();
         const items = [],
@@ -120,7 +122,7 @@ const ROOT = path.join(__dirname, '..'),
   const by = {};
   for (const r of rows) (by[r.t] || (by[r.t] = [])).push(r);
   const n = (t) => (by[t] || []).length,
-    INFO = new Set(['kẹt đường', 'bỏ vì không có chỗ', 'lấn đường/hồ']);
+    INFO = new Set(['sát mép đảo', 'kẹt đường', 'bỏ vì không có chỗ', 'lấn đường/hồ']);
   for (const t of Object.keys(by)) {
     console.log((INFO.has(t) ? 'BIẾT ' : '') + t + ': ' + by[t].length);
     const kinds = {};

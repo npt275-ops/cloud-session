@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 156 tệp, 44217 dòng.
+Tổng: 156 tệp, 44241 dòng.
 
 ## (gốc)
 
@@ -153,7 +153,7 @@ Công trình dùng chung mọi đảo: bộ ghép khối, đường, cổng, c�
 | `render/build/marvels.js` | 1520 | Kiến trúc lạ của sáu đảo qua 12 thời … | `BK.Marvels3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/neon.js` | 92 | Thành phố neon (từ thời 10) | `BK.Neon3D` | `render/build/kit3d.js` `render/build/plains/common.js` `render/build/roads.js` |
 | `render/build/place3d.js` | 374 | Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ thủng xuống biển, mép đảo và các công trình khác) … | `BK.Place3D` |  |
-| `render/build/roads.js` | 274 | Mạng đường của sáu đảo … | `BK.Roads3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
+| `render/build/roads.js` | 296 | Mạng đường của sáu đảo … | `BK.Roads3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/ruins3d.js` | 122 | Công trình hư hại trong chiến tranh … | `BK.Ruins3D` | `render/build/life3d.js` |
 | `render/build/traffic3d.js` | 40 | Xe bay lượn vòng trên cao dọc vòng đường … | `BK.Traffic3D` |  |
 | `render/build/vehicles.js` | 90 | Xe bay của từng thời … | `BK.Vehicles3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
@@ -242,7 +242,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 |---|---|---|---|---|
 | `tools/bug-hunt.js` | 392 | Quét lỗi trận chiến và NPC bằng trình duyệt không giao diện … | `BK.NAV_SOLIDS` | `game/cities.js` `game/nature.js` `game/world.js` `logic/arms.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/nav3d.js` `render/scene3d.js` `ui/landbar.js` |
 | `tools/calibrate.js` | 221 | Cân chỉnh bằng nhiều trận … |  | `logic/island.js` `logic/world.js` |
-| `tools/check-buildings.js` | 143 | Rà soát công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` |
+| `tools/check-buildings.js` | 145 | Rà soát công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` |
 | `tools/check-footing.js` | 79 | Quét công trình thò ra ngoài đảo hay đè lên lỗ hồ: 6 đảo × 12 thời … |  | `game/cities.js` `game/world.js` |
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
 | `tools/check-walk.js` | 187 | Người đi xuyên công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/world.js` `render/build/kit3d.js` `render/scene3d.js` |
