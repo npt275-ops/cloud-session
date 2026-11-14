@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 164 tệp, 46022 dòng.
+Tổng: 164 tệp, 46082 dòng.
 
 ## (gốc)
 
@@ -29,7 +29,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 114 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/world.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess.js` | 363 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `ui/landbar.js` |
+| `game/possess.js` | 383 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
@@ -209,7 +209,7 @@ Giao diện: thanh đảo, bảng làng, máy quay bay, bảng dev.
 | `ui/camera-fly.js` | 147 | Camera đi theo tay người chơi: bay tới một chỗ (flyTo, trượt êm), bay tự do bằng phím mũi tên, W A S D, Q E (lên xuống) | `BK.CameraFly` G: 2 dịch vụ | `game/nature.js` `game/possess.js` `game/world.js` `render/map/map3d.js` `render/tank3d.js` `ui/landbar.js` |
 | `ui/hud.js` | 62 | Những gì ghi và bấm trên màn hình ngoài bảng làng: nút tốc độ (1×, 2×, 4×; không có tạm dừng), nút âm thanh, dòng ngày … | `BK.Hud` G: 1 dịch vụ | `game/cities.js` `game/seasons.js` `game/world.js` `logic/eras.js` |
 | `ui/landbar.js` | 59 | Thanh sáu vùng đất ở trên cùng: bấm một đảo để bay tới đảo đó; đảo đang xem được tô sáng (setFocus) | `BK.LandBar` G: 1 dịch vụ | `game/nature.js` `game/world.js` `ui/camera-fly.js` |
-| `ui/possess-ctl.js` | 208 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
+| `ui/possess-ctl.js` | 227 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
 | `ui/race-dev.js` | 277 | Tin giữa các đảo và bảng dev "Cuộc đua" … | `BK.RaceDev` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/temper.js` `logic/war.js` `ui/camera-fly.js` `ui/landbar.js` |
 | `ui/village-ui.js` | 346 | Bảng của một làng: thế hệ, số người, tình huống đang có, hội đồng 8 ghế, nhật ký, và các nút thử tình huống … | `BK.VillageUI` | `logic/brain.js` `logic/council.js` `logic/dramas.js` `logic/eras.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rules.js` `logic/tasks.js` `logic/temper.js` |
 

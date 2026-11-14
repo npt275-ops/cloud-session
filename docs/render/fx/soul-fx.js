@@ -145,7 +145,28 @@
         }
       }
     }
-    G.soulFx = { phase, update };
+    // nhảy: tiếp đất thì một nhúm bụi nhỏ toả quanh chân
+    function land(st) {
+      const f = G.villageOf(st.i).folk(st.id);
+      if (!f || !f.rig || !Pt()) return;
+      const feet = f.rig.root.position,
+        col = DUST[isleKey(st)] || DUST.plains;
+      for (let k = 0; k < 14; k++) {
+        const a = (k / 14) * Math.PI * 2;
+        Pt().emit({
+          p: v.set(feet.x + Math.cos(a) * 0.2, feet.y + 0.05, feet.z + Math.sin(a) * 0.2),
+          v: d.set(Math.cos(a) * 1.6, 0.3 + Math.random() * 0.3, Math.sin(a) * 1.6),
+          life: 0.6 + Math.random() * 0.3,
+          size: 0.16,
+          grow: 1.6,
+          drag: 3,
+          grav: 0.8,
+          alpha: 0.4,
+          color: col,
+        });
+      }
+    }
+    G.soulFx = { phase, update, land };
   }
   BK.SoulFx = { setup, DUST };
 })(typeof self !== 'undefined' ? self : globalThis);

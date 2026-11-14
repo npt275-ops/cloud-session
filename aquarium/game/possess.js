@@ -17,12 +17,14 @@
   // máy quay sau vai: lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường che thì lại gần nhưng
   // không gần hơn NEAR_MIN, nâng cao thêm tới LIFT; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
   const CAM = {
-    BACK: 2.3,
-    UP: 0.35,
-    SIDE: 0.55,
-    NEAR_MIN: 1.1,
+    BACK: 4.2,
+    UP: 0.85,
+    SIDE: 0.7,
+    NEAR_MIN: 1.7,
     LIFT: 1.6,
     WALK: 2.2,
+    JUMP_V: 4.6, // nhảy: vận tốc bật lên, trọng lực (đơn vị mỗi giây): cao chừng nửa thân người, chạm đất sau 0,6 giây
+    GRAV: 15,
     RUN: 5,
     FOV: 52,
     FOV_GOD: 34,
@@ -53,8 +55,9 @@
       fromFov: 34,
       yaw: 0, // hướng nhìn của máy quay sau vai (quanh trục đứng)
       pitch: 0.12,
-      shake: 0,
       move: new THREE.Vector2(), // phím, cần ảo: (phải, tới) -1..1
+      jumpY: 0, // nhảy: độ cao trên mặt đất, vận tốc đứng
+      jumpV: 0,
       run: false,
       camPos: new THREE.Vector3(),
       look: new THREE.Vector3(),
@@ -150,6 +153,7 @@
 
     /* ---------- Người bị nhập đi theo phím ---------- */
     function driver(f) {
+      f.lift = st.jumpY; // (render/village3d.js nâng người lên chừng này khi nhảy)
       const m = st.move;
       if (st.phase !== 'in' || m.lengthSq() < 0.01) return null;
       // tới (m.y) theo hướng máy quay, ngang (m.x) sang phải; đích cách chừng một bước rưỡi
@@ -199,12 +203,11 @@
         });
         if (u >= 1) go('hit');
       },
-      // chạm: chớp trắng, rung mạnh, máy quay ở ngay đầu người
+      // chạm: chớp trắng, máy quay ở ngay đầu người
       hit(u) {
         headOf(st.camPos);
         st.look.copy(st.camPos).add(v1.set(Math.sin(yawOfFolk()), -0.05, Math.cos(yawOfFolk())));
         const calm = reduce();
-        st.shake = calm ? 0 : 0.18 * (1 - u);
         Object.assign(fx(), {
           flash: calm ? 0 : 1 - smooth(u * 1.6),
           radial: 0,
@@ -320,18 +323,34 @@
       const dur = T[st.phase],
         u = dur ? Math.min(1, st.t / dur) : 0;
       PHASE[st.phase](u);
+      // nhảy: bay lên rồi rơi xuống theo trọng lực, chạm đất thì dừng
+      if (st.jumpY > 0) {
+        st.jumpV -= CAM.GRAV * sec;
+        st.jumpY += st.jumpV * sec;
+        if (st.jumpY <= 0) {
+          st.jumpY = 0;
+          st.jumpV = 0;
+          if (G.soulFx && G.soulFx.land) G.soulFx.land(st);
+        }
+      }
       if (st.phase === 'off') return;
       if (G.near) G.near.set(st.phase === 'wake' || st.phase === 'in', st.i, headOf(v1)); // đồ hoạ gần (render/near3d.js)
       // (vùng bóng nắng theo controls.target, render/perf3d.js: đặt vào đầu người thì bóng quanh người sắc nét)
       if (st.phase === 'wake' || st.phase === 'in') controls.target.copy(headOf(v1));
       camera.position.copy(st.camPos);
-      if (st.shake > 0) camera.position.add(v1.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(st.shake));
       camera.lookAt(st.look);
       camera.updateProjectionMatrix();
       // tâm toả của mờ toả tâm: chỗ người bị nhập trên màn hình
       const h = headOf(v1).project(camera);
       G.post.center.set(clamp01(h.x * 0.5 + 0.5), clamp01(h.y * 0.5 + 0.5));
       if (G.soulFx) G.soulFx.update(sec, st);
+    }
+    // nhảy (ui/possess-ctl.js, phím Space): chỉ khi đang đứng trên đất
+    function jump() {
+      if (st.phase !== 'in' || st.jumpY > 0) return;
+      st.jumpV = CAM.JUMP_V;
+      st.jumpY = 0.0001;
+      if (G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
     }
     // xoay nhìn (ui/possess-ctl.js): dx, dy theo radian
     function look(dx, dy) {
@@ -344,6 +363,7 @@
       exit,
       update,
       look,
+      jump,
       st,
       T,
       CAM,

@@ -1,8 +1,8 @@
 /* Bể Kính · ui/possess-ctl.js · Nút và điều khiển của cú nhập hồn (design/ke-hoach-buoc-32.md mục 3.3)
  * Nút "Nhập hồn" trên thanh điều khiển; trong lúc nhập hồn ẩn mọi bảng của góc nhìn thượng đế (body.possessed), chỉ còn
  * một dòng nhắc phím và nút "Thoát".
- * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, kéo chuột để xoay nhìn, Esc thoát.
- * Điện thoại: cần ảo nửa trái màn hình (đẩy xa thì chạy), kéo nửa phải để xoay nhìn.
+ * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy, kéo chuột để xoay nhìn, Esc thoát.
+ * Điện thoại: cần ảo nửa trái màn hình (đẩy xa thì chạy), kéo nửa phải để xoay nhìn, nút "Nhảy" góc phải dưới.
  * Chỉ ghi vào G.possess (st.move, st.run, look, enter, exit); không đụng máy quay, không đụng người. Cần: game/possess.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -19,6 +19,10 @@ body.possessed.soul-in .soul-hint { opacity: 1; pointer-events: auto; }
 .soul-stick { position: fixed; left: 0; bottom: 0; width: 50%; height: 55%; display: none; touch-action: none; }
 .soul-look { position: fixed; right: 0; top: 0; width: 50%; height: 100%; display: none; touch-action: none; }
 body.possessed.soul-in.touch .soul-stick, body.possessed.soul-in.touch .soul-look { display: block; }
+.soul-jump { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 22px); bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
+  width: 66px; height: 66px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.12);
+  color: #fff; font: 600 12px var(--font-body); display: none; touch-action: none; }
+body.possessed.soul-in.touch .soul-jump { display: block; }
 .soul-knob { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; display: none;
   border: 1.5px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.06); }
 .soul-knob i { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
@@ -58,7 +62,7 @@ body.possessed.soul-in.touch .soul-stick, body.possessed.soul-in.touch .soul-loo
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
     hint.innerHTML =
-      '<span class="keys">W A S D đi · Shift chạy · kéo chuột để nhìn · Esc thoát</span><button type="button">Thoát</button>';
+      '<span class="keys">W A S D đi · Shift chạy · Space nhảy · kéo chuột để nhìn · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),
@@ -69,7 +73,15 @@ body.possessed.soul-in.touch .soul-stick, body.possessed.soul-in.touch .soul-loo
     knob.className = 'soul-knob';
     knob.innerHTML = '<i></i>';
     stick.appendChild(knob);
-    document.body.append(stick, lookPad);
+    const jumpBtn = document.createElement('button');
+    jumpBtn.className = 'soul-jump';
+    jumpBtn.type = 'button';
+    jumpBtn.textContent = 'Nhảy';
+    jumpBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      P.jump();
+    });
+    document.body.append(stick, lookPad, jumpBtn);
     if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
 
     /* ----- phím ----- */
@@ -99,6 +111,13 @@ body.possessed.soul-in.touch .soul-stick, body.possessed.soul-in.touch .soul-loo
         if (!P.active) return;
         if (e.code === 'Escape') {
           P.exit();
+          return;
+        }
+        if (e.code === 'Space') {
+          // nhảy (game/possess.js jump); chặn không cho ui/camera-fly.js bay máy quay lên
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (!e.repeat) P.jump();
           return;
         }
         if (KEYS[e.code] || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
