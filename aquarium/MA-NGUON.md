@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 44000 dòng.
+Tổng: 155 tệp, 43997 dòng.
 
 ## (gốc)
 
@@ -18,7 +18,7 @@ Gốc: biển, mây, âm thanh (dựng trước các phần khác).
 |---|---|---|---|---|
 | `audio.js` | 539 | Âm thanh tự sinh bằng Web Audio (không dùng file âm thanh nào) | `CityAudio` |  |
 | `clouds3d.js` | 494 | Mây trong bể kính | `Clouds3D` |  |
-| `sea3d.js` | 308 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
+| `sea3d.js` | 305 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
 
 ## game/
 
