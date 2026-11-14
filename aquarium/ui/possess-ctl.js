@@ -1,7 +1,7 @@
 /* Bể Kính · ui/possess-ctl.js · Nút và điều khiển của cú nhập hồn (design/ke-hoach-buoc-32.md mục 3.3)
  * Nút "Nhập hồn" trên thanh điều khiển; trong lúc nhập hồn ẩn mọi bảng của góc nhìn thượng đế (body.possessed), chỉ còn
  * một dòng nhắc phím và nút "Thoát".
- * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy, kéo chuột để xoay nhìn, Esc thoát.
+ * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy, rê chuột để nhìn (bấm vào màn hình: khoá chuột), Esc thoát.
  * Điện thoại: cần ảo nửa trái màn hình (đẩy xa thì chạy), kéo nửa phải để xoay nhìn, nút "Nhảy" góc phải dưới.
  * Chỉ ghi vào G.possess (st.move, st.run, look, enter, exit); không đụng máy quay, không đụng người. Cần: game/possess.js. */
 (function (root) {
@@ -39,7 +39,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     ArrowRight: [1, 0],
     KeyD: [1, 0],
   };
-  const LOOK_K = 0.0042; // radian mỗi điểm ảnh kéo
+  const LOOK_K = 0.0032; // radian mỗi điểm ảnh rê chuột
   function setup(G) {
     const P = G.possess,
       canvas = G.renderer.domElement;
@@ -62,7 +62,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
     hint.innerHTML =
-      '<span class="keys">W A S D đi · Shift chạy · Space nhảy · kéo chuột để nhìn · Esc thoát</span><button type="button">Thoát</button>';
+      '<span class="keys">W A S D đi · Shift chạy · Space nhảy · rê chuột để nhìn (bấm để khoá chuột) · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),
@@ -110,7 +110,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
       (e) => {
         if (!P.active) return;
         if (e.code === 'Escape') {
-          P.exit();
+          if (!locked()) P.exit(); // (đang khoá chuột: Esc chỉ mở khoá)
           return;
         }
         if (e.code === 'Space') {
@@ -144,17 +144,19 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
       applyMove();
     });
 
-    /* ----- chuột: kéo để xoay nhìn ----- */
-    let drag = null;
+    /* ----- chuột: rê chuột là máy quay nhìn theo (không cần giữ nút); bấm vào màn hình thì khoá chuột để xoay không giới hạn,
+     * Esc mở khoá (bấm Esc lần nữa thì thoát nhập hồn) ----- */
+    const locked = () => document.pointerLockElement === canvas;
     canvas.addEventListener('pointerdown', (e) => {
-      if (P.active && e.pointerType === 'mouse') drag = [e.clientX, e.clientY];
+      if (P.inside && e.pointerType === 'mouse' && !locked() && canvas.requestPointerLock) canvas.requestPointerLock();
     });
     window.addEventListener('pointermove', (e) => {
-      if (!drag || !P.active) return;
-      P.look((e.clientX - drag[0]) * LOOK_K, (e.clientY - drag[1]) * LOOK_K);
-      drag = [e.clientX, e.clientY];
+      if (!P.active || e.pointerType !== 'mouse') return;
+      const dx = e.movementX || 0,
+        dy = e.movementY || 0;
+      if (Math.abs(dx) > 300 || Math.abs(dy) > 300) return; // (cú nhảy chuột khi vừa khoá, vừa mở khoá)
+      P.look(dx * LOOK_K, dy * LOOK_K);
     });
-    window.addEventListener('pointerup', () => (drag = null));
 
     /* ----- điện thoại: cần ảo bên trái, kéo bên phải để nhìn ----- */
     let sid = null,
@@ -214,6 +216,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
       last = ph;
       document.body.classList.toggle('possessed', ph !== 'off');
       document.body.classList.toggle('soul-in', ph === 'in');
+      if (ph !== 'in' && locked() && document.exitPointerLock) document.exitPointerLock();
       if (ph === 'off') {
         held.clear();
         stickV = null;

@@ -1336,11 +1336,13 @@
         }
         f.moving = moving;
         f.meetVerb = meetVerb;
+        if (f.motion && BK.Motion3D) BK.Motion3D.pose(f, tgt, real); // cử động có sức nặng (nhập hồn: render/body/motion3d.js)
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + (0.5 * Math.max(0, age)) / 16;
         f.rig.root.position.copy(L.center).add(f.pos);
         f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE + gyOf(f.pos) + (f.lift || 0); // ngồi, quỳ thì hạ người; nhảy (nhập hồn) thì nâng lên
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ');
+        if (f.motion && BK.Motion3D) BK.Motion3D.root(f); // (nghiêng khi rẽ, ngả khi tăng tốc, phanh)
         f.rig.root.scale.setScalar(sc * SCALE);
         f.rig.root.updateMatrixWorld(true);
         // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)

@@ -23,6 +23,8 @@
     NEAR_MIN: 1.7,
     LIFT: 1.6,
     WALK: 2.2,
+    ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
+    DEC: 9,
     JUMP_V: 4.6, // nhảy: vận tốc bật lên, trọng lực (đơn vị mỗi giây): cao chừng nửa thân người, chạm đất sau 0,6 giây
     GRAV: 15,
     RUN: 5,
@@ -56,6 +58,7 @@
       yaw: 0, // hướng nhìn của máy quay sau vai (quanh trục đứng)
       pitch: 0.12,
       move: new THREE.Vector2(), // phím, cần ảo: (phải, tới) -1..1
+      vel: new THREE.Vector3(), // vận tốc đi hiện tại (đơn vị mỗi giây thật, mặt phẳng ngang)
       jumpY: 0, // nhảy: độ cao trên mặt đất, vận tốc đứng
       jumpV: 0,
       run: false,
@@ -152,13 +155,26 @@
     }
 
     /* ---------- Người bị nhập đi theo phím ---------- */
+    // (vận tốc theo phím đổi dần: tăng tốc ACC, hãm DEC đơn vị mỗi giây bình phương, tính trong update)
     function driver(f) {
       f.lift = st.jumpY; // (render/village3d.js nâng người lên chừng này khi nhảy)
-      const m = st.move;
-      if (st.phase !== 'in' || m.lengthSq() < 0.01) return null;
-      // tới (m.y) theo hướng máy quay, ngang (m.x) sang phải; đích cách chừng một bước rưỡi
-      const d = fwdOf(st.yaw, new THREE.Vector3()).multiplyScalar(m.y).addScaledVector(rightOf(st.yaw, v1), m.x);
-      return { p: f.pos.clone().addScaledVector(d.normalize(), 1.6), road: true, run: st.run, realSpeed: st.run ? CAM.RUN : CAM.WALK };
+      if (!f.motion && BK.Motion3D) f.motion = BK.Motion3D.state(); // cử động có sức nặng (render/body/motion3d.js)
+      const sp = st.vel.length();
+      if (st.phase !== 'in' || sp < 0.05) return null;
+      return { p: f.pos.clone().addScaledVector(v1.copy(st.vel).normalize(), 1.6), road: true, run: st.run, realSpeed: sp };
+    }
+    // vận tốc mong muốn theo phím: tới (move.y) theo hướng máy quay, ngang (move.x) sang phải
+    function steer(sec) {
+      const m = st.move,
+        want = new THREE.Vector3();
+      if (st.phase === 'in' && m.lengthSq() >= 0.01)
+        fwdOf(st.yaw, want)
+          .multiplyScalar(m.y)
+          .addScaledVector(rightOf(st.yaw, v1), m.x)
+          .normalize()
+          .multiplyScalar(st.run ? CAM.RUN : CAM.WALK);
+      const k = Math.min(1, sec * (want.lengthSq() > st.vel.lengthSq() ? CAM.ACC : CAM.DEC));
+      st.vel.lerp(want, k);
     }
 
     /* ---------- Các pha ---------- */
@@ -244,12 +260,12 @@
         if (u >= 1) go('in');
       },
       // trong thân: máy quay bám sau vai (lò xo), người đi theo phím
-      in() {
+      in(u, sec) {
         const head = headOf(v1).clone(),
           want = shoulder(head, v2.clone());
-        st.camPos.lerp(want, 0.18);
+        st.camPos.lerp(want, 1 - Math.exp(-sec * 12)); // (bám theo giờ thật: máy chậm vẫn theo kịp người chạy)
         st.look.copy(head).add(v1.set(Math.sin(st.yaw), Math.sin(st.pitch), Math.cos(st.yaw)).multiplyScalar(6));
-        camera.fov += (CAM.FOV - camera.fov) * 0.1;
+        camera.fov += (CAM.FOV - camera.fov) * (1 - Math.exp(-sec * 6));
         Object.assign(fx(), IN_FX, { focus: st.camPos.distanceTo(head) });
         G.timeK = 1;
         if (!personOf() || !personOf().alive) exit();
@@ -299,7 +315,12 @@
       const p = personOf();
       if (p) p.possessed = false;
       const V = villageNow();
-      if (V) V.setDriver(st.id, null);
+      if (V) {
+        V.setDriver(st.id, null);
+        const f = V.folk(st.id);
+        if (f) f.motion = null; // (trả lại dáng đi chung của làng)
+      }
+      st.vel.set(0, 0, 0);
       if (G.near) G.near.set(false);
     }
     function done() {
@@ -322,7 +343,8 @@
       st.t += sec;
       const dur = T[st.phase],
         u = dur ? Math.min(1, st.t / dur) : 0;
-      PHASE[st.phase](u);
+      PHASE[st.phase](u, sec);
+      steer(sec);
       // nhảy: bay lên rồi rơi xuống theo trọng lực, chạm đất thì dừng
       if (st.jumpY > 0) {
         st.jumpV -= CAM.GRAV * sec;

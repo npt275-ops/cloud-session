@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 164 tệp, 46084 dòng.
+Tổng: 165 tệp, 46239 dòng.
 
 ## (gốc)
 
@@ -29,7 +29,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 114 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/world.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess.js` | 383 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `ui/landbar.js` |
+| `game/possess.js` | 405 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/body/motion3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
@@ -106,7 +106,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1642 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1644 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -209,7 +209,7 @@ Giao diện: thanh đảo, bảng làng, máy quay bay, bảng dev.
 | `ui/camera-fly.js` | 147 | Camera đi theo tay người chơi: bay tới một chỗ (flyTo, trượt êm), bay tự do bằng phím mũi tên, W A S D, Q E (lên xuống) | `BK.CameraFly` G: 2 dịch vụ | `game/nature.js` `game/possess.js` `game/world.js` `render/map/map3d.js` `render/tank3d.js` `ui/landbar.js` |
 | `ui/hud.js` | 62 | Những gì ghi và bấm trên màn hình ngoài bảng làng: nút tốc độ (1×, 2×, 4×; không có tạm dừng), nút âm thanh, dòng ngày … | `BK.Hud` G: 1 dịch vụ | `game/cities.js` `game/seasons.js` `game/world.js` `logic/eras.js` |
 | `ui/landbar.js` | 59 | Thanh sáu vùng đất ở trên cùng: bấm một đảo để bay tới đảo đó; đảo đang xem được tô sáng (setFocus) | `BK.LandBar` G: 1 dịch vụ | `game/nature.js` `game/world.js` `ui/camera-fly.js` |
-| `ui/possess-ctl.js` | 227 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
+| `ui/possess-ctl.js` | 230 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
 | `ui/race-dev.js` | 277 | Tin giữa các đảo và bảng dev "Cuộc đua" … | `BK.RaceDev` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/temper.js` `logic/war.js` `ui/camera-fly.js` `ui/landbar.js` |
 | `ui/village-ui.js` | 346 | Bảng của một làng: thế hệ, số người, tình huống đang có, hội đồng 8 ghế, nhật ký, và các nút thử tình huống … | `BK.VillageUI` | `logic/brain.js` `logic/council.js` `logic/dramas.js` `logic/eras.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rules.js` `logic/tasks.js` `logic/temper.js` |
 
@@ -351,76 +351,77 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 62. `render/gestures3d.js`
 63. `render/work3d.js`
 64. `render/nav3d.js`
-65. `render/village3d.js`
-66. `ui/village-ui.js`
-67. `render/build/kit3d.js`
-68. `render/build/life3d.js`
-69. `render/build/place3d.js`
-70. `render/build/workyards3d.js`
-71. `render/build/ruins3d.js`
-72. `render/build/batch3d.js`
-73. `render/build/bridges3d.js`
-74. `render/travel3d.js`
-75. `render/war3d.js`
-76. `render/missiles3d.js`
-77. `render/shots3d.js`
-78. `render/engines3d.js`
-79. `render/prosper3d.js`
-80. `render/hpbars3d.js`
-81. `render/build/plains/common.js`
-82. `render/build/plains/e01.js`
-83. `render/build/plains/e02.js`
-84. `render/build/plains/e03.js`
-85. `render/build/plains/e04.js`
-86. `render/build/plains/e05.js`
-87. `render/build/plains/e06.js`
-88. `render/build/plains/e07.js`
-89. `render/build/plains/e08.js`
-90. `render/build/plains/e09.js`
-91. `render/build/plains/e10.js`
-92. `render/build/plains/e11.js`
-93. `render/build/plains/e12.js`
-94. `render/build/plains/outer.js`
-95. `render/build/plains/wonders.js`
-96. `render/build/roads.js`
-97. `render/build/lamps.js`
-98. `render/build/neon.js`
-99. `render/build/vehicles.js`
-100. `render/build/traffic3d.js`
-101. `render/build/plains/town.js`
-102. `render/build/gates.js`
-103. `render/build/isles/arch.js`
-104. `render/build/civic.js`
-105. `render/build/marvels.js`
-106. `render/build/isles/halls.js`
-107. `render/build/isles/halls-future.js`
-108. `render/build/isles/compose.js`
-109. `render/build/isles/forest.js`
-110. `render/build/isles/mountain.js`
-111. `render/build/isles/tundra.js`
-112. `render/build/isles/coast.js`
-113. `render/build/isles/desert.js`
-114. `render/buildings3d.js`
-115. `game/world.js`
-116. `render/scene3d.js`
-117. `render/mood3d.js`
-118. `render/sky3d.js`
-119. `render/neon3d.js`
-120. `render/perf3d.js`
-121. `render/tank3d.js`
-122. `game/nature.js`
-123. `game/seasons.js`
-124. `render/snow3d.js`
-125. `ui/camera-fly.js`
-126. `render/fx/post3d.js`
-127. `render/fx/particles3d.js`
-128. `render/fx/soul-audio.js`
-129. `render/fx/soul-fx.js`
-130. `render/near3d.js`
-131. `ui/landbar.js`
-132. `ui/race-dev.js`
-133. `game/cities.js`
-134. `ui/hud.js`
-135. `game/possess.js`
-136. `ui/possess-ctl.js`
-137. `game/loop.js`
+65. `render/body/motion3d.js`
+66. `render/village3d.js`
+67. `ui/village-ui.js`
+68. `render/build/kit3d.js`
+69. `render/build/life3d.js`
+70. `render/build/place3d.js`
+71. `render/build/workyards3d.js`
+72. `render/build/ruins3d.js`
+73. `render/build/batch3d.js`
+74. `render/build/bridges3d.js`
+75. `render/travel3d.js`
+76. `render/war3d.js`
+77. `render/missiles3d.js`
+78. `render/shots3d.js`
+79. `render/engines3d.js`
+80. `render/prosper3d.js`
+81. `render/hpbars3d.js`
+82. `render/build/plains/common.js`
+83. `render/build/plains/e01.js`
+84. `render/build/plains/e02.js`
+85. `render/build/plains/e03.js`
+86. `render/build/plains/e04.js`
+87. `render/build/plains/e05.js`
+88. `render/build/plains/e06.js`
+89. `render/build/plains/e07.js`
+90. `render/build/plains/e08.js`
+91. `render/build/plains/e09.js`
+92. `render/build/plains/e10.js`
+93. `render/build/plains/e11.js`
+94. `render/build/plains/e12.js`
+95. `render/build/plains/outer.js`
+96. `render/build/plains/wonders.js`
+97. `render/build/roads.js`
+98. `render/build/lamps.js`
+99. `render/build/neon.js`
+100. `render/build/vehicles.js`
+101. `render/build/traffic3d.js`
+102. `render/build/plains/town.js`
+103. `render/build/gates.js`
+104. `render/build/isles/arch.js`
+105. `render/build/civic.js`
+106. `render/build/marvels.js`
+107. `render/build/isles/halls.js`
+108. `render/build/isles/halls-future.js`
+109. `render/build/isles/compose.js`
+110. `render/build/isles/forest.js`
+111. `render/build/isles/mountain.js`
+112. `render/build/isles/tundra.js`
+113. `render/build/isles/coast.js`
+114. `render/build/isles/desert.js`
+115. `render/buildings3d.js`
+116. `game/world.js`
+117. `render/scene3d.js`
+118. `render/mood3d.js`
+119. `render/sky3d.js`
+120. `render/neon3d.js`
+121. `render/perf3d.js`
+122. `render/tank3d.js`
+123. `game/nature.js`
+124. `game/seasons.js`
+125. `render/snow3d.js`
+126. `ui/camera-fly.js`
+127. `render/fx/post3d.js`
+128. `render/fx/particles3d.js`
+129. `render/fx/soul-audio.js`
+130. `render/fx/soul-fx.js`
+131. `render/near3d.js`
+132. `ui/landbar.js`
+133. `ui/race-dev.js`
+134. `game/cities.js`
+135. `ui/hud.js`
+136. `game/possess.js`
+137. `ui/possess-ctl.js`
+138. `game/loop.js`
