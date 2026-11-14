@@ -7,6 +7,7 @@
  *   dof      làm mờ hậu cảnh theo độ sâu: nét ở focus (khoảng cách tới máy quay), mờ dần ra xa (focusRange)
  *   blur     mờ cả ảnh (vừa mở mắt, choáng)
  *   vignette tối viền; grade: chỉnh màu điện ảnh (đậm, tương phản, tối ngả lam, sáng ngả vàng); grain: hạt nhiễu phim
+ *   desat    nhạt màu (dừng thời gian); tint: phủ màu tintColor [r, g, b] (phép thời gian); ripple: gợn sóng màn hình (tua lùi)
  *   lids     mí mắt (0 mở hẳn, 1 nhắm hẳn); flash: chớp trắng; ring: vòng nứt sáng khi xuyên vòm kính (0..1 theo thời gian)
  * Mỗi hiệu ứng là một số trong G.post.fx; game/possess.js đặt các số đó theo dòng thời gian. Có khử răng cưa nhẹ (theo độ
  * sáng) vì vẽ vào ảnh tạm thì mất khử răng cưa sẵn có của trình duyệt.
@@ -23,6 +24,10 @@
     vignette: 0,
     grade: 0,
     grain: 0,
+    desat: 0,
+    tint: 0,
+    tintColor: [1, 1, 1],
+    ripple: 0,
     lids: 0,
     flash: 0,
     ring: 0,
@@ -30,7 +35,8 @@
   const VERT = 'varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
   const FRAG = [
     'uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 uRes; uniform float uNear, uFar, uTime;',
-    'uniform float uRadial, uChroma, uDof, uFocus, uRange, uBlur, uVig, uGrade, uGrain, uLids, uFlash, uRing, uHasDepth;',
+    'uniform float uRadial, uChroma, uDof, uFocus, uRange, uBlur, uVig, uGrade, uGrain, uLids, uFlash, uRing, uHasDepth, uDesat, uTint, uRipple;',
+    'uniform vec3 uTintC;',
     'uniform vec2 uCenter;',
     'varying vec2 vUv;',
     'float viewZ(vec2 uv){ float d = texture2D(tDepth, uv).x; return (uNear * uFar) / ((uFar - uNear) * d - uFar); }',
@@ -48,6 +54,8 @@
     ' return mix(c, (a + b) * 0.5, 0.55); }',
     'void main(){',
     ' vec2 uv = vUv; vec3 col;',
+    // gợn sóng (tua lùi): ảnh lay nhẹ như nhìn qua mặt nước
+    ' if (uRipple > 0.001) uv += vec2(sin(uv.y * 38.0 + uTime * 7.0), cos(uv.x * 30.0 - uTime * 6.0)) * 0.0035 * uRipple;',
     // mờ toả tâm: 8 mẫu dọc tia từ tâm toả, kèm tách màu theo tia
     ' vec2 toC = uv - uCenter; float r = length(toC);',
     ' if (uRadial > 0.001) { vec3 acc = vec3(0.0); float k = uRadial * 0.11 * r;',
@@ -68,6 +76,9 @@
     ' if (uGrade > 0.001) { float l = lum(col); vec3 g = mix(vec3(l), col, 1.22); g = (g - 0.5) * 1.12 + 0.5;',
     '  g += mix(vec3(-0.015, 0.0, 0.035), vec3(0.035, 0.018, -0.02), smoothstep(0.15, 0.85, l));',
     '  col = mix(col, clamp(g, 0.0, 1.0), uGrade); }',
+    // phép thời gian: nhạt màu, phủ màu
+    ' if (uDesat > 0.001) col = mix(col, vec3(lum(col)), uDesat);',
+    ' if (uTint > 0.001) col = mix(col, col * uTintC * 1.2 + uTintC * 0.04, uTint);',
     ' if (uVig > 0.001) { float v = smoothstep(0.35, 1.05, length((uv - 0.5) * vec2(uRes.x / uRes.y, 1.0)) * 1.15); col *= 1.0 - uVig * v * 0.85; }',
     ' if (uGrain > 0.001) col += (hash(uv * uRes + fract(uTime * 7.13) * 91.7) - 0.5) * uGrain * 0.09;',
     // vòng nứt sáng khi xuyên vòm kính: một vòng mảnh toả ra từ tâm, có răng cưa như vết nứt
@@ -124,6 +135,10 @@
       uLids: { value: 0 },
       uFlash: { value: 0 },
       uRing: { value: 0 },
+      uDesat: { value: 0 },
+      uTint: { value: 0 },
+      uTintC: { value: new THREE.Vector3(1, 1, 1) },
+      uRipple: { value: 0 },
       uHasDepth: { value: canDepth ? 1 : 0 },
       uCenter: { value: center },
     };
@@ -147,6 +162,9 @@
       fx.grain > 0.001 ||
       fx.lids > 0.001 ||
       fx.flash > 0.001 ||
+      fx.desat > 0.001 ||
+      fx.tint > 0.001 ||
+      fx.ripple > 0.001 ||
       (fx.ring > 0.001 && fx.ring < 0.999);
     function render() {
       if (!active()) {
@@ -177,10 +195,14 @@
       U.uLids.value = fx.lids;
       U.uFlash.value = fx.flash;
       U.uRing.value = fx.ring;
+      U.uDesat.value = fx.desat;
+      U.uTint.value = fx.tint;
+      U.uTintC.value.set(fx.tintColor[0], fx.tintColor[1], fx.tintColor[2]);
+      U.uRipple.value = fx.ripple;
       renderer.render(qScene, qCam);
     }
     // về lại góc nhìn thượng đế: mọi hiệu ứng về 0
-    const reset = () => Object.assign(fx, FX0);
+    const reset = () => Object.assign(fx, FX0, { tintColor: [1, 1, 1] });
     G.post = { fx, center, render, reset, active, depth: canDepth };
   }
   BK.Post3D = { setup, FX0 };

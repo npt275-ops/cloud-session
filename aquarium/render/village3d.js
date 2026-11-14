@@ -832,7 +832,8 @@
       GESTURE_MAX = 2;
     let gameT = 0,
       gestT = 0;
-    function update(dt, t, speed) {
+    // frozen: đang dừng thời gian (game/time-magic.js): mọi người đứng im giữa động tác, trừ người bị nhập hồn (có hàm lái)
+    function update(dt, t, speed, frozen) {
       dt = Math.max(0, dt || 0);
       const k = speed || 1,
         real = Math.min(0.1, dt / 1000),
@@ -935,6 +936,7 @@
           continue;
         } // đạn tới: ngã xuống
         alive.add(key);
+        if (frozen && !drivers.has(key)) continue;
         // người ở xa máy quay (quá LOD_FAR) cập nhật cách một khung hình (design/ke-hoach-khac-phuc.md mục 1.3); thời gian bỏ qua
         // dồn sang lần sau (debt) nên vẫn đi đúng quãng đường
         // người đứng trong hàng bắn (không đi) cũng vậy: trận đông người thì nửa số người cập nhật mỗi khung hình

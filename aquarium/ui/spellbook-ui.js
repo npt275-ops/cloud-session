@@ -94,7 +94,7 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       if (html != null) e.innerHTML = html;
       return e;
     };
-    const fmt = (s) => s.cost + (s.use === 'hold' ? '/giây' : '') + ' linh lực' + (s.cd ? ' · hồi ' + s.cd + ' giây' : '');
+    const fmt = (s) => SP.price(s) + (s.use === 'hold' ? '/giây' : '') + ' linh lực' + (s.cd ? ' · hồi ' + s.cd + ' giây' : '');
     /* ----- thanh phép, linh lực, dòng báo ----- */
     const bar = el('div', 'sb-bar'),
       slots = el('div', 'sb-slots'),
@@ -108,7 +108,7 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       slotEls = open()
         .slice(0, 9)
         .map((s, i) => {
-          const b = el('button', 'sb-slot', '<span class="k">' + (i + 1) + '</span>' + svg(s.school) + '<span class="c">' + s.cost + '</span><span class="cd"></span>');
+          const b = el('button', 'sb-slot', '<span class="k">' + (i + 1) + '</span>' + svg(s.school) + '<span class="c">' + SP.price(s) + '</span><span class="cd"></span>');
           b.type = 'button';
           b.title = s.name + ' · ' + fmt(s);
           b.style.color = PAL.c(s.school + '.mid');
@@ -192,9 +192,10 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       if (e.target === wrap) toggle(false);
     });
     function tryCast() {
-      const r = SB.cast();
-      if (!r.ok && r.text) say(r.text);
+      const r = SB.press();
+      if (r && !r.ok && r.text) say(r.text);
     }
+    const stopCast = () => SB.release(); // (thả phím, chuột: dừng phép đang giữ)
     /* ----- phím, chuột, nút điện thoại ----- */
     // (nghe ở window, pha bắt: chạy trước phím của ui/possess-ctl.js, để Esc đóng sách chứ không thoát nhập hồn)
     window.addEventListener(
@@ -227,6 +228,11 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       },
       true,
     );
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'KeyE') stopCast();
+    });
+    window.addEventListener('pointerup', stopCast);
+    window.addEventListener('blur', stopCast);
     canvas.addEventListener('pointerdown', (e) => {
       // (lần bấm đầu chỉ khoá chuột: ui/possess-ctl.js; đã khoá chuột thì chuột trái phát phép)
       if (P.inside && e.button === 0 && e.pointerType === 'mouse' && document.pointerLockElement === canvas && !isOpen()) tryCast();
@@ -242,6 +248,7 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       e.preventDefault();
       tryCast();
     });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) tCast.addEventListener(ev, stopCast);
     document.body.append(tBook, tCast);
     /* ----- mỗi khung hình ----- */
     let lastMana = -1;
@@ -258,7 +265,7 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
         x.b.classList.toggle('sel', SB.st.sel === x.s.id);
         const cd = SB.cooldown(x.s.id);
         x.cd.style.setProperty('--p', cd > 0 ? ((cd / x.s.cd) * 100).toFixed(1) + '%' : '0%');
-        x.b.classList.toggle('no', m < x.s.cost);
+        x.b.classList.toggle('no', !SP.DEV.infinite && m < SP.price(x.s));
       }
       if (toastT && performance.now() > toastT) {
         toast.classList.remove('on');

@@ -141,3 +141,15 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   khi niệm; ngọc màu hệ phép đang chọn; đạn phép bay ra từ đầu gậy); vòng phù chú (render/magic/sigils.js: năm hình tự thiết kế;
   viên gạch "sigil" trong render/magic/vfx.js: hiện trước đầu gậy lúc niệm, nằm sát đất lúc bung); phép "Hố đen" thêm vào sách
   (sắp có).
+
+## Phép thời gian (đã làm)
+- Dừng (bật/tắt, lâu nhất 8 giây thật), tua nhanh (giữ: 8 lần, giữ quá 1,5 giây thì 16 lần), tua lùi (giữ: mỗi 0,45 giây lùi
+  một ảnh trận; ảnh chụp mỗi 3 ngày game, giữ 30 ngày). Điều khiển: game/time-magic.js; đồng hồ thế giới G.timeCtl (frozen, mul)
+  do game/loop.js đọc; ảnh trận logic/timeline.js (nạp vào thế giới đang chạy, giữ nguyên đối tượng); hình: render/magic/time3d.js;
+  màn hình: render/fx/post3d.js (desat, tint, ripple); tiếng: render/fx/magic-audio.js (bell, tick).
+- Lúc dừng: logic, nhà, mây, người trong làng đứng im; chỉ người bị nhập hồn, máy quay, hiệu ứng phép chạy theo giờ thật.
+- Sau tua lùi: người bị nhập vẫn được đánh dấu possessed; người đó chưa có ở lúc lùi về thì thoát nhập hồn.
+
+## Linh lực lúc làm game (người chơi chốt)
+- Tạm thời mọi phép cùng giá 5 (phép giữ: 5 mỗi giây), linh lực vô hạn: logic/spells.js `DEV = { infinite: true, cost: 5 }`.
+  Giá riêng từng phép vẫn ghi trong SPELLS; chơi thật thì đặt `infinite: false, cost: null`.

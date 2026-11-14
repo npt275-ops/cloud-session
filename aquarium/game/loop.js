@@ -38,6 +38,8 @@
     BK.VFX.setup(G); // render/magic/vfx.js (bộ hạt dùng chung của phép)
     BK.Aim3D.setup(G); // render/magic/aim3d.js (vòng ngắm của phép)
     BK.Staff3D.setup(G); // render/magic/staff3d.js (gậy phép trong tay khi nhập hồn)
+    BK.Time3D.setup(G); // render/magic/time3d.js (hình ảnh phép thời gian)
+    BK.TimeMagic.setup(G); // game/time-magic.js (đồng hồ thế giới: dừng, tua nhanh, tua lùi)
     BK.Spellbook.setup(G); // game/spellbook.js (sách phép thuật: chọn, ngắm, phát phép, linh lực)
     BK.SpellbookUi.setup(G); // ui/spellbook-ui.js (cuốn sách, thanh phép, linh lực)
     BK.RaceDev.setup(G); // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")
@@ -45,7 +47,8 @@
     const { W, renderer, scene, camera, controls } = G,
       T = G.time;
     let last = performance.now(),
-      lastSlow = 0;
+      lastSlow = 0,
+      frozenMs = 0; // (mili giây thời gian thế giới đã đứng im: phép dừng thời gian)
     G.seasons.update(true);
     function frame(t) {
       const f0 = performance.now(); // đo hiệu năng (G.frameTime: thời gian phần JS (trong đó phần logic), phần vẽ mỗi khung hình, trung bình trượt; tools/ đo 4 cảnh)
@@ -55,7 +58,11 @@
       G.perf.govern(dt);
       // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
       const l0 = performance.now();
-      G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1) * G.timeK) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó; G.timeK: chậm lại lúc lao nhập hồn (game/possess.js)
+      // (phép thời gian, game/time-magic.js: G.timeCtl.mul 0 khi dừng, tua lùi; 8, 16 khi tua nhanh)
+      const tc = G.timeCtl,
+        frozen = !!(tc && tc.frozen);
+      // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó; G.timeK: chậm lại lúc lao nhập hồn (game/possess.js)
+      G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1) * G.timeK * (tc ? tc.mul : 1)) / 1000);
       const l1 = performance.now();
       const { night } = G.sky.applyTime();
       G.weather.night = night;
@@ -67,17 +74,23 @@
         G.citiesRun.slow();
         G.raceDev.slow();
       }
-      G.nature.animate(dt, t, night);
-      G.citiesRun.animate(dt, t, night);
+      // thời gian thế giới (mây, sóng, khói, tuyết, thuyền, đạn, người trong làng): đứng im khi dừng thời gian; làng vẫn nhận giờ thật
+      // để linh hồn (người bị nhập hồn) đi lại được, người khác đứng im (frozen)
+      if (frozen) frozenMs += raw;
+      const wdt = frozen ? 0 : dt,
+        wt = t - frozenMs;
+      G.nature.animate(wdt, wt, night);
+      G.citiesRun.animate(dt, wt, night, frozen);
       if (G.look) G.look.update();
-      if (G.neonCity) G.neonCity.update(dt, t);
-      G.snow.update(dt, t, G.weather.winter);
+      if (G.neonCity) G.neonCity.update(wdt, wt);
+      G.snow.update(wdt, wt, G.weather.winter);
       const now = performance.now();
-      G.updatePuffs(now, dt);
-      G.tank.animate(t);
+      G.updatePuffs(now - frozenMs, wdt);
+      G.tank.animate(wt);
       G.cameraFly.update(dt, now);
       controls.update();
       G.possess.update(dt); // game/possess.js: lúc nhập hồn máy quay do cú nhập hồn đặt
+      G.timeMagic.update(Math.min(0.1, dt / 1000)); // game/time-magic.js: dừng, tua nhanh, tua lùi (giờ thật)
       G.possessUi.sync();
       G.particles.update(Math.min(0.1, dt / 1000));
       G.spellbook.update(Math.min(0.1, dt / 1000)); // (giờ thật: hồi linh lực, đạn phép, vòng ngắm)

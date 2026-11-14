@@ -524,7 +524,9 @@
       for (const l of lights) l.intensity = 0;
       for (const m of sigils) m.visible = false;
     }
-    G.vfx = { play, emitter, sigil, update, counts, clear, groundAt, MAX };
+    // phát một hạt trực tiếp (hiệu ứng tự tính chỗ, vận tốc: hạt bay vào tâm, xoáy quanh người...): layer 'soft' | 'glow'
+    const spawnOne = (layer, p, v, o) => spawn(layerOf(layer), p, v, o);
+    G.vfx = { play, emitter, sigil, spawn: spawnOne, update, counts, clear, groundAt, MAX };
   }
   BK.VFX = { setup, MAX };
 })(typeof self !== 'undefined' ? self : globalThis);

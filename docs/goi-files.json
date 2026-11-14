@@ -55,6 +55,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/time-magic.js",
+  "src": "game/time-magic.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/world.js",
   "src": "game/world.js",
   "mode": 420
@@ -267,6 +272,11 @@
  {
   "path": "BeKinh/logic/temper.js",
   "src": "logic/temper.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/timeline.js",
+  "src": "logic/timeline.js",
   "mode": 420
  },
  {
@@ -627,6 +637,11 @@
  {
   "path": "BeKinh/render/magic/staff3d.js",
   "src": "render/magic/staff3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/magic/time3d.js",
+  "src": "render/magic/time3d.js",
   "mode": 420
  },
  {

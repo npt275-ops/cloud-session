@@ -2,8 +2,10 @@
  * Chỉ khi đang nhập hồn (game/possess.js, pha 'in'). Luật (linh lực, hồi phép, điều kiện) ở logic/spells.js; hiệu ứng ở
  * render/magic/ (G.vfx, G.aim3d); âm thanh render/fx/magic-audio.js; giao diện ui/spellbook-ui.js gọi select(), cast().
  *   ngắm   tia từ tâm màn hình đi theo hướng máy quay, chạm mặt đất ở đâu thì ngắm ở đó; xa quá RANGE thì kéo về trong tầm
- *   phát   kiểm tra luật (BK.Spells.cast), giơ tay (f.castT: render/body/motion3d.js), rồi chạy phần tác động của phép đó
- *          (bảng CAST: mỗi phép một hàm nhỏ; hệ sau thêm vào bảng, không sửa phần chung)
+ *   phát   press() khi bấm (phím E, chuột trái), release() khi thả. Theo cách dùng của phép (logic/spells.js use):
+ *          'tap' kiểm tra luật (BK.Spells.cast), giơ tay (f.castT: render/body/motion3d.js), chạy phần tác động (bảng CAST);
+ *          'toggle' bấm bật, bấm lại tắt (bảng TOGGLE); 'hold' chạy suốt lúc giữ (bảng HOLD). Mỗi phép một hàm nhỏ trong bảng;
+ *          hệ sau thêm vào bảng, không sửa phần chung
  *   gậy    gậy phép trong tay phải (render/magic/staff3d.js): ngọc màu hệ phép đang chọn, niệm phép thì nghiêng về chỗ ngắm;
  *          vòng phù chú (G.vfx.sigil) hiện trước đầu gậy lúc niệm
  *   đạn    đạn phép bay theo đường cong từ đầu gậy tới chỗ ngắm, kéo đuôi hạt; tới nơi thì gọi onHit của nó
@@ -114,9 +116,49 @@
       },
     };
 
+    // phép thời gian (game/time-magic.js): dừng là bật tắt, tua nhanh, tua lùi là giữ
+    const TOGGLE = {
+      timeStop: () => G.timeMagic.toggleStop(),
+    };
+    const HOLD = {
+      timeFast: (on) => G.timeMagic.hold('timeFast', on),
+      timeBack: (on) => G.timeMagic.hold('timeBack', on),
+    };
+    // dáng niệm phép chung: giơ gậy, phù chú của hệ ở đầu gậy, bụi phép
+    function castLook(s) {
+      const f = folk();
+      if (f) f.castT = 0.4;
+      hand(v1);
+      camera.getWorldDirection(v2);
+      G.vfx.sigil(s.school, v1, v2, { size: 0.75, life: 0.55 });
+      if (BK.MagicRecipes[s.school + 'Cast']) G.vfx.play(s.school + 'Cast', v1);
+      if (audio) audio.cast(s.school === 'time' ? 0.35 : 0.8);
+    }
+    // bấm: phát phép theo cách dùng của nó; trả { ok, why, text }
+    function press() {
+      const s = spell();
+      if (!s) return { ok: false };
+      if (s.open && (s.use === 'hold' || s.use === 'toggle')) {
+        const wasOn = s.id === 'timeStop' && G.timeMagic && G.timeMagic.stopped;
+        const r = s.use === 'hold' ? HOLD[s.id] && HOLD[s.id](true) : TOGGLE[s.id] && TOGGLE[s.id]();
+        if (!r || r.ok === false) return deny(typeof r === 'object' && r ? r : { ok: false, why: 'mana', text: SP.WHY.mana });
+        if (s.use === 'hold') st.holding = s.id;
+        if (!wasOn) castLook(s);
+        st.last = { ok: true, id: s.id, t: performance.now() };
+        return { ok: true };
+      }
+      return cast();
+    }
+    // thả: dừng phép đang giữ
+    function release() {
+      if (st.holding && HOLD[st.holding]) HOLD[st.holding](false);
+      st.holding = null;
+    }
     // chọn phép (sách, thanh phép nhanh); phép chưa mở cũng chọn được để xem, bấm phát thì báo "sắp có"
     function select(id) {
-      if (SP.BY.has(id)) st.sel = id;
+      if (!SP.BY.has(id)) return;
+      release();
+      st.sel = id;
     }
     // phát phép đang chọn; trả { ok, why, text }
     function cast() {
@@ -139,7 +181,7 @@
 
     function update(sec) {
       if (!(sec > 0)) return;
-      if (G.world && G.world.soul) SP.regen(G.world, sec); // (giờ thật: cả lúc dừng thời gian)
+      if (G.world && G.world.soul) SP.regen(G.world, sec, !!st.holding); // (giờ thật: cả lúc dừng thời gian; đang giữ phép thì không hồi)
       stepBolts(sec);
       const s = spell(),
         f = folk();
@@ -159,6 +201,8 @@
     G.spellbook = {
       select,
       cast,
+      press,
+      release,
       update,
       st,
       audio,

@@ -950,7 +950,8 @@
       syncLevels();
     }
     // mỗi khung hình: công trình theo tiến độ xây của logic, người của các đảo gần máy quay, xe nhường người
-    function animate(dt, t, night) {
+    // frozen: đang dừng thời gian (game/time-magic.js): công trình đứng im, người trong làng đứng im trừ người bị nhập hồn
+    function animate(dt, t, night, frozen) {
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       if (bars) bars.begin(); // thanh máu: hải chiến (render/war3d.js), cổng, nhà chính, người trong làng
       for (let i = 0; i < N; i++) {
@@ -958,7 +959,7 @@
         buildings.setProgress(i, isle(i).build && isle(i).build.list, isle(i).build && isle(i).build.level);
       }
       for (let i = 0; i < N; i++) buildings.setCrew(i, villages[i] && villages[i].visible ? villages[i].siteCrew() : -1); // thợ đã tới góc nhà (đảo không vẽ người: −1, không chờ)
-      buildings.animate(dt, t, night, camera.position, speed);
+      buildings.animate(frozen ? 0 : dt, t, night, camera.position, speed);
       if (world.diplomacy) {
         const day = world.day + world.acc / World.TICKS_PER_DAY;
         travel.update(world.caravans, day, t, G.levelOf, world.visits);
@@ -991,7 +992,7 @@
         if (d < NEAR || (v && v.visible && d < FAR)) {
           const vv = villageOf(i);
           vv.setVisible(true);
-          vv.update(dt, t, speed);
+          vv.update(dt, t, speed, frozen);
         } else if (v) {
           v.setVisible(false);
         }
@@ -1089,7 +1090,18 @@
       villageOf,
       jumpEra,
       goEra,
-      citiesRun: { step, animate, slow },
+      // revive: nạp một ảnh trận (logic/save.js) với cách khôi phục của game (tua lùi: game/time-magic.js); resync: vẽ lại theo
+      // thế giới vừa đổi (thời, cầu, sân đảo bị sáp nhập)
+      citiesRun: {
+        step,
+        animate,
+        slow,
+        revive: (text) => BK.Save.load(text, { restore: (W2) => World.restore(W2, { buildPlan }) }),
+        resync: () => {
+          syncLevels();
+          syncWorld();
+        },
+      },
     });
   }
   BK.GameCities = { setup, buildPlan };

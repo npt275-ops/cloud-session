@@ -3,6 +3,21 @@ const test = require('node:test');
 const assert = require('node:assert');
 const S = require('../logic/spells.js');
 const IN = { inside: true, nearSea: false };
+const DEV0 = Object.assign({}, S.DEV);
+// (các bài dưới thử luật chơi thật: tắt chế độ thử)
+S.DEV.infinite = false;
+S.DEV.cost = null;
+
+test('chế độ thử: mọi phép giá 5, linh lực không bị trừ', () => {
+  assert.deepStrictEqual(DEV0, { infinite: true, cost: 5 });
+  Object.assign(S.DEV, DEV0);
+  const W = {};
+  for (let i = 0; i < 40; i++) assert.ok(S.channel(W, 'timeBack', 1, IN).ok);
+  assert.strictEqual(S.cast(W, 'soulBolt', IN).cost, 5);
+  assert.strictEqual(S.state(W).mana, S.MANA_MAX);
+  S.DEV.infinite = false;
+  S.DEV.cost = null;
+});
 
 test('sách có đủ các trang và các phép người chơi đã chốt', () => {
   assert.deepStrictEqual(
@@ -22,6 +37,7 @@ test('chỉ dùng được khi đang nhập hồn', () => {
 
 test('phép chưa làm xong thì "sắp có"', () => {
   assert.strictEqual(S.can({}, 'fireball', IN).why, 'soon');
+  assert.ok(S.can({}, 'timeStop', IN).ok, 'phép thời gian đã mở');
 });
 
 test('tốn linh lực, hồi phép; linh lực tự hồi theo giờ thật, không quá tối đa', () => {
@@ -53,4 +69,27 @@ test('Đại hồng thuỷ chỉ dùng khi ở gần biển', () => {
   } finally {
     sp.open = false;
   }
+});
+
+test('phép giữ phím (tua nhanh, tua lùi): tốn linh lực theo giây, hết thì dừng', () => {
+  const W = {};
+  let t = 0;
+  while (S.channel(W, 'timeBack', 0.1, IN).ok) t += 0.1;
+  const per = S.BY.get('timeBack').cost;
+  assert.ok(Math.abs(t - S.MANA_MAX / per) < 0.25, 'giữ được chừng ' + (S.MANA_MAX / per) + ' giây: ' + t.toFixed(1));
+  assert.strictEqual(S.channel(W, 'timeBack', 0.1, IN).why, 'mana');
+  assert.strictEqual(S.channel({}, 'timeFast', 0.1, { inside: false }).why, 'outside');
+});
+
+test('đang giữ phép thì linh lực không tự hồi: giữ lâu phải cạn', () => {
+  const W = {};
+  let t = 0;
+  // mỗi khung hình: hồi (đang giữ) rồi trừ theo giây, như game/spellbook.js và game/time-magic.js
+  for (; t < 60; t += 0.1) {
+    S.regen(W, 0.1, true);
+    if (!S.channel(W, 'timeFast', 0.1, IN).ok) break;
+  }
+  assert.ok(t < 10, 'tua nhanh giữ được ' + t.toFixed(1) + ' giây rồi cạn');
+  S.regen(W, 2, false);
+  assert.ok(S.state(W).mana >= 13, 'thả ra thì hồi lại');
 });

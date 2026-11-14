@@ -5,6 +5,8 @@
  *   impact(k)     tiếng bung khi phép chạm đích: k 0..1 độ mạnh
  *   deny()        tiếng "tịt" khi không dùng được (thiếu linh lực, đang hồi phép)
  *   page()        tiếng lật trang sách
+ *   bell(on)      chuông trầm khi thời gian dừng (on), chuông cao, ngắn khi thời gian chạy tiếp
+ *   tick(k)       tiếng tích tắc (tua nhanh, tua lùi): k > 0 cao, k < 0 trầm
  * Cần: audio.js (G.audio). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -73,7 +75,22 @@
       if (!b) return;
       band(b, 2500, 5000, 0.8, [[0.03, 0.12], [0.2, 0.0001]], 0.22);
     }
-    return { cast, impact, deny, page };
+    function bell(on) {
+      const b = bus();
+      if (!b) return;
+      const f = on ? 196 : 392;
+      tone(b, f, f * 0.998, 0.12, on ? 2.4 : 1.1, 'sine');
+      tone(b, f * 2.01, f * 2, 0.05, on ? 1.8 : 0.8, 'sine');
+      tone(b, f * 3.02, f * 3, 0.025, on ? 1.2 : 0.5, 'triangle');
+      band(b, on ? 3000 : 600, on ? 400 : 4000, 1.5, [[0.05, 0.12], [0.6, 0.0001]], 0.65);
+    }
+    function tick(k) {
+      const b = bus();
+      if (!b) return;
+      const f = k < 0 ? 900 : 1700;
+      tone(b, f, f * 0.9, 0.05, 0.05, 'square');
+    }
+    return { cast, impact, deny, page, bell, tick };
   }
   BK.MagicAudio = { create };
 })(typeof self !== 'undefined' ? self : globalThis);
