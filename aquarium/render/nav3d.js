@@ -401,13 +401,16 @@
       }
       return p;
     }
+    // (vừa bước lấn vào mép khung, còn nông hơn SNAP: ra hẳn ngay, bước lấn nhỏ nên không thấy giật; trước đây chỉ lùi dần
+    // nên người đi chéo cắt được qua góc nhà. Ở sâu trong khung, do công trình vừa mọc lên chỗ đang đứng: bước ra nhanh gấp ba)
+    const SNAP = 0.9;
     function pushOut(pos, max, farm) {
       const e = exitOf(pos.x, pos.z, farm);
       if (!e) return;
       const dx = e.x - pos.x,
         dz = e.z - pos.z,
         d = Math.hypot(dx, dz) || 1,
-        k = Math.min(1, max / d);
+        k = d <= SNAP ? 1 : Math.min(1, (max * 3) / d);
       pos.x += dx * k;
       pos.z += dz * k;
     }

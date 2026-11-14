@@ -534,25 +534,46 @@
       // người phải tránh (places().solids, render/nav3d.js)
       // (khung tính trên mọi phần thấp hơn tầm người 2,2: nhà sàn, nhà nấm, kim tự tháp ngược phình ra ở ngang người cũng là chỗ không đi qua)
       if (!P.dead) {
+        // (đo theo từng cạnh của từng tam giác, cắt vào dải cao -0,3..tầm người: chân chống xiên, mái dốc có một đầu chôn dưới
+        // đất, đầu kia cao quá đầu người vẫn cắt ngang tầm người ở giữa; chỉ đo theo đỉnh thì sót, người đi xuyên qua)
         const top = BODY_H / (P.fitS || 1),
-          v = new THREE.Vector3();
+          LO = -0.3,
+          tri = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
         let x0 = 1e9,
           x1 = -1e9,
           z0 = 1e9,
           z1 = -1e9,
           hmax = 0;
+        const put = (x, z) => {
+          if (x < x0) x0 = x;
+          if (x > x1) x1 = x;
+          if (z < z0) z0 = z;
+          if (z > z1) z1 = z;
+        };
         m.updateMatrixWorld(true);
         m.traverse((q) => {
           if (!q.isMesh || !q.geometry.attributes.position || q === m.userData.glow || q === m.userData.lit) return;
-          const A = q.geometry.attributes.position;
-          for (let j = 0; j < A.count; j++) {
-            v.fromBufferAttribute(A, j).applyMatrix4(q.matrixWorld);
-            if (v.y > hmax) hmax = v.y;
-            if (v.y > top || v.y < -0.3) continue;
-            if (v.x < x0) x0 = v.x;
-            if (v.x > x1) x1 = v.x;
-            if (v.z < z0) z0 = v.z;
-            if (v.z > z1) z1 = v.z;
+          const A = q.geometry.attributes.position,
+            I = q.geometry.index,
+            n = I ? I.count : A.count;
+          for (let j = 0; j + 2 < n; j += 3) {
+            for (let k = 0; k < 3; k++) {
+              tri[k].fromBufferAttribute(A, I ? I.getX(j + k) : j + k).applyMatrix4(q.matrixWorld);
+              if (tri[k].y > hmax) hmax = tri[k].y;
+            }
+            for (let k = 0; k < 3; k++) {
+              const a = tri[k],
+                b = tri[(k + 1) % 3];
+              if ((a.y > top && b.y > top) || (a.y < LO && b.y < LO)) continue;
+              // hai đầu của cạnh sau khi cắt vào dải [LO, top]
+              for (const [u, w] of [
+                [a, b],
+                [b, a],
+              ]) {
+                const t = u.y > top ? (u.y - top) / (u.y - w.y) : u.y < LO ? (LO - u.y) / (w.y - u.y) : 0;
+                put(u.x + (w.x - u.x) * t, u.z + (w.z - u.z) * t);
+              }
+            }
           }
         });
         const s = P.fitS,
