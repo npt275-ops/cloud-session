@@ -20,6 +20,7 @@
   const ON = { plains: true }; // các miền bật bản thử
   const FADE = 1200; // (mili giây) chuyển dần lúc mở mắt
   const SCAN = 2000, // (mili giây) quét lại các khối quanh đảo (công trình mới mọc)
+    SLICE = 400, // số khối quét mỗi khung hình
     NEAR = 110; // bán kính quét quanh tâm đảo
   const LIGHT = {
     sun: '#ffe3b8', // nắng ấm
@@ -101,20 +102,37 @@
       return sv;
     }
     // chuyển mềm các vật liệu gãy mặt của khối quanh đảo (khối không có pháp tuyến thì để nguyên: vẽ mềm sẽ đen)
+    // (quét cả cảnh trong một khung hình tốn chừng 20 ms ở máy chậm: khung khựng. Lần đầu quét hết; sau đó mỗi khung hình chỉ
+    // quét SLICE khối, vòng lại từ đầu sau mỗi SCAN mili giây)
     const wp = new THREE.Vector3();
+    function soften(L, sv, o) {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes.normal) return;
+      const m = o.material;
+      if (!m || Array.isArray(m) || !m.flatShading || !m.isMeshStandardMaterial || sv.flat.has(m)) return;
+      o.getWorldPosition(wp);
+      if (!o.isInstancedMesh && Math.hypot(wp.x - L.center.x, wp.z - L.center.z) > NEAR) return;
+      if (o.isInstancedMesh && !isUnder(o, L.g)) return;
+      sv.flat.add(m);
+      m.flatShading = false;
+      m.needsUpdate = true;
+    }
     function scan(L, sv) {
       sv.scanAt = performance.now();
-      G.scene.traverse((o) => {
-        if (!o.isMesh || !o.geometry || !o.geometry.attributes.normal) return;
-        const m = o.material;
-        if (!m || Array.isArray(m) || !m.flatShading || !m.isMeshStandardMaterial || sv.flat.has(m)) return;
-        o.getWorldPosition(wp);
-        if (!o.isInstancedMesh && Math.hypot(wp.x - L.center.x, wp.z - L.center.z) > NEAR) return;
-        if (o.isInstancedMesh && !isUnder(o, L.g)) return;
-        sv.flat.add(m);
-        m.flatShading = false;
-        m.needsUpdate = true;
-      });
+      sv.stack = null; // (vừa quét hết: lượt chia nhỏ bắt đầu lại sau SCAN)
+      G.scene.traverse((o) => soften(L, sv, o));
+    }
+    // (chia theo số khối: một nhánh con có thể là cả một đảo hàng nghìn khối; duyệt bằng ngăn xếp, mỗi khung hình tối đa SLICE khối)
+    function scanSome(L, sv) {
+      if (!sv.stack || !sv.stack.length) {
+        if (performance.now() - sv.scanAt < SCAN) return;
+        sv.scanAt = performance.now();
+        sv.stack = [G.scene];
+      }
+      for (let n = 0; n < SLICE && sv.stack.length; n++) {
+        const o = sv.stack.pop();
+        soften(L, sv, o);
+        for (let k = o.children.length - 1; k >= 0; k--) sv.stack.push(o.children[k]);
+      }
     }
     function isUnder(o, g) {
       for (let p = o.parent; p; p = p.parent) if (p === g) return true;
@@ -161,7 +179,7 @@
         st.onAt = performance.now();
         st.saved = apply(L);
       }
-      if (performance.now() - st.saved.scanAt > SCAN) scan(L, st.saved);
+      scanSome(L, st.saved);
       const k = (st.k = Math.min(1, (performance.now() - st.onAt) / FADE));
       const Lt = G.sky && G.sky.lights;
       if (Lt) {

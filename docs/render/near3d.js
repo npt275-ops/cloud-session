@@ -113,11 +113,11 @@
           sh.vertexShader
             .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = normalize(mix(vec3(normal), vec3(0.0, 1.0, 0.0), uSoft));')
             .replace(
-            '#include <begin_vertex>',
-            '#include <begin_vertex>\nvTip = aTip; vec4 wp0 = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);\n' +
-              'float sw = sin(uWind * 1.7 + wp0.x * 0.45 + wp0.z * 0.3) * 0.6 + sin(uWind * 2.9 + wp0.z * 0.9) * 0.4;\n' +
-              'transformed.x += sw * 0.07 * aTip * position.y * 3.0; transformed.z += sw * 0.04 * aTip * position.y * 3.0; transformed.y *= 1.0 - 0.2 * uSoft;',
-          );
+              '#include <begin_vertex>',
+              '#include <begin_vertex>\nvTip = aTip; vec4 wp0 = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);\n' +
+                'float sw = sin(uWind * 1.7 + wp0.x * 0.45 + wp0.z * 0.3) * 0.6 + sin(uWind * 2.9 + wp0.z * 0.9) * 0.4;\n' +
+                'transformed.x += sw * 0.07 * aTip * position.y * 3.0; transformed.z += sw * 0.04 * aTip * position.y * 3.0; transformed.y *= 1.0 - 0.2 * uSoft;',
+            );
         sh.fragmentShader =
           'uniform vec3 uBase; uniform vec3 uTipC; uniform float uSoft; varying float vTip;\n' +
           sh.fragmentShader.replace(
@@ -176,19 +176,84 @@
       }
       return true;
     }
-    // dựng lại cỏ, hoa, sỏi quanh (cx, cz) (toạ độ đảo)
-    function rebuild(L, cx, cz) {
+    // cỏ, hoa, sỏi của từng ô CELL × CELL tính một lần rồi nhớ (CACHE): đi lại chỉ phải tính các ô mới vào vòng, còn lại ghép
+    // từ bộ nhớ (trước đây tính lại cả vòng mỗi lần dời 3 đơn vị: khung hình khựng). Bộ nhớ xoá khi đổi đảo hay khi chỗ công trình
+    // của đảo thay đổi (công trình mới mọc lên chỗ có cỏ). Mỗi cây ghi số: cỏ [x, y, z, xoay, nghiêng, cỡ, cao, r, g, b],
+    // hoa [x, y, z, xoay, cỡ, r, g, b], sỏi [x, y, z, xoay x, y, z, cỡ, r, g, b]
+    // (mỗi lần ghép chỉ tính tối đa NEW_CELLS ô mới; ô chưa tính thì bỏ qua lần này, khung sau ghép lại: chạy nhanh qua vùng mới
+    // không khựng; ô mới luôn ở mép vòng, chỗ cỏ đã nhỏ dần)
+    const CACHE = { key: null, cells: new Map(), max: 900 },
+      NEW_CELLS = 6;
+    function cellOf(L, ix, iz, ctx) {
+      const k = ix + ',' + iz;
+      let c = CACHE.cells.get(k);
+      if (c) return c;
+      if (ctx.budget <= 0) {
+        ctx.missing++;
+        return null;
+      }
+      ctx.budget--;
+      const { K, solids, grounds, tries, green, gc } = ctx;
+      c = { g: [], f: [], p: [] };
+      const r = rng((ix * 73856093) ^ (iz * 19349663) ^ ((L.i + 1) * 83492791));
+      const place = (n, fn) => {
+        for (let k2 = 0; k2 < n; k2++) {
+          const x = (ix + r()) * CELL,
+            z = (iz + r()) * CELL,
+            a = r(),
+            b = r(),
+            cc = r();
+          if (!freeAt(L, solids, grounds, x, z)) continue;
+          fn(x, L.surfAt(x, z), z, a, b, cc);
+        }
+      };
+      place(tries, (x, y, z, a, b, cc) => {
+        if (cc > green(x, z)) return;
+        const s = 0.7 + a * 0.6,
+          k3 = 0.92 + b * 0.16;
+        c.g.push(x, y, z, a * 6.28, (b - 0.5) * 0.2, s, s * (0.8 + b * 0.6), gc.r * k3, gc.g * k3, gc.b * k3);
+      });
+      if (K.flowers.length)
+        place(K.flower, (x, y, z, a, b, cc) => {
+          if (a > green(x, z)) return;
+          col.set(K.flowers[Math.floor(cc * K.flowers.length)]);
+          c.f.push(x, y, z, b * 6.28, 0.8 + a * 0.5, col.r, col.g, col.b);
+        });
+      place(K.pebble, (x, y, z, a, b, cc) => {
+        col.set(K.stone).multiplyScalar(0.85 + b * 0.3);
+        c.p.push(x, y + 0.02, z, a * 3, b * 6.28, cc * 3, 0.6 + a * 1.4, col.r, col.g, col.b);
+      });
+      if (CACHE.cells.size >= CACHE.max) CACHE.cells.delete(CACHE.cells.keys().next().value);
+      CACHE.cells.set(k, c);
+      return c;
+    }
+    // ghép cỏ, hoa, sỏi quanh (cx, cz) (toạ độ đảo) từ các ô; nhỏ dần ở mép vòng
+    function rebuild(L, cx, cz, first) {
       const K = KIND[L.ter] || KIND.plains,
         PL = G.buildings && G.buildings.places ? G.buildings.places(L.i) : null,
         solids = ((PL && PL.solids) || []).filter((B) => B.kind !== 'town'),
         grounds = (PL && PL.grounds) || [];
-      const tries = G.perf && G.perf.pr != null && G.perf.pr < 1 ? GREEN.TRY / 2 : GREEN.TRY;
-      // độ xanh của đất ở (x, z), 0..1 (màu đất ghi vào gc)
+      const key = L.i + ':' + solids.length + ':' + grounds.length;
+      if (CACHE.key !== key || CACHE.pl !== PL) {
+        CACHE.key = key;
+        CACHE.pl = PL;
+        CACHE.cells.clear();
+      }
       const gc = new THREE.Color(),
         green = (x, z) => {
           L.groundAt(x, z, gc);
           return Math.max(0, Math.min(1, (gc.g - Math.max(gc.r, gc.b) - GREEN.from) / (GREEN.full - GREEN.from)));
         };
+      const ctx = {
+        K,
+        solids,
+        grounds,
+        tries: G.perf && G.perf.pr != null && G.perf.pr < 1 ? GREEN.TRY / 2 : GREEN.TRY,
+        green,
+        gc,
+        budget: first ? 1e9 : NEW_CELLS,
+        missing: 0,
+      };
       let ng = 0,
         nf = 0,
         np = 0;
@@ -196,48 +261,45 @@
         c1x = Math.floor((cx + R) / CELL),
         c0z = Math.floor((cz - R) / CELL),
         c1z = Math.floor((cz + R) / CELL);
+      const edgeOf = (x, z) => {
+        const d = Math.hypot(x - cx, z - cz);
+        return d > R ? 0 : Math.min(1, (R - d) / 3);
+      };
+      // (ô gần tính trước: hạn mức ô mới mỗi lần dành cho chỗ gần người)
+      const order = [];
       for (let ix = c0x; ix <= c1x; ix++)
-        for (let iz = c0z; iz <= c1z; iz++) {
-          const r = rng((ix * 73856093) ^ (iz * 19349663) ^ ((L.i + 1) * 83492791));
-          const place = (n, fn) => {
-            for (let k = 0; k < n; k++) {
-              const x = (ix + r()) * CELL,
-                z = (iz + r()) * CELL,
-                d = Math.hypot(x - cx, z - cz),
-                a = r(),
-                b = r(),
-                c = r();
-              if (d > R) continue;
-              if (!freeAt(L, solids, grounds, x, z)) continue;
-              const edge = Math.min(1, (R - d) / 3); // (nhỏ dần ở mép vòng)
-              fn(x, L.surfAt(x, z), z, edge, a, b, c);
-            }
-          };
-          place(tries, (x, y, z, e, a, b, c) => {
-            if (ng >= MAX_G || c > green(x, z)) return;
-            const s = (0.7 + a * 0.6) * e;
-            E.set((b - 0.5) * 0.2, a * 6.28, 0);
-            M.compose(Pv.set(x, y, z), Q.setFromEuler(E), Sv.set(s, s * (0.8 + b * 0.6), s));
-            grass.setMatrixAt(ng, M);
-            grass.setColorAt(ng++, col.copy(gc).multiplyScalar(0.92 + b * 0.16));
-          });
-          if (K.flowers.length)
-            place(K.flower, (x, y, z, e, a, b, c) => {
-              if (nf >= MAX_F || a > green(x, z)) return;
-              const s = (0.8 + a * 0.5) * e;
-              M.compose(Pv.set(x, y, z), Q.setFromEuler(E.set(0, b * 6.28, 0)), Sv.set(s, s, s));
-              flowers.setMatrixAt(nf, M);
-              flowers.setColorAt(nf++, col.set(K.flowers[Math.floor(c * K.flowers.length)]));
-            });
-          place(K.pebble, (x, y, z, e, a, b, c) => {
-            if (np >= MAX_P) return;
-            const s = (0.6 + a * 1.4) * e;
-            E.set(a * 3, b * 6.28, c * 3);
-            M.compose(Pv.set(x, y + 0.02, z), Q.setFromEuler(E), Sv.set(s, s * 0.6, s * 0.9));
-            pebbles.setMatrixAt(np, M);
-            pebbles.setColorAt(np++, col.set(K.stone).multiplyScalar(0.85 + b * 0.3));
-          });
+        for (let iz = c0z; iz <= c1z; iz++) order.push([Math.hypot((ix + 0.5) * CELL - cx, (iz + 0.5) * CELL - cz), ix, iz]);
+      order.sort((a, b) => a[0] - b[0]);
+      for (const [d0, ix, iz] of order) {
+        if (d0 > R + CELL) continue;
+        const c = cellOf(L, ix, iz, ctx);
+        if (!c) continue;
+        for (let j = 0; j < c.g.length && ng < MAX_G; j += 10) {
+          const e = edgeOf(c.g[j], c.g[j + 2]);
+          if (!e) continue;
+          E.set(c.g[j + 4], c.g[j + 3], 0);
+          M.compose(Pv.set(c.g[j], c.g[j + 1], c.g[j + 2]), Q.setFromEuler(E), Sv.set(c.g[j + 5] * e, c.g[j + 6] * e, c.g[j + 5] * e));
+          grass.setMatrixAt(ng, M);
+          grass.setColorAt(ng++, col.setRGB(c.g[j + 7], c.g[j + 8], c.g[j + 9]));
         }
+        for (let j = 0; j < c.f.length && nf < MAX_F; j += 8) {
+          const e = edgeOf(c.f[j], c.f[j + 2]);
+          if (!e) continue;
+          const s = c.f[j + 4] * e;
+          M.compose(Pv.set(c.f[j], c.f[j + 1], c.f[j + 2]), Q.setFromEuler(E.set(0, c.f[j + 3], 0)), Sv.set(s, s, s));
+          flowers.setMatrixAt(nf, M);
+          flowers.setColorAt(nf++, col.setRGB(c.f[j + 5], c.f[j + 6], c.f[j + 7]));
+        }
+        for (let j = 0; j < c.p.length && np < MAX_P; j += 10) {
+          const e = edgeOf(c.p[j], c.p[j + 2]);
+          if (!e) continue;
+          const s = c.p[j + 6] * e;
+          E.set(c.p[j + 3], c.p[j + 4], c.p[j + 5]);
+          M.compose(Pv.set(c.p[j], c.p[j + 1], c.p[j + 2]), Q.setFromEuler(E), Sv.set(s, s * 0.6, s * 0.9));
+          pebbles.setMatrixAt(np, M);
+          pebbles.setColorAt(np++, col.setRGB(c.p[j + 7], c.p[j + 8], c.p[j + 9]));
+        }
+      }
       grass.count = ng;
       flowers.count = nf;
       pebbles.count = np;
@@ -249,6 +311,7 @@
       }
       st.cx = cx;
       st.cz = cz;
+      st.missing = ctx.missing; // (còn ô chưa tính: khung sau ghép lại)
     }
     function set(on, i, head) {
       const fog = scene.fog;
@@ -262,6 +325,7 @@
         if (!st.on) return;
         st.on = false;
         st.k = 0;
+        st.i = -1; // (vào lại: dựng hết một lần lúc mở mắt)
         for (const m of [grass, flowers, pebbles]) m.visible = false;
         lamp.intensity = 0;
         if (fog && st.fog0) {
@@ -286,9 +350,10 @@
       // cỏ: dựng lại khi người đi xa chỗ dựng lần trước
       const x = head.x - L.center.x,
         z = head.z - L.center.z;
-      if (st.i !== i || Math.hypot(x - st.cx, z - st.cz) > CELL) {
+      if (st.i !== i || st.missing > 0 || Math.hypot(x - st.cx, z - st.cz) > CELL) {
+        const first = st.i !== i; // (lần đầu: lúc mở mắt, ảnh còn nhoè: dựng hết một lần)
         st.i = i;
-        rebuild(L, x, z);
+        rebuild(L, x, z, first);
       }
       for (const m of [grass, flowers, pebbles]) m.visible = true;
       U.uWind.value = performance.now() * 0.001;

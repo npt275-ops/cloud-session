@@ -88,6 +88,7 @@
         PERF.ema = 16.7;
       } else if (PERF.good > 4000) {
         PERF.good = 0;
+        if (t < PERF.cool) return; // (vừa hạ chất lượng: không nâng gì trong 45 giây, kể cả bóng; tránh đổi qua đổi lại gây khựng)
         if (PERF.shadow === 0) PERF.shadow = 1024;
         else if (PERF.shadow < (lowEnd ? 1024 : 2048)) PERF.shadow = 2048;
         else if (PERF.shadowEvery > 2) PERF.shadowEvery = 2;
@@ -115,7 +116,8 @@
         sc.updateProjectionMatrix();
         PERF.force = true;
       }
-      renderer.shadowMap.needsUpdate = PERF.force || moved || PERF.frame % PERF.shadowEvery === 0;
+      // (lúc nhập hồn: vùng bóng nhỏ, cập nhật mỗi khung hình: bóng người đi quanh không giật cách khung)
+      renderer.shadowMap.needsUpdate = PERF.force || moved || (G.possess && G.possess.active) || PERF.frame % PERF.shadowEvery === 0;
       PERF.force = false;
     }
     document.addEventListener('keydown', (e) => {

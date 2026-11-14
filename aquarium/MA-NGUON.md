@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 187 tệp, 49170 dòng.
+Tổng: 187 tệp, 49304 dòng.
 
 ## (gốc)
 
@@ -98,10 +98,10 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/missiles3d.js` | 191 | Tên lửa bay, vụ nổ, nấm hạt nhân … | `BK.Missiles3D` | `render/map/map3d.js` |
 | `render/mood3d.js` | 111 | Không khí ánh sáng ("chill") | `BK.Mood3D` |  |
 | `render/nav3d.js` | 603 | Lối đi của người trên một đảo … | `BK.NAV_SOLIDS` `BK.Nav3D` | `render/build/plains/common.js` `render/build/roads.js` |
-| `render/near3d.js` | 308 | Cảnh vật gần sau cú nhập hồn … | `BK.Near3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `render/perf3d.js` `render/scene3d.js` |
+| `render/near3d.js` | 373 | Cảnh vật gần sau cú nhập hồn … | `BK.Near3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `render/perf3d.js` `render/scene3d.js` |
 | `render/neon3d.js` | 272 | Mặt trời nhân tạo của thành phố neon (từ thời 10) | `BK.NeonCity3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `render/build/neon.js` `render/scene3d.js` |
 | `render/outfits3d.js` | 262 | Trang phục của 5 nhóm người hay gặp qua 12 thời kỳ: người đứng đầu, tướng, lính, dân thường nam, dân thường nữ | `BK.Outfits3D` |  |
-| `render/perf3d.js` | 139 | Mượt và nét: bộ điều tốc nhắm 60 khung hình mỗi giây (chậm thì hạ độ nét, vẽ bóng thưa hơn, rồi bỏ bóng; nhanh lại thì … | `BK.Perf3D` G: 1 dịch vụ | `game/world.js` |
+| `render/perf3d.js` | 141 | Mượt và nét: bộ điều tốc nhắm 60 khung hình mỗi giây (chậm thì hạ độ nét, vẽ bóng thưa hơn, rồi bỏ bóng; nhanh lại thì … | `BK.Perf3D` G: 1 dịch vụ | `game/possess.js` `game/world.js` |
 | `render/prosper3d.js` | 304 | Thịnh vượng và suy tàn thấy được … | `BK.Prosper3D` | `sea3d.js` |
 | `render/rig3d.js` | 468 | Bộ khung khớp của một người (hông, ngực, cổ, đầu, vai, khuỷu, cổ tay, hông, gối, cổ chân) và hình người theo nét đã … | `BK.Rig3D` | `render/outfits3d.js` |
 | `render/scene3d.js` | 135 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `render/mood3d.js` |

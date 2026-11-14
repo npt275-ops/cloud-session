@@ -1,13 +1,13 @@
 /* Bể Kính · render/magic/staff3d.js · Gậy phép trong tay phải nhân vật đang nhập hồn (design/ke-hoach-buoc-37.md mục 9)
- * Gậy gỗ bo tròn kiểu đồ chơi: thân thuôn, hai vòng đai, đầu gậy là một nhánh cong ôm viên ngọc sáng màu hệ phép đang chọn
- * (render/style/palette.js). Gậy không gắn cứng vào xương tay (giơ tay thì đầu gậy sẽ chĩa ra sau vai): bám theo chỗ bàn tay
+ * Gậy gỗ bo tròn kiểu đồ chơi, tay cầm gần cổ gậy: thân thuôn, hai vòng đai, đầu gậy là một nhánh cong ôm viên ngọc sáng
+ * màu hệ phép đang chọn (render/style/palette.js). Gậy không gắn cứng vào xương tay (giơ tay thì đầu gậy sẽ chĩa ra sau vai): bám theo chỗ bàn tay
  * phải (xương wrR), hướng tính riêng: đứng thẳng khi đi, đứng; lúc niệm phép (k 0..1) nghiêng về chỗ ngắm.
  * G.staff3d.update(người, hệ, hướng ngắm (hay null), k niệm phép), hide(), tip(out) (đầu gậy: đạn phép bay ra từ đây).
  * Cần: three.js, render/style/palette.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
-  const LEN = 1.25, // (đơn vị khung người) dài gậy
-    BELOW = 0.3; // phần gậy thò xuống dưới bàn tay
+  const LEN = 1.08, // (đơn vị khung người) dài gậy
+    BELOW = 0.76; // phần gậy dưới bàn tay: tay cầm gần cổ gậy, đầu gậy chỉ nhô trên tay một đoạn ngắn
   function setup(G) {
     const { THREE, scene } = G;
     const wood = new THREE.MeshStandardMaterial({ color: '#8a5a36', roughness: 0.7 }),
@@ -19,7 +19,7 @@
     shaft.position.y = LEN / 2 - BELOW;
     const capB = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), wood);
     capB.position.y = -BELOW;
-    const bands = [0.12, LEN - BELOW - 0.18].map((y) => {
+    const bands = [-0.07, LEN - BELOW - 0.12].map((y) => {
       const b = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.012, 8, 16).rotateX(Math.PI / 2), band);
       b.position.y = y;
       return b;

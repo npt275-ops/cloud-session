@@ -18,6 +18,8 @@
   const NEAR = 15,
     NEAR_LOW = 6,
     RADIUS = 24, // (đơn vị) xa hơn chừng này thì giữ thân cũ
+    BUILD_PER_FRAME = 1, // dựng tối đa chừng này thân mỗi khung hình
+    POOL = 24, // giữ lại tối đa chừng này thân của người vừa ra xa
     SHOE = '#4a3426';
   let REST = null; // khung đứng thẳng ở gốc toạ độ: ma trận nghịch của từng xương (dùng chung cho mọi người, khung giống nhau)
   let NODES = null;
@@ -36,8 +38,23 @@
     }
     return REST;
   }
-  // viên nang dọc trục y, từ y0 tới y1 (y0 < y1), bán kính r
+  // hình khối gốc dùng lại (đã bỏ chỉ số, có pháp tuyến): dựng thân mới không phải tạo lại hàng chục hình cầu, viên nang
+  const GEO = new Map();
+  function cached(key, make) {
+    let g = GEO.get(key);
+    if (!g) {
+      g = make();
+      if (g.index) g = g.toNonIndexed();
+      if (!g.attributes.normal) g.computeVertexNormals();
+      GEO.set(key, g);
+    }
+    return g;
+  }
+  // viên nang dọc trục y, từ y0 tới y1 (y0 < y1), bán kính r (dùng lại theo thông số)
   function capsule(THREE, r, y0, y1, seg) {
+    return cached('c' + r + ',' + y0.toFixed(4) + ',' + y1.toFixed(4) + ',' + (seg || 14), () => capsuleGeo(THREE, r, y0, y1, seg));
+  }
+  function capsuleGeo(THREE, r, y0, y1, seg) {
     const pts = [],
       n = 8;
     for (let i = 0; i <= n; i++) {
@@ -107,7 +124,7 @@
         new THREE.Quaternion().setFromEuler(new THREE.Euler(rx || 0, 0, 0)),
         new THREE.Vector3(sx || 1, sy || 1, sz || 1),
       );
-    const sph = (r, w, h) => new THREE.SphereGeometry(r, w || 20, h || 14);
+    const sph = (r, w, h) => cached('s' + r + ',' + (w || 20) + ',' + (h || 14), () => new THREE.SphereGeometry(r, w || 20, h || 14));
     const W = (n) => R.world[n].elements; // (vị trí xương lúc đứng thẳng: phần tử 12, 13, 14)
     const at = (n) => new THREE.Vector3(W(n)[12], W(n)[13], W(n)[14]);
     const yRel = (n, y) => y - at(n).y; // độ cao y (toạ độ khung) tính từ xương n
@@ -198,8 +215,33 @@
 
   /* ---------- Đám đông gần ---------- */
   function setup(G) {
-    const st = { on: false, i: -1, t: 0, list: new Set() },
+    // queue: người chờ dựng thân (mỗi khung hình dựng tối đa BUILD_PER_FRAME người: không khựng khi nhiều người cùng vào gần);
+    // pool: thân của người vừa ra xa, giữ lại (ẩn) để quay lại thì dùng ngay, tối đa POOL thân
+    const st = { on: false, i: -1, t: 0, list: new Set(), queue: [], pool: new Map() },
       feet = BK.Feet3D ? BK.Feet3D.create(G) : null;
+    const fresh = (f, soft) => soft && soft.rig === f.rig && soft.traits.age === BK.Traits3D.bracket(f.age);
+    function park(f) {
+      if (!f.soft) return;
+      f.soft.mesh.visible = false;
+      st.pool.delete(f);
+      st.pool.set(f, f.soft);
+      f.soft = null;
+      while (st.pool.size > POOL) {
+        const [g, soft] = st.pool.entries().next().value;
+        drop(G, soft);
+        st.pool.delete(g);
+      }
+    }
+    // dựng (hay lấy lại từ pool) thân cho người f
+    function give(f) {
+      const old = st.pool.get(f);
+      st.pool.delete(f);
+      if (fresh(f, old)) f.soft = old;
+      else {
+        if (old) drop(G, old);
+        f.soft = build(G, f);
+      }
+    }
     // bật cho đảo i quanh chỗ p (thế giới), người bị nhập hồn là self (khoá); on = false: trả hết về thân cũ
     function update(on, i, p, self, sec) {
       const V = i >= 0 ? G.villageOf(i) : null;
@@ -227,22 +269,26 @@
       const keep = new Set(cand.slice(0, n).map((c) => c[2]));
       for (const f of st.list)
         if (!keep.has(f)) {
-          if (f.soft) drop(G, f.soft);
-          f.soft = null;
+          park(f);
           st.list.delete(f);
         }
+      st.queue = st.queue.filter((f) => keep.has(f));
       for (const f of keep) {
-        if (f.soft && (f.soft.rig !== f.rig || f.soft.traits.age !== BK.Traits3D.bracket(f.age))) {
+        if (f.soft && !fresh(f, f.soft)) {
           drop(G, f.soft); // (khung đổi: lớn lên, sang thời mới; sang lứa tuổi mới)
           f.soft = null;
         }
-        if (!f.soft) f.soft = build(G, f);
         st.list.add(f);
+        if (f.soft || st.queue.includes(f)) continue;
+        // người bị nhập hồn dựng ngay; người khác: lấy lại từ pool ngay (không tốn), chưa có thì xếp hàng
+        if (f === (cand[0] && cand[0][0] === -1 ? cand[0][2] : null) || fresh(f, st.pool.get(f))) give(f);
+        else st.queue.push(f);
       }
       visibility(V);
     }
-    // người vào nhà thì ẩn thân mềm
+    // người vào nhà thì ẩn thân mềm; dựng dần người đang chờ
     function visibility(V) {
+      for (let k = 0; k < BUILD_PER_FRAME && st.queue.length; k++) give(st.queue.shift());
       for (const f of st.list)
         if (f.soft) {
           f.soft.mesh.visible = !f.inside && V.visible;
@@ -255,6 +301,9 @@
         if (f.soft) drop(G, f.soft);
         f.soft = null;
       }
+      for (const soft of st.pool.values()) drop(G, soft);
+      st.pool.clear();
+      st.queue.length = 0;
       st.list.clear();
       if (feet) feet.hide();
     }

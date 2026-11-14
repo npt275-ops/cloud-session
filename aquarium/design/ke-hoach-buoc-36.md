@@ -33,3 +33,18 @@ Người chơi: máy quay khi nhân vật di chuyển ("máy quay chính") bị 
 
 Kiểm thử: test/possess-cam.test.js (nhân vật đứng yên trên màn hình khi đi với độ dài khung hình lẫn lộn; tường che không làm
 nhân vật nhảy chỗ, hướng nhìn giữ nguyên; xoay cùng kết quả ở 120, 30, 10 khung hình mỗi giây; nhảy: máy quay theo sau mượt).
+
+## Lần 2: khung hình khựng định kỳ (người chơi vẫn thấy giật sau khi máy quay đã mượt)
+
+Đo thời gian từng phần mỗi khung hình khi đang nhập hồn và chạy (máy vẽ bằng phần mềm, chậm hơn máy thật vài lần nhưng tỉ lệ
+giữ nguyên): khung khựng tới 120 ms, do:
+
+| Phần | Khựng lớn nhất trước | Sửa | Sau |
+|---|---|---|---|
+| Thân mềm (render/body/softbody3d.js) | 103 ms: người mới vào gần thì dựng thân ngay, có khi nhiều người cùng lúc | Mỗi khung hình dựng tối đa 1 người (hàng chờ); người ra xa giữ lại thân (ẩn), quay lại dùng ngay; hình khối gốc dùng lại | 22 ms (một người, máy chậm) |
+| Cỏ, sỏi, hoa (render/near3d.js) | 102 ms: dời 3 đơn vị là tính lại cả vòng cỏ | Mỗi ô tính một lần rồi nhớ; mỗi lần ghép chỉ tính tối đa 6 ô mới, ô gần trước; lần đầu (lúc mở mắt) dựng hết | 12 ms |
+| Đồ chơi thu nhỏ (render/style/diorama3d.js) | 28 ms: quét cả cảnh mỗi 2 giây | Quét theo ngăn xếp, mỗi khung hình tối đa 400 khối | 1,4 ms |
+| Chất lượng tự chỉnh (render/perf3d.js) | Bóng đổi 2048 ↔ 1024 qua lại (chỉ độ nét có thời gian chờ) | Vừa hạ chất lượng thì 45 giây không nâng gì | |
+| Bóng người quanh mình | Đứng yên thì bóng cập nhật cách 2, 3 khung hình (bóng người đi quanh giật) | Lúc nhập hồn cập nhật mỗi khung hình (vùng bóng nhỏ) | |
+
+Khung khựng nặng nhất phần JS: 120 ms → 34 ms.
