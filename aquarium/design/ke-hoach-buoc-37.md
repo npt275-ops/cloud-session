@@ -118,3 +118,19 @@ Chưa có tác động lên thế giới; các phép của bốn hệ hiện tro
   giảm từ 0,75 xuống 0,3 (game/possess.js IN_FX).
 - Hạt sáng trộn kiểu "vừa phát sáng vừa che một phần nền" (cộng sáng thuần chìm mất trên cỏ, trời ban ngày).
 - Kiểm thử: test/spells.test.js.
+
+## 9. Ảnh tham khảo người chơi gửi (sau bước 1) và cách đưa vào
+
+Lấy ý tưởng chung, không chép hình của trò chơi khác (ký hiệu, cuốn sách, gậy đều tự thiết kế theo phong cách đồ chơi thu nhỏ).
+
+| Ý trong ảnh | Đưa vào Bể Kính |
+|---|---|
+| Sách mở sẵn ở góc dưới màn hình, trang bên phải là vòng phù chú của phép đang chọn | Sách nhỏ luôn hiện ở góc dưới trái khi nhập hồn, lật trang khi đổi phép; mỗi hệ một vòng phù chú tự vẽ (vòng tròn, hình của hệ ở giữa, ba vòng nhỏ quanh) |
+| Gậy phép trong tay (nhìn ngôi thứ nhất) | Gậy phép bo tròn trong tay phải nhân vật; phép bay ra từ đầu gậy |
+| Vòng phép sáng xoay trước tay khi niệm | Viên gạch mới "vòng phù chú" trong bộ hạt chung: vòng sáng có ký hiệu xoay trước đầu gậy hay dưới đất, màu theo hệ |
+| Cầu nước lơ lửng | Cột nước, gọi mưa: tụ thành quả cầu nước trước rồi mới phun |
+| Đá trồi lên, bụi cát | Trụ đá, rung đất |
+| Hạt bụi lơ lửng giữa không trung | Dừng thời gian: bụi, lá, tàn lửa đứng im giữa không trung |
+| Lốc lửa xoáy lên trời | Vòng lửa nâng cấp thành lốc lửa (vệt lửa xoắn ốc) |
+| Hố đen có vành sáng | Phép mới gợi ý cho trang Linh hồn: hố đen hút hạt, hút người nhẹ (ý người chơi nêu từ đầu) |
+| Sóng nước đổ ập, bọt trắng | Cột nước, sóng; Đại hồng thuỷ |
