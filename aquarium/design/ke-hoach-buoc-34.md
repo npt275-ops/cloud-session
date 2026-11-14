@@ -26,7 +26,7 @@ nhân vật đã giữ, đồng thời giảm sáng: màu dịu ("chill"), khôn
 | 3. Nét riêng | render/body/traits3d.js, face3d.js | Tính từ mã người (cùng người luôn cùng nét): dáng gầy, đầy đặn, bụng tròn; cỡ mắt, khoảng cách mắt, cỡ mũi, tai, miệng, độ dày lông mày; tàn nhang; kiểu tóc (ngắn trùm, mái, dựng, búi, đuôi ngựa, dài, hói), hợp với tóc của thân cũ ở xa |
 | 4. Bóng chân và da | render/body/feet3d.js, face3d.js | Vệt bóng tiếp đất dưới từng bàn chân, nhỏ và nhạt khi nhấc chân (một lượt vẽ cho mọi người); da ấm như ánh sáng xuyên qua da |
 | 5. Nén giãn | render/body/motion3d.js, render/village3d.js | Bay lên kéo dài theo tốc độ dọc, chạm đất nén bẹt (có cú đẩy lò xo: máy chậm vẫn thấy), mỗi bước nhún nhẹ, nảy lại như đồ chơi cao su; giữ gần đúng thể tích. Lò xo chia bước nhỏ nên ổn định ở máy chậm |
-| 6. Chi tiết | face3d.js, softbody3d.js | Mũi, tai, lông mày, đốm sáng mắt, râu, ria; tóc có sợi; cổ áo, thắt lưng, ngón cái, đế giày sáng màu |
+| 6. Chi tiết | face3d.js, softbody3d.js | Mũi, tai, lông mày, đốm sáng mắt, râu, ria; tóc có sợi; cổ áo, ngón cái, đế giày sáng màu (đã bỏ thắt lưng: vòng tròn giữa thân, người chơi thấy thừa); mũi, tai, tàn nhang, ria không có viền nét |
 
 Mỗi người một vật liệu (biểu cảm riêng) nhưng chung một chương trình shader; số lượt vẽ không đổi (hai lượt mỗi người, thêm
 một lượt cho mọi vệt bóng chân).

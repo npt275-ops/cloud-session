@@ -8,18 +8,19 @@
  *   miệng một trong bốn: thẳng, cười, mếu, há; khối không dùng thì co về tâm (không thấy)
  *   má    hồng khi vui (trẻ nhỏ luôn hồng)
  * Viền nét (INK) bỏ qua các khối của mặt (mặt không có viền đen quanh mắt, miệng).
- * Mã bộ phận dùng chung với thân: 0 vải, 1 da, 2 tóc, 3 giày; từ 10 trở lên là khối biểu cảm (PART).
+ * Mã bộ phận dùng chung với thân: 0 vải, 1 da, 2 tóc, 3 giày; 10 tới 18 là khối biểu cảm; 19 chi tiết da trên mặt (mũi, tai,
+ * tàn nhang), 20 ria: không co giãn, chỉ không có viền nét (viền quanh mũi, ria thành vòng đen) (PART).
  * Cần: three.js (qua ctx), render/body/traits3d.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
-  const PART = { CLOTH: 0, SKIN: 1, HAIR: 2, SHOE: 3, EYE: 10, SHINE: 11, BROW_L: 12, BROW_R: 13, M_LINE: 14, M_SMILE: 15, M_FROWN: 16, M_OPEN: 17, CHEEK: 18 };
+  const PART = { CLOTH: 0, SKIN: 1, HAIR: 2, SHOE: 3, EYE: 10, SHINE: 11, BROW_L: 12, BROW_R: 13, M_LINE: 14, M_SMILE: 15, M_FROWN: 16, M_OPEN: 17, CHEEK: 18, FEAT_SKIN: 19, FEAT_HAIR: 20 };
   const MOUTH = { line: 0, smile: 1, frown: 2, open: 3 };
   // đoạn shader đỉnh (trước khi gắn xương: toạ độ khung đứng thẳng): co giãn khối biểu cảm quanh tâm của nó
   const VERT_HEAD = 'attribute float aPart; attribute vec3 aCtr; varying float vPart; varying vec3 vRest;\n' +
     'uniform float uEye, uBy, uTilt, uMouth, uCheek, uClosed;\n';
   const VERT_BODY =
     'vPart = aPart; vRest = position;\n' +
-    'if (aPart > 9.5) { vec3 d = transformed - aCtr;\n' +
+    'if (aPart > 9.5 && aPart < 18.5) { vec3 d = transformed - aCtr;\n' +
     ' if (aPart < 10.5) d.y *= uEye;\n' + // mắt
     ' else if (aPart < 11.5) d *= 1.0 - uClosed;\n' + // đốm sáng
     ' else if (aPart < 13.5) { float a = (aPart < 12.5 ? 1.0 : -1.0) * uTilt * 0.5; d.xy = mat2(cos(a), sin(a), -sin(a), cos(a)) * d.xy; d.y += uBy * 1.6; }\n' + // mày
@@ -32,9 +33,9 @@
   // đoạn shader điểm ảnh: da ấm như ánh sáng xuyên qua da; tóc có sợi
   const FRAG_HEAD = 'varying float vPart; varying vec3 vRest;\n';
   const FRAG_COLOR =
-    'if (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= 0.92 + 0.08 * sin((vRest.x * 1.7 + vRest.z) * 140.0 + sin(vRest.y * 40.0) * 2.0);\n';
+    'if ((vPart > 1.5 && vPart < 2.5) || vPart > 19.5) diffuseColor.rgb *= 0.92 + 0.08 * sin((vRest.x * 1.7 + vRest.z) * 140.0 + sin(vRest.y * 40.0) * 2.0);\n';
   const FRAG_EMIT =
-    'if (vPart > 0.5 && vPart < 1.5) totalEmissiveRadiance += diffuseColor.rgb * vec3(0.1, 0.035, 0.02);\n' +
+    'if ((vPart > 0.5 && vPart < 1.5) || (vPart > 18.5 && vPart < 19.5)) totalEmissiveRadiance += diffuseColor.rgb * vec3(0.1, 0.035, 0.02);\n' +
     'if (vPart > 2.5 && vPart < 3.5) totalEmissiveRadiance *= 0.5;\n'; // (giày không có viền sáng ấm)
   function uniforms() {
     return { uEye: { value: 1 }, uBy: { value: 0 }, uTilt: { value: 0 }, uMouth: { value: 0 }, uCheek: { value: 0 }, uClosed: { value: 0 } };
@@ -71,15 +72,15 @@
         add(sph(0.03, 10, 6), 'head', L(sx * (T.gap + 0.006), eyeY + 0.06 + (T.eye - 1) * 0.02, 0.229, 1.45, 0.3 * T.brow, 0.45), brow, sx < 0 ? P.BROW_L : P.BROW_R);
       add(sph(0.034, 10, 8), 'head', L(sx * 0.15, HY - 0.075, 0.195, 1.2, 0.7, 0.45), pink, P.CHEEK);
       // tai
-      add(sph(0.05 * T.ear, 10, 8), 'head', L(sx * 0.243, HY - 0.02, -0.005, 0.45, 0.85, 0.65), col.skin, P.SKIN);
+      add(sph(0.05 * T.ear, 10, 8), 'head', L(sx * 0.243, HY - 0.02, -0.005, 0.45, 0.85, 0.65), col.skin, P.FEAT_SKIN);
       // tàn nhang: ba chấm mỗi bên má
       if (T.freckle)
-        for (let k = 0; k < 3; k++) add(sph(0.0065, 6, 4), 'head', L(sx * (0.1 + k * 0.022), HY - 0.045 - (k % 2) * 0.014, 0.222 - k * 0.006), skinD.clone().multiplyScalar(0.82), P.SKIN);
+        for (let k = 0; k < 3; k++) add(sph(0.0065, 6, 4), 'head', L(sx * (0.1 + k * 0.022), HY - 0.045 - (k % 2) * 0.014, 0.222 - k * 0.006), skinD.clone().multiplyScalar(0.82), P.FEAT_SKIN);
     }
     // mũi
-    add(sph(0.026 * T.nose, 10, 8), 'head', L(0, HY - 0.05, 0.243, 1, 0.85, 0.8), skinD, P.SKIN);
+    add(sph(0.026 * T.nose, 10, 8), 'head', L(0, HY - 0.05, 0.243, 1, 0.85, 0.8), skinD, P.FEAT_SKIN);
     // bốn kiểu miệng (chỉ một kiểu hiện, theo biểu cảm)
-    const mz = T.beard ? 0.229 : 0.224,
+    const mz = T.beard ? 0.236 : 0.224, // (có râu: miệng nhô ra trước râu)
       mw = 0.03 * T.mouth,
       arc = () => new THREE.TorusGeometry(mw, 0.0075, 6, 14, Math.PI);
     add(sph(0.03 * T.mouth, 10, 6), 'head', L(0, HY - 0.105, mz, 1.1, 0.32, 0.5), lip, P.M_LINE);
@@ -130,7 +131,7 @@
     // râu: cằm và ria
     if (T.beard) {
       add(sph(0.14), 'head', L(0, HY - 0.165, 0.12, 1.2, 0.85, 0.75), hair, P.HAIR);
-      add(sph(0.05), 'head', L(0, HY - 0.08, 0.229, 1.5, 0.4, 0.5), hair, P.HAIR);
+      add(sph(0.045), 'head', L(0, HY - 0.074, 0.232, 1.5, 0.3, 0.45), hair, P.FEAT_HAIR);
     }
   }
   BK.Face3D = { build, update, uniforms, PART, MOUTH, VERT_HEAD, VERT_BODY, INK_HEAD, INK_BODY, FRAG_HEAD, FRAG_COLOR, FRAG_EMIT };

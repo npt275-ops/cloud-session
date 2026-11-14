@@ -10,7 +10,7 @@
  * đảo đang ở để đổi sang thân mềm; người khác giữ thân cũ (render/village3d.js không vẽ thân cũ của người có f.soft, trừ đồ
  * cầm tay).
  * Bước 34 (design/ke-hoach-buoc-34.md): nét riêng, tỉ lệ theo tuổi (render/body/traits3d.js), mặt, tóc, râu, biểu cảm
- * (render/body/face3d.js), vệt bóng chân (render/body/feet3d.js); da ấm, tóc có sợi; thắt lưng, cổ áo, ngón cái, đế giày.
+ * (render/body/face3d.js), vệt bóng chân (render/body/feet3d.js); da ấm, tóc có sợi; cổ áo, ngón cái, đế giày (không có thắt lưng: người chơi thấy thừa).
  * Mỗi người một vật liệu (biểu cảm riêng) nhưng chung một chương trình shader.
  * Cần: three.js, render/rig3d.js, render/body/traits3d.js, render/body/face3d.js, render/body/feet3d.js. */
 (function (root) {
@@ -120,15 +120,13 @@
     add(sph(0.25, 28, 20), 'head', L(0, HY, 0, 1, 0.98, 0.96), col.skin, P.SKIN);
     BK.Face3D.build({ THREE, add, L, sph, capsule: (r, y0, y1) => capsule(THREE, r, y0, y1), HY, T, col });
     // cổ ngắn, thân tròn đầy (áo), hông (quần), váy nếu có
-    // (dáng người: wide nở ngang thân, hông; bụng tròn; cổ áo, thắt lưng)
+    // (dáng người: wide nở ngang thân, hông; bụng tròn; cổ áo)
     const W2 = T.wide;
     add(capsule(THREE, 0.07, -0.02, 0.04), 'neck', L(0, 0, 0), col.skin, P.SKIN);
     add(sph(0.2, 24, 18), 'chest', L(0, yRel('chest', 1.07), 0.005, 1.13 * W2, 1.3, 0.92 * (0.5 + 0.5 * W2)), col.shirt);
     if (T.belly) add(sph(0.16, 20, 14), 'chest', L(0, yRel('chest', 0.93), 0.07, 1.15 * W2, 0.95, 0.9), col.shirt);
     add(new THREE.TorusGeometry(0.085, 0.022, 8, 20).rotateX(Math.PI / 2), 'neck', L(0, -0.035, 0.005, 1.1, 1, 1), col.shirt.clone().multiplyScalar(1.12));
     add(sph(0.19, 22, 16), 'pelvis', L(0, yRel('pelvis', 0.8), 0, 1.1 * W2, 0.8, 0.92), col.pants);
-    if (!col.skirt)
-      add(new THREE.TorusGeometry(0.2, 0.022, 8, 26).rotateX(Math.PI / 2), 'pelvis', L(0, yRel('pelvis', 0.9), 0, 1.06 * W2, 1, 0.9), col.pants.clone().multiplyScalar(0.6));
     if (col.skirt) add(new THREE.CylinderGeometry(0.18, 0.27, 0.3, 22, 1, true), 'pelvis', L(0, yRel('pelvis', 0.63), 0, W2, 1, W2), col.skirt);
     // tay: vai tròn (áo), cánh tay trên (tay áo), cẳng tay, bàn tay tròn
     for (const s of ['L', 'R']) {
