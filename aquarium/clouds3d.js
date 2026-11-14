@@ -485,6 +485,7 @@
         return slots.filter((s) => s.on && s.members.length).length;
       },
       clouds,
+      puffs, // (render/style/diorama3d.js: mây tròn mịn lúc nhập hồn)
       LAYER,
     };
   }

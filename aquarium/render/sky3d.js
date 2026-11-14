@@ -215,7 +215,7 @@
       $('time').textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
       return { day, night, neon };
     }
-    Object.assign(G, { sun, sky: { applyTime } });
+    Object.assign(G, { sun, sky: { applyTime, lights: { sun, hemi, fill } } }); // (lights: render/style/diorama3d.js chỉnh lúc nhập hồn)
   }
   BK.Sky3D = { setup };
 })(typeof self !== 'undefined' ? self : globalThis);

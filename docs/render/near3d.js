@@ -98,30 +98,33 @@
   }
   function setup(G) {
     const { THREE, scene } = G;
-    const U = { uWind: { value: 0 } };
+    const U = { uWind: { value: 0 }, uSoft: { value: 0 } }; // uSoft: thảm cỏ mềm (render/style/diorama3d.js đặt qua G.near.soft)
     // vật liệu lay theo gió: phần trên (aTip) đưa qua lại theo thời gian và chỗ đứng. Màu riêng từng cây (instanceColor): cỏ là
     // màu đất chỗ đó, gốc sẫm ngọn sáng; hoa: cuống màu base, bông màu riêng
     function swayMat(base, tipCol, perInstance) {
       const m = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, side: THREE.DoubleSide });
       m.onBeforeCompile = (sh) => {
         sh.uniforms.uWind = U.uWind;
+        sh.uniforms.uSoft = U.uSoft;
         sh.uniforms.uBase = { value: new THREE.Color(base) };
         sh.uniforms.uTipC = { value: new THREE.Color(tipCol) };
         sh.vertexShader =
-          'uniform float uWind; attribute float aTip; varying float vTip;\n' +
-          sh.vertexShader.replace(
+          'uniform float uWind; uniform float uSoft; attribute float aTip; varying float vTip;\n' +
+          sh.vertexShader
+            .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = normalize(mix(vec3(normal), vec3(0.0, 1.0, 0.0), uSoft));')
+            .replace(
             '#include <begin_vertex>',
             '#include <begin_vertex>\nvTip = aTip; vec4 wp0 = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);\n' +
               'float sw = sin(uWind * 1.7 + wp0.x * 0.45 + wp0.z * 0.3) * 0.6 + sin(uWind * 2.9 + wp0.z * 0.9) * 0.4;\n' +
-              'transformed.x += sw * 0.07 * aTip * position.y * 3.0; transformed.z += sw * 0.04 * aTip * position.y * 3.0;',
+              'transformed.x += sw * 0.07 * aTip * position.y * 3.0; transformed.z += sw * 0.04 * aTip * position.y * 3.0; transformed.y *= 1.0 - 0.2 * uSoft;',
           );
         sh.fragmentShader =
-          'uniform vec3 uBase; uniform vec3 uTipC; varying float vTip;\n' +
+          'uniform vec3 uBase; uniform vec3 uTipC; uniform float uSoft; varying float vTip;\n' +
           sh.fragmentShader.replace(
             '#include <color_fragment>',
             perInstance === 'flower'
               ? '#include <color_fragment>\ndiffuseColor.rgb = mix(uBase, vColor, step(0.5, vTip));'
-              : '#include <color_fragment>\ndiffuseColor.rgb = vColor * mix(0.55, 1.22, vTip);',
+              : '#include <color_fragment>\ndiffuseColor.rgb = vColor * mix(mix(0.55, 0.82, uSoft), mix(1.22, 1.1, uSoft), vTip);',
           );
       };
       m.customProgramCacheKey = () => 'near-sway-' + perInstance;
@@ -296,7 +299,9 @@
       flowers: flowers.visible ? flowers.count : 0,
       pebbles: pebbles.visible ? pebbles.count : 0,
     });
-    G.near = { set, counts, freeAt, KIND, R }; // (freeAt: render/style/painterly3d.js dùng chung chỗ được mọc)
+    // thảm cỏ mềm 0..1 (render/style/diorama3d.js)
+    const soft = (k) => (U.uSoft.value = k);
+    G.near = { set, counts, soft, KIND, R };
   }
   BK.Near3D = { setup, KIND };
 })(typeof self !== 'undefined' ? self : globalThis);

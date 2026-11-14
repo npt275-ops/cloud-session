@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 167 tệp, 46886 dòng.
+Tổng: 167 tệp, 46707 dòng.
 
 ## (gốc)
 
@@ -17,7 +17,7 @@ Gốc: biển, mây, âm thanh (dựng trước các phần khác).
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `audio.js` | 552 | Âm thanh tự sinh bằng Web Audio (không dùng file âm thanh nào) | `CityAudio` |  |
-| `clouds3d.js` | 494 | Mây trong bể kính | `Clouds3D` |  |
+| `clouds3d.js` | 495 | Mây trong bể kính | `Clouds3D` |  |
 | `sea3d.js` | 305 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
 
 ## game/
@@ -27,9 +27,9 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
-| `game/loop.js` | 116 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/world.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/painterly3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` |
+| `game/loop.js` | 116 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/world.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess.js` | 411 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/painterly3d.js` `ui/landbar.js` |
+| `game/possess.js` | 411 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
@@ -94,7 +94,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/missiles3d.js` | 191 | Tên lửa bay, vụ nổ, nấm hạt nhân … | `BK.Missiles3D` | `render/map/map3d.js` |
 | `render/mood3d.js` | 109 | Không khí ánh sáng ("chill") | `BK.Mood3D` |  |
 | `render/nav3d.js` | 603 | Lối đi của người trên một đảo … | `BK.NAV_SOLIDS` `BK.Nav3D` | `render/build/plains/common.js` `render/build/roads.js` |
-| `render/near3d.js` | 303 | Cảnh vật gần sau cú nhập hồn … | `BK.Near3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `render/perf3d.js` `render/scene3d.js` |
+| `render/near3d.js` | 308 | Cảnh vật gần sau cú nhập hồn … | `BK.Near3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `render/perf3d.js` `render/scene3d.js` |
 | `render/neon3d.js` | 272 | Mặt trời nhân tạo của thành phố neon (từ thời 10) | `BK.NeonCity3D` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `render/build/neon.js` `render/scene3d.js` |
 | `render/outfits3d.js` | 262 | Trang phục của 5 nhóm người hay gặp qua 12 thời kỳ: người đứng đầu, tướng, lính, dân thường nam, dân thường nữ | `BK.Outfits3D` |  |
 | `render/perf3d.js` | 139 | Mượt và nét: bộ điều tốc nhắm 60 khung hình mỗi giây (chậm thì hạ độ nét, vẽ bóng thưa hơn, rồi bỏ bóng; nhanh lại thì … | `BK.Perf3D` G: 1 dịch vụ | `game/world.js` |
@@ -102,7 +102,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/rig3d.js` | 468 | Bộ khung khớp của một người (hông, ngực, cổ, đầu, vai, khuỷu, cổ tay, hông, gối, cổ chân) và hình người theo nét đã … | `BK.Rig3D` | `render/outfits3d.js` |
 | `render/scene3d.js` | 125 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `render/mood3d.js` |
 | `render/shots3d.js` | 210 | Tên, đạn, tia bay trên chiến trường … | `BK.Shots3D` |  |
-| `render/sky3d.js` | 222 | Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod) … | `BK.Sky3D` G: 2 dịch vụ | `game/cities.js` `game/world.js` `render/build/neon.js` `render/look3d.js` `render/mood3d.js` `render/perf3d.js` |
+| `render/sky3d.js` | 222 | Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod) … | `BK.Sky3D` G: 5 dịch vụ | `game/cities.js` `game/world.js` `render/build/neon.js` `render/look3d.js` `render/mood3d.js` `render/perf3d.js` |
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
@@ -264,7 +264,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `render/buildings3d.js`: `G.visible`
 - `game/world.js`: `G.THREE`, `G.reduce`, `G.hash`, `G.clamp`, `G.lerp`, `G.C`, `G.audio`, `G.typing`, `G.touchUi`, `G.TERRAINS`, `G.W`, `G.Sim`, `G.focus`, `G.time`, `G.weather`
 - `render/scene3d.js`: `G.canvas`, `G.renderer`, `G.scene`, `G.camera`, `G.controls`, `G.resize`, `G.mat`, `G.mesh`, `G.glowTex`, `G.puff`, `G.updatePuffs`
-- `render/sky3d.js`: `G.sun`, `G.sky`
+- `render/sky3d.js`: `G.sun`, `G.sky`, `G.lights`, `G.hemi`, `G.fill`
 - `render/neon3d.js`: `G.neonCity`
 - `render/perf3d.js`: `G.perf`
 - `render/tank3d.js`: `G.DOME`, `G.tank`
@@ -276,7 +276,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `render/fx/particles3d.js`: `G.particles`
 - `render/fx/soul-fx.js`: `G.soulFx`
 - `render/near3d.js`: `G.near`
-- `render/style/painterly3d.js`: `G.painterly`
+- `render/style/diorama3d.js`: `G.diorama`
 - `ui/landbar.js`: `G.setFocus`
 - `ui/race-dev.js`: `G.raceDev`
 - `game/cities.js`: `G.world`, `G.isle`, `G.buildings`, `G.prosper`, `G.shots`, `G.deckAt`, `G.villages`, `G.war3d`, `G.travel3d`, `G.village`, `G.villageUi`, `G.villageOf`, `G.jumpEra`, `G.goEra`, `G.citiesRun`, `G.animate`, `G.slow`, `G.levelOf`, `G.shots3d`, `G.skyLevel`, `G.level`, `G.watchIsland`, `G.slowmo`, `G.topStory`, `G.gearNow`, `G.dust`
@@ -421,7 +421,7 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 130. `render/fx/soul-audio.js`
 131. `render/fx/soul-fx.js`
 132. `render/near3d.js`
-133. `render/style/painterly3d.js`
+133. `render/style/diorama3d.js`
 134. `ui/landbar.js`
 135. `ui/race-dev.js`
 136. `game/cities.js`

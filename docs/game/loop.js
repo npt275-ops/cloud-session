@@ -27,7 +27,7 @@
     BK.SoulFx.setup(G); // render/fx/soul-fx.js (hạt, âm thanh theo pha của cú nhập hồn)
     BK.Near3D.setup(G); // render/near3d.js (cảnh vật gần sau cú nhập hồn: sương, đèn, cỏ, sỏi, hoa)
     BK.SoftBody3D.setup(G); // render/body/softbody3d.js (thân đồ chơi mềm cho nhân vật mình và người gần)
-    BK.Painterly3D.setup(G); // render/style/painterly3d.js (bản thử kiểu tranh vẽ sau khi nhập hồn, đảo Lúa Vàng)
+    BK.Diorama3D.setup(G); // render/style/diorama3d.js (bản thử thế giới đồ chơi thu nhỏ sau khi nhập hồn, đảo Lúa Vàng)
     BK.LandBar.setup(G); // ui/landbar.js
     BK.GameCities.setup(G); // game/cities.js (sáu thành phố: logic của cả bể, công trình, người)
     if (BK.Look3D) BK.Look3D.setup(G); // render/look3d.js (hình ảnh mô hình thu nhỏ: màu, vệt tối chân, chi tiết bề mặt)
