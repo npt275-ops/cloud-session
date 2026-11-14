@@ -3,9 +3,9 @@
  * nên mọi cử chỉ, dáng đi (render/anim3d.js, render/body/motion3d.js) dùng nguyên. Lưới ghép từ các khối tròn nhẵn chồng mí
  * lên nhau (đầu to, thân, hông, tay chân dạng viên nang, bàn tay tròn, bàn chân to); mỗi khối gắn cứng vào một xương. Màu
  * lấy đúng từ trang phục của người đó (bộ phận shirt, shorts, skirt, head, hairCap, hairBack của khung cũ): nhân vật nhất
- * quán qua mọi thời. Một lượt vẽ cho thân, một cho viền.
+ * quán qua mọi thời. Một lượt vẽ mỗi người.
  *   chất liệu  nhựa mờ: sáng tối chuyển mềm liên tục, phản sáng mờ rộng, viền sáng quanh người (rim), da ấm ở rìa
- *   viền nét   lớp vỏ lật mặt hơi phồng ra, màu nâu sẫm: viền mảnh quanh người như tranh vẽ
+ *   (không có viền nét: người chơi bỏ ở bước 35)
  * Đám đông gần (crowd): mỗi chừng 0,3 giây chọn người bị nhập hồn và tối đa NEAR người gần máy quay nhất (máy chậm: ít hơn) trên
  * đảo đang ở để đổi sang thân mềm; người khác giữ thân cũ (render/village3d.js không vẽ thân cũ của người có f.soft, trừ đồ
  * cầm tay).
@@ -18,8 +18,6 @@
   const NEAR = 15,
     NEAR_LOW = 6,
     RADIUS = 24, // (đơn vị) xa hơn chừng này thì giữ thân cũ
-    OUTLINE = 0.014, // (đơn vị khung) bề dày viền
-    INK = '#2b1d16',
     SHOE = '#4a3426';
   let REST = null; // khung đứng thẳng ở gốc toạ độ: ma trận nghịch của từng xương (dùng chung cho mọi người, khung giống nhau)
   let NODES = null;
@@ -65,7 +63,7 @@
     // (khung cũ: nữ có tóc dài sau lưng 'hairBackLong', nam có tóc gáy ngắn 'hairBack': render/rig3d.js)
     return { skin, shirt, pants, hair, skirt: by.skirt || null, longHair: !!by.hairBackLong };
   }
-  // dựng lưới thân mềm cho người f (khung f.rig); trả { mesh, line, rig }
+  // dựng lưới thân mềm cho người f (khung f.rig); trả { mesh, rig, U, traits }
   function build(G, f) {
     const { THREE } = G,
       R = rest(THREE, f.p),
@@ -132,12 +130,14 @@
     for (const s of ['L', 'R']) {
       add(sph(0.088, 16, 12), 'sh' + s, L(0, 0, 0), col.shirt);
       add(capsule(THREE, 0.07, -(at('sh' + s).y - at('el' + s).y) + 0.02, -0.02), 'sh' + s, L(0, 0, 0), col.shirt);
+      add(sph(0.068, 14, 10), 'el' + s, L(0, 0, 0), col.shirt); // khớp khuỷu tròn (gập tay không thấy khấc)
       add(capsule(THREE, 0.062, -(at('el' + s).y - at('wr' + s).y) + 0.02, 0.0), 'el' + s, L(0, 0, 0), col.skin, P.SKIN);
       add(sph(0.078, 14, 12), 'wr' + s, L(0, -0.045, 0.01, 0.92, 1.05, 0.85), col.skin, P.SKIN);
       // ngón cái: cục tròn nhỏ phía trước bàn tay
       add(sph(0.032, 10, 8), 'wr' + s, L(0, -0.035, 0.07, 1, 1.3, 1), col.skin, P.SKIN);
       // chân: đùi, cẳng chân (quần), bàn chân to
       add(capsule(THREE, 0.09, -(at('hip' + s).y - at('kn' + s).y) + 0.02, 0.0), 'hip' + s, L(0, 0, 0), col.pants);
+      add(sph(0.088, 16, 12), 'kn' + s, L(0, 0, 0.005), col.pants); // khớp gối tròn (gập gối liền mạch)
       add(capsule(THREE, 0.076, -(at('kn' + s).y - at('an' + s).y) + 0.04, 0.0), 'kn' + s, L(0, 0, 0), col.skirt ? col.skin : col.pants, col.skirt ? P.SKIN : 0);
       add(sph(0.08, 16, 12), 'an' + s, L(0, 0.01, 0.045, 0.95, 0.68, 1.55), shoe, P.SHOE);
       // đế giày sáng hơn, mỏng, hơi rộng
@@ -156,17 +156,13 @@
     const bones = NODES.map((k) => f.rig.nodes[k]),
       skel = new THREE.Skeleton(bones, R.inv);
     const U = BK.Face3D.uniforms(),
-      mesh = new THREE.SkinnedMesh(g, bodyMat(THREE, U)),
-      line = new THREE.SkinnedMesh(g, inkMat(THREE));
-    for (const m of [mesh, line]) {
-      m.bind(skel, new THREE.Matrix4());
-      m.frustumCulled = false;
-    }
+      mesh = new THREE.SkinnedMesh(g, bodyMat(THREE, U));
+    mesh.bind(skel, new THREE.Matrix4());
+    mesh.frustumCulled = false;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    line.renderOrder = -1;
-    G.scene.add(mesh, line);
-    return { mesh, line, rig: f.rig, U, traits: T };
+    G.scene.add(mesh);
+    return { mesh, rig: f.rig, U, traits: T };
   }
   // vật liệu thân: nhựa mờ có viền sáng; mỗi người một vật liệu (biểu cảm riêng: U), chung một chương trình shader
   const F = () => BK.Face3D;
@@ -192,23 +188,10 @@
     m.customProgramCacheKey = () => 'soft-body-34';
     return m;
   }
-  // viền nét lật mặt (dùng chung): bỏ qua khối của mặt
-  let INKM = null;
-  function inkMat(THREE) {
-    if (INKM) return INKM;
-    INKM = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, skinning: true });
-    INKM.onBeforeCompile = (sh) => {
-      sh.vertexShader =
-        F().INK_HEAD +
-        sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = vec3(position) + normal * ' + OUTLINE.toFixed(4) + ';\n' + F().INK_BODY);
-    };
-    INKM.customProgramCacheKey = () => 'soft-ink-34';
-    return INKM;
-  }
   // độ cao mắt cá lúc đứng thẳng (đơn vị khung; render/body/feet3d.js)
   const ankle = () => (REST && NODES ? REST.world.anL.elements[13] : 0.1);
   function drop(G, s) {
-    G.scene.remove(s.mesh, s.line);
+    G.scene.remove(s.mesh);
     s.mesh.geometry.dispose();
     s.mesh.material.dispose();
   }
@@ -262,7 +245,7 @@
     function visibility(V) {
       for (const f of st.list)
         if (f.soft) {
-          f.soft.mesh.visible = f.soft.line.visible = !f.inside && V.visible;
+          f.soft.mesh.visible = !f.inside && V.visible;
           BK.Face3D.update(f.soft.U, f); // biểu cảm theo f.expr, chớp mắt
         }
       if (feet) feet.update(st.list); // vệt bóng chân (render/body/feet3d.js)

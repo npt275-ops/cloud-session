@@ -97,8 +97,18 @@ const ROOT = path.join(__dirname, '..'),
     s0.near.grass + ' khóm cỏ, ' + s0.near.flowers + ' cây hoa, ' + s0.near.pebbles + ' viên sỏi',
   );
   ok('cảnh gần: sương kéo gần', s0.fogNear != null && s0.fogNear < 100, 'sương bắt đầu ở ' + (s0.fogNear || 0).toFixed(0));
+  // giữ W tới khi đi được 1 đơn vị, tối đa 8 giây (trình duyệt vẽ bằng phần mềm có khi gần một giây mới có một khung hình)
   await p.keyboard.down('KeyW');
-  await p.waitForTimeout(3000);
+  for (let t0 = Date.now(); Date.now() - t0 < 8000; ) {
+    await p.waitForTimeout(400);
+    const d = await p.evaluate(([x, z]) => {
+      const G = __glass.G,
+        P = G.possess,
+        f = G.villageOf(P.st.i).folk(P.st.id);
+      return Math.hypot(f.pos.x - x, f.pos.z - z);
+    }, s0.pos);
+    if (d > 1) break;
+  }
   await p.keyboard.up('KeyW');
   await shot('3-di');
   const s1 = await p.evaluate(() => {

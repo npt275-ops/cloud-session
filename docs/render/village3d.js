@@ -1349,6 +1349,15 @@
         f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE + gyOf(f.pos) + (f.lift || 0); // ngồi, quỳ thì hạ người; nhảy (nhập hồn) thì nâng lên
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ');
         if (f.motion && BK.Motion3D) BK.Motion3D.root(f); // (nghiêng khi rẽ, ngả khi tăng tốc, phanh)
+        // lộn nhào (game/possess-jump.js f.flip): xoay quanh giữa thân, không quanh bàn chân; ghi độ dời cho máy quay (f.flipOff)
+        if (f.flip) {
+          const c = 0.85 * sc * SCALE,
+            a = f.flip,
+            fo = f.flipOff || (f.flipOff = new THREE.Vector3());
+          fo.set(-Math.sin(f.yaw) * c * Math.sin(a), c * (1 - Math.cos(a)), -Math.cos(f.yaw) * c * Math.sin(a));
+          f.rig.root.rotation.x += a;
+          f.rig.root.position.add(fo);
+        } else if (f.flipOff) f.flipOff.set(0, 0, 0);
         f.rig.root.scale.setScalar(sc * SCALE);
         // nén giãn (render/body/motion3d.js: sq > 0 nén bẹt, < 0 kéo dài; giữ gần đúng thể tích)
         if (f.motion && f.motion.sq) {

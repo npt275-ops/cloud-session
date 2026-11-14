@@ -50,20 +50,22 @@
     const s = Math.sin(m.ph),
       c = Math.cos(m.ph);
     // nhảy, chạm đất
-    const air = (f.lift || 0) > 0.02;
+    const lift0 = f.lift || 0,
+      air = lift0 > 0.02;
     if (m.air && !air) {
-      m.land = LAND_T;
-      m.sqv += SQ.KICK; // (cú đẩy nén lúc chạm đất: máy chậm, khung hình dài hơn lúc khuỵu gối, vẫn thấy nén rồi nảy lại)
+      m.landT = LAND_T * (0.8 + 0.8 * (f.landK || 0)); // (rơi mạnh thì khuỵu lâu hơn)
+      m.land = m.landT;
+      m.sqv += SQ.KICK * (0.5 + (f.landK || 0)); // (cú đẩy nén lúc chạm đất: máy chậm, khung hình dài hơn lúc khuỵu gối, vẫn thấy nén rồi nảy lại)
     }
     m.air = air;
     if (w > 0.02) {
       // chân: biên độ hông, gối theo tốc độ; gối gập lúc đưa chân lên trước; dồn trọng tâm theo chân trụ
       const ah = lerp(0.4, 0.78, r) * w,
-        ak = lerp(0.62, 1.35, r) * w;
+        ak = lerp(0.9, 1.45, r) * w; // (gối gập rõ khi đưa chân lên: không đơ)
       tgt.hxL = s * ah;
       tgt.hxR = -s * ah;
-      tgt.kxL = Math.max(0, -Math.sin(m.ph - 0.55)) * ak + 0.05 * w;
-      tgt.kxR = Math.max(0, Math.sin(m.ph - 0.55)) * ak + 0.05 * w;
+      tgt.kxL = Math.max(0, -Math.sin(m.ph - 0.55)) * ak + 0.12 * w; // (chân trụ cũng hơi chùng gối)
+      tgt.kxR = Math.max(0, Math.sin(m.ph - 0.55)) * ak + 0.12 * w;
       // thân: nhún hai lần mỗi chu kỳ (thấp nhất lúc hai chân dạng), xoay hông, vai ngược hông, ngả tới theo tốc độ
       tgt.py = (-0.025 - 0.04 * r + Math.abs(c) * lerp(0.03, 0.075, r)) * w;
       tgt.pry = s * lerp(0.09, 0.15, r) * w;
@@ -84,28 +86,66 @@
       tgt.kxR = Math.max(tgt.kxR || 0, sh < 0 ? -0.12 * sh : 0);
       tgt.cx = (tgt.cx || 0) + Math.sin(m.t * 1.7) * 0.015;
     }
+    // hai chân song song, không bè ra (gen dạng chân của làng không áp cho nhân vật mình)
+    tgt.hzL = tgt.hzR = 0.01;
     // đầu: giữ thăng bằng (bù độ ngả của ngực), nhìn trước vào hướng đang rẽ
     tgt.hx = (tgt.hx || 0) - (tgt.cx || 0) * 0.6;
     tgt.hy = (tgt.hy || 0) + clamp(m.yawRate * 0.12, -0.5, 0.5);
     // phanh gấp, lao đi: ngực ngả theo gia tốc
     tgt.cx += clamp(m.acc * 0.03, -0.18, 0.2);
-    // nhảy: lúc bay co gối, hông gập, tay dang lên; chạm đất khuỵu gối, nén người rồi bật lại
+    // nhảy (game/possess-jump.js: f.prep, f.flip, f.glide, f.landK). Lấy đà: khuỵu gối, ngả tới, vung tay ra sau. Bay: lên
+    // thì duỗi chân, tay vung lên; gần đỉnh co gối; rơi thì duỗi chân với xuống đất. Lộn: ôm gối tròn người. Lượn: dang tay,
+    // chân thả lỏng. Chạm đất: khuỵu gối sâu theo độ mạnh cú rơi, nén người, rồi nhún lên lại
+    const vyNow = (lift0 - m.ly) / dt;
+    if (f.prep > 0 && !air) {
+      const k = Math.sin((f.prep * Math.PI) / 2);
+      tgt.kxL = tgt.kxR = 1.05 * k;
+      tgt.hxL = tgt.hxR = 0.75 * k;
+      tgt.py = -0.15 * k;
+      tgt.cx = (tgt.cx || 0) + 0.3 * k;
+      tgt.sxL = tgt.sxR = -0.7 * k;
+      tgt.exL = tgt.exR = 0.25;
+    }
     if (air) {
-      tgt.kxL = tgt.kxR = 0.95;
-      tgt.hxL = 0.55;
-      tgt.hxR = 0.35;
-      tgt.sxL = tgt.sxR = 0.75;
-      tgt.szL = tgt.szR = 0.55;
-      tgt.exL = tgt.exR = 0.5;
-      tgt.cx = 0.12;
+      if (f.flip) {
+        tgt.kxL = tgt.kxR = 1.9;
+        tgt.hxL = tgt.hxR = 1.55;
+        tgt.sxL = tgt.sxR = 0.95;
+        tgt.szL = tgt.szR = 0.15;
+        tgt.exL = tgt.exR = 1.7;
+        tgt.cx = 0.5;
+        tgt.hx = -0.2;
+      } else if (f.glide) {
+        tgt.kxL = 0.35;
+        tgt.kxR = 0.15;
+        tgt.hxL = 0.25;
+        tgt.hxR = -0.05;
+        tgt.sxL = tgt.sxR = 0.2;
+        tgt.szL = tgt.szR = 1.35;
+        tgt.exL = tgt.exR = 0.15;
+        tgt.cx = -0.06;
+      } else {
+        const up = clamp(vyNow / 5, -1, 1), // 1 đang lên nhanh, 0 ở đỉnh, -1 rơi nhanh
+          apex = 1 - Math.abs(up);
+        tgt.kxL = 0.25 + 0.75 * apex;
+        tgt.kxR = 0.45 + 0.55 * apex;
+        tgt.hxL = 0.25 + 0.4 * apex;
+        tgt.hxR = 0.05 + 0.3 * apex;
+        tgt.sxL = tgt.sxR = 0.4 + 0.6 * Math.max(0, up);
+        tgt.szL = tgt.szR = 0.3 + 0.35 * Math.max(0, -up);
+        tgt.exL = tgt.exR = 0.45;
+        tgt.cx = 0.08;
+      }
     } else if (m.land > 0) {
-      const k = Math.sin((m.land / LAND_T) * Math.PI);
-      tgt.kxL = Math.max(tgt.kxL, 0.75 * k);
-      tgt.kxR = Math.max(tgt.kxR, 0.75 * k);
-      tgt.hxL = Math.max(tgt.hxL, 0.4 * k);
-      tgt.hxR = Math.max(tgt.hxR, 0.4 * k);
-      tgt.py = Math.min(tgt.py, -0.11 * k);
-      tgt.cx += 0.22 * k;
+      const LT = m.landT || LAND_T,
+        k = Math.sin((m.land / LT) * Math.PI),
+        d = 0.75 + 0.6 * (f.landK || 0); // (rơi mạnh thì khuỵu sâu)
+      tgt.kxL = Math.max(tgt.kxL, 0.85 * d * k);
+      tgt.kxR = Math.max(tgt.kxR, 0.85 * d * k);
+      tgt.hxL = Math.max(tgt.hxL, 0.5 * d * k);
+      tgt.hxR = Math.max(tgt.hxR, 0.5 * d * k);
+      tgt.py = Math.min(tgt.py, -0.13 * d * k);
+      tgt.cx += 0.25 * d * k;
       tgt.szL = tgt.szR = Math.max(tgt.szL || 0, 0.35 * k);
     }
     // nén giãn: đích theo tốc độ dọc (bay), chạm đất, bước; đi qua lò xo
@@ -113,8 +153,8 @@
       vy = (lift - m.ly) / dt;
     m.ly = lift;
     let sq = w * SQ.STEP * (Math.abs(c) - 0.5) * 2;
-    if (air) sq = -clamp(Math.abs(vy) * 0.03, 0, SQ.STRETCH);
-    else if (m.land > 0) sq = SQ.LAND * Math.sqrt(m.land / LAND_T); // (nén nhất ngay lúc chạm đất, nhả dần)
+    if (air) sq = f.flip ? 0.06 : -clamp(Math.abs(vy) * 0.03, 0, SQ.STRETCH); // (lộn: tròn người lại)
+    else if (m.land > 0) sq = SQ.LAND * Math.sqrt(m.land / (m.landT || LAND_T)); // (nén nhất ngay lúc chạm đất, nhả dần)
     for (let n = Math.ceil(dt / 0.016), h = dt / n; n > 0; n--) {
       // (chia bước nhỏ: máy chậm vẫn ổn định)
       m.sqv += (SQ.K * (sq - m.sq) - SQ.D * m.sqv) * h;

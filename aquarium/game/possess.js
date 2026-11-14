@@ -25,7 +25,7 @@
     WALK: 2.2,
     ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
     DEC: 9,
-    JUMP_V: 4.6, // nhảy: vận tốc bật lên, trọng lực (đơn vị mỗi giây): cao chừng nửa thân người, chạm đất sau 0,6 giây
+    JUMP_V: 5.4, // nhảy lần 1: vận tốc bật lên, trọng lực (đơn vị mỗi giây): cao chừng 1 đơn vị; nhảy lần 2, lộn, lượn: game/possess-jump.js
     GRAV: 15,
     RUN: 5,
     FOV: 52,
@@ -46,6 +46,7 @@
   function setup(G) {
     const { THREE, camera, controls } = G,
       Wd = () => G.world; // thế giới logic (game/cities.js; có thể thay mới khi tua năm)
+    const J = BK.PossessJump.create(CAM); // nhảy hai lần, lộn, lượn (game/possess-jump.js)
     const st = {
       phase: 'off',
       t: 0, // giây đã qua trong pha
@@ -98,7 +99,8 @@
     // chỗ đầu người (toạ độ thế giới); người chưa có hình (đảo xa chưa vẽ người): tâm đảo
     function headOf(out) {
       const f = folkNow();
-      if (f && f.rig) return out.copy(f.rig.root.position).add(v2.set(0, HEAD, 0));
+      // (lúc lộn: bỏ độ dời gốc khung do vòng lộn, render/village3d.js f.flipOff: máy quay không giật theo vòng lộn)
+      if (f && f.rig) return out.copy(f.rig.root.position).add(v2.set(0, HEAD, 0)).sub(f.flipOff || v2.set(0, 0, 0));
       const L = G.lands[st.i];
       return out.copy(L.center).add(v2.set(0, 4, 0));
     }
@@ -158,6 +160,7 @@
     // (vận tốc theo phím đổi dần: tăng tốc ACC, hãm DEC đơn vị mỗi giây bình phương, tính trong update)
     function driver(f) {
       f.lift = st.jumpY; // (render/village3d.js nâng người lên chừng này khi nhảy)
+      J.pose(f); // (khuỵu lấy đà, lộn, lượn, độ mạnh chạm đất: render/body/motion3d.js, render/village3d.js)
       if (!f.motion && BK.Motion3D) f.motion = BK.Motion3D.state(); // cử động có sức nặng (render/body/motion3d.js)
       const sp = st.vel.length();
       if (st.phase !== 'in' || sp < 0.05) return null;
@@ -321,6 +324,8 @@
         if (f) f.motion = null; // (trả lại dáng đi chung của làng)
       }
       st.vel.set(0, 0, 0);
+      st.jumpY = st.jumpV = 0;
+      J.reset();
       if (G.near) G.near.set(false);
       if (G.softCrowd) G.softCrowd.clear();
       if (G.diorama) G.diorama.update(false);
@@ -347,16 +352,10 @@
         u = dur ? Math.min(1, st.t / dur) : 0;
       PHASE[st.phase](u, sec);
       steer(sec);
-      // nhảy: bay lên rồi rơi xuống theo trọng lực, chạm đất thì dừng
-      if (st.jumpY > 0) {
-        st.jumpV -= CAM.GRAV * sec;
-        st.jumpY += st.jumpV * sec;
-        if (st.jumpY <= 0) {
-          st.jumpY = 0;
-          st.jumpV = 0;
-          if (G.soulFx && G.soulFx.land) G.soulFx.land(st);
-        }
-      }
+      // nhảy (game/possess-jump.js): lấy đà, bay, lộn, lượn, chạm đất
+      const jev = J.step(st, sec);
+      if (jev === 'up' && G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
+      else if (jev > 0 && G.soulFx && G.soulFx.land) G.soulFx.land(st);
       if (st.phase === 'off') return;
       if (G.near) G.near.set(st.phase === 'wake' || st.phase === 'in', st.i, headOf(v1)); // đồ hoạ gần (render/near3d.js)
       // thân đồ chơi mềm cho mình và người gần (render/body/softbody3d.js): từ lúc chạm
@@ -373,13 +372,11 @@
       G.post.center.set(clamp01(h.x * 0.5 + 0.5), clamp01(h.y * 0.5 + 0.5));
       if (G.soulFx) G.soulFx.update(sec, st);
     }
-    // nhảy (ui/possess-ctl.js, phím Space): chỉ khi đang đứng trên đất
+    // nhảy (ui/possess-ctl.js, phím Space): đứng thì nhảy lần 1, đang bay thì nhảy lần 2 (lộn); hold: giữ Space để lượn
     function jump() {
-      if (st.phase !== 'in' || st.jumpY > 0) return;
-      st.jumpV = CAM.JUMP_V;
-      st.jumpY = 0.0001;
-      if (G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
+      if (J.press(st) && J.n === 2 && G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
     }
+    const hold = (on) => J.hold(on);
     // xoay nhìn (ui/possess-ctl.js): dx, dy theo radian
     function look(dx, dy) {
       if (st.phase !== 'in' && st.phase !== 'wake') return;
@@ -392,6 +389,7 @@
       update,
       look,
       jump,
+      hold,
       st,
       T,
       CAM,

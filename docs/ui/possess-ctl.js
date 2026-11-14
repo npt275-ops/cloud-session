@@ -1,7 +1,7 @@
 /* Bể Kính · ui/possess-ctl.js · Nút và điều khiển của cú nhập hồn (design/ke-hoach-buoc-32.md mục 3.3)
  * Nút "Nhập hồn" trên thanh điều khiển; trong lúc nhập hồn ẩn mọi bảng của góc nhìn thượng đế (body.possessed), chỉ còn
  * một dòng nhắc phím và nút "Thoát".
- * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy, rê chuột để nhìn (bấm vào màn hình: khoá chuột), Esc thoát.
+ * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy (bấm lần nữa khi đang bay: lộn; giữ: lượn), rê chuột để nhìn (bấm vào màn hình: khoá chuột), Esc thoát.
  * Điện thoại: cần ảo nửa trái màn hình (đẩy xa thì chạy), kéo nửa phải để xoay nhìn, nút "Nhảy" góc phải dưới.
  * Chỉ ghi vào G.possess (st.move, st.run, look, enter, exit); không đụng máy quay, không đụng người. Cần: game/possess.js. */
 (function (root) {
@@ -62,7 +62,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
     hint.innerHTML =
-      '<span class="keys">W A S D đi · Shift chạy · Space nhảy · rê chuột để nhìn (bấm để khoá chuột) · Esc thoát</span><button type="button">Thoát</button>';
+      '<span class="keys">W A S D đi · Shift chạy · Space nhảy (2 lần: lộn; giữ: lượn) · rê chuột để nhìn (bấm để khoá chuột) · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),
@@ -80,7 +80,9 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     jumpBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       P.jump();
+      if (P.hold) P.hold(true);
     });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) jumpBtn.addEventListener(ev, () => P.hold && P.hold(false));
     document.body.append(stick, lookPad, jumpBtn);
     if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
 
@@ -118,6 +120,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
           e.preventDefault();
           e.stopImmediatePropagation();
           if (!e.repeat) P.jump();
+          if (P.hold) P.hold(true); // (giữ Space: lượn sau cú lộn, game/possess-jump.js)
           return;
         }
         if (KEYS[e.code] || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
@@ -132,6 +135,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     document.addEventListener(
       'keyup',
       (e) => {
+        if (e.code === 'Space' && P.hold) P.hold(false);
         if (!held.has(e.code)) return;
         held.delete(e.code);
         applyMove();

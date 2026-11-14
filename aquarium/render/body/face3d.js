@@ -7,9 +7,8 @@
  *   mày   nâng, hạ, nghiêng (giận: chụm xuống giữa; buồn: xếch lên giữa)
  *   miệng một trong bốn: thẳng, cười, mếu, há; khối không dùng thì co về tâm (không thấy)
  *   má    hồng khi vui (trẻ nhỏ luôn hồng)
- * Viền nét (INK) bỏ qua các khối của mặt (mặt không có viền đen quanh mắt, miệng).
  * Mã bộ phận dùng chung với thân: 0 vải, 1 da, 2 tóc, 3 giày; 10 tới 18 là khối biểu cảm; 19 chi tiết da trên mặt (mũi, tai,
- * tàn nhang), 20 ria: không co giãn, chỉ không có viền nét (viền quanh mũi, ria thành vòng đen) (PART).
+ * tàn nhang), 20 ria: không co giãn (PART).
  * Cần: three.js (qua ctx), render/body/traits3d.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -27,9 +26,6 @@
     ' else if (aPart < 17.5) d *= step(abs(aPart - 14.0 - uMouth), 0.5);\n' + // miệng: chỉ kiểu đang dùng
     ' else d *= uCheek;\n' + // má
     ' transformed = aCtr + d; }\n';
-  // viền nét: khối biểu cảm co về tâm (không có viền)
-  const INK_HEAD = 'attribute float aPart; attribute vec3 aCtr;\n';
-  const INK_BODY = 'if (aPart > 9.5) transformed = aCtr;\n';
   // đoạn shader điểm ảnh: da ấm như ánh sáng xuyên qua da; tóc có sợi
   const FRAG_HEAD = 'varying float vPart; varying vec3 vRest;\n';
   const FRAG_COLOR =
@@ -134,5 +130,5 @@
       add(sph(0.045), 'head', L(0, HY - 0.074, 0.232, 1.5, 0.3, 0.45), hair, P.FEAT_HAIR);
     }
   }
-  BK.Face3D = { build, update, uniforms, PART, MOUTH, VERT_HEAD, VERT_BODY, INK_HEAD, INK_BODY, FRAG_HEAD, FRAG_COLOR, FRAG_EMIT };
+  BK.Face3D = { build, update, uniforms, PART, MOUTH, VERT_HEAD, VERT_BODY, FRAG_HEAD, FRAG_COLOR, FRAG_EMIT };
 })(typeof self !== 'undefined' ? self : globalThis);

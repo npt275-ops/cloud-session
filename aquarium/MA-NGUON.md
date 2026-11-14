@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 172 tệp, 47202 dòng.
+Tổng: 174 tệp, 47422 dòng.
 
 ## (gốc)
 
@@ -29,7 +29,8 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 116 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/world.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess.js` | 411 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
+| `game/possess-jump.js` | 93 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
+| `game/possess.js` | 409 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-jump.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
@@ -106,7 +107,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1660 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1669 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -209,7 +210,7 @@ Giao diện: thanh đảo, bảng làng, máy quay bay, bảng dev.
 | `ui/camera-fly.js` | 147 | Camera đi theo tay người chơi: bay tới một chỗ (flyTo, trượt êm), bay tự do bằng phím mũi tên, W A S D, Q E (lên xuống) | `BK.CameraFly` G: 2 dịch vụ | `game/nature.js` `game/possess.js` `game/world.js` `render/map/map3d.js` `render/tank3d.js` `ui/landbar.js` |
 | `ui/hud.js` | 62 | Những gì ghi và bấm trên màn hình ngoài bảng làng: nút tốc độ (1×, 2×, 4×; không có tạm dừng), nút âm thanh, dòng ngày … | `BK.Hud` G: 1 dịch vụ | `game/cities.js` `game/seasons.js` `game/world.js` `logic/eras.js` |
 | `ui/landbar.js` | 59 | Thanh sáu vùng đất ở trên cùng: bấm một đảo để bay tới đảo đó; đảo đang xem được tô sáng (setFocus) | `BK.LandBar` G: 1 dịch vụ | `game/nature.js` `game/world.js` `ui/camera-fly.js` |
-| `ui/possess-ctl.js` | 230 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
+| `ui/possess-ctl.js` | 234 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
 | `ui/race-dev.js` | 277 | Tin giữa các đảo và bảng dev "Cuộc đua" … | `BK.RaceDev` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/temper.js` `logic/war.js` `ui/camera-fly.js` `ui/landbar.js` |
 | `ui/village-ui.js` | 346 | Bảng của một làng: thế hệ, số người, tình huống đang có, hội đồng 8 ghế, nhật ký, và các nút thử tình huống … | `BK.VillageUI` | `logic/brain.js` `logic/council.js` `logic/dramas.js` `logic/eras.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rules.js` `logic/tasks.js` `logic/temper.js` |
 
@@ -230,6 +231,7 @@ Kiểm thử: node --test test/*.js.
 | `test/island.test.js` | 356 | Kiểm thử logic ngầm của một đảo (Lúa Vàng): chạy bằng `node --test` trong thư mục aquarium |  | `logic/brain.js` `logic/dramas.js` `logic/homes.js` `logic/island.js` `logic/jobs.js` `logic/people.js` `logic/posts.js` `logic/rules.js` `logic/schedule.js` `logic/temper.js` |
 | `test/missiles.test.js` | 186 | Tên lửa (thời 7), hạt nhân (thời 8) (logic/missiles.js) |  | `logic/economy.js` `logic/island.js` `logic/missiles.js` `logic/people.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/motion3d.test.js` | 46 | Nén giãn của nhân vật khi nhảy (render/body/motion3d.js; design/ke-hoach-buoc-34.md điểm 5) |  | `render/body/motion3d.js` |
+| `test/possess-jump.test.js` | 87 | Nhảy hai lần, lộn, lượn (game/possess-jump.js; design/ke-hoach-buoc-35.md) |  | `game/possess-jump.js` |
 | `test/powers.test.js` | 141 | Quyền năng có giá, mục tiêu theo trận (logic/powers.js, logic/goals.js; design/ke-hoach-khac-phuc.md mục 8) |  | `logic/climate.js` `logic/economy.js` `logic/eras.js` `logic/goals.js` `logic/island.js` `logic/powers.js` `logic/siege.js` `logic/world.js` |
 | `test/save.test.js` | 84 | Lưu và nạp lại trận (logic/save.js) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` |
 | `test/scenes.test.js` | 147 | Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js) |  | `logic/economy.js` `logic/island.js` `logic/posts.js` `logic/schedule.js` `logic/world.js` |
@@ -249,7 +251,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 | `tools/calibrate.js` | 221 | Cân chỉnh bằng nhiều trận … |  | `logic/island.js` `logic/world.js` |
 | `tools/check-buildings.js` | 145 | Rà soát công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` |
 | `tools/check-footing.js` | 79 | Quét công trình thò ra ngoài đảo hay đè lên lỗ hồ: 6 đảo × 12 thời … |  | `game/cities.js` `game/world.js` |
-| `tools/check-possess.js` | 152 | Kiểm tra cú nhập hồn … |  | `game/cities.js` `game/possess.js` `logic/people.js` `render/fx/post3d.js` `render/near3d.js` `render/scene3d.js` |
+| `tools/check-possess.js` | 162 | Kiểm tra cú nhập hồn … |  | `game/cities.js` `game/possess.js` `logic/people.js` `render/fx/post3d.js` `render/near3d.js` `render/scene3d.js` |
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
 | `tools/check-walk.js` | 187 | Người đi xuyên công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/world.js` `render/build/kit3d.js` `render/scene3d.js` |
 | `tools/clip.js` | 376 | Quay clip khung dọc điện thoại để xem bằng mắt … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/perf3d.js` `render/scene3d.js` `ui/landbar.js` |
@@ -431,6 +433,7 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 138. `ui/race-dev.js`
 139. `game/cities.js`
 140. `ui/hud.js`
-141. `game/possess.js`
-142. `ui/possess-ctl.js`
-143. `game/loop.js`
+141. `game/possess-jump.js`
+142. `game/possess.js`
+143. `ui/possess-ctl.js`
+144. `game/loop.js`

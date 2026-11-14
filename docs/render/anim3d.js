@@ -53,7 +53,7 @@
   function basePose(K) {
     const p = blank();
     p.cx = (0.5 - K.posture) * 0.3 + K.lean * 0.12;
-    p.hzL = 0.03 + K.stance * 0.09;
+    p.hzL = 0.012 + K.stance * 0.04; // (dạng chân nhẹ: bước 35, chân không bè sang hai bên)
     p.hzR = p.hzL;
     p.szL = p.szR = 0.08;
     return p;
