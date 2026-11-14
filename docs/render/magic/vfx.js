@@ -8,7 +8,7 @@
  *   light   đèn chớp (chớp nổ, ánh lửa): vài đèn điểm dùng lại
  *   sigil   vòng phù chú sáng (render/magic/sigils.js): bung ra, xoay, mờ dần; quay mặt theo hướng phép hay nằm sát đất
  * Phát theo công thức (render/magic/recipes.js: chỉ là số, màu): play(tên, chỗ, { dir, scale }); nguồn phát liên tục (đuôi
- * cầu lửa, lửa cháy): emitter(tên, chỗ) trả { pos, stop() }. Màu viết theo bảng màu chung (render/style/palette.js), ví dụ
+ * cầu lửa, lửa cháy): emitter(tên, chỗ) trả { pos, stop(), paused }. Màu viết theo bảng màu chung (render/style/palette.js), ví dụ
  * 'fire.core'. Cỡ hạt tính theo đơn vị thế giới (đúng cỡ dù xa gần). Toạ độ thế giới.
  * Giới hạn: tối đa MAX hạt mỗi loại (máy chậm: một nửa); đầy thì hạt cũ nhất nhường chỗ.
  * Cần: three.js, render/style/palette.js, render/magic/recipes.js, render/magic/sigils.js. */
@@ -489,6 +489,7 @@
           emitters.delete(em);
           continue;
         }
+        if (em.paused) continue; // (tạm ngừng phát: ví dụ lửa lúc dừng thời gian)
         em.acc += sec * (em.R.rate || 30) * (low() ? 0.5 : 1);
         const n = Math.floor(em.acc);
         if (!n) continue;

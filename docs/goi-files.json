@@ -285,6 +285,31 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/magic/fire/blaze.js",
+  "src": "magic/fire/blaze.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/fire/cast.js",
+  "src": "magic/fire/cast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/fire/look3d.js",
+  "src": "magic/fire/look3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/fire/recipes.js",
+  "src": "magic/fire/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/fire/sounds.js",
+  "src": "magic/fire/sounds.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/magic/fire/spells.js",
   "src": "magic/fire/spells.js",
   "mode": 420

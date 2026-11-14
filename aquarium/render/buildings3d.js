@@ -1369,6 +1369,36 @@
     function setDecline(i, on) {
       if (shown[i]) shown[i].decline = !!on;
     }
+    // chỗ có thể hư hại (khoá của logic/siege.js: nhà dân 'home:<số>', bãi làm việc) trong bán kính r quanh chỗ at (toạ độ
+    // thế giới) của đảo i, gần nhất trước: [{ key, pos (thế giới), r, d }] (sách phép: magic/fire/cast.js đốt nhà)
+    const YARD_KEYS = ['store', 'craft', 'power', 'farm', 'wood', 'stone'];
+    function sitesNear(i, at, r) {
+      const sh = shown[i];
+      if (!sh) return [];
+      const keys = [];
+      for (const P of sh.pieces.concat(sh.standing || [])) if (P.home != null) keys.push('home:' + P.home);
+      for (const Y of (sh.wy && sh.wy.yards) || []) if (YARD_KEYS.includes(Y.kind)) keys.push(Y.kind);
+      const out = [];
+      for (const key of new Set(keys)) {
+        const s0 = siteOf(sh, i, key);
+        if (!s0) continue;
+        const pos = sh.L.g.localToWorld(s0.pos.clone()),
+          d = Math.hypot(pos.x - at.x, pos.z - at.z);
+        if (d <= r + s0.r) out.push({ key, pos, r: s0.r, d });
+      }
+      return out.sort((a, b) => a.d - b.d);
+    }
+    // chỗ của một khoá (toạ độ thế giới) và độ cao đỉnh mái (top: lửa, khói mọc từ đó), hay null
+    const TOPS = new WeakMap();
+    function sitePos(i, key) {
+      const sh = shown[i],
+        s0 = sh && siteOf(sh, i, key);
+      if (!s0) return null;
+      const pos = sh.L.g.localToWorld(s0.pos.clone()),
+        g = s0.piece ? s0.piece.g : s0.yard ? s0.yard.g : null;
+      if (g && !TOPS.has(g)) TOPS.set(g, new THREE.Box3().setFromObject(g).max.y);
+      return { pos, r: s0.r, top: g ? TOPS.get(g) : pos.y + 2 };
+    }
     function setRuin(i, ruin, burning, fixing) {
       const sh = shown[i];
       if (!sh || !BK.Ruins3D) return;
@@ -1408,6 +1438,8 @@
       setStock,
       setGraves,
       setRuin,
+      sitesNear,
+      sitePos,
       setDecline,
       flush,
       debug,

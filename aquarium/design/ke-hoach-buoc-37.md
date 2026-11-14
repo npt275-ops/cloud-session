@@ -153,3 +153,20 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 ## Linh lực lúc làm game (người chơi chốt)
 - Tạm thời mọi phép cùng giá 5 (phép giữ: 5 mỗi giây), linh lực vô hạn: logic/spells.js `DEV = { infinite: true, cost: 5 }`.
   Giá riêng từng phép vẫn ghi trong SPELLS; chơi thật thì đặt `infinite: false, cost: null`.
+
+## Mỗi hệ phép một thư mục (người chơi chốt: code sạch, dễ tìm, dễ sửa)
+- `magic/<hệ>/`: spells.js (danh sách phép), cast.js (phát phép, đăng ký với sách), recipes.js (hạt), sounds.js (tiếng),
+  look3d.js (hình riêng), tệp luật riêng (time/timeline.js, fire/blaze.js). Hướng dẫn: magic/README.md.
+- Lõi (logic/spells.js, game/spellbook.js, render/magic/, render/fx/magic-audio.js) không biết gì về từng hệ: thêm phép, thêm
+  hệ không sửa lõi. Sửa phép thời gian chỉ mở magic/time/.
+
+## Hệ lửa (đã làm)
+- Cầu lửa (bấm, ngắm): quả cầu bay theo đường cong, nổ: chớp, lửa đặc bung tròn, tàn lửa, khói bông, mảnh than, vết cháy xém.
+  Hậu quả: tối đa 2 nhà, bãi làm việc trong 3,2 đơn vị bén lửa (magic/fire/blaze.js: cháy 10 ngày game, mỗi ngày mất 0,045
+  độ bền: một lần làm nhà mất gần nửa độ bền, người nhà phải ở nhờ; ba lần thì sụp; đang cháy thì thợ chưa sửa); người trong
+  8 đơn vị hoảng sợ, mặt sợ hãi, bỏ chạy chừng 5 giây (render/village3d.js spook).
+- Vòng lửa (bấm, quanh mình): 36 lưỡi lửa thành vòng bán kính 4, cháy 6 giây thật, ánh lửa chập chờn, vết cháy xém thành vòng.
+  Hậu quả: không ai đi vào được (render/village3d.js setZones), người trong vòng bị đẩy ra, bỏ chạy; nhà chạm vòng bén lửa.
+- Nhà đang cháy: lửa đặc dày trên đỉnh mái, khói đen xám bốc cao, tàn lửa (magic/fire/look3d.js; tối đa 6 nhà gần máy quay).
+- Dừng thời gian: lửa ngừng phát, vòng lửa không hết giờ, nhà không cháy thêm (luật theo ngày game).
+- Lửa kiểu "đồ chơi": cục lửa tròn đặc màu cam (lớp hạt mềm, đọc rõ ban ngày) cộng lõi hạt sáng.

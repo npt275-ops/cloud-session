@@ -252,7 +252,7 @@
   /* ---------- Sửa lại sau chiến tranh ---------- */
   // mỗi ngày (logic/island.js): không còn giặc trên đảo thì thợ xây sửa chỗ hư nặng nhất trước
   function repairDay(S, day) {
-    const keys = damaged(S);
+    const keys = damaged(S).filter((k) => !(S.blaze && S.blaze[k])); // (đang cháy: phép lửa, magic/fire/blaze.js; tắt rồi mới sửa)
     if (!keys.length) {
       S.repairJob = null;
       return;

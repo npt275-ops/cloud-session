@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 200 tệp, 50101 dòng.
+Tổng: 206 tệp, 50561 dòng.
 
 ## (gốc)
 
@@ -88,7 +88,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
-| `render/buildings3d.js` | 1420 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
+| `render/buildings3d.js` | 1452 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
 | `render/deep3d.js` | 247 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
@@ -110,7 +110,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1671 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1720 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -233,6 +233,11 @@ Hệ lửa: cầu lửa, vòng lửa (nhà bén lửa, người hoảng sợ).
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
+| `magic/fire/blaze.js` | 44 | Nhà cháy vì phép lửa (luật, chạy được bằng Node; kiểm thử: test/blaze.test.js) | `BK.Blaze` | `logic/siege.js` |
+| `magic/fire/cast.js` | 108 | Phát phép hệ lửa (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/spellbook.js` `magic/fire/blaze.js` `magic/fire/look3d.js` `magic/time/cast.js` `render/magic/vfx.js` `render/scene3d.js` |
+| `magic/fire/look3d.js` | 66 | Hình ảnh của phép lửa ngoài bộ hạt … | `BK.Fire3D` G: 1 dịch vụ | `render/magic/vfx.js` |
+| `magic/fire/recipes.js` | 86 | Công thức hiệu ứng hạt của hệ lửa … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
+| `magic/fire/sounds.js` | 25 | Tiếng của phép lửa (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
 | `magic/fire/spells.js` | 12 | Danh sách phép hệ lửa (trang "Lửa" của sách) |  | `logic/spells.js` |
 
 ## magic/earth/
@@ -272,6 +277,7 @@ Kiểm thử: node --test test/*.js.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `test/battles.test.js` | 407 | Bước 8: vũ khí theo thời (logic/arms.js), kịch bản chiến tranh (logic/battles.js) … |  | `logic/arms.js` `logic/battles.js` `logic/brain.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/prosperity.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
+| `test/blaze.test.js` | 49 | Nhà cháy vì phép lửa (magic/fire/blaze.js; design/ke-hoach-buoc-37.md) | `BK.Siege` | `logic/siege.js` |
 | `test/bridges.test.js` | 150 | Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/island.js` `logic/schedule.js` `logic/war.js` `logic/world.js` |
 | `test/climate.test.js` | 110 | Khí hậu, thiên tai từng đảo và ngoại gen … |  | `logic/brain.js` `logic/climate.js` `logic/epigen.js` `logic/genes.js` `logic/island.js` `logic/people.js` `logic/rng.js` `logic/world.js` |
 | `test/code.test.js` | 50 | Giữ quy ước code dễ tìm, dễ sửa (README.md mục "Làm việc với code") |  |  |
@@ -347,6 +353,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `game/spellbook.js`: `G.spellbook`
 - `magic/time/look3d.js`: `G.time3d`
 - `magic/time/cast.js`: `G.timeCtl`, `G.timeMagic`
+- `magic/fire/look3d.js`: `G.fire3d`
 - `ui/spellbook-ui.js`: `G.spellbookUi`
 - `game/loop.js`: `G.frameTime`
 
@@ -517,7 +524,12 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 161. `magic/time/look3d.js`
 162. `magic/time/cast.js`
 163. `magic/fire/spells.js`
-164. `magic/earth/spells.js`
-165. `magic/water/spells.js`
-166. `ui/spellbook-ui.js`
-167. `game/loop.js`
+164. `magic/fire/blaze.js`
+165. `magic/fire/recipes.js`
+166. `magic/fire/sounds.js`
+167. `magic/fire/look3d.js`
+168. `magic/fire/cast.js`
+169. `magic/earth/spells.js`
+170. `magic/water/spells.js`
+171. `ui/spellbook-ui.js`
+172. `game/loop.js`

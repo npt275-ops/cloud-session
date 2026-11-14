@@ -67,6 +67,8 @@
       LOD_FAR = 40;
     let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
     const drivers = new Map(); // khoá người → hàm lái (nhập hồn: game/possess.js setDriver)
+    // phép tác động lên người (sách phép, magic/<hệ>/cast.js): hoảng sợ bỏ chạy (spook), vùng không ai vào được (setZones)
+    let zones = []; // [{ x, z, r }] toạ độ thế giới
     const bars = o.bars || null; // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
     const UNSTICK_S = 3,
       UNSTICK_D = 0.5,
@@ -1052,6 +1054,15 @@
           f.engage = null;
           f.strolling = false;
         }
+        // hoảng sợ (spook): bỏ việc, chạy tới chỗ xa nơi nguy hiểm, tới giờ (giờ thật) thì về việc cũ
+        if (f.spook && (drv || rs > f.spook.until)) f.spook = null;
+        if (f.spook) {
+          goal = { p: f.spook.to, run: true };
+          meetGoal = null;
+          meetVerb = null;
+          f.engage = null;
+          f.strolling = false;
+        }
         // đi theo giờ game, từng bước con: mỗi bước tìm lại đích (lối đi, điểm kế tiếp trên phố), đi một đoạn, giữ trong tường thành
         let moving = false;
         const secF = sec + (f.debt || 0);
@@ -1347,6 +1358,7 @@
         }
         Anim.apply(f.rig, f.cur, tgt, dt);
         const sc = age >= 16 ? 1 : 0.5 + (0.5 * Math.max(0, age)) / 16;
+        if (zones.length && !drv) keepOut(f);
         f.rig.root.position.copy(L.center).add(f.pos);
         f.rig.root.position.y += (f.cur.ty || 0) * sc * SCALE + gyOf(f.pos) + (f.lift || 0); // ngồi, quỳ thì hạ người; nhảy (nhập hồn) thì nâng lên
         f.rig.root.rotation.set(f.cur.rx || 0, f.yaw, 0, 'YXZ');
@@ -1381,7 +1393,9 @@
           f.blinkAt = rs + 2.2 + Math.random() * 3;
         } // giờ thực
         f.blink = Math.max(0, f.blink - real);
-        const ek = meetVerb
+        const ek = f.spook
+          ? 'fear'
+          : meetVerb
           ? 'happy'
           : gface && EXPR[gface] && mind.verb !== 'protest' && !X.war && !X.mourning && !mind.mood && !hungry
             ? gface
@@ -1491,6 +1505,39 @@
       }
       return n;
     };
+    // người trong bán kính r quanh chỗ at (toạ độ thế giới) hoảng sợ, chạy ra xa chừng run đơn vị, trong chừng sec giây
+    // (không kể người bị nhập hồn); trả số người bị doạ
+    function spook(at, r, sec, run) {
+      const cx = at.x - L.center.x,
+        cz = at.z - L.center.z,
+        now = lastRs; // (đồng hồ của làng: dừng thời gian thì không trôi)
+      let n = 0;
+      for (const [key, f] of folks) {
+        if (drivers.has(key) || f.inside || !f.rig) continue;
+        const dx = f.pos.x - cx,
+          dz = f.pos.z - cz,
+          d = Math.hypot(dx, dz);
+        if (d > r) continue;
+        const a = d > 0.05 ? Math.atan2(dz, dx) : Math.random() * Math.PI * 2,
+          to = new THREE.Vector3(cx + Math.cos(a) * (d + run), 0, cz + Math.sin(a) * (d + run));
+        Nav.keepInside(to);
+        f.spook = { to, until: now + sec * (0.8 + 0.4 * Math.random()) };
+        n++;
+      }
+      return n;
+    }
+    // vùng không ai vào được: người đi tới mép thì bị giữ lại ngoài vòng
+    function keepOut(f) {
+      for (const z of zones) {
+        const dx = f.pos.x - (z.x - L.center.x),
+          dz = f.pos.z - (z.z - L.center.z),
+          d = Math.hypot(dx, dz);
+        if (d >= z.r) continue;
+        const k = d > 0.01 ? z.r / d : 0;
+        if (k) f.pos.set(f.pos.x - dx + dx * k, f.pos.y, f.pos.z - dz + dz * k);
+        else f.pos.x += z.r;
+      }
+    }
     const worldPos = (id) => {
       const f = folks.get(id);
       return f ? f.rig.root.position.clone() : null;
@@ -1654,6 +1701,8 @@
       },
       // nhập hồn (game/possess.js): người này đi theo hàm lái fn(f) thay vì theo việc (null: thôi); folk(khoá): dữ liệu vẽ của người đó
       setDriver: (key, fn) => (fn ? drivers.set(key, fn) : drivers.delete(key)),
+      spook,
+      setZones: (list) => (zones = list || []),
       folk: (key) => folks.get(key) || null,
       get count() {
         return folks.size;
