@@ -536,9 +536,18 @@
       if (!P.dead) {
         // (đo theo từng cạnh của từng tam giác, cắt vào dải cao -0,3..tầm người: chân chống xiên, mái dốc có một đầu chôn dưới
         // đất, đầu kia cao quá đầu người vẫn cắt ngang tầm người ở giữa; chỉ đo theo đỉnh thì sót, người đi xuyên qua)
+        // (độ cao tính so với mặt đất ngay dưới từng điểm, không phải chân công trình: đứng trên dốc thì mái, mũ nấm phía dốc
+        // xuống thấp ngang ngực người)
         const top = BODY_H / (P.fitS || 1),
           LO = -0.3,
-          tri = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+          tri = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+          gs = P.fitS || 1,
+          ry = P.g.rotation.y,
+          rc = Math.cos(ry),
+          rs = Math.sin(ry),
+          g0 = sh.L.surfAt ? sh.L.surfAt(P.x, P.z) : 0,
+          // điểm (x, z) theo trục công trình: mặt đất ở đó thấp hơn chân công trình bao nhiêu (theo đơn vị của hình)
+          drop = (x, z) => (sh.L.surfAt ? (g0 - sh.L.surfAt(P.x + (x * rc + z * rs) * gs, P.z + (-x * rs + z * rc) * gs)) / gs : 0);
         let x0 = 1e9,
           x1 = -1e9,
           z0 = 1e9,
@@ -561,6 +570,7 @@
             for (let k = 0; k < 3; k++) {
               tri[k].fromBufferAttribute(A, I ? I.getX(j + k) : j + k).applyMatrix4(q.matrixWorld);
               if (tri[k].y > hmax) hmax = tri[k].y;
+              tri[k].y += drop(tri[k].x, tri[k].z);
             }
             for (let k = 0; k < 3; k++) {
               const a = tri[k],

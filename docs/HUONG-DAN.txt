@@ -1,6 +1,6 @@
 ﻿BỂ KÍNH
 Chaos Sandbox: sáu đảo, mười hai thời đại, chín năm.
-Phiên bản 2026.11.14-9d1a8d3
+Phiên bản 2026.11.14-17b5f91
 
 CÀI BẰNG MỘT LỆNH (tải toàn bộ mã nguồn, tạo phần mềm Bể Kính có biểu tượng, mở game)
  - Windows: mở PowerShell, dán lệnh:
