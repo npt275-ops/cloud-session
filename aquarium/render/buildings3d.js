@@ -552,7 +552,8 @@
         };
         m.updateMatrixWorld(true);
         m.traverse((q) => {
-          if (!q.isMesh || !q.geometry.attributes.position || q === m.userData.glow || q === m.userData.lit) return;
+          // (phần phát sáng cũng là khối đặc: tháp canh thời 9 làm toàn bằng nó, ray mỏ phát sáng; ô cửa sáng thì nằm trên tường)
+          if (!q.isMesh || !q.geometry.attributes.position || q === m.userData.lit) return;
           const A = q.geometry.attributes.position,
             I = q.geometry.index,
             n = I ? I.count : A.count;
@@ -1009,7 +1010,7 @@
         }
         if (!P.box || P.spec.gate || P.outer === 'sea' || P.kind === 'dock') continue;
         const soft = FIELD.has(P.kind);
-        if (P.box.h < (soft ? 0.3 : 0.6)) continue;
+        if (P.box.h < 0.3) continue; // (bể bơi, bệ thấp đặt trên dốc: thành vẫn cao ngang hông người phía dốc xuống)
         out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft, self: P });
       }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
@@ -1238,6 +1239,23 @@
     }
     // chỉ cho bài kiểm tra: đo lại chỗ lấn đường của các công trình đang đứng (như lúc dựng), trạng thái gộp khối của một đảo
     const debug = {
+      // các công trình của một đảo (thời này và thời trước còn đứng): loại, chỗ, có hiện không, khung chân (P.box)
+      pieces: (i) =>
+        shown[i]
+          ? [...shown[i].pieces.map((P) => [P, 'mới']), ...shown[i].standing.map((P) => [P, 'cũ'])].map(([P, w]) => ({
+              w,
+              kind: P.kind,
+              x: +P.x.toFixed(1),
+              z: +P.z.toFixed(1),
+              vis: P.g.visible,
+              gone: !!P.gone,
+              dead: !!P.dead,
+              baked: !!P.baked,
+              outer: P.outer,
+              box: P.box && [P.box.x0, P.box.x1, P.box.z0, P.box.z1, P.box.h].map((v) => +v.toFixed(1)),
+              fitS: P.fitS,
+            }))
+          : [],
       roadCheck: (i, all) => {
         const sh = shown[i];
         if (!sh) return null;
