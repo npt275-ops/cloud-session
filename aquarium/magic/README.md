@@ -7,7 +7,7 @@ Muốn sửa phép nào thì mở thư mục của hệ đó. Không cần mở 
 | `magic/soul/` | Linh hồn | Tia linh lực, Hố đen (sắp có) |
 | `magic/time/` | Thời gian | Dừng, Tua nhanh, Tua lùi |
 | `magic/fire/` | Lửa | Cầu lửa, Vòng lửa |
-| `magic/earth/` | Đất | Trụ đá, Rung đất (sắp có) |
+| `magic/earth/` | Đất | Trụ đá, Núi đá, Rung đất |
 | `magic/water/` | Nước | Gọi mưa, Cột nước, Đại hồng thuỷ (sắp có) |
 
 ## Trong một thư mục hệ
@@ -21,7 +21,7 @@ Tệp nào không cần thì không có.
 | `recipes.js` | Công thức hạt (chỉ số và màu) | Trình duyệt |
 | `sounds.js` | Tiếng riêng của hệ (`BK.MagicAudio.add`) | Trình duyệt |
 | `look3d.js` | Hình riêng không làm được bằng hạt (khối 3D, vòng lửa, trụ đá...) | Trình duyệt |
-| Tệp luật riêng | Tác động lên thế giới, ví dụ `time/timeline.js` (ảnh trận), `fire/blaze.js` (nhà cháy) | Node, có kiểm thử |
+| Tệp luật riêng | Tác động lên thế giới, ví dụ `time/timeline.js` (ảnh trận), `fire/blaze.js` (nhà cháy), `earth/rise.js` (núi trong trận), `earth/shape.js` (dáng núi) | Node, có kiểm thử |
 
 `setup(G, kit)` trả về:
 - `acts`: mỗi phép một mục `{ tap(chỗ ngắm) }` (bấm), `{ toggle(), on() }` (bật tắt) hoặc `{ hold(bật) }` (giữ);
@@ -37,9 +37,11 @@ Tệp nào không cần thì không có.
 | `ground(x, z)` | Độ cao mặt đất |
 | `bolt({...})` | Đạn phép bay theo đường cong |
 | `castLook(phép, hue)` | Dáng niệm phép |
+| `tipSigil(hệ)` | Phù chú của hệ hiện ở đầu gậy, rõ chừng một giây rồi mờ dần |
 | `audio` | Tiếng phép |
 | `say(chữ)` | Hiện dòng báo |
 | `island()` | Đảo đang ở |
+| `cam()` | Máy quay chính: `boost(k, giữ, về)` lùi xa, `shake(độ rung, giây)` rung |
 
 ## Lõi dùng chung
 

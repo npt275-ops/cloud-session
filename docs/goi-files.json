@@ -280,6 +280,36 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/magic/earth/cast.js",
+  "src": "magic/earth/cast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/look3d.js",
+  "src": "magic/earth/look3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/recipes.js",
+  "src": "magic/earth/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/rise.js",
+  "src": "magic/earth/rise.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/shape.js",
+  "src": "magic/earth/shape.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/sounds.js",
+  "src": "magic/earth/sounds.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/magic/earth/spells.js",
   "src": "magic/earth/spells.js",
   "mode": 420

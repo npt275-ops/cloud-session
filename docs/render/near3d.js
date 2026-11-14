@@ -204,7 +204,7 @@
             b = r(),
             cc = r();
           if (!freeAt(L, solids, grounds, x, z)) continue;
-          fn(x, L.surfAt(x, z), z, a, b, cc);
+          fn(x, (L.baseAt || L.surfAt)(x, z), z, a, b, cc); // (đất gốc: đất nhô của phép đất che cỏ, hạ xuống thì cỏ vẫn đúng chỗ)
         }
       };
       place(tries, (x, y, z, a, b, cc) => {

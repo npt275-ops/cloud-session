@@ -6,11 +6,10 @@
   const BK = root.BK || (root.BK = {});
   BK.Spellbook.school('soul', (G, kit) => {
     const { THREE } = G;
-    const v1 = new THREE.Vector3(),
-      v2 = new THREE.Vector3();
+    const v1 = new THREE.Vector3();
     function soulBolt(aim) {
+      kit.tipSigil('soul');
       kit.hand(v1);
-      G.vfx.sigil('soul', v1, v2.copy(aim).sub(v1).normalize(), { size: 0.75, life: 0.55 });
       G.vfx.play('soulCast', v1);
       if (kit.audio) kit.audio.cast(0.8);
       kit.bolt({

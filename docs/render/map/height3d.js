@@ -14,7 +14,8 @@
    * Đường của đảo đi trên dáng lớn M (thoải), gồ ghề tránh mặt đường; hồ, ao thủng xuyên đảo xuống biển (holes); mỗi công trình
    * có một nền phẳng ở cao độ chỗ nó đứng (đất quanh nền nối thoải vào đất tự nhiên).
    * Dùng:
-   *   L.surfAt(x, z)   cao độ chỗ đứng (toạ độ đảo); ngoài đảo trả 0
+   *   L.surfAt(x, z)   cao độ chỗ đứng (toạ độ đảo); ngoài đảo trả 0; tính cả đất nhô tạm thời (L.bumps: phép đất)
+   *   L.baseAt(x, z)   cao độ đất gốc, không tính đất nhô (cỏ, cây đặt theo đất gốc: đất nhô hạ xuống thì không lơ lửng)
    *   L.setPads(list)  nền công trình của thời đang vẽ: [{ x, z, r, y? (bỏ: lấy cao độ đất lúc đó, sau các nền trước), blend? }]; dựng lại lưới, phủ
    *                    lại các khối phủ theo đất (L.drape), đặt lại cây; tăng L.hVer (ai giữ cao độ thì theo số này mà cập nhật)
    *   L.drape(obj)     ghi một nhóm khối vẽ ở cao độ 0 (đá, núi, lớp đường, tường) để nâng từng đỉnh theo đất
@@ -204,7 +205,19 @@
       Hs.set(nat);
       H.set(nat);
       L.hVer = 0;
-      L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
+      L.baseAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
+      // đất nhô (L.bumps): mỗi khối { x, z, r, at(dx, dz) → cao thêm } cộng vào cao độ trong bán kính r; người, máy quay, hạt
+      // đọc L.surfAt nên đi lên được chỗ đất nhô (phép đất: magic/earth/look3d.js thêm, bớt)
+      L.bumps = [];
+      L.surfAt = (x, z) => {
+        let y = L.baseAt(x, z);
+        for (const b of L.bumps) {
+          const dx = x - b.x,
+            dz = z - b.z;
+          if (dx * dx + dz * dz < b.r * b.r) y += b.at(dx, dz);
+        }
+        return y;
+      };
       // màu mặt đất ở (x, z) như đang vẽ: màu nền theo mùa (L.groundMat) nhân màu theo đỉnh (đá ở sườn dốc, cát ở mép, sẫm chỗ
       // ướt); render/near3d.js mọc cỏ theo độ xanh của màu này
       L.groundAt = (x, z, out) => {

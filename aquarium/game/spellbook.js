@@ -21,6 +21,10 @@
   const BK = root.BK || (root.BK = {});
   const RANGE = 22, // (đơn vị đảo) tầm ngắm xa nhất tính từ nhân vật
     BOLT_SPEED = 16; // (đơn vị mỗi giây) tốc độ đạn phép
+  // phù chú của hệ hiện ở đầu gậy lúc giơ gậy niệm phép: bám theo đầu gậy, quay mặt về máy quay, xoay chậm; hiện rõ chừng một
+  // giây rồi mờ dần (người chơi kịp nhìn rõ hình của hệ: render/magic/sigils.js)
+  const TIP_SIGIL = { size: 0.85, life: 1.8, spin: 0.35 },
+    TIP_UP = 0.12; // (đơn vị) phù chú cao hơn đầu gậy chừng này
   const SCHOOLS = []; // [hệ, setup] theo thứ tự nạp (school)
   function school(id, fn) {
     if (SCHOOLS.some((x) => x[0] === id)) throw new Error('hệ phép đăng ký hai lần: ' + id);
@@ -106,13 +110,25 @@
       }
     }
 
+    // phù chú của hệ ở đầu gậy (TIP_SIGIL); update() giữ nó bám đầu gậy, quay về máy quay
+    function tipSigil(school) {
+      hand(v1);
+      st.tip = G.vfx.sigil(school, v1, v2.copy(camera.position).sub(v1), TIP_SIGIL);
+    }
+    function stepTip() {
+      const m = st.tip;
+      if (!m || !m.visible) return (st.tip = null);
+      hand(m.position);
+      m.position.y += TIP_UP;
+      m.lookAt(camera.position);
+      m.rotateZ(m.userData.age * m.userData.spin);
+    }
     // dáng niệm phép chung: giơ gậy, phù chú của hệ ở đầu gậy, bụi phép (công thức '<hệ>Cast' nếu hệ có), tiếng vút (hue: cao độ)
     function castLook(s, hue) {
       const f = folk();
       if (f) f.castT = 0.4;
+      tipSigil(s.school);
       hand(v1);
-      camera.getWorldDirection(v2);
-      G.vfx.sigil(s.school, v1, v2, { size: 0.75, life: 0.55 });
       if (BK.MagicRecipes[s.school + 'Cast']) G.vfx.play(s.school + 'Cast', v1);
       if (audio) audio.cast(hue == null ? 0.8 : hue);
     }
@@ -130,9 +146,11 @@
       ground, // ground(x, z): độ cao mặt đất đảo đang ở
       bolt, // bolt({ to, trail, speed, arc, onHit }): đạn phép bay từ đầu gậy tới chỗ ngắm
       castLook, // castLook(phép, hue): dáng niệm chung: giơ gậy, phù chú, bụi phép, tiếng vút
+      tipSigil, // tipSigil(hệ): phù chú của hệ hiện ở đầu gậy rồi mờ dần
       audio,
       say: (t) => G.spellbookUi && G.spellbookUi.say(t),
       island: () => (P() && P().st.i >= 0 ? P().st.i : -1),
+      cam: () => (P() ? P().cam : null), // máy quay chính (game/possess-cam.js: boost lùi xa, shake rung)
       ctx,
     };
     const ACT = {},
@@ -199,6 +217,7 @@
       if (G.world && G.world.soul) SP.regen(G.world, sec, !!st.holding); // (giờ thật: cả lúc dừng thời gian; đang giữ phép thì không hồi)
       for (const fn of TICK) fn(sec);
       stepBolts(sec);
+      stepTip();
       const s = spell(),
         f = folk();
       // gậy phép: chỉ khi ở trong thân

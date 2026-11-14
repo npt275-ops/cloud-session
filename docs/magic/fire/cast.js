@@ -21,8 +21,7 @@
   BK.Spellbook.school('fire', (G, kit) => {
     const { THREE } = G;
     BK.Fire3D.setup(G); // (hình: magic/fire/look3d.js)
-    const v1 = new THREE.Vector3(),
-      v2 = new THREE.Vector3();
+    const v1 = new THREE.Vector3();
     const st = { ring: null, houseT: 0 };
     const W = () => G.world;
     const sound = (name, ...a) => kit.audio && kit.audio[name] && kit.audio[name](...a);
@@ -42,8 +41,8 @@
 
     /* ----- Cầu lửa ----- */
     function fireball(aim) {
+      kit.tipSigil('fire');
       kit.hand(v1);
-      G.vfx.sigil('fire', v1, v2.copy(aim).sub(v1).normalize(), { size: 0.8, life: 0.5 });
       G.vfx.play('fireCast', v1);
       sound('whoosh');
       const i = kit.island();
@@ -52,7 +51,9 @@
     function explode(i, p) {
       G.vfx.play('fireBurst', p);
       G.vfx.sigil('fire', p, null, { size: 3, life: 0.8, spin: 2 });
-      sound('boom', Math.max(0.2, 1 - p.distanceTo(kit.feet()) / 40));
+      const near = Math.max(0.2, 1 - p.distanceTo(kit.feet()) / 40);
+      sound('boom', near);
+      if (kit.cam()) kit.cam().shake(0.18 * near, 0.5); // (máy quay rung theo vụ nổ, xa thì nhẹ)
       tell(burnNear(i, p, BLAST_R, MAX_IGNITE));
       scare(i, p, SCARE_R, SCARE_SEC, SCARE_RUN);
     }

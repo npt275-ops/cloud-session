@@ -317,7 +317,7 @@
         for (const k in t.slot) T[k].setMatrixAt(t.slot[k], ZERO);
         return;
       }
-      const gy = L.surfAt ? L.surfAt(t.x, t.z) : 0; // (đảo nhấp nhô: render/map/height3d.js)
+      const gy = L.baseAt ? L.baseAt(t.x, t.z) : 0; // (đảo nhấp nhô: render/map/height3d.js; đất gốc, không tính đất nhô)
       _o.position.set(t.x, gy + 0.05, t.z);
       _o.rotation.set(0, 0, 0);
       _o.scale.set(t.r * 1.15, 1, t.r * 1.15);

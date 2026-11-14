@@ -170,3 +170,18 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Nhà đang cháy: lửa đặc dày trên đỉnh mái, khói đen xám bốc cao, tàn lửa (magic/fire/look3d.js; tối đa 6 nhà gần máy quay).
 - Dừng thời gian: lửa ngừng phát, vòng lửa không hết giờ, nhà không cháy thêm (luật theo ngày game).
 - Lửa kiểu "đồ chơi": cục lửa tròn đặc màu cam (lớp hạt mềm, đọc rõ ban ngày) cộng lõi hạt sáng.
+
+## Phù chú ở đầu gậy (người chơi chốt)
+- Mỗi lần niệm phép, phù chú của hệ (5 hình: render/magic/sigils.js) hiện ở đầu gậy, bám theo đầu gậy, quay mặt về máy quay,
+  xoay chậm; rõ chừng một giây rồi mờ dần (tổng 1,8 giây) để người chơi nhìn rõ hình của hệ (game/spellbook.js TIP_SIGIL, kit.tipSigil).
+
+## Hệ đất (đã làm)
+- Đất nhô dùng chung: L.bumps cộng vào cao độ đảo (render/map/height3d.js L.surfAt); người, máy quay, hạt đi trên mặt núi.
+  Cỏ, cây đặt theo đất gốc (L.baseAt): núi hạ xuống thì không lơ lửng.
+- Trụ đá (bấm, dưới chân): núi đá bán kính 7,5 trồi lên, đỉnh là trụ đá phẳng cao 7 (gấp 5 người); nhân vật được nâng lên theo
+  (đo: 4,8 → 11,8). Máy quay bật ra xa gấp 6 lần (đo: 4,2 → 25,5 đơn vị) trong 2,2 giây rồi về dần, rung theo đất.
+- Núi đá (bấm, ngắm): sáu trụ đá trồi lên quanh chỗ ngắm, rồi đất giữa chúng dâng thành núi cao 4,5; trụ nằm lại thành mỏm đá.
+- Rung đất (bấm, ngắm): ba đợt sóng đất toả ra, bụi theo vòng sóng, vết nứt ở tâm, máy quay rung.
+- Hậu quả: núi đứng 40 (trụ đá), 60 (núi đá) ngày game rồi hạ (magic/earth/rise.js, lưu cùng trận, tua lùi theo); nhà dưới
+  núi gần tâm thì sập, ở sườn thì nứt; rung đất làm nứt tối đa 5 nhà trong bán kính 9; người gần đó hoảng sợ bỏ chạy.
+- Máy quay chính có thêm boost (lùi xa) và shake (rung) dùng chung (game/possess-cam.js); cầu lửa nổ gần cũng rung nhẹ.

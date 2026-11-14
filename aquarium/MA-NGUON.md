@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 206 tệp, 50561 dòng.
+Tổng: 213 tệp, 51098 dòng.
 
 ## (gốc)
 
@@ -29,11 +29,11 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/cities.js` | 1109 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 134 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `magic/time/cast.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess-cam.js` | 97 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
+| `game/possess-cam.js` | 126 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
 | `game/possess-jump.js` | 93 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
 | `game/possess.js` | 404 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
-| `game/spellbook.js` | 235 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
+| `game/spellbook.js` | 254 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
 ## logic/
@@ -120,7 +120,7 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/map/height3d.js` | 766 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
+| `render/map/height3d.js` | 779 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
 | `render/map/map3d.js` | 124 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
 | `render/map/mountains3d.js` | 322 | Núi của bản đồ | `BK.MapMountains` |  |
 | `render/map/relief3d.js` | 363 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), hồ, ao nhỏ thủng … | `BK.MapRelief` |  |
@@ -210,7 +210,7 @@ Hệ linh hồn: tia linh lực, hố đen.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `magic/soul/cast.js` | 29 | Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school) |  | `game/spellbook.js` `render/magic/vfx.js` |
+| `magic/soul/cast.js` | 28 | Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school) |  | `game/spellbook.js` `render/magic/vfx.js` |
 | `magic/soul/recipes.js` | 36 | Công thức hiệu ứng hạt của hệ linh hồn … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
 | `magic/soul/spells.js` | 12 | Danh sách phép hệ linh hồn (trang "Linh hồn" của sách) |  | `logic/spells.js` |
 
@@ -234,7 +234,7 @@ Hệ lửa: cầu lửa, vòng lửa (nhà bén lửa, người hoảng sợ).
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `magic/fire/blaze.js` | 44 | Nhà cháy vì phép lửa (luật, chạy được bằng Node; kiểm thử: test/blaze.test.js) | `BK.Blaze` | `logic/siege.js` |
-| `magic/fire/cast.js` | 108 | Phát phép hệ lửa (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/spellbook.js` `magic/fire/blaze.js` `magic/fire/look3d.js` `magic/time/cast.js` `render/magic/vfx.js` `render/scene3d.js` |
+| `magic/fire/cast.js` | 109 | Phát phép hệ lửa (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/spellbook.js` `magic/fire/blaze.js` `magic/fire/look3d.js` `magic/time/cast.js` `render/magic/vfx.js` `render/scene3d.js` |
 | `magic/fire/look3d.js` | 66 | Hình ảnh của phép lửa ngoài bộ hạt … | `BK.Fire3D` G: 1 dịch vụ | `render/magic/vfx.js` |
 | `magic/fire/recipes.js` | 86 | Công thức hiệu ứng hạt của hệ lửa … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
 | `magic/fire/sounds.js` | 25 | Tiếng của phép lửa (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
@@ -246,7 +246,13 @@ Hệ đất: trụ đá, rung đất.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `magic/earth/spells.js` | 12 | Danh sách phép hệ đất (trang "Đất" của sách) |  | `logic/spells.js` |
+| `magic/earth/cast.js` | 130 | Phát phép hệ đất (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/nature.js` `game/spellbook.js` `logic/siege.js` `magic/earth/look3d.js` `magic/earth/rise.js` `magic/time/cast.js` `render/magic/vfx.js` |
+| `magic/earth/look3d.js` | 141 | Khối núi đá của phép đất … | `BK.Earth3D` G: 1 dịch vụ | `game/nature.js` `magic/earth/shape.js` `render/magic/vfx.js` |
+| `magic/earth/recipes.js` | 44 | Công thức hiệu ứng hạt của hệ đất … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
+| `magic/earth/rise.js` | 29 | Đất nhô của phép đất trong thế giới (luật, chạy được bằng Node; test/earth.test.js) | `BK.EarthRise` |  |
+| `magic/earth/shape.js` | 65 | Hình dáng đất nhô của phép đất (chỉ là toán: dùng chung cho mặt đất và khối vẽ) | `BK.EarthShape` |  |
+| `magic/earth/sounds.js` | 25 | Tiếng của phép đất (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
+| `magic/earth/spells.js` | 13 | Danh sách phép hệ đất (trang "Đất" của sách) |  | `logic/spells.js` |
 
 ## magic/water/
 
@@ -281,6 +287,7 @@ Kiểm thử: node --test test/*.js.
 | `test/bridges.test.js` | 150 | Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/island.js` `logic/schedule.js` `logic/war.js` `logic/world.js` |
 | `test/climate.test.js` | 110 | Khí hậu, thiên tai từng đảo và ngoại gen … |  | `logic/brain.js` `logic/climate.js` `logic/epigen.js` `logic/genes.js` `logic/island.js` `logic/people.js` `logic/rng.js` `logic/world.js` |
 | `test/code.test.js` | 50 | Giữ quy ước code dễ tìm, dễ sửa (README.md mục "Làm việc với code") |  |  |
+| `test/earth.test.js` | 39 | Đất nhô của phép đất (magic/earth/shape.js, magic/earth/rise.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/ecology.test.js` | 236 | Hệ sinh thái hỗn loạn (logic/ecology.js): môi trường, chạy nạn, lấy vợ chồng khác đảo … |  | `logic/brain.js` `logic/climate.js` `logic/diplomacy.js` `logic/ecology.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/tasks.js` `logic/world.js` |
 | `test/economy.test.js` | 97 | Tài nguyên và lên cấp: mỗi đảo một nhịp, thiếu thứ gì thì kẹt ở đó (khi chưa có giao thương) |  | `logic/economy.js` `logic/family.js` `logic/island.js` `logic/world.js` |
 | `test/eras.test.js` | 21 | Mười hai thời kỳ: thời đầu là Thời đồ đá; lên cấp bằng giỏ tài nguyên (logic/economy.js) |  |  |
@@ -354,6 +361,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `magic/time/look3d.js`: `G.time3d`
 - `magic/time/cast.js`: `G.timeCtl`, `G.timeMagic`
 - `magic/fire/look3d.js`: `G.fire3d`
+- `magic/earth/look3d.js`: `G.earth3d`
 - `ui/spellbook-ui.js`: `G.spellbookUi`
 - `game/loop.js`: `G.frameTime`
 
@@ -530,6 +538,12 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 167. `magic/fire/look3d.js`
 168. `magic/fire/cast.js`
 169. `magic/earth/spells.js`
-170. `magic/water/spells.js`
-171. `ui/spellbook-ui.js`
-172. `game/loop.js`
+170. `magic/earth/shape.js`
+171. `magic/earth/rise.js`
+172. `magic/earth/recipes.js`
+173. `magic/earth/sounds.js`
+174. `magic/earth/look3d.js`
+175. `magic/earth/cast.js`
+176. `magic/water/spells.js`
+177. `ui/spellbook-ui.js`
+178. `game/loop.js`

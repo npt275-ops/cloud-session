@@ -11,6 +11,9 @@
  *             nhìn: nhân vật đứng đúng một chỗ trên màn hình, chỉ to lên khi máy quay vào gần (không nhảy chỗ); không gần hơn
  *             NEAR_MIN
  *   đất       không chui xuống đất (mặt đất dưới máy quay làm mượt)
+ *   lùi xa    C.boost(k, giữ, về): máy quay lùi ra xa gấp k lần (cả độ cao) trong chừng giữ giây rồi về dần trong chừng về giây
+ *             (phép đất: núi trồi dưới chân, máy quay bật ra để thấy cả ngọn núi); vào, ra đều mượt
+ *   rung      C.shake(độ rung, giây): máy quay rung (nổ, đất rung), nhỏ dần tới hết giờ; hướng nhìn rung cùng
  * create(CAM) trả C; game/possess.js gọi C.reset(đầu, hướng, độ ngẩng) lúc mở mắt, C.look(dx, dy) khi rê chuột,
  * C.step(giây, đầu, clearFrac, groundAt) mỗi khung hình rồi đọc C.pos, C.look3, C.yaw, C.pitch.
  * Cần: three.js. */
@@ -23,6 +26,8 @@
     OUT: 2.2, // hết che: lùi ra
     GROUND: 10, // mặt đất dưới máy quay
     SNAP: 3, // (đơn vị) nhân vật dời xa hơn chừng này trong một khung hình (đổi người, dịch chuyển): đặt lại ngay
+    BOOST_OUT: 5, // lùi xa: ra
+    BOOST_IN: 6, // lùi xa: về (theo đường cong của boost)
   };
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   function create(CAM) {
@@ -38,7 +43,13 @@
       pos: new THREE.Vector3(),
       look3: new THREE.Vector3(),
       ready: false,
+      zoom: 1, // hệ số lùi xa hiện tại (boost)
     };
+    let boost = null,
+      shake = null;
+    C.boost = (k, hold, back) => (boost = { k, hold, back, t: 0 });
+    C.shake = (amp, sec) => (shake = { amp: Math.max(amp, shake ? shake.amp * (1 - shake.t / shake.sec) : 0), sec, t: 0 });
+    const jolt = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0),
       dir = new THREE.Vector3(),
       right = new THREE.Vector3(),
@@ -79,7 +90,16 @@
       const free = clearFrac ? clearFrac(C.tgt, place(C.tgt, CAM.BACK, ideal)) : 1,
         want = Math.max(CAM.NEAR_MIN, free * CAM.BACK);
       C.dist += (want - C.dist) * ex(sec, want < C.dist ? RATE.IN : RATE.OUT);
-      place(C.tgt, C.dist, C.pos);
+      // lùi xa (boost): ra nhanh, giữ, về chậm
+      let zk = 1;
+      if (boost) {
+        boost.t += sec;
+        const u = boost.t - boost.hold;
+        zk = u < 0 ? boost.k : 1 + (boost.k - 1) * Math.exp((-3 * u) / boost.back);
+        if (u > boost.back * 2) boost = null;
+      }
+      C.zoom += (zk - C.zoom) * ex(sec, zk > C.zoom ? RATE.BOOST_OUT : RATE.BOOST_IN);
+      place(C.tgt, C.dist * C.zoom, C.pos);
       // không chui xuống đất
       if (groundAt) {
         const g = groundAt(C.pos.x, C.pos.z) + 0.35;
@@ -88,6 +108,15 @@
       }
       // hướng nhìn không đổi theo khoảng cách: như máy quay ở chỗ đầy đủ nhìn vào điểm trước mặt nhân vật 6 đơn vị
       C.look3.copy(C.pos).addScaledVector(dir, 6).sub(arm);
+      // rung: cùng một độ dời cho chỗ đặt và chỗ nhìn (khung hình rung, không lắc hướng)
+      if (shake) {
+        shake.t += sec;
+        const a = shake.amp * Math.max(0, 1 - shake.t / shake.sec);
+        jolt.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2 * a);
+        C.pos.add(jolt);
+        C.look3.add(jolt);
+        if (shake.t >= shake.sec) shake = null;
+      }
       return C;
     };
     return C;

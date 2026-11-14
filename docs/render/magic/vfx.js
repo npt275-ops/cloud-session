@@ -7,6 +7,7 @@
  *   decal   vết trên đất: đĩa mờ (cháy xém, đất ướt) hay vòng (sóng xung kích), to dần, nhạt dần
  *   light   đèn chớp (chớp nổ, ánh lửa): vài đèn điểm dùng lại
  *   sigil   vòng phù chú sáng (render/magic/sigils.js): bung ra, xoay, mờ dần; quay mặt theo hướng phép hay nằm sát đất
+ *           (sigil(...) trả khối đó: bên gọi có thể dời theo, như phù chú bám đầu gậy)
  * Phát theo công thức (render/magic/recipes.js: chỉ là số, màu): play(tên, chỗ, { dir, scale }); nguồn phát liên tục (đuôi
  * cầu lửa, lửa cháy): emitter(tên, chỗ) trả { pos, stop(), paused }. Màu viết theo bảng màu chung (render/style/palette.js), ví dụ
  * 'fire.core'. Cỡ hạt tính theo đơn vị thế giới (đúng cỡ dù xa gần). Toạ độ thế giới.
@@ -401,6 +402,7 @@
       }
       m.userData = { age: 0, life: (o && o.life) || 0.7, size: (o && o.size) || 1, spin: (o && o.spin) || 2.4, roll: 0 };
       m.visible = true;
+      return m;
     }
     function stepSigils(sec) {
       for (const m of sigils) {
