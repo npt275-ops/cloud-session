@@ -620,6 +620,16 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/magic/sigils.js",
+  "src": "render/magic/sigils.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/magic/staff3d.js",
+  "src": "render/magic/staff3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/magic/vfx.js",
   "src": "render/magic/vfx.js",
   "mode": 420

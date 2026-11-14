@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 185 tệp, 48873 dòng.
+Tổng: 187 tệp, 49170 dòng.
 
 ## (gốc)
 
@@ -27,13 +27,13 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `game/cities.js` | 1097 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
-| `game/loop.js` | 123 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
+| `game/loop.js` | 124 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
 | `game/possess-cam.js` | 97 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
 | `game/possess-jump.js` | 93 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
 | `game/possess.js` | 404 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
-| `game/spellbook.js` | 160 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/vfx.js` |
+| `game/spellbook.js` | 173 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
 ## logic/
@@ -74,7 +74,7 @@ Logic ngầm (chạy được trong Node, không vẽ): người, đảo, kinh t
 | `logic/scenes.js` | 139 | Cảnh theo sự kiện của một đảo … | `BK.Scenes` | `logic/people.js` `logic/posts.js` |
 | `logic/schedule.js` | 29 | Lịch một ngày theo giờ trong ngày (S.tod, 0..1, do phần chạy game ghi vào theo vòng ngày đêm trên trời): đêm, sáng, trưa … | `BK.Schedule` |  |
 | `logic/siege.js` | 321 | Đánh thành: cổng → các công trình xung quanh → nhà chính … | `BK.Siege` | `logic/economy.js` `logic/island.js` `logic/people.js` `logic/rules.js` |
-| `logic/spells.js` | 87 | Luật của sách phép thuật … | `BK.Spells` |  |
+| `logic/spells.js` | 88 | Luật của sách phép thuật … | `BK.Spells` |  |
 | `logic/strategy.js` | 536 | Não chiến lược của người đứng đầu mỗi đảo … | `BK.Strategy` | `logic/chronicle.js` `logic/diplomacy.js` `logic/ecology.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/war.js` |
 | `logic/tasks.js` | 263 | Việc làm trong ngày thường theo vai và theo buổi (logic/schedule.js) | `BK.Tasks` | `logic/guards.js` `logic/leader.js` `logic/people.js` `logic/posts.js` `logic/schedule.js` `logic/siege.js` |
 | `logic/temper.js` | 56 | Tính cách nổi trội của một người … | `BK.Temper` |  |
@@ -294,6 +294,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `game/possess.js`: `G.timeK`, `G.possess`
 - `ui/possess-ctl.js`: `G.possessUi`
 - `render/magic/vfx.js`: `G.vfx`
+- `render/magic/staff3d.js`: `G.staff3d`
 - `render/magic/aim3d.js`: `G.aim3d`
 - `game/spellbook.js`: `G.spellbook`
 - `ui/spellbook-ui.js`: `G.spellbookUi`
@@ -449,10 +450,12 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 144. `ui/possess-ctl.js`
 145. `render/style/palette.js`
 146. `render/magic/recipes.js`
-147. `render/magic/vfx.js`
-148. `render/magic/aim3d.js`
-149. `render/fx/magic-audio.js`
-150. `logic/spells.js`
-151. `game/spellbook.js`
-152. `ui/spellbook-ui.js`
-153. `game/loop.js`
+147. `render/magic/sigils.js`
+148. `render/magic/vfx.js`
+149. `render/magic/staff3d.js`
+150. `render/magic/aim3d.js`
+151. `render/fx/magic-audio.js`
+152. `logic/spells.js`
+153. `game/spellbook.js`
+154. `ui/spellbook-ui.js`
+155. `game/loop.js`

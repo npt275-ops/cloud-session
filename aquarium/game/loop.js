@@ -37,6 +37,7 @@
     BK.PossessCtl.setup(G); // ui/possess-ctl.js (nút, phím, cần ảo của cú nhập hồn)
     BK.VFX.setup(G); // render/magic/vfx.js (bộ hạt dùng chung của phép)
     BK.Aim3D.setup(G); // render/magic/aim3d.js (vòng ngắm của phép)
+    BK.Staff3D.setup(G); // render/magic/staff3d.js (gậy phép trong tay khi nhập hồn)
     BK.Spellbook.setup(G); // game/spellbook.js (sách phép thuật: chọn, ngắm, phát phép, linh lực)
     BK.SpellbookUi.setup(G); // ui/spellbook-ui.js (cuốn sách, thanh phép, linh lực)
     BK.RaceDev.setup(G); // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")

@@ -4,9 +4,12 @@
  *   ngắm   tia từ tâm màn hình đi theo hướng máy quay, chạm mặt đất ở đâu thì ngắm ở đó; xa quá RANGE thì kéo về trong tầm
  *   phát   kiểm tra luật (BK.Spells.cast), giơ tay (f.castT: render/body/motion3d.js), rồi chạy phần tác động của phép đó
  *          (bảng CAST: mỗi phép một hàm nhỏ; hệ sau thêm vào bảng, không sửa phần chung)
- *   đạn    đạn phép bay theo đường cong từ tay tới chỗ ngắm, kéo đuôi hạt; tới nơi thì gọi onHit của nó
+ *   gậy    gậy phép trong tay phải (render/magic/staff3d.js): ngọc màu hệ phép đang chọn, niệm phép thì nghiêng về chỗ ngắm;
+ *          vòng phù chú (G.vfx.sigil) hiện trước đầu gậy lúc niệm
+ *   đạn    đạn phép bay theo đường cong từ đầu gậy tới chỗ ngắm, kéo đuôi hạt; tới nơi thì gọi onHit của nó
  * update(giây thật) mỗi khung hình (game/loop.js): hồi linh lực (cả lúc dừng thời gian), bay đạn, vòng ngắm.
- * Cần: logic/spells.js, render/magic/vfx.js, render/magic/aim3d.js, render/fx/magic-audio.js, game/possess.js. */
+ * Cần: logic/spells.js, render/magic/vfx.js, render/magic/aim3d.js, render/magic/staff3d.js, render/fx/magic-audio.js,
+ * game/possess.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const RANGE = 22, // (đơn vị đảo) tầm ngắm xa nhất tính từ nhân vật
@@ -58,8 +61,9 @@
       out.set(v1.x, ground(v1.x, v1.z), v1.z);
       return true;
     }
-    // chỗ bàn tay phải của nhân vật (đạn phép bay ra từ đây)
+    // chỗ phép phát ra: đầu gậy (không có gậy: bàn tay phải)
     function hand(out) {
+      if (G.staff3d && G.staff3d.visible) return G.staff3d.tip(out);
       const f = folk();
       if (f && f.rig.nodes.wrR) return out.setFromMatrixPosition(f.rig.nodes.wrR.matrixWorld);
       return out.copy(f ? f.rig.root.position : camera.position).add(v2.set(0, 1, 0));
@@ -94,13 +98,16 @@
     const CAST = {
       // phép thử: đốm sáng bay tới chỗ ngắm rồi bung ra (chưa tác động lên thế giới)
       soulBolt(aim) {
-        G.vfx.play('soulCast', hand(v1));
+        hand(v1);
+        G.vfx.sigil('soul', v1, v2.copy(aim).sub(v1).normalize(), { size: 0.75, life: 0.55 });
+        G.vfx.play('soulCast', v1);
         if (audio) audio.cast(0.8);
         bolt({
           to: aim,
           trail: 'soulTrail',
           onHit: (p) => {
             G.vfx.play('soulBurst', p);
+            G.vfx.sigil('soul', p, null, { size: 2.6, life: 0.9, spin: 1.2 });
             if (audio) audio.impact(0.5);
           },
         });
@@ -134,7 +141,13 @@
       if (!(sec > 0)) return;
       if (G.world && G.world.soul) SP.regen(G.world, sec); // (giờ thật: cả lúc dừng thời gian)
       stepBolts(sec);
-      const s = spell();
+      const s = spell(),
+        f = folk();
+      // gậy phép: chỉ khi ở trong thân
+      if (G.staff3d) {
+        if (inside() && f) G.staff3d.update(f, s ? s.school : 'soul', st.aimOk ? v2.copy(st.aim).sub(f.rig.root.position) : null, (f.castT || 0) / 0.4);
+        else G.staff3d.hide();
+      }
       if (inside() && s && s.aim && G.aim3d) {
         st.aimOk = aimPoint(st.aim);
         G.aim3d.show(st.aim, s.school + '.mid', st.aimOk && SP.can(W(), s.id, ctx()).ok);

@@ -27,6 +27,7 @@
   // open: đã làm xong (chưa mở thì sách ghi "sắp có")
   const SPELLS = [
     { id: 'soulBolt', school: 'soul', name: 'Tia linh lực', cost: 8, cd: 0.5, use: 'tap', aim: true, open: true, desc: 'Một đốm sáng linh hồn bay tới chỗ ngắm rồi bung ra. Phép thử, chưa tác động lên thế giới.' },
+    { id: 'blackHole', school: 'soul', name: 'Hố đen', cost: 45, cd: 12, use: 'tap', aim: true, desc: 'Hố đen có vành sáng ở chỗ ngắm, hút hạt, hút người nhẹ về tâm vài giây.' },
     { id: 'timeStop', school: 'time', name: 'Dừng thời gian', cost: 30, cd: 8, use: 'toggle', self: true, desc: 'Cả thế giới đứng im, chỉ linh hồn vẫn đi lại được.' },
     { id: 'timeFast', school: 'time', name: 'Tua nhanh', cost: 6, cd: 0, use: 'hold', self: true, desc: 'Giữ để thời gian trôi nhanh 8 lần, 16 lần.' },
     { id: 'timeBack', school: 'time', name: 'Tua lùi', cost: 10, cd: 0, use: 'hold', self: true, desc: 'Giữ để lùi từng ngày, xa nhất 30 ngày.' },

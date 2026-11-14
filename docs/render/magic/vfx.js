@@ -6,14 +6,15 @@
  *   debris  mảnh vụn (đá, đất, giọt nước to): khối tròn mịn có vật lý: rơi, nảy, lăn, nằm lại rồi nhỏ dần
  *   decal   vết trên đất: đĩa mờ (cháy xém, đất ướt) hay vòng (sóng xung kích), to dần, nhạt dần
  *   light   đèn chớp (chớp nổ, ánh lửa): vài đèn điểm dùng lại
+ *   sigil   vòng phù chú sáng (render/magic/sigils.js): bung ra, xoay, mờ dần; quay mặt theo hướng phép hay nằm sát đất
  * Phát theo công thức (render/magic/recipes.js: chỉ là số, màu): play(tên, chỗ, { dir, scale }); nguồn phát liên tục (đuôi
  * cầu lửa, lửa cháy): emitter(tên, chỗ) trả { pos, stop() }. Màu viết theo bảng màu chung (render/style/palette.js), ví dụ
  * 'fire.core'. Cỡ hạt tính theo đơn vị thế giới (đúng cỡ dù xa gần). Toạ độ thế giới.
  * Giới hạn: tối đa MAX hạt mỗi loại (máy chậm: một nửa); đầy thì hạt cũ nhất nhường chỗ.
- * Cần: three.js, render/style/palette.js, render/magic/recipes.js. */
+ * Cần: three.js, render/style/palette.js, render/magic/recipes.js, render/magic/sigils.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
-  const MAX = { soft: 2000, glow: 2000, debris: 240, decal: 96, light: 4 };
+  const MAX = { soft: 2000, glow: 2000, debris: 240, decal: 96, light: 4, sigil: 6 };
   const rnd = (a, b) => (Array.isArray(a) ? a[0] + Math.random() * (a[1] - a[0]) : a == null ? b : a);
   // (độ sâu: renderer dùng logarithmicDepthBuffer, shader tự viết phải tính độ sâu cùng kiểu, không thì mặt đất che mất hạt)
   const LD_V = '#include <common>\n#include <logdepthbuf_pars_vertex>\n',
@@ -374,6 +375,50 @@
       }
     }
 
+    /* ----- vòng phù chú: vài tấm phẳng dùng lại ----- */
+    const sigils = [];
+    for (let k = 0; k < MAX.sigil; k++) {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1),
+        new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false }),
+      );
+      m.visible = false;
+      m.renderOrder = 9;
+      m.userData = { age: 0, life: 0, size: 1, spin: 1 };
+      scene.add(m);
+      sigils.push(m);
+    }
+    // sigil(hệ, chỗ, hướng mặt (null: nằm sát đất), { size, life, spin })
+    function sigil(school, p, face, o) {
+      const m = sigils.reduce((a, b) => (a.userData.life - a.userData.age < b.userData.life - b.userData.age ? a : b));
+      m.material.map = BK.Sigils.texture(THREE, school);
+      m.material.needsUpdate = true;
+      m.position.copy(p);
+      if (face) m.lookAt(tmp.copy(p).add(face));
+      else {
+        m.position.y = groundAt(p.x, p.z) + 0.04;
+        m.rotation.set(-Math.PI / 2, 0, 0);
+      }
+      m.userData = { age: 0, life: (o && o.life) || 0.7, size: (o && o.size) || 1, spin: (o && o.spin) || 2.4, roll: 0 };
+      m.visible = true;
+    }
+    function stepSigils(sec) {
+      for (const m of sigils) {
+        const d = m.userData;
+        if (!m.visible) continue;
+        d.age += sec;
+        if (d.age >= d.life) {
+          m.visible = false;
+          continue;
+        }
+        const u = d.age / d.life,
+          grow = 1 - Math.pow(1 - Math.min(1, u / 0.25), 3); // (bung ra nhanh)
+        m.scale.setScalar(d.size * (0.35 + 0.65 * grow));
+        m.rotateZ(d.spin * sec);
+        m.material.opacity = Math.min(1, u * 8) * (u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4);
+      }
+    }
+
     /* ----- phát theo công thức ----- */
     const tmp = new THREE.Vector3(),
       vel = new THREE.Vector3(),
@@ -463,6 +508,7 @@
       stepDebris(sec);
       stepDecals(sec);
       stepLights(sec);
+      stepSigils(sec);
     }
     const counts = () => ({ soft: soft.live, glow: glow.live, debris: deb.live, decal: dec.live, emitters: emitters.size });
     function clear() {
@@ -476,8 +522,9 @@
       dec.live = 0;
       emitters.clear();
       for (const l of lights) l.intensity = 0;
+      for (const m of sigils) m.visible = false;
     }
-    G.vfx = { play, emitter, update, counts, clear, groundAt, MAX };
+    G.vfx = { play, emitter, sigil, update, counts, clear, groundAt, MAX };
   }
   BK.VFX = { setup, MAX };
 })(typeof self !== 'undefined' ? self : globalThis);

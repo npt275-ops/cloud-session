@@ -134,3 +134,10 @@ Lấy ý tưởng chung, không chép hình của trò chơi khác (ký hiệu, 
 | Lốc lửa xoáy lên trời | Vòng lửa nâng cấp thành lốc lửa (vệt lửa xoắn ốc) |
 | Hố đen có vành sáng | Phép mới gợi ý cho trang Linh hồn: hố đen hút hạt, hút người nhẹ (ý người chơi nêu từ đầu) |
 | Sóng nước đổ ập, bọt trắng | Cột nước, sóng; Đại hồng thuỷ |
+
+Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm B (không luôn hiện ở góc); có gậy phép trong tay phải; thêm phép
+"Hố đen" vào trang Linh hồn (làm sau bốn hệ chính).
+- Đã làm (sau ảnh tham khảo): gậy phép (render/magic/staff3d.js: bám theo tay phải, đứng thẳng khi đi, nghiêng về chỗ ngắm
+  khi niệm; ngọc màu hệ phép đang chọn; đạn phép bay ra từ đầu gậy); vòng phù chú (render/magic/sigils.js: năm hình tự thiết kế;
+  viên gạch "sigil" trong render/magic/vfx.js: hiện trước đầu gậy lúc niệm, nằm sát đất lúc bung); phép "Hố đen" thêm vào sách
+  (sắp có).
