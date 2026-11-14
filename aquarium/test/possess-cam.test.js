@@ -73,3 +73,21 @@ test('nhảy: độ cao máy quay theo sau mượt, không nảy cứng theo nh�
   for (let i = 0; i < 60; i++) C.step(1 / 60, head);
   assert.ok(Math.abs(C.tgt.y - 2.2) < 0.01, 'sau một giây đã theo kịp');
 });
+
+test('nảy (đất trồi dưới chân): máy quay chỉ lên một đoạn nhẹ rồi về đúng chỗ cũ, không lùi ra xa', () => {
+  const C = create(CAM),
+    head = new THREE.Vector3(0, 1.2, 0);
+  C.reset(head, 0, 0.12);
+  C.step(1 / 60, head);
+  const y0 = C.pos.y,
+    d0 = Math.hypot(C.pos.x - head.x, C.pos.z - head.z);
+  C.hop(0.45, 0.9);
+  let top = 0;
+  for (let i = 0; i < 120; i++) {
+    C.step(1 / 60, head);
+    top = Math.max(top, C.pos.y - y0);
+    assert.ok(Math.abs(Math.hypot(C.pos.x - head.x, C.pos.z - head.z) - d0) < 1e-6, 'khoảng cách ngang không đổi');
+  }
+  assert.ok(top > 0.4 && top <= 0.45 + 1e-9, 'nảy lên ' + top);
+  assert.ok(Math.abs(C.pos.y - y0) < 1e-9, 'về lại tầm cũ');
+});

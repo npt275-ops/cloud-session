@@ -220,6 +220,12 @@
       };
       // màu mặt đất ở (x, z) như đang vẽ: màu nền theo mùa (L.groundMat) nhân màu theo đỉnh (đá ở sườn dốc, cát ở mép, sẫm chỗ
       // ướt); render/near3d.js mọc cỏ theo độ xanh của màu này
+      // màu theo đỉnh ở (x, z) (chưa nhân màu nền theo mùa): khối vẽ nào dùng chung vật liệu đất L.groundMat (đất nhô của
+      // phép đất) thì tô màu đỉnh bằng số này để trông y như đất quanh đó
+      L.tintAt = (x, z, out) => {
+        const F = L.hf;
+        return F.tr ? out.setRGB(sample(F, F.tr, x, z), sample(F, F.tg, x, z), sample(F, F.tb, x, z)) : out.setRGB(1, 1, 1);
+      };
       L.groundAt = (x, z, out) => {
         const F = L.hf,
           c = L.groundMat.color;

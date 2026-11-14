@@ -185,3 +185,11 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Hậu quả: núi đứng 40 (trụ đá), 60 (núi đá) ngày game rồi hạ (magic/earth/rise.js, lưu cùng trận, tua lùi theo); nhà dưới
   núi gần tâm thì sập, ở sườn thì nứt; rung đất làm nứt tối đa 5 nhà trong bán kính 9; người gần đó hoảng sợ bỏ chạy.
 - Máy quay chính có thêm boost (lùi xa) và shake (rung) dùng chung (game/possess-cam.js); cầu lửa nổ gần cũng rung nhẹ.
+
+## Hệ đất: sửa theo ý người chơi (thay bản trụ đá, núi đá, rung đất)
+- Đất trồi (dưới chân): mảng đất quanh chân phồng lên thành gò bán kính 3,6, mặt trên bằng, cao 1,8; nhân vật lên theo (đo:
+  4,8 → 6,6). Gò là chính mặt đất: dùng chung vật liệu đất của đảo (L.groundMat), màu từng đỉnh lấy đúng màu đất chỗ đó
+  (L.tintAt); chỗ có lớp phủ (sân cát, đường) thì giữa gò mang màu lớp phủ, ra viền hoà vào đất.
+- Máy quay: bỏ lùi xa ×6; máy quay vẫn bám tầm mắt nhân vật, chỉ nảy lên 0,45 đơn vị trong 0,9 giây rồi về (C.hop), rung nhẹ.
+- Núi đất (ngắm): gò đất nhỏ hình ngọn núi (bán kính 4,5, cao 3,2, đỉnh hơi tròn), cùng chất đất như trên.
+- Bỏ Rung đất.

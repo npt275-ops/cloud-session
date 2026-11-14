@@ -5,8 +5,7 @@
   const BK = root.BK || (root.BK = {});
   const SP = BK.Spells || require('../../logic/spells.js');
   SP.add('earth', [
-    { id: 'pillar', name: 'Trụ đá', cost: 25, cd: 4, use: 'tap', self: true, open: true, desc: 'Núi đá trồi lên ngay dưới chân, đỉnh là trụ đá nâng mình lên cao; máy quay bật ra xa để thấy cả ngọn núi.' },
-    { id: 'mount', name: 'Núi đá', cost: 35, cd: 6, use: 'tap', aim: true, open: true, desc: 'Vòng trụ đá trồi lên ở chỗ ngắm rồi đất giữa dâng lên thành núi; nhà ở đó bị đẩy sập.' },
-    { id: 'quake', name: 'Rung đất', cost: 40, cd: 10, use: 'tap', aim: true, open: true, desc: 'Sóng đất toả ra từ chỗ ngắm: nhà rung nứt, người gần đó hoảng sợ bỏ chạy.' },
+    { id: 'uplift', name: 'Đất trồi', cost: 25, cd: 4, use: 'tap', self: true, open: true, desc: 'Mảng đất quanh chân phồng lên thành gò, nâng mình lên cao hơn người một chút.' },
+    { id: 'mount', name: 'Núi đất', cost: 35, cd: 6, use: 'tap', aim: true, open: true, desc: 'Một gò đất nhỏ hình ngọn núi trồi lên ở chỗ ngắm; nhà ở đó bị đẩy nứt, sập.' },
   ]);
 })(typeof self !== 'undefined' ? self : globalThis);

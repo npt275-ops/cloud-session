@@ -150,7 +150,7 @@
       audio,
       say: (t) => G.spellbookUi && G.spellbookUi.say(t),
       island: () => (P() && P().st.i >= 0 ? P().st.i : -1),
-      cam: () => (P() ? P().cam : null), // máy quay chính (game/possess-cam.js: boost lùi xa, shake rung)
+      cam: () => (P() ? P().cam : null), // máy quay chính (game/possess-cam.js: hop nảy nhẹ, shake rung)
       ctx,
     };
     const ACT = {},

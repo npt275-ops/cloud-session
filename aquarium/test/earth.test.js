@@ -4,35 +4,37 @@ const assert = require('node:assert');
 const Sh = require('../magic/earth/shape.js');
 const R = require('../magic/earth/rise.js');
 
-test('Trụ đá: đỉnh trụ phẳng cao h ở giữa, núi thấp dần ra viền, ngoài viền bằng 0', () => {
-  const b = { kind: 'peak', r: 7.5, h: 7, seed: 1 };
-  assert.ok(Math.abs(Sh.at(b, 0, 0, 1) - 7) < 1e-9);
-  assert.ok(Math.abs(Sh.at(b, 0.8, 0.3, 1) - 7) < 1e-9, 'mặt đỉnh phẳng: người đứng vừa');
-  const mid = Sh.at(b, 4, 0, 1);
-  assert.ok(mid > 0.3 && mid < 3, 'sườn núi ' + mid);
-  assert.strictEqual(Sh.at(b, 9, 0, 1), 0);
+test('Đất trồi: mặt trên bằng cao h quanh chân, sườn thoải, ngoài viền bằng 0', () => {
+  const b = { kind: 'uplift', r: 3.6, h: 1.8, seed: 1 };
+  assert.ok(Math.abs(Sh.at(b, 0, 0, 1) - 1.8) < 1e-9);
+  assert.ok(Math.abs(Sh.at(b, 0.7, 0.3, 1) - 1.8) < 1e-9, 'mặt trên bằng: người đứng vừa');
+  const mid = Sh.at(b, 2.2, 0, 1);
+  assert.ok(mid > 0.2 && mid < 1.6, 'sườn ' + mid);
+  assert.strictEqual(Sh.at(b, 5, 0, 1), 0);
   assert.strictEqual(Sh.at(b, 0, 0, 0), 0, 'chưa trồi');
   assert.ok(Sh.at(b, 0, 0, 0.3) < Sh.at(b, 0, 0, 0.6), 'trồi dần');
 });
 
-test('Núi đá: trụ quanh tâm trồi trước, đất giữa dâng lên sau', () => {
-  const b = { kind: 'mount', r: 6.5, h: 4.5, seed: 0 };
-  const crag = [Math.cos(0) * 3.25, Math.sin(0) * 3.25],
-    between = [Math.cos(Math.PI / 6) * 1.6, Math.sin(Math.PI / 6) * 1.6];
-  assert.ok(Sh.at(b, crag[0], crag[1], 0.3) > 1, 'trụ đã lên');
-  assert.ok(Sh.at(b, between[0], between[1], 0.3) < 0.3, 'đất giữa chưa lên nhiều');
-  assert.ok(Sh.at(b, between[0], between[1], 1) > 3, 'xong: thành núi');
+test('Núi đất: cao nhất ở đỉnh, thấp dần đều ra viền (hình ngọn núi)', () => {
+  const b = { kind: 'mount', r: 4.5, h: 3.2, seed: 0 };
+  let last = Infinity;
+  for (let d = 0; d < 4; d += 0.5) {
+    const y = Sh.at(b, d, 0, 1);
+    assert.ok(y < last, 'thấp dần ở ' + d);
+    last = y;
+  }
+  assert.ok(Sh.at(b, 0, 0, 1) > 2 && Sh.at(b, 0, 0, 1) <= 3.2);
 });
 
 test('đất nhô theo trận: hết giờ thì bỏ, tối đa MAX khối mỗi đảo', () => {
   const S = {};
-  const a = R.raise(S, { kind: 'peak', x: 1, z: 2, r: 7, h: 7 }, 10);
-  assert.strictEqual(a.until, 10 + R.LAST.peak);
+  const a = R.raise(S, { kind: 'uplift', x: 1, z: 2, r: 3.6, h: 1.8 }, 10);
+  assert.strictEqual(a.until, 10 + R.LAST.uplift);
   R.step(S, 20);
   assert.strictEqual(S.rises.length, 1);
-  R.step(S, 10 + R.LAST.peak);
+  R.step(S, 10 + R.LAST.uplift);
   assert.strictEqual(S.rises.length, 0);
-  for (let k = 0; k < R.MAX + 3; k++) R.raise(S, { kind: 'mount', x: k, z: 0, r: 6, h: 4 }, 100);
+  for (let k = 0; k < R.MAX + 3; k++) R.raise(S, { kind: 'mount', x: k, z: 0, r: 4.5, h: 3.2 }, 100);
   assert.strictEqual(S.rises.length, R.MAX);
   assert.strictEqual(S.rises[0].x, 3, 'khối cũ nhất hạ trước');
 });

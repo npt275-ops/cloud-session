@@ -11,8 +11,8 @@
  *             nhìn: nhân vật đứng đúng một chỗ trên màn hình, chỉ to lên khi máy quay vào gần (không nhảy chỗ); không gần hơn
  *             NEAR_MIN
  *   đất       không chui xuống đất (mặt đất dưới máy quay làm mượt)
- *   lùi xa    C.boost(k, giữ, về): máy quay lùi ra xa gấp k lần (cả độ cao) trong chừng giữ giây rồi về dần trong chừng về giây
- *             (phép đất: núi trồi dưới chân, máy quay bật ra để thấy cả ngọn núi); vào, ra đều mượt
+ *   nảy      C.hop(độ cao, giây): máy quay nảy lên một đoạn nhẹ rồi về (đất dưới chân trồi lên: như người bị hất lên một
+ *             chút); máy quay vẫn bám tầm mắt nhân vật, chỉ thêm đoạn nảy này
  *   rung      C.shake(độ rung, giây): máy quay rung (nổ, đất rung), nhỏ dần tới hết giờ; hướng nhìn rung cùng
  * create(CAM) trả C; game/possess.js gọi C.reset(đầu, hướng, độ ngẩng) lúc mở mắt, C.look(dx, dy) khi rê chuột,
  * C.step(giây, đầu, clearFrac, groundAt) mỗi khung hình rồi đọc C.pos, C.look3, C.yaw, C.pitch.
@@ -26,8 +26,6 @@
     OUT: 2.2, // hết che: lùi ra
     GROUND: 10, // mặt đất dưới máy quay
     SNAP: 3, // (đơn vị) nhân vật dời xa hơn chừng này trong một khung hình (đổi người, dịch chuyển): đặt lại ngay
-    BOOST_OUT: 5, // lùi xa: ra
-    BOOST_IN: 6, // lùi xa: về (theo đường cong của boost)
   };
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   function create(CAM) {
@@ -43,11 +41,10 @@
       pos: new THREE.Vector3(),
       look3: new THREE.Vector3(),
       ready: false,
-      zoom: 1, // hệ số lùi xa hiện tại (boost)
     };
-    let boost = null,
+    let hop = null,
       shake = null;
-    C.boost = (k, hold, back) => (boost = { k, hold, back, t: 0 });
+    C.hop = (h, sec) => (hop = { h, sec, t: 0 });
     C.shake = (amp, sec) => (shake = { amp: Math.max(amp, shake ? shake.amp * (1 - shake.t / shake.sec) : 0), sec, t: 0 });
     const jolt = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0),
@@ -90,16 +87,16 @@
       const free = clearFrac ? clearFrac(C.tgt, place(C.tgt, CAM.BACK, ideal)) : 1,
         want = Math.max(CAM.NEAR_MIN, free * CAM.BACK);
       C.dist += (want - C.dist) * ex(sec, want < C.dist ? RATE.IN : RATE.OUT);
-      // lùi xa (boost): ra nhanh, giữ, về chậm
-      let zk = 1;
-      if (boost) {
-        boost.t += sec;
-        const u = boost.t - boost.hold;
-        zk = u < 0 ? boost.k : 1 + (boost.k - 1) * Math.exp((-3 * u) / boost.back);
-        if (u > boost.back * 2) boost = null;
+      place(C.tgt, C.dist, C.pos);
+      // nảy (hop): lên nhanh, về chậm hơn (đường cong một nhịp), cả chỗ đặt và chỗ nhìn
+      let up = 0;
+      if (hop) {
+        hop.t += sec;
+        const u = Math.min(1, hop.t / hop.sec);
+        up = hop.h * Math.sin(Math.PI * Math.pow(u, 0.6));
+        if (u >= 1) hop = null;
       }
-      C.zoom += (zk - C.zoom) * ex(sec, zk > C.zoom ? RATE.BOOST_OUT : RATE.BOOST_IN);
-      place(C.tgt, C.dist * C.zoom, C.pos);
+      C.pos.y += up;
       // không chui xuống đất
       if (groundAt) {
         const g = groundAt(C.pos.x, C.pos.z) + 0.35;

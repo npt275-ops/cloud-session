@@ -26,7 +26,7 @@ test('sách có đủ các trang và các phép người chơi đã chốt', () 
     S.SCHOOLS.map((s) => s.id),
     ['soul', 'time', 'fire', 'earth', 'water'],
   );
-  for (const id of ['timeStop', 'timeFast', 'timeBack', 'fireball', 'fireRing', 'pillar', 'quake', 'rain', 'geyser', 'deluge'])
+  for (const id of ['timeStop', 'timeFast', 'timeBack', 'fireball', 'fireRing', 'uplift', 'mount', 'rain', 'geyser', 'deluge'])
     assert.ok(S.BY.has(id), 'thiếu phép ' + id);
   for (const s of S.SPELLS) assert.ok(S.SCHOOLS.some((c) => c.id === s.school), s.id + ' thuộc trang lạ');
   // sách xếp theo trang
