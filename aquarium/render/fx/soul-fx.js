@@ -89,7 +89,10 @@
           const a = Math.random() * Math.PI * 2,
             rad = 1.2 + Math.random() * 5,
             dist = 6 + Math.random() * 26;
-          v.copy(camera.position).addScaledVector(d, dist).addScaledVector(r, Math.cos(a) * rad).addScaledVector(u, Math.sin(a) * rad);
+          v.copy(camera.position)
+            .addScaledVector(d, dist)
+            .addScaledVector(r, Math.cos(a) * rad)
+            .addScaledVector(u, Math.sin(a) * rad);
           P.streak({
             p: v,
             v: d.clone().multiplyScalar(-60 * (0.3 + speed)),

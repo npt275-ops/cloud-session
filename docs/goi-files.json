@@ -30,6 +30,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/possess.js",
+  "src": "game/possess.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/seasons.js",
   "src": "game/seasons.js",
   "mode": 420
@@ -515,6 +520,26 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/fx/particles3d.js",
+  "src": "render/fx/particles3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/fx/post3d.js",
+  "src": "render/fx/post3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/fx/soul-audio.js",
+  "src": "render/fx/soul-audio.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/fx/soul-fx.js",
+  "src": "render/fx/soul-fx.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/gestures3d.js",
   "src": "render/gestures3d.js",
   "mode": 420
@@ -587,6 +612,11 @@
  {
   "path": "BeKinh/render/nav3d.js",
   "src": "render/nav3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/near3d.js",
+  "src": "render/near3d.js",
   "mode": 420
  },
  {
@@ -677,6 +707,11 @@
  {
   "path": "BeKinh/ui/landbar.js",
   "src": "ui/landbar.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/possess-ctl.js",
+  "src": "ui/possess-ctl.js",
   "mode": 420
  },
  {

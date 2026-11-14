@@ -10,7 +10,7 @@
     let ctx = null,
       master = null,
       on = false;
-    let windG, windF, rainG, murmurG;
+    let windG, windF, rainG, murmurG, muff;
     const timers = new Set();
     const st = { day: 1, night: 0, rain: 0, snow: 0, festival: 0, panic: 0, drought: 0, winter: 0 };
 
@@ -63,7 +63,12 @@
       comp.connect(ctx.destination);
       master = ctx.createGain();
       master.gain.value = 0;
-      master.connect(comp);
+      // bịt tai (cú nhập hồn, render/fx/soul-audio.js muffle): lọc trầm trên đường ra chung, bình thường mở hết
+      muff = ctx.createBiquadFilter();
+      muff.type = 'lowpass';
+      muff.frequency.value = 20000;
+      master.connect(muff);
+      muff.connect(comp);
       windF = ctx.createBiquadFilter();
       windF.type = 'lowpass';
       windF.frequency.value = 480;
@@ -253,6 +258,14 @@
       },
       resume() {
         if (ctx && on && ctx.state === 'suspended') ctx.resume();
+      },
+      // cho phần âm thanh riêng của cú nhập hồn (render/fx/soul-audio.js): nguồn âm, đường ra chung, tiếng ồn; null khi đang tắt tiếng
+      bus() {
+        return ctx && on ? { ctx, out: master, noise: noiseBuffer } : null;
+      },
+      // bịt tai: lọc bỏ âm cao trên chừng hz, chuyển dần trong sec giây (20000: mở hết)
+      muffle(hz, sec) {
+        if (muff) ramp(muff.frequency, hz, sec || 0.2);
       },
       setState(s) {
         Object.assign(st, s);

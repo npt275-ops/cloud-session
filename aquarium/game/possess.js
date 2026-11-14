@@ -15,8 +15,20 @@
   // dòng thời gian (giây thật)
   const T = { wind: 0.4, dive: 1.4, hit: 0.2, wake: 1.2, leave: 1.2 };
   // máy quay sau vai: lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường che thì lại gần nhưng
-  // không gần hơn NEAR_MIN, nâng cao thêm tới LIFT; góc nhìn khi ở trong thân
-  const CAM = { BACK: 2.3, UP: 0.35, SIDE: 0.55, NEAR_MIN: 1.1, LIFT: 1.6, FOV: 52, FOV_GOD: 34, PITCH_MIN: -0.55, PITCH_MAX: 0.75 };
+  // không gần hơn NEAR_MIN, nâng cao thêm tới LIFT; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
+  const CAM = {
+    BACK: 2.3,
+    UP: 0.35,
+    SIDE: 0.55,
+    NEAR_MIN: 1.1,
+    LIFT: 1.6,
+    WALK: 2.2,
+    RUN: 5,
+    FOV: 52,
+    FOV_GOD: 34,
+    PITCH_MIN: -0.55,
+    PITCH_MAX: 0.75,
+  };
   // hiệu ứng khi ở trong thân (render/fx/post3d.js)
   const IN_FX = { grade: 0.85, vignette: 0.45, grain: 0.3, dof: 0.75, focusRange: 26 };
   const HEAD = 1.22; // độ cao mắt người trưởng thành so với chân
@@ -142,7 +154,7 @@
       if (st.phase !== 'in' || m.lengthSq() < 0.01) return null;
       // tới (m.y) theo hướng máy quay, ngang (m.x) sang phải; đích cách chừng một bước rưỡi
       const d = fwdOf(st.yaw, new THREE.Vector3()).multiplyScalar(m.y).addScaledVector(rightOf(st.yaw, v1), m.x);
-      return { p: f.pos.clone().addScaledVector(d.normalize(), 1.6), road: true, run: st.run };
+      return { p: f.pos.clone().addScaledVector(d.normalize(), 1.6), road: true, run: st.run, realSpeed: st.run ? CAM.RUN : CAM.WALK };
     }
 
     /* ---------- Các pha ---------- */
@@ -193,7 +205,13 @@
         st.look.copy(st.camPos).add(v1.set(Math.sin(yawOfFolk()), -0.05, Math.cos(yawOfFolk())));
         const calm = reduce();
         st.shake = calm ? 0 : 0.18 * (1 - u);
-        Object.assign(fx(), { flash: calm ? 0 : 1 - smooth(u * 1.6), radial: 0, chroma: calm ? 0 : 0.6 * (1 - u), ring: 0, lids: calm ? 1 : 0 });
+        Object.assign(fx(), {
+          flash: calm ? 0 : 1 - smooth(u * 1.6),
+          radial: 0,
+          chroma: calm ? 0 : 0.6 * (1 - u),
+          ring: 0,
+          lids: calm ? 1 : 0,
+        });
         if (u >= 1) {
           st.yaw = yawOfFolk();
           st.pitch = 0.12;
@@ -240,7 +258,14 @@
         st.look.copy(st.fromLook).lerp(st.god.target, e);
         camera.fov = st.fromFov + (st.god.fov - st.fromFov) * e;
         const k = 1 - e;
-        Object.assign(fx(), { grade: IN_FX.grade * k, vignette: IN_FX.vignette * k, grain: IN_FX.grain * k, dof: IN_FX.dof * k, blur: 0, radial: 0 });
+        Object.assign(fx(), {
+          grade: IN_FX.grade * k,
+          vignette: IN_FX.vignette * k,
+          grain: IN_FX.grain * k,
+          dof: IN_FX.dof * k,
+          blur: 0,
+          radial: 0,
+        });
         if (u >= 1) done();
       },
     };
@@ -297,6 +322,8 @@
       PHASE[st.phase](u);
       if (st.phase === 'off') return;
       if (G.near) G.near.set(st.phase === 'wake' || st.phase === 'in', st.i, headOf(v1)); // đồ hoạ gần (render/near3d.js)
+      // (vùng bóng nắng theo controls.target, render/perf3d.js: đặt vào đầu người thì bóng quanh người sắc nét)
+      if (st.phase === 'wake' || st.phase === 'in') controls.target.copy(headOf(v1));
       camera.position.copy(st.camPos);
       if (st.shake > 0) camera.position.add(v1.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(st.shake));
       camera.lookAt(st.look);

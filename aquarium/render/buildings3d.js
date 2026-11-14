@@ -1014,6 +1014,11 @@
         out.solids.push({ x: P.x, z: P.z, c, s: sn, x0: P.box.x0, x1: P.box.x1, z0: P.box.z0, z1: P.box.z1, kind: P.kind, soft, self: P });
       }
       out.fixed = sh.fixed; // chỗ đã có công trình { x, y (trục z), r } (render/prosper3d.js tìm chỗ trống dựng đài kỳ quan)
+      // mặt sân đất: sân làng và các bãi làm việc [{ x, z, r }] (render/near3d.js: cỏ không mọc trên sân)
+      out.grounds = [
+        ...(sh.yard ? [{ x: sh.yard.position.x, z: sh.yard.position.z, r: sh.yardR }] : []),
+        ...(sh.wy ? sh.wy.yards.filter((Y) => Y.g.visible).map((Y) => ({ x: Y.g.position.x, z: Y.g.position.z, r: 3.4 })) : []),
+      ];
       // chỗ dùng chung không chồng lên công trình, đường, cây, mép đảo (design/ke-hoach-khac-phuc.md mục 6.2, 7.1): tìm một lần
       // mỗi thời (sh mới mỗi thời), ghi vào fixed để đài kỳ quan và công trình dựng sau tránh ra
       {

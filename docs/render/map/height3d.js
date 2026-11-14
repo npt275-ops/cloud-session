@@ -205,6 +205,14 @@
       H.set(nat);
       L.hVer = 0;
       L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
+      // màu mặt đất ở (x, z) như đang vẽ: màu nền theo mùa (L.groundMat) nhân màu theo đỉnh (đá ở sườn dốc, cát ở mép, sẫm chỗ
+      // ướt); render/near3d.js mọc cỏ theo độ xanh của màu này
+      L.groundAt = (x, z, out) => {
+        const F = L.hf,
+          c = L.groundMat.color;
+        if (!F.tr) return out.copy(c);
+        return out.setRGB(c.r * sample(F, F.tr, x, z), c.g * sample(F, F.tg, x, z), c.b * sample(F, F.tb, x, z));
+      };
       L.natAt = (x, z) => Math.max(0, sample(L.hf, Hs, x, z));
       L.padY = (x, z, r) => {
         let s = L.natAt(x, z),
@@ -438,6 +446,10 @@
         P = mesh.geometry.attributes.position,
         Cc = mesh.geometry.attributes.color;
       const tint = (c, base) => [c.r / Math.max(0.05, base.r), c.g / Math.max(0.05, base.g), c.b / Math.max(0.05, base.b)];
+      // (màu theo đỉnh tách ba kênh để đọc lại màu đất ở một điểm: L.groundAt)
+      if (!F.tr) F.tr = new Float32Array(P.count);
+      if (!F.tg) F.tg = new Float32Array(P.count);
+      if (!F.tb) F.tb = new Float32Array(P.count);
       const rk = tint(F.rock, F.base),
         sd = tint(F.sand, F.base);
       for (let k = 0; k <= K; k++)
@@ -467,6 +479,9 @@
           b = lerp(b, sd[2], sand);
           const dk = 1 - 0.45 * wet;
           Cc.setXYZ(v, r * dk, g * dk, b * dk);
+          F.tr[v] = r * dk;
+          F.tg[v] = g * dk;
+          F.tb[v] = b * dk;
         }
       P.needsUpdate = true;
       Cc.needsUpdate = true;

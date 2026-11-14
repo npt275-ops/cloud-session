@@ -201,12 +201,19 @@
     return true;
   }
 
+  // việc của người đang bị nhập hồn: không việc, không chỗ, không hạn (phần vẽ đi theo phím của người chơi)
+  const POSSESSED = { state: 'walk', mood: null, target: null, place: null, verb: null, intensity: 0.5, until: 1e12, self: true };
   const IDLE_SOCIAL = new Set(['chat', 'rest', 'tell']); // việc nhàn ở một chỗ, coi như cùng việc khi nghĩ lại (think)
   /* ---------- Mỗi nhịp nghĩ: ai hết việc thì chọn việc mới ---------- */
   function think(S, rng) {
     for (const p of S.people.values()) {
       if (!p.alive) {
         S.minds.delete(p.id);
+        continue;
+      }
+      // người đang bị nhập hồn (game/possess.js đặt p.possessed): người chơi điều khiển, bộ não không giao việc
+      if (p.possessed) {
+        if (!(S.minds.get(p.id) || {}).self) S.minds.set(p.id, Object.assign({}, POSSESSED));
         continue;
       }
       const m = S.minds.get(p.id);

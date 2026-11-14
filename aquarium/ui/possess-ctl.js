@@ -57,7 +57,8 @@ body.possessed.soul-in.touch .soul-stick, body.possessed.soul-in.touch .soul-loo
     btn.onclick = () => P.enter();
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
-    hint.innerHTML = '<span class="keys">W A S D đi · Shift chạy · kéo chuột để nhìn · Esc thoát</span><button type="button">Thoát</button>';
+    hint.innerHTML =
+      '<span class="keys">W A S D đi · Shift chạy · kéo chuột để nhìn · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),

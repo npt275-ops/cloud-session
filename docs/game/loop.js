@@ -22,11 +22,17 @@
     BK.GameSeasons.setup(G); // game/seasons.js
     BK.Snow3D.setup(G); // render/snow3d.js
     BK.CameraFly.setup(G); // ui/camera-fly.js
+    BK.Post3D.setup(G); // render/fx/post3d.js (lượt vẽ hậu kỳ của cú nhập hồn)
+    BK.Particles3D.setup(G); // render/fx/particles3d.js (bộ hạt dùng chung)
+    BK.SoulFx.setup(G); // render/fx/soul-fx.js (hạt, âm thanh theo pha của cú nhập hồn)
+    BK.Near3D.setup(G); // render/near3d.js (cảnh vật gần sau cú nhập hồn: sương, đèn, cỏ, sỏi, hoa)
     BK.LandBar.setup(G); // ui/landbar.js
     BK.GameCities.setup(G); // game/cities.js (sáu thành phố: logic của cả bể, công trình, người)
     if (BK.Look3D) BK.Look3D.setup(G); // render/look3d.js (hình ảnh mô hình thu nhỏ: màu, vệt tối chân, chi tiết bề mặt)
     if (BK.NeonCity3D) BK.NeonCity3D.setup(G); // render/neon3d.js (mặt trời nhân tạo của thành phố neon, thời 10 trở đi)
     BK.Hud.setup(G); // ui/hud.js
+    BK.Possess.setup(G); // game/possess.js (cú nhập hồn)
+    BK.PossessCtl.setup(G); // ui/possess-ctl.js (nút, phím, cần ảo của cú nhập hồn)
     BK.RaceDev.setup(G); // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")
 
     const { W, renderer, scene, camera, controls } = G,
@@ -42,7 +48,7 @@
       G.perf.govern(dt);
       // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
       const l0 = performance.now();
-      G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1)) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó
+      G.citiesRun.step((raw * T.tps * (G.slowmo ? G.slowmo : 1) * G.timeK) / 1000); // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó; G.timeK: chậm lại lúc lao nhập hồn (game/possess.js)
       const l1 = performance.now();
       const { night } = G.sky.applyTime();
       G.weather.night = night;
@@ -64,9 +70,12 @@
       G.tank.animate(t);
       G.cameraFly.update(dt, now);
       controls.update();
+      G.possess.update(dt); // game/possess.js: lúc nhập hồn máy quay do cú nhập hồn đặt
+      G.possessUi.sync();
+      G.particles.update(Math.min(0.1, dt / 1000));
       G.perf.shadowTick();
       const f1 = performance.now();
-      renderer.render(scene, camera);
+      G.post.render(); // render/fx/post3d.js: không có hiệu ứng thì vẽ thẳng như renderer.render(scene, camera)
       const f2 = performance.now(),
         FT = G.frameTime || (G.frameTime = { js: 0, gl: 0, n: 0 }),
         k = FT.n < 30 ? 1 / ++FT.n : 1 / 30;

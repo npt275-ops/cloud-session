@@ -66,6 +66,7 @@
     const camera = o.camera || null,
       LOD_FAR = 40;
     let frameNo = 0; // người ở xa máy quay cập nhật thưa hơn
+    const drivers = new Map(); // khoá người → hàm lái (nhập hồn: game/possess.js setDriver)
     const bars = o.bars || null; // thanh máu (render/hpbars3d.js): người đang ra trận, người bị thương
     const UNSTICK_S = 3,
       UNSTICK_D = 0.5,
@@ -943,6 +944,7 @@
           f0.rig &&
           (frameNo + p.id) % 2 === 1 &&
           !(f0.pend && f0.pend.length) &&
+          !drivers.has(key) &&
           ((f0.side && !f0.moving) || (!f0.engage && f0.rig.root.position.distanceToSquared(camera.position) > LOD_FAR * LOD_FAR))
         ) {
           f0.debt = Math.min(0.8, (f0.debt || 0) + sec);
@@ -1037,6 +1039,16 @@
           }
         }
         f.strolling = (mind.place === 'stroll' || mind.place === 'hallLoop') && !meetVerb;
+        // người đang bị nhập hồn (game/possess.js): đi theo phím của người chơi (drv trả { p, road: true, run } hay null: đứng yên),
+        // không theo việc, không dừng trò chuyện, không tự bắn
+        const drv = drivers.get(key);
+        if (drv) {
+          goal = drv(f);
+          meetGoal = null;
+          meetVerb = null;
+          f.engage = null;
+          f.strolling = false;
+        }
         // đi theo giờ game, từng bước con: mỗi bước tìm lại đích (lối đi, điểm kế tiếp trên phố), đi một đoạn, giữ trong tường thành
         let moving = false;
         const secF = sec + (f.debt || 0);
@@ -1067,17 +1079,21 @@
           _v.copy(g.p).sub(f.pos);
           _v.y = 0;
           const d = _v.length(),
-            run = mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
+            run = (goal && goal.run) || mind.state === 'panic' || (mind.state === 'attack' && d > 2) || d > 14;
           // ra trận mà đích còn xa (chạy từ nhà ra cổng, đuổi theo dân chạy nạn sang phía kia đảo): chạy nước rút, tới kịp lúc logic
           // cho vào trận (logic/war.js JOIN_DAYS, CIV_CHASE)
           const sprint = mind.state === 'attack' && goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) > 18 ? 1.8 : 1;
+          // (người bị nhập hồn: hàm lái cho tốc độ theo giờ thật realSpeed, đổi ra giờ game: tốc độ trận 1×, 2×, 4× không đổi
+          // bước đi của người chơi)
           const speed =
-            sprint *
-            (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) *
-            f.knobs.tempo *
-            (0.8 + 0.4 * f.knobs.stride) *
-            (carrying(f) || mind.carryItem ? 0.85 : 1) *
-            (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
+            goal && goal.realSpeed
+              ? goal.realSpeed / Math.max(0.05, k)
+              : sprint *
+                (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) *
+                f.knobs.tempo *
+                (0.8 + 0.4 * f.knobs.stride) *
+                (carrying(f) || mind.carryItem ? 0.85 : 1) *
+                (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
           if (d > 0.25) {
             moving = true;
             const step = Math.min(d, speed * h),
@@ -1607,6 +1623,9 @@
       get selected() {
         return selected;
       },
+      // nhập hồn (game/possess.js): người này đi theo hàm lái fn(f) thay vì theo việc (null: thôi); folk(khoá): dữ liệu vẽ của người đó
+      setDriver: (key, fn) => (fn ? drivers.set(key, fn) : drivers.delete(key)),
+      folk: (key) => folks.get(key) || null,
       get count() {
         return folks.size;
       },

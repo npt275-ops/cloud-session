@@ -1083,13 +1083,17 @@
           // ra trận mà đích còn xa (chạy từ nhà ra cổng, đuổi theo dân chạy nạn sang phía kia đảo): chạy nước rút, tới kịp lúc logic
           // cho vào trận (logic/war.js JOIN_DAYS, CIV_CHASE)
           const sprint = mind.state === 'attack' && goal && Math.hypot(goal.p.x - f.pos.x, goal.p.z - f.pos.z) > 18 ? 1.8 : 1;
+          // (người bị nhập hồn: hàm lái cho tốc độ theo giờ thật realSpeed, đổi ra giờ game: tốc độ trận 1×, 2×, 4× không đổi
+          // bước đi của người chơi)
           const speed =
-            sprint *
-            (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) *
-            f.knobs.tempo *
-            (0.8 + 0.4 * f.knobs.stride) *
-            (carrying(f) || mind.carryItem ? 0.85 : 1) *
-            (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
+            goal && goal.realSpeed
+              ? goal.realSpeed / Math.max(0.05, k)
+              : sprint *
+                (run ? 3.4 : mind.verb === 'sleep' ? 2 : 1.25) *
+                f.knobs.tempo *
+                (0.8 + 0.4 * f.knobs.stride) *
+                (carrying(f) || mind.carryItem ? 0.85 : 1) *
+                (hungry ? 0.8 : 1); // tối muộn về ngủ thì rảo bước; mang hàng, đói thì chậm lại
           if (d > 0.25) {
             moving = true;
             const step = Math.min(d, speed * h),

@@ -158,9 +158,14 @@
       lines.visible = any;
       lg.attributes.position.needsUpdate = lg.attributes.color.needsUpdate = true;
     }
-    G.particles = { emit, streak, update, get live() {
-      return live;
-    } };
+    G.particles = {
+      emit,
+      streak,
+      update,
+      get live() {
+        return live;
+      },
+    };
   }
   BK.Particles3D = { setup, MAX };
 })(typeof self !== 'undefined' ? self : globalThis);

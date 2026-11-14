@@ -179,3 +179,21 @@ Phép thời gian, lửa, đất, nước, hố đen, sách phép, luân hồi: 
    - đầu trận tự lao vào một NPC ngẫu nhiên làm cảnh mở màn, sau đó bấm người nào nhập người đó (đề xuất);
    - chỉ bấm chọn.
 3. **Cỏ, sỏi, hoa gần** chỉ hiện khi nhập hồn: đồng ý hay không.
+
+## 9. Đã làm (bản để người chơi kiểm duyệt)
+
+Phạm vi: cú lao và cảnh vật gần. Người mềm bo tròn và cử động có sức nặng (bước 31) làm sau khi duyệt.
+
+| Phần | Tệp | Nội dung |
+|---|---|---|
+| Lượt hậu kỳ | render/fx/post3d.js | Mờ toả tâm, tách màu, làm mờ hậu cảnh, mờ cả ảnh, tối viền, chỉnh màu, hạt nhiễu, mí mắt, chớp trắng, vòng nứt kính, khử răng cưa. Không hiệu ứng thì vẽ thẳng (đo: màu lệch dưới 1/255) |
+| Cú nhập hồn | game/possess.js | Máy trạng thái khựng → lao → chạm → mở mắt → trong thân → bay ngược lên; chọn ngẫu nhiên một người lớn, dính với người đó tới khi chết (W.soul); máy quay sau vai, né tường (không gần hơn 1,1, nâng cao lên); đi 2,2, chạy 5 đơn vị mỗi giây thật (tốc độ trận không đổi bước đi) |
+| Điều khiển | ui/possess-ctl.js | Nút "Nhập hồn"; W A S D, Shift, kéo chuột, Esc; điện thoại: cần ảo trái, kéo phải; ẩn mọi bảng khi nhập hồn |
+| Logic | logic/brain.js | p.possessed: bộ não không giao việc |
+| Người | render/village3d.js | setDriver, folk; người bị nhập đi theo phím, không tự bắn, không dừng trò chuyện |
+| Hạt | render/fx/particles3d.js | Bộ hạt dùng chung: hạt tròn mềm, vệt thẳng |
+| Hạt, tiếng theo pha | render/fx/soul-fx.js, render/fx/soul-audio.js | Vệt gió, vòng bụi khi chạm, bụi lơ lửng, bụi chân khi chạy; gió hút, gió rít, gõ kính, tiếng trầm, nhịp tim, bịt tai (audio.js: bus, muffle) |
+| Cảnh vật gần | render/near3d.js | Sương kéo gần, đèn ấm theo người, bóng nắng sắc quanh người, cỏ mọc ở mọi chỗ đất xanh (càng xanh càng dày, cùng màu đất; L.groundAt ở render/map/height3d.js), hoa, sỏi, lay theo gió; không mọc trên đường, hồ, chân công trình, sân đất (places().grounds) |
+
+Kiểm tra: tools/check-possess.js. Đủ các pha, logic không giao việc, cỏ, sương, đi lại, không đứng trong nhà, thoát ra trả lại
+đúng, không lỗi trang.
