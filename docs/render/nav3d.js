@@ -23,7 +23,7 @@
      * theo đường ngắn nhất trên mạng (Dijkstra), rồi từ điểm đường gần đích vào tận nơi; đi trên vỉa hè bên phải. Thêm vào đó,
      * không ai ra quá vòng tường (mép đảo trừ WALL_IN): tường thành chỉ có thể đi qua ở chỗ hở, mà chẳng ai cần ra ngoài. */
     const NAV_NEAR = 9,
-      WALL_IN = 5.2;
+      WALL_IN = 5.8; // tường cách mép 2,6–3,5, dày tới 1,7 về mỗi phía (hàng bụi tròn thời 9): chừa thêm 0,6
     // khoảng lệch từ tim đường ra giữa vỉa hè (từ thời 3 có vỉa hè; trước đó đi sát mép lối đất)
     const sideOff = () => {
       const T = BK.Plains3D && BK.Plains3D.TOWN,
@@ -236,9 +236,11 @@
       }
       return v;
     }
+    // (mép tính như chỗ đặt tường: chỗ hẹp nhất quanh hướng đó, render/build/plains/town.js edgeWall; mép đảo lượn gấp thì
+    // tường lùi vào theo chỗ hẹp, người cũng phải lùi theo)
     function keepInside(pos) {
       const a = Math.atan2(pos.z, pos.x),
-        R = L.rOf(a) - WALL_IN,
+        R = Math.min(L.rOf(a), L.rOf(a - 0.06), L.rOf(a + 0.06)) - WALL_IN,
         r = Math.hypot(pos.x, pos.z);
       if (r > R) pos.multiplyScalar(R / r);
     }
