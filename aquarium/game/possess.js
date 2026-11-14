@@ -14,14 +14,13 @@
   const BK = root.BK || (root.BK = {});
   // dòng thời gian (giây thật)
   const T = { wind: 0.4, dive: 1.4, hit: 0.2, wake: 1.2, leave: 1.2 };
-  // máy quay sau vai: lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường che thì lại gần nhưng
-  // không gần hơn NEAR_MIN, nâng cao thêm tới LIFT; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
+  // máy quay sau vai (game/possess-cam.js): lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường
+  // che thì trượt vào gần nhưng không gần hơn NEAR_MIN; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
   const CAM = {
     BACK: 4.2,
     UP: 0.85,
     SIDE: 0.7,
     NEAR_MIN: 1.7,
-    LIFT: 1.6,
     WALK: 2.2,
     ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
     DEC: 9,
@@ -47,6 +46,7 @@
     const { THREE, camera, controls } = G,
       Wd = () => G.world; // thế giới logic (game/cities.js; có thể thay mới khi tua năm)
     const J = BK.PossessJump.create(CAM); // nhảy hai lần, lộn, lượn (game/possess-jump.js)
+    const C = BK.PossessCam.create(CAM); // máy quay chính sau vai (game/possess-cam.js)
     const st = {
       phase: 'off',
       t: 0, // giây đã qua trong pha
@@ -112,24 +112,18 @@
     // hướng tới và hướng sang phải của máy quay theo yaw (mặt phẳng ngang)
     const fwdOf = (yaw, out) => out.set(Math.sin(yaw), 0, Math.cos(yaw));
     const rightOf = (yaw, out) => out.set(-Math.cos(yaw), 0, Math.sin(yaw));
-    /* ---------- Máy quay sau vai ---------- */
-    // chỗ máy quay mong muốn sau vai (yaw, pitch của máy quay); tường che thì kéo máy quay lại gần (khung công trình, places().solids)
-    function shoulder(head, out) {
-      const cp = Math.cos(st.pitch),
-        dir = v1.set(Math.sin(st.yaw) * cp, Math.sin(st.pitch), Math.cos(st.yaw) * cp); // hướng nhìn
-      out.copy(head).addScaledVector(dir, -CAM.BACK).addScaledVector(rightOf(st.yaw, v2), CAM.SIDE).addScaledVector(up, CAM.UP);
-      // (tường che: tìm chỗ gần nhất trên đường từ đầu ra máy quay còn trống; bị che thì máy quay lại gần, không gần hơn
-      // NEAR_MIN, và nâng cao lên để nhìn chéo qua vai, không chui vào sau gáy)
-      const free = clearFrac(head, out);
-      if (free < 1) {
-        const k = Math.max(CAM.NEAR_MIN / CAM.BACK, free);
-        out.lerpVectors(head, out, k).addScaledVector(up, (1 - k) * CAM.LIFT);
-      }
-      // không chui xuống đất
-      const L2 = G.lands[st.i],
-        gy = L2.center.y + L2.surfAt(out.x - L2.center.x, out.z - L2.center.z) + 0.35;
-      if (out.y < gy) out.y = gy;
-      return out;
+    /* ---------- Máy quay sau vai (game/possess-cam.js) ---------- */
+    // mặt đất (toạ độ thế giới) dưới chỗ x, z của đảo đang ở
+    const groundAt = (x, z) => {
+      const L = G.lands[st.i];
+      return L.center.y + L.surfAt(x - L.center.x, z - L.center.z);
+    };
+    // máy quay chính một bước: cập nhật C (chỗ đặt, hướng nhìn), chép hướng ra st.yaw, st.pitch (đi theo hướng máy quay)
+    function camStep(sec, head) {
+      C.step(sec, head, clearFrac, groundAt);
+      st.yaw = C.yaw;
+      st.pitch = C.pitch;
+      return C;
     }
 
     // phần trống trên đoạn từ đầu a tới máy quay b (0..1): điểm đầu tiên rơi vào khung công trình (places().solids), dưới nóc
@@ -138,8 +132,8 @@
         PL = G.buildings && G.buildings.places ? G.buildings.places(st.i) : null,
         solids = (PL && PL.solids) || [],
         q = new THREE.Vector3();
-      for (let k = 1; k <= 10; k++) {
-        q.lerpVectors(a, b, k / 10);
+      for (let k = 1; k <= 20; k++) {
+        q.lerpVectors(a, b, k / 20);
         const x = q.x - L.center.x,
           z = q.z - L.center.z,
           hy = q.y - L.center.y - L.surfAt(x, z);
@@ -151,7 +145,7 @@
             lz = dx * B.s + dz * B.c;
           return lx > B.x0 - 0.25 && lx < B.x1 + 0.25 && lz > B.z0 - 0.25 && lz < B.z1 + 0.25;
         });
-        if (hit) return (k - 1) / 10;
+        if (hit) return (k - 1) / 20;
       }
       return 1;
     }
@@ -237,14 +231,15 @@
         if (u >= 1) {
           st.yaw = yawOfFolk();
           st.pitch = 0.12;
+          C.reset(headOf(v1), st.yaw, st.pitch);
           go('wake');
         }
       },
       // mở mắt: mí mắt mở dần (chớp lại một lần), ảnh nhoè rồi nét, máy quay lùi ra sau vai, thời gian về bình thường
-      wake(u) {
-        const head = headOf(v1).clone(),
-          want = shoulder(head, v2.clone());
-        st.camPos.copy(head).lerp(want, smooth(u));
+      wake(u, sec) {
+        const head = headOf(v1).clone();
+        camStep(sec, head);
+        st.camPos.copy(head).lerp(C.pos, smooth(u));
         st.look.copy(head).add(v1.set(Math.sin(st.yaw), Math.sin(st.pitch) * 0.6, Math.cos(st.yaw)).multiplyScalar(4));
         camera.fov = CAM.FOV_GOD + (CAM.FOV - CAM.FOV_GOD) * smooth(u * 1.4);
         const blink = u > 0.5 && u < 0.72 ? Math.sin(((u - 0.5) / 0.22) * Math.PI) * 0.55 : 0;
@@ -264,10 +259,10 @@
       },
       // trong thân: máy quay bám sau vai (lò xo), người đi theo phím
       in(u, sec) {
-        const head = headOf(v1).clone(),
-          want = shoulder(head, v2.clone());
-        st.camPos.lerp(want, 1 - Math.exp(-sec * 12)); // (bám theo giờ thật: máy chậm vẫn theo kịp người chạy)
-        st.look.copy(head).add(v1.set(Math.sin(st.yaw), Math.sin(st.pitch), Math.cos(st.yaw)).multiplyScalar(6));
+        const head = headOf(v1).clone();
+        camStep(sec, head);
+        st.camPos.copy(C.pos); // (gắn cứng theo nhân vật: không trễ, không rung theo độ dài khung hình)
+        st.look.copy(C.look3);
         camera.fov += (CAM.FOV - camera.fov) * (1 - Math.exp(-sec * 6));
         Object.assign(fx(), IN_FX, { focus: st.camPos.distanceTo(head) });
         G.timeK = 1;
@@ -380,8 +375,7 @@
     // xoay nhìn (ui/possess-ctl.js): dx, dy theo radian
     function look(dx, dy) {
       if (st.phase !== 'in' && st.phase !== 'wake') return;
-      st.yaw -= dx;
-      st.pitch = Math.max(CAM.PITCH_MIN, Math.min(CAM.PITCH_MAX, st.pitch - dy));
+      C.look(dx, dy); // (hướng đích; hướng thật theo sau rất nhanh trong game/possess-cam.js)
     }
     G.possess = {
       enter,
@@ -390,6 +384,7 @@
       look,
       jump,
       hold,
+      cam: C, // (máy quay chính: game/possess-cam.js; công cụ kiểm tra đọc)
       st,
       T,
       CAM,

@@ -30,6 +30,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/possess-cam.js",
+  "src": "game/possess-cam.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/possess-jump.js",
   "src": "game/possess-jump.js",
   "mode": 420
