@@ -618,8 +618,11 @@
     /* ---------- Lỗ thủng xuống biển (design/ke-hoach-buoc-28.md) ----------
      * Hồ, ao, đầm, ốc đảo (L.holes) thủng xuyên qua mặt đảo và phần đất đá phía dưới: nhìn qua lỗ là mặt biển thật (sea3d.js),
      * nhảy xuống là chìm thẳng vào biển, lặn tiếp ra tới đáy bể. Mặt đảo và mặt dưới đảo bỏ không vẽ chỗ lỗ (mặt nạ lỗ: ảnh
-     * MASK × MASK phủ đảo, đọc trong shader); quanh mép lỗ một vách đất đá từ mặt đất xuống tới mặt dưới đảo (L.underY). */
-    const MASK = 512;
+     * MASK × MASK phủ đảo, đọc trong shader); quanh mép lỗ một vách đất đá từ mặt đất xuống tới mặt dưới đảo (L.underY).
+     * Mặt nước hồ đầy gần sát miệng lỗ; lặn qua mặt nước là xuống lòng lỗ rồi ra biển. */
+    const MASK = 512,
+      WATER_DROP = 0.18, // mặt nước hồ thấp hơn chỗ bờ thấp nhất chừng này
+      WATER_C = { plains: '#4aa3c7', forest: '#3f9bb5', mountain: '#4f9fc9', tundra: '#9fd6ea', coast: '#3fb5c9', desert: '#3fa7b5' };
     function holes(L, st) {
       if (!L.holes.length) return;
       let B = 0;
@@ -704,6 +707,32 @@
       wall.userData.noDrape = true;
       wall.name = 'hồ thủng xuống biển';
       L.g.add(wall);
+      // mặt nước hồ: đầy gần sát miệng (thấp hơn chỗ bờ thấp nhất WATER_DROP), phủ kín lòng lỗ; hai mặt (lặn qua nhìn lên vẫn
+      // thấy), bên dưới vẫn thông xuống biển. Cả đảo một khối; vật liệu ghi vào L.waterMats (render/map/map3d.js cho lấp lánh)
+      const wp = [];
+      for (const poly of L.holes) {
+        const y = Math.min(...poly.map(([x, z]) => Math.max(0, sample(F, F.Hs, x, z)))) - WATER_DROP,
+          v2 = poly.map(([x, z]) => new THREE.Vector2(x, z));
+        for (const tri of THREE.ShapeUtils.triangulateShape(v2, [])) for (const i of tri) wp.push(poly[i][0], y, poly[i][1]);
+      }
+      const wg = new THREE.BufferGeometry();
+      wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
+      wg.computeVertexNormals();
+      const wm = new THREE.MeshStandardMaterial({
+        color: WATER_C[L.ter] || WATER_C.plains,
+        roughness: 0.15,
+        metalness: 0.2,
+        emissive: '#0c3b52',
+        emissiveIntensity: 0.3,
+        side: THREE.DoubleSide,
+      });
+      L.waterMats.push(wm);
+      const water = new THREE.Mesh(wg, wm);
+      water.receiveShadow = true;
+      water.userData.noDrape = true;
+      water.name = 'mặt nước hồ';
+      water.raycast = () => {};
+      L.g.add(water);
     }
     function finish(L, st) {
       // dải phẳng (bãi cát, hẻm núi; không phủ theo đất) nâng theo độ nâng của đất tại từng đỉnh: giữa đảo nâng đủ L.lift, chỗ

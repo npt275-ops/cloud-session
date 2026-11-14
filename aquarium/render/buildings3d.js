@@ -418,6 +418,9 @@
     // đo cỡ thật, lấn đường thì dời hay thu nhỏ vừa đủ (render/build/place3d.js clearRoad)
     function bakeOf(P, sh) {
       if (P.baked) return;
+      // nhà chính dựng hình trước mọi công trình khác của đảo: nó đứng yên, các công trình khác tránh móng thật của nó
+      const hall = P.kind === 'hall' ? null : sh.pieces.find((Q) => Q.kind === 'hall');
+      if (hall && !hall.baked && !hall.dead) bakeOf(hall, sh);
       P.baked = true;
       const lv = P.spec.lv || sh.level,
         key = keyOf(P, lv, sh.L.ter),
@@ -476,13 +479,23 @@
         } else m = src;
       }
       m.updateMatrixWorld(true);
-      // không chắn đường: trừ lớp đường, cổng thành nằm trên đường chính, công trình ngoài khơi
-      if (sh.L.roadSegs && !P.spec.town && !P.spec.gate && P.outer !== 'sea') {
+      // móng của các công trình đã dựng hình trên đảo (trừ lớp đường, cổng, công trình ngoài khơi): công trình này không đè lên.
+      // Nhà chính dựng trước, đứng yên: không xét
+      const solid = (Q) => !Q.spec.town && !Q.spec.gate && Q.outer !== 'sea';
+      const others =
+        P.kind === 'hall' || !solid(P)
+          ? null
+          : sh.pieces
+              .filter((Q) => Q !== P && Q.low && !Q.dead && !Q.gone && solid(Q))
+              .map((Q) => PL.rectOf(Q.x, Q.z, Q.g.rotation.y, Q.low));
+      // không chắn đường, không đè hồ, không đè công trình khác: trừ lớp đường, cổng thành nằm trên đường chính, công trình ngoài khơi
+      if (sh.L.roadSegs && solid(P)) {
         const q = PL.clearRoad(
           sh.L,
           { x: P.x, z: P.z, rotY: P.g.rotation.y, fitS: P.fitS, hall: P.kind === 'hall', self: P.spec },
           m,
           sh.fixed,
+          others,
         );
         if (q) {
           sh.moved = (sh.moved || 0) + (q.stuck ? 0 : 1);
@@ -500,7 +513,7 @@
       // móng phải nằm trọn trong đảo (trừ tường thành, cổng, công trình ở bờ, ngoài khơi): dời vào, thu nhỏ, hay bỏ
       if (!P.spec.town && !P.spec.gate && P.outer !== 'sea' && P.outer !== 'coast') {
         // (kỳ quan, công trình vòng ngoài cũng phải nằm trọn trong đảo)
-        const q = PL.keepOn(sh.L, { x: P.x, z: P.z, rotY: P.g.rotation.y, fitS: P.fitS, self: P.spec }, m, sh.fixed);
+        const q = PL.keepOn(sh.L, { x: P.x, z: P.z, rotY: P.g.rotation.y, fitS: P.fitS, self: P.spec }, m, sh.fixed, others);
         if (q && q.drop) {
           sh.dropped = (sh.dropped || 0) + 1;
           P.dead = true;
@@ -556,6 +569,7 @@
           h: hmax * s,
           r: Math.max(fp.r, Math.hypot(Math.max(-x0, x1), Math.max(-z0, z1)) * s * 0.85),
         };
+        P.low = fp.b; // khung phần sát đất (render/build/place3d.js footprint): công trình dựng sau không đè lên
         if (!old || Math.abs(old.r - fp.r) > 0.3) sh.resettle = true;
       }
       P.g.add(m);

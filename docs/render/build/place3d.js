@@ -167,9 +167,54 @@
             z = (bb.min.z + ((bb.max.z - bb.min.z) * b) / 4) * s;
           pts.push([x * c + z * sn, -x * sn + z * c]);
         }
-      return { pts, r: Math.max(bb.max.x, -bb.min.x, bb.max.z, -bb.min.z) * s };
+      return {
+        pts,
+        r: Math.max(bb.max.x, -bb.min.x, bb.max.z, -bb.min.z) * s,
+        c,
+        sn,
+        b: { x0: bb.min.x * s, x1: bb.max.x * s, z0: bb.min.z * s, z1: bb.max.z * s },
+      };
     }
-    const scaled = (fp, k) => ({ pts: fp.pts.map(([x, z]) => [x * k, z * k]), r: fp.r * k });
+    const scaled = (fp, k) => ({
+      pts: fp.pts.map(([x, z]) => [x * k, z * k]),
+      r: fp.r * k,
+      c: fp.c,
+      sn: fp.sn,
+      b: { x0: fp.b.x0 * k, x1: fp.b.x1 * k, z0: fp.b.z0 * k, z1: fp.b.z1 * k },
+    });
+    /* ---------- Công trình không đè lên nhau (đo theo móng thật; design/ke-hoach-buoc-29.md) ----------
+     * Chỗ đặt ban đầu tính theo vòng tròn khai báo (clear), nhỏ hơn hình thật của nhiều công trình: tháp canh xuyên nhà, nhà dính
+     * vào trường, nhà đứng trên bệ nhà chính. Mỗi công trình đã dựng hình là một khung chữ nhật theo trục của chính nó
+     * (rectOf: chỗ, góc quay, khung phần sát đất P.low của render/buildings3d.js). Móng thật của công trình mới (footprint) chạm khung
+     * của công trình khác (lưới điểm của bên này nằm trong khung bên kia, hay ngược lại) thì coi như lấn đường: clearRoad dời đi. */
+    const TOUCH = 0.25; // hai móng được sát nhau tới chừng này
+    const inRect = (R, px, pz) => {
+      const dx = px - R.x,
+        dz = pz - R.z,
+        lx = dx * R.c - dz * R.sn,
+        lz = dx * R.sn + dz * R.c;
+      return lx > R.b.x0 + TOUCH && lx < R.b.x1 - TOUCH && lz > R.b.z0 + TOUCH && lz < R.b.z1 - TOUCH;
+    };
+    function rectOf(x, z, rotY, b) {
+      const c = Math.cos(rotY),
+        sn = Math.sin(rotY),
+        pts = [];
+      for (const u of [0, 0.5, 1])
+        for (const v of [0, 0.5, 1]) {
+          const lx = b.x0 + (b.x1 - b.x0) * u,
+            lz = b.z0 + (b.z1 - b.z0) * v;
+          pts.push([x + lx * c + lz * sn, z - lx * sn + lz * c]);
+        }
+      return { x, z, c, sn, b, pts };
+    }
+    const hitsOthers = (fp, x, z, others) =>
+      !!others &&
+      others.some(
+        (O) =>
+          (O.x - x) ** 2 + (O.z - z) ** 2 < (fp.r * 1.5 + Math.hypot(O.b.x1 - O.b.x0, O.b.z1 - O.b.z0)) ** 2 &&
+          (fp.pts.some(([dx, dz]) => inRect(O, x + dx, z + dz)) ||
+            O.pts.some(([px, pz]) => inRect({ x, z, c: fp.c, sn: fp.sn, b: fp.b }, px, pz))),
+      );
     // phần sát đất lấn đường, hay rơi vào (hoặc sát mép) lỗ hồ thủng xuống biển (L.inHole: render/map/height3d.js)
     const blocks = (L, fp, x, z) =>
       fp.pts.some(
@@ -177,10 +222,11 @@
           (L.roadSegs && L.roadSegs.some((S) => segDist(x + dx, z + dz, S) < L.roadW)) || (L.inHole && L.inHole(x + dx, z + dz, 1.2)),
       );
     // chỗ mới cho một công trình lấn đường (P: { x, z, rotY, hall, self }, fixed: các công trình đã có chỗ); null nếu không có
-    function relocate(L, P, fp, fixed) {
+    function relocate(L, P, fp, fixed, others) {
       const rr = fp.r;
       const good = (x, z) =>
         !blocks(L, fp, x, z) &&
+        !hitsOthers(fp, x, z, others) &&
         L.inside(x, z, rr * 0.5) &&
         !L.blockedWild(x, z, rr * 0.6) &&
         !(fixed || []).some((F) => F.P !== P.self && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.75 + rr * 0.75) ** 2);
@@ -241,18 +287,20 @@
       for (const [, x, z] of cand) if (good(x, z)) return [x, z];
       return null;
     }
-    // công trình đã dựng hình m (P: { x, z, rotY, fitS, hall, self }): không lấn đường thì trả null; lấn thì trả chỗ và cỡ mới
-    // { x, z, fitS } (ghi luôn vào fixed), không có chỗ nào thì { stuck: true }
-    function clearRoad(L, P, m, fixed) {
+    // công trình đã dựng hình m (P: { x, z, rotY, fitS, hall, self }): không lấn đường, hồ, không đè móng công trình khác
+    // (others: rectOf của các công trình đã dựng hình) thì trả null; lấn thì trả chỗ và cỡ mới { x, z, fitS } (ghi luôn vào
+    // fixed), không có chỗ nào thì { stuck: true }
+    function clearRoad(L, P, m, fixed, others) {
       m.updateMatrixWorld(true);
-      const fp = footprint(m, P.rotY, P.fitS);
-      if (fp.r <= 0.3 || !blocks(L, fp, P.x, P.z)) return null;
-      let q = relocate(L, P, fp, fixed),
+      const fp = footprint(m, P.rotY, P.fitS),
+        bad = (f, x, z) => blocks(L, f, x, z) || hitsOthers(f, x, z, others);
+      if (fp.r <= 0.3 || !bad(fp, P.x, P.z)) return null;
+      let q = relocate(L, P, fp, fixed, others),
         k = 1;
       for (const k2 of [0.94, 0.88, 0.82, 0.76, 0.7]) {
         if (q) break;
         const f2 = scaled(fp, k2);
-        q = blocks(L, f2, P.x, P.z) ? relocate(L, P, f2, fixed) : [P.x, P.z];
+        q = bad(f2, P.x, P.z) ? relocate(L, P, f2, fixed, others) : [P.x, P.z];
         if (q) k = k2;
       }
       if (!q) return { stuck: true };
@@ -269,14 +317,15 @@
     // (tới 60%); vẫn không được thì trả { drop: true }: không dựng, không bao giờ để nhà treo ngoài biển. Trong đảo sẵn: null
     const EDGE_M = 1.5;
     const outside = (L, fp, x, z) => fp.pts.some(([dx, dz]) => !L.inside(x + dx, z + dz, EDGE_M));
-    function keepOn(L, P, m, fixed) {
+    function keepOn(L, P, m, fixed, others) {
       m.updateMatrixWorld(true);
       const fp0 = footprint(m, P.rotY, P.fitS);
       if (!outside(L, fp0, P.x, P.z)) return null;
       const ok = (fp, x, z) =>
         !outside(L, fp, x, z) &&
         !L.blockedWild(x, z, fp.r * 0.5) &&
-        !(L.roadSegs && blocks(L, fp, x, z)) &&
+        !blocks(L, fp, x, z) &&
+        !hitsOthers(fp, x, z, others) &&
         !(fixed || []).some((F) => F.P !== P.self && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r * 0.8 + fp.r * 0.8) ** 2);
       const R = Math.hypot(P.x, P.z) || 1,
         ux = -P.x / R,
@@ -318,7 +367,7 @@
     // chỗ (x, z) có chồng lên công trình nào trong fixed không (bỏ qua chính nó: tag); dùng cho bài kiểm tra tools/check-scene.js
     const overlaps = (x, z, r, fixed, tag) =>
       (fixed || []).filter((F) => F.P !== tag && (F.x - x) ** 2 + (F.y - z) ** 2 < (F.r + r - 0.3) ** 2);
-    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad, freeSpot, overlaps, keepOn, outside };
+    return { homeSpot, outerSpot, landFor, onRoad, segDist, footprint, blocks, clearRoad, freeSpot, overlaps, keepOn, outside, rectOf };
   }
   return { create };
 });
