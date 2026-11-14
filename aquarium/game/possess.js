@@ -322,6 +322,7 @@
       }
       st.vel.set(0, 0, 0);
       if (G.near) G.near.set(false);
+      if (G.softCrowd) G.softCrowd.clear();
     }
     function done() {
       st.phase = 'off';
@@ -357,6 +358,8 @@
       }
       if (st.phase === 'off') return;
       if (G.near) G.near.set(st.phase === 'wake' || st.phase === 'in', st.i, headOf(v1)); // đồ hoạ gần (render/near3d.js)
+      // thân đồ chơi mềm cho mình và người gần (render/body/softbody3d.js): từ lúc chạm
+      if (G.softCrowd) G.softCrowd.update(st.phase === 'hit' || st.phase === 'wake' || st.phase === 'in', st.i, headOf(v1), st.id, sec);
       // (vùng bóng nắng theo controls.target, render/perf3d.js: đặt vào đầu người thì bóng quanh người sắc nét)
       if (st.phase === 'wake' || st.phase === 'in') controls.target.copy(headOf(v1));
       camera.position.copy(st.camPos);

@@ -1375,7 +1375,10 @@
         }
       // đếm chỗ cần cho từng loại bộ phận, rồi đổ vào các khối lặp
       for (const k in need) need[k] = 0;
-      for (const [, f] of folks) if (!f.inside) for (const part of f.rig.parts) need[part.type] = (need[part.type] || 0) + 1;
+      // (người có thân mềm, render/body/softbody3d.js: chỉ vẽ đồ cầm tay của thân cũ)
+      const oldPart = (f, part) => !f.soft || (part.face && part.face.startsWith('tool:'));
+      for (const [, f] of folks)
+        if (!f.inside) for (const part of f.rig.parts) if (oldPart(f, part)) need[part.type] = (need[part.type] || 0) + 1;
       for (const type in need) {
         const m = im(type, need[type]);
         m.count = 0;
@@ -1385,6 +1388,7 @@
         if (f.inside) continue;
         const E = f.expr || EXPR.neutral;
         for (const part of f.rig.parts) {
+          if (!oldPart(f, part)) continue;
           let local = part.local;
           if (part.face) {
             const F = part.face,

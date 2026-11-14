@@ -74,3 +74,12 @@ Hai mức chi tiết:
 1. Có viền nét mảnh quanh nhân vật (kiểu tranh vẽ) không?
 2. Sáng tối: chia nấc như hoạt hình, hay chuyển mềm liên tục như đồ chơi nhựa mờ ở ảnh 1?
 3. Bắt đầu từ bước 1 (cử động) như đề xuất?
+
+## 6. Đã làm (người chơi đã chốt: có viền nét, sáng tối chuyển mềm như đồ chơi nhựa)
+
+| Phần | Tệp | Nội dung |
+|---|---|---|
+| Máy quay theo chuột | ui/possess-ctl.js | Rê chuột là nhìn theo, không cần giữ nút; bấm vào màn hình thì khoá chuột để xoay không giới hạn; Esc mở khoá, Esc lần nữa thoát |
+| Cử động | render/body/motion3d.js, game/possess.js | Tăng tốc, hãm dần; đi và chạy trộn theo tốc độ đo được; hông nhún, xoay hông, vai ngược hông, tay đánh theo chân; nghiêng khi rẽ, ngả khi tăng tốc, phanh; đầu giữ thăng bằng, nhìn trước hướng rẽ; đầu, ngực, tay qua lò xo; nhảy co gối, dang tay, khuỵu gối khi chạm đất; đứng thở, dồn trọng tâm |
+| Thân đồ chơi mềm | render/body/softbody3d.js | Mỗi người một lưới liền có xương (xương là khung khớp cũ): đầu to, thân và hông tròn đầy, tay chân viên nang, bàn tay tròn, bàn chân to, mắt có đốm sáng, má hồng, miệng, tóc, váy, tóc dài; màu lấy từ trang phục của chính người đó (nhất quán qua 12 thời); chất liệu nhựa mờ có viền sáng; viền nét nâu sẫm (vỏ lật mặt). Nhân vật mình và 15 người gần nhất (máy chậm 6) trong bán kính 24, cập nhật mỗi 0,3 giây; người xa giữ thân cũ. Mỗi người hai lượt vẽ |
+| Máy quay bám | game/possess.js | Bám theo giờ thật (máy chậm vẫn theo kịp người chạy) |
