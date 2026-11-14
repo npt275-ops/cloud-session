@@ -1,4 +1,4 @@
-# Bước 37 · Sách phép thuật (đề xuất, chưa làm)
+# Bước 37 · Sách phép thuật
 
 Người chơi muốn một cuốn sách phép thuật, code tách riêng để dễ sửa, gồm: phép thời gian (tiến, lùi, tạm dừng), lửa, đất,
 nước; cùng một bộ hạt dùng chung và các kỹ năng hiệu ứng hợp với game, vẫn đẹp mắt.
@@ -75,3 +75,46 @@ Giới hạn để vẫn mượt: tối đa 4.000 hạt ở máy tính, 1.500 �
 3. Phép có hậu quả thật lên thế giới (đề xuất, có giới hạn), hay chỉ là hiệu ứng cho đẹp?
 4. Tua lùi xa nhất bao lâu: 30 ngày game (đề xuất), hay dài hơn (tốn bộ nhớ hơn)?
 5. Danh sách 8 phép ở mục 2: giữ, đổi, hay thêm phép nào?
+
+## 7. Người chơi đã quyết
+
+1. Sách chỉ dùng được khi nhập hồn.
+2. Phép tốn linh lực tự hồi.
+3. Phép có hậu quả thật lên thế giới.
+4. Tua lùi xa nhất 30 ngày game.
+5. Đổi, thêm phép:
+   - **Đất, trụ đá**: dựng ngay dưới chân nhân vật đang đứng, nâng nhân vật lên; máy quay bật lên cao gấp 6 lần kèm hiệu ứng
+     (bụi, đá văng, đất nứt) cho thật.
+   - **Nước, phép mới "Đại hồng thuỷ"**: chỉ dùng được khi ở gần biển. Sóng mạnh hơn, giữa là lốc xoáy nước; toàn bộ nước trong
+     bể dâng lên cao chừng 13 đến 15 lần tầm mắt nhân vật rồi đổ ập xuống thật mạnh; sóng lớn tràn vào cả sáu đảo. Phần code
+     của phép này phải đặc biệt sạch: tách thành các tệp nhỏ theo từng việc (luật, mực nước, lốc xoáy, sóng tràn, máy quay),
+     không chồng code, dễ tìm dễ sửa.
+
+## 8. Bước 1 (đang làm): khung sách, bộ hạt chung, linh lực
+
+| Tệp | Nội dung |
+|---|---|
+| render/style/palette.js | Bảng màu chung của phép và giao diện sách |
+| render/magic/vfx.js | Bộ hạt dùng chung: hạt mềm, hạt sáng, mảnh vụn, vết trên đất, đèn chớp; phát theo công thức, nguồn phát liên tục |
+| render/magic/recipes.js | Công thức hiệu ứng (chỉ là số, màu) |
+| render/magic/aim3d.js | Vòng ngắm trên mặt đất |
+| logic/spells.js | Danh sách phép, linh lực, hồi phép, điều kiện dùng (kiểm thử: test/spells.test.js) |
+| game/spellbook.js | Chọn phép, ngắm (tia từ tâm màn hình xuống đất), bấm phép, đạn phép bay tới đích |
+| ui/spellbook-ui.js | Cuốn sách (phím B), thanh phép 1 đến 9, thanh linh lực |
+| render/fx/magic-audio.js | Âm thanh phép |
+
+Phép thử để chạy thông cả đường đi: "Tia linh lực" (trang Linh hồn): một đốm sáng bay từ tay tới chỗ ngắm, nổ tung hạt sáng.
+Chưa có tác động lên thế giới; các phép của bốn hệ hiện trong sách nhưng còn khoá ("sắp có") tới bước của hệ đó.
+
+### Bước 1 đã làm
+
+- Đủ các tệp ở bảng trên; sách có 5 trang (Linh hồn, Thời gian, Lửa, Đất, Nước), phép chưa làm ghi "Sắp có"; thanh phép 1 đến 9,
+  thanh linh lực (100, hồi 7 mỗi giây thật), báo khi không phát được; phím B mở sách, E hay chuột trái (đã khoá chuột) phát
+  phép, Esc đóng sách trước rồi mới thoát nhập hồn; điện thoại có nút Sách, Phép.
+- Phép thử "Tia linh lực": tay đưa ra, quả cầu sáng bay theo đường cong kéo đuôi hạt, chạm đất bung hạt sáng, vòng sóng, bụi
+  sáng, đèn chớp, tiếng vút và tiếng bung.
+- Sửa hai lỗi tìm thấy khi thử: (1) shader tự viết của bộ hạt (cả bộ hạt cũ render/fx/particles3d.js) tính độ sâu khác kiểu
+  logarithmicDepthBuffer của renderer nên mặt đất che mất hạt; (2) mờ hậu cảnh lúc nhập hồn quá mạnh xoá nhoè hạt ở tầm ngắm:
+  giảm từ 0,75 xuống 0,3 (game/possess.js IN_FX).
+- Hạt sáng trộn kiểu "vừa phát sáng vừa che một phần nền" (cộng sáng thuần chìm mất trên cỏ, trời ban ngày).
+- Kiểm thử: test/spells.test.js.

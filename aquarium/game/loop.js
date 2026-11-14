@@ -35,6 +35,10 @@
     BK.Hud.setup(G); // ui/hud.js
     BK.Possess.setup(G); // game/possess.js (cú nhập hồn)
     BK.PossessCtl.setup(G); // ui/possess-ctl.js (nút, phím, cần ảo của cú nhập hồn)
+    BK.VFX.setup(G); // render/magic/vfx.js (bộ hạt dùng chung của phép)
+    BK.Aim3D.setup(G); // render/magic/aim3d.js (vòng ngắm của phép)
+    BK.Spellbook.setup(G); // game/spellbook.js (sách phép thuật: chọn, ngắm, phát phép, linh lực)
+    BK.SpellbookUi.setup(G); // ui/spellbook-ui.js (cuốn sách, thanh phép, linh lực)
     BK.RaceDev.setup(G); // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")
 
     const { W, renderer, scene, camera, controls } = G,
@@ -75,6 +79,9 @@
       G.possess.update(dt); // game/possess.js: lúc nhập hồn máy quay do cú nhập hồn đặt
       G.possessUi.sync();
       G.particles.update(Math.min(0.1, dt / 1000));
+      G.spellbook.update(Math.min(0.1, dt / 1000)); // (giờ thật: hồi linh lực, đạn phép, vòng ngắm)
+      G.vfx.update(Math.min(0.1, dt / 1000));
+      G.spellbookUi.sync();
       G.perf.shadowTick();
       const f1 = performance.now();
       G.post.render(); // render/fx/post3d.js: không có hiệu ứng thì vẽ thẳng như renderer.render(scene, camera)

@@ -33,7 +33,7 @@
     PITCH_MAX: 0.75,
   };
   // hiệu ứng khi ở trong thân (render/fx/post3d.js)
-  const IN_FX = { grade: 0.85, vignette: 0.45, grain: 0.3, dof: 0.75, focusRange: 26 };
+  const IN_FX = { grade: 0.85, vignette: 0.45, grain: 0.3, dof: 0.3, focusRange: 40 }; // (mờ hậu cảnh nhẹ: hạt của phép không ghi độ sâu, mờ mạnh thì bị xoá nhoè)
   const HEAD = 1.22; // độ cao mắt người trưởng thành so với chân
   const reduce = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);

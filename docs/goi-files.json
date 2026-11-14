@@ -50,6 +50,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/spellbook.js",
+  "src": "game/spellbook.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/world.js",
   "src": "game/world.js",
   "mode": 420
@@ -242,6 +247,11 @@
  {
   "path": "BeKinh/logic/siege.js",
   "src": "logic/siege.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/logic/spells.js",
+  "src": "logic/spells.js",
   "mode": 420
  },
  {
@@ -555,6 +565,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/fx/magic-audio.js",
+  "src": "render/fx/magic-audio.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/fx/particles3d.js",
   "src": "render/fx/particles3d.js",
   "mode": 420
@@ -592,6 +607,21 @@
  {
   "path": "BeKinh/render/look3d.js",
   "src": "render/look3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/magic/aim3d.js",
+  "src": "render/magic/aim3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/magic/recipes.js",
+  "src": "render/magic/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/magic/vfx.js",
+  "src": "render/magic/vfx.js",
   "mode": 420
  },
  {
@@ -705,6 +735,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/style/palette.js",
+  "src": "render/style/palette.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/tank3d.js",
   "src": "render/tank3d.js",
   "mode": 420
@@ -757,6 +792,11 @@
  {
   "path": "BeKinh/ui/race-dev.js",
   "src": "ui/race-dev.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/ui/spellbook-ui.js",
+  "src": "ui/spellbook-ui.js",
   "mode": 420
  },
  {

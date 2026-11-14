@@ -8,13 +8,16 @@
   const BK = root.BK || (root.BK = {});
   const MAX = 1400,
     MAX_L = 160;
+  // (độ sâu cùng kiểu logarithmicDepthBuffer của renderer: không thì mặt đất, nhà che mất hạt)
   const DOT_V =
+    '#include <common>\n#include <logdepthbuf_pars_vertex>\n' +
     'attribute float aSize; attribute float aAlpha; attribute vec3 aColor; varying float vA; varying vec3 vC;\n' +
     'void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;\n' +
-    ' gl_PointSize = aSize * (300.0 / max(0.1, -mv.z)); vA = aAlpha; vC = aColor; }';
+    ' gl_PointSize = aSize * (300.0 / max(0.1, -mv.z)); vA = aAlpha; vC = aColor;\n#include <logdepthbuf_vertex>\n}';
   const DOT_F =
+    '#include <logdepthbuf_pars_fragment>\n' +
     'varying float vA; varying vec3 vC;\n' +
-    'void main(){ vec2 c = gl_PointCoord - 0.5; float d = dot(c, c); if (d > 0.25) discard;\n' +
+    'void main(){\n#include <logdepthbuf_fragment>\n vec2 c = gl_PointCoord - 0.5; float d = dot(c, c); if (d > 0.25) discard;\n' +
     ' gl_FragColor = vec4(vC, vA * (1.0 - smoothstep(0.05, 0.25, d))); }';
   function setup(G) {
     const { THREE, scene } = G;

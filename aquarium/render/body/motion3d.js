@@ -160,6 +160,15 @@
       m.sqv += (SQ.K * (sq - m.sq) - SQ.D * m.sqv) * h;
       m.sq = clamp(m.sq + m.sqv * h, -0.2, 0.25);
     }
+    // niệm phép (game/spellbook.js f.castT): tay phải đưa thẳng ra trước, hơi cao; vai trái mở ra cân người
+    if (f.castT > 0) {
+      const k = Math.min(1, f.castT / 0.15);
+      tgt.sxR = 1.45 * k + (tgt.sxR || 0) * (1 - k);
+      tgt.szR = 0.08;
+      tgt.exR = 0.12 * k + (tgt.exR || 0) * (1 - k);
+      tgt.cy = (tgt.cy || 0) - 0.2 * k;
+      f.castT = Math.max(0, f.castT - dt);
+    }
     // lò xo: đầu, ngực, hai tay theo sau một nhịp rồi nảy lại
     for (const key in SPRING) {
       const [kk, dd] = SPRING[key],
