@@ -1,4 +1,4 @@
-/* Bể Kính · logic/timeline.js · Ảnh chụp trận để tua lùi thời gian (design/ke-hoach-buoc-37.md, phép thời gian)
+/* Bể Kính · magic/time/timeline.js · Ảnh chụp trận để tua lùi thời gian (design/ke-hoach-buoc-37.md, phép thời gian)
  * Mỗi EVERY ngày game chụp một ảnh trận (logic/save.js: chuỗi JSON), giữ các ảnh trong KEEP ngày gần nhất (người chơi chốt
  * 30 ngày). Tua lùi: lấy ảnh trước ngày hiện tại, nạp ra một thế giới mới rồi chép nội dung vào thế giới đang chạy (merge):
  * giữ nguyên đối tượng thế giới và từng đảo (phần vẽ đang trỏ vào chúng), chỉ thay nội dung bên trong. Những khoá trong KEEP_KEYS

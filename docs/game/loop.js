@@ -38,9 +38,7 @@
     BK.VFX.setup(G); // render/magic/vfx.js (bộ hạt dùng chung của phép)
     BK.Aim3D.setup(G); // render/magic/aim3d.js (vòng ngắm của phép)
     BK.Staff3D.setup(G); // render/magic/staff3d.js (gậy phép trong tay khi nhập hồn)
-    BK.Time3D.setup(G); // render/magic/time3d.js (hình ảnh phép thời gian)
-    BK.TimeMagic.setup(G); // game/time-magic.js (đồng hồ thế giới: dừng, tua nhanh, tua lùi)
-    BK.Spellbook.setup(G); // game/spellbook.js (sách phép thuật: chọn, ngắm, phát phép, linh lực)
+    BK.Spellbook.setup(G); // game/spellbook.js (sách phép thuật: chọn, ngắm, phát phép, linh lực; dựng các hệ ở magic/<hệ>/)
     BK.SpellbookUi.setup(G); // ui/spellbook-ui.js (cuốn sách, thanh phép, linh lực)
     BK.RaceDev.setup(G); // ui/race-dev.js (tin giữa các đảo, bảng dev "Cuộc đua")
 
@@ -58,7 +56,7 @@
       G.perf.govern(dt);
       // xem chậm (game/cities.js G.slowmo): đảo đang xem có chuyện (trận đánh, biểu tình, đám tang…) thì thời gian chậm lại để kịp thấy
       const l0 = performance.now();
-      // (phép thời gian, game/time-magic.js: G.timeCtl.mul 0 khi dừng, tua lùi; 8, 16 khi tua nhanh)
+      // (phép thời gian, magic/time/cast.js: G.timeCtl.mul 0 khi dừng, tua lùi; 8, 16 khi tua nhanh)
       const tc = G.timeCtl,
         frozen = !!(tc && tc.frozen);
       // lịch và giờ trong ngày do logic giữ (logic/world.js); W.day, T.tod lấy lại từ đó; G.timeK: chậm lại lúc lao nhập hồn (game/possess.js)
@@ -90,10 +88,9 @@
       G.cameraFly.update(dt, now);
       controls.update();
       G.possess.update(dt); // game/possess.js: lúc nhập hồn máy quay do cú nhập hồn đặt
-      G.timeMagic.update(Math.min(0.1, dt / 1000)); // game/time-magic.js: dừng, tua nhanh, tua lùi (giờ thật)
       G.possessUi.sync();
       G.particles.update(Math.min(0.1, dt / 1000));
-      G.spellbook.update(Math.min(0.1, dt / 1000)); // (giờ thật: hồi linh lực, đạn phép, vòng ngắm)
+      G.spellbook.update(Math.min(0.1, dt / 1000)); // (giờ thật: hồi linh lực, các hệ phép, đạn phép, vòng ngắm)
       G.vfx.update(Math.min(0.1, dt / 1000));
       G.spellbookUi.sync();
       G.perf.shadowTick();

@@ -2,20 +2,30 @@
  * Chỉ khi đang nhập hồn (game/possess.js, pha 'in'). Luật (linh lực, hồi phép, điều kiện) ở logic/spells.js; hiệu ứng ở
  * render/magic/ (G.vfx, G.aim3d); âm thanh render/fx/magic-audio.js; giao diện ui/spellbook-ui.js gọi select(), cast().
  *   ngắm   tia từ tâm màn hình đi theo hướng máy quay, chạm mặt đất ở đâu thì ngắm ở đó; xa quá RANGE thì kéo về trong tầm
- *   phát   press() khi bấm (phím E, chuột trái), release() khi thả. Theo cách dùng của phép (logic/spells.js use):
- *          'tap' kiểm tra luật (BK.Spells.cast), giơ tay (f.castT: render/body/motion3d.js), chạy phần tác động (bảng CAST);
- *          'toggle' bấm bật, bấm lại tắt (bảng TOGGLE); 'hold' chạy suốt lúc giữ (bảng HOLD). Mỗi phép một hàm nhỏ trong bảng;
- *          hệ sau thêm vào bảng, không sửa phần chung
+ *   hệ     mỗi hệ phép một thư mục riêng (magic/<hệ>/: magic/README.md). Phần phát phép của hệ (magic/<hệ>/cast.js) tự đăng
+ *          ký: BK.Spellbook.school(hệ, setup). setup(G, kit) chạy một lần khi dựng sách, trả { acts, update }:
+ *            acts    { idPhép: { tap(chỗ ngắm) | toggle() + on() | hold(bật), hue } } theo cách dùng của phép (logic/spells.js
+ *                    use); hue: cao độ tiếng vút lúc niệm (phép bật tắt, phép giữ: sách tự làm dáng niệm)
+ *            update  (tuỳ chọn) update(giây thật) mỗi khung hình
+ *          kit: đồ dùng chung cho các hệ (xem KIT bên dưới): đầu gậy, người đang nhập, chân, mặt đất, đạn phép, dáng niệm, tiếng
+ *          Thêm hệ mới không sửa tệp này.
+ *   phát   press() khi bấm (phím E, chuột trái), release() khi thả. 'tap': kiểm tra luật (BK.Spells.cast), giơ tay (f.castT:
+ *          render/body/motion3d.js), gọi acts[id].tap; 'toggle' bấm bật, bấm lại tắt; 'hold' chạy suốt lúc giữ
  *   gậy    gậy phép trong tay phải (render/magic/staff3d.js): ngọc màu hệ phép đang chọn, niệm phép thì nghiêng về chỗ ngắm;
  *          vòng phù chú (G.vfx.sigil) hiện trước đầu gậy lúc niệm
  *   đạn    đạn phép bay theo đường cong từ đầu gậy tới chỗ ngắm, kéo đuôi hạt; tới nơi thì gọi onHit của nó
- * update(giây thật) mỗi khung hình (game/loop.js): hồi linh lực (cả lúc dừng thời gian), bay đạn, vòng ngắm.
+ * update(giây thật) mỗi khung hình (game/loop.js): hồi linh lực (cả lúc dừng thời gian), các hệ, bay đạn, vòng ngắm.
  * Cần: logic/spells.js, render/magic/vfx.js, render/magic/aim3d.js, render/magic/staff3d.js, render/fx/magic-audio.js,
- * game/possess.js. */
+ * game/possess.js; các hệ ở magic/<hệ>/ nạp sau tệp này (index.html). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const RANGE = 22, // (đơn vị đảo) tầm ngắm xa nhất tính từ nhân vật
     BOLT_SPEED = 16; // (đơn vị mỗi giây) tốc độ đạn phép
+  const SCHOOLS = []; // [hệ, setup] theo thứ tự nạp (school)
+  function school(id, fn) {
+    if (SCHOOLS.some((x) => x[0] === id)) throw new Error('hệ phép đăng ký hai lần: ' + id);
+    SCHOOLS.push([id, fn]);
+  }
   function setup(G) {
     const { THREE, camera } = G;
     const SP = BK.Spells,
@@ -96,54 +106,59 @@
       }
     }
 
-    /* ----- tác động của từng phép (hệ sau thêm vào đây: mỗi phép một hàm nhỏ, hay gọi sang tệp riêng của hệ đó) ----- */
-    const CAST = {
-      // phép thử: đốm sáng bay tới chỗ ngắm rồi bung ra (chưa tác động lên thế giới)
-      soulBolt(aim) {
-        hand(v1);
-        G.vfx.sigil('soul', v1, v2.copy(aim).sub(v1).normalize(), { size: 0.75, life: 0.55 });
-        G.vfx.play('soulCast', v1);
-        if (audio) audio.cast(0.8);
-        bolt({
-          to: aim,
-          trail: 'soulTrail',
-          onHit: (p) => {
-            G.vfx.play('soulBurst', p);
-            G.vfx.sigil('soul', p, null, { size: 2.6, life: 0.9, spin: 1.2 });
-            if (audio) audio.impact(0.5);
-          },
-        });
-      },
-    };
-
-    // phép thời gian (game/time-magic.js): dừng là bật tắt, tua nhanh, tua lùi là giữ
-    const TOGGLE = {
-      timeStop: () => G.timeMagic.toggleStop(),
-    };
-    const HOLD = {
-      timeFast: (on) => G.timeMagic.hold('timeFast', on),
-      timeBack: (on) => G.timeMagic.hold('timeBack', on),
-    };
-    // dáng niệm phép chung: giơ gậy, phù chú của hệ ở đầu gậy, bụi phép
-    function castLook(s) {
+    // dáng niệm phép chung: giơ gậy, phù chú của hệ ở đầu gậy, bụi phép (công thức '<hệ>Cast' nếu hệ có), tiếng vút (hue: cao độ)
+    function castLook(s, hue) {
       const f = folk();
       if (f) f.castT = 0.4;
       hand(v1);
       camera.getWorldDirection(v2);
       G.vfx.sigil(s.school, v1, v2, { size: 0.75, life: 0.55 });
       if (BK.MagicRecipes[s.school + 'Cast']) G.vfx.play(s.school + 'Cast', v1);
-      if (audio) audio.cast(s.school === 'time' ? 0.35 : 0.8);
+      if (audio) audio.cast(hue == null ? 0.8 : hue);
+    }
+    // chân nhân vật (phép toả ra từ đây); chưa nhập hồn thì chỗ máy quay
+    const feet = () => {
+      const f = folk();
+      return f ? f.rig.root.position : camera.position;
+    };
+    // đồ dùng chung cho các hệ (magic/<hệ>/cast.js)
+    const KIT = {
+      folk, // dữ liệu vẽ của người đang bị nhập (render/village3d.js folk), hay null
+      feet,
+      inside,
+      hand, // hand(out): đầu gậy (chỗ phép phát ra)
+      ground, // ground(x, z): độ cao mặt đất đảo đang ở
+      bolt, // bolt({ to, trail, speed, arc, onHit }): đạn phép bay từ đầu gậy tới chỗ ngắm
+      castLook, // castLook(phép, hue): dáng niệm chung: giơ gậy, phù chú, bụi phép, tiếng vút
+      audio,
+      say: (t) => G.spellbookUi && G.spellbookUi.say(t),
+      island: () => (P() && P().st.i >= 0 ? P().st.i : -1),
+      ctx,
+    };
+    const ACT = {},
+      TICK = [];
+    // (dựng các hệ sau khi các hàm bên dưới đã có: xem cuối setup)
+    function mountSchools() {
+      for (const [id, fn] of SCHOOLS) {
+        const r = fn(G, KIT) || {};
+        for (const k in r.acts || {}) {
+          if (!SP.BY.has(k) || SP.BY.get(k).school !== id) throw new Error('hệ ' + id + ' phát phép lạ: ' + k);
+          ACT[k] = r.acts[k];
+        }
+        if (r.update) TICK.push(r.update);
+      }
     }
     // bấm: phát phép theo cách dùng của nó; trả { ok, why, text }
     function press() {
       const s = spell();
       if (!s) return { ok: false };
-      if (s.open && (s.use === 'hold' || s.use === 'toggle')) {
-        const wasOn = s.id === 'timeStop' && G.timeMagic && G.timeMagic.stopped;
-        const r = s.use === 'hold' ? HOLD[s.id] && HOLD[s.id](true) : TOGGLE[s.id] && TOGGLE[s.id]();
+      const a = ACT[s.id];
+      if (s.open && a && (s.use === 'hold' || s.use === 'toggle')) {
+        const wasOn = s.use === 'toggle' && a.on && a.on();
+        const r = s.use === 'hold' ? a.hold(true) : a.toggle();
         if (!r || r.ok === false) return deny(typeof r === 'object' && r ? r : { ok: false, why: 'mana', text: SP.WHY.mana });
         if (s.use === 'hold') st.holding = s.id;
-        if (!wasOn) castLook(s);
+        if (!wasOn) castLook(s, a.hue);
         st.last = { ok: true, id: s.id, t: performance.now() };
         return { ok: true };
       }
@@ -151,7 +166,7 @@
     }
     // thả: dừng phép đang giữ
     function release() {
-      if (st.holding && HOLD[st.holding]) HOLD[st.holding](false);
+      if (st.holding && ACT[st.holding]) ACT[st.holding].hold(false);
       st.holding = null;
     }
     // chọn phép (sách, thanh phép nhanh); phép chưa mở cũng chọn được để xem, bấm phát thì báo "sắp có"
@@ -169,7 +184,7 @@
       if (!r.ok) return deny(r);
       const f = folk();
       if (f) f.castT = 0.4; // (giơ tay niệm phép: render/body/motion3d.js)
-      if (CAST[s.id]) CAST[s.id](st.aim.clone());
+      if (ACT[s.id] && ACT[s.id].tap) ACT[s.id].tap(st.aim.clone(), s);
       st.last = { ok: true, id: s.id, t: performance.now() };
       return r;
     }
@@ -182,6 +197,7 @@
     function update(sec) {
       if (!(sec > 0)) return;
       if (G.world && G.world.soul) SP.regen(G.world, sec, !!st.holding); // (giờ thật: cả lúc dừng thời gian; đang giữ phép thì không hồi)
+      for (const fn of TICK) fn(sec);
       stepBolts(sec);
       const s = spell(),
         f = folk();
@@ -198,6 +214,7 @@
         G.aim3d.hide();
       }
     }
+    mountSchools();
     G.spellbook = {
       select,
       cast,
@@ -206,11 +223,12 @@
       update,
       st,
       audio,
+      kit: KIT,
       inside,
       mana: () => (G.world && G.world.soul ? SP.state(G.world).mana : 0),
       can: (id) => SP.can(W(), id, ctx()),
       cooldown: (id) => (G.world && G.world.soul ? SP.state(G.world).cd[id] || 0 : 0),
     };
   }
-  BK.Spellbook = { setup, RANGE };
+  BK.Spellbook = { setup, school, RANGE };
 })(typeof self !== 'undefined' ? self : globalThis);

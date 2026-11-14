@@ -832,7 +832,7 @@
       GESTURE_MAX = 2;
     let gameT = 0,
       gestT = 0;
-    // frozen: đang dừng thời gian (game/time-magic.js): mọi người đứng im giữa động tác, trừ người bị nhập hồn (có hàm lái)
+    // frozen: đang dừng thời gian (magic/time/cast.js): mọi người đứng im giữa động tác, trừ người bị nhập hồn (có hàm lái)
     function update(dt, t, speed, frozen) {
       dt = Math.max(0, dt || 0);
       const k = speed || 1,

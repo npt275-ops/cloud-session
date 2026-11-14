@@ -2,6 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const S = require('../logic/spells.js');
+// mỗi hệ tự thêm phép của mình (magic/<hệ>/spells.js)
+for (const k of ['soul', 'time', 'fire', 'earth', 'water']) require('../magic/' + k + '/spells.js');
 const IN = { inside: true, nearSea: false };
 const DEV0 = Object.assign({}, S.DEV);
 // (các bài dưới thử luật chơi thật: tắt chế độ thử)
@@ -27,6 +29,11 @@ test('sách có đủ các trang và các phép người chơi đã chốt', () 
   for (const id of ['timeStop', 'timeFast', 'timeBack', 'fireball', 'fireRing', 'pillar', 'quake', 'rain', 'geyser', 'deluge'])
     assert.ok(S.BY.has(id), 'thiếu phép ' + id);
   for (const s of S.SPELLS) assert.ok(S.SCHOOLS.some((c) => c.id === s.school), s.id + ' thuộc trang lạ');
+  // sách xếp theo trang
+  const rank = S.SPELLS.map((s) => S.SCHOOLS.findIndex((c) => c.id === s.school));
+  assert.deepStrictEqual(rank, [...rank].sort((a, b) => a - b));
+  assert.throws(() => S.add('soul', [{ id: 'soulBolt' }]), /trùng/);
+  assert.throws(() => S.add('nope', []), /trang lạ/);
 });
 
 test('chỉ dùng được khi đang nhập hồn', () => {
@@ -36,7 +43,7 @@ test('chỉ dùng được khi đang nhập hồn', () => {
 });
 
 test('phép chưa làm xong thì "sắp có"', () => {
-  assert.strictEqual(S.can({}, 'fireball', IN).why, 'soon');
+  assert.strictEqual(S.can({}, 'pillar', IN).why, 'soon');
   assert.ok(S.can({}, 'timeStop', IN).ok, 'phép thời gian đã mở');
 });
 
@@ -84,7 +91,7 @@ test('phép giữ phím (tua nhanh, tua lùi): tốn linh lực theo giây, hế
 test('đang giữ phép thì linh lực không tự hồi: giữ lâu phải cạn', () => {
   const W = {};
   let t = 0;
-  // mỗi khung hình: hồi (đang giữ) rồi trừ theo giây, như game/spellbook.js và game/time-magic.js
+  // mỗi khung hình: hồi (đang giữ) rồi trừ theo giây, như game/spellbook.js và magic/time/cast.js
   for (; t < 60; t += 0.1) {
     S.regen(W, 0.1, true);
     if (!S.channel(W, 'timeFast', 0.1, IN).ok) break;

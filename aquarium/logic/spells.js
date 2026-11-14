@@ -2,6 +2,7 @@
  * Sách thuộc về linh hồn (người chơi), chỉ dùng được khi đang nhập hồn. Mỗi phép tốn linh lực (tự hồi theo giờ thật) và có thời
  * gian hồi phép. Trạng thái nằm trong thế giới (W.soul.magic: được lưu cùng trận): { mana, cd: { phép: giây còn lại } }.
  *   SCHOOLS  các trang của sách theo thứ tự; SPELLS danh sách phép (id, trang, tên, giá, hồi phép, cách dùng, điều kiện, đã mở chưa)
+ *   add(trang, [phép])  mỗi hệ tự thêm phép của mình: magic/<hệ>/spells.js (mỗi hệ phép một thư mục riêng: magic/README.md)
  *   state(W)          trạng thái phép (tạo nếu chưa có)
  *   regen(W, giây, giữ)  hồi linh lực, giảm thời gian hồi phép (giờ thật: cả lúc dừng thời gian); đang giữ phép (giữ = true) thì
  *                     linh lực không hồi (giữ phép phải cạn dần)
@@ -10,7 +11,7 @@
  *   channel(W, id, giây, ctx)  phép giữ phím: trừ linh lực theo giây đang giữ (cost là mỗi giây); hết linh lực thì { ok: false }
  *   price(s)          giá thật của phép s (lúc thử: DEV.cost cho mọi phép)
  *   DEV               chế độ thử: { infinite: linh lực vô hạn (không bị trừ), cost: giá chung cho mọi phép (null: giá riêng) }
- * Tác động lên thế giới của từng phép nằm ở tệp riêng của hệ đó (bước sau). Không vẽ gì, chạy được bằng Node. */
+ * Tác động lên thế giới của từng phép nằm trong thư mục của hệ đó (magic/<hệ>/). Không vẽ gì, chạy được bằng Node. */
 (function (root, factory) {
   const BK = root.BK || (root.BK = {});
   BK.Spells = factory(BK);
@@ -28,24 +29,25 @@
     { id: 'earth', name: 'Đất' },
     { id: 'water', name: 'Nước' },
   ];
-  // use: 'tap' bấm một lần; 'hold' giữ (tốn linh lực mỗi giây: cost là mỗi giây); 'toggle' bấm bật, bấm tắt
-  // aim: phép cần ngắm chỗ trên mặt đất; self: phát ngay chỗ nhân vật; need: 'sea' chỉ dùng được khi ở gần biển
-  // open: đã làm xong (chưa mở thì sách ghi "sắp có")
-  const SPELLS = [
-    { id: 'soulBolt', school: 'soul', name: 'Tia linh lực', cost: 8, cd: 0.5, use: 'tap', aim: true, open: true, desc: 'Một đốm sáng linh hồn bay tới chỗ ngắm rồi bung ra. Phép thử, chưa tác động lên thế giới.' },
-    { id: 'blackHole', school: 'soul', name: 'Hố đen', cost: 45, cd: 12, use: 'tap', aim: true, desc: 'Hố đen có vành sáng ở chỗ ngắm, hút hạt, hút người nhẹ về tâm vài giây.' },
-    { id: 'timeStop', school: 'time', open: true, name: 'Dừng thời gian', cost: 30, cd: 8, use: 'toggle', self: true, desc: 'Cả thế giới đứng im, chỉ linh hồn vẫn đi lại được.' },
-    { id: 'timeFast', school: 'time', open: true, name: 'Tua nhanh', cost: 14, cd: 0, use: 'hold', self: true, desc: 'Giữ để thời gian trôi nhanh 8 lần, 16 lần.' },
-    { id: 'timeBack', school: 'time', open: true, name: 'Tua lùi', cost: 20, cd: 0, use: 'hold', self: true, desc: 'Giữ để lùi từng ngày, xa nhất 30 ngày.' },
-    { id: 'fireball', school: 'fire', name: 'Cầu lửa', cost: 20, cd: 1.5, use: 'tap', aim: true, desc: 'Ném quả cầu lửa; trúng nhà thì bén lửa.' },
-    { id: 'fireRing', school: 'fire', name: 'Vòng lửa', cost: 35, cd: 8, use: 'tap', self: true, desc: 'Vòng lửa quanh mình, không ai đi qua được.' },
-    { id: 'pillar', school: 'earth', name: 'Trụ đá', cost: 25, cd: 4, use: 'tap', self: true, desc: 'Trụ đá trồi lên ngay dưới chân, nâng mình lên cao.' },
-    { id: 'quake', school: 'earth', name: 'Rung đất', cost: 40, cd: 10, use: 'tap', aim: true, desc: 'Sóng đất toả ra, người gần đó ngã ngồi.' },
-    { id: 'rain', school: 'water', name: 'Gọi mưa', cost: 30, cd: 10, use: 'tap', aim: true, desc: 'Mây nhỏ kéo đến, mưa dập lửa, tưới ruộng.' },
-    { id: 'geyser', school: 'water', name: 'Cột nước', cost: 25, cd: 3, use: 'tap', aim: true, desc: 'Cột nước phun lên, đẩy người ra xa, dập lửa.' },
-    { id: 'deluge', school: 'water', name: 'Đại hồng thuỷ', cost: 100, cd: 120, use: 'tap', self: true, need: 'sea', desc: 'Chỉ khi ở gần biển: lốc xoáy nước, cả bể dâng cao rồi đổ ập, sóng tràn vào sáu đảo.' },
-  ];
-  const BY = new Map(SPELLS.map((s) => [s.id, s]));
+  // Danh sách phép: mỗi hệ tự thêm phép của mình (magic/<hệ>/spells.js gọi add). Một phép gồm:
+  //   id, name, cost (giá linh lực; phép giữ: mỗi giây), cd (giây hồi phép), desc (một câu trong sách)
+  //   use: 'tap' bấm một lần; 'hold' giữ (tốn linh lực mỗi giây); 'toggle' bấm bật, bấm tắt
+  //   aim: phép cần ngắm chỗ trên mặt đất; self: phát ngay chỗ nhân vật; need: 'sea' chỉ dùng được khi ở gần biển
+  //   open: đã làm xong (chưa mở thì sách ghi "sắp có")
+  // Thứ tự trong sách: theo trang (SCHOOLS), trong một trang theo thứ tự thêm.
+  const SPELLS = [],
+    BY = new Map();
+  function add(school, list) {
+    if (!SCHOOLS.some((c) => c.id === school)) throw new Error('trang lạ: ' + school);
+    for (const s0 of list) {
+      if (BY.has(s0.id)) throw new Error('phép trùng id: ' + s0.id);
+      const s = Object.assign({ school }, s0);
+      SPELLS.push(s);
+      BY.set(s.id, s);
+    }
+    const rank = (s) => SCHOOLS.findIndex((c) => c.id === s.school);
+    SPELLS.sort((a, b) => rank(a) - rank(b)); // (sort giữ nguyên thứ tự thêm trong cùng trang)
+  }
   const price = (s) => (DEV.cost != null ? DEV.cost : s.cost);
   function state(W) {
     const soul = W.soul || (W.soul = {});
@@ -102,5 +104,5 @@
     m.mana -= need;
     return { ok: true, cost: need };
   }
-  return { SCHOOLS, SPELLS, BY, MANA_MAX, REGEN, DEV, WHY, price, state, regen, can, cast, channel };
+  return { SCHOOLS, SPELLS, BY, add, MANA_MAX, REGEN, DEV, WHY, price, state, regen, can, cast, channel };
 });

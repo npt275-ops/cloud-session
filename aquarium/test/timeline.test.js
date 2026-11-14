@@ -1,4 +1,4 @@
-// Bể Kính · test/timeline.test.js · Ảnh chụp trận, tua lùi thời gian (logic/timeline.js; design/ke-hoach-buoc-37.md)
+// Bể Kính · test/timeline.test.js · Ảnh chụp trận, tua lùi thời gian (magic/time/timeline.js; design/ke-hoach-buoc-37.md)
 const test = require('node:test');
 const assert = require('node:assert');
 for (const f of [
@@ -39,9 +39,9 @@ for (const f of [
   'goals',
   'world',
   'save',
-  'timeline',
 ])
   require('../logic/' + f + '.js');
+require('../magic/time/timeline.js');
 const BK = globalThis.BK;
 const sum = (W) =>
   JSON.stringify([

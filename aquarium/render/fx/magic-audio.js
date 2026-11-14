@@ -1,15 +1,21 @@
 /* Bể Kính · render/fx/magic-audio.js · Âm thanh phép (design/ke-hoach-buoc-37.md)
- * Tự sinh bằng Web Audio qua đường ra chung của audio.js (bus); âm thanh đang tắt thì không kêu gì. Mỗi tiếng một hàm, hệ sau
- * thêm tiếng của mình vào đây:
+ * Tự sinh bằng Web Audio qua đường ra chung của audio.js (bus); âm thanh đang tắt thì không kêu gì. Ở đây chỉ có tiếng dùng chung:
  *   cast(hue)     tiếng vút lúc niệm phép (hue 0..1: thấp ấm tới cao trong)
  *   impact(k)     tiếng bung khi phép chạm đích: k 0..1 độ mạnh
  *   deny()        tiếng "tịt" khi không dùng được (thiếu linh lực, đang hồi phép)
  *   page()        tiếng lật trang sách
- *   bell(on)      chuông trầm khi thời gian dừng (on), chuông cao, ngắn khi thời gian chạy tiếp
- *   tick(k)       tiếng tích tắc (tua nhanh, tua lùi): k > 0 cao, k < 0 trầm
+ * Tiếng riêng của từng hệ nằm ở magic/<hệ>/sounds.js, tự thêm vào bằng add({ tên(kit, ...tham số) }): kit = { band, tone }
+ * (hai bộ tạo tiếng bên dưới, đã gắn sẵn đường ra). Sau khi create, gọi như tiếng chung: audio.bell(true).
  * Cần: audio.js (G.audio). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
+  const EXTRA = {}; // tiếng riêng các hệ (add)
+  function add(o) {
+    for (const k in o) {
+      if (EXTRA[k]) throw new Error('tiếng phép trùng tên: ' + k);
+      EXTRA[k] = o[k];
+    }
+  }
   function create(G) {
     let noise = null;
     const bus = () => (G.audio && G.audio.bus ? G.audio.bus() : null);
@@ -75,22 +81,14 @@
       if (!b) return;
       band(b, 2500, 5000, 0.8, [[0.03, 0.12], [0.2, 0.0001]], 0.22);
     }
-    function bell(on) {
-      const b = bus();
-      if (!b) return;
-      const f = on ? 196 : 392;
-      tone(b, f, f * 0.998, 0.12, on ? 2.4 : 1.1, 'sine');
-      tone(b, f * 2.01, f * 2, 0.05, on ? 1.8 : 0.8, 'sine');
-      tone(b, f * 3.02, f * 3, 0.025, on ? 1.2 : 0.5, 'triangle');
-      band(b, on ? 3000 : 600, on ? 400 : 4000, 1.5, [[0.05, 0.12], [0.6, 0.0001]], 0.65);
-    }
-    function tick(k) {
-      const b = bus();
-      if (!b) return;
-      const f = k < 0 ? 900 : 1700;
-      tone(b, f, f * 0.9, 0.05, 0.05, 'square');
-    }
-    return { cast, impact, deny, page, bell, tick };
+    const out = { cast, impact, deny, page };
+    // tiếng riêng của các hệ: kit gắn sẵn đường ra (âm thanh tắt thì không kêu)
+    for (const k in EXTRA)
+      out[k] = (...a) => {
+        const b = bus();
+        if (b) EXTRA[k]({ band: (...x) => band(b, ...x), tone: (...x) => tone(b, ...x) }, ...a);
+      };
+    return out;
   }
-  BK.MagicAudio = { create };
+  BK.MagicAudio = { create, add };
 })(typeof self !== 'undefined' ? self : globalThis);

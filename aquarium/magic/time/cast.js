@@ -1,17 +1,17 @@
-/* Bể Kính · game/time-magic.js · Điều khiển phép thời gian: dừng, tua nhanh, tua lùi (design/ke-hoach-buoc-37.md)
+/* Bể Kính · magic/time/cast.js · Phát phép hệ thời gian: dừng, tua nhanh, tua lùi (design/ke-hoach-buoc-37.md)
  * Đồng hồ thế giới (G.timeCtl, game/loop.js đọc mỗi khung hình):
  *   frozen  đang dừng hay đang tua lùi: logic đứng im; mây, sóng, khói, thuyền, đạn, người trong làng đứng im giữa động tác
  *           (thời gian thế giới không trôi), chỉ linh hồn (người bị nhập hồn), máy quay, hiệu ứng phép vẫn chạy theo giờ thật
  *   mul     hệ số tốc độ logic: 0 khi dừng, tua lùi; FAST (rồi FAST2 sau FAST2_AFTER giây giữ) khi tua nhanh; 1 bình thường
- * Phép (luật, linh lực: logic/spells.js; ảnh trận: logic/timeline.js; hình ảnh: render/magic/time3d.js; âm thanh:
- * render/fx/magic-audio.js):
+ * Đăng ký với sách (game/spellbook.js school): timeStop bật tắt, timeFast, timeBack giữ. Cùng thư mục: danh sách phép
+ * (spells.js), ảnh trận (timeline.js), hình (look3d.js), hạt (recipes.js), tiếng (sounds.js). Linh lực: logic/spells.js.
  *   toggleStop()  bật dừng (tốn linh lực một lần), bấm lại thì chạy tiếp; dừng lâu nhất STOP_MAX giây thật
  *   hold(id, bật) giữ tua nhanh ('timeFast') hay tua lùi ('timeBack'): tốn linh lực theo giây, hết thì tự thả
  * Tua lùi: mỗi BACK_STEP giây thật lùi về ảnh trận trước đó (chụp mỗi 3 ngày game, giữ 30 ngày); hết ảnh thì báo, tự thả.
  * Sau khi lùi: đánh dấu lại người bị nhập hồn (logic không giao việc), vẽ lại theo thế giới vừa đổi (G.citiesRun.resync).
  * Ảnh trận chụp lúc trình duyệt rảnh (chụp tốn vài chục mili giây ở cuối trận, không làm khựng khung hình đang chạy).
- * update(giây thật) mỗi khung hình (game/loop.js, sau game/possess.js). Ra khỏi thân thì mọi phép thời gian tắt.
- * Cần: logic/spells.js, logic/timeline.js, render/magic/time3d.js, render/fx/post3d.js, game/possess.js, game/cities.js. */
+ * update(giây thật) mỗi khung hình (sách gọi, sau game/possess.js). Ra khỏi thân thì mọi phép thời gian tắt.
+ * Cần: logic/spells.js, magic/time/timeline.js, magic/time/look3d.js, render/fx/post3d.js, game/possess.js, game/cities.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const STOP_MAX = 8, // (giây thật) dừng thời gian lâu nhất mỗi lần
@@ -26,22 +26,17 @@
     back: { desat: 0.45, tint: 0.55, tintColor: [1.1, 0.95, 0.78], ripple: 1 },
     none: { desat: 0, tint: 0, tintColor: null, ripple: 0 },
   };
-  function setup(G) {
+  function setup(G, kit) {
+    BK.Time3D.setup(G); // (hình: magic/time/look3d.js)
     const SP = BK.Spells,
       TL = BK.Timeline.create();
     const st = { stop: false, stopT: 0, fast: false, fastT: 0, back: false, backT: 0, look: { desat: 0, tint: 0, ripple: 0 }, color: [1, 1, 1], tick: 0 };
     const P = () => G.possess,
       inside = () => !!(P() && P().st.phase === 'in'),
       ctx = () => ({ inside: inside() });
-    const say = (t) => G.spellbookUi && G.spellbookUi.say(t);
-    const audio = () => G.spellbook && G.spellbook.audio;
-    // chỗ chân nhân vật (hiệu ứng toả ra từ đây)
-    function feet() {
-      const p = P();
-      const V = p && p.st.i >= 0 ? G.villageOf(p.st.i) : null,
-        f = V ? V.folk(p.st.id) : null;
-      return f ? f.rig.root.position : G.camera.position;
-    }
+    const say = kit.say,
+      audio = () => kit.audio,
+      feet = kit.feet; // (chỗ chân nhân vật: hiệu ứng toả ra từ đây)
     G.timeCtl = {
       get frozen() {
         return st.stop || st.back;
@@ -189,6 +184,15 @@
         return { stop: st.stop, fast: st.fast, back: st.back, snaps: TL.count(), oldest: TL.oldest() };
       },
     };
+    return {
+      acts: {
+        timeStop: { toggle: toggleStop, on: () => st.stop, hue: 0.35 },
+        timeFast: { hold: (on) => hold('timeFast', on), hue: 0.35 },
+        timeBack: { hold: (on) => hold('timeBack', on), hue: 0.35 },
+      },
+      update,
+    };
   }
-  BK.TimeMagic = { setup, STOP_MAX, FAST, FAST2, BACK_STEP };
+  BK.TimeMagic = { STOP_MAX, FAST, FAST2, BACK_STEP };
+  BK.Spellbook.school('time', setup);
 })(typeof self !== 'undefined' ? self : globalThis);

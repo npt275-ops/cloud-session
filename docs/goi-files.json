@@ -55,11 +55,6 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/game/time-magic.js",
-  "src": "game/time-magic.js",
-  "mode": 420
- },
- {
   "path": "BeKinh/game/world.js",
   "src": "game/world.js",
   "mode": 420
@@ -275,11 +270,6 @@
   "mode": 420
  },
  {
-  "path": "BeKinh/logic/timeline.js",
-  "src": "logic/timeline.js",
-  "mode": 420
- },
- {
   "path": "BeKinh/logic/war.js",
   "src": "logic/war.js",
   "mode": 420
@@ -287,6 +277,66 @@
  {
   "path": "BeKinh/logic/world.js",
   "src": "logic/world.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/earth/spells.js",
+  "src": "magic/earth/spells.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/fire/spells.js",
+  "src": "magic/fire/spells.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/cast.js",
+  "src": "magic/soul/cast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/recipes.js",
+  "src": "magic/soul/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/spells.js",
+  "src": "magic/soul/spells.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/cast.js",
+  "src": "magic/time/cast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/look3d.js",
+  "src": "magic/time/look3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/recipes.js",
+  "src": "magic/time/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/sounds.js",
+  "src": "magic/time/sounds.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/spells.js",
+  "src": "magic/time/spells.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/time/timeline.js",
+  "src": "magic/time/timeline.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/spells.js",
+  "src": "magic/water/spells.js",
   "mode": 420
  },
  {
@@ -637,11 +687,6 @@
  {
   "path": "BeKinh/render/magic/staff3d.js",
   "src": "render/magic/staff3d.js",
-  "mode": 420
- },
- {
-  "path": "BeKinh/render/magic/time3d.js",
-  "src": "render/magic/time3d.js",
   "mode": 420
  },
  {

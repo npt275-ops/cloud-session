@@ -1,5 +1,5 @@
-/* Bể Kính · render/magic/time3d.js · Hình ảnh của phép thời gian (design/ke-hoach-buoc-37.md)
- * Chỉ vẽ (luật ở logic/spells.js, logic/timeline.js; điều khiển ở game/time-magic.js). Màu theo bảng màu chung.
+/* Bể Kính · magic/time/look3d.js · Hình ảnh của phép thời gian (design/ke-hoach-buoc-37.md)
+ * Chỉ vẽ (điều khiển ở magic/time/cast.js gọi setup; công thức hạt magic/time/recipes.js). Màu theo bảng màu chung.
  *   stopOn(chỗ)   dừng thời gian: vòng phù chú đồng hồ cát lớn dưới chân, sóng lan trên đất, MOTES hạt bụi vàng lơ lửng đứng im
  *                 quanh người (đứng im giữa không trung suốt lúc thời gian dừng)
  *   stopOff(chỗ)  thời gian chạy tiếp: sóng lan, bụi tan

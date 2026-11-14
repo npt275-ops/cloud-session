@@ -950,7 +950,7 @@
       syncLevels();
     }
     // mỗi khung hình: công trình theo tiến độ xây của logic, người của các đảo gần máy quay, xe nhường người
-    // frozen: đang dừng thời gian (game/time-magic.js): công trình đứng im, người trong làng đứng im trừ người bị nhập hồn
+    // frozen: đang dừng thời gian (magic/time/cast.js): công trình đứng im, người trong làng đứng im trừ người bị nhập hồn
     function animate(dt, t, night, frozen) {
       const speed = G.time.tps / G.time.SPEEDS[0][0];
       if (bars) bars.begin(); // thanh máu: hải chiến (render/war3d.js), cổng, nhà chính, người trong làng
@@ -1090,7 +1090,7 @@
       villageOf,
       jumpEra,
       goEra,
-      // revive: nạp một ảnh trận (logic/save.js) với cách khôi phục của game (tua lùi: game/time-magic.js); resync: vẽ lại theo
+      // revive: nạp một ảnh trận (logic/save.js) với cách khôi phục của game (tua lùi: magic/time/cast.js); resync: vẽ lại theo
       // thế giới vừa đổi (thời, cầu, sân đảo bị sáp nhập)
       citiesRun: {
         step,
