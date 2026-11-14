@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 155 tệp, 44198 dòng.
+Tổng: 155 tệp, 44000 dòng.
 
 ## (gốc)
 
@@ -83,7 +83,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
-| `render/buildings3d.js` | 1354 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
+| `render/buildings3d.js` | 1362 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
 | `render/deep3d.js` | 247 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
@@ -114,12 +114,12 @@ Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `render/map/height3d.js` | 631 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
+| `render/map/height3d.js` | 722 | Cao độ mặt đảo (đảo nhấp nhô như đảo thật; design/ke-hoach-buoc-14.md) | `BK.MapHeight` |  |
 | `render/map/map3d.js` | 124 | bản đồ sáu đảo (chỉ thiên nhiên) | `BK.groundAt` `Lands3D` | `render/map/height3d.js` `render/map/mountains3d.js` `render/map/relief3d.js` `render/map/shared3d.js` `render/map/terrain3d.js` `render/map/trees3d.js` `render/map/water3d.js` |
 | `render/map/mountains3d.js` | 322 | Núi của bản đồ | `BK.MapMountains` |  |
-| `render/map/relief3d.js` | 565 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), sông chảy từ mép … | `BK.MapRelief` |  |
+| `render/map/relief3d.js` | 363 | Địa hình thêm của từng đảo, đặt ngoài vùng làng ở giữa đảo: khối núi riêng (MASSIF ở mountains3d.js), hồ, ao nhỏ thủng … | `BK.MapRelief` |  |
 | `render/map/shared3d.js` | 315 | Phần dùng chung của bản đồ: hình học gốc dùng lại (hộp, trụ, nón, khối nhiều mặt...), bộ gom mảnh Kit (mỗi mảnh một màu … | `BK.MapShared` | `render/look3d.js` |
-| `render/map/terrain3d.js` | 821 | Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ và sông sẵn có của … | `BK.MapTerrain` | `render/build/roads.js` |
+| `render/map/terrain3d.js` | 715 | Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ sẵn có của từng … | `BK.MapTerrain` | `render/build/roads.js` |
 | `render/map/trees3d.js` | 433 | Cây và bụi của sáu miền (FLORA): cây tán tròn ít mặt mọc thành lùm, giữ lại thông, thông tuyết, dừa, xương rồng … | `BK.MapTrees` |  |
 | `render/map/water3d.js` | 61 | Gộp mặt nước và bờ của một đảo: mỗi loại một khối, một lượt vẽ (màu theo đỉnh, giữ nguyên chỗ và dáng) | `BK.MapWater` |  |
 
@@ -152,7 +152,7 @@ Công trình dùng chung mọi đảo: bộ ghép khối, đường, cổng, c�
 | `render/build/life3d.js` | 62 | Khói bốc lên từ công trình (bếp lửa, ống khói, lò rèn, nhà máy) | `BK.Life3D` |  |
 | `render/build/marvels.js` | 1520 | Kiến trúc lạ của sáu đảo qua 12 thời … | `BK.Marvels3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/neon.js` | 92 | Thành phố neon (từ thời 10) | `BK.Neon3D` | `render/build/kit3d.js` `render/build/plains/common.js` `render/build/roads.js` |
-| `render/build/place3d.js` | 320 | Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ, sông, mép đảo và các công trình khác) … | `BK.Place3D` |  |
+| `render/build/place3d.js` | 325 | Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ thủng xuống biển, mép đảo và các công trình khác) … | `BK.Place3D` |  |
 | `render/build/roads.js` | 274 | Mạng đường của sáu đảo … | `BK.Roads3D` | `render/build/kit3d.js` `render/build/plains/common.js` |
 | `render/build/ruins3d.js` | 122 | Công trình hư hại trong chiến tranh … | `BK.Ruins3D` | `render/build/life3d.js` |
 | `render/build/traffic3d.js` | 40 | Xe bay lượn vòng trên cao dọc vòng đường … | `BK.Traffic3D` |  |
@@ -242,7 +242,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 |---|---|---|---|---|
 | `tools/bug-hunt.js` | 392 | Quét lỗi trận chiến và NPC bằng trình duyệt không giao diện … | `BK.NAV_SOLIDS` | `game/cities.js` `game/nature.js` `game/world.js` `logic/arms.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/nav3d.js` `render/scene3d.js` `ui/landbar.js` |
 | `tools/calibrate.js` | 221 | Cân chỉnh bằng nhiều trận … |  | `logic/island.js` `logic/world.js` |
-| `tools/check-footing.js` | 73 | Quét công trình thò ra ngoài đảo: 6 đảo × 12 thời … |  | `game/cities.js` `game/world.js` |
+| `tools/check-footing.js` | 79 | Quét công trình thò ra ngoài đảo hay đè lên lỗ hồ: 6 đảo × 12 thời … |  | `game/cities.js` `game/world.js` |
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
 | `tools/check-walk.js` | 187 | Người đi xuyên công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/world.js` `render/build/kit3d.js` `render/scene3d.js` |
 | `tools/clip.js` | 376 | Quay clip khung dọc điện thoại để xem bằng mắt … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/perf3d.js` `render/scene3d.js` `ui/landbar.js` |

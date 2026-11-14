@@ -1,5 +1,5 @@
 /* Bể Kính · render/build/place3d.js
- * Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ, sông, mép đảo và các công trình khác):
+ * Tìm chỗ đặt công trình trên địa hình thật của một đảo (tránh núi, hồ thủng xuống biển, mép đảo và các công trình khác):
  *   homeSpot   công trình trong làng: giữ đúng chỗ đã định nếu trống, không thì dịch dần ra xung quanh; tránh núi, hồ, mép đảo,
  *              công trình khác và mặt đường (L.roadSegs: các đoạn đường của đảo, đặt bởi render/buildings3d.js)
  *   outerSpot  công trình ngoài làng: coast (mép đảo, mặt trước quay ra biển), sea (ngoài khơi), forest (vòng ngoài làng),
@@ -170,7 +170,12 @@
       return { pts, r: Math.max(bb.max.x, -bb.min.x, bb.max.z, -bb.min.z) * s };
     }
     const scaled = (fp, k) => ({ pts: fp.pts.map(([x, z]) => [x * k, z * k]), r: fp.r * k });
-    const blocks = (L, fp, x, z) => fp.pts.some(([dx, dz]) => L.roadSegs.some((S) => segDist(x + dx, z + dz, S) < L.roadW));
+    // phần sát đất lấn đường, hay rơi vào (hoặc sát mép) lỗ hồ thủng xuống biển (L.inHole: render/map/height3d.js)
+    const blocks = (L, fp, x, z) =>
+      fp.pts.some(
+        ([dx, dz]) =>
+          (L.roadSegs && L.roadSegs.some((S) => segDist(x + dx, z + dz, S) < L.roadW)) || (L.inHole && L.inHole(x + dx, z + dz, 1.2)),
+      );
     // chỗ mới cho một công trình lấn đường (P: { x, z, rotY, hall, self }, fixed: các công trình đã có chỗ); null nếu không có
     function relocate(L, P, fp, fixed) {
       const rr = fp.r;
@@ -191,14 +196,14 @@
       }
       let best = null,
         bd = 1e9;
-      for (const S of L.roadSegs) {
+      for (const S of L.roadSegs || []) {
         const d = segDist(P.x, P.z, S);
         if (d < bd) {
           bd = d;
           best = S;
         }
       }
-      const [x0, z0, x1, z1] = best,
+      const [x0, z0, x1, z1] = best || [P.x, P.z, P.x + 1, P.z],
         dx = x1 - x0,
         dz = z1 - z0,
         ll = Math.hypot(dx, dz) || 1,
@@ -296,7 +301,7 @@
       return { drop: true };
     }
     // chỗ trống bán kính r gần (x, z) cho chỗ dùng chung (sân chơi, bãi trao đổi, gốc cây kể chuyện; design/ke-hoach-khac-phuc.md
-    // mục 6.2): xoắn ốc ra quanh điểm muốn đặt, tránh mép đảo, núi, hồ, sông, mặt đường và công trình đã có (fixed). null nếu hết chỗ
+    // mục 6.2): xoắn ốc ra quanh điểm muốn đặt, tránh mép đảo, núi, hồ, mặt đường và công trình đã có (fixed). null nếu hết chỗ
     function freeSpot(L, x, z, r, fixed) {
       for (let ring = 0; ring <= 24; ring++)
         for (let k = 0; k < (ring ? 12 + ring : 1); k++) {

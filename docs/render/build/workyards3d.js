@@ -202,7 +202,7 @@
             const rad = L.rOf(a) - back,
               p0 = new THREE.Vector2(Math.cos(a) * rad, Math.sin(a) * rad),
               p = PL.homeSpot(L, p0, R, fixed, null);
-            if (!L.inside(p.x, p.y, 9) || inMassif(L, p.x, p.y, R + 1.5)) continue;
+            if (!L.inside(p.x, p.y, 9) || inMassif(L, p.x, p.y, R + 1.5) || (L.inHole && L.inHole(p.x, p.y, R + 1))) continue;
             if (fixed.some((F) => (F.x - p.x) ** 2 + (F.y - p.y) ** 2 < (F.r + R) ** 2)) continue;
             best = { a, p };
           }

@@ -2,9 +2,10 @@
   'use strict';
   const BK = root.BK || (root.BK = {});
   /* Bể Kính · render/map/terrain3d.js
-   * Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ và sông sẵn có của
-   * từng miền, dãy núi Đá Mây, đầm phá Cửa Sóng, ốc đảo Cát Hồng (terrain). Mặt nước và bờ được đánh dấu để gộp lại
-   * (render/map/water3d.js). Cần: render/map/shared3d.js, render/map/mountains3d.js. */
+   * Dáng đất riêng của sáu miền: mép đảo (shapeOf), phần đất đá phía dưới đảo (underside), mặt đảo, hồ sẵn có của từng
+   * miền, dãy núi Đá Mây, đầm phá Cửa Sóng, ốc đảo Cát Hồng (terrain). Không có sông. Hồ, đầm, ốc đảo là lỗ thủng xuyên đảo
+   * xuống biển (L.addHole: render/map/height3d.js). Dải bờ cát, hẻm núi đánh dấu để gộp lại (render/map/water3d.js).
+   * Cần: render/map/shared3d.js, render/map/mountains3d.js. */
   function create(X, MT) {
     const {
         THREE,
@@ -75,6 +76,20 @@
       L.roadSegs = BK.Roads3D ? BK.Roads3D.isleSegs(L) : null;
       L.roadW = BK.Roads3D ? BK.Roads3D.HALF : 1.9;
       L.onRoad = (x, z, r) => !!L.roadSegs && BK.Roads3D.hits(L.roadSegs, x, z, r, L.roadW + 0.6);
+      // dải cong đã trải trên mặt đảo (bãi cát, hẻm núi: ribbon) [x, z, nửa bề rộng]: hồ không thủng vào
+      L.dry = [];
+      // một đường viền hồ [[x, z], ...] đặt được không: cả viền ở vành giữa làng (bán kính 28) và dải mép đảo (cách mép 6: tường,
+      // cầu tàu, bãi đá), không lấn đường (chừa chỗ đèn, cây ven đường), khối lớn (L.props, gồm các hồ đã có) hay dải cong nào
+      // (render/map/relief3d.js cũng dùng)
+      L.holeFits = (pts) =>
+        pts.every(
+          ([x, z]) =>
+            Math.hypot(x, z) > 28 &&
+            L.inside(x, z, 6) &&
+            !L.onRoad(x, z, 1.5) &&
+            !L.blockedWild(x, z, 0.3) &&
+            !L.dry.some(([a, b, w]) => (a - x) ** 2 + (b - z) ** 2 < (w + 0.6) ** 2),
+        );
     }
     // phần đất đá phía dưới đảo: dựng theo đúng mép đảo, mỗi miền một kiểu vân
     const UNDER = {
@@ -197,6 +212,15 @@
         new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, side: THREE.DoubleSide }),
       );
       L.g.add(m);
+      // (lỗ hồ thủng cả phần này: render/map/height3d.js holes) độ sâu mặt dưới đảo tại (x, z): theo các vòng bậc đá
+      L.underMat = m.material;
+      L.underY = (x, z) => {
+        const sc = Math.hypot(x, z) / L.rOf(Math.atan2(z, x)),
+          lv = U.lv;
+        for (let j = 0; j + 1 < lv.length; j++)
+          if (sc >= lv[j + 1][1]) return lv[j][0] + ((lv[j + 1][0] - lv[j][0]) * (lv[j][1] - sc)) / (lv[j][1] - lv[j + 1][1]);
+        return lv[lv.length - 1][0];
+      };
       // nét riêng bên dưới: rễ cây rủ, băng nhũ, san hô, vân đá đỏ
       const k = new Kit(),
         at = (a, r, y) => [Math.cos(a) * r, y, Math.sin(a) * r];
@@ -255,45 +279,8 @@
       if (HT) HT.init(L);
       underside(L, st);
       L.waterMats = [];
-      const water = (geo, x, z, ry, y, col, op) => {
-        const m = new THREE.MeshStandardMaterial({
-          color: col || '#4aa3c7',
-          roughness: 0.15,
-          metalness: 0.2,
-          emissive: '#0c3b52',
-          emissiveIntensity: 0.3,
-          flatShading: true,
-          transparent: op != null,
-          opacity: op == null ? 1 : op,
-        });
-        const me = new THREE.Mesh(geo, m);
-        me.rotation.x = -Math.PI / 2;
-        me.rotation.z = ry || 0;
-        me.position.set(x, y || 0.06, z);
-        me.receiveShadow = true;
-        L.g.add(me);
-        L.waterMats.push(m);
-        if (op == null) me.userData.flatPart = 'water';
-        else {
-          me.userData.carve = true;
-          me.userData.noDrape = true;
-        }
-        return me;
-      };
-      const flat = (geo, x, z, y, col, rough) => {
-        const me = new THREE.Mesh(
-          geo,
-          new THREE.MeshStandardMaterial({ color: col, roughness: rough == null ? 0.95 : rough, flatShading: true }),
-        );
-        me.userData.flatPart = 'shore';
-        me.rotation.x = -Math.PI / 2;
-        me.position.set(x, y, z);
-        me.receiveShadow = true;
-        L.g.add(me);
-        return me;
-      };
-      // hồ: mặt nước theo một đường viền riêng r(góc), mỗi miền một dáng
-      const lakeGeo = (R, rf, n) => {
+      // hồ: lỗ thủng xuyên qua đảo xuống biển (render/map/height3d.js holes) theo một đường viền riêng r(góc), mỗi miền một dáng
+      const lakeShape = (R, rf, n) => {
         const sh = new THREE.Shape();
         for (let i = 0; i <= (n || 48); i++) {
           const t = (i / (n || 48)) * TAU,
@@ -301,12 +288,20 @@
           if (i === 0) sh.moveTo(Math.cos(t) * r, Math.sin(t) * r);
           else sh.lineTo(Math.cos(t) * r, Math.sin(t) * r);
         }
-        return new THREE.ShapeGeometry(sh);
+        return sh;
       };
-      const setLake = (x, z, R) => {
-        L.lake = [x, z];
-        L.lakeR = R;
-        prop(x, z, R + 0.4);
+      // đặt một hồ gần (x, z): đường viền (toạ độ dáng, nằm ngang: xoay ry quanh trục đứng) dời tới chỗ gần nhất cả viền vừa
+      // (L.holeFits) thành lỗ thủng của đảo, ghi vào L.props đủ phủ cả viền (người, cây, công trình tránh); trả chỗ đặt, hay null
+      const hole = (shape, x, z, ry) => {
+        const c = Math.cos(ry || 0),
+          sn = Math.sin(ry || 0),
+          sp = shape.getPoints(),
+          ring = (X, Z) => sp.map((q) => [X + q.x * c - q.y * sn, Z - (q.x * sn + q.y * c)]),
+          p = nearest(x, z, (X, Z) => L.holeFits(ring(X, Z)), true);
+        if (!p) return null;
+        L.addHole(ring(p[0], p[1]));
+        prop(p[0], p[1], Math.max(...sp.map((q) => Math.hypot(q.x, q.y))) + 0.6);
+        return p;
       };
       const k = new Kit(),
         rng = landRng(L.i),
@@ -317,37 +312,34 @@
       };
       const edge = (deg, m) => L.rOf(oa + (deg * Math.PI) / 180) - (m || 0);
       const prop = (x, z, r) => L.props.push({ x, z, r });
-      // dời một khối lớn (núi, cao nguyên, hồ, đầm, ốc đảo...) ra khỏi đường: tìm chỗ gần nhất (ra phía ngoài trước, rồi xoay
-      // dọc theo vòng) không lấn đường, vẫn trong đảo; không có chỗ thì trả null (bỏ khối đó)
-      const offRoad = (x, z, r) => {
-        if (!L.onRoad(x, z, r)) return [x, z];
+      // chỗ gần (x, z) nhất mà ok(X, Z): ra phía ngoài trước, rồi xoay dọc theo vòng (all: xoay hết vòng); không có thì null.
+      // offRoad: dời một khối lớn (núi, cao nguyên, mỏm đá...) ra khỏi đường, vẫn trong đảo; không có chỗ thì null (bỏ khối đó)
+      const DR = [0, 3, 6, 9, 12, 15, -3, -6],
+        DR_ALL = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, -3, -6, -9],
+        DA = [0, 0.08, -0.08, 0.16, -0.16, 0.25, -0.25, 0.35, -0.35, 0.5, -0.5],
+        DA_ALL = [0, ...Array.from({ length: 78 }, (_, i) => (i % 2 ? -1 : 1) * 0.08 * Math.ceil((i + 1) / 2))]; // all: xa hơn, cả vòng
+      const nearest = (x, z, ok, all) => {
         const a0 = Math.atan2(z, x),
           r0 = Math.hypot(x, z);
-        for (const dr of [0, 3, 6, 9, 12, 15, -3, -6])
-          for (const da of [0, 0.08, -0.08, 0.16, -0.16, 0.25, -0.25, 0.35, -0.35, 0.5, -0.5]) {
+        for (const dr of all ? DR_ALL : DR)
+          for (const da of all ? DA_ALL : DA) {
             const a = a0 + da,
               rr = r0 + dr,
               X = Math.cos(a) * rr,
               Z = Math.sin(a) * rr;
-            if (L.inside(X, Z, r * 0.7 + 1) && !L.onRoad(X, Z, r)) return [X, Z];
+            if (ok(X, Z)) return [X, Z];
           }
         return null;
       };
-      // hồ cuối sông lấn đường: dời hồ ra, nối dài sông tới hồ mới (bờ wb, nước ww)
-      const moveLake = (x, z, r, pts, wb, ww, bank, water) => {
-        const q = offRoad(x, z, r);
-        if (!q || (q[0] === x && q[1] === z)) return [x, z];
-        const tail = [pts[pts.length - 1], [(pts[pts.length - 1][0] + q[0]) / 2, (pts[pts.length - 1][1] + q[1]) / 2], q];
-        ribbon(tail, wb, 0.03, new THREE.MeshStandardMaterial({ color: bank, roughness: 0.9, flatShading: true, side: THREE.DoubleSide }));
-        ribbon(tail, ww, 0.08, waterMat(water));
-        return q;
-      };
+      const offRoad = (x, z, r) =>
+        L.onRoad(x, z, r) ? nearest(x, z, (X, Z) => L.inside(X, Z, r * 0.7 + 1) && !L.onRoad(X, Z, r)) : [x, z];
       // mảnh nhỏ rải rác (đá, cỏ, nón cây, khối băng nhỏ) lấn đường thì bỏ
       k.avoid = (x, z, s) => L.onRoad(x, z, s * 0.8);
-      // dải cong (sông, bờ đê): theo một dãy điểm
+      // dải cong (bãi cát, hẻm núi): theo một dãy điểm; ghi vào L.dry để hồ không thủng vào
       const ribbon = (pts, wid, y, mat) => {
         const pos = [],
           idx = [];
+        for (const [x, z] of pts) L.dry.push([x, z, wid / 2]);
         for (let s = 0; s < pts.length; s++) {
           const [x, z] = pts[s],
             [x2, z2] = pts[Math.min(pts.length - 1, s + 1)],
@@ -369,83 +361,43 @@
         gg.computeVertexNormals();
         const me = new THREE.Mesh(gg, mat);
         me.receiveShadow = true;
-        me.userData.flatPart = L.waterMats.includes(mat) ? 'water' : 'shore';
+        me.userData.flatPart = 'shore';
         L.g.add(me);
         return me;
       };
-      const waterMat = (col) => {
-        const m = new THREE.MeshStandardMaterial({
-          color: col || '#4aa3c7',
-          roughness: 0.15,
-          metalness: 0.2,
-          emissive: '#0c3b52',
-          emissiveIntensity: 0.3,
-          side: THREE.DoubleSide,
-        });
-        L.waterMats.push(m);
-        return m;
-      };
       if (L.ter === 'plains') {
-        // đồng bằng: đồng cỏ hoa dại ở hai cánh, đồng cỏ ở giữa, sông uốn khúc đổ vào hồ sen
-        // đồng cỏ hoa dại ở hai cánh (trước đây là ruộng bậc; đảo thô chưa có người cày cấy)
-        const pts = [];
-        for (let s = 0; s <= 40; s++) {
-          const u = s / 40,
-            d = -36 + u * 72,
-            r = 24 + 5 * Math.sin(u * Math.PI * 2.5) + u * 10;
-          pts.push(at(d, Math.min(edge(d, 0.6), r)));
-        }
-        ribbon(
-          pts,
-          6.2,
-          0.03,
-          new THREE.MeshStandardMaterial({ color: '#c9b48a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }),
-        );
-        ribbon(pts, 4.0, 0.08, waterMat());
-        L.river = pts;
-        L.riverBank = 6.2; // (bề rộng dải bờ: cầu qua sông ở render/map/relief3d.js)
-        // lòng sông, cả dải bờ: cây, công trình tránh
-        for (let q = 0; q < pts.length; q += 2) L.props.push({ x: pts[q][0], z: pts[q][1], r: L.riverBank / 2 + 1, river: true });
-        // hồ sen cuối sông: dáng quả thận, lá sen xanh và hoa hồng
+        // đồng bằng: đồng cỏ hoa dại ở hai cánh, đồng cỏ ở giữa, hồ hình quả thận thông xuống biển, viền cỏ lác và hoa
         {
-          const [ex, ez] = pts[pts.length - 1],
-            [bx, bz] = at(30, 27),
-            R = 6.2;
-          let x = (ex + bx) / 2,
-            z = (ez + bz) / 2;
-          [x, z] = moveLake(x, z, R * 1.25, pts, 6.2, 4.0, '#c9b48a', '#4aa3c7');
-          flat(
-            lakeGeo(R + 1.2, (t) => 1 + 0.24 * Math.sin(2 * t) + 0.1 * Math.sin(3 * t + 1)),
-            x,
-            z,
-            0.03,
-            '#c9b48a',
-          );
-          water(
-            lakeGeo(R, (t) => 1 + 0.24 * Math.sin(2 * t) + 0.1 * Math.sin(3 * t + 1)),
-            x,
-            z,
-            0,
-            0.08,
-            '#4aa3c7',
-          );
-          for (let i = 0; i < 22; i++) {
-            const a = rng() * TAU,
-              r = Math.sqrt(rng()) * R * 0.78;
-            k.cyl('#5d9e4a', x + Math.cos(a) * r, 0.1, z + Math.sin(a) * r, 0.55 + rng() * 0.35, 0.03, 8);
-            if (rng() < 0.4)
-              k.add(
-                ICO(),
-                pick(['#f28ab2', '#f7b6cf', '#ffffff'], rng()),
-                x + Math.cos(a) * r,
-                0.22,
-                z + Math.sin(a) * r,
-                0.22,
-                0.22,
-                0.22,
+          const R = 6.2,
+            rf = (t) => 1 + 0.24 * Math.sin(2 * t) + 0.1 * Math.sin(3 * t + 1),
+            p = hole(lakeShape(R, rf), ...at(15, 30), 0);
+          if (p) {
+            const [x, z] = p;
+            for (let i = 0; i < 22; i++) {
+              const t = rng() * TAU,
+                r = R * rf(t) + 0.4 + rng() * 0.8;
+              k.cone(
+                pick(['#8fb04a', '#a7b85e', '#7f9f3f'], rng()),
+                x + Math.cos(t) * r,
+                0,
+                z - Math.sin(t) * r,
+                0.18,
+                0.7 + rng() * 0.5,
+                5,
               );
+              if (rng() < 0.4)
+                k.add(
+                  ICO(),
+                  pick(['#f28ab2', '#f7b6cf', '#ffffff'], rng()),
+                  x + Math.cos(t) * r,
+                  0.75,
+                  z - Math.sin(t) * r,
+                  0.16,
+                  0.16,
+                  0.16,
+                );
+            }
           }
-          setLake(x, z, R * 1.15);
         }
         for (let i = 0; i < 26; i++) {
           const [x, z] = at((rng() - 0.5) * 70, 25 + rng() * 8);
@@ -489,58 +441,31 @@
           prop(x, z, 3.2);
           L.motherTree = [x, z];
         }
-        const pts = [];
-        for (let s = 0; s <= 30; s++) {
-          const u = s / 30,
-            d = 40 + u * 40,
-            r = 18 + u * 18 + Math.sin(u * 9) * 1.2;
-          pts.push(at(d, Math.min(edge(d, 0.6), r)));
-        }
-        ribbon(
-          pts,
-          3.2,
-          0.03,
-          new THREE.MeshStandardMaterial({ color: '#6b5a3a', roughness: 0.9, flatShading: true, side: THREE.DoubleSide }),
-        );
-        ribbon(pts, 2.0, 0.08, waterMat('#3f9cc6'));
-        L.river = pts;
-        L.riverBank = 3.2;
-        // lòng sông, cả dải bờ: cây, công trình tránh
-        for (let q = 0; q < pts.length; q += 2) L.props.push({ x: pts[q][0], z: pts[q][1], r: L.riverBank / 2 + 1, river: true });
-        // hồ rừng cuối suối: bờ lượn nhiều khúc, lau sậy, lá súng
+        // hồ rừng: bờ lượn nhiều khúc, thông xuống biển, lau sậy quanh bờ
         {
-          const [ex, ez] = pts[pts.length - 1],
-            [bx, bz] = at(70, 26),
-            R = 6.6;
-          let x = (ex + bx) / 2,
-            z = (ez + bz) / 2;
-          [x, z] = moveLake(x, z, R * 1.25, pts, 3.2, 2.0, '#6b5a3a', '#3f9cc6');
-          const rf = (t) => 1 + 0.16 * Math.sin(3 * t) + 0.1 * Math.cos(5 * t + 0.6);
-          flat(lakeGeo(R + 1, rf), x, z, 0.03, '#6b5a3a');
-          water(lakeGeo(R, rf), x, z, 0, 0.08, '#2f7f9a');
-          for (let i = 0; i < 30; i++) {
-            const t = rng() * TAU,
-              r = R * rf(t) * (0.9 + rng() * 0.2);
-            k.add(
-              UCYL(4),
-              pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()),
-              x + Math.cos(t) * r,
-              0,
-              z + Math.sin(t) * r,
-              0.07,
-              1.1 + rng() * 0.9,
-              0.07,
-              (rng() - 0.5) * 0.3,
-              0,
-              (rng() - 0.5) * 0.3,
-            );
+          const R = 6.6,
+            rf = (t) => 1 + 0.16 * Math.sin(3 * t) + 0.1 * Math.cos(5 * t + 0.6),
+            p = hole(lakeShape(R, rf), ...at(62, 28), 0);
+          if (p) {
+            const [x, z] = p;
+            for (let i = 0; i < 30; i++) {
+              const t = rng() * TAU,
+                r = R * rf(t) * (1.06 + rng() * 0.18);
+              k.add(
+                UCYL(4),
+                pick(['#6f8f3a', '#8a9a48', '#5d7a32'], rng()),
+                x + Math.cos(t) * r,
+                0,
+                z - Math.sin(t) * r,
+                0.07,
+                1.1 + rng() * 0.9,
+                0.07,
+                (rng() - 0.5) * 0.3,
+                0,
+                (rng() - 0.5) * 0.3,
+              );
+            }
           }
-          for (let i = 0; i < 9; i++) {
-            const a = rng() * TAU,
-              r = Math.sqrt(rng()) * R * 0.7;
-            k.cyl('#4f8a3f', x + Math.cos(a) * r, 0.1, z + Math.sin(a) * r, 0.4 + rng() * 0.3, 0.03, 7);
-          }
-          setLake(x, z, R * 1.2);
         }
         for (let i = 0; i < 40; i++) {
           const [x, z] = at((rng() - 0.5) * 200, 12 + rng() * 26);
@@ -578,30 +503,28 @@
           prop(x, z, 6.4);
           L.plateau = [x, z, 4.3];
         }
-        // hồ núi hình giọt nước, xanh thẫm, viền đá cuội và một hòn đảo đá nhỏ giữa hồ
+        // hồ núi hình giọt nước thông xuống biển, viền đá cuội
         {
           const R = 5.6,
-            [x, z] = offRoad(...at(30, 22), R * 1.15) || at(30, 22),
-            rf = (t) => 0.72 + 0.36 * Math.cos(t) * Math.abs(Math.cos(t * 0.5)) + 0.06 * Math.sin(4 * t);
-          const ry = -(oa + 0.6); // mũi giọt nước chĩa về phía trong đảo
-          flat(lakeGeo(R + 0.9, rf), x, z, 0.03, '#9d9589').rotation.z = ry;
-          water(lakeGeo(R, rf), x, z, ry, 0.08, '#2c6f9a');
-          for (let i = 0; i < 18; i++) {
-            const t = (i / 18) * TAU,
-              r = R * rf(t) + 0.5;
-            k.blob(
-              DOD(),
-              pick(['#8b8577', '#7c776b', '#a39b8e'], rng()),
-              x + Math.cos(t + ry) * r,
-              0.15,
-              z - Math.sin(t + ry) * r,
-              0.35 + rng() * 0.35,
-              0.6,
-            );
+            rf = (t) => 0.72 + 0.36 * Math.cos(t) * Math.abs(Math.cos(t * 0.5)) + 0.06 * Math.sin(4 * t),
+            ry = -(oa + 0.6), // mũi giọt nước chĩa về phía trong đảo
+            p = hole(lakeShape(R, rf), ...at(30, 22), ry);
+          if (p) {
+            const [x, z] = p;
+            for (let i = 0; i < 18; i++) {
+              const t = (i / 18) * TAU,
+                r = R * rf(t) + 0.5;
+              k.blob(
+                DOD(),
+                pick(['#8b8577', '#7c776b', '#a39b8e'], rng()),
+                x + Math.cos(t + ry) * r,
+                0.15,
+                z - Math.sin(t + ry) * r,
+                0.35 + rng() * 0.35,
+                0.6,
+              );
+            }
           }
-          k.blob(DOD(), '#7f7a6e', x, 0.1, z, 0.9, 0.8);
-          k.cone('#3f7a4c', x + 0.2, 0.6, z, 0.4, 1.2, 6);
-          setLake(x, z, R * 1.1);
         }
         for (let b = 0; b < 26; b++) {
           const [x, z] = at((rng() - 0.5) * 190, 20 + rng() * 14);
@@ -610,24 +533,16 @@
         }
       }
       if (L.ter === 'tundra') {
-        // băng nguyên: hồ đóng băng, sống băng, vách sông băng, khe nứt, mảng băng trôi tách khỏi đảo
-        // hồ băng sáu cạnh, mặt băng nứt
+        // băng nguyên: hồ băng, sống băng, vách sông băng, khe nứt, mảng băng trôi tách khỏi đảo
+        // hồ sáu cạnh thông xuống biển
         {
           const R = 7.4,
-            [x, z] = offRoad(...at(-22, 23), R * 1.1) || at(-22, 23),
             rf = (t) => {
               const s6 = Math.PI / 3,
                 u = (((t % s6) + s6) % s6) - s6 / 2;
               return (Math.cos(s6 / 2) / Math.cos(u)) * (1 + 0.05 * Math.sin(7 * t));
             };
-          flat(lakeGeo(R + 0.8, rf, 72), x, z, 0.03, '#eef6fa').rotation.z = 0.3;
-          water(lakeGeo(R, rf, 72), x, z, 0.3, 0.06, '#cfeaf5');
-          for (let i = 0; i < 6; i++) {
-            const a = rng() * TAU,
-              l = 2 + rng() * 3.5;
-            k.box('#9cc7dc', x + Math.cos(a) * l * 0.5, 0.075, z + Math.sin(a) * l * 0.5, l, 0.01, 0.08, -a);
-          }
-          setLake(x, z, R * 1.05);
+          hole(lakeShape(R, rf, 72), ...at(-22, 23), 0.3);
         }
         {
           const [x, z] = offRoad(...at(8, Math.min(edge(8, 4), 32)), 8) || at(8, Math.min(edge(8, 4), 32));
@@ -675,38 +590,8 @@
         L.aurora = true;
       }
       if (L.ter === 'coast') {
-        // biển: đầm phá xanh ngọc khoét vào nửa ngoài, đảo nhỏ có dừa, san hô dưới nước, bãi cát dài
-        const LR = 9.5,
-          lagoon = offRoad(...at(0, 26), LR + 2) || at(0, 26);
-        // đầm phá hình bông hoa năm cánh, bãi cát bao quanh
-        const lagoonF = (t) => 1 + 0.2 * Math.cos(5 * t) + 0.05 * Math.sin(9 * t);
-        flat(lakeGeo(LR + 2.6, lagoonF, 80), lagoon[0], lagoon[1], 0.03, '#ecd9a8');
-        const lw = water(lakeGeo(LR, lagoonF, 80), lagoon[0], lagoon[1], 0, 0.1, '#3fc0c8', 0.78);
-        lw.renderOrder = 2;
-        for (let i = 0; i < 26; i++) {
-          const a = rng() * TAU,
-            r = rng() * (LR - 1.2);
-          k.blob(
-            ICO(),
-            pick(['#ff8f7a', '#ffb36b', '#e97ab0', '#7fd1c6', '#f4e3a1', '#c46a9a'], rng()),
-            lagoon[0] + Math.cos(a) * r,
-            0.02,
-            lagoon[1] + Math.sin(a) * r,
-            0.25 + rng() * 0.35,
-            0.6,
-          );
-        }
-        for (const [dx, dz, R] of [
-          [-3.2, 2.2, 1.6],
-          [3.6, -1.2, 1.3],
-          [0.6, -4.4, 1.1],
-        ]) {
-          k.add(SPHG(), '#ecd9a8', lagoon[0] + dx, 0, lagoon[1] + dz, R, 0.35, R);
-          k.add(UCYL(5), '#8a6a46', lagoon[0] + dx, 0.2, lagoon[1] + dz, 0.12, 2.4, 0.12, 0, 0.18, 0.1);
-          k.blob(ICO(), '#5f9f4a', lagoon[0] + dx + 0.4, 2.6, lagoon[1] + dz + 0.2, 1.1, 0.3);
-        }
-        prop(lagoon[0], lagoon[1], LR + 1.6);
-        L.lagoon = [lagoon[0], lagoon[1], LR];
+        // biển: bãi cát dài dọc mép (trải trước để đầm tránh), đầm phá hình bông hoa khoét vào nửa ngoài, thông xuống biển,
+        // dừa quanh bờ
         const sandPts = [];
         for (let s = 0; s <= 50; s++) {
           const d = -120 + s * 4.8;
@@ -718,6 +603,20 @@
           0.025,
           new THREE.MeshStandardMaterial({ color: '#ecd9a8', roughness: 0.95, flatShading: true, side: THREE.DoubleSide }),
         );
+        const LR = 9.5,
+          lagoonF = (t) => 1 + 0.2 * Math.cos(5 * t) + 0.05 * Math.sin(9 * t),
+          lagoon = hole(lakeShape(LR, lagoonF, 80), ...at(0, 26), 0);
+        // dừa trên bờ quanh đầm
+        if (lagoon)
+          for (let i = 0; i < 5; i++) {
+            const t = (i / 5) * TAU + 0.3,
+              r = LR * lagoonF(t) + 1.6,
+              px = lagoon[0] + Math.cos(t) * r,
+              pz = lagoon[1] - Math.sin(t) * r;
+            k.add(UCYL(5), '#8a6a46', px, 0.1, pz, 0.12, 2.4, 0.12, 0, 0.18, 0.1);
+            k.blob(ICO(), '#5f9f4a', px + 0.4, 2.5, pz + 0.2, 1.1, 0.3);
+            prop(px, pz, 0.8);
+          }
         for (let r2 = 0; r2 < 12; r2++) {
           const d = -110 + rng() * 220,
             [x, z] = at(d, edge(d, 0.8));
@@ -785,10 +684,9 @@
           );
           L.canyon = pts;
         }
-        // ốc đảo hình trăng khuyết, bờ cát sẫm và hàng cỏ lác
+        // ốc đảo hình trăng khuyết thông xuống biển
         {
           const R = 5.2,
-            [x, z] = offRoad(...at(62, 20), R + 1) || at(62, 20),
             rot = -(oa + (62 * Math.PI) / 180);
           const cres = (rr) => {
             const sh = new THREE.Shape();
@@ -803,13 +701,9 @@
               const t = -2.0 + (i / 40) * 4.0;
               sh.lineTo(Math.cos(t) * rr * 0.62 + rr * 0.42, Math.sin(t) * rr * 0.62);
             }
-            return new THREE.ShapeGeometry(sh);
+            return sh;
           };
-          flat(cres(R + 1.1), x, z, 0.03, '#b98a55').rotation.z = rot;
-          water(cres(R), x, z, rot, 0.07, '#3fb0b8');
-          L.oasis = [x, z];
-          L.lakeR = R;
-          prop(x, z, R + 0.6);
+          L.oasis = hole(cres(R), ...at(62, 20), rot);
         }
       }
       if (k.b.length || k.l.length) meshOf(k, bodyMat, L.g, 0, 0, 0);

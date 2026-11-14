@@ -11,10 +11,10 @@
    *   desert   Cát Hồng: cồn cát lưỡi liềm một sườn thoải một sườn dốc, một bậc cao nguyên đá
    * Mặt đất là một lưới cực (K vòng × S múi, đỉnh vòng ngoài nằm đúng mép đảo, cao độ 0). Cao độ một điểm:
    *   mép (thoải hay dựng) × (nền + dáng lớn M + gồ ghề W chỉ ở ngoài đường)  →  khoét nước  →  nền công trình (pads)
-   * Đường của đảo đi trên dáng lớn M (thoải), gồ ghề tránh mặt đường; sông, hồ, ao khoét xuống dưới mặt nước; mỗi công trình
+   * Đường của đảo đi trên dáng lớn M (thoải), gồ ghề tránh mặt đường; hồ, ao thủng xuyên đảo xuống biển (holes); mỗi công trình
    * có một nền phẳng ở cao độ chỗ nó đứng (đất quanh nền nối thoải vào đất tự nhiên).
    * Dùng:
-   *   L.surfAt(x, z)   cao độ chỗ đứng (toạ độ đảo); trong lòng sông, hồ trả 0 (mặt nước); ngoài đảo trả 0
+   *   L.surfAt(x, z)   cao độ chỗ đứng (toạ độ đảo); ngoài đảo trả 0
    *   L.setPads(list)  nền công trình của thời đang vẽ: [{ x, z, r, y? (bỏ: lấy cao độ đất lúc đó, sau các nền trước), blend? }]; dựng lại lưới, phủ
    *                    lại các khối phủ theo đất (L.drape), đặt lại cây; tăng L.hVer (ai giữ cao độ thì theo số này mà cập nhật)
    *   L.drape(obj)     ghi một nhóm khối vẽ ở cao độ 0 (đá, núi, lớp đường, tường) để nâng từng đỉnh theo đất
@@ -204,8 +204,7 @@
       Hs.set(nat);
       H.set(nat);
       L.hVer = 0;
-      // (trên cầu qua sông: mặt cầu, render/map/relief3d.js ghi L.bridges)
-      L.surfAt = (x, z) => onBridge(L, x, z, Math.max(0, sample(L.hf, H, x, z)));
+      L.surfAt = (x, z) => Math.max(0, sample(L.hf, H, x, z));
       L.natAt = (x, z) => Math.max(0, sample(L.hf, Hs, x, z));
       L.padY = (x, z, r) => {
         let s = L.natAt(x, z),
@@ -229,6 +228,33 @@
         rebuild(L);
       };
       L.collectWater = () => collectWater(L);
+      // lỗ thủng xuyên đảo xuống biển (hồ, ao, đầm, ốc đảo: render/map/terrain3d.js, relief3d.js): đường viền [[x, z], ...]
+      L.holes = [];
+      L.addHole = (pts) => L.holes.push(pts);
+      // (x, z) nằm trong một lỗ, hay cách mép lỗ chưa tới m (công trình, đường: tools/check-footing.js)
+      L.inHole = (x, z, m) => L.holes.some((poly) => inPoly(poly, x, z) || (m > 0 && edgeDist(poly, x, z) < m));
+    }
+    // điểm (x, z) trong đường viền kín [[x, z], ...] (đếm số lần cắt cạnh) và khoảng cách tới đường viền đó
+    function inPoly(poly, x, z) {
+      let inside = false;
+      for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) {
+        const [xa, za] = poly[a],
+          [xb, zb] = poly[b];
+        if (za > z !== zb > z && x < ((xb - xa) * (z - za)) / (zb - za) + xa) inside = !inside;
+      }
+      return inside;
+    }
+    function edgeDist(poly, x, z) {
+      let d = Infinity;
+      for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) {
+        const [xa, za] = poly[a],
+          [xb, zb] = poly[b],
+          dx = xb - xa,
+          dz = zb - za,
+          t = Math.max(0, Math.min(1, ((x - xa) * dx + (z - za) * dz) / (dx * dx + dz * dz || 1)));
+        d = Math.min(d, Math.hypot(x - xa - dx * t, z - za - dz * t));
+      }
+      return d;
     }
 
     // cao độ tại (x, z): nội suy đúng theo tam giác của lưới vẽ (người và vật đứng khít mặt đất)
@@ -267,26 +293,16 @@
       return h00 * v0 + h11 * v1 + h01 * (1 - v0 - v1);
     }
 
-    /* ---------- Khoét nước: mọi mặt nước của đảo (hồ, ao, đầm, sông) hạ đất xuống dưới mặt nước, bờ nối thoải ---------- */
-    // ghi các tam giác mặt nước (toạ độ đảo) trước khi chúng được gộp (render/map/water3d.js); line: dải khoét theo dãy điểm (hẻm núi)
+    /* ---------- Khoét nước: mỗi lỗ hồ hạ đất quanh mép xuống thấp hơn mặt nước, bờ nối thoải ---------- */
+    // tam giác của từng lỗ (toạ độ đảo); line: dải khoét theo dãy điểm (hẻm núi khô của Cát Hồng)
     function collectWater(L) {
-      const F = L.hf,
-        v = new THREE.Vector3();
-      for (const m of L.g.children) {
-        if (!m.isMesh || !(m.userData.flatPart === 'water' || m.userData.carve)) continue;
-        m.updateMatrix();
-        const g = m.geometry,
-          P = g.attributes.position,
-          I = g.index,
-          n = I ? I.count : P.count,
-          pt = (q) => {
-            v.fromBufferAttribute(P, I ? I.getX(q) : q).applyMatrix4(m.matrix);
-            return [v.x, v.z];
-          };
-        for (let q = 0; q < n; q += 3) {
-          const a = pt(q),
-            b = pt(q + 1),
-            c = pt(q + 2);
+      const F = L.hf;
+      for (const poly of L.holes) {
+        const pts = poly.map(([x, z]) => new THREE.Vector2(x, z));
+        for (const [i0, i1, i2] of THREE.ShapeUtils.triangulateShape(pts, [])) {
+          const a = poly[i0],
+            b = poly[i1],
+            c = poly[i2];
           F.tris.push([
             a[0],
             a[1],
@@ -326,18 +342,6 @@
       }
       return inside === 0 ? -1 : out;
     }
-    // chỗ đứng trên cầu qua sông: cao hơn đất thì lấy mặt cầu (mặt cầu dốc đều từ đầu y0 tới đầu y1)
-    function onBridge(L, x, z, h) {
-      if (!L.bridges) return h;
-      for (const b of L.bridges) {
-        const dx = x - b.x,
-          dz = z - b.z,
-          sl = dx * b.ux + dz * b.uz,
-          t = -dx * b.uz + dz * b.ux;
-        if (Math.abs(sl) <= b.half && Math.abs(t) <= b.hw) h = Math.max(h, b.y0 + ((b.y1 - b.y0) * (sl / b.half + 1)) / 2);
-      }
-      return h;
-    }
     function carve(L) {
       const F = L.hf,
         { nat, Hs, road, px, pz } = F,
@@ -348,8 +352,7 @@
         if (F.tris.length) {
           const d = waterD(F, px[v], pz[v]);
           if (d < BANK) {
-            // (cả dưới đường: sông chảy liền; đường qua sông đi trên cầu, render/map/relief3d.js riverBridges)
-            // (sát mép nước, trong 0,8, đất vẫn thấp hơn mặt nước: lưới đất thưa hơn bề rộng sông hẹp cũng không lấp sông)
+            // (sát mép lỗ, trong 0,8, đất thấp xuống: bờ nghiêng về phía lỗ)
             const tgt = d < 0 ? F.lift[v] - 0.4 : lerp(F.lift[v] - 0.15, h, sstep(0.8, BANK, d));
             h = Math.min(h, tgt);
           }
@@ -499,7 +502,7 @@
           if (dx > R || dx < -R || dz > R || dz < -R) continue;
           const d = Math.hypot(dx, dz);
           if (d >= R) continue;
-          // (lòng sông, hồ đã khoét: nền công trình không lấp; mép công trình sát sông thì chìa ra trên mặt nước)
+          // (chỗ lỗ hồ đã khoét: nền công trình không lấp)
           if (Hs[v] < F.lift[v] - 0.2) continue;
           H[v] = lerp(H[v], y, 1 - sstep(p.r, R, d));
         }
@@ -612,15 +615,103 @@
       o.geometry.computeVertexNormals();
       o.geometry.computeBoundingSphere();
     }
+    /* ---------- Lỗ thủng xuống biển (design/ke-hoach-buoc-28.md) ----------
+     * Hồ, ao, đầm, ốc đảo (L.holes) thủng xuyên qua mặt đảo và phần đất đá phía dưới: nhìn qua lỗ là mặt biển thật (sea3d.js),
+     * nhảy xuống là chìm thẳng vào biển, lặn tiếp ra tới đáy bể. Mặt đảo và mặt dưới đảo bỏ không vẽ chỗ lỗ (mặt nạ lỗ: ảnh
+     * MASK × MASK phủ đảo, đọc trong shader); quanh mép lỗ một vách đất đá từ mặt đất xuống tới mặt dưới đảo (L.underY). */
+    const MASK = 512;
+    function holes(L, st) {
+      if (!L.holes.length) return;
+      let B = 0;
+      for (const poly of L.holes) for (const [x, z] of poly) B = Math.max(B, Math.abs(x), Math.abs(z));
+      B += 2;
+      const data = new Uint8Array(MASK * MASK * 4),
+        px = (x) => ((x / B + 1) / 2) * MASK - 0.5;
+      for (const poly of L.holes) {
+        let x0 = 1e9,
+          x1 = -1e9,
+          z0 = 1e9,
+          z1 = -1e9;
+        for (const [x, z] of poly) {
+          x0 = Math.min(x0, x);
+          x1 = Math.max(x1, x);
+          z0 = Math.min(z0, z);
+          z1 = Math.max(z1, z);
+        }
+        for (let j = Math.max(0, Math.floor(px(z0))); j <= Math.min(MASK - 1, Math.ceil(px(z1))); j++)
+          for (let i = Math.max(0, Math.floor(px(x0))); i <= Math.min(MASK - 1, Math.ceil(px(x1))); i++) {
+            const x = (((i + 0.5) / MASK) * 2 - 1) * B,
+              z = (((j + 0.5) / MASK) * 2 - 1) * B;
+            if (inPoly(poly, x, z)) data[(j * MASK + i) * 4] = 255;
+          }
+      }
+      const tex = new THREE.DataTexture(data, MASK, MASK, THREE.RGBAFormat);
+      tex.magFilter = tex.minFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+      const U = { uHoleMap: { value: tex }, uHoleB: { value: B } };
+      for (const m of [L.groundMat, L.underMat]) {
+        if (!m) continue;
+        const prev = m.onBeforeCompile;
+        m.onBeforeCompile = (sh, r) => {
+          if (prev) prev(sh, r);
+          Object.assign(sh.uniforms, U);
+          sh.vertexShader =
+            'varying vec2 vHoleP;\n' +
+            sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvHoleP = transformed.xz;');
+          sh.fragmentShader =
+            'uniform sampler2D uHoleMap;\nuniform float uHoleB;\nvarying vec2 vHoleP;\n' +
+            sh.fragmentShader.replace(
+              'void main() {',
+              'void main() {\n if (texture2D(uHoleMap, vHoleP / (2.0 * uHoleB) + 0.5).r > 0.5) discard;',
+            );
+        };
+        const key = m.customProgramCacheKey.bind(m);
+        m.customProgramCacheKey = () => key() + '|holes';
+        m.needsUpdate = true;
+      }
+      // vách quanh mép lỗ: từ mặt đất (đã khoét) xuống mặt dưới đảo; màu đất đá theo tầng như mặt dưới đảo
+      const F = L.hf,
+        strata = st.rock.map((h) => new THREE.Color(h)),
+        pos = [],
+        col = [];
+      for (const poly of L.holes) {
+        const top = poly.map(([x, z]) => Math.max(0, sample(F, F.Hs, x, z)) + 0.04),
+          bot = poly.map(([x, z]) => (L.underY ? L.underY(x, z) : -3) - 0.3);
+        for (let a = 0; a < poly.length; a++) {
+          const b = (a + 1) % poly.length,
+            P = [
+              [poly[a][0], top[a], poly[a][1], 0],
+              [poly[b][0], top[b], poly[b][1], 0],
+              [poly[b][0], bot[b], poly[b][1], 1],
+              [poly[a][0], bot[a], poly[a][1], 1],
+            ];
+          for (const q of [0, 1, 2, 0, 2, 3]) {
+            const [x, y, z, d] = P[q],
+              c = strata[Math.min(strata.length - 1, Math.round(d * (strata.length - 1)))];
+            pos.push(x, y, z);
+            col.push(c.r, c.g, c.b);
+          }
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      const wall = new THREE.Mesh(
+        g,
+        new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, side: THREE.DoubleSide }),
+      );
+      wall.userData.noDrape = true;
+      wall.name = 'hồ thủng xuống biển';
+      L.g.add(wall);
+    }
     function finish(L, st) {
-      // mặt nước, bờ (phẳng, không phủ theo đất) nâng theo độ nâng của đất tại từng đỉnh: giữa đảo nâng đủ L.lift, chỗ đất thoải
-      // xuống biển (cổng chính, hai đầu bến cầu, bãi biển) và vách mép đảo thì thấp dần: sông chảy dốc xuống theo, không lơ
-      // lửng trên chỗ đất thoải; phần nâng nguyên khối (cầu qua sông, khe núi) nâng đều L.lift
-      for (const o of L.g.children)
-        if (o.userData.flatPart && o.isMesh) liftFlat(L, o);
-        else if (o.userData.flatLift || o.userData.carve) o.position.y += L.lift || 0;
+      // dải phẳng (bãi cát, hẻm núi; không phủ theo đất) nâng theo độ nâng của đất tại từng đỉnh: giữa đảo nâng đủ L.lift, chỗ
+      // đất thoải xuống biển (cổng chính, hai đầu bến cầu, bãi biển) và vách mép đảo thì thấp dần
+      for (const o of L.g.children) if (o.userData.flatPart && o.isMesh) liftFlat(L, o);
       carve(L);
       build(L, st);
+      holes(L, st);
       for (const o of L.g.children.slice())
         if (o !== L.hf.mesh && !o.userData.noDrape && !o.userData.flatPart && !o.isInstancedMesh) L.drape(o);
     }

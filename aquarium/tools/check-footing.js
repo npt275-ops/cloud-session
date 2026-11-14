@@ -1,4 +1,4 @@
-// Bể Kính · tools/check-footing.js · Quét công trình thò ra ngoài đảo: 6 đảo × 12 thời (design/ke-hoach-buoc-14.md)
+// Bể Kính · tools/check-footing.js · Quét công trình thò ra ngoài đảo hay đè lên lỗ hồ: 6 đảo × 12 thời (design/ke-hoach-buoc-14.md, 28)
 // Mở trang thật, đặt cả sáu đảo vào từng thời, dựng hết công trình, đo phần sát đất của từng món (render/buildings3d.js footing)
 // so với mép đảo. Công trình ngoài khơi (khơi) và cầu tàu ở bờ (bờ: dock) đứng trên nước có chủ ý, chỉ in để biết. Mã thoát 1 nếu có
 // món khác thò quá MAX.
@@ -42,7 +42,7 @@ const ROOT = path.join(__dirname, '..'),
   });
   await b.close();
   const by = {};
-  for (const r of rows) {
+  for (const r of rows.filter((r) => r.over > 0.05)) {
     if (r.cls === 'bờ' && r.kind === 'dock') r.cls = 'khơi';
     (by[r.cls] || (by[r.cls] = [])).push(r);
   }
@@ -63,10 +63,16 @@ const ROOT = path.join(__dirname, '..'),
     for (const r of over.slice(0, +(process.env.SHOW || 6)))
       console.log('   thời ' + r.lv + ' đảo ' + r.i + ' ' + r.kind + ' thò ' + r.over + ' tại ' + r.at);
   }
+  // phần sát đất rơi vào lỗ hồ thủng xuống biển (design/ke-hoach-buoc-28.md): mọi loại, kể cả đường và công trình ngoài khơi
+  const holed = rows.filter((r) => r.hole > 0).sort((a, b) => b.hole - a.hole);
+  bad += holed.length;
+  console.log((holed.length ? 'KHÔNG ĐẠT ' : 'ĐẠT ') + 'trên hồ: ' + holed.length + ' món có phần sát đất rơi vào lỗ hồ');
+  for (const r of holed.slice(0, +(process.env.SHOW || 6)))
+    console.log('   thời ' + r.lv + ' đảo ' + r.i + ' ' + r.cls + ' ' + r.kind + ': ' + r.hole + ' đỉnh, tại ' + r.hAt);
   if (errs.length) {
     console.log('LỖI TRANG: ' + errs.slice(0, 3).join(' | '));
     bad++;
   }
-  console.log(bad ? 'KHÔNG ĐẠT: ' + bad : 'ĐẠT: không công trình nào thò ra ngoài đảo');
+  console.log(bad ? 'KHÔNG ĐẠT: ' + bad : 'ĐẠT: không công trình nào thò ra ngoài đảo hay đè lên hồ');
   process.exit(bad ? 1 : 0);
 })();

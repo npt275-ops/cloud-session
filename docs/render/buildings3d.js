@@ -1139,7 +1139,8 @@
         .filter(Boolean);
     }
     // bài kiểm tra (tools/check-footing.js): mọi thứ đang hiện trên một đảo (công trình trong làng, ngoài làng, cổng, lớp đường và
-    // tường, bãi làm việc): phần sát đất (dưới lowY) thò ra ngoài mép đảo bao xa. Trả [{ kind, cls, over }] của món có over > 0;
+    // tường, bãi làm việc): phần sát đất (dưới lowY) thò ra ngoài mép đảo bao xa, và bao nhiêu đỉnh sát đất rơi vào lỗ hồ thủng
+    // xuống biển (L.inHole: render/map/height3d.js). Trả [{ kind, cls, over, hole }] của món có over > 0 hay hole > 0;
     // cls: 'làng' | 'bờ' | 'khơi' | 'rừng' | 'cổng' | 'đường' | 'bãi'. Công trình ngoài khơi (sea) đứng trên nước có chủ ý.
     function footing(i, lowY) {
       const sh = shown[i];
@@ -1152,7 +1153,9 @@
       inv.copy(L.g.matrixWorld).invert();
       const measure = (g) => {
         let over = 0,
-          at = null;
+          at = null,
+          hole = 0,
+          hAt = null;
         g.traverse((o) => {
           if (!o.isMesh || !o.visible || !o.geometry.attributes.position) return;
           const A = o.geometry.attributes.position;
@@ -1160,6 +1163,10 @@
             v.fromBufferAttribute(A, j).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
             const up = v.y - (sh.L.surfAt ? sh.L.surfAt(v.x, v.z) : 0);
             if (up > (lowY || 1) || v.y < -0.3) continue; // (sát đất: tính từ mặt đất chỗ đó)
+            if (L.inHole && L.inHole(v.x, v.z, 0)) {
+              hole++;
+              hAt = hAt || [Math.round(v.x), Math.round(v.z)];
+            }
             const d = Math.hypot(v.x, v.z) - L.rOf(Math.atan2(v.z, v.x));
             if (d > over) {
               over = d;
@@ -1167,7 +1174,7 @@
             }
           }
         });
-        return { over, at };
+        return { over, at, hole, hAt };
       };
       for (const P of [...sh.pieces, ...sh.standing]) {
         if (!P.g.visible || P.gone || P.dead || !P.baked) continue;
@@ -1183,13 +1190,14 @@
                     ? 'rừng'
                     : 'làng',
           m = measure(P.g);
-        if (m.over > 0.05) out.push({ kind: P.kind, cls, over: +m.over.toFixed(1), at: m.at });
+        if (m.over > 0.05 || m.hole) out.push({ kind: P.kind, cls, over: +m.over.toFixed(1), hole: m.hole, at: m.at, hAt: m.hAt });
       }
       if (sh.wy)
         for (const Y of sh.wy.yards)
           if (Y.g.visible) {
             const m = measure(Y.g);
-            if (m.over > 0.05) out.push({ kind: Y.key || 'bãi', cls: 'bãi', over: +m.over.toFixed(1), at: m.at });
+            if (m.over > 0.05 || m.hole)
+              out.push({ kind: Y.key || 'bãi', cls: 'bãi', over: +m.over.toFixed(1), hole: m.hole, at: m.at, hAt: m.hAt });
           }
       return out;
     }
