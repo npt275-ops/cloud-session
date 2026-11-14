@@ -76,3 +76,20 @@ Sửa:
   Kiểm thò ra ngoài đảo vẫn đạt.
 - Ảnh chụp từ trên xuống từng hồ: nhìn qua lỗ thấy biển, vách đá quanh mép, không đường nào cắt ngang.
 - Kiểm thử: 92/92 đạt.
+
+## 5. Sóng đứng yên trên máy bật "giảm chuyển động"
+
+- Báo lỗi: sóng biển không chuyển động.
+- Nguyên nhân: sea3d.js animate chỉ cho thời gian của sóng chạy khi máy không bật "giảm chuyển động"
+  (prefers-reduced-motion). Bật cài đặt này thì mặt biển đứng yên hẳn. Máy hay bật sẵn cài đặt này:
+  - iPhone, iPad: Reduce Motion;
+  - Windows: tắt hiệu ứng động;
+  - Android: xoá hoạt ảnh.
+- Sửa: bật "giảm chuyển động" thì sóng chậm lại còn 0,4 lần, như mây và tuyết đang làm, không đứng yên nữa.
+  Nước dưới đáy bể (render/deep3d.js) cũng vậy.
+- Đo độ cao mặt biển tại một điểm, ba lần cách nhau 1,2 giây:
+
+  | Chế độ | Trước khi sửa | Sau khi sửa |
+  |---|---|---|
+  | Bình thường | thay đổi | thay đổi |
+  | Giảm chuyển động | −0,946 cả ba lần | −0,68, −0,49, −0,76 |

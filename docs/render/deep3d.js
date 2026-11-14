@@ -148,7 +148,7 @@
       darkFog = new THREE.Color('#06202f');
     let wasUnder = false;
     function animate(dt, t, night, cam) {
-      const ts = reduce ? 0 : t * 0.001;
+      const ts = t * 0.001 * (reduce ? 0.4 : 1); // (giảm chuyển động: chậm lại, không đứng yên)
       WU.uT.value = ts;
       for (const f of anims) f(ts); // (phần động: đảo lơ lửng, vòng quay của Thành Vỏ Ốc Xà Cừ)
       glowMat.color.setScalar(0.8 + 0.2 * Math.sin(ts * 1.3));

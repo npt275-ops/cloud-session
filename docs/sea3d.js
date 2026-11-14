@@ -262,10 +262,7 @@
     fitBody();
 
     function animate(dt, t, night, storm) {
-      const ts = t * 0.001;
-      if (!reduce) {
-        tNow = ts;
-      } // (giảm chuyển động: sóng đứng yên)
+      tNow = t * 0.001 * (reduce ? 0.4 : 1); // (máy bật giảm chuyển động: sóng chậm lại như mây, không đứng yên)
       ampNow += (1.15 + 0.75 * (storm || 0) - ampNow) * Math.min(1, (dt || 16) / 3000); // giông bão: sóng lớn dần
       U.uT.value = tNow;
       U.uAmp.value = ampNow;
