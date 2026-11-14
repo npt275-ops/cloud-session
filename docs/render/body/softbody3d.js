@@ -236,7 +236,15 @@
     }
     // người vào nhà thì ẩn thân mềm
     function visibility(V) {
-      for (const f of st.list) if (f.soft) f.soft.mesh.visible = f.soft.line.visible = !f.inside && V.visible;
+      for (const f of st.list)
+        if (f.soft) {
+          f.soft.mesh.visible = f.soft.line.visible = !f.inside && V.visible;
+          f.soft.mesh.material = st.body || mats(G.THREE).body;
+        }
+    }
+    // đổi vật liệu thân (render/style/painterly3d.js: tô kiểu tranh vẽ); null: trả lại nhựa mờ
+    function setBody(m) {
+      st.body = m;
     }
     function clear() {
       for (const f of st.list) {
@@ -248,6 +256,7 @@
     G.softCrowd = {
       update,
       clear,
+      setBody,
       get count() {
         return st.list.size;
       },

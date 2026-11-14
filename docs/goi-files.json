@@ -675,6 +675,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/style/painterly3d.js",
+  "src": "render/style/painterly3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/tank3d.js",
   "src": "render/tank3d.js",
   "mode": 420

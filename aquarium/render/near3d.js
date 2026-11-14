@@ -296,7 +296,7 @@
       flowers: flowers.visible ? flowers.count : 0,
       pebbles: pebbles.visible ? pebbles.count : 0,
     });
-    G.near = { set, counts, KIND, R };
+    G.near = { set, counts, freeAt, KIND, R }; // (freeAt: render/style/painterly3d.js dùng chung chỗ được mọc)
   }
   BK.Near3D = { setup, KIND };
 })(typeof self !== 'undefined' ? self : globalThis);
