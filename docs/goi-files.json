@@ -350,6 +350,36 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/magic/soul/blackhole/blackhole.js",
+  "src": "magic/soul/blackhole/blackhole.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/blackhole/hole3d.js",
+  "src": "magic/soul/blackhole/hole3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/blackhole/inside.js",
+  "src": "magic/soul/blackhole/inside.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/blackhole/plan.js",
+  "src": "magic/soul/blackhole/plan.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/blackhole/pull.js",
+  "src": "magic/soul/blackhole/pull.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/blackhole/warp3d.js",
+  "src": "magic/soul/blackhole/warp3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/magic/soul/cast.js",
   "src": "magic/soul/cast.js",
   "mode": 420
@@ -357,6 +387,11 @@
  {
   "path": "BeKinh/magic/soul/recipes.js",
   "src": "magic/soul/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/soul/sounds.js",
+  "src": "magic/soul/sounds.js",
   "mode": 420
  },
  {

@@ -1382,6 +1382,8 @@
             S3 = f.rig.root.scale;
           S3.set(S3.x * (1 + q * 0.55), S3.y * (1 - q), S3.z * (1 + q * 0.55));
         }
+        // phép đang giữ thân người này (hố đen hút: magic/soul/blackhole/pull.js): tự đặt chỗ, hướng, cỡ của gốc khung
+        if (f.grab) f.grab(f.rig.root, f);
         f.rig.root.updateMatrixWorld(true);
         // thanh máu trên đầu: người đang ra trận, người bị thương chưa hồi (logic/war.js p.hp)
         // (thanh máu từng người: người đã mất máu, hay người ra trận ở gần máy quay; ở xa thì game/cities.js vẽ thanh tổng của cả đội)
@@ -1707,6 +1709,10 @@
       spook,
       setZones: (list) => (zones = list || []),
       folk: (key) => folks.get(key) || null,
+      // mọi người đang được vẽ của đảo: fn(dữ liệu vẽ, khoá)
+      each(fn) {
+        for (const [k, f] of folks) fn(f, k);
+      },
       get count() {
         return folks.size;
       },

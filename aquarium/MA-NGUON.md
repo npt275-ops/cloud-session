@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 237 tệp, 53107 dòng.
+Tổng: 245 tệp, 53818 dòng.
 
 ## (gốc)
 
@@ -32,7 +32,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/possess-cam.js` | 123 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
 | `game/possess-jump.js` | 94 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
 | `game/possess-swim.js` | 50 | Bơi của nhân vật đang nhập hồn (khi nước ngập quá DEPTH_IN: Đại hồng thuỷ, dưới biển) | `BK.PossessSwim` |  |
-| `game/possess.js` | 418 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
+| `game/possess.js` | 425 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/spellbook.js` | 264 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
@@ -111,7 +111,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
 | `render/tank3d.js` | 61 | Bể kính bao quanh sáu đảo: vòm kính trong, vòng đồng ở chân, các núm đồng; đá trôi lơ lửng bên ngoài bể (nhấp nhô) | `BK.Tank3D` G: 2 dịch vụ | `render/map/map3d.js` |
 | `render/travel3d.js` | 231 | Đoàn buôn đi giữa các đảo … | `BK.Travel3D` | `sea3d.js` |
-| `render/village3d.js` | 1723 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/body/swim3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
+| `render/village3d.js` | 1729 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/body/swim3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
 
@@ -223,9 +223,10 @@ Hệ linh hồn: tia linh lực, hố đen.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `magic/soul/cast.js` | 28 | Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school) |  | `game/spellbook.js` `render/magic/vfx.js` |
+| `magic/soul/cast.js` | 38 | Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school) |  | `game/spellbook.js` `magic/soul/blackhole/blackhole.js` `magic/time/cast.js` `render/magic/vfx.js` |
 | `magic/soul/recipes.js` | 36 | Công thức hiệu ứng hạt của hệ linh hồn … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
-| `magic/soul/spells.js` | 12 | Danh sách phép hệ linh hồn (trang "Linh hồn" của sách) |  | `logic/spells.js` |
+| `magic/soul/sounds.js` | 20 | Tiếng của phép linh hồn (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
+| `magic/soul/spells.js` | 21 | Danh sách phép hệ linh hồn (trang "Linh hồn" của sách) |  | `logic/spells.js` |
 
 ## magic/time/
 
@@ -314,6 +315,7 @@ Kiểm thử: node --test test/*.js.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `test/battles.test.js` | 407 | Bước 8: vũ khí theo thời (logic/arms.js), kịch bản chiến tranh (logic/battles.js) … |  | `logic/arms.js` `logic/battles.js` `logic/brain.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/prosperity.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
+| `test/blackhole.test.js` | 44 | Nhịp và luật của Hố đen (magic/soul/blackhole/plan.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/blaze.test.js` | 49 | Nhà cháy vì phép lửa (magic/fire/blaze.js; design/ke-hoach-buoc-37.md) | `BK.Siege` | `logic/siege.js` |
 | `test/bridges.test.js` | 150 | Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/island.js` `logic/schedule.js` `logic/war.js` `logic/world.js` |
 | `test/climate.test.js` | 110 | Khí hậu, thiên tai từng đảo và ngoại gen … |  | `logic/brain.js` `logic/climate.js` `logic/epigen.js` `logic/genes.js` `logic/island.js` `logic/people.js` `logic/rng.js` `logic/world.js` |
@@ -335,7 +337,7 @@ Kiểm thử: node --test test/*.js.
 | `test/scenes.test.js` | 147 | Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js) |  | `logic/economy.js` `logic/island.js` `logic/posts.js` `logic/schedule.js` `logic/world.js` |
 | `test/siege.test.js` | 224 | Đánh thành (logic/siege.js, logic/war.js): cổng theo đường tới, công trình hư, vây nhà chính … |  | `logic/battles.js` `logic/brain.js` `logic/dramas.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/soak.test.js` | 35 | Hậu quả của phép nước (magic/water/soak.js; design/ke-hoach-buoc-37.md) | `BK.Siege` `BK.Climate` | `logic/climate.js` `logic/siege.js` |
-| `test/spells.test.js` | 103 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
+| `test/spells.test.js` | 105 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/staff-weight.test.js` | 42 | Sức nặng của gậy phép (render/magic/staff-weight.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/strategy.test.js` | 227 | Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu … |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/missiles.js` `logic/strategy.js` `logic/world.js` |
 | `test/timeline.test.js` | 102 | Ảnh chụp trận, tua lùi thời gian (magic/time/timeline.js; design/ke-hoach-buoc-37.md) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` `magic/time/timeline.js` |
@@ -398,6 +400,9 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `render/magic/staff3d.js`: `G.staff3d`
 - `render/magic/aim3d.js`: `G.aim3d`
 - `game/spellbook.js`: `G.spellbook`
+- `magic/soul/blackhole/hole3d.js`: `G.hole3d`
+- `magic/soul/blackhole/inside.js`: `G.voidInside`
+- `magic/soul/blackhole/blackhole.js`: `G.blackHole`
 - `magic/time/look3d.js`: `G.time3d`
 - `magic/time/cast.js`: `G.timeCtl`, `G.timeMagic`
 - `magic/fire/look3d.js`: `G.fire3d`
@@ -414,201 +419,208 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 
 Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới: đặt sau mọi tệp nó dùng.
 
-1. `audio.js`
-2. `render/look3d.js`
-3. `render/map/shared3d.js`
-4. `render/map/mountains3d.js`
-5. `render/map/height3d.js`
-6. `render/map/terrain3d.js`
-7. `render/map/water3d.js`
-8. `render/map/relief3d.js`
-9. `render/map/trees3d.js`
-10. `render/map/map3d.js`
-11. `sea3d.js`
-12. `render/deep/terrain3d.js`
-13. `render/deep/kit3d.js`
-14. `render/deep/citadel3d.js`
-15. `render/deep/ruins3d.js`
-16. `render/deep/tunnels3d.js`
-17. `render/deep/beings3d.js`
-18. `render/deep/denizens3d.js`
-19. `render/deep3d.js`
-20. `clouds3d.js`
-21. `logic/rng.js`
-22. `logic/rules.js`
-23. `logic/genes.js`
-24. `logic/people.js`
-25. `logic/family.js`
-26. `logic/council.js`
-27. `logic/temper.js`
-28. `logic/posts.js`
-29. `logic/jobs.js`
-30. `logic/eras.js`
-31. `logic/schedule.js`
-32. `logic/scenes.js`
-33. `logic/leader.js`
-34. `logic/guards.js`
-35. `logic/tasks.js`
-36. `logic/dramas.js`
-37. `logic/economy.js`
-38. `logic/climate.js`
-39. `logic/epigen.js`
-40. `logic/construction.js`
-41. `logic/homes.js`
-42. `logic/brain.js`
-43. `logic/island.js`
-44. `logic/diplomacy.js`
-45. `logic/siege.js`
-46. `logic/arms.js`
-47. `logic/missiles.js`
-48. `logic/ecology.js`
-49. `logic/war.js`
-50. `logic/battles.js`
-51. `logic/chronicle.js`
-52. `logic/prosperity.js`
-53. `logic/strategy.js`
-54. `logic/powers.js`
-55. `logic/goals.js`
-56. `logic/world.js`
-57. `logic/save.js`
-58. `render/outfits3d.js`
-59. `render/rig3d.js`
-60. `render/anim3d.js`
-61. `render/ik3d.js`
-62. `render/gestures3d.js`
-63. `render/work3d.js`
-64. `render/nav3d.js`
-65. `render/body/motion3d.js`
-66. `render/body/swim3d.js`
-67. `render/body/traits3d.js`
-68. `render/body/face3d.js`
-69. `render/body/feet3d.js`
-70. `render/body/softbody3d.js`
-71. `render/village3d.js`
-72. `ui/village-ui.js`
-73. `render/build/kit3d.js`
-74. `render/build/life3d.js`
-75. `render/build/place3d.js`
-76. `render/build/workyards3d.js`
-77. `render/build/ruins3d.js`
-78. `render/build/batch3d.js`
-79. `render/build/bridges3d.js`
-80. `render/travel3d.js`
-81. `render/war3d.js`
-82. `render/missiles3d.js`
-83. `render/shots3d.js`
-84. `render/engines3d.js`
-85. `render/prosper3d.js`
-86. `render/hpbars3d.js`
-87. `render/build/plains/common.js`
-88. `render/build/plains/e01.js`
-89. `render/build/plains/e02.js`
-90. `render/build/plains/e03.js`
-91. `render/build/plains/e04.js`
-92. `render/build/plains/e05.js`
-93. `render/build/plains/e06.js`
-94. `render/build/plains/e07.js`
-95. `render/build/plains/e08.js`
-96. `render/build/plains/e09.js`
-97. `render/build/plains/e10.js`
-98. `render/build/plains/e11.js`
-99. `render/build/plains/e12.js`
-100. `render/build/plains/outer.js`
-101. `render/build/plains/wonders.js`
-102. `render/build/roads.js`
-103. `render/build/lamps.js`
-104. `render/build/neon.js`
-105. `render/build/vehicles.js`
-106. `render/build/traffic3d.js`
-107. `render/build/plains/town.js`
-108. `render/build/gates.js`
-109. `render/build/isles/arch.js`
-110. `render/build/civic.js`
-111. `render/build/marvels.js`
-112. `render/build/isles/halls.js`
-113. `render/build/isles/halls-future.js`
-114. `render/build/isles/compose.js`
-115. `render/build/isles/forest.js`
-116. `render/build/isles/mountain.js`
-117. `render/build/isles/tundra.js`
-118. `render/build/isles/coast.js`
-119. `render/build/isles/desert.js`
-120. `render/buildings3d.js`
-121. `game/world.js`
-122. `render/scene3d.js`
-123. `render/mood3d.js`
-124. `render/sky3d.js`
-125. `render/neon3d.js`
-126. `render/perf3d.js`
-127. `render/tank3d.js`
-128. `render/water/passes3d.js`
-129. `render/water/ripples3d.js`
-130. `render/water/surface3d.js`
-131. `render/water/under3d.js`
-132. `render/water/water3d.js`
-133. `game/nature.js`
-134. `game/seasons.js`
-135. `render/snow3d.js`
-136. `ui/camera-fly.js`
-137. `render/fx/post3d.js`
-138. `render/fx/particles3d.js`
-139. `render/fx/soul-audio.js`
-140. `render/fx/soul-fx.js`
-141. `render/near3d.js`
-142. `render/style/diorama3d.js`
-143. `ui/landbar.js`
-144. `ui/race-dev.js`
-145. `game/cities.js`
-146. `ui/hud.js`
-147. `game/possess-jump.js`
-148. `game/possess-swim.js`
-149. `game/possess-cam.js`
-150. `game/possess.js`
-151. `ui/possess-ctl.js`
-152. `render/style/palette.js`
-153. `render/magic/recipes.js`
-154. `render/magic/sigils.js`
-155. `render/magic/vfx.js`
-156. `render/magic/staff-weight.js`
-157. `render/magic/staff-aura3d.js`
-158. `render/magic/staff3d.js`
-159. `render/magic/aim3d.js`
-160. `render/fx/magic-audio.js`
-161. `logic/spells.js`
-162. `game/spellbook.js`
-163. `magic/soul/spells.js`
-164. `magic/soul/recipes.js`
-165. `magic/soul/cast.js`
-166. `magic/time/spells.js`
-167. `magic/time/timeline.js`
-168. `magic/time/recipes.js`
-169. `magic/time/sounds.js`
-170. `magic/time/look3d.js`
-171. `magic/time/cast.js`
-172. `magic/fire/spells.js`
-173. `magic/fire/blaze.js`
-174. `magic/fire/recipes.js`
-175. `magic/fire/sounds.js`
-176. `magic/fire/look3d.js`
-177. `magic/fire/cast.js`
-178. `magic/earth/spells.js`
-179. `magic/earth/shape.js`
-180. `magic/earth/rise.js`
-181. `magic/earth/recipes.js`
-182. `magic/earth/sounds.js`
-183. `magic/earth/look3d.js`
-184. `magic/earth/cast.js`
-185. `magic/water/spells.js`
-186. `magic/water/soak.js`
-187. `magic/water/recipes.js`
-188. `magic/water/sounds.js`
-189. `magic/water/stream-mat.js`
-190. `magic/water/rain3d.js`
-191. `magic/water/geyser3d.js`
-192. `magic/water/deluge/plan.js`
-193. `magic/water/deluge/vortex3d.js`
-194. `magic/water/deluge/surge3d.js`
-195. `magic/water/deluge/deluge.js`
-196. `magic/water/cast.js`
-197. `ui/spellbook-ui.js`
-198. `game/loop.js`
+1. `magic/soul/blackhole/warp3d.js`
+2. `audio.js`
+3. `render/look3d.js`
+4. `render/map/shared3d.js`
+5. `render/map/mountains3d.js`
+6. `render/map/height3d.js`
+7. `render/map/terrain3d.js`
+8. `render/map/water3d.js`
+9. `render/map/relief3d.js`
+10. `render/map/trees3d.js`
+11. `render/map/map3d.js`
+12. `sea3d.js`
+13. `render/deep/terrain3d.js`
+14. `render/deep/kit3d.js`
+15. `render/deep/citadel3d.js`
+16. `render/deep/ruins3d.js`
+17. `render/deep/tunnels3d.js`
+18. `render/deep/beings3d.js`
+19. `render/deep/denizens3d.js`
+20. `render/deep3d.js`
+21. `clouds3d.js`
+22. `logic/rng.js`
+23. `logic/rules.js`
+24. `logic/genes.js`
+25. `logic/people.js`
+26. `logic/family.js`
+27. `logic/council.js`
+28. `logic/temper.js`
+29. `logic/posts.js`
+30. `logic/jobs.js`
+31. `logic/eras.js`
+32. `logic/schedule.js`
+33. `logic/scenes.js`
+34. `logic/leader.js`
+35. `logic/guards.js`
+36. `logic/tasks.js`
+37. `logic/dramas.js`
+38. `logic/economy.js`
+39. `logic/climate.js`
+40. `logic/epigen.js`
+41. `logic/construction.js`
+42. `logic/homes.js`
+43. `logic/brain.js`
+44. `logic/island.js`
+45. `logic/diplomacy.js`
+46. `logic/siege.js`
+47. `logic/arms.js`
+48. `logic/missiles.js`
+49. `logic/ecology.js`
+50. `logic/war.js`
+51. `logic/battles.js`
+52. `logic/chronicle.js`
+53. `logic/prosperity.js`
+54. `logic/strategy.js`
+55. `logic/powers.js`
+56. `logic/goals.js`
+57. `logic/world.js`
+58. `logic/save.js`
+59. `render/outfits3d.js`
+60. `render/rig3d.js`
+61. `render/anim3d.js`
+62. `render/ik3d.js`
+63. `render/gestures3d.js`
+64. `render/work3d.js`
+65. `render/nav3d.js`
+66. `render/body/motion3d.js`
+67. `render/body/swim3d.js`
+68. `render/body/traits3d.js`
+69. `render/body/face3d.js`
+70. `render/body/feet3d.js`
+71. `render/body/softbody3d.js`
+72. `render/village3d.js`
+73. `ui/village-ui.js`
+74. `render/build/kit3d.js`
+75. `render/build/life3d.js`
+76. `render/build/place3d.js`
+77. `render/build/workyards3d.js`
+78. `render/build/ruins3d.js`
+79. `render/build/batch3d.js`
+80. `render/build/bridges3d.js`
+81. `render/travel3d.js`
+82. `render/war3d.js`
+83. `render/missiles3d.js`
+84. `render/shots3d.js`
+85. `render/engines3d.js`
+86. `render/prosper3d.js`
+87. `render/hpbars3d.js`
+88. `render/build/plains/common.js`
+89. `render/build/plains/e01.js`
+90. `render/build/plains/e02.js`
+91. `render/build/plains/e03.js`
+92. `render/build/plains/e04.js`
+93. `render/build/plains/e05.js`
+94. `render/build/plains/e06.js`
+95. `render/build/plains/e07.js`
+96. `render/build/plains/e08.js`
+97. `render/build/plains/e09.js`
+98. `render/build/plains/e10.js`
+99. `render/build/plains/e11.js`
+100. `render/build/plains/e12.js`
+101. `render/build/plains/outer.js`
+102. `render/build/plains/wonders.js`
+103. `render/build/roads.js`
+104. `render/build/lamps.js`
+105. `render/build/neon.js`
+106. `render/build/vehicles.js`
+107. `render/build/traffic3d.js`
+108. `render/build/plains/town.js`
+109. `render/build/gates.js`
+110. `render/build/isles/arch.js`
+111. `render/build/civic.js`
+112. `render/build/marvels.js`
+113. `render/build/isles/halls.js`
+114. `render/build/isles/halls-future.js`
+115. `render/build/isles/compose.js`
+116. `render/build/isles/forest.js`
+117. `render/build/isles/mountain.js`
+118. `render/build/isles/tundra.js`
+119. `render/build/isles/coast.js`
+120. `render/build/isles/desert.js`
+121. `render/buildings3d.js`
+122. `game/world.js`
+123. `render/scene3d.js`
+124. `render/mood3d.js`
+125. `render/sky3d.js`
+126. `render/neon3d.js`
+127. `render/perf3d.js`
+128. `render/tank3d.js`
+129. `render/water/passes3d.js`
+130. `render/water/ripples3d.js`
+131. `render/water/surface3d.js`
+132. `render/water/under3d.js`
+133. `render/water/water3d.js`
+134. `game/nature.js`
+135. `game/seasons.js`
+136. `render/snow3d.js`
+137. `ui/camera-fly.js`
+138. `render/fx/post3d.js`
+139. `render/fx/particles3d.js`
+140. `render/fx/soul-audio.js`
+141. `render/fx/soul-fx.js`
+142. `render/near3d.js`
+143. `render/style/diorama3d.js`
+144. `ui/landbar.js`
+145. `ui/race-dev.js`
+146. `game/cities.js`
+147. `ui/hud.js`
+148. `game/possess-jump.js`
+149. `game/possess-swim.js`
+150. `game/possess-cam.js`
+151. `game/possess.js`
+152. `ui/possess-ctl.js`
+153. `render/style/palette.js`
+154. `render/magic/recipes.js`
+155. `render/magic/sigils.js`
+156. `render/magic/vfx.js`
+157. `render/magic/staff-weight.js`
+158. `render/magic/staff-aura3d.js`
+159. `render/magic/staff3d.js`
+160. `render/magic/aim3d.js`
+161. `render/fx/magic-audio.js`
+162. `logic/spells.js`
+163. `game/spellbook.js`
+164. `magic/soul/spells.js`
+165. `magic/soul/recipes.js`
+166. `magic/soul/sounds.js`
+167. `magic/soul/blackhole/plan.js`
+168. `magic/soul/blackhole/hole3d.js`
+169. `magic/soul/blackhole/pull.js`
+170. `magic/soul/blackhole/inside.js`
+171. `magic/soul/blackhole/blackhole.js`
+172. `magic/soul/cast.js`
+173. `magic/time/spells.js`
+174. `magic/time/timeline.js`
+175. `magic/time/recipes.js`
+176. `magic/time/sounds.js`
+177. `magic/time/look3d.js`
+178. `magic/time/cast.js`
+179. `magic/fire/spells.js`
+180. `magic/fire/blaze.js`
+181. `magic/fire/recipes.js`
+182. `magic/fire/sounds.js`
+183. `magic/fire/look3d.js`
+184. `magic/fire/cast.js`
+185. `magic/earth/spells.js`
+186. `magic/earth/shape.js`
+187. `magic/earth/rise.js`
+188. `magic/earth/recipes.js`
+189. `magic/earth/sounds.js`
+190. `magic/earth/look3d.js`
+191. `magic/earth/cast.js`
+192. `magic/water/spells.js`
+193. `magic/water/soak.js`
+194. `magic/water/recipes.js`
+195. `magic/water/sounds.js`
+196. `magic/water/stream-mat.js`
+197. `magic/water/rain3d.js`
+198. `magic/water/geyser3d.js`
+199. `magic/water/deluge/plan.js`
+200. `magic/water/deluge/vortex3d.js`
+201. `magic/water/deluge/surge3d.js`
+202. `magic/water/deluge/deluge.js`
+203. `magic/water/cast.js`
+204. `ui/spellbook-ui.js`
+205. `game/loop.js`

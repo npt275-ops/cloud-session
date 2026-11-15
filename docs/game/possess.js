@@ -163,7 +163,7 @@
     function steer(sec) {
       const m = st.move,
         want = new THREE.Vector3();
-      if (st.phase === 'in' && m.lengthSq() >= 0.01)
+      if (st.phase === 'in' && !st.held && m.lengthSq() >= 0.01)
         fwdOf(st.yaw, want)
           .multiplyScalar(m.y)
           .addScaledVector(rightOf(st.yaw, v1), m.x)
@@ -318,6 +318,7 @@
         if (f) f.motion = null; // (trả lại dáng đi chung của làng)
       }
       st.vel.set(0, 0, 0);
+      st.held = false;
       st.jumpY = st.jumpV = 0;
       J.reset();
       if (G.near) G.near.set(false);
@@ -382,10 +383,15 @@
     }
     // nhảy (ui/possess-ctl.js, phím Space): đứng thì nhảy lần 1, đang bay thì nhảy lần 2 (lộn); hold: giữ Space để lượn
     function jump() {
-      if (SW.on) return; // (dưới nước: giữ Space là bơi lên, game/possess-swim.js)
+      if (SW.on || st.held) return; // (dưới nước: giữ Space là bơi lên, game/possess-swim.js; bị phép giữ thân thì thôi)
       if (J.press(st) && J.n === 2 && G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
     }
     const hold = (on) => J.hold(on);
+    // thân bị phép giữ (hố đen hút: magic/soul/blackhole/blackhole.js): không đi, không nhảy được, vẫn xoay nhìn được
+    function setHeld(on) {
+      st.held = !!on;
+      if (on) st.vel.set(0, 0, 0);
+    }
     // xoay nhìn (ui/possess-ctl.js): dx, dy theo radian
     function look(dx, dy) {
       if (st.phase !== 'in' && st.phase !== 'wake') return;
@@ -398,6 +404,7 @@
       look,
       jump,
       hold,
+      setHeld,
       cam: C, // (máy quay chính: game/possess-cam.js; công cụ kiểm tra đọc)
       st,
       T,

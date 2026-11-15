@@ -4,7 +4,7 @@ Muốn sửa phép nào thì mở thư mục của hệ đó. Không cần mở 
 
 | Thư mục | Hệ | Phép |
 |---|---|---|
-| `magic/soul/` | Linh hồn | Tia linh lực, Hố đen (sắp có) |
+| `magic/soul/` | Linh hồn | Tia linh lực, Hố đen (thư mục riêng `magic/soul/blackhole/`) |
 | `magic/time/` | Thời gian | Dừng, Tua nhanh, Tua lùi |
 | `magic/fire/` | Lửa | Cầu lửa, Vòng lửa |
 | `magic/earth/` | Đất | Đất trồi, Núi đất |

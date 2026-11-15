@@ -43,7 +43,9 @@ test('chỉ dùng được khi đang nhập hồn', () => {
 });
 
 test('phép chưa làm xong thì "sắp có"', () => {
-  assert.strictEqual(S.can({}, 'blackHole', IN).why, 'soon');
+  S.add('soul', [{ id: 'testSoon', name: 'Thử', cost: 1, cd: 0, use: 'tap' }]);
+  assert.strictEqual(S.can({}, 'testSoon', IN).why, 'soon');
+  assert.ok(S.can({}, 'blackHole', IN).ok, 'hố đen đã mở');
   assert.ok(S.can({}, 'timeStop', IN).ok, 'phép thời gian đã mở');
 });
 

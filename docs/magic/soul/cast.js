@@ -1,7 +1,8 @@
 /* Bể Kính · magic/soul/cast.js · Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school)
  *   soulBolt  phép thử: đốm sáng bay tới chỗ ngắm rồi bung ra (chưa tác động lên thế giới)
- *   blackHole (sắp có)
- * Công thức hạt: magic/soul/recipes.js; danh sách phép: magic/soul/spells.js. */
+ *   blackHole Hố đen: toàn bộ ở magic/soul/blackhole/ (nhịp, bẻ cong không gian, hình hố, hút người, bên trong hố); ở đây chỉ
+ *             bắt đầu
+ * Công thức hạt: magic/soul/recipes.js; tiếng: magic/soul/sounds.js; danh sách phép: magic/soul/spells.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   BK.Spellbook.school('soul', (G, kit) => {
@@ -22,6 +23,15 @@
         },
       });
     }
-    return { acts: { soulBolt: { tap: soulBolt } } };
+    BK.BlackHole.setup(G, kit);
+    function blackHole(aim) {
+      kit.tipSigil('soul');
+      if (kit.audio) kit.audio.cast(0.2);
+      if (!G.blackHole.start(aim)) kit.say('Hố đen đang mở');
+    }
+    function update(sec) {
+      G.blackHole.update(sec, !!(G.timeCtl && G.timeCtl.frozen));
+    }
+    return { acts: { soulBolt: { tap: soulBolt }, blackHole: { tap: blackHole } }, update };
   });
 })(typeof self !== 'undefined' ? self : globalThis);
