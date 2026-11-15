@@ -10,6 +10,9 @@
  *   5 độ nhám         sóng nhỏ hơn một điểm ảnh (so với cỡ điểm ảnh trên mặt nước, fwidth) không vẽ thành gợn nữa mà cộng vào
  *                     độ nhám: ánh nắng loang rộng ra, mờ đi, không lấp lánh nhiễu ở xa
  *   6 vật chạm nước   gợn mô phỏng, bọt theo gợn, bóng tiếp xúc quanh vật nổi; (vật dưới nước: render/water/under3d.js)
+ * Xoáy nước (setWhirl(x, z, bán kính, độ sâu, độ mạnh 0..1)): mặt nước trũng xuống thành phễu (độ dốc của phễu cộng vào cùng
+ * trường dốc nên phản chiếu, ánh nắng uốn theo phễu), nước quanh đó bị cuốn quay, vệt bọt xoắn ốc chạy vào tâm (lốc xoáy của
+ * Đại hồng thuỷ: magic/water/deluge/vortex3d.js). Độ mạnh 0: không có.
  * Bọt sẵn có (ngọn sóng, quanh chân đảo, sát vách kính) giữ nguyên, phủ lên trên cùng. Màu ra đã ở hệ màu màn hình (hai ảnh vẽ
  * trước đã qua nén sáng) nên chất liệu không nén sáng lần nữa. Nhìn từ dưới nước lên: mặt nước sáng mờ, màu nước sâu.
  * setup(G) thay vật liệu mặt nước của sea3d.js; update() mỗi khung hình (render/water/water3d.js gọi).
@@ -61,6 +64,8 @@
         uRipO: { value: new THREE.Vector3(0, 0, 48) },
         uContact: { value: G.waterRipples.contacts },
         uSeaY: { value: 0 },
+        uWhirl: { value: new THREE.Vector4(0, 0, 1, 0) }, // (x, z, bán kính, độ sâu)
+        uWhirlK: { value: 0 },
       },
     ]);
     // (sóng, độ lớn sóng: dùng chung đối tượng với sea3d.js để cùng nhịp với thuyền, vách nước)
@@ -75,7 +80,7 @@
       fine +=
         `{ float vis = clamp(1.0 - fp * ${f(D.k)} / 2.2, 0.0, 1.0), ph = ${f(D.k)} * dot(vec2(${f(D.dx)}, ${f(D.dz)}), vW.xz) - ${f(D.w)} * uT; ` +
         `s += vis * vec2(${f(D.dx)}, ${f(D.dz)}) * (${f(D.s)} * cos(ph)); lost += (1.0 - vis) * ${f(D.s * D.s)}; }\n`;
-    const vertexShader = `uniform float uT; uniform float uAmp; uniform mat4 uReflM; uniform float uSeaY;
+    const vertexShader = `uniform float uT; uniform float uAmp; uniform mat4 uReflM; uniform float uSeaY; uniform vec4 uWhirl; uniform float uWhirlK;
 attribute vec2 aShore;
 varying vec3 vW; varying float vWave; varying float vShore; varying vec2 vXZ; varying float vAmp; varying vec4 vRefl; varying vec4 vScr; varying float vViewW;
 #include <common>
@@ -84,7 +89,10 @@ varying vec3 vW; varying float vWave; varying float vShore; varying vec2 vXZ; va
 void main() {
   vec3 transformed = position;
   { vec2 p0 = transformed.xz; float amp = aShore.x * uAmp, h = 0.0; vec2 off = vec2(0.0);
-${Wv.glsl}${Wv.rim}    transformed.xz += off; transformed.y += h; vWave = h / (${f(Wv.AMAX)} * max(uAmp, 0.01)); vShore = aShore.y; vXZ = p0; vAmp = amp; }
+${Wv.glsl}${Wv.rim}    if (uWhirlK > 0.0) { vec2 q = p0 - uWhirl.xy; float d2 = dot(q, q) / (uWhirl.z * uWhirl.z);
+      h -= uWhirlK * uWhirl.w * exp(-2.5 * d2); // (phễu trũng xuống)
+      float sw = uWhirlK * 1.4 * exp(-0.8 * d2), cs = cos(sw), sn = sin(sw); off += vec2(cs * q.x - sn * q.y, sn * q.x + cs * q.y) - q; } // (cuốn quay)
+    transformed.xz += off; transformed.y += h; vWave = h / (${f(Wv.AMAX)} * max(uAmp, 0.01)); vShore = aShore.y; vXZ = p0; vAmp = amp; }
   vec4 wp = modelMatrix * vec4(transformed, 1.0);
   vW = wp.xyz;
   vRefl = uReflM * vec4(wp.x, uSeaY, wp.z, 1.0);
@@ -97,7 +105,7 @@ ${Wv.glsl}${Wv.rim}    transformed.xz += off; transformed.y += h; vWave = h / ($
 }`;
     const fragmentShader = `uniform float uT; uniform sampler2D uRefl; uniform sampler2D uRefr; uniform sampler2D uDepth; uniform vec2 uHas;
 uniform float uLogFC; uniform vec3 uSunDir; uniform vec3 uSunC; uniform vec3 uSkyTop; uniform vec3 uSkyBot; uniform vec3 uScat;
-uniform vec3 uSigma; uniform sampler2D uRip; uniform vec3 uRipO; uniform vec3 uContact[${G.waterRipples.contacts.length}];
+uniform vec3 uSigma; uniform sampler2D uRip; uniform vec3 uRipO; uniform vec4 uWhirl; uniform float uWhirlK; uniform vec3 uContact[${G.waterRipples.contacts.length}];
 varying vec3 vW; varying float vWave; varying float vShore; varying vec2 vXZ; varying float vAmp; varying vec4 vRefl; varying vec4 vScr; varying float vViewW;
 #include <common>
 #include <fog_pars_fragment>
@@ -109,7 +117,12 @@ void main() {
   // ---- 2: một trường độ dốc ----
   vec2 s = vec2(0.0), p0 = vXZ;
   float lost = 0.0, fp = length(fwidth(vW.xz)); // (cỡ một điểm ảnh trên mặt nước, đơn vị đảo)
-${big}${fine}  float rip = 0.0;
+${big}${fine}  float whirlFoam = 0.0;
+  if (uWhirlK > 0.0) { vec2 q = vW.xz - uWhirl.xy; float r2 = uWhirl.z * uWhirl.z, e = exp(-2.5 * dot(q, q) / r2);
+    s += q * (5.0 * uWhirlK * uWhirl.w * e / r2); // (độ dốc thành phễu)
+    float d = length(q) / uWhirl.z, an = atan(q.y, q.x);
+    whirlFoam = uWhirlK * smoothstep(3.0, 0.4, d) * smoothstep(0.55, 0.95, sin(an * 4.0 + log(d + 0.05) * 7.0 + uT * 5.0)); }
+  float rip = 0.0;
   { vec2 ru = (vW.xz - uRipO.xy) / uRipO.z + 0.5, e = min(ru, 1.0 - ru);
     if (e.x > 0.0 && e.y > 0.0) { float t = 1.0 / ${G.waterRipples.RES}.0, k = smoothstep(0.0, 0.08, min(e.x, e.y));
       rip = texture2D(uRip, ru).r * k;
@@ -159,7 +172,7 @@ ${big}${fine}  float rip = 0.0;
     ${Wv.glassBrk}
     float glass = smoothstep(2.2, 0.15, gd) * (0.45 + 0.55 * gb) + smoothstep(1.0, 0.0, abs(gd - 1.2 - 2.4 * fract(uT * 0.22 + gb * 0.25))) * 0.55 * gb
       + smoothstep(4.0, 0.5, gd) * smoothstep(0.1, 0.6, vWave) * 0.8;
-    float foam = clamp(crest * 0.45 + band * 0.75 + glass * 0.85 + smoothstep(0.25, 0.7, abs(rip)) * 0.35, 0.0, 0.92);
+    float foam = clamp(crest * 0.45 + band * 0.75 + glass * 0.85 + smoothstep(0.25, 0.7, abs(rip)) * 0.35 + whirlFoam * 0.8, 0.0, 0.92);
     vec3 lit = uSkyTop * 0.55 + uSunC * 0.5 * max(uSunDir.y, 0.0);
     col = mix(col, vec3(0.93, 0.97, 1.0) * lit, foam); }
   gl_FragColor = vec4(col, 1.0);
@@ -195,7 +208,11 @@ ${big}${fine}  float rip = 0.0;
       U.uRip.value = Rp.tex;
       U.uRipO.value.set(Rp.origin.x, Rp.origin.y, Rp.SIZE);
     }
-    G.waterSurface = { update, mat, U };
+    const setWhirl = (x, z, r, depth, k) => {
+      U.uWhirl.value.set(x, z, r, depth);
+      U.uWhirlK.value = k;
+    };
+    G.waterSurface = { update, mat, U, setWhirl };
   }
   BK.WaterSurface = { setup, SIGMA, SCATTER, DETAIL };
 })(typeof self !== 'undefined' ? self : globalThis);

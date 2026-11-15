@@ -1350,7 +1350,10 @@
         }
         f.moving = moving;
         f.meetVerb = meetVerb;
+        // dưới nước (Đại hồng thuỷ dâng nước): lơ lửng, bơi (render/body/swim3d.js)
+        if (BK.Swim3D && BK.seaLevel) BK.Swim3D.folk(f, BK.seaLevel() - (L.center.y + gyOf(f.pos)), real, rs, !!drv);
         if (f.motion && BK.Motion3D) BK.Motion3D.pose(f, tgt, real); // cử động có sức nặng (nhập hồn: render/body/motion3d.js)
+        if (BK.Swim3D) BK.Swim3D.pose(f, tgt, rs);
         if (age >= 62) {
           // người già hơi còng: ngực ngả tới, đầu ngẩng bù lại
           tgt.cx = (tgt.cx || 0) + 0.14;

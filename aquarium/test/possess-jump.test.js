@@ -3,7 +3,6 @@ const test = require('node:test');
 const assert = require('node:assert');
 require('../game/possess-jump.js');
 const { create, JUMP } = globalThis.BK.PossessJump;
-const CAM = { JUMP_V: JUMP.V1, GRAV: 15 };
 const DT = 1 / 60;
 // chạy tới khi chạm đất (hay hết giờ); trả thời gian bay, độ cao lớn nhất, góc lộn lớn nhất, có lượn không
 function fly(J, st, f, onStep) {
@@ -24,8 +23,8 @@ function fly(J, st, f, onStep) {
   return { t, top, flip, glide, landed };
 }
 
-test('nhảy lần 1: khuỵu lấy đà rồi mới bật lên, cao hơn trước (chừng 1 đơn vị)', () => {
-  const J = create(CAM),
+test('nhảy lần 1: khuỵu lấy đà rồi mới bật lên, cao chừng 1,6 đơn vị (người chơi chốt: nhảy cao hơn)', () => {
+  const J = create(),
     st = { phase: 'in', jumpY: 0, jumpV: 0 },
     f = {};
   assert.ok(J.press(st));
@@ -34,13 +33,13 @@ test('nhảy lần 1: khuỵu lấy đà rồi mới bật lên, cao hơn trư�
   assert.strictEqual(st.jumpY, 0, 'đang lấy đà: chưa rời đất');
   assert.ok(f.prep > 0.3, 'đang khuỵu gối');
   const r = fly(J, st, f);
-  assert.ok(r.top > 0.9 && r.top < 1.1, 'cao chừng 1 đơn vị: ' + r.top.toFixed(2));
+  assert.ok(r.top > 1.5 && r.top < 1.75, 'cao chừng 1,6 đơn vị: ' + r.top.toFixed(2));
   assert.strictEqual(r.flip, 0, 'lần 1 không lộn');
   assert.ok(r.landed > 0, 'chạm đất');
 });
 
 test('chỉ hai lần nhảy: lần 2 lộn đủ một vòng; lần 3 không có tác dụng', () => {
-  const J = create(CAM),
+  const J = create(),
     st = { phase: 'in', jumpY: 0, jumpV: 0 },
     f = {};
   J.press(st);
@@ -60,7 +59,7 @@ test('chỉ hai lần nhảy: lần 2 lộn đủ một vòng; lần 3 không c�
 
 test('giữ Space sau cú lộn: lượn, rơi chậm hơn nhiều; không giữ thì rơi như thường', () => {
   const run = (hold) => {
-    const J = create(CAM),
+    const J = create(),
       st = { phase: 'in', jumpY: 0, jumpV: 0 },
       f = {};
     J.press(st);
@@ -81,6 +80,6 @@ test('giữ Space sau cú lộn: lượn, rơi chậm hơn nhiều; không giữ
 });
 
 test('chỉ nhảy được khi đang ở trong thân', () => {
-  const J = create(CAM);
+  const J = create();
   assert.strictEqual(J.press({ phase: 'wake', jumpY: 0, jumpV: 0 }), false);
 });

@@ -253,7 +253,8 @@
         return seaDy;
       },
     };
-    (root.BK || (root.BK = {})).seaAt = surface; // (thuyền, tàu nổi trên biển: render/travel3d.js, prosper3d.js, buildings3d.js)
+    (root.BK || (root.BK = {})).seaAt = surface;
+    root.BK.seaLevel = () => SEA_Y + seaDy; // (mực nước lúc này: người dưới nước bơi, render/body/swim3d.js) // (thuyền, tàu nổi trên biển: render/travel3d.js, prosper3d.js, buildings3d.js)
     return out;
   }
 

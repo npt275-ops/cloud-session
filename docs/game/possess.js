@@ -24,9 +24,7 @@
     WALK: 2.2,
     ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
     DEC: 9,
-    JUMP_V: 5.4, // nhảy lần 1: vận tốc bật lên, trọng lực (đơn vị mỗi giây): cao chừng 1 đơn vị; nhảy lần 2, lộn, lượn: game/possess-jump.js
-    GRAV: 15,
-    RUN: 5,
+    RUN: 7.5, // (đơn vị mỗi giây) chạy (Shift); nhảy, trọng lực: game/possess-jump.js
     FOV: 52,
     FOV_GOD: 34,
     PITCH_MIN: -0.55,
@@ -45,7 +43,8 @@
   function setup(G) {
     const { THREE, camera, controls } = G,
       Wd = () => G.world; // thế giới logic (game/cities.js; có thể thay mới khi tua năm)
-    const J = BK.PossessJump.create(CAM); // nhảy hai lần, lộn, lượn (game/possess-jump.js)
+    const J = BK.PossessJump.create(); // nhảy hai lần, lộn, lượn (game/possess-jump.js)
+    const SW = BK.PossessSwim.create(); // bơi dưới nước: lơ lửng, Space nổi, Shift lặn (game/possess-swim.js)
     const C = BK.PossessCam.create(CAM); // máy quay chính sau vai (game/possess-cam.js)
     const st = {
       phase: 'off',
@@ -153,7 +152,7 @@
     /* ---------- Người bị nhập đi theo phím ---------- */
     // (vận tốc theo phím đổi dần: tăng tốc ACC, hãm DEC đơn vị mỗi giây bình phương, tính trong update)
     function driver(f) {
-      f.lift = st.jumpY; // (render/village3d.js nâng người lên chừng này khi nhảy)
+      f.lift = SW.on ? SW.lift : st.jumpY; // (render/village3d.js nâng người lên chừng này khi nhảy, khi bơi)
       J.pose(f); // (khuỵu lấy đà, lộn, lượn, độ mạnh chạm đất: render/body/motion3d.js, render/village3d.js)
       if (!f.motion && BK.Motion3D) f.motion = BK.Motion3D.state(); // cử động có sức nặng (render/body/motion3d.js)
       const sp = st.vel.length();
@@ -169,7 +168,7 @@
           .multiplyScalar(m.y)
           .addScaledVector(rightOf(st.yaw, v1), m.x)
           .normalize()
-          .multiplyScalar(st.run ? CAM.RUN : CAM.WALK);
+          .multiplyScalar(SW.on ? BK.PossessSwim.SWIM.SPEED : st.run ? CAM.RUN : CAM.WALK);
       const k = Math.min(1, sec * (want.lengthSq() > st.vel.lengthSq() ? CAM.ACC : CAM.DEC));
       st.vel.lerp(want, k);
     }
@@ -347,8 +346,22 @@
         u = dur ? Math.min(1, st.t / dur) : 0;
       PHASE[st.phase](u, sec);
       steer(sec);
+      // dưới nước (game/possess-swim.js): bơi thay cho nhảy; vào nước thì thôi nhảy, ra khỏi nước thì rơi từ chỗ đang bơi
+      const fNow = st.phase === 'in' ? folkNow() : null;
+      if (fNow) {
+        const p = fNow.rig.root.position,
+          sev = SW.step(sec, BK.seaLevel() - groundAt(p.x, p.z), J.held, st.run);
+        if (sev === 'in') {
+          J.reset();
+          st.jumpY = st.jumpV = 0;
+        } else if (sev === 'out') {
+          st.jumpY = SW.y;
+          st.jumpV = 0;
+        }
+        if (SW.on) BK.Swim3D.bubbles(G, headOf(v1), sec);
+      }
       // nhảy (game/possess-jump.js): lấy đà, bay, lộn, lượn, chạm đất
-      const jev = J.step(st, sec);
+      const jev = SW.on ? 0 : J.step(st, sec);
       if (jev === 'up' && G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
       else if (jev > 0 && G.soulFx && G.soulFx.land) G.soulFx.land(st);
       if (st.phase === 'off') return;
@@ -369,6 +382,7 @@
     }
     // nhảy (ui/possess-ctl.js, phím Space): đứng thì nhảy lần 1, đang bay thì nhảy lần 2 (lộn); hold: giữ Space để lượn
     function jump() {
+      if (SW.on) return; // (dưới nước: giữ Space là bơi lên, game/possess-swim.js)
       if (J.press(st) && J.n === 2 && G.soulFx && G.soulFx.jump) G.soulFx.jump(st);
     }
     const hold = (on) => J.hold(on);

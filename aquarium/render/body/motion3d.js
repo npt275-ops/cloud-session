@@ -51,7 +51,7 @@
       c = Math.cos(m.ph);
     // nhảy, chạm đất
     const lift0 = f.lift || 0,
-      air = lift0 > 0.02;
+      air = lift0 > 0.02 && !(f.swimK > 0.3); // (dưới nước: không phải đang bay, tư thế do render/body/swim3d.js)
     if (m.air && !air) {
       m.landT = LAND_T * (0.8 + 0.8 * (f.landK || 0)); // (rơi mạnh thì khuỵu lâu hơn)
       m.land = m.landT;

@@ -218,3 +218,17 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Sóng dâng dùng chung: sea3d.js setSwell(k). Tiếng nước trùng tên tiếng lửa (roar) bị bộ đăng ký tiếng chặn: đổi seaRoar.
 - Thanh phép nhanh theo trang (ui/spellbook-ui.js): 11 phép đã mở không vừa 9 phím; thanh hiện phép của trang đang xem,
   biểu tượng các trang bên trái (bấm hay phím Q sang trang kế), phím 1–9 chọn trong trang.
+
+## Dưới nước, lốc xoáy, chạy nhảy (người chơi chốt)
+- Dưới nước là phần riêng: game/possess-swim.js (bơi của nhân vật nhập hồn: chỉ là số, test/possess-swim.test.js) và
+  render/body/swim3d.js (tư thế bơi cho mọi người, người trong làng lơ lửng, bọt khí). Nước ngập chân quá 1,1 thì bơi:
+  không trọng lực, không nhảy; thả phím thì nổi nhẹ tới cách đáy 1 rồi lơ lửng nhấp nhô; giữ Space bơi lên (tới khi mắt nhô
+  khỏi mặt nước), giữ Shift lặn xuống; đi ngang 3,2 đơn vị mỗi giây. Tư thế: đi thì bơi sải (người gần nằm ngang, tay quạt
+  luân phiên qua đầu, chân đập nước), đứng yên thì đạp nước (ngả tới, ngẩng đầu, tay quạt rộng, chân co đạp ếch). Người trong
+  làng lơ lửng giữa nước (cách đáy 1,4), nhấp nhô; nước rút thì rơi dần xuống đất. Đo lúc Đại hồng thuỷ: nhân vật lơ lửng cách
+  đáy 1,1 tới 1,3; 22/22 người trong làng lơ lửng; nước rút thì tất cả về đất. Mực nước: BK.seaLevel (sea3d.js).
+- Lốc xoáy (magic/water/deluge/vortex3d.js): mặt biển trũng thành phễu xoáy có vệt bọt xoắn ốc (render/water/surface3d.js
+  setWhirl, cùng trường dốc của nước), cột nước hai lớp (lõi đặc thắt giữa, vỏ bụi nước quay nhanh hơn), thân uốn lượn, gợn
+  vòng xoắn chạy lên, sáng theo nắng; chân tung bụi nước xoáy, giọt văng xoắn ra; đỉnh nối vào mây giông xoáy.
+- Chạy 5 → 7,5 đơn vị mỗi giây (game/possess.js RUN); nhảy lần 1 cao chừng 1 → 1,6 (game/possess-jump.js V1 7, V2 6,2).
+  Dọn: vận tốc nhảy, trọng lực chỉ còn ghi ở game/possess-jump.js (bỏ JUMP_V, GRAV trùng ở game/possess.js).

@@ -40,6 +40,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/game/possess-swim.js",
+  "src": "game/possess-swim.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/game/possess.js",
   "src": "game/possess.js",
   "mode": 420
@@ -477,6 +482,11 @@
  {
   "path": "BeKinh/render/body/softbody3d.js",
   "src": "render/body/softbody3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/body/swim3d.js",
+  "src": "render/body/swim3d.js",
   "mode": 420
  },
  {
