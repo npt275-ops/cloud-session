@@ -48,7 +48,8 @@ test('đường bị cuốn: quay quanh hố nhiều vòng, co dần, rồi mớ
   assert.ok(a.d === 1 && b.d < 1 && c.d === 0);
   assert.ok(c.turn > b.turn && b.turn > a.turn);
   assert.ok(a.stretch === 1 && c.stretch > b.stretch);
-  assert.ok(c.turn >= Math.PI * 2 * 3, 'quay quanh hố ít nhất 3 vòng trước khi vào tâm');
-  const mid = H.spiral(0.8, 20, 6);
-  assert.ok(mid.d * 20 >= 6 * 0.9 && mid.d * 20 < 20, 'đang quay vòng: co dần về vòng trong, chưa lao vào tâm');
+  assert.ok(c.turn >= Math.PI * 2 && c.turn <= Math.PI * 4, 'quay quanh hố 1–2 vòng');
+  const ring = H.spiral(0.55, 20, 6);
+  assert.ok(Math.abs(ring.d * 20 - 6) < 0.3, 'quay vòng sát lõi trước khi chui vào: ' + (ring.d * 20).toFixed(2));
+  assert.ok(c.head === 1 && c.stretch >= 4, 'cuối: quay đầu vào tâm, người bị kéo dài');
 });

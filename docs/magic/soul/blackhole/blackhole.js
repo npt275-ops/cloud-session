@@ -20,6 +20,8 @@
     TINT: 0.8, // ngả vàng cam lớn nhất (quay lưng chạy khỏi hố thì mạnh nhất)
     TINT_EDGE: 25, // (đơn vị) ngoài tầm hút chừng này thì hết ngả màu
     TINT_RATE: 1.5, // (1/giây) màu đổi từ từ theo chừng này
+    CAM_IN: [0.85, 0.98], // máy quay theo người nhập hồn vào trong lõi trong khoảng này của đường bị cuốn (0..1)
+    DARK_AT: 0.82, // từ đây màn hình tối dần thành một màu đen (inside.js): người đang chui vào lõi
   };
   function setup(G, kit) {
     const { THREE } = G;
@@ -46,7 +48,7 @@
       Object.assign(hole, { on: true, t: 0, i, R: r / 24 });
       hole.aim.copy(aim);
       hole.isle = { x: L.center.x, z: L.center.z, r: hole.R };
-      Object.assign(st, { acc: 0, dust: 0, player: null, sucked: false, inside: false, tint: 0, lt: 0 });
+      Object.assign(st, { acc: 0, dust: 0, player: null, sucked: false, inside: false, tint: 0, lt: 0, camDir: null });
       hole.pieces = pieces.prepare(i);
       const V = G.villageOf(i);
       if (V && V.spook) V.spook(aim, 999, P.HOLD_END, 10);
@@ -121,7 +123,22 @@
         st.sucked = true;
         sound('voidSuck');
       }
-      if (s === 'in') {
+      // lúc người chui vào lõi, máy quay theo vào trong lõi (lõi vẽ cả mặt trong: chỉ còn một màu đen)
+      if (s === 'pull' || s === 'in') {
+        const pl = f.void.pulled,
+          u = Math.min(1, (hole.t - pl.t0) / pl.dur),
+          x = Math.max(0, Math.min(1, (u - FX.CAM_IN[0]) / (FX.CAM_IN[1] - FX.CAM_IN[0]))),
+          k = x * x * (3 - 2 * x);
+        if (k > 0) {
+          if (!st.camDir) st.camDir = hole.c.clone().sub(G.camera.position).normalize();
+          Pz.setCamPull(hole.c, v1.copy(hole.c).addScaledVector(st.camDir, 10), k);
+        }
+        if (u >= FX.DARK_AT && !st.inside) {
+          st.inside = true;
+          G.voidInside.enter();
+        }
+      }
+      if (s === 'in' && !st.inside) {
         st.inside = true;
         G.voidInside.enter();
       }

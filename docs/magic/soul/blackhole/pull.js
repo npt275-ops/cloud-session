@@ -14,17 +14,25 @@
     const Plan = BK.BlackHolePlan,
       P = Plan.P;
     const held = new Set(); // người đang bị giữ (để thả hết khi hố tan)
-    const tmp = new THREE.Vector3();
+    const tmp = new THREE.Vector3(),
+      UP = new THREE.Vector3(0, 1, 0),
+      qT = new THREE.Quaternion(),
+      qA = new THREE.Quaternion(),
+      eu = new THREE.Euler();
     // đặt gốc khung theo đường xoắn: s = { t0, dur, d0, a0, y0, spin, yaw }, u 0..1
     function place(rt, s, u, hole) {
-      // (vòng trong: ngay ngoài lõi đen, trong đĩa bồi tụ)
+      // (vòng trong: sát lõi đen)
       const c = hole.c,
-        sp = Plan.spiral(u, s.d0, Plan.outer(hole.t, hole.R) * 0.5),
+        sp = Plan.spiral(u, s.d0, Plan.horizon(hole.t, hole.R) * 1.4),
         d = s.d0 * sp.d,
         a = s.a0 + sp.turn * s.spin;
       const y = s.y0 + (c.y - s.y0) * sp.lift + Math.sin(u * 9 + s.a0) * 0.4 * (1 - u);
       rt.position.set(c.x + Math.cos(a) * d, y, c.z + Math.sin(a) * d);
-      rt.rotation.set(u * u * 5 * s.spin, s.yaw + u * 7 * s.spin, u * 2.2, 'YXZ');
+      // lộn nhào nhẹ lúc bị nhấc, rồi quay đầu vào tâm; kéo dài người theo trục thân (lúc đó là hướng vào tâm), mỏng ngang
+      qT.setFromEuler(eu.set(u * 2.5 * s.spin, s.yaw + u * 3 * s.spin, u * 1.2, 'YXZ'));
+      tmp.copy(c).sub(rt.position);
+      if (tmp.lengthSq() > 1e-6) qA.setFromUnitVectors(UP, tmp.normalize());
+      rt.quaternion.copy(qT).slerp(qA, sp.head);
       const k = rt.scale.y,
         g = u >= 1 ? 0.001 : 1;
       rt.scale.set((k * g) / Math.sqrt(sp.stretch), k * g * sp.stretch, (k * g) / Math.sqrt(sp.stretch));

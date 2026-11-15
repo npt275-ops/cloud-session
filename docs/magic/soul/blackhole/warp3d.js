@@ -59,18 +59,18 @@ vec3 bkWarp(vec3 p, vec3 A, float rad, vec3 S) {
   float uS = clamp((u - 0.4 - hs * 0.15) / 0.6, 0.0, 1.0);
   if (uS <= 0.0) return pT;
   vec3 sT = bkTidal(S, A, rad, n, a, sd, crk), q = pT - sT, d0 = sT - C;
-  // quỹ đạo: lên ngang mặt đĩa, quay 2,5–4 vòng quanh hố (bán kính co dần về vòng trong, càng gần càng quay nhanh), rồi lao vào
-  float ang = 6.2832 * (2.5 + hs * 1.5) * pow(uS, 1.5), ca = cos(ang), sa = sin(ang);
-  float r0 = length(d0.xz) + 1e-3, rf = mix(1.0, min(1.0, bkHoleB.x * 0.55 / r0), smoothstep(0.1, 0.82, uS));
-  rf *= 1.0 - smoothstep(0.82, 1.0, uS);
+  // quỹ đạo: lên ngang mặt đĩa, quay 1–2 vòng quanh hố (bán kính co dần về sát lõi, càng gần càng quay nhanh), rồi chui vào lõi
+  float ang = 6.2832 * (1.0 + hs) * pow(uS, 1.5), ca = cos(ang), sa = sin(ang);
+  float r0 = length(d0.xz) + 1e-3, rf = mix(1.0, min(1.0, bkHoleB.x * 0.32 / r0), smoothstep(0.1, 0.5, uS));
+  rf *= 1.0 - smoothstep(0.55, 1.0, uS);
   vec2 h = vec2(ca * d0.x - sa * d0.z, sa * d0.x + ca * d0.z) * rf;
   float lift = sin(min(1.0, uS * 4.0) * 1.5708) * (0.6 + rad * 0.4);
   vec3 np = C + vec3(h.x, mix(d0.y + lift, 0.0, smoothstep(0.0, 0.3, uS)), h.y);
   q = bkTurn(q, normalize(vec3(hs - 0.5, 0.7, fract(hs * 7.31) - 0.5)), uS * (2.0 + hs * 6.0));
   vec3 n2 = normalize(C - np + vec3(0.0, 1e-3, 0.0));
-  float st = 1.0 + 3.0 * smoothstep(0.78, 1.0, uS), al = dot(q, n2);
+  float st = 1.0 + 3.0 * smoothstep(0.5, 1.0, uS), al = dot(q, n2);
   q = (q - n2 * al) / sqrt(st) + n2 * al * st;
-  q *= 1.0 - smoothstep(0.88, 1.0, uS);
+  q *= 1.0 - smoothstep(0.92, 1.0, uS);
   return np + q;
 }
 `;

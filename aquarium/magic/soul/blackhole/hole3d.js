@@ -1,5 +1,6 @@
 /* Bể Kính · magic/soul/blackhole/hole3d.js · Hình Hố đen (design/ke-hoach-buoc-37.md mục "Hố đen"; ảnh tham khảo người chơi gửi)
- *   lõi      cầu đen tuyệt đối (chân trời sự kiện), không bị lớp bẻ cong (warp3d.js) kéo vào
+ *   lõi      cầu đen tuyệt đối (chân trời sự kiện), không bị lớp bẻ cong (warp3d.js) kéo vào; vẽ cả mặt trong (máy quay
+ *            theo người nhập hồn chui vào lõi thì chỉ thấy một màu đen)
  *   vòng     vòng photon: viền sáng trắng mảnh ôm sát lõi, cộng quầng cam mờ (phần đĩa phía sau bị bẻ cong vòng qua đầu lõi);
  *            luôn quay mặt về máy quay
  *   đĩa      đĩa bồi tụ dẹt xoáy quanh lõi: trắng vàng ở mép trong, cam, đỏ thẫm ở ngoài, mờ dần ra mép; các vệt xoắn ốc chạy
@@ -81,7 +82,7 @@ void main(){
     const grp = new THREE.Group();
     grp.visible = false;
     // lõi đen: không bị bẻ cong (warp3d.js userData.noVoid), không sương mù, không nhận ánh sáng
-    const core = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }));
+    const core = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false, side: THREE.DoubleSide }));
     core.material.userData.noVoid = true;
     const uni = () => ({ uT: { value: 0 }, uFade: { value: 1 } });
     const mat = (frag, vert, u, blend) =>

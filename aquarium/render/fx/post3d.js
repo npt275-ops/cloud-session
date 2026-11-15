@@ -83,7 +83,7 @@
     '  g += mix(vec3(-0.015, 0.0, 0.035), vec3(0.035, 0.018, -0.02), smoothstep(0.15, 0.85, l));',
     '  col = mix(col, clamp(g, 0.0, 1.0), uGrade); }',
     // ánh sáng không thoát được khỏi hố: ngả dần sang vàng cam của đĩa bồi tụ (giữ sáng tối của ảnh)
-    ' if (uVoid > 0.001) { float l = lum(col); col = mix(col, uVoidCol * (0.25 + 1.1 * l) + col * 0.25, uVoid * 0.75); }',
+    ' if (uVoid > 0.001) { float l = lum(col); col = mix(col, uVoidCol * 1.35 * l + col * 0.25, uVoid * 0.75); }',
     // phép thời gian: nhạt màu, phủ màu
     ' if (uDesat > 0.001) col = mix(col, vec3(lum(col)), uDesat);',
     ' if (uTint > 0.001) col = mix(col, col * uTintC * 1.2 + uTintC * 0.04, uTint);',

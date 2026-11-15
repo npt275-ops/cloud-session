@@ -319,6 +319,7 @@
       }
       st.vel.set(0, 0, 0);
       st.held = false;
+      st.camPull = null;
       st.jumpY = st.jumpV = 0;
       J.reset();
       if (G.near) G.near.set(false);
@@ -373,6 +374,11 @@
       if (G.diorama) G.diorama.update(st.phase === 'wake' || st.phase === 'in', st.i);
       // (vùng bóng nắng theo controls.target, render/perf3d.js: đặt vào đầu người thì bóng quanh người sắc nét)
       if (st.phase === 'wake' || st.phase === 'in') controls.target.copy(headOf(v1));
+      // máy quay bị kéo theo vào trong hố (magic/soul/blackhole/blackhole.js setCamPull): tới chỗ to, nhìn về look
+      if (st.camPull && st.phase === 'in') {
+        st.camPos.lerp(st.camPull.to, st.camPull.k);
+        st.look.lerp(st.camPull.look, st.camPull.k);
+      }
       camera.position.copy(st.camPos);
       camera.lookAt(st.look);
       camera.updateProjectionMatrix();
@@ -392,6 +398,10 @@
       st.held = !!on;
       if (on) st.vel.set(0, 0, 0);
     }
+    // kéo máy quay về chỗ to (nhìn về look) theo mức k 0..1 (hố đen nuốt cả máy quay); null: thôi
+    function setCamPull(to, look, k) {
+      st.camPull = to ? { to: to.clone(), look: look.clone(), k: Math.max(0, Math.min(1, k)) } : null;
+    }
     // xoay nhìn (ui/possess-ctl.js): dx, dy theo radian
     function look(dx, dy) {
       if (st.phase !== 'in' && st.phase !== 'wake') return;
@@ -405,6 +415,7 @@
       jump,
       hold,
       setHeld,
+      setCamPull,
       cam: C, // (máy quay chính: game/possess-cam.js; công cụ kiểm tra đọc)
       st,
       T,
