@@ -1,0 +1,327 @@
+<title>Khối công trình Bể Kính</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+  /* bố cục: cảnh 3D phủ kín màn hình; thanh trên nổi (tên trang, bậc, toàn cảnh); bảng khối đang chọn nổi góc phải (điện thoại: đáy) */
+  :root {
+    --bg: #dfe9ee;
+    --panel: rgba(250, 252, 250, 0.92);
+    --ink: #1f2a27;
+    --muted: #5d6b67;
+    --line: rgba(31, 42, 39, 0.14);
+    --accent: #2f7d5b;
+    --accent-ink: #ffffff;
+    --hp: #c8402f;
+    --hp-bg: rgba(200, 64, 47, 0.16);
+    --font: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --bg: #12191c;
+      --panel: rgba(22, 30, 33, 0.92);
+      --ink: #e6efeb;
+      --muted: #9fb0aa;
+      --line: rgba(230, 239, 235, 0.14);
+      --accent: #57b88a;
+      --accent-ink: #0d1a14;
+      --hp: #ef6a56;
+      --hp-bg: rgba(239, 106, 86, 0.2);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme='dark'] {
+    --bg: #12191c;
+    --panel: rgba(22, 30, 33, 0.92);
+    --ink: #e6efeb;
+    --muted: #9fb0aa;
+    --line: rgba(230, 239, 235, 0.14);
+    --accent: #57b88a;
+    --accent-ink: #0d1a14;
+    --hp: #ef6a56;
+    --hp-bg: rgba(239, 106, 86, 0.2);
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font); overflow: hidden; }
+  #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .bar {
+    position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); z-index: 5;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+    padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    pointer-events: none;
+  }
+  .bar > * { pointer-events: auto; }
+  .name { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+  .name b { display: block; font-size: 15px; font-weight: 700; }
+  .name span { font-size: 12px; color: var(--muted); }
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); background: transparent;
+    border: 0; border-radius: 7px; padding: 7px 10px; cursor: pointer;
+  }
+  button:hover { background: var(--line); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.on { background: var(--accent); color: var(--accent-ink); }
+  .card {
+    position: fixed; z-index: 6; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: min(320px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  }
+  .card h2 { margin: 0; font-size: 18px; font-weight: 700; text-wrap: balance; }
+  .tier { font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+  .use { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink); }
+  .hp { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .hp i { display: block; height: 8px; border-radius: 4px; background: var(--hp-bg); overflow: hidden; }
+  .hp i > i { height: 100%; border-radius: 0; background: var(--hp); }
+  .hp b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .act { display: flex; gap: 8px; }
+  .act button { flex: 1; border: 1px solid var(--line); }
+  .act button.up { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .act button:disabled { opacity: 0.45; cursor: default; }
+  .note { font-size: 12px; color: var(--muted); margin: 0; }
+  @media (max-width: 560px) { .name span { display: none; } }
+</style>
+
+<canvas id="scene"></canvas>
+<div class="bar">
+  <div class="name"><b>Khối công trình</b><span>Lúa Vàng · 7 loại × 4 bậc · bản dev</span></div>
+  <div class="seg" id="tiers" aria-label="Lọc theo bậc"></div>
+  <div class="seg"><button type="button" id="home">Toàn cảnh</button></div>
+</div>
+<div class="card" id="card">
+  <div>
+    <div class="tier" id="c-tier">Chưa chọn khối</div>
+    <h2 id="c-name">Bấm vào một công trình</h2>
+  </div>
+  <p class="use" id="c-use">Mỗi công trình là một khối riêng: bấm vào để máy quay bay tới, xem máu, công dụng và nâng cấp lên bậc kế.</p>
+  <div class="hp" id="c-hp" hidden><span>Máu</span><i><i id="c-hpbar"></i></i><b id="c-hpnum"></b></div>
+  <div class="act" id="c-act" hidden>
+    <button type="button" class="up" id="c-up">Nâng cấp</button>
+    <button type="button" id="c-back">Toàn cảnh</button>
+  </div>
+  <p class="note" id="c-note">Giá nâng cấp để sau. Cùng loại thì cùng máu, chỉ khác hình theo bậc.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="render/build/kit3d.js"></script>
+<script src="render/blocks/blocks.js"></script>
+<script src="render/blocks/shapes/hall.js"></script>
+<script src="render/blocks/shapes/house.js"></script>
+<script src="render/blocks/shapes/barracks.js"></script>
+<script src="render/blocks/shapes/workshop.js"></script>
+<script src="render/blocks/shapes/gate.js"></script>
+<script src="render/blocks/shapes/wall.js"></script>
+<script src="render/blocks/shapes/granary.js"></script>
+<script>
+  (() => {
+    const T = THREE,
+      B = BK.Blocks,
+      canvas = document.getElementById('scene');
+    const renderer = new T.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = T.PCFSoftShadowMap;
+    const scene = new T.Scene();
+    scene.background = new T.Color('#bcd9e6');
+    scene.fog = new T.Fog('#bcd9e6', 120, 260);
+    const camera = new T.PerspectiveCamera(38, 1, 0.3, 600);
+    const controls = new T.OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.minDistance = 6;
+    controls.maxDistance = 180;
+    scene.add(new T.HemisphereLight('#f4f1e2', '#6f8a5a', 0.75));
+    const sun = new T.DirectionalLight('#fff3dc', 1.0);
+    sun.position.set(-40, 70, 45);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 220 });
+    scene.add(sun);
+    // nền cỏ, mỗi bậc một dải đất
+    const SX = 12,
+      SZ = 13,
+      KN = B.KINDS.length,
+      TN = B.TIERS.length;
+    const ground = new T.Mesh(new T.PlaneGeometry(400, 400), new T.MeshStandardMaterial({ color: '#8fbf63', roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    const laneCol = ['#c9b07a', '#b9b3a2', '#a9a49b', '#c7d0d6'];
+    for (let t = 0; t < TN; t++) {
+      const lane = new T.Mesh(new T.PlaneGeometry(SX * KN + 6, SZ - 3), new T.MeshStandardMaterial({ color: laneCol[t], roughness: 1 }));
+      lane.rotation.x = -Math.PI / 2;
+      lane.position.set(0, 0.01, zOf(t));
+      lane.receiveShadow = true;
+      scene.add(lane);
+    }
+    function xOf(i) { return (i - (KN - 1) / 2) * SX; }
+    function zOf(t) { return (t - (TN - 1) / 2) * SZ; }
+    // dựng các khối: cột theo loại, hàng theo bậc
+    const slots = []; // { kind, x, z, g }
+    function place(kind, tier, x, z) {
+      const g = B.build(kind, tier, 'plains');
+      g.position.set(x, 0, z);
+      g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      scene.add(g);
+      return g;
+    }
+    B.KINDS.forEach((K, i) => {
+      for (let t = 0; t < TN; t++) {
+        const x = xOf(i), z = zOf(t);
+        if (K.id === 'wall') {
+          // ba đoạn tường nối khít nhau, tính là ba khối cùng mẫu
+          for (const dx of [-4, 0, 4]) slots.push({ kind: K.id, x: x + dx, z, tier: t, g: place(K.id, t, x + dx, z) });
+        } else slots.push({ kind: K.id, x, z, tier: t, g: place(K.id, t, x, z) });
+      }
+    });
+    // nhãn bậc ở đầu mỗi hàng
+    function label(text, x, z) {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 96;
+      const g = c.getContext('2d');
+      g.fillStyle = 'rgba(255,255,255,0.88)';
+      g.beginPath(); g.roundRect ? g.roundRect(4, 8, 504, 80, 18) : g.rect(4, 8, 504, 80); g.fill();
+      g.fillStyle = '#1f2a27'; g.font = '600 40px "Be Vietnam Pro", system-ui, sans-serif'; g.textBaseline = 'middle';
+      g.fillText(text, 26, 50);
+      const s = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(c), depthTest: false }));
+      s.scale.set(10, 1.9, 1); s.position.set(x, 3, z); s.renderOrder = 9;
+      scene.add(s);
+    }
+    B.TIERS.forEach((tr, t) => label('Bậc ' + (t + 1) + ' · ' + tr.name + ' (' + tr.eras + ')', xOf(0) - 13.5, zOf(t)));
+    B.KINDS.forEach((K, i) => label(K.name, xOf(i) + 2.5, zOf(TN - 1) + 8.5));
+
+    /* ---------- máy quay bay tới ---------- */
+    const HOME = { pos: new T.Vector3(0, 78, 96), target: new T.Vector3(0, 0, 4) };
+    camera.position.copy(HOME.pos);
+    controls.target.copy(HOME.target);
+    let fly = null;
+    function flyTo(pos, target) {
+      fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), u: 0 };
+    }
+    function focus(s) {
+      const box = new T.Box3().setFromObject(s.g),
+        c = box.getCenter(new T.Vector3()),
+        r = Math.max(4, box.getSize(new T.Vector3()).length() * 0.62);
+      flyTo(new T.Vector3(c.x + r * 0.9, c.y + r * 0.85, c.z + r * 1.55), c);
+    }
+
+    /* ---------- chọn, nâng cấp ---------- */
+    let sel = null,
+      edge = null;
+    const $ = (id) => document.getElementById(id);
+    function outline(s) {
+      if (edge) { scene.remove(edge); edge.geometry.dispose(); edge = null; }
+      if (!s) return;
+      const box = new T.Box3().setFromObject(s.g);
+      edge = new T.Box3Helper(box, new T.Color('#2f7d5b'));
+      scene.add(edge);
+    }
+    function show(s) {
+      sel = s;
+      outline(s);
+      if (!s) {
+        $('c-tier').textContent = 'Chưa chọn khối';
+        $('c-name').textContent = 'Bấm vào một công trình';
+        $('c-use').textContent = 'Mỗi công trình là một khối riêng: bấm vào để máy quay bay tới, xem máu, công dụng và nâng cấp lên bậc kế.';
+        $('c-hp').hidden = $('c-act').hidden = true;
+        return;
+      }
+      const b = s.g.userData.block,
+        K = B.kind(b.kind),
+        tr = B.TIERS[b.tier];
+      $('c-tier').textContent = 'Bậc ' + (b.tier + 1) + ' · ' + tr.name + ' · ' + tr.eras;
+      $('c-name').textContent = K.name;
+      $('c-use').textContent = K.use;
+      $('c-hp').hidden = $('c-act').hidden = false;
+      $('c-hpbar').style.width = (b.hp / 10) * 100 + '%';
+      $('c-hpnum').textContent = b.hp + '/10';
+      const last = b.tier >= B.TIERS.length - 1;
+      $('c-up').disabled = last;
+      $('c-up').textContent = last ? 'Đã bậc cuối' : 'Nâng cấp lên ' + B.TIERS[b.tier + 1].name;
+    }
+    function upgrade() {
+      if (!sel) return;
+      const g = B.next(sel.g);
+      if (!g) return;
+      g.position.copy(sel.g.position);
+      g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      scene.remove(sel.g);
+      BK.BuildKit.dispose(sel.g);
+      scene.add(g);
+      sel.g = g;
+      sel.tier = g.userData.block.tier;
+      pop = { g, u: 0 };
+      show(sel);
+      focus(sel); // (bậc kế thường to hơn: máy quay lùi ra cho vừa)
+    }
+    let pop = null; // (nâng cấp: khối mới nảy lên một nhịp)
+    $('c-up').addEventListener('click', upgrade);
+    $('c-back').addEventListener('click', () => { show(null); flyTo(HOME.pos, HOME.target); });
+    $('home').addEventListener('click', () => { show(null); flyTo(HOME.pos, HOME.target); });
+    // lọc bậc: bấm một bậc thì máy quay bay tới hàng đó
+    const tiersEl = $('tiers');
+    B.TIERS.forEach((tr, t) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = tr.name;
+      b.addEventListener('click', () => {
+        show(null);
+        flyTo(new T.Vector3(0, 34, zOf(t) + 52), new T.Vector3(0, 1.5, zOf(t)));
+      });
+      tiersEl.appendChild(b);
+    });
+    // bấm chọn (không tính khi kéo xoay)
+    const ray = new T.Raycaster(),
+      ndc = new T.Vector2();
+    let down = null;
+    canvas.addEventListener('pointerdown', (e) => (down = [e.clientX, e.clientY]));
+    canvas.addEventListener('pointerup', (e) => {
+      if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(slots.map((s) => s.g), true)[0],
+        g = hit && B.of(hit.object),
+        s = g && slots.find((q) => q.g === g);
+      if (s) { show(s); focus(s); }
+    });
+    // bản thử tự động: ?chon=loại,bậc chọn sẵn một khối (chụp ảnh kiểm tra)
+    window.__blocks = { slots, show, focus, upgrade };
+
+    function resize() {
+      const w = innerWidth, h = innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.fov = w / h < 1 ? 55 : 38;
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize);
+    resize();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let last = performance.now();
+    (function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (fly) {
+        fly.u = Math.min(1, fly.u + dt / (reduce ? 0.01 : 0.9));
+        const e = fly.u * fly.u * (3 - 2 * fly.u);
+        camera.position.lerpVectors(fly.p0, fly.p1, e);
+        controls.target.lerpVectors(fly.t0, fly.t1, e);
+        if (fly.u >= 1) fly = null;
+      }
+      if (pop) {
+        pop.u = Math.min(1, pop.u + dt / 0.45);
+        const k = 1 + Math.sin(pop.u * Math.PI) * 0.12;
+        pop.g.scale.set(1 / Math.sqrt(k), k, 1 / Math.sqrt(k));
+        if (pop.u >= 1) { pop.g.scale.set(1, 1, 1); pop = null; }
+        outline(sel);
+      }
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    })(last);
+  })();
+</script>

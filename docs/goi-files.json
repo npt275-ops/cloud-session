@@ -505,6 +505,46 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/blocks/blocks.js",
+  "src": "render/blocks/blocks.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/barracks.js",
+  "src": "render/blocks/shapes/barracks.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/gate.js",
+  "src": "render/blocks/shapes/gate.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/granary.js",
+  "src": "render/blocks/shapes/granary.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/hall.js",
+  "src": "render/blocks/shapes/hall.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/house.js",
+  "src": "render/blocks/shapes/house.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/wall.js",
+  "src": "render/blocks/shapes/wall.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/shapes/workshop.js",
+  "src": "render/blocks/shapes/workshop.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/body/face3d.js",
   "src": "render/body/face3d.js",
   "mode": 420
