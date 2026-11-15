@@ -8,9 +8,10 @@
  * Hai dáng trộn liền theo f.staffK (0 chống .. 1 cầm chạy), ghi vào người để render/body/motion3d.js đặt tay phải cho khớp.
  * Sức nặng: hướng trên chỉ là hướng đích; hướng thật đi qua render/magic/staff-weight.js (đầu gậy trễ khi tăng tốc, văng tới
  * khi phanh, quét theo sau khi rẽ, bập bênh theo bước, hơi trĩu). Chống gậy xuống đất: bụi nhỏ ở chân gậy (công thức
- * staffThud) và tiếng gỗ (G.staff3d.onPlant, game/spellbook.js gắn tiếng thud của render/fx/magic-audio.js).
+ * staffThud, cùng vòng sóng sáng của render/magic/staff-aura3d.js) và tiếng gỗ (G.staff3d.onPlant, game/spellbook.js gắn tiếng thud của render/fx/magic-audio.js).
+ * Hào quang của gậy (quầng ngọc, đốm bay, vệt khi chạy, phù chú dưới chân gậy): render/magic/staff-aura3d.js.
  * G.staff3d.update(người, hệ, hướng ngắm (hay null), k niệm phép), hide(), tip(out) (đầu gậy: đạn phép bay ra từ đây).
- * Cần: three.js, render/style/palette.js, render/magic/staff-weight.js, render/magic/vfx.js. */
+ * Cần: three.js, render/style/palette.js, render/magic/staff-weight.js, render/magic/staff-aura3d.js, render/magic/vfx.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const LEN = 1.08, // (đơn vị khung người) dài gậy
@@ -63,7 +64,9 @@
       baseW = new THREE.Vector3(),
       ID = new THREE.Quaternion();
     const SW = BK.StaffWeight,
-      heavy = SW.state();
+      heavy = SW.state(),
+      aura = BK.StaffAura3D.setup(G, body, tipLocal),
+      tipW = new THREE.Vector3();
     let school = 'soul',
       last = 0,
       carried = 0; // (mức cầm chạy cao nhất gần đây: để biết lúc vừa chống gậy xuống)
@@ -104,16 +107,25 @@
       }
       gem.emissiveIntensity = 1.1 + 0.4 * Math.sin(now * 0.004) + (k > 0 ? 1.2 * k : 0);
       // vừa chống gậy xuống đất: bụi nhỏ ở chân gậy, tiếng gỗ
+      grp.updateMatrixWorld(true);
+      tipW.copy(tipLocal).applyMatrix4(body.matrixWorld);
+      baseW.set(0, -BELOW, 0).applyMatrix4(body.matrixWorld);
+      const groundY = G.vfx ? G.vfx.groundAt(baseW.x, baseW.z) : gy;
       carried = Math.max(carried * Math.exp(-sec * 0.8), ck);
-      if (ck < HOLD.PLANT_AT && carried > HOLD.PLANT_FROM) {
+      const planted = ck < HOLD.PLANT_AT && carried > HOLD.PLANT_FROM;
+      if (planted) {
         carried = 0;
-        grp.updateMatrixWorld(true);
-        baseW.set(0, -BELOW, 0).applyMatrix4(body.matrixWorld);
-        if (G.vfx) G.vfx.play('staffThud', baseW.setY(G.vfx.groundAt(baseW.x, baseW.z) + 0.02), { scale: s });
+        if (G.vfx) G.vfx.play('staffThud', v3.set(baseW.x, groundY + 0.02, baseW.z), { scale: s });
         if (G.staff3d.onPlant) G.staff3d.onPlant(0.6);
       }
+      // hào quang (render/magic/staff-aura3d.js)
+      aura.update(sec, { school, carry: ck, cast: Math.max(0, Math.min(1, k)), moving: spd > 0.3, planted, tip: tipW, base: baseW, groundY, s });
     }
-    const hide = () => (grp.visible = false);
+    const v3 = new THREE.Vector3();
+    const hide = () => {
+      grp.visible = false;
+      aura.hide();
+    };
     const tip = (out) => {
       grp.updateMatrixWorld(true);
       return out.copy(tipLocal).applyMatrix4(body.matrixWorld);

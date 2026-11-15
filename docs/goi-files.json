@@ -805,6 +805,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/magic/staff-aura3d.js",
+  "src": "render/magic/staff-aura3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/magic/staff-weight.js",
   "src": "render/magic/staff-weight.js",
   "mode": 420

@@ -254,7 +254,10 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   - mỗi bước chạy tay nhún, đầu gậy bập bênh theo; cầm ngang thì hơi trĩu xuống; chạy đều thì không trễ
   - đổi dáng (cầm chạy sang chống) đi qua cùng lò xo nên gậy quay xuống có đà; lúc chân gậy chạm đất: bụi nhỏ toả sát
     đất, vài hạt sỏi nảy (render/magic/recipes.js staffThud) và tiếng gõ gỗ trầm (render/fx/magic-audio.js thud).
-  - Đã thử rồi bỏ: quầng sáng, đốm bay, vòng phù chú quanh gậy (không đúng ý người chơi).
+- Hào quang của gậy (người chơi chốt: giữ, quán tính chỉ là thêm vào), màu theo hệ phép đang chọn
+  (render/magic/staff-aura3d.js AURA): ngọc có quầng sáng thở (niệm phép bừng lên), ba đốm sáng bay vòng quanh ngọc; cầm chạy
+  thì đầu gậy để vệt sáng; đứng chống thì đốm sáng bốc lên từ ngọc và dưới chân gậy hiện vòng phù chú của hệ nằm sát đất, xoay
+  chậm; lúc vừa chống gậy xuống có vòng sóng sáng toả trên đất (cùng lúc với bụi, tiếng gỗ; staff3d báo một lần).
 
 ## Hố đen (chuẩn bị, chờ người chơi chốt)
 Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole, giá 5 như mọi phép lúc làm game). Đề xuất:
