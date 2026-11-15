@@ -259,32 +259,29 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   thì đầu gậy để vệt sáng; đứng chống thì đốm sáng bốc lên từ ngọc và dưới chân gậy hiện vòng phù chú của hệ nằm sát đất, xoay
   chậm; lúc vừa chống gậy xuống có vòng sóng sáng toả trên đất (cùng lúc với bụi, tiếng gỗ; staff3d báo một lần).
 
-## Hố đen (đã làm; người chơi chốt, có ảnh tham khảo)
+## Hố đen (đã làm; người chơi chốt qua ba lần sửa, có ảnh tham khảo)
 Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn bộ ở magic/soul/blackhole/, mỗi phần một tệp:
 - plan.js (nhịp, luật; kiểm thử test/blackhole.test.js):
-  - Hố lớn dần trong 26 giây tới nửa bán kính đảo.
-  - Hố lớn hơn vật nào (đường kính cả hố ≥ cỡ vật) thì hút được vật đó: người (1,4) gần như ngay, nhà (10) sau chừng 8–10 giây.
-  - Từ lúc hút được nhà, mặt hút lan dần phủ hết đảo lúc 34 giây.
-  - Hố còn tới 40 giây.
-- Người chơi sửa (bản đầu bẻ cong cả đất thành phễu: không đạt): đất giữ nguyên, từng vật thể tách ra bị hút lên.
-  - pieces.js: lúc phát phép tách các khối lưới gộp của đảo thành từng vật. Hàn đỉnh trùng, gom tam giác dính nhau thành mảnh;
-    mảnh chồng lên nhau gộp thành một vật (thân với tán là một cây; tường, mái là một nhà; tối đa 7 đơn vị). Vật quá to (dải
-    đường, bờ tường dài) cắt theo ô 2,4 thành từng mảng (mảng gạch đường). Khối lặp (cỏ, hoa, sỏi): mỗi bản một vật.
-    Lần thử đầu tách được khoảng 11.900 vật trong khoảng 0,23 giây. Mỗi giây tách thêm khối mới dựng (công trình đổi bản vẽ
-    xa, gần theo máy quay).
-  - Không đụng: mặt đất, vách đảo, mặt dưới đảo, bờ, hồ; người (pull.js hút cả thân); gậy phép; đáy bể.
-  - warp3d.js: mỗi vật đi cả khối, giữ nguyên hình. Vật bị nhấc lên khi mặt hút qua nó và hố lớn hơn nó (vật nhỏ như cỏ, đá
-    trước; cây; nhà sau), mỗi vật lệch giờ một chút. Vật lộn nhào quanh tâm của chính nó, bay xoắn ốc về tâm hố; gần lõi thì
-    bị kéo dài về phía tâm, mỏng đi, rồi thu nhỏ vào lõi. Shader tính cho cả bóng đổ; chỉ trên đảo bị hút.
-- hole3d.js (theo ảnh tham khảo):
-  - Lõi đen tuyệt đối, vòng photon trắng.
-  - Đĩa bồi tụ trắng vàng → cam → đỏ thẫm xoáy, ngả mặt về phía máy quay.
-  - Hai tia xanh trắng theo trục.
-- pull.js: người trong tầm bị cuốn lên, xoắn ốc vào tâm, lộn nhào, kéo dài người. Dân cả đảo hoảng sợ.
-- Người nhập hồn (nếu ở đảo đó):
-  - Từ 0,8 giây lơ lửng cao 2,6, không đi, không nhảy được, chỉ xoay chuột nhìn (game/possess.js setHeld).
-  - Thấy người bị hút trước, rồi đất, nhà bị nhấc lên, biến dạng.
-  - 3 giây sau khi nhà bắt đầu bị nhấc thì tới lượt mình bị hút (5 giây) vào hố.
-- inside.js: vào trong hố thì màn hình tối hẳn, ghi "Đã bị hút vào hố đen", linh hồn rời thân về tầm nhìn thần. Phần "bên trong
-  hố đen" chờ phát triển tiếp, làm ở tệp này.
+  - Hố lớn dần trong 26 giây tới nửa bán kính đảo; hố lớn hơn vật nào (đường kính cả hố ≥ cỡ vật) thì hút được vật đó.
+  - Tầm hút (khoảng cách ngang tới trục hố) lan dần tới 0,85 × bán kính đảo lúc 34 giây. Phát ở giữa đảo thì hút gần hết
+    đảo; phát ở đầu đảo rồi chạy về cuối đảo thì không bị hút. Hố còn tới 40 giây.
+- Bẻ cong ánh sáng (thấu kính hấp dẫn, render/fx/post3d.js lens; blackhole.js đặt theo chỗ hố trên màn hình):
+  - Mỗi điểm ảnh lấy màu ở β = θ − R²/θ: cảnh quanh hố (tán cây, đồi) bị kéo lệch về phía tâm đen; xa vẫn cong nhẹ nên
+    đường chân trời uốn như gương cầu lồi. Sát vành bóng đen, cảnh và đĩa bồi tụ bị kéo thành vòng sáng.
+  - Bóng đen trên màn hình bằng 1,7 lần lõi; vành bồi tụ cam đỏ (hole3d.js) hiện ngay từ lúc mở hố.
+- Đất giữ nguyên, từng vật thể bị hút (người chơi sửa: bản đầu bẻ cong cả đất thành phễu, không đạt):
+  - pieces.js: tách các khối lưới gộp của đảo thành từng vật (hàn đỉnh, gom mảnh dính nhau; mảnh chồng lên nhau gộp thành
+    một vật, tối đa 7 đơn vị: thân và tán là một cây, tường và mái là một nhà; vật quá to cắt ô 2,4 thành mảng gạch đường).
+    Mỗi mảnh lại cắt ô 0,9 thành mảnh vụn. Khối lặp (cỏ, hoa, sỏi): mỗi bản một vật. Lần thử: khoảng 11.900 vật trong
+    0,2–0,5 giây; mỗi giây tách thêm khối mới dựng. Không đụng: đất, vách, mặt dưới đảo, bờ, hồ; người; gậy phép; đáy bể.
+  - warp3d.js (lực thuỷ triều, kéo thành sợi): vật không bay thẳng vào ngay. Trước hết cả vật bị kéo dài về phía hố, ép mỏng
+    ngang; phần càng cao càng bị kéo nghiêng (thân cây uốn cong), lắc oằn oại; các mảnh tách hở dần (nứt); cả vật nhích lên
+    (bật gốc). Rồi từng mảnh vụn rời ra (lệch giờ), lộn nhào, bay xoắn ốc về tâm; gần lõi bị kéo dài, mỏng đi, thu nhỏ vào lõi.
+    Vật nhỏ (cỏ, đá) trước, cây, nhà sau. Shader tính cho cả bóng đổ; chỉ trên đảo bị hút.
+- hole3d.js (theo ảnh tham khảo): lõi đen, vòng photon, đĩa bồi tụ trắng vàng → cam → đỏ thẫm xoáy ngả về máy quay, hai tia.
+- pull.js: người trong tầm hút bị cuốn lên xoắn ốc vào tâm, lộn nhào, kéo dài người. Dân cả đảo hoảng sợ.
+- Người nhập hồn: sau khi phát phép vẫn chạy tự do quan sát. Vào tầm hút thì bị giữ (không đi, không nhảy được, chỉ xoay
+  chuột nhìn: game/possess.js setHeld), lơ lửng 2 giây, rồi bị hút 5 giây vào lõi.
+- inside.js: vào trong hố thì màn hình tối hẳn, ghi "Đã bị hút vào hố đen", linh hồn rời thân. Phần "bên trong hố đen" chờ
+  phát triển tiếp, làm ở tệp này.
 - Bản thử: sau 40 giây hố tan dần trong 4 giây, trả lại đảo và người, để thử lại được.

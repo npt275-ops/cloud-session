@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const H = require('../magic/soul/blackhole/plan.js');
 const P = H.P;
 for (const R of [30, 45, 60])
-  test('đảo bán kính ' + R + ': hố lớn dần tới nửa đảo, hút người trước, rồi nhà, rồi người nhập hồn, rồi cả đảo', () => {
+  test('đảo bán kính ' + R + ': hố lớn dần tới nửa đảo, vật nhỏ trước rồi tới nhà, tầm hút lan dần', () => {
     let last = 0;
     for (let t = 0; t <= P.GROW + 5; t += 0.5) {
       const o = H.outer(t, R);
@@ -17,15 +17,23 @@ for (const R of [30, 45, 60])
       house = H.houseAt(R);
     assert.ok(person < 2, 'người bị hút gần như ngay: ' + person.toFixed(1));
     assert.ok(house > 6 && house < 15, 'nhà bị nhấc lên sau chừng 10 giây: ' + house.toFixed(1));
-    assert.ok(H.playerAt(R) > house && H.playerIn(R) > H.playerAt(R), 'người nhập hồn bị hút sau khi thấy nhà bị nhấc');
-    assert.ok(H.reach(person + 0.1, R) > 0 && H.reach(0, R) === (H.eats(P.PERSON, 0, R) ? H.outer(0, R) * P.REACH : 0));
-    assert.ok(H.front(1, R) < H.front(house, R), 'mặt hút lan dần');
-    assert.ok(H.front(P.EAT_END, R) >= H.height(P.EAT_END, R) + R, 'mặt hút phủ hết đảo');
+    let lr = 0;
+    for (let t = 0; t <= P.REACH_END + 4; t += 0.5) {
+      assert.ok(H.reach(t, R) >= lr, 'tầm hút chỉ lan ra');
+      lr = H.reach(t, R);
+    }
+    assert.ok(Math.abs(H.reach(P.REACH_END, R) - R * P.REACH_MAX) < 1e-9, 'tầm hút lớn nhất');
   });
 test('hố lớn hơn vật thì mới hút được vật', () => {
   assert.ok(!H.eats(P.HOUSE, 0, 40) && H.eats(P.HOUSE, P.GROW, 40));
   assert.ok(!H.eats(200, P.GROW, 40), 'vật to hơn cả hố thì không');
   assert.strictEqual(H.eatAt(200, 40), Infinity);
+});
+test('phát ở giữa đảo thì hút gần hết đảo; phát ở đầu đảo thì chạy về cuối đảo không bị hút', () => {
+  const R = 60,
+    far = H.reach(P.HOLD_END, R);
+  assert.ok(far >= 0.8 * R, 'từ giữa đảo: tầm hút phủ gần tới mép');
+  assert.ok(far < R, 'từ đầu đảo: cuối đảo (cách hơn R, cả ở đảo hẹp) vẫn ngoài tầm');
 });
 test('hố còn tới HOLD_END rồi tan dần (bản thử: trả lại đảo)', () => {
   assert.strictEqual(H.fade(P.HOLD_END), 1);

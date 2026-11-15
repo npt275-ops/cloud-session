@@ -5,7 +5,8 @@
  *   2. mảnh nào chồng lên nhau thì gộp thành một vật (thân với tán thành một cây; tường, mái thành một nhà) nếu vật gộp không quá
  *      to (PART.MAX)
  *   3. vật còn quá to (cả dải đường, cả bờ tường dài) thì cắt theo ô PART.CELL: mỗi ô một mảng (mảng gạch đường)
- * Khối lặp (cỏ, hoa, sỏi vẽ bằng InstancedMesh): mỗi bản là một vật, tâm ở gốc của bản đó.
+ *   4. mỗi mảnh lại cắt theo ô PART.SHARD thành mảnh vụn (bkShard: tâm mảnh vụn): lúc bị xé, mảnh vụn bay riêng
+ * Khối lặp (cỏ, hoa, sỏi vẽ bằng InstancedMesh): mỗi bản là một vật (cũng là một mảnh vụn), tâm ở gốc của bản đó.
  * Không đụng: mặt đất, vách đảo, mặt dưới đảo, bờ, hồ (đất giữ nguyên); người (pull.js hút cả thân); thứ dưới mặt đảo (đáy bể);
  * shader tự viết (mặt biển, hạt, trời); vật ngoài đảo.
  * Khối lưới có chỉ mục được thay bằng bản không chỉ mục (mỗi tam giác đỉnh riêng) để cắt ô được; restore() trả lại như cũ.
@@ -15,6 +16,7 @@
   const PART = {
     MAX: 7, // (đơn vị) vật gộp to hơn chừng này (đường chéo hộp bao) thì không gộp thêm
     CELL: 2.4, // (đơn vị) cỡ ô cắt vật quá to (mảng gạch đường)
+    SHARD: 0.9, // (đơn vị) cỡ mảnh vụn khi vật bị xé
     EPS: 0.03, // hai mảnh phải chồng vào nhau quá chừng này mới gộp (chỉ chạm cạnh như hai viên gạch thì không)
     WELD: 1e-3, // đỉnh cách nhau dưới chừng này coi là một
   };
@@ -38,7 +40,8 @@
       const rad = o.geometry.boundingSphere.radius * o.matrixWorld.getMaxScaleOnAxis();
       return Math.hypot(v.x - L.center.x, v.z - L.center.z) < L.rOf(Math.atan2(v.z - L.center.z, v.x - L.center.x)) + 6 + rad;
     }
-    // tách một lưới (không chỉ mục) thành vật: trả Float32Array bkPivot (tâm, -bán kính) theo từng đỉnh, toạ độ của lưới
+    // tách một lưới (không chỉ mục) thành vật: trả { pivot: bkPivot (tâm, -bán kính), shard: bkShard (tâm mảnh vụn) } theo từng
+    // đỉnh, toạ độ của lưới
     function split(g, scale) {
       const P = g.attributes.position.array,
         nV = P.length / 3,
@@ -156,7 +159,28 @@
           w = -Math.max(0.05, (diag(b) / 2) * scale);
         for (const t of c.t) for (let k = 0; k < 3; k++) out.set([(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2, w], (t * 3 + k) * 4);
       }
-      return out;
+      // 4. mảnh vụn: trong mỗi mảnh, gom tam giác theo ô PART.SHARD (theo trọng tâm tam giác); tâm mảnh vụn = tâm hộp bao
+      const shards = new Map(),
+        sh = new Float32Array(nV * 4),
+        S = PART.SHARD;
+      for (let t = 0; t < nT; t++) {
+        const i = t * 9,
+          k = find(t) + ':' + Math.floor((P[i] + P[i + 3] + P[i + 6]) / 3 / S) + ',' + Math.floor((P[i + 1] + P[i + 4] + P[i + 7]) / 3 / S) + ',' +
+            Math.floor((P[i + 2] + P[i + 5] + P[i + 8]) / 3 / S);
+        let c = shards.get(k);
+        if (!c) shards.set(k, (c = { b: [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity], t: [] }));
+        for (let a = 0; a < 9; a++) {
+          const ax = a % 3;
+          if (P[i + a] < c.b[ax]) c.b[ax] = P[i + a];
+          if (P[i + a] > c.b[ax + 3]) c.b[ax + 3] = P[i + a];
+        }
+        c.t.push(t);
+      }
+      for (const c of shards.values()) {
+        const b = c.b;
+        for (const t of c.t) for (let k = 0; k < 3; k++) sh.set([(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2, 1], (t * 3 + k) * 4);
+      }
+      return { pivot: out, shard: sh };
     }
     // tách mọi khối lưới hợp lệ chưa tách của đảo i; gọi lại được (scan): chỉ làm khối mới dựng, hay khối đã bị thay lưới
     // (công trình đổi bản vẽ xa, gần theo máy quay, dựng lại khi đổi thời) trong lúc hố còn
@@ -183,11 +207,14 @@
             a = new Float32Array(nV * 4);
           for (let k = 0; k < nV; k++) a.set([bs.center.x, bs.center.y, bs.center.z, -Math.max(0.05, bs.radius * s)], k * 4);
           g.setAttribute('bkPivot', new THREE.BufferAttribute(a, 4));
+          g.setAttribute('bkShard', new THREE.BufferAttribute(a.slice(), 4));
           n += o.count;
         } else {
           g = old.index ? old.toNonIndexed() : old.clone();
-          const a = split(g, s);
+          const r = split(g, s),
+            a = r.pivot;
           g.setAttribute('bkPivot', new THREE.BufferAttribute(a, 4));
+          g.setAttribute('bkShard', new THREE.BufferAttribute(r.shard, 4));
           const seen = new Set();
           for (let k = 0; k < a.length; k += 4) seen.add(a[k] + ',' + a[k + 1] + ',' + a[k + 2]);
           n += seen.size;

@@ -2,9 +2,10 @@
  * Người trong tầm hút (plan.js reach: hố lớn hơn người thì hút được) bị nhấc khỏi đất rồi xoắn ốc vào tâm: quay càng nhanh khi
  * càng gần, lộn nhào, kéo dài người ra, mỏng đi (lớp bẻ cong không gian warp3d.js còn kéo méo thêm khi tới gần); vào tới lõi
  * thì thu nhỏ hẳn (bị lõi che). Giữ thân người qua f.grab (render/village3d.js gọi sau khi đặt gốc khung).
- * Người nhập hồn (player): lơ lửng từ FLOAT_AT (không đi được, chỉ xoay nhìn: game/possess.js setHeld), xoay chậm, nhấp nhô;
- * từ playerAt bị hút vào như mọi người; playerIn là lúc qua chân trời sự kiện.
- * create(G) trả { step(t, hố), player(f, t, hố) trả 'float' | 'pull' | 'in', releaseAll() }; hố = { c (tâm), R, i (đảo) }.
+ * Người nhập hồn (player): ngoài tầm hút thì vẫn chạy tự do ('free'). Vào tầm hút (plan.js reach) thì bị giữ: không đi được,
+ * chỉ xoay nhìn (game/possess.js setHeld), lơ lửng, xoay chậm, nhấp nhô CATCH_FLOAT giây ('float'), rồi bị hút vào như mọi
+ * người ('pull', PLAYER_SEC giây); qua chân trời sự kiện thì 'in'. Đã bị giữ thì không thoát được nữa.
+ * create(G) trả { step(hố), player(f, hố) trả 'free' | 'float' | 'pull' | 'in', releaseAll() }; hố = { c (tâm), t, R, i (đảo) }.
  * Cần: three.js, render/village3d.js (each, f.grab), magic/soul/blackhole/plan.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -58,17 +59,18 @@
       });
       return n;
     }
-    // người nhập hồn: lơ lửng rồi bị hút
+    // người nhập hồn: ngoài tầm thì tự do; vào tầm thì lơ lửng rồi bị hút
     function player(f, hole) {
-      const t = hole.t;
+      const t = hole.t,
+        rt = f.rig.root;
       if (!f.void) {
-        const rt = f.rig.root;
-        f.void = { base: rt.position.clone(), yaw: f.yaw, pulled: null };
+        if (Math.hypot(rt.position.x - hole.c.x, rt.position.z - hole.c.z) > Plan.reach(t, hole.R)) return 'free';
+        f.void = { base: rt.position.clone(), yaw: f.yaw, t0: t, pulled: null };
         f.grab = (r) => {
           const s = f.void;
           if (s.pulled) return place(r, s.pulled, Math.min(1, (hole.t - s.pulled.t0) / s.pulled.dur), hole);
-          const u = Math.min(1, (hole.t - P.FLOAT_AT) / 2),
-            e = u <= 0 ? 0 : u * u * (3 - 2 * u);
+          const u = Math.min(1, (hole.t - s.t0) / 1.2),
+            e = u * u * (3 - 2 * u);
           tmp.copy(hole.c).sub(s.base).setY(0).multiplyScalar(0.04 * e); // (trôi nhẹ về phía hố)
           r.position.copy(s.base).add(tmp);
           r.position.y += P.FLOAT_UP * e + Math.sin(hole.t * 1.3) * 0.12 * e;
@@ -76,9 +78,8 @@
         };
         held.add(f);
       }
-      if (t >= Plan.playerAt(hole.R) && !f.void.pulled) {
-        const rt = f.rig.root,
-          s = f.void;
+      const s = f.void;
+      if (!s.pulled && t >= s.t0 + P.CATCH_FLOAT) {
         s.pulled = {
           t0: t,
           dur: P.PLAYER_SEC,
@@ -89,7 +90,7 @@
           yaw: f.yaw,
         };
       }
-      return t >= Plan.playerIn(hole.R) ? 'in' : f.void.pulled ? 'pull' : t >= P.FLOAT_AT ? 'float' : 'stand';
+      return s.pulled ? (t >= s.pulled.t0 + s.pulled.dur ? 'in' : 'pull') : 'float';
     }
     function releaseAll() {
       for (const f of held) {

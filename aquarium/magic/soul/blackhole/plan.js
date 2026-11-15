@@ -5,14 +5,15 @@
  *   height(t, R)    tâm hố cao hơn mặt đất chỗ ngắm chừng này (hố lớn thì bay cao lên, đĩa không cắt đất)
  *   eats(cỡ, t, R)  hố lớn hơn vật (đường kính cả hố ≥ cỡ vật) thì hút được vật đó
  *   houseAt(R)      lúc hố đủ lớn để hút nhà (cỡ HOUSE)
- *   front(t, R)     mặt hút (khoảng cách tới tâm hố) lan ra từ lúc phát phép, phủ hết đảo lúc EAT_END. Vật thể (cây, cỏ, đá,
- *                   nhà, mảng gạch đường: pieces.js, warp3d.js) bị hút khi mặt hút đã qua nó VÀ hố đủ lớn hơn nó (SIZE): vật
- *                   nhỏ trước, nhà sau. Đất giữ nguyên
- *   reach(t, R)     người (cỡ PERSON) trong khoảng ngang này tới tâm hố thì bị cuốn lên
- *   playerAt(R)     người nhập hồn: lơ lửng từ FLOAT_AT (không đi được, chỉ xoay nhìn), bị hút từ lúc này (sau khi nhà bị nhấc)
- *   playerIn(R)     người nhập hồn qua chân trời sự kiện (vào trong hố)
+ *   reach(t, R)     tầm hút: khoảng cách ngang tới trục hố, lan dần tới REACH_MAX × R lúc REACH_END. Trong tầm:
+ *                   - vật thể (cây, cỏ, đá, nhà, mảng gạch đường: pieces.js, warp3d.js) hố lớn hơn nó (SIZE) thì bị kéo dài,
+ *                     uốn oằn, nứt, bật gốc, xé thành mảnh bay vào; vật nhỏ trước, nhà sau. Đất giữ nguyên
+ *                   - người (hố lớn hơn người) bị cuốn lên (pull.js)
+ *                   - người nhập hồn vào tầm thì bị giữ (không đi được, chỉ xoay nhìn), lơ lửng CATCH_FLOAT giây rồi bị hút
+ *                     PLAYER_SEC giây vào lõi. Ở ngoài tầm thì vẫn chạy tự do quan sát: phát phép ở đầu đảo rồi chạy về cuối
+ *                     đảo (xa hơn REACH_MAX × R) thì không bị hút
  *   fade(t)         1 suốt lúc hố còn; sau HOLD_END tan dần về 0 trong RELEASE giây (bản thử: trả lại đảo để thử tiếp)
- *   spiral(u, d0)   đường xoắn vào tâm của một vật bị hút (u 0..1): khoảng cách (phần của d0), góc quay thêm, độ kéo dài
+ *   spiral(u, d0)   đường xoắn vào tâm của một người bị hút (u 0..1): khoảng cách (phần của d0), góc quay thêm, độ kéo dài
  * Chạy được bằng Node (kiểm thử: test/blackhole.test.js). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -25,15 +26,13 @@
     LIFT: 0.9, // tâm hố cao hơn đất: 1,5 + outer × LIFT
     PERSON: 1.4, // (đơn vị) cỡ một người
     HOUSE: 10, // (đơn vị) cỡ một ngôi nhà
-    REACH: 4, // người trong outer × REACH (theo phương ngang) bị cuốn lên
+    REACH_MAX: 0.85, // tầm hút lớn nhất: chừng này lần bán kính đảo (phát ở giữa đảo thì hút gần hết đảo; ở đầu đảo thì cuối đảo thoát)
+    REACH_END: 34, // (giây) tầm hút lớn hết cỡ
     PULL_SEC: [3.5, 6], // (giây) một người bị hút từ lúc nhấc lên tới lúc vào trong hố
-    EAT_END: 34, // (giây) mặt hút phủ hết đảo
-    EAT_OVER: 1.4, // mặt hút lan tới quá mép đảo chừng này lần bán kính
-    BAND: 8, // (đơn vị) mặt hút đi qua chừng này thì vật đi hết đường từ lúc nhấc lên tới lúc vào lõi
+    BAND: 9, // (đơn vị) tầm hút lan qua chừng này thì vật đi hết đường: kéo dài, nứt, bật gốc, xé mảnh, bay vào lõi
     SIZE: 1, // vật bán kính b bị hút khi cỡ cả hố ≥ b × SIZE (cùng luật với eats: đường kính hố ≥ cỡ vật)
-    FLOAT_AT: 0.8, // (giây) người nhập hồn bắt đầu lơ lửng
+    CATCH_FLOAT: 2, // (giây) người nhập hồn vào tầm hút: lơ lửng chừng này rồi mới bị hút
     FLOAT_UP: 2.6, // (đơn vị) lơ lửng cao chừng này
-    PLAYER_AFTER: 3, // (giây) người nhập hồn bị hút sau houseAt chừng này (đã thấy nhà bị nhấc, biến dạng)
     PLAYER_SEC: 5, // (giây) người nhập hồn bị hút vào hố
     HOLD_END: 40, // (giây) hố còn tới lúc này
     RELEASE: 4, // (giây) rồi tan dần (bản thử)
@@ -58,10 +57,8 @@
     return b;
   }
   const houseAt = (R) => eatAt(P.HOUSE, R);
-  const front = (t, R) => height(t, R) + Math.pow(clamp01(t / P.EAT_END), 1.2) * R * P.EAT_OVER;
-  const reach = (t, R) => (eats(P.PERSON, t, R) ? outer(t, R) * P.REACH : 0);
-  const playerAt = (R) => houseAt(R) + P.PLAYER_AFTER;
-  const playerIn = (R) => playerAt(R) + P.PLAYER_SEC;
+  // (luôn hơn cả hố một chút: thứ chạm vào hố thì bị hút; lan dần ra theo thời gian; không quá REACH_MAX × R)
+  const reach = (t, R) => Math.min(R * P.REACH_MAX, Math.max(1.5 * outer(t, R), R * P.REACH_MAX * Math.pow(clamp01(t / P.REACH_END), 1.1)));
   const fade = (t) => 1 - clamp01((t - P.HOLD_END) / P.RELEASE);
   const done = (t) => t >= P.HOLD_END + P.RELEASE;
   // đường xoắn vào tâm: chậm lúc đầu (nhấc lên), nhanh dần; quay càng nhanh khi càng gần (như nước xoáy vào lỗ)
@@ -70,6 +67,6 @@
     const d = 1 - e;
     return { d, turn: (1.2 + 6 / Math.max(1, d0 * 0.15)) * e, lift: Math.sin(Math.min(1, u * 1.6) * Math.PI * 0.5), stretch: 1 + 2.5 * e };
   }
-  BK.BlackHolePlan = { P, outer, horizon, height, eats, eatAt, houseAt, front, reach, playerAt, playerIn, fade, done, spiral };
+  BK.BlackHolePlan = { P, outer, horizon, height, eats, eatAt, houseAt, reach, fade, done, spiral };
   if (typeof module !== 'undefined') module.exports = BK.BlackHolePlan;
 })(typeof self !== 'undefined' ? self : globalThis);

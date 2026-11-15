@@ -9,6 +9,10 @@
  *   vignette tối viền; grade: chỉnh màu điện ảnh (đậm, tương phản, tối ngả lam, sáng ngả vàng); grain: hạt nhiễu phim
  *   desat    nhạt màu (dừng thời gian); tint: phủ màu tintColor [r, g, b] (phép thời gian); ripple: gợn sóng màn hình (tua lùi)
  *   lids     mí mắt (0 mở hẳn, 1 nhắm hẳn); flash: chớp trắng; ring: vòng nứt sáng khi xuyên vòm kính (0..1 theo thời gian)
+ *   lens     thấu kính hấp dẫn (Hố đen, magic/soul/blackhole/blackhole.js): 0..1 độ mạnh; lensC: tâm trên màn hình [x, y] (0..1);
+ *            lensR: bán kính Einstein (theo chiều cao màn hình). Mỗi điểm ảnh lấy màu từ chỗ β = θ − R²/θ (θ: khoảng cách tới
+ *            tâm): cảnh quanh hố bị kéo lệch về phía tâm, càng gần càng mạnh, xa vẫn cong nhẹ (đường chân trời uốn như gương cầu
+ *            lồi); sát vành bóng đen cảnh, đĩa bồi tụ bị kéo thành vòng sáng; trong bán kính R là bóng đen
  * Mỗi hiệu ứng là một số trong G.post.fx; game/possess.js đặt các số đó theo dòng thời gian. Có khử răng cưa nhẹ (theo độ
  * sáng) vì vẽ vào ảnh tạm thì mất khử răng cưa sẵn có của trình duyệt.
  * Cần: three.js, render/scene3d.js (renderer, scene, camera), render/perf3d.js (G.perf: hạ bớt khi máy chậm). */
@@ -31,6 +35,9 @@
     lids: 0,
     flash: 0,
     ring: 0,
+    lens: 0,
+    lensC: [0.5, 0.5],
+    lensR: 0.1,
   };
   const VERT = 'varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
   const FRAG = [
@@ -38,6 +45,7 @@
     'uniform float uRadial, uChroma, uDof, uFocus, uRange, uBlur, uVig, uGrade, uGrain, uLids, uFlash, uRing, uHasDepth, uDesat, uTint, uRipple;',
     'uniform vec3 uTintC;',
     'uniform vec2 uCenter;',
+    'uniform float uLens, uLensR; uniform vec2 uLensC;',
     'varying vec2 vUv;',
     'float viewZ(vec2 uv){ float d = texture2D(tDepth, uv).x; return (uNear * uFar) / ((uFar - uNear) * d - uFar); }',
     'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
@@ -53,7 +61,10 @@
     ' vec3 a = texture2D(tColor, uv + dir * 0.75).rgb, b = texture2D(tColor, uv - dir * 0.75).rgb;',
     ' return mix(c, (a + b) * 0.5, 0.55); }',
     'void main(){',
-    ' vec2 uv = vUv; vec3 col;',
+    ' vec2 uv = vUv; vec3 col; float lensTh = 1e3;',
+    // thấu kính hấp dẫn: lấy màu ở β = θ − R²/θ theo hướng tới tâm hố (toạ độ theo chiều cao màn hình)
+    ' if (uLens > 0.001) { vec2 asp = vec2(uRes.x / uRes.y, 1.0), d = (uv - uLensC) * asp; lensTh = length(d) + 1e-5;',
+    '  float bet = max(0.0, lensTh - uLensR * uLensR / lensTh); uv = uLensC + d / lensTh * mix(lensTh, bet, uLens) / asp; }',
     // gợn sóng (tua lùi): ảnh lay nhẹ như nhìn qua mặt nước
     ' if (uRipple > 0.001) uv += vec2(sin(uv.y * 38.0 + uTime * 7.0), cos(uv.x * 30.0 - uTime * 6.0)) * 0.0035 * uRipple;',
     // mờ toả tâm: 8 mẫu dọc tia từ tâm toả, kèm tách màu theo tia
@@ -86,6 +97,8 @@
     '  float band = 1.0 - smoothstep(0.0, 0.02 + 0.03 * uRing, abs(r - rr)); col = mix(col, vec3(0.92, 0.97, 1.0), band * (1.0 - uRing) * 0.9);',
     '  col += vec3(0.6, 0.75, 0.9) * (1.0 - smoothstep(0.0, rr, r)) * (1.0 - uRing) * 0.18; }',
     ' col = mix(col, vec3(1.0, 0.99, 0.96), uFlash);',
+    // bóng đen của hố (trong bán kính Einstein)
+    ' if (uLens > 0.001) col *= mix(1.0, smoothstep(uLensR * 0.985, uLensR * 1.02, lensTh), uLens);',
     // mí mắt: hai dải tối cong từ trên, dưới khép lại; mép mềm
     ' if (uLids > 0.001) { float y = abs(uv.y - 0.5) * 2.0, x = (uv.x - 0.5) * 2.0, edge = 1.0 - uLids * (1.0 - 0.18 * x * x);',
     '  col *= 1.0 - smoothstep(edge - 0.12, edge + 0.02, y); col *= 1.0 - uLids * uLids * 0.6; }',
@@ -141,6 +154,9 @@
       uRipple: { value: 0 },
       uHasDepth: { value: canDepth ? 1 : 0 },
       uCenter: { value: center },
+      uLens: { value: 0 },
+      uLensR: { value: 0.1 },
+      uLensC: { value: new THREE.Vector2(0.5, 0.5) },
     };
     const quad = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
@@ -165,6 +181,7 @@
       fx.desat > 0.001 ||
       fx.tint > 0.001 ||
       fx.ripple > 0.001 ||
+      fx.lens > 0.001 ||
       (fx.ring > 0.001 && fx.ring < 0.999);
     function render() {
       if (!active()) {
@@ -199,10 +216,13 @@
       U.uTint.value = fx.tint;
       U.uTintC.value.set(fx.tintColor[0], fx.tintColor[1], fx.tintColor[2]);
       U.uRipple.value = fx.ripple;
+      U.uLens.value = fx.lens;
+      U.uLensR.value = fx.lensR;
+      U.uLensC.value.set(fx.lensC[0], fx.lensC[1]);
       renderer.render(qScene, qCam);
     }
     // về lại góc nhìn thượng đế: mọi hiệu ứng về 0
-    const reset = () => Object.assign(fx, FX0, { tintColor: [1, 1, 1] });
+    const reset = () => Object.assign(fx, FX0, { tintColor: [1, 1, 1], lensC: [0.5, 0.5] });
     G.post = { fx, center, render, reset, active, depth: canDepth };
   }
   BK.Post3D = { setup, FX0 };
