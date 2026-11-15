@@ -195,3 +195,12 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Bỏ Rung đất.
 - Người chơi chốt thêm: gò cao gần gấp 6 lần: Đất trồi cao 10,8 (chân rộng 8, mặt trên bằng bán kính 1,4, trồi trong 2,2 giây),
   Núi đất cao 19 (chân rộng 11, trồi trong 3 giây).
+
+## Sửa sau hệ đất: đường tách khỏi đất nhô, chân không lút vào đường
+- Lỗi 1: lớp đường, tường được phủ theo L.surfAt (có tính gò đất của phép); làng dựng lại lúc gò còn đứng thì đường bị nâng
+  theo gò rồi kẹt trên không. Sửa: mọi thứ đặt cố định (lớp đường, tường, nhà, sân, bãi, đồ trang trí) theo đất gốc L.baseAt
+  (render/map/height3d.js drapeOne, render/buildings3d.js, render/prosper3d.js). Đo: 86.485 đỉnh đường, tường lệch 0 khỏi đất gốc
+  sau khi làng dựng lại lúc gò đang đứng.
+- Lỗi 2: mặt đường cao hơn đất 0,155 (render/build/roads.js Y), người đứng trên đất nên bàn chân lút vào đường. Sửa: L.surfAt
+  cộng mặt đường, vỉa hè (L.coverAt, render/build/roads.js surface theo bề rộng đường, vỉa hè của thời; mép dốc thoải 0,2).
+  Đo: đứng giữa đường chân cao hơn đất 0,155 (đúng mặt đường); ra cỏ thì 0.

@@ -174,7 +174,7 @@
           if (m) m.visible = false;
           return;
         }
-        const base = L.center.y + (L.surfAt ? L.surfAt(hc.x, hc.z) : 0),
+        const base = L.center.y + (L.baseAt ? L.baseAt(hc.x, hc.z) : 0),
           R = Math.min(12, pl.hallR || 5) + 2.5; // (đảo nhấp nhô: theo cao độ nền nhà chính)
         // thời hoàng kim: hai vòng dây cờ quanh nhà chính, đèn lồng giữa các đoạn
         if (S0.golden) {
@@ -218,7 +218,7 @@
           const g = monument(i);
           g.visible = true;
           const sp = spotFor(i, S0.level, pl, L, hc, (pl.hallR || 5) + 2.5);
-          g.position.set(sp.x + L.center.x, L.center.y + (L.surfAt ? L.surfAt(sp.x, sp.z) : 0), sp.z + L.center.z);
+          g.position.set(sp.x + L.center.x, L.center.y + (L.baseAt ? L.baseAt(sp.x, sp.z) : 0), sp.z + L.center.z);
           let y = 0;
           const n = done + (S0.wonder ? 1 : 0);
           for (let k = 0; k < 13; k++) {

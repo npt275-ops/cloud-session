@@ -219,6 +219,12 @@
           sn = Math.sin(th);
         L.roadSegs = BK.Roads3D.isleSegs(L, townSpec.net || 'plains');
         L.roadW = BK.Roads3D.HALF; // nửa mặt đường rộng nhất cộng vỉa hè
+        // người bước lên mặt đường, vỉa hè của thời này (render/map/height3d.js L.surfAt cộng thêm), không lút chân vào đường
+        const Tn = BK.Plains3D && BK.Plains3D.TOWN,
+          rw = Tn ? Tn.ROAD_W[level] || 2.4 : 2.4,
+          walk = !!(Tn && Tn.WALKS[level]),
+          segs = L.roadSegs;
+        L.coverAt = (x, z) => BK.Roads3D.surface(segs, x, z, rw, walk);
         // chỗ hở của tường (theo trục của lớp đường): cổng chính góc 0, hai chỗ bắc cầu sang hai đảo bên cạnh (L.landing)
         L.wallGaps = [
           0,
@@ -380,13 +386,13 @@
         pads.push({ x: yx, z: yz, r: sh.yardR + 1, blend: 4, y: L.padY ? L.padY(yx, yz, sh.yardR) : undefined });
       }
       L.setPads(pads);
-      for (const P of sh.pieces) if (!P.spec.town && P.outer !== 'sea') P.g.position.y = L.surfAt(P.x, P.z);
-      if (sh.yard) sh.yard.position.y = L.surfAt(sh.yard.position.x, sh.yard.position.z) + 0.04;
-      if (sh.wy) for (const Y of sh.wy.yards) Y.g.position.y = L.surfAt(Y.g.position.x, Y.g.position.z);
+      for (const P of sh.pieces) if (!P.spec.town && P.outer !== 'sea') P.g.position.y = L.baseAt(P.x, P.z);
+      if (sh.yard) sh.yard.position.y = L.baseAt(sh.yard.position.x, sh.yard.position.z) + 0.04;
+      if (sh.wy) for (const Y of sh.wy.yards) Y.g.position.y = L.baseAt(Y.g.position.x, Y.g.position.z);
       if (sh.spots)
         for (const k in sh.spots) {
           const g = sh.spots[k];
-          if (g && g.isObject3D) g.position.y = L.surfAt(g.position.x, g.position.z);
+          if (g && g.isObject3D) g.position.y = L.baseAt(g.position.x, g.position.z);
         }
       if (sh.inBatch.length) sh.unbatch = true;
       sh.dirty = true;
@@ -600,7 +606,7 @@
         // lớp đường, tường, đèn: từng đỉnh phủ theo đất; phần chuyển động (xe, cối xay) nâng cả khối theo chỗ nó đứng
         const c = Math.cos(P.g.rotation.y),
           sn = Math.sin(P.g.rotation.y);
-        P.liftAt = (x, z) => sh.L.surfAt(P.x + x * c + z * sn, P.z - x * sn + z * c);
+        P.liftAt = (x, z) => sh.L.baseAt(P.x + x * c + z * sn, P.z - x * sn + z * c);
         for (const n in m.userData.subs || {}) {
           const q = m.userData.subs[n];
           q.traverse((o) => {
@@ -1048,7 +1054,7 @@
           } else sh.fixed.push({ x: q.x, y: q.z, r, P: 'spot:' + tag });
           if (prop) {
             if (!sp[tag + ':g']) sp[tag + ':g'] = prop();
-            sp[tag + ':g'].position.set(q.x, L.surfAt ? L.surfAt(q.x, q.z) : 0, q.z);
+            sp[tag + ':g'].position.set(q.x, L.baseAt ? L.baseAt(q.x, q.z) : 0, q.z);
           }
           return sp[tag];
         };
@@ -1202,7 +1208,7 @@
           const A = o.geometry.attributes.position;
           for (let j = 0; j < A.count; j++) {
             v.fromBufferAttribute(A, j).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
-            const up = v.y - (sh.L.surfAt ? sh.L.surfAt(v.x, v.z) : 0);
+            const up = v.y - (sh.L.baseAt ? sh.L.baseAt(v.x, v.z) : 0);
             if (up > (lowY || 1) || v.y < -0.3) continue; // (sát đất: tính từ mặt đất chỗ đó)
             if (L.inHole && L.inHole(v.x, v.z, 0)) {
               hole++;

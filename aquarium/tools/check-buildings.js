@@ -81,7 +81,7 @@ const ROOT = path.join(__dirname, '..'),
             const M = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld);
             for (let j = 0; j < n; j += 3) {
               const P = [va, vb, vc].map((q, k) => q.fromBufferAttribute(A, I ? I.getX(j + k) : j + k).applyMatrix4(M));
-              const ups = P.map((q) => q.y - L.surfAt(q.x, q.z));
+              const ups = P.map((q) => q.y - (L.baseAt || L.surfAt)(q.x, q.z));
               if (Math.max(...ups) < 0.7 || Math.min(...ups) > 3) continue; // thân sát đất: không tính mặt nền phẳng, phần trên cao
               const x0 = Math.floor(Math.min(va.x, vb.x, vc.x) / CELL),
                 x1 = Math.floor(Math.max(va.x, vb.x, vc.x) / CELL),

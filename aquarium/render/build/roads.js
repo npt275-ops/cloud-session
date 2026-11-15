@@ -212,6 +212,23 @@
       t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / L2));
     return Math.hypot(x - x0 - dx * t, z - z0 - dz * t);
   };
+  // mặt đường cao hơn đất bao nhiêu ở (x, z) (người bước lên mặt đường, vỉa hè chứ không lút chân vào): w bề rộng mặt đường
+  // của thời, walk có vỉa hè không; ra khỏi đường thì 0. Mép đường, mép vỉa hè dốc thoải trong EDGE (không nảy bậc)
+  const TOP = Y + 0.025, // mặt trên tấm đường (dày 0,05, tâm ở Y)
+    WALK_TOP = Y + 0.02 + 0.035, // mặt trên vỉa hè (dày 0,07, tâm ở Y + 0,02: dressWalks)
+    EDGE = 0.2;
+  function surface(segList, x, z, w, walk) {
+    if (!segList) return 0;
+    let d = Infinity;
+    for (const S of segList) {
+      const q = segDist(x, z, S);
+      if (q < d) d = q;
+    }
+    const half = w / 2,
+      ramp = (a, edge) => Math.max(0, Math.min(1, (edge - a) / EDGE)); // 1 trong, 0 ngoài mép
+    if (walk) return d < half ? TOP : WALK_TOP * ramp(d, half + WALK);
+    return TOP * ramp(d, half);
+  }
   // một vòng tròn (x, z, r) có lấn vào đường không
   const hits = (segList, x, z, r, half) => !!segList && segList.some((S) => segDist(x, z, S) < (r || 0) + (half || HALF));
   // chỗ qua đường trên vòng đường (chỉ số điểm của vòng): hai bên mỗi ngã giao với đường toả, và rải đều dọc vòng (cứ khoảng
@@ -291,5 +308,5 @@
     }
     return all;
   }
-  BK.Roads3D = { NETS, ARCS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, crossIdx, dressWalks, HALF, WALK, Y };
+  BK.Roads3D = { NETS, ARCS, net, segs, draw, along, isleNet, isleSegs, segDist, hits, surface, crossIdx, dressWalks, HALF, WALK, Y };
 })(typeof self !== 'undefined' ? self : globalThis);
