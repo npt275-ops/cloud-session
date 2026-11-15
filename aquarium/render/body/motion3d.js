@@ -20,6 +20,12 @@
   const RUN_FROM = 2.6, // (đơn vị mỗi giây) từ chừng này bắt đầu chạy hẳn, tới RUN_FROM + RUN_SPAN thì chạy hết sức
     RUN_SPAN = 1.8,
     LAND_T = 0.28; // (giây) khuỵu gối khi chạm đất
+  // hai tay hơi dạng ra, khuỷu hơi gập (cả lúc đứng); tay phải cầm gậy phép (render/magic/staff3d.js f.staffK: 0 chống, 1 cầm chạy)
+  const ARM = { OUT: 0.26, ELBOW: 0.3 },
+    STAFF = {
+      PLANT: { sx: 0.32, sz: 0.34, ex: 0.85 }, // chống gậy: tay đưa tới, ra ngoài, khuỷu gập, bàn tay ngang hông nắm gậy đứng
+      CARRY: { sx: 0.2, sz: 0.3, ex: 1.25, swing: 0.22 }, // cầm chạy: khuỷu gập vuông, bàn tay ngang eo, đánh nhẹ theo bước
+    };
   // nén giãn: mức kéo dài tối đa lúc bay, mức nén lúc chạm đất, mức nhún mỗi bước; lò xo (độ cứng, độ hãm)
   const SQ = { STRETCH: 0.12, LAND: 0.17, STEP: 0.025, K: 170, D: 11, KICK: 2.4 };
   function state() {
@@ -75,8 +81,8 @@
       // tay: đánh ngược chân, khuỷu gập dần khi chạy
       tgt.sxL = -s * lerp(0.38, 0.95, r) * w;
       tgt.sxR = s * lerp(0.38, 0.95, r) * w;
-      tgt.szL = tgt.szR = lerp(0.1, 0.2, r);
-      tgt.exL = tgt.exR = lerp(0.28, 1.35, r) * w + 0.12;
+      tgt.szL = tgt.szR = lerp(ARM.OUT, ARM.OUT + 0.08, r);
+      tgt.exL = tgt.exR = lerp(0.28, 1.35, r) * w + ARM.ELBOW;
     } else {
       // đứng: thở, dồn trọng tâm sang một chân theo nhịp chậm, tay buông thả lỏng
       const sh = Math.sin(m.t * 0.35);
@@ -85,6 +91,19 @@
       tgt.kxL = Math.max(tgt.kxL || 0, sh > 0 ? 0.12 * sh : 0);
       tgt.kxR = Math.max(tgt.kxR || 0, sh < 0 ? -0.12 * sh : 0);
       tgt.cx = (tgt.cx || 0) + Math.sin(m.t * 1.7) * 0.015;
+      tgt.szL = Math.max(tgt.szL || 0, ARM.OUT);
+      tgt.szR = Math.max(tgt.szR || 0, ARM.OUT);
+      tgt.exL = Math.max(tgt.exL || 0, ARM.ELBOW);
+      tgt.exR = Math.max(tgt.exR || 0, ARM.ELBOW);
+    }
+    // tay phải cầm gậy phép: trộn dáng chống và dáng cầm chạy (dáng bay, niệm phép phía dưới ghi đè)
+    if (f.staffK != null) {
+      const k = clamp(f.staffK, 0, 1),
+        P = STAFF.PLANT,
+        C = STAFF.CARRY;
+      tgt.sxR = lerp(P.sx, C.sx + s * C.swing * w, k);
+      tgt.szR = lerp(P.sz, C.sz, k);
+      tgt.exR = lerp(P.ex, C.ex, k);
     }
     // hai chân song song, không bè ra (gen dạng chân của làng không áp cho nhân vật mình)
     tgt.hzL = tgt.hzR = 0.01;

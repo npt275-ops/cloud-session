@@ -239,3 +239,42 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   cầm gậy vươn lên trước, tay kia vung sau, ưỡn ngực ngẩng đầu); ở đỉnh dang tay giữ thăng bằng, lắc nhẹ; rơi thì chân đạp
   như chạy trên không, tay giơ chao, duỗi chân đón đất; lộn ôm gối gọn hơn, cúi đầu; lượn kiểu siêu nhân (ngả người tới, tay
   dang như cánh vẫy nhẹ, chân duỗi sau, thân chao nghiêng theo nhịp). Ba pha trên chuyển mượt theo vận tốc đứng.
+
+## Dáng cầm gậy, linh lực riêng của gậy (người chơi chốt)
+- Hai tay hơi dạng ra, khuỷu hơi gập, cả lúc đứng lẫn lúc đi (render/body/motion3d.js ARM).
+- Gậy phép đổi dáng theo tốc độ (render/magic/staff3d.js HOLD; f.staffK 0 chống .. 1 cầm chạy, trộn liền):
+  - Đi, chạy, nhảy, bơi: cầm gần giữa thân gậy, gậy gần song song mặt đất, đầu gậy chĩa tới, hơi ngóc lên, chếch ra ngoài.
+    Tay phải gập khuỷu, bàn tay ngang eo, đánh nhẹ theo bước (motion3d STAFF.CARRY).
+  - Đứng: chống gậy thẳng đứng, chân gậy chạm đất (chỗ cầm trượt dọc thân gậy cho vừa tầm tay); tay phải đưa tới, ra ngoài,
+    nắm gậy ngang hông (motion3d STAFF.PLANT).
+  - Niệm phép: vẫn nghiêng đầu gậy về chỗ ngắm như cũ.
+- Gậy có sức mạnh riêng, màu theo hệ phép đang chọn (render/magic/staff-aura3d.js AURA): ngọc có quầng sáng thở (niệm phép
+  bừng lên), ba đốm sáng bay vòng quanh ngọc; cầm chạy thì đầu gậy để vệt sáng; đứng chống thì đốm sáng bốc lên từ ngọc và
+  dưới chân gậy hiện vòng phù chú của hệ nằm sát đất, xoay chậm; lúc vừa chống gậy xuống có vòng sóng sáng toả trên đất.
+
+## Hố đen (chuẩn bị, chờ người chơi chốt)
+Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole, giá 5 như mọi phép lúc làm game). Đề xuất:
+- Chỗ: thư mục riêng magic/soul/blackhole/
+  - plan.js: dòng thời gian, lực hút theo khoảng cách (logic thuần, chạy bằng Node, có kiểm thử).
+  - hole3d.js: hình hố đen.
+  - pull.js: hút người, hạt, mảnh vụn.
+  - sounds.js.
+  - magic/soul/cast.js chỉ gọi vào.
+- Dòng thời gian:
+  - Nhen (0–0,6 giây): một điểm đen ở chỗ ngắm, chớp sáng, phù chú linh hồn bung ra.
+  - Hút (khoảng 5 giây): hố lớn dần tới cỡ đủ.
+  - Sụp (0,4 giây): hố co lại thành một điểm, bung một vòng sóng sáng thả mọi thứ ra.
+  - Để lại vết vòng cháy sáng trên đất, mờ dần.
+- Hình:
+  - Lõi cầu đen tuyệt đối, viền là vòng photon mảnh, sáng trắng.
+  - Đĩa bồi tụ dẹt xoáy quanh: sáng ở mép trong, mờ ra ngoài, màu lam bạc của hệ linh hồn, một bên sáng hơn như đang lao về phía mắt.
+  - Không gian quanh hố bị bẻ cong (hấp thụ ảnh nền rồi uốn quanh hố, dùng lại lượt vẽ khúc xạ của nước).
+  - Hạt, bụi, lá bị cuốn theo xoắn ốc vào tâm.
+- Hậu quả thật:
+  - Người trong bán kính bị kéo trượt về tâm, càng gần càng mạnh, người nhẹ (trẻ em) bị nhấc khỏi đất, xoay quanh hố.
+  - Sụp thì rơi xuống, ngồi choáng một lúc rồi bỏ chạy sợ hãi (V.spook).
+  - Lửa gần hố bị hút tắt; nước mưa, hơi nước bị hút vào.
+- Cần người chơi chốt:
+  1. Cỡ hố, thời gian hút.
+  2. Có phá nhà, làm chết người hay chỉ hút rồi thả.
+  3. Người nhập hồn có bị hút không.
