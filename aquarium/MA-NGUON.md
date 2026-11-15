@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 245 tệp, 53818 dòng.
+Tổng: 246 tệp, 54080 dòng.
 
 ## (gốc)
 
@@ -586,41 +586,42 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 165. `magic/soul/recipes.js`
 166. `magic/soul/sounds.js`
 167. `magic/soul/blackhole/plan.js`
-168. `magic/soul/blackhole/hole3d.js`
-169. `magic/soul/blackhole/pull.js`
-170. `magic/soul/blackhole/inside.js`
-171. `magic/soul/blackhole/blackhole.js`
-172. `magic/soul/cast.js`
-173. `magic/time/spells.js`
-174. `magic/time/timeline.js`
-175. `magic/time/recipes.js`
-176. `magic/time/sounds.js`
-177. `magic/time/look3d.js`
-178. `magic/time/cast.js`
-179. `magic/fire/spells.js`
-180. `magic/fire/blaze.js`
-181. `magic/fire/recipes.js`
-182. `magic/fire/sounds.js`
-183. `magic/fire/look3d.js`
-184. `magic/fire/cast.js`
-185. `magic/earth/spells.js`
-186. `magic/earth/shape.js`
-187. `magic/earth/rise.js`
-188. `magic/earth/recipes.js`
-189. `magic/earth/sounds.js`
-190. `magic/earth/look3d.js`
-191. `magic/earth/cast.js`
-192. `magic/water/spells.js`
-193. `magic/water/soak.js`
-194. `magic/water/recipes.js`
-195. `magic/water/sounds.js`
-196. `magic/water/stream-mat.js`
-197. `magic/water/rain3d.js`
-198. `magic/water/geyser3d.js`
-199. `magic/water/deluge/plan.js`
-200. `magic/water/deluge/vortex3d.js`
-201. `magic/water/deluge/surge3d.js`
-202. `magic/water/deluge/deluge.js`
-203. `magic/water/cast.js`
-204. `ui/spellbook-ui.js`
-205. `game/loop.js`
+168. `magic/soul/blackhole/pieces.js`
+169. `magic/soul/blackhole/hole3d.js`
+170. `magic/soul/blackhole/pull.js`
+171. `magic/soul/blackhole/inside.js`
+172. `magic/soul/blackhole/blackhole.js`
+173. `magic/soul/cast.js`
+174. `magic/time/spells.js`
+175. `magic/time/timeline.js`
+176. `magic/time/recipes.js`
+177. `magic/time/sounds.js`
+178. `magic/time/look3d.js`
+179. `magic/time/cast.js`
+180. `magic/fire/spells.js`
+181. `magic/fire/blaze.js`
+182. `magic/fire/recipes.js`
+183. `magic/fire/sounds.js`
+184. `magic/fire/look3d.js`
+185. `magic/fire/cast.js`
+186. `magic/earth/spells.js`
+187. `magic/earth/shape.js`
+188. `magic/earth/rise.js`
+189. `magic/earth/recipes.js`
+190. `magic/earth/sounds.js`
+191. `magic/earth/look3d.js`
+192. `magic/earth/cast.js`
+193. `magic/water/spells.js`
+194. `magic/water/soak.js`
+195. `magic/water/recipes.js`
+196. `magic/water/sounds.js`
+197. `magic/water/stream-mat.js`
+198. `magic/water/rain3d.js`
+199. `magic/water/geyser3d.js`
+200. `magic/water/deluge/plan.js`
+201. `magic/water/deluge/vortex3d.js`
+202. `magic/water/deluge/surge3d.js`
+203. `magic/water/deluge/deluge.js`
+204. `magic/water/cast.js`
+205. `ui/spellbook-ui.js`
+206. `game/loop.js`

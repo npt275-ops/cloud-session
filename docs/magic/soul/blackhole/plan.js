@@ -4,8 +4,10 @@
  *   horizon(t, R)   bán kính chân trời sự kiện (lõi đen): một phần của outer
  *   height(t, R)    tâm hố cao hơn mặt đất chỗ ngắm chừng này (hố lớn thì bay cao lên, đĩa không cắt đất)
  *   eats(cỡ, t, R)  hố lớn hơn vật (đường kính cả hố ≥ cỡ vật) thì hút được vật đó
- *   houseAt(R)      lúc hố đủ lớn để hút nhà (cỡ HOUSE): từ đây công trình, đất bị nhấc lên, bẻ cong, hút dần
- *   front(t, R)     mặt hút của đất, nhà, cây (khoảng cách tới tâm hố): trước houseAt là 0; sau đó lan ra phủ hết đảo lúc EAT_END
+ *   houseAt(R)      lúc hố đủ lớn để hút nhà (cỡ HOUSE)
+ *   front(t, R)     mặt hút (khoảng cách tới tâm hố) lan ra từ lúc phát phép, phủ hết đảo lúc EAT_END. Vật thể (cây, cỏ, đá,
+ *                   nhà, mảng gạch đường: pieces.js, warp3d.js) bị hút khi mặt hút đã qua nó VÀ hố đủ lớn hơn nó (SIZE): vật
+ *                   nhỏ trước, nhà sau. Đất giữ nguyên
  *   reach(t, R)     người (cỡ PERSON) trong khoảng ngang này tới tâm hố thì bị cuốn lên
  *   playerAt(R)     người nhập hồn: lơ lửng từ FLOAT_AT (không đi được, chỉ xoay nhìn), bị hút từ lúc này (sau khi nhà bị nhấc)
  *   playerIn(R)     người nhập hồn qua chân trời sự kiện (vào trong hố)
@@ -27,8 +29,8 @@
     PULL_SEC: [3.5, 6], // (giây) một người bị hút từ lúc nhấc lên tới lúc vào trong hố
     EAT_END: 34, // (giây) mặt hút phủ hết đảo
     EAT_OVER: 1.4, // mặt hút lan tới quá mép đảo chừng này lần bán kính
-    BAND: 7, // (đơn vị) bề dày dải biến dạng ở mặt hút (vật trong dải bị kéo dài, xoắn, nhấc lên dần)
-    LENS: 0.22, // độ bẻ cong không gian quanh hố (cả chỗ chưa bị hút)
+    BAND: 8, // (đơn vị) mặt hút đi qua chừng này thì vật đi hết đường từ lúc nhấc lên tới lúc vào lõi
+    SIZE: 1, // vật bán kính b bị hút khi cỡ cả hố ≥ b × SIZE (cùng luật với eats: đường kính hố ≥ cỡ vật)
     FLOAT_AT: 0.8, // (giây) người nhập hồn bắt đầu lơ lửng
     FLOAT_UP: 2.6, // (đơn vị) lơ lửng cao chừng này
     PLAYER_AFTER: 3, // (giây) người nhập hồn bị hút sau houseAt chừng này (đã thấy nhà bị nhấc, biến dạng)
@@ -56,12 +58,7 @@
     return b;
   }
   const houseAt = (R) => eatAt(P.HOUSE, R);
-  function front(t, R) {
-    const t0 = houseAt(R);
-    if (t < t0) return 0;
-    const u = clamp01((t - t0) / Math.max(1, P.EAT_END - t0));
-    return height(t, R) + u * u * R * P.EAT_OVER;
-  }
+  const front = (t, R) => height(t, R) + Math.pow(clamp01(t / P.EAT_END), 1.2) * R * P.EAT_OVER;
   const reach = (t, R) => (eats(P.PERSON, t, R) ? outer(t, R) * P.REACH : 0);
   const playerAt = (R) => houseAt(R) + P.PLAYER_AFTER;
   const playerIn = (R) => playerAt(R) + P.PLAYER_SEC;

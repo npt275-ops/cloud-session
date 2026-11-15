@@ -32,6 +32,8 @@
     const wood = new THREE.MeshStandardMaterial({ color: '#8a5a36', roughness: 0.7 }),
       band = new THREE.MeshStandardMaterial({ color: '#c9a25a', roughness: 0.45, metalness: 0.3 }),
       gem = new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#9fe0ff', emissiveIntensity: 1.2, roughness: 0.2 });
+    // (gậy luôn ở trong tay: Hố đen không tách gậy ra hút riêng, magic/soul/blackhole/pieces.js)
+    for (const m of [wood, band, gem]) m.userData.noVoid = true;
     const grp = new THREE.Group(),
       body = new THREE.Group(); // (trục y của body là dọc thân gậy, gốc ở chỗ bàn tay)
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, LEN, 12), wood);

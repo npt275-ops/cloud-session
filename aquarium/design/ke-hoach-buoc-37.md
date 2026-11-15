@@ -266,11 +266,16 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
   - Hố lớn hơn vật nào (đường kính cả hố ≥ cỡ vật) thì hút được vật đó: người (1,4) gần như ngay, nhà (10) sau chừng 8–10 giây.
   - Từ lúc hút được nhà, mặt hút lan dần phủ hết đảo lúc 34 giây.
   - Hố còn tới 40 giây.
-- warp3d.js: bẻ cong không gian thật trên mọi vật thể (đất, đường, nhà, cây, người, bóng):
-  - Quanh hố không gian hơi cong.
-  - Trong mặt hút, vật bị nhấc lên, xoắn quanh trục hố, ép về mặt đĩa, kéo dài theo hướng tâm, mỏng đi, rồi vào lõi.
-  - Nhà và người không bị phá hay chết: biến dạng rồi bị hút lên.
-  - Chỉ trên đảo bị hút, đảo khác không sao.
+- Người chơi sửa (bản đầu bẻ cong cả đất thành phễu: không đạt): đất giữ nguyên, từng vật thể tách ra bị hút lên.
+  - pieces.js: lúc phát phép tách các khối lưới gộp của đảo thành từng vật. Hàn đỉnh trùng, gom tam giác dính nhau thành mảnh;
+    mảnh chồng lên nhau gộp thành một vật (thân với tán là một cây; tường, mái là một nhà; tối đa 7 đơn vị). Vật quá to (dải
+    đường, bờ tường dài) cắt theo ô 2,4 thành từng mảng (mảng gạch đường). Khối lặp (cỏ, hoa, sỏi): mỗi bản một vật.
+    Lần thử đầu tách được khoảng 11.900 vật trong khoảng 0,23 giây. Mỗi giây tách thêm khối mới dựng (công trình đổi bản vẽ
+    xa, gần theo máy quay).
+  - Không đụng: mặt đất, vách đảo, mặt dưới đảo, bờ, hồ; người (pull.js hút cả thân); gậy phép; đáy bể.
+  - warp3d.js: mỗi vật đi cả khối, giữ nguyên hình. Vật bị nhấc lên khi mặt hút qua nó và hố lớn hơn nó (vật nhỏ như cỏ, đá
+    trước; cây; nhà sau), mỗi vật lệch giờ một chút. Vật lộn nhào quanh tâm của chính nó, bay xoắn ốc về tâm hố; gần lõi thì
+    bị kéo dài về phía tâm, mỏng đi, rồi thu nhỏ vào lõi. Shader tính cho cả bóng đổ; chỉ trên đảo bị hút.
 - hole3d.js (theo ảnh tham khảo):
   - Lõi đen tuyệt đối, vòng photon trắng.
   - Đĩa bồi tụ trắng vàng → cam → đỏ thẫm xoáy, ngả mặt về phía máy quay.

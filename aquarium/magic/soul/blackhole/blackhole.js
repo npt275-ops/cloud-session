@@ -1,14 +1,14 @@
 /* Bể Kính · magic/soul/blackhole/blackhole.js · Điều khiển Hố đen: nối các phần theo nhịp (magic/soul/blackhole/plan.js)
  * start(chỗ ngắm): bắt đầu (đang có thì thôi). update(giây, đứng) mỗi khung hình:
  *   hình hố       hole3d.js: lớn dần trong GROW giây tới nửa đảo, bay cao dần trên chỗ ngắm
- *   bẻ cong       warp3d.js: không gian quanh hố cong; từ lúc hố đủ lớn để hút nhà, mặt hút lan ra: đất, nhà, cây bị nhấc lên,
- *                 xoắn, kéo dài, hút vào lõi, tới khi hết cả đảo
+ *   hút vật thể   pieces.js tách đảo thành từng vật (cây, cỏ, đá, nhà, mảng gạch đường); warp3d.js cho từng vật nhấc lên, lộn
+ *                 nhào, xoắn ốc vào lõi khi mặt hút qua nó và hố lớn hơn nó (vật nhỏ trước, nhà sau). Đất giữ nguyên
  *   hút người     pull.js: người trong tầm (hố lớn hơn người) bị cuốn lên xoắn vào tâm; dân cả đảo hoảng sợ bỏ chạy
  *   người nhập hồn (nếu ở đảo này): lơ lửng không đi được, chỉ xoay nhìn (game/possess.js setHeld); bị hút sau khi thấy nhà bị
  *                 nhấc lên; qua lõi thì vào trong hố (inside.js), linh hồn rời thân
  *   hạt           vật chất cuốn về tâm theo đĩa, bụi bốc lên ở mặt hút; tiếng ù trầm (magic/soul/sounds.js)
  *   tan           sau HOLD_END hố tan dần, trả lại đảo (bản thử, để thử lại được)
- * Thời gian dừng (đứng): mọi thứ đứng im giữa chừng. Cần: plan.js, warp3d.js, hole3d.js, pull.js, inside.js. */
+ * Thời gian dừng (đứng): mọi thứ đứng im giữa chừng. Cần: plan.js, warp3d.js, pieces.js, hole3d.js, pull.js, inside.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const FX = {
@@ -22,7 +22,8 @@
     const Plan = BK.BlackHolePlan,
       P = Plan.P,
       Warp = BK.VoidWarp,
-      pull = BK.BlackHolePull.create(G);
+      pull = BK.BlackHolePull.create(G),
+      pieces = BK.BlackHolePieces.create(G);
     const hole = { on: false, t: 0, c: new THREE.Vector3(), aim: new THREE.Vector3(), R: 30, i: -1, isle: { x: 0, z: 0, r: 30 } };
     const st = { acc: 0, dust: 0, player: null, sucked: false, inside: false };
     const sound = (name, ...a) => kit.audio && kit.audio[name] && kit.audio[name](...a);
@@ -39,6 +40,7 @@
       hole.aim.copy(aim);
       hole.isle = { x: L.center.x, z: L.center.z, r: hole.R };
       Object.assign(st, { acc: 0, dust: 0, player: null, sucked: false, inside: false });
+      hole.pieces = pieces.prepare(i);
       const V = G.villageOf(i);
       if (V && V.spook) V.spook(aim, 999, P.HOLD_END, 10);
       sound('voidHum', P.HOLD_END);
@@ -47,6 +49,7 @@
     function stop() {
       hole.on = false;
       Warp.off();
+      pieces.restore();
       G.hole3d.hide();
       pull.releaseAll();
       if (G.possess && G.possess.setHeld) G.possess.setHeld(false);
@@ -108,7 +111,7 @@
         hz = Plan.horizon(t, hole.R);
       hole.c.set(hole.aim.x, kit.ground(hole.aim.x, hole.aim.z) + Plan.height(t, hole.R), hole.aim.z);
       G.hole3d.show(hole.c, outer, hz, t, fade);
-      Warp.set({ center: hole.c, front: Plan.front(t, hole.R), band: P.BAND, horizon: hz, lens: P.LENS, spin: t * 0.5, isle: hole.isle, fade });
+      Warp.set({ center: hole.c, front: Plan.front(t, hole.R), band: P.BAND, outer, size: P.SIZE, time: t, isle: hole.isle, fade });
       if (fade < 1) pull.releaseAll(); // (hố đang tan: trả người lại)
       else {
         const skip = G.possess && G.possess.inside && G.possess.st.i === hole.i ? G.possess.st.id : null;
@@ -116,6 +119,8 @@
         player();
       }
       if (!still && fade > 0.2) particles(sec, outer);
+      // khối lưới mới dựng trong lúc hố còn (công trình đổi bản vẽ xa, gần theo máy quay): tách thêm, mỗi giây một lần
+      if (fade >= 1 && Math.floor(t) !== Math.floor(t - sec)) hole.pieces += pieces.scan(hole.i);
       if (Plan.done(t)) stop();
     }
     G.blackHole = { start, update, stop, hole, get on() {

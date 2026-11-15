@@ -19,7 +19,7 @@ for (const R of [30, 45, 60])
     assert.ok(house > 6 && house < 15, 'nhà bị nhấc lên sau chừng 10 giây: ' + house.toFixed(1));
     assert.ok(H.playerAt(R) > house && H.playerIn(R) > H.playerAt(R), 'người nhập hồn bị hút sau khi thấy nhà bị nhấc');
     assert.ok(H.reach(person + 0.1, R) > 0 && H.reach(0, R) === (H.eats(P.PERSON, 0, R) ? H.outer(0, R) * P.REACH : 0));
-    assert.strictEqual(H.front(house - 0.1, R), 0, 'trước khi đủ lớn: đất, nhà chưa bị hút');
+    assert.ok(H.front(1, R) < H.front(house, R), 'mặt hút lan dần');
     assert.ok(H.front(P.EAT_END, R) >= H.height(P.EAT_END, R) + R, 'mặt hút phủ hết đảo');
   });
 test('hố lớn hơn vật thì mới hút được vật', () => {

@@ -73,6 +73,7 @@
     // ấn dưới chân gậy: nằm trong cảnh (không theo thân gậy), sát đất
     // (trộn màu thường, không cộng sáng: cộng sáng thì chìm mất trên cát, cỏ sáng ban ngày)
     const runeMat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0, polygonOffset: true, polygonOffsetFactor: -2 });
+    runeMat.userData.noVoid = true; // (đi theo gậy: Hố đen không hút riêng)
     const rune = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), runeMat);
     rune.renderOrder = 3;
     rune.visible = false;
