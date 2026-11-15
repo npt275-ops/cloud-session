@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 213 tệp, 51048 dòng.
+Tổng: 213 tệp, 51049 dòng.
 
 ## (gốc)
 
@@ -246,7 +246,7 @@ Hệ đất: trụ đá, rung đất.
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
-| `magic/earth/cast.js` | 81 | Phát phép hệ đất (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/nature.js` `game/spellbook.js` `logic/siege.js` `magic/earth/look3d.js` `magic/earth/rise.js` `magic/time/cast.js` `render/magic/vfx.js` |
+| `magic/earth/cast.js` | 82 | Phát phép hệ đất (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/nature.js` `game/spellbook.js` `logic/siege.js` `magic/earth/look3d.js` `magic/earth/rise.js` `magic/time/cast.js` `render/magic/vfx.js` |
 | `magic/earth/look3d.js` | 170 | Khối đất nhô của phép đất … | `BK.Earth3D` G: 1 dịch vụ | `game/nature.js` `magic/earth/shape.js` `render/magic/vfx.js` |
 | `magic/earth/recipes.js` | 26 | Công thức hiệu ứng hạt của hệ đất … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
 | `magic/earth/rise.js` | 29 | Đất nhô của phép đất trong thế giới (luật, chạy được bằng Node; test/earth.test.js) | `BK.EarthRise` |  |

@@ -11,7 +11,7 @@
   if (typeof module === 'object' && module.exports) module.exports = BK.EarthShape;
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
-  const TOP_R = 1.0, // (đơn vị đảo) bán kính mặt bằng trên gò Đất trồi (người đứng vừa)
+  const TOP_R = 1.4, // (đơn vị đảo) bán kính mặt bằng trên gò Đất trồi (người đứng vừa, đi lại được một chút)
     EDGE = 1.17; // viền gồ ghề lớn nhất so với r
   const clamp = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
   const sstep = (a, b, x) => {

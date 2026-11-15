@@ -11,10 +11,10 @@
  * ngừng trồi, ngừng hạ. Cần: three.js, render/magic/vfx.js, magic/earth/shape.js, render/map/height3d.js (L.bumps, L.baseAt). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
-  const RISE = { uplift: 1.1, mount: 1.8 }, // (giây thật) trồi lên
+  const RISE = { uplift: 2.2, mount: 3 }, // (giây thật) trồi lên
     SINK = 2.5, // (giây thật) hạ xuống
     SEGS = 40, // số múi quanh tâm
-    RINGS = 12, // số vòng từ tâm ra viền
+    RINGS = 18, // số vòng từ tâm ra viền
     DUST_EVERY = 0.12, // (giây) bụi ở chân núi lúc trồi, hạ
     FRESH = 0.6; // (ngày game) khối sinh trong chừng này thì trồi lên từ đầu; cũ hơn (nạp trận, tua lùi) thì hiện ngay
   function setup(G) {

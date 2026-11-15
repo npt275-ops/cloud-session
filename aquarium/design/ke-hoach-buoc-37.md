@@ -193,3 +193,5 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Máy quay: bỏ lùi xa ×6; máy quay vẫn bám tầm mắt nhân vật, chỉ nảy lên 0,45 đơn vị trong 0,9 giây rồi về (C.hop), rung nhẹ.
 - Núi đất (ngắm): gò đất nhỏ hình ngọn núi (bán kính 4,5, cao 3,2, đỉnh hơi tròn), cùng chất đất như trên.
 - Bỏ Rung đất.
+- Người chơi chốt thêm: gò cao gần gấp 6 lần: Đất trồi cao 10,8 (chân rộng 8, mặt trên bằng bán kính 1,4, trồi trong 2,2 giây),
+  Núi đất cao 19 (chân rộng 11, trồi trong 3 giây).

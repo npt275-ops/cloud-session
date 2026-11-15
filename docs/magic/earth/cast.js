@@ -10,8 +10,9 @@
  * Cùng thư mục: danh sách phép (spells.js), dáng gò (shape.js), luật gò (rise.js), hình (look3d.js), hạt, tiếng. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
-  const UPLIFT = { kind: 'uplift', r: 3.6, h: 1.8 }, // (đơn vị đảo; người cao 1,4)
-    MOUNT = { kind: 'mount', r: 4.5, h: 3.2 },
+  // (đơn vị đảo; người cao 1,4) người chơi chốt: cao gần gấp 6 lần bản đầu (1,8 và 3,2); chân gò rộng ra cho cân
+  const UPLIFT = { kind: 'uplift', r: 8, h: 10.8 },
+    MOUNT = { kind: 'mount', r: 11, h: 19 },
     CRUSH = 0.55, // nhà trong phần này của bán kính gò thì sập, ngoài đó (vẫn dưới gò) thì nứt
     HIT_CRUSH = 0.75, // độ bền mất: sập
     HIT_CRACK = 0.3, // nứt
@@ -39,7 +40,7 @@
       BK.EarthRise.raise(S, Object.assign({}, o, { x: at.x - L.center.x, z: at.z - L.center.z }), S.day);
       G.earth3d.sync(i, S.rises, S.day);
       G.vfx.play('riseBurst', at, { scale: o.r / 4 });
-      G.vfx.sigil('earth', at, null, { size: o.r * 1.2, life: 1.4, spin: 0.5 });
+      G.vfx.sigil('earth', at, null, { size: Math.min(7, o.r * 0.8), life: 1.4, spin: 0.5 });
       sound('crack');
       sound('rumble', (BK.Earth3D.RISE[o.kind] || 1.5) + 0.3);
       const n = crush(i, at, o.r);
