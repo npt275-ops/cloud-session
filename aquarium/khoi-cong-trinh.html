@@ -142,8 +142,8 @@
     Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 220 });
     scene.add(sun);
     // nền cỏ, mỗi bậc một dải đất
-    const SX = 12,
-      SZ = 13,
+    const SX = 16,
+      SZ = 15,
       KN = B.KINDS.length,
       TN = B.TIERS.length;
     const ground = new T.Mesh(new T.PlaneGeometry(400, 400), new T.MeshStandardMaterial({ color: '#8fbf63', roughness: 1 }));
@@ -195,7 +195,7 @@
     B.KINDS.forEach((K, i) => label(K.name, xOf(i) + 2.5, zOf(TN - 1) + 8.5));
 
     /* ---------- máy quay bay tới ---------- */
-    const HOME = { pos: new T.Vector3(0, 78, 96), target: new T.Vector3(0, 0, 4) };
+    const HOME = { pos: new T.Vector3(0, 98, 122), target: new T.Vector3(0, 0, 4) };
     camera.position.copy(HOME.pos);
     controls.target.copy(HOME.target);
     let fly = null;

@@ -16,9 +16,9 @@
   const KINDS = [
     { id: 'hall', name: 'Nhà chính', hp: 10, size: [8, 8], use: 'Mất là thua. Cấp nhà chính mở khoá cấp của các công trình khác.' },
     { id: 'house', name: 'Nhà dân', hp: 5, size: [4, 4], use: 'Dân ở. Mất nhà thì mất số dân đang sống trong đó.' },
-    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [8, 7], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
+    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [11, 9], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
     { id: 'workshop', name: 'Xưởng xe', hp: 7, size: [6, 6], use: 'Sinh xe tấn công: xe phá cổng, máy bắn đá, về sau là xe tăng.' },
-    { id: 'gate', name: 'Cổng thành', hp: 8, size: [10, 4], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
+    { id: 'gate', name: 'Cổng thành', hp: 8, size: [14, 5], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
     { id: 'wall', name: 'Tường bao', hp: 10, size: [4, 1.4], use: 'Bao kín thành. Mỗi đoạn là một khối cùng mẫu, nối khít nhau.' },
     { id: 'granary', name: 'Kho lương', hp: 6, size: [6, 6], use: 'Nuôi dân và lính; về sau là nguồn tiền nâng cấp. Mất kho thì dân đói, lính yếu.' },
   ];

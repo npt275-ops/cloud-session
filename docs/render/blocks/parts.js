@@ -8,6 +8,8 @@
  *   rail                lan can: thanh trên và các song đứng dọc trục x
  *   guard               lính gác đứng (cao ~1,25, quay mặt về +z): quần áo, mũ, vũ khí theo bậc
  *   torus               vòng tròn nằm ngang (vành sáng, bánh xe) dựng bằng three.js
+ *   barrel, crate       thùng gỗ, hòm (đồ đạc sân lính, kho, cổng)
+ *   banner, torch       cờ treo dọc áp tường, đuốc
  * Cần: three.js, render/build/kit3d.js, render/blocks/blocks.js. */
 (function (root) {
   const BK = root.BK;
@@ -60,6 +62,28 @@
     torus(k, color, r, tube, x, y, z, o) {
       const g = new root.THREE.TorusGeometry(r, tube, 4, 28);
       k.add(g, color, x, y, z, Object.assign({ rot: [Math.PI / 2, 0, 0] }, o || {}));
+    },
+    // thùng gỗ đai sắt (bậc tương lai: thùng kim loại có vành sáng)
+    barrel(k, P, t, x, y, z) {
+      k.add(K().lathe([[0.2, 0], [0.25, 0.25], [0.2, 0.5]], 8), t === 3 ? P.metal : '#8a5a32', x, y, z);
+      for (const yy of [0.1, 0.4]) H.torus(k, t === 3 ? P.glow : P.dark, 0.23, 0.02, x, y + yy, z, t === 3 ? { glow: true } : null);
+    },
+    // hòm gỗ cạnh s, hai nẹp chéo mặt trước
+    crate(k, P, t, x, y, z, s) {
+      k.add(K().box(s, s, s, 0.02, true), t === 3 ? P.wall2 : '#a77b48', x, y, z);
+      k.add(K().box(s + 0.02, 0.06, s + 0.02, 0.01, true), t === 3 ? P.glow : P.trim, x, y + s * 0.45, z, t === 3 ? { glow: true } : null);
+    },
+    // cờ treo dọc áp mặt tường trước (z: mặt tường): thanh treo, tấm vải, viền dưới
+    banner(k, P, x, y, z, w, h) {
+      k.add(K().box(w + 0.2, 0.06, 0.06, 0.01), P.dark, x, y, z + 0.06);
+      k.add(K().box(w, h, 0.04, 0.01), P.accent, x, y - h, z + 0.05);
+      k.add(K().box(w * 0.5, w * 0.5, 0.03, 0.01), '#e8c75a', x, y - h * 0.45, z + 0.08, { rot: [0, 0, Math.PI / 4] });
+    },
+    // đuốc (bậc tương lai: đèn cột sáng)
+    torch(k, P, t, x, y, z) {
+      k.add(K().post(0.05, 0.5, 5), t === 3 ? P.metal : P.trim, x, y, z);
+      if (t === 3) k.add(K().box(0.12, 0.3, 0.12, 0.01), P.glow, x, y + 0.5, z, { glow: true });
+      else k.add(K().cone(0.11, 0.3, 6), '#ff9a3a', x, y + 0.5, z, { glow: true });
     },
     // lính gác đứng ở (x, y, z), mặt về +z. Vũ khí theo bậc: giáo tre, giáo sắt, súng trường, gậy sáng
     guard(k, P, t, x, y, z) {

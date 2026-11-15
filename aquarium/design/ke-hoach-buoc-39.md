@@ -12,9 +12,9 @@ chừng 20 phút. Mỗi công trình quan trọng là **một khối riêng**:
 | --- | --- | --- | --- |
 | Nhà chính | 10 | 8×8 | Mất là thua; cấp nhà chính mở khoá cấp công trình khác |
 | Nhà dân | 5 | 4×4 | Dân ở; mất nhà mất dân |
-| Nhà lính | 7 | 8×7 | Sinh lính đánh gần, đánh xa |
+| Nhà lính | 7 | 11×9 | Sinh lính đánh gần, đánh xa |
 | Xưởng xe | 7 | 6×6 | Xe phá cổng, máy bắn đá, về sau xe tăng |
-| Cổng thành | 8 | 10×4 | Lối vào duy nhất; hai chòi gác chỉ báo tin |
+| Cổng thành | 8 | 14×5 | Lối vào duy nhất; hai chòi gác chỉ báo tin |
 | Tường bao | 10 | 4×1,4 | Bao kín; mỗi đoạn một khối, nối khít |
 | Kho lương | 6 | 6×6 | Nuôi dân và lính; nguồn tiền nâng cấp |
 
@@ -28,8 +28,11 @@ Gỗ tre (thời 1–3) · Đá (4–6) · Gạch thép (7–9) · Tương lai (
 | --- | --- | --- | --- | --- |
 | Nhà chính | Đình làng nhà sàn, mái rơm cong hai đầu, hiên cột, trống, cột tô-tem | Cung đá hai tầng nền, mái ngói hai tầng cong góc, hàng cột đỏ, đèn đá | Dinh thự hai tầng, hiên cột trắng có trán tường, hai cánh, tháp đồng hồ vòm đồng | Tháp neon thon, ba đĩa sàn có vành sáng, ăng-ten |
 | Nhà dân | Nhà sàn một tầng, thang, rơm, chum | Hai tầng: đá dưới, khung gỗ trên, hộp hoa, ghế | Ba tầng gạch, ban công sắt, bồn nước trên mái | Ba tầng lệch nhau, dải kính sáng, vườn mái |
-| Nhà lính | Nhà dài, sân rào cọc, hình nộm rơm, lửa trại | Doanh trại đá, tường thấp quanh sân, chòi canh có lính | Hai tầng mái tôn, sân duyệt binh kẻ vạch, vượt rào, lính xếp hàng | Nhà chứa mái vòm, bãi đáp, bia ảnh nổi |
-| Cổng thành | Hai chòi gỗ có sàn, mỗi chòi hai lính cầm giáo | Trụ đá răng tường, lính trên đỉnh, cổng đinh sắt, đuốc | Trụ gạch có chòi canh mái nhọn, lính súng, đèn pha, cổng song sắt | Trụ neon, sàn tròn có lính sáng, màn chắn năng lượng |
+| Nhà lính (11×9) | Nhà dài, lán vũ khí, chòi canh góc, rào cọc, lửa trại, trống | Doanh trại đá, kho vũ khí, tháp canh, tường sân có vòm cổng, giếng, cờ treo | Hai tầng mái tôn, nhà ăn, đội hình 2×4, bãi chướng ngại, xe tải, bao cát | Nhà chứa mái vòm, tháp điều khiển, bãi đáp có xe bay, rào năng lượng |
+| Cổng thành (14×5) | Chòi gỗ hai tầng sàn, lầu cổng mái rơm, cổng cọc đôi, chông chắn | Trụ đá gờ đỡ, cờ treo, lầu cổng, lối đi có lính, song chắn, chậu lửa | Trụ gạch chòi canh, lầu cổng có mái, chốt gác, thanh chắn, bao cát, cột đèn | Trụ neon có súng tháp, vòng biểu tượng sáng, màn năng lượng, cọc sáng |
+
+Chung nhà lính: sân chia ba khu (đánh gần, tập hợp, bắn xa), giá vũ khí, hòm, thùng, lính tập. Chung cổng: tường đầu khối nối tường bao,
+lối đi trên tường có lính, lính gác đứng đất trước cổng.
 
 Bậc tương lai: bảng màu sẫm, mọi cạnh có viền neon (blocks.js `neonEdges`). Mảnh chung (lính gác, cửa sổ, lan can, vành tròn):
 `render/blocks/parts.js`.
