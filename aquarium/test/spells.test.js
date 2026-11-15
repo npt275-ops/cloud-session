@@ -102,3 +102,14 @@ test('đang giữ phép thì linh lực không tự hồi: giữ lâu phải c�
   S.regen(W, 2, false);
   assert.ok(S.state(W).mana >= 13, 'thả ra thì hồi lại');
 });
+
+test('giơ gậy niệm phép giữ yên 1–3 giây; phép càng lâu, càng lớn thì giữ càng lâu', () => {
+  for (const s of S.SPELLS) {
+    const h = S.holdOf(s);
+    assert.ok(h >= S.HOLD.MIN && h <= S.HOLD.MAX, s.id + ': ' + h);
+  }
+  const h = (id) => S.holdOf(S.BY.get(id));
+  assert.ok(h('soulBolt') < h('mount') && h('mount') < h('rain') && h('rain') < h('blackHole'));
+  assert.strictEqual(h('deluge'), 3);
+  assert.strictEqual(h('blackHole'), 3);
+});

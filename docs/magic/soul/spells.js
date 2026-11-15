@@ -5,13 +5,14 @@
   const BK = root.BK || (root.BK = {});
   const SP = BK.Spells || require('../../logic/spells.js');
   SP.add('soul', [
-    { id: 'soulBolt', name: 'Tia linh lực', cost: 8, cd: 0.5, use: 'tap', aim: true, open: true, desc: 'Một đốm sáng linh hồn bay tới chỗ ngắm rồi bung ra. Phép thử: chưa tác động lên thế giới.' },
+    { id: 'soulBolt', name: 'Tia linh lực', cost: 8, cd: 0.5, use: 'tap', hold: 1, aim: true, open: true, desc: 'Một đốm sáng linh hồn bay tới chỗ ngắm rồi bung ra. Phép thử: chưa tác động lên thế giới.' },
     {
       id: 'blackHole',
       name: 'Hố đen',
       cost: 45,
       cd: 44,
       use: 'tap',
+      hold: 3,
       aim: true,
       open: true,
       desc: 'Hố đen ở chỗ ngắm lớn dần tới nửa đảo, bẻ cong không gian, hút người, nhà rồi cả hòn đảo, hút luôn người nhập hồn.',

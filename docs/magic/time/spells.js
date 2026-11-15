@@ -5,8 +5,8 @@
   const BK = root.BK || (root.BK = {});
   const SP = BK.Spells || require('../../logic/spells.js');
   SP.add('time', [
-    { id: 'timeStop', open: true, name: 'Dừng thời gian', cost: 30, cd: 8, use: 'toggle', self: true, desc: 'Cả thế giới đứng im, chỉ linh hồn vẫn đi lại được.' },
-    { id: 'timeFast', open: true, name: 'Tua nhanh', cost: 14, cd: 0, use: 'hold', self: true, desc: 'Giữ để thời gian trôi nhanh 8 lần, 16 lần.' },
-    { id: 'timeBack', open: true, name: 'Tua lùi', cost: 20, cd: 0, use: 'hold', self: true, desc: 'Giữ để lùi từng ngày, xa nhất 30 ngày.' },
+    { id: 'timeStop', open: true, name: 'Dừng thời gian', cost: 30, cd: 8, use: 'toggle', hold: 2, self: true, desc: 'Cả thế giới đứng im, chỉ linh hồn vẫn đi lại được.' },
+    { id: 'timeFast', open: true, name: 'Tua nhanh', cost: 14, cd: 0, use: 'hold', hold: 1.2, self: true, desc: 'Giữ để thời gian trôi nhanh 8 lần, 16 lần.' },
+    { id: 'timeBack', open: true, name: 'Tua lùi', cost: 20, cd: 0, use: 'hold', hold: 1.2, self: true, desc: 'Giữ để lùi từng ngày, xa nhất 30 ngày.' },
   ]);
 })(typeof self !== 'undefined' ? self : globalThis);

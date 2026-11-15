@@ -31,6 +31,7 @@
     if (SCHOOLS.some((x) => x[0] === id)) throw new Error('hệ phép đăng ký hai lần: ' + id);
     SCHOOLS.push([id, fn]);
   }
+  const CAST_DOWN = 0.3; // (giây) cuối thời gian giữ gậy: hạ gậy xuống trong chừng này (render/body/motion3d.js cùng số)
   function setup(G) {
     const { THREE, camera } = G;
     const SP = BK.Spells,
@@ -136,7 +137,7 @@
     // dáng niệm phép chung: giơ gậy, phù chú của hệ ở đầu gậy, bụi phép (công thức '<hệ>Cast' nếu hệ có), tiếng vút (hue: cao độ)
     function castLook(s, hue) {
       const f = folk();
-      if (f) f.castT = 0.4;
+      if (f) f.castT = SP.holdOf(s); // (giơ gậy rồi giữ yên chừng ấy giây: render/body/motion3d.js)
       tipSigil(s.school);
       hand(v1);
       if (BK.MagicRecipes[s.school + 'Cast']) G.vfx.play(s.school + 'Cast', v1);
@@ -211,7 +212,7 @@
       const r = SP.cast(W(), s.id, ctx());
       if (!r.ok) return deny(r);
       const f = folk();
-      if (f) f.castT = 0.4; // (giơ tay niệm phép: render/body/motion3d.js)
+      if (f) f.castT = SP.holdOf(s); // (giơ gậy niệm phép, giữ yên chừng ấy giây rồi hạ: render/body/motion3d.js)
       if (ACT[s.id] && ACT[s.id].tap) ACT[s.id].tap(st.aim.clone(), s);
       st.last = { ok: true, id: s.id, t: performance.now() };
       return r;
@@ -232,7 +233,7 @@
         f = folk();
       // gậy phép: chỉ khi ở trong thân
       if (G.staff3d) {
-        if (inside() && f) G.staff3d.update(f, s ? s.school : 'soul', st.aimOk ? v2.copy(st.aim).sub(f.rig.root.position) : null, (f.castT || 0) / 0.4);
+        if (inside() && f) G.staff3d.update(f, s ? s.school : 'soul', st.aimOk ? v2.copy(st.aim).sub(f.rig.root.position) : null, Math.min(1, (f.castT || 0) / CAST_DOWN));
         else G.staff3d.hide();
       }
       if (inside() && s && s.aim && G.aim3d) {

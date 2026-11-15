@@ -299,3 +299,13 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
 - inside.js: vào trong hố thì màn hình tối hẳn, ghi "Đã bị hút vào hố đen", linh hồn rời thân. Phần "bên trong hố đen" chờ
   phát triển tiếp, làm ở tệp này.
 - Bản thử: sau 40 giây hố tan dần trong 4 giây, trả lại đảo và người, để thử lại được.
+
+## Giơ gậy niệm phép giữ yên theo độ lớn của phép (người chơi chốt)
+- Niệm phép thì giơ gậy thẳng ra trước, giữ yên 1–3 giây rồi mới hạ xuống (0,3 giây cuối). Phép càng lâu, càng lớn thì giữ
+  càng lâu: số giây là trường hold của từng phép trong magic/<hệ>/spells.js (logic/spells.js holdOf, HOLD 1..3).
+- Hiện đặt: Tia linh lực, Cầu lửa 1; Tua nhanh, Tua lùi 1,2; Cột nước 1,5; Đất trồi 1,6; Núi đất, Vòng lửa, Dừng thời gian 2;
+  Gọi mưa 2,4; Đại hồng thuỷ, Hố đen 3.
+- Đo được: Gọi mưa giữ tay giơ gậy suốt 2,4 giây (góc vai 1,45–1,68) rồi hạ; Cầu lửa 1 giây.
+
+## Tạm đóng phần sách phép (người chơi chốt)
+Sách phép tạm dừng ở đây: 5 hệ, 12 phép đã mở; Hố đen tạm chốt (phần "bên trong hố đen" chờ phát triển tiếp).

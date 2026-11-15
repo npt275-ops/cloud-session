@@ -28,6 +28,7 @@
     };
   // nén giãn: mức kéo dài tối đa lúc bay, mức nén lúc chạm đất, mức nhún mỗi bước; lò xo (độ cứng, độ hãm)
   const SQ = { STRETCH: 0.12, LAND: 0.17, STEP: 0.025, K: 170, D: 11, KICK: 2.4 };
+  const CAST_DOWN = 0.3; // (giây) hạ gậy xuống trong chừng này cuối thời gian giữ (game/spellbook.js cùng số)
   function state() {
     return { spd: 0, ph: 0, lx: null, lz: 0, yaw: null, yawRate: 0, acc: 0, lean: 0, tilt: 0, air: false, land: 0, t: 0, sp: {}, ly: 0, sq: 0, sqv: 0 };
   }
@@ -199,9 +200,10 @@
       m.sqv += (SQ.K * (sq - m.sq) - SQ.D * m.sqv) * h;
       m.sq = clamp(m.sq + m.sqv * h, -0.2, 0.25);
     }
-    // niệm phép (game/spellbook.js f.castT): tay phải đưa thẳng ra trước, hơi cao; vai trái mở ra cân người
+    // niệm phép (game/spellbook.js f.castT: giây còn giữ, theo hold của phép 1–3 giây): tay phải giơ gậy thẳng ra trước, hơi cao,
+    // giữ yên suốt lúc đó; vai trái mở ra cân người; CAST_DOWN giây cuối thì hạ xuống
     if (f.castT > 0) {
-      const k = Math.min(1, f.castT / 0.15);
+      const k = Math.min(1, f.castT / CAST_DOWN);
       tgt.sxR = 1.45 * k + (tgt.sxR || 0) * (1 - k);
       tgt.szR = 0.08;
       tgt.exR = 0.12 * k + (tgt.exR || 0) * (1 - k);

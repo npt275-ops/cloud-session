@@ -5,8 +5,8 @@
   const BK = root.BK || (root.BK = {});
   const SP = BK.Spells || require('../../logic/spells.js');
   SP.add('water', [
-    { id: 'rain', name: 'Gọi mưa', cost: 30, cd: 10, use: 'tap', aim: true, open: true, desc: 'Mây nhỏ kéo tới chỗ ngắm, mưa rơi vài giây: nhà đang cháy tắt lửa, đảo hết hạn hán, hết cháy rừng.' },
-    { id: 'geyser', name: 'Cột nước', cost: 25, cd: 3, use: 'tap', aim: true, open: true, desc: 'Cột nước phun vọt lên ở chỗ ngắm: dập lửa tức thì, người gần đó bị hất ra, bỏ chạy.' },
-    { id: 'deluge', name: 'Đại hồng thuỷ', cost: 100, cd: 120, use: 'tap', self: true, need: 'sea', open: true, desc: 'Chỉ khi đứng gần biển: lốc xoáy giữa bể, cả bể dâng cao gấp 14 lần tầm mắt rồi đổ ập, sóng tràn vào sáu đảo.' },
+    { id: 'rain', name: 'Gọi mưa', cost: 30, cd: 10, use: 'tap', hold: 2.4, aim: true, open: true, desc: 'Mây nhỏ kéo tới chỗ ngắm, mưa rơi vài giây: nhà đang cháy tắt lửa, đảo hết hạn hán, hết cháy rừng.' },
+    { id: 'geyser', name: 'Cột nước', cost: 25, cd: 3, use: 'tap', hold: 1.5, aim: true, open: true, desc: 'Cột nước phun vọt lên ở chỗ ngắm: dập lửa tức thì, người gần đó bị hất ra, bỏ chạy.' },
+    { id: 'deluge', name: 'Đại hồng thuỷ', cost: 100, cd: 120, use: 'tap', hold: 3, self: true, need: 'sea', open: true, desc: 'Chỉ khi đứng gần biển: lốc xoáy giữa bể, cả bể dâng cao gấp 14 lần tầm mắt rồi đổ ập, sóng tràn vào sáu đảo.' },
   ]);
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -34,9 +34,12 @@
   //   use: 'tap' bấm một lần; 'hold' giữ (tốn linh lực mỗi giây); 'toggle' bấm bật, bấm tắt
   //   aim: phép cần ngắm chỗ trên mặt đất; self: phát ngay chỗ nhân vật; need: 'sea' chỉ dùng được khi ở gần biển
   //   open: đã làm xong (chưa mở thì sách ghi "sắp có")
+  //   hold: (giây) giơ gậy niệm phép rồi giữ yên chừng này mới hạ xuống (HOLD.MIN..HOLD.MAX; phép càng lâu, càng lớn thì càng lâu)
   // Thứ tự trong sách: theo trang (SCHOOLS), trong một trang theo thứ tự thêm.
   const SPELLS = [],
     BY = new Map();
+  const HOLD = { MIN: 1, MAX: 3 }; // (giây) giơ gậy giữ yên ít nhất, nhiều nhất
+  const holdOf = (s) => Math.min(HOLD.MAX, Math.max(HOLD.MIN, (s && s.hold) || HOLD.MIN));
   function add(school, list) {
     if (!SCHOOLS.some((c) => c.id === school)) throw new Error('trang lạ: ' + school);
     for (const s0 of list) {
@@ -104,5 +107,5 @@
     m.mana -= need;
     return { ok: true, cost: need };
   }
-  return { SCHOOLS, SPELLS, BY, add, MANA_MAX, REGEN, DEV, WHY, price, state, regen, can, cast, channel };
+  return { SCHOOLS, SPELLS, BY, add, HOLD, holdOf, MANA_MAX, REGEN, DEV, WHY, price, state, regen, can, cast, channel };
 });

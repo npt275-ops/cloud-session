@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 246 tệp, 54238 dòng.
+Tổng: 246 tệp, 54256 dòng.
 
 ## (gốc)
 
@@ -34,7 +34,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/possess-swim.js` | 50 | Bơi của nhân vật đang nhập hồn (khi nước ngập quá DEPTH_IN: Đại hồng thuỷ, dưới biển) | `BK.PossessSwim` |  |
 | `game/possess.js` | 436 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
-| `game/spellbook.js` | 264 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
+| `game/spellbook.js` | 265 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
 ## logic/
@@ -75,7 +75,7 @@ Logic ngầm (chạy được trong Node, không vẽ): người, đảo, kinh t
 | `logic/scenes.js` | 139 | Cảnh theo sự kiện của một đảo … | `BK.Scenes` | `logic/people.js` `logic/posts.js` |
 | `logic/schedule.js` | 29 | Lịch một ngày theo giờ trong ngày (S.tod, 0..1, do phần chạy game ghi vào theo vòng ngày đêm trên trời): đêm, sáng, trưa … | `BK.Schedule` |  |
 | `logic/siege.js` | 321 | Đánh thành: cổng → các công trình xung quanh → nhà chính … | `BK.Siege` | `logic/economy.js` `logic/island.js` `logic/people.js` `logic/rules.js` |
-| `logic/spells.js` | 109 | Luật của sách phép thuật … | `BK.Spells` |  |
+| `logic/spells.js` | 112 | Luật của sách phép thuật … | `BK.Spells` |  |
 | `logic/strategy.js` | 536 | Não chiến lược của người đứng đầu mỗi đảo … | `BK.Strategy` | `logic/chronicle.js` `logic/diplomacy.js` `logic/ecology.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/war.js` |
 | `logic/tasks.js` | 263 | Việc làm trong ngày thường theo vai và theo buổi (logic/schedule.js) | `BK.Tasks` | `logic/guards.js` `logic/leader.js` `logic/people.js` `logic/posts.js` `logic/schedule.js` `logic/siege.js` |
 | `logic/temper.js` | 56 | Tính cách nổi trội của một người … | `BK.Temper` |  |
@@ -226,7 +226,7 @@ Hệ linh hồn: tia linh lực, hố đen.
 | `magic/soul/cast.js` | 38 | Phát phép hệ linh hồn (đăng ký với sách: game/spellbook.js school) |  | `game/spellbook.js` `magic/soul/blackhole/blackhole.js` `magic/time/cast.js` `render/magic/vfx.js` |
 | `magic/soul/recipes.js` | 36 | Công thức hiệu ứng hạt của hệ linh hồn … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
 | `magic/soul/sounds.js` | 20 | Tiếng của phép linh hồn (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
-| `magic/soul/spells.js` | 21 | Danh sách phép hệ linh hồn (trang "Linh hồn" của sách) |  | `logic/spells.js` |
+| `magic/soul/spells.js` | 22 | Danh sách phép hệ linh hồn (trang "Linh hồn" của sách) |  | `logic/spells.js` |
 
 ## magic/time/
 
@@ -337,7 +337,7 @@ Kiểm thử: node --test test/*.js.
 | `test/scenes.test.js` | 147 | Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js) |  | `logic/economy.js` `logic/island.js` `logic/posts.js` `logic/schedule.js` `logic/world.js` |
 | `test/siege.test.js` | 224 | Đánh thành (logic/siege.js, logic/war.js): cổng theo đường tới, công trình hư, vây nhà chính … |  | `logic/battles.js` `logic/brain.js` `logic/dramas.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/soak.test.js` | 35 | Hậu quả của phép nước (magic/water/soak.js; design/ke-hoach-buoc-37.md) | `BK.Siege` `BK.Climate` | `logic/climate.js` `logic/siege.js` |
-| `test/spells.test.js` | 105 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
+| `test/spells.test.js` | 116 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/staff-weight.test.js` | 42 | Sức nặng của gậy phép (render/magic/staff-weight.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/strategy.test.js` | 227 | Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu … |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/missiles.js` `logic/strategy.js` `logic/world.js` |
 | `test/timeline.test.js` | 102 | Ảnh chụp trận, tua lùi thời gian (magic/time/timeline.js; design/ke-hoach-buoc-37.md) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` `magic/time/timeline.js` |
