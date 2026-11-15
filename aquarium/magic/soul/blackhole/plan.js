@@ -10,13 +10,16 @@
  *                     uốn oằn, nứt, bật gốc, xé thành mảnh bay vào; vật nhỏ trước, nhà sau. Đất giữ nguyên
  *                   - người (hố lớn hơn người) bị cuốn lên (pull.js)
  *                   - người nhập hồn vào tầm thì bị giữ (không đi được, chỉ xoay nhìn), lơ lửng CATCH_FLOAT giây rồi bị hút
- *                     PLAYER_SEC giây vào lõi. Ở ngoài tầm thì vẫn chạy tự do quan sát: phát phép ở đầu đảo rồi chạy về cuối
+ *                     (spiral: kéo giãn, quay vòng, lao vào) vào lõi. Ở ngoài tầm thì vẫn chạy tự do quan sát: phát phép ở đầu đảo rồi chạy về cuối
  *                     đảo (xa hơn REACH_MAX × R) thì không bị hút
  *   fade(t)         1 suốt lúc hố còn; sau HOLD_END tan dần về 0 trong RELEASE giây (bản thử: trả lại đảo để thử tiếp)
- *   spiral(u, d0, rIn) đường bị cuốn vào của một người (u 0..1; d0: khoảng cách ngang lúc bị nhấc; rIn: bán kính vòng trong): nhấc lên
- *                   ngang mặt đĩa bồi tụ, quay quanh hố ORBITS vòng (bán kính co dần về rIn sát lõi, càng gần càng quay nhanh),
- *                   rồi bị kéo dài, quay đầu vào tâm và chui hẳn vào trong lõi. Trả { d: khoảng cách (phần của d0), turn: góc đã
- *                   quay, lift: 0..1 lên tới mặt đĩa, head: 0..1 quay đầu vào tâm, stretch: kéo dài người theo hướng tâm }
+ *   spiral(u, d0, rIn) đường bị cuốn vào của một người (u 0..1 trên pullSec() giây; d0: khoảng cách ngang lúc bị cuốn; rIn: bán kính
+ *                   vòng trong sát lõi), ba chặng nối nhau (người chơi chốt):
+ *                   - kéo giãn (STRETCH_SEC): vẫn lơ lửng tại chỗ, cả thân dài dần ra, quay dần theo hướng về tâm hố
+ *                   - quay vòng (ORBIT_SEC): nhấc lên ngang mặt đĩa bồi tụ, quay ORBITS vòng quanh hố, bán kính co dần về rIn
+ *                   - lao vào (PLUNGE_SEC): lao thẳng vào tâm (không quay thêm), thân dài thêm nữa
+ *                   Trả { d: khoảng cách (phần của d0), turn: góc đã quay, lift: 0..1 lên tới mặt đĩa, head: 0..1 quay đầu vào
+ *                   tâm, stretch: kéo dài người theo trục thân }
  * Chạy được bằng Node (kiểm thử: test/blackhole.test.js). */
 (function (root) {
   const BK = root.BK || (root.BK = {});
@@ -31,13 +34,18 @@
     HOUSE: 10, // (đơn vị) cỡ một ngôi nhà
     REACH_MAX: 0.85, // tầm hút lớn nhất: chừng này lần bán kính đảo (phát ở giữa đảo thì hút gần hết đảo; ở đầu đảo thì cuối đảo thoát)
     REACH_END: 34, // (giây) tầm hút lớn hết cỡ
-    PULL_SEC: [5, 7], // (giây) một người bị hút từ lúc nhấc lên tới lúc vào trong hố
-    ORBITS: 1.5, // (vòng) người bị cuốn quay quanh hố chừng này vòng rồi chui vào lõi (mảnh vụn: warp3d.js, 1–2 vòng)
+    STRETCH_SEC: 2.5, // (giây) chặng kéo giãn người (lơ lửng tại chỗ)
+    ORBIT_SEC: 3, // (giây) chặng quay vòng quanh hố
+    PLUNGE_SEC: 1, // (giây) chặng lao thẳng vào tâm
+    ORBITS: 2, // (vòng) quay quanh hố chừng này vòng rồi lao vào tâm (mảnh vụn: warp3d.js, 1–2 vòng)
+    STRETCH: 3.5, // người dài ra chừng này lần sau chặng kéo giãn; lúc lao vào thêm STRETCH_PLUNGE
+    STRETCH_PLUNGE: 2,
+    PULL_JIT: [0.9, 1.15], // (người trong làng) mỗi người nhanh chậm chừng này lần
+    CAM_GAP: 6, // (đơn vị) vòng quay của người nhập hồn nới ra chừng này (máy quay sau lưng ~5: chỉ vào lõi ở chặng lao vào)
     BAND: 16, // (đơn vị) tầm hút lan qua chừng này thì vật đi hết đường: kéo dài, nứt, bật gốc, xé mảnh, quay vòng, vào lõi
     SIZE: 1, // vật bán kính b bị hút khi cỡ cả hố ≥ b × SIZE (cùng luật với eats: đường kính hố ≥ cỡ vật)
     CATCH_FLOAT: 2, // (giây) người nhập hồn vào tầm hút: lơ lửng chừng này rồi mới bị hút
     FLOAT_UP: 2.6, // (đơn vị) lơ lửng cao chừng này
-    PLAYER_SEC: 7, // (giây) người nhập hồn bị cuốn quanh hố, kéo dài, rồi chui vào lõi (máy quay theo vào: màn hình đen hẳn)
     HOLD_END: 40, // (giây) hố còn tới lúc này
     RELEASE: 4, // (giây) rồi tan dần (bản thử)
   };
@@ -65,24 +73,28 @@
   const reach = (t, R) => Math.min(R * P.REACH_MAX, Math.max(1.5 * outer(t, R), R * P.REACH_MAX * Math.pow(clamp01(t / P.REACH_END), 1.1)));
   const fade = (t) => 1 - clamp01((t - P.HOLD_END) / P.RELEASE);
   const done = (t) => t >= P.HOLD_END + P.RELEASE;
-  // đường bị cuốn vào: nhấc lên mặt đĩa (u 0..0,25), quay vòng co dần về sát lõi (0,1..0,55; càng gần càng nhanh), bị kéo dài
-  // và quay đầu vào tâm (0,4..0,75), chui hẳn vào trong lõi (0,6..1)
+  // đường bị cuốn vào: kéo giãn (lơ lửng tại chỗ), quay vòng (lên mặt đĩa, co về sát lõi), lao thẳng vào tâm
   const smooth = (a, b, x) => {
     const t = clamp01((x - a) / (b - a));
     return t * t * (3 - 2 * t);
   };
+  const pullSec = () => P.STRETCH_SEC + P.ORBIT_SEC + P.PLUNGE_SEC;
   function spiral(u, d0, rIn) {
     u = clamp01(u);
-    const inner = Math.min(1, (rIn || 0) / Math.max(1e-3, d0));
-    const d = (1 - (1 - inner) * smooth(0.1, 0.55, u)) * (1 - smooth(0.6, 1, u));
+    const T = pullSec(),
+      s1 = P.STRETCH_SEC / T,
+      s2 = (P.STRETCH_SEC + P.ORBIT_SEC) / T;
+    const inner = Math.min(1, (rIn || 0) / Math.max(1e-3, d0)),
+      o = clamp01((u - s1) / (s2 - s1)); // (tiến độ chặng quay vòng)
+    const d = (1 - (1 - inner) * smooth(0, 1, o)) * (1 - smooth(s2, 1, u));
     return {
       d,
-      turn: Math.PI * 2 * P.ORBITS * Math.pow(u, 1.5),
-      lift: smooth(0, 0.25, u),
-      head: smooth(0.4, 0.75, u),
-      stretch: 1 + 4 * smooth(0.45, 1, u),
+      turn: Math.PI * 2 * P.ORBITS * Math.pow(o, 1.4),
+      lift: smooth(s1, s1 + (s2 - s1) * 0.4, u),
+      head: smooth(0, s1, u),
+      stretch: 1 + (P.STRETCH - 1) * smooth(0, s1, u) + P.STRETCH_PLUNGE * smooth(s2, 1, u),
     };
   }
-  BK.BlackHolePlan = { P, outer, horizon, height, eats, eatAt, houseAt, reach, fade, done, spiral };
+  BK.BlackHolePlan = { P, outer, horizon, height, eats, eatAt, houseAt, reach, fade, done, spiral, pullSec };
   if (typeof module !== 'undefined') module.exports = BK.BlackHolePlan;
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -20,8 +20,9 @@
     TINT: 0.8, // ngả vàng cam lớn nhất (quay lưng chạy khỏi hố thì mạnh nhất)
     TINT_EDGE: 25, // (đơn vị) ngoài tầm hút chừng này thì hết ngả màu
     TINT_RATE: 1.5, // (1/giây) màu đổi từ từ theo chừng này
-    CAM_IN: [0.85, 0.98], // máy quay theo người nhập hồn vào trong lõi trong khoảng này của đường bị cuốn (0..1)
-    DARK_AT: 0.82, // từ đây màn hình tối dần thành một màu đen (inside.js): người đang chui vào lõi
+    CAM_IN: [0.87, 0.98], // máy quay theo người nhập hồn vào trong lõi trong khoảng này của đường bị cuốn (0..1; lao vào từ 0,85)
+    DARK_AT: 0.9, // từ đây màn hình tối dần thành một màu đen (inside.js): người đang chui vào lõi
+    FACE_RATE: 1.5, // (1/giây) lúc bị cuốn, máy quay xoay về phía hố nhanh chừng này
   };
   function setup(G, kit) {
     const { THREE } = G;
@@ -112,7 +113,7 @@
       fx.voidTint = st.tint;
     }
     // người nhập hồn ở đảo này: lơ lửng, bị hút, vào trong hố
-    function player() {
+    function player(sec) {
       const Pz = G.possess;
       if (!Pz || !Pz.inside || Pz.st.i !== hole.i || st.inside) return;
       const f = G.villageOf(hole.i).folk(Pz.st.id);
@@ -122,6 +123,13 @@
       if (s === 'pull' && !st.sucked) {
         st.sucked = true;
         sound('voidSuck');
+      }
+      // đang bị cuốn: máy quay tự xoay dần về phía hố (vẫn xoay chuột thêm được), để thấy mình bị cuốn quanh hố
+      if (s === 'pull' && Pz.cam) {
+        const rp = f.rig.root.position;
+        let dw = Math.atan2(hole.c.x - rp.x, hole.c.z - rp.z) - Pz.cam.yawT;
+        dw = Math.atan2(Math.sin(dw), Math.cos(dw));
+        Pz.look(-dw * Math.min(1, sec * FX.FACE_RATE), 0);
       }
       // lúc người chui vào lõi, máy quay theo vào trong lõi (lõi vẽ cả mặt trong: chỉ còn một màu đen)
       if (s === 'pull' || s === 'in') {
@@ -165,7 +173,7 @@
       else {
         const skip = G.possess && G.possess.inside && G.possess.st.i === hole.i ? G.possess.st.id : null;
         pull.step(hole, skip);
-        player();
+        player(sec);
       }
       if (!still && fade > 0.2) particles(sec, outer);
       // khối lưới mới dựng trong lúc hố còn (công trình đổi bản vẽ xa, gần theo máy quay): tách thêm, mỗi giây một lần

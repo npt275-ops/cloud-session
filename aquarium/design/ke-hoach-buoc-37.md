@@ -282,13 +282,16 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
     ngang; phần càng cao càng bị kéo nghiêng (thân cây uốn cong), lắc oằn oại; các mảnh tách hở dần (nứt); cả vật nhích lên
     (bật gốc). Rồi từng mảnh vụn rời ra (lệch giờ), lộn nhào, bay xoắn ốc về tâm; gần lõi bị kéo dài, mỏng đi, thu nhỏ vào lõi.
     Vật nhỏ (cỏ, đá) trước, cây, nhà sau. Shader tính cho cả bóng đổ; chỉ trên đảo bị hút.
-- Bị cuốn vào trong hố (người chơi chốt qua hai lần: bản quay 3,5 vòng thì người kẹt ở ngoài miệng hố, máy quay quay quá
-  nhiều vòng). Người, người nhập hồn (plan.js spiral), mảnh vụn (warp3d.js) đi cùng một kiểu đường:
-  - Lơ lửng, nhấc lên ngang mặt đĩa bồi tụ.
-  - Cuốn 1–2 vòng quanh hố (người 1,5 vòng; mảnh vụn 1–2 vòng), bán kính co dần về sát lõi, càng gần càng nhanh.
-  - Thân 3D bị kéo dài theo hướng tâm (người dài ra gấp 5, mỏng ngang), quay đầu vào tâm, rồi chui hẳn vào trong lõi.
-  - Người nhập hồn 7 giây. Máy quay bám theo người tới gần hết đường (85–98%) thì bị kéo vào trong lõi (game/possess.js
-    setCamPull); lõi vẽ cả mặt trong. Từ 82% đường màn hình tối dần thành một màu đen (inside.js).
+- Bị cuốn vào trong hố (người chơi chốt qua ba lần; plan.js spiral, mọi con số ở P). Người nhập hồn, người trong làng:
+  - Lơ lửng 2 giây (người nhập hồn, CATCH_FLOAT).
+  - Kéo giãn 2,5 giây: vẫn lơ lửng tại chỗ, cả thân dài dần ra 3,5 lần, quay dần theo hướng về tâm hố.
+  - Quay vòng 3 giây: nhấc lên ngang mặt đĩa bồi tụ, quay đúng 2 vòng quanh hố, bán kính co dần về sát lõi (người nhập hồn
+    nới thêm CAM_GAP 6 đơn vị để máy quay sau lưng không lọt vào lõi giữa chừng). Máy quay tự xoay dần về phía hố (vẫn xoay
+    chuột được).
+  - Lao vào 1 giây: lao thẳng vào tâm, không quay thêm, thân dài thêm. Máy quay theo vào trong lõi (lõi vẽ cả mặt trong);
+    màn hình tối dần thành một màu đen (inside.js).
+  - Đo được: đứng yên lúc kéo giãn, đúng 2,00 vòng, rồi lao vào.
+  - Mảnh vụn (warp3d.js): quay 1–2 vòng, vòng trong sát lõi, chui vào lõi.
 - hole3d.js (theo ảnh tham khảo): lõi đen, vòng photon, đĩa bồi tụ trắng vàng → cam → đỏ thẫm xoáy ngả về máy quay, hai tia.
 - pull.js: người trong tầm hút bị cuốn lên xoắn ốc vào tâm, lộn nhào, kéo dài người. Dân cả đảo hoảng sợ.
 - Người nhập hồn: sau khi phát phép vẫn chạy tự do quan sát. Vào tầm hút thì bị giữ (không đi, không nhảy được, chỉ xoay

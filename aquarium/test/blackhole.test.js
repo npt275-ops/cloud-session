@@ -48,8 +48,13 @@ test('đường bị cuốn: quay quanh hố nhiều vòng, co dần, rồi mớ
   assert.ok(a.d === 1 && b.d < 1 && c.d === 0);
   assert.ok(c.turn > b.turn && b.turn > a.turn);
   assert.ok(a.stretch === 1 && c.stretch > b.stretch);
-  assert.ok(c.turn >= Math.PI * 2 && c.turn <= Math.PI * 4, 'quay quanh hố 1–2 vòng');
-  const ring = H.spiral(0.55, 20, 6);
-  assert.ok(Math.abs(ring.d * 20 - 6) < 0.3, 'quay vòng sát lõi trước khi chui vào: ' + (ring.d * 20).toFixed(2));
-  assert.ok(c.head === 1 && c.stretch >= 4, 'cuối: quay đầu vào tâm, người bị kéo dài');
+  const T = H.pullSec(),
+    s1 = P.STRETCH_SEC / T,
+    s2 = (P.STRETCH_SEC + P.ORBIT_SEC) / T;
+  const st1 = H.spiral(s1, 20, 6);
+  assert.ok(st1.d === 1 && st1.turn === 0 && st1.stretch >= P.STRETCH - 1e-9, 'hết chặng kéo giãn: vẫn tại chỗ, chưa quay, đã dài ra');
+  const st2 = H.spiral(s2, 20, 6);
+  assert.ok(Math.abs(st2.d * 20 - 6) < 0.3 && Math.abs(st2.turn - Math.PI * 2 * P.ORBITS) < 1e-6, 'hết chặng quay: 2 vòng, sát lõi');
+  assert.ok(Math.abs(c.turn - st2.turn) < 1e-9, 'lao thẳng vào tâm, không quay thêm');
+  assert.ok(c.head === 1 && c.stretch > st1.stretch, 'cuối: quay đầu vào tâm, người dài thêm');
 });

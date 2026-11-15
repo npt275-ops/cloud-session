@@ -4,7 +4,7 @@
  * thì thu nhỏ hẳn (bị lõi che). Giữ thân người qua f.grab (render/village3d.js gọi sau khi đặt gốc khung).
  * Người nhập hồn (player): ngoài tầm hút thì vẫn chạy tự do ('free'). Vào tầm hút (plan.js reach) thì bị giữ: không đi được,
  * chỉ xoay nhìn (game/possess.js setHeld), lơ lửng, xoay chậm, nhấp nhô CATCH_FLOAT giây ('float'), rồi bị hút vào như mọi
- * người ('pull', PLAYER_SEC giây); qua chân trời sự kiện thì 'in'. Đã bị giữ thì không thoát được nữa.
+ * người ('pull': kéo giãn, quay vòng, lao vào: plan.js spiral); qua chân trời sự kiện thì 'in'. Đã bị giữ thì không thoát được nữa.
  * create(G) trả { step(hố), player(f, hố) trả 'free' | 'float' | 'pull' | 'in', releaseAll() }; hố = { c (tâm), t, R, i (đảo) }.
  * Cần: three.js, render/village3d.js (each, f.grab), magic/soul/blackhole/plan.js. */
 (function (root) {
@@ -23,7 +23,7 @@
     function place(rt, s, u, hole) {
       // (vòng trong: sát lõi đen)
       const c = hole.c,
-        sp = Plan.spiral(u, s.d0, Plan.horizon(hole.t, hole.R) * 1.4),
+        sp = Plan.spiral(u, s.d0, Plan.horizon(hole.t, hole.R) * 1.4 + (s.camGap || 0)),
         d = s.d0 * sp.d,
         a = s.a0 + sp.turn * s.spin;
       const y = s.y0 + (c.y - s.y0) * sp.lift + Math.sin(u * 9 + s.a0) * 0.4 * (1 - u);
@@ -41,7 +41,7 @@
       const rt = f.rig.root;
       const s = {
         t0: hole.t,
-        dur: P.PULL_SEC[0] + Math.random() * (P.PULL_SEC[1] - P.PULL_SEC[0]),
+        dur: Plan.pullSec() * (P.PULL_JIT[0] + Math.random() * (P.PULL_JIT[1] - P.PULL_JIT[0])),
         d0: Math.hypot(rt.position.x - hole.c.x, rt.position.z - hole.c.z),
         a0: Math.atan2(rt.position.z - hole.c.z, rt.position.x - hole.c.x),
         y0: rt.position.y,
@@ -90,11 +90,12 @@
       if (!s.pulled && t >= s.t0 + P.CATCH_FLOAT) {
         s.pulled = {
           t0: t,
-          dur: P.PLAYER_SEC,
+          dur: Plan.pullSec(),
           d0: Math.hypot(rt.position.x - hole.c.x, rt.position.z - hole.c.z),
           a0: Math.atan2(rt.position.z - hole.c.z, rt.position.x - hole.c.x),
           y0: rt.position.y,
           spin: 1,
+          camGap: P.CAM_GAP, // (vòng quay của người nhập hồn nới ra: máy quay sau lưng không lọt vào lõi giữa chừng)
           yaw: f.yaw,
         };
       }
