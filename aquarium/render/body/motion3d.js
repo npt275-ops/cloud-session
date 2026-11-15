@@ -16,7 +16,8 @@
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v),
     lerp = (a, b, t) => a + (b - a) * t;
   // các khoá của tư thế đi qua lò xo (theo sau một nhịp, nảy nhẹ): độ cứng, độ hãm
-  const SPRING = { hx: [70, 9], hy: [60, 8], cx: [90, 12], sxL: [80, 7], sxR: [80, 7], exL: [90, 9], exR: [90, 9] };
+  // (tay phải hãm mạnh hơn: giơ gậy niệm phép thì lên tới góc rồi đứng yên, không vọt quá đầu rồi lắc về)
+  const SPRING = { hx: [70, 9], hy: [60, 8], cx: [90, 12], sxL: [80, 7], sxR: [80, 15], exL: [90, 9], exR: [90, 15] };
   const RUN_FROM = 2.6, // (đơn vị mỗi giây) từ chừng này bắt đầu chạy hẳn, tới RUN_FROM + RUN_SPAN thì chạy hết sức
     RUN_SPAN = 1.8,
     LAND_T = 0.28; // (giây) khuỵu gối khi chạm đất
@@ -28,6 +29,7 @@
     };
   // nén giãn: mức kéo dài tối đa lúc bay, mức nén lúc chạm đất, mức nhún mỗi bước; lò xo (độ cứng, độ hãm)
   const SQ = { STRETCH: 0.12, LAND: 0.17, STEP: 0.025, K: 170, D: 11, KICK: 2.4 };
+  const CAST_ARM = 2.5; // (rad) vai phải lúc giơ gậy niệm phép: π/2 là ngang vai; 2,5 là chếch lên khoảng 53° (người chơi chốt 45–60°)
   const CAST_DOWN = 0.3; // (giây) hạ gậy xuống trong chừng này cuối thời gian giữ (game/spellbook.js cùng số)
   function state() {
     return { spd: 0, ph: 0, lx: null, lz: 0, yaw: null, yawRate: 0, acc: 0, lean: 0, tilt: 0, air: false, land: 0, t: 0, sp: {}, ly: 0, sq: 0, sqv: 0 };
@@ -204,7 +206,7 @@
     // giữ yên suốt lúc đó; vai trái mở ra cân người; CAST_DOWN giây cuối thì hạ xuống
     if (f.castT > 0) {
       const k = Math.min(1, f.castT / CAST_DOWN);
-      tgt.sxR = 1.45 * k + (tgt.sxR || 0) * (1 - k);
+      tgt.sxR = CAST_ARM * k + (tgt.sxR || 0) * (1 - k);
       tgt.szR = 0.08;
       tgt.exR = 0.12 * k + (tgt.exR || 0) * (1 - k);
       tgt.cy = (tgt.cy || 0) - 0.2 * k;
@@ -214,9 +216,13 @@
     for (const key in SPRING) {
       const [kk, dd] = SPRING[key],
         sp = m.sp[key] || (m.sp[key] = { x: tgt[key] || 0, v: 0 });
-      const a = kk * ((tgt[key] || 0) - sp.x) - dd * sp.v;
-      sp.v += a * dt;
-      sp.x += sp.v * dt;
+      // (khung hình dài thì chia nhỏ bước tính: không thì lò xo cứng tự lắc qua lắc lại trên máy chậm)
+      const n = Math.max(1, Math.ceil(dt / (1 / 60))),
+        h = dt / n;
+      for (let i = 0; i < n; i++) {
+        sp.v += (kk * ((tgt[key] || 0) - sp.x) - dd * sp.v) * h;
+        sp.x += sp.v * h;
+      }
       tgt[key] = sp.x;
     }
     m.land = Math.max(0, m.land - dt); // (trừ ở cuối: khung chạm đất vẫn thấy đủ, kể cả máy chậm)

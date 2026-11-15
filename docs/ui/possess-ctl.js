@@ -1,7 +1,8 @@
 /* Bể Kính · ui/possess-ctl.js · Nút và điều khiển của cú nhập hồn (design/ke-hoach-buoc-32.md mục 3.3)
  * Nút "Nhập hồn" trên thanh điều khiển; trong lúc nhập hồn ẩn mọi bảng của góc nhìn thượng đế (body.possessed), chỉ còn
  * một dòng nhắc phím và nút "Thoát".
- * Máy tính: phím mũi tên hay W A S D để đi, Shift chạy, Space nhảy (bấm lần nữa khi đang bay: lộn; giữ: lượn), rê chuột để nhìn (bấm vào màn hình: khoá chuột), Esc thoát.
+ * Máy tính: phím mũi tên hay W A S D để chạy (người chơi chốt: bấm là chạy), giữ Shift thì đi chậm (dưới nước: Shift lặn),
+ * Space nhảy (bấm lần nữa khi đang bay: lộn; giữ: lượn), rê chuột để nhìn (bấm vào màn hình: khoá chuột), Esc thoát.
  * Điện thoại: cần ảo nửa trái màn hình (đẩy xa thì chạy), kéo nửa phải để xoay nhìn, nút "Nhảy" góc phải dưới.
  * Chỉ ghi vào G.possess (st.move, st.run, look, enter, exit); không đụng máy quay, không đụng người. Cần: game/possess.js. */
 (function (root) {
@@ -62,7 +63,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
     hint.innerHTML =
-      '<span class="keys">WASD đi · Shift chạy · Space nhảy · B sách phép · 1–9, Q chọn phép · E phát phép · dưới nước: Space nổi, Shift lặn · bấm để khoá chuột · Esc thoát</span><button type="button">Thoát</button>';
+      '<span class="keys">WASD chạy · Shift đi chậm · Space nhảy · B sách phép · 1–9, Q chọn phép · E phát phép · dưới nước: Space nổi, Shift lặn · bấm để khoá chuột · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),
@@ -105,7 +106,10 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
       }
       const n = Math.hypot(x, y);
       P.st.move.set(n > 1 ? x / n : x, n > 1 ? y / n : y);
-      P.st.run = held.has('ShiftLeft') || held.has('ShiftRight') || (!!stickV && Math.hypot(stickV[0], stickV[1]) > 0.85);
+      const shift = held.has('ShiftLeft') || held.has('ShiftRight');
+      // (phím: chạy, giữ Shift thì đi chậm; cần gạt trên điện thoại: đẩy hết cỡ mới chạy)
+      P.st.run = stickV ? Math.hypot(stickV[0], stickV[1]) > 0.85 && !shift : !shift;
+      P.st.dive = shift; // (dưới nước: Shift lặn xuống, game/possess-swim.js)
     }
     document.addEventListener(
       'keydown',

@@ -48,3 +48,15 @@ giữ nguyên): khung khựng tới 120 ms, do:
 | Bóng người quanh mình | Đứng yên thì bóng cập nhật cách 2, 3 khung hình (bóng người đi quanh giật) | Lúc nhập hồn cập nhật mỗi khung hình (vùng bóng nhỏ) | |
 
 Khung khựng nặng nhất phần JS: 120 ms → 34 ms.
+
+## Lần 3: màn hình thỉnh thoảng zoom nhỏ rồi trở lại trong gần 1 giây (người chơi báo, máy tính)
+- Đo: ghi góc nhìn mỗi khung hình lúc nhập hồn: cứ khoảng 1,3 giây góc nhìn tụt từ 66° xuống 57° rồi bò về 66°. Bắt kẻ đặt góc
+  nhìn (gài bẫy đọc ngăn xếp): render/perf3d.js (bộ điều tốc đổi độ nét theo tốc độ khung hình) gọi render/scene3d.js
+  resize(), hàm này đặt lại góc nhìn về 34°/50° (góc nhìn thượng đế). Kẻ thứ hai: render/deep3d.js mỗi khung hình kéo góc
+  nhìn về 34° (khung hình chậm thì kéo mạnh).
+- Sửa: lúc nhập hồn (BK.possessActive, game/possess.js) hai chỗ đó không đụng góc nhìn. Đo lại: góc nhìn đứng yên 66° suốt.
+- Độ nét chập chờn người chơi thấy cũng từ bộ điều tốc đó (đổi độ nét mỗi lần máy chậm, nhanh); góc nhìn không còn giật theo.
+- Máy quay chính rộng hơn nữa (người chơi chốt): lùi 4,9 → 6,2, cao 0,85 → 1,05, góc nhìn 58 → 66.
+- Tường che: phải bị che liền 0,25 giây máy quay mới vào gần (game/possess-cam.js BLOCK): cột, mái, cây lướt qua không còn làm
+  máy quay giật vào rồi lùi ra.
+- Máy tính: bấm W A S D là chạy (7,5), giữ Shift thì đi chậm (2,2); dưới nước Shift vẫn là lặn (ui/possess-ctl.js st.dive).

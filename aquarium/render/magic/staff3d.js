@@ -4,7 +4,7 @@
  * phải (xương wrR), hướng tính riêng (HOLD):
  *   chạy, đi, nhảy: cầm ngang gần giữa thân gậy, gần song song mặt đất, đầu gậy chĩa tới hơi ngóc lên (dáng cầm gậy chạy thật)
  *   đứng: chống gậy thẳng đứng, chân gậy chạm đất (trượt chỗ cầm dọc thân gậy cho vừa tầm tay)
- *   niệm phép (k 0..1): nghiêng về chỗ ngắm.
+ *   niệm phép (k 0..1): chĩa về phía chỗ ngắm, chếch lên CAST_UP (~53°) so với mặt đất.
  * Hai dáng trộn liền theo f.staffK (0 chống .. 1 cầm chạy), ghi vào người để render/body/motion3d.js đặt tay phải cho khớp.
  * Sức nặng: hướng trên chỉ là hướng đích; hướng thật đi qua render/magic/staff-weight.js (đầu gậy trễ khi tăng tốc, văng tới
  * khi phanh, quét theo sau khi rẽ, bập bênh theo bước, hơi trĩu). Chống gậy xuống đất: bụi nhỏ ở chân gậy (công thức
@@ -24,6 +24,7 @@
     SLIDE_MIN: -0.15, // lúc chống: chỗ cầm chỉ trượt trong khoảng này (tay thấp quá, cao quá thì gậy nhấc khỏi đất)
     SLIDE_MAX: 0.5,
     BLEND: 6, // (1/giây) tốc độ đổi dáng
+    CAST_UP: 0.92, // (rad) niệm phép: gậy chếch lên chừng này so với mặt đất (~53°, cùng tay: render/body/motion3d.js CAST_ARM)
     PLANT_AT: 0.12, // f.staffK xuống dưới mức này (sau khi đã cầm chạy trên PLANT_FROM) là vừa chống gậy xuống đất
     PLANT_FROM: 0.6,
   };
@@ -92,7 +93,13 @@
         cy = Math.cos(f.yaw);
       dir.set(sy - cy * HOLD.OUT, 0, cy + sy * HOLD.OUT).normalize().multiplyScalar(Math.cos(HOLD.TILT)).setY(Math.sin(HOLD.TILT));
       q.copy(ID).slerp(qAim.setFromUnitVectors(up, dir), ck);
-      if (aim && k > 0) q.slerp(qAim.setFromUnitVectors(up, dir.copy(aim).normalize()), Math.min(1, k) * 0.75);
+      // niệm phép: gậy chĩa về phía chỗ ngắm (hay phía trước) và chếch lên CAST_UP so với mặt đất, theo tay giơ gậy
+      if (k > 0) {
+        if (aim && aim.x * aim.x + aim.z * aim.z > 1e-4) dir.set(aim.x, 0, aim.z).normalize();
+        else dir.set(sy, 0, cy);
+        dir.multiplyScalar(Math.cos(HOLD.CAST_UP)).setY(Math.sin(HOLD.CAST_UP));
+        q.slerp(qAim.setFromUnitVectors(up, dir), Math.min(1, k));
+      }
       dir.copy(up).applyQuaternion(q);
       // chỗ cầm: chống thì trượt cho chân gậy chạm đất, cầm chạy thì cầm gần giữa
       const gy = G.vfx ? G.vfx.groundAt(hand.x, hand.z) : f.rig.root.position.y;

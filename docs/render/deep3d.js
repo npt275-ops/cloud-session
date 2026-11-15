@@ -195,9 +195,12 @@
       D.denizens.update(Math.min(dt || 16, 100) / 1000, t * 0.001, cam, under);
       // dưới nước góc nhìn rộng ra (62°) để thấy trọn một phế tích dài 185 trong lòng rãnh; lên mặt nước trả lại góc thường
       // (góc thường theo render/scene3d.js resize: 34°, màn hẹp 50°)
+      // (đang nhập hồn thì góc nhìn do máy quay nhập hồn giữ, game/possess.js: không giành lại, không thì cứ khung hình nào chậm
+      // là bị kéo về 34° một chút rồi bật lại, thành giật zoom)
       const base = window.innerWidth < 720 ? 50 : 34,
-        want = under ? Math.max(base, 62) : base;
-      if (Math.abs(cam.fov - want) > 0.05) {
+        want = under ? Math.max(base, 62) : base,
+        owned = root.BK && root.BK.possessActive && root.BK.possessActive();
+      if (!owned && Math.abs(cam.fov - want) > 0.05) {
         cam.fov += (want - cam.fov) * Math.min(1, (dt || 16) / 400);
         if (Math.abs(cam.fov - want) < 0.05) cam.fov = want;
         cam.updateProjectionMatrix();

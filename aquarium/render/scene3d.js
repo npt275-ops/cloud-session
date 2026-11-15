@@ -49,7 +49,9 @@
         h = window.innerHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
-      camera.fov = w < 720 ? 50 : 34;
+      // (đang nhập hồn thì góc nhìn do máy quay nhập hồn giữ, game/possess.js; render/perf3d.js gọi resize mỗi lần đổi độ nét,
+      // đặt lại góc nhìn ở đây thì màn hình nhập hồn bị zoom vào rồi bật ra)
+      if (!(root.BK && root.BK.possessActive && root.BK.possessActive())) camera.fov = w < 720 ? 50 : 34;
       camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);

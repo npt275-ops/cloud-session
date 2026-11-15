@@ -309,3 +309,6 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
 
 ## Tạm đóng phần sách phép (người chơi chốt)
 Sách phép tạm dừng ở đây: 5 hệ, 12 phép đã mở; Hố đen tạm chốt (phần "bên trong hố đen" chờ phát triển tiếp).
+- Sửa (người chơi chốt): tay giơ gậy chếch lên 45–60° so với mặt đất, không ngang: vai phải 2,5 rad (render/body/motion3d.js
+  CAST_ARM), gậy chĩa về phía chỗ ngắm chếch lên 53° (render/magic/staff3d.js CAST_UP). Lò xo tay phải hãm mạnh hơn và chia
+  nhỏ bước tính khi khung hình dài: tay lên tới góc rồi đứng yên. Đo được: vai 2,5, gậy 55° so với mặt đất, đứng yên.

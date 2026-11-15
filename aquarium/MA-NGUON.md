@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 246 tệp, 54256 dòng.
+Tổng: 246 tệp, 54283 dòng.
 
 ## (gốc)
 
@@ -29,10 +29,10 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/cities.js` | 1109 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
 | `game/loop.js` | 136 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `magic/time/cast.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `render/water/water3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
-| `game/possess-cam.js` | 123 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
+| `game/possess-cam.js` | 126 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
 | `game/possess-jump.js` | 94 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
 | `game/possess-swim.js` | 50 | Bơi của nhân vật đang nhập hồn (khi nước ngập quá DEPTH_IN: Đại hồng thuỷ, dưới biển) | `BK.PossessSwim` |  |
-| `game/possess.js` | 436 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
+| `game/possess.js` | 438 | Cú nhập hồn … | `BK.possessActive` `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
 | `game/spellbook.js` | 265 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
@@ -90,7 +90,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 |---|---|---|---|---|
 | `render/anim3d.js` | 250 | Cử động tay chân bằng công thức, không cần tệp hoạt ảnh: 5 trạng thái gốc (đứng yên, đi, nói chuyện hay tranh cãi … | `BK.Anim3D` | `render/ik3d.js` |
 | `render/buildings3d.js` | 1458 | Đặt công trình lên cả sáu đảo theo cấp văn minh (1..12) | `BK.Buildings3D` G: 1 dịch vụ | `render/build/batch3d.js` `render/build/isles/compose.js` `render/build/kit3d.js` `render/build/life3d.js` `render/build/neon.js` `render/build/place3d.js` `render/build/plains/common.js` `render/build/roads.js` `render/build/ruins3d.js` `render/build/traffic3d.js` `render/build/workyards3d.js` `render/look3d.js` `sea3d.js` |
-| `render/deep3d.js` | 247 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
+| `render/deep3d.js` | 250 | Đáy bể: ghép các phần, rong, bọt khí, máy quay dưới nước … | `BK.Deep3D` | `game/possess.js` `render/deep/citadel3d.js` `render/deep/denizens3d.js` `render/deep/kit3d.js` `render/deep/ruins3d.js` `render/deep/terrain3d.js` `render/deep/tunnels3d.js` |
 | `render/engines3d.js` | 310 | Máy công thành, trại vây, cổng dịch chuyển, lá chắn … | `BK.Engines3D` | `render/map/map3d.js` |
 | `render/gestures3d.js` | 629 | Thư viện cử chỉ của NPC trong toàn bộ Chaos Sandbox: di chuyển, đứng chờ, giao tiếp, cảm xúc, lao động, tôn giáo … | `BK.Gestures3D` G: 2 dịch vụ |  |
 | `render/hpbars3d.js` | 72 | Thanh máu … | `BK.HpBars3D` |  |
@@ -105,7 +105,7 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/perf3d.js` | 141 | Mượt và nét: bộ điều tốc nhắm 60 khung hình mỗi giây (chậm thì hạ độ nét, vẽ bóng thưa hơn, rồi bỏ bóng; nhanh lại thì … | `BK.Perf3D` G: 1 dịch vụ | `game/possess.js` `game/world.js` |
 | `render/prosper3d.js` | 304 | Thịnh vượng và suy tàn thấy được … | `BK.Prosper3D` | `sea3d.js` |
 | `render/rig3d.js` | 468 | Bộ khung khớp của một người (hông, ngực, cổ, đầu, vai, khuỷu, cổ tay, hông, gối, cổ chân) và hình người theo nét đã … | `BK.Rig3D` | `render/outfits3d.js` |
-| `render/scene3d.js` | 135 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `render/mood3d.js` |
+| `render/scene3d.js` | 137 | Bộ vẽ, cảnh, camera và tay kéo xoay camera, đổi cỡ màn hình; vài thứ dùng chung khi vẽ: ảnh đốm sáng mờ (glowTex), vật … | `BK.Scene3D` G: 11 dịch vụ | `game/possess.js` `render/mood3d.js` |
 | `render/shots3d.js` | 210 | Tên, đạn, tia bay trên chiến trường … | `BK.Shots3D` |  |
 | `render/sky3d.js` | 222 | Bầu trời, sao, trăng, ánh sáng (trời, nắng, trăng) và ngày đêm: mỗi khung hình tính màu trời theo giờ (G.time.tod) … | `BK.Sky3D` G: 5 dịch vụ | `game/cities.js` `game/world.js` `render/build/neon.js` `render/look3d.js` `render/mood3d.js` `render/perf3d.js` |
 | `render/snow3d.js` | 51 | Tuyết rơi mùa đông trên băng nguyên (dày) và núi (thưa), dày dần theo độ đông (G.weather.winter) | `BK.Snow3D` G: 1 dịch vụ | `game/world.js` `render/map/map3d.js` |
@@ -303,7 +303,7 @@ Giao diện: thanh đảo, bảng làng, máy quay bay, bảng dev.
 | `ui/camera-fly.js` | 147 | Camera đi theo tay người chơi: bay tới một chỗ (flyTo, trượt êm), bay tự do bằng phím mũi tên, W A S D, Q E (lên xuống) | `BK.CameraFly` G: 2 dịch vụ | `game/nature.js` `game/possess.js` `game/world.js` `render/map/map3d.js` `render/tank3d.js` `ui/landbar.js` |
 | `ui/hud.js` | 62 | Những gì ghi và bấm trên màn hình ngoài bảng làng: nút tốc độ (1×, 2×, 4×; không có tạm dừng), nút âm thanh, dòng ngày … | `BK.Hud` G: 1 dịch vụ | `game/cities.js` `game/seasons.js` `game/world.js` `logic/eras.js` |
 | `ui/landbar.js` | 59 | Thanh sáu vùng đất ở trên cùng: bấm một đảo để bay tới đảo đó; đảo đang xem được tô sáng (setFocus) | `BK.LandBar` G: 1 dịch vụ | `game/nature.js` `game/world.js` `ui/camera-fly.js` |
-| `ui/possess-ctl.js` | 234 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
+| `ui/possess-ctl.js` | 238 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
 | `ui/race-dev.js` | 277 | Tin giữa các đảo và bảng dev "Cuộc đua" … | `BK.RaceDev` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/temper.js` `logic/war.js` `ui/camera-fly.js` `ui/landbar.js` |
 | `ui/spellbook-ui.js` | 320 | Giao diện sách phép thuật … | `BK.SpellbookUi` G: 1 dịch vụ | `game/possess.js` `game/spellbook.js` `game/world.js` `logic/spells.js` `render/scene3d.js` `render/style/palette.js` |
 | `ui/village-ui.js` | 346 | Bảng của một làng: thế hệ, số người, tình huống đang có, hội đồng 8 ghế, nhật ký, và các nút thử tình huống … | `BK.VillageUI` | `logic/brain.js` `logic/council.js` `logic/dramas.js` `logic/eras.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rules.js` `logic/tasks.js` `logic/temper.js` |

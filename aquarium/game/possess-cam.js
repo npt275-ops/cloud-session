@@ -24,6 +24,7 @@
     Y: 9, // độ cao điểm bám
     IN: 9, // tường che: máy quay vào gần
     OUT: 2.2, // hết che: lùi ra
+    BLOCK: 0.25, // (giây) phải bị che liền chừng này mới vào gần (cột, mái, cây lướt qua thì thôi: không giật vào rồi lùi ra)
     GROUND: 10, // mặt đất dưới máy quay
     SNAP: 3, // (đơn vị) nhân vật dời xa hơn chừng này trong một khung hình (đổi người, dịch chuyển): đặt lại ngay
   };
@@ -84,8 +85,10 @@
       C.tgt.z = head.z;
       C.tgt.y += (head.y - C.tgt.y) * ex(sec, RATE.Y);
       // tường che: khoảng cách đích theo phần trống trên đường từ điểm bám ra chỗ đặt đầy đủ
-      const free = clearFrac ? clearFrac(C.tgt, place(C.tgt, CAM.BACK, ideal)) : 1,
-        want = Math.max(CAM.NEAR_MIN, free * CAM.BACK);
+      const free = clearFrac ? clearFrac(C.tgt, place(C.tgt, CAM.BACK, ideal)) : 1;
+      let want = Math.max(CAM.NEAR_MIN, free * CAM.BACK);
+      C.blockT = want < C.dist - 0.3 ? (C.blockT || 0) + sec : 0;
+      if (C.blockT > 0 && C.blockT < RATE.BLOCK) want = C.dist;
       C.dist += (want - C.dist) * ex(sec, want < C.dist ? RATE.IN : RATE.OUT);
       place(C.tgt, C.dist, C.pos);
       // nảy (hop): lên nhanh, về chậm hơn (đường cong một nhịp), cả chỗ đặt và chỗ nhìn

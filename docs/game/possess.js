@@ -17,15 +17,15 @@
   // máy quay sau vai (game/possess-cam.js): lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường
   // che thì trượt vào gần nhưng không gần hơn NEAR_MIN; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
   const CAM = {
-    BACK: 4.9, // (người chơi chốt: rộng hơn một chút; trước đây 4,2, góc nhìn 52)
-    UP: 0.85,
+    BACK: 6.2, // (người chơi chốt hai lần: rộng hơn; 4,2 → 4,9 → 6,2; góc nhìn 52 → 58 → 66)
+    UP: 1.05,
     SIDE: 0.7,
     NEAR_MIN: 1.7,
     WALK: 2.2,
     ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
     DEC: 9,
-    RUN: 7.5, // (đơn vị mỗi giây) chạy (Shift); nhảy, trọng lực: game/possess-jump.js
-    FOV: 58,
+    RUN: 7.5, // (đơn vị mỗi giây) chạy (máy tính: bấm W A S D là chạy, giữ Shift thì đi WALK); nhảy, trọng lực: game/possess-jump.js
+    FOV: 66,
     FOV_GOD: 34,
     PITCH_MIN: -0.55,
     PITCH_MAX: 0.75,
@@ -352,7 +352,7 @@
       const fNow = st.phase === 'in' ? folkNow() : null;
       if (fNow) {
         const p = fNow.rig.root.position,
-          sev = SW.step(sec, BK.seaLevel() - groundAt(p.x, p.z), J.held, st.run);
+          sev = SW.step(sec, BK.seaLevel() - groundAt(p.x, p.z), J.held, !!st.dive);
         if (sev === 'in') {
           J.reset();
           st.jumpY = st.jumpV = 0;
@@ -407,6 +407,8 @@
       if (st.phase !== 'in' && st.phase !== 'wake') return;
       C.look(dx, dy); // (hướng đích; hướng thật theo sau rất nhanh trong game/possess-cam.js)
     }
+    // (render/deep3d.js đọc: đang nhập hồn thì góc nhìn do máy quay nhập hồn giữ)
+    BK.possessActive = () => st.phase !== 'off';
     G.possess = {
       enter,
       exit,
