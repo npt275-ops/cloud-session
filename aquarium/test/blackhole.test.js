@@ -41,11 +41,14 @@ test('hố còn tới HOLD_END rồi tan dần (bản thử: trả lại đảo)
   assert.strictEqual(H.fade(P.HOLD_END + P.RELEASE), 0);
   assert.ok(!H.done(P.HOLD_END) && H.done(P.HOLD_END + P.RELEASE));
 });
-test('đường xoắn vào tâm: gần dần, quay thêm, kéo dài người ra', () => {
+test('đường bị cuốn: quay quanh hố nhiều vòng, co dần, rồi mới lao vào tâm', () => {
   const a = H.spiral(0, 20),
     b = H.spiral(0.5, 20),
     c = H.spiral(1, 20);
   assert.ok(a.d === 1 && b.d < 1 && c.d === 0);
   assert.ok(c.turn > b.turn && b.turn > a.turn);
   assert.ok(a.stretch === 1 && c.stretch > b.stretch);
+  assert.ok(c.turn >= Math.PI * 2 * 3, 'quay quanh hố ít nhất 3 vòng trước khi vào tâm');
+  const mid = H.spiral(0.8, 20, 6);
+  assert.ok(mid.d * 20 >= 6 * 0.9 && mid.d * 20 < 20, 'đang quay vòng: co dần về vòng trong, chưa lao vào tâm');
 });

@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 246 tệp, 54152 dòng.
+Tổng: 246 tệp, 54167 dòng.
 
 ## (gốc)
 
@@ -315,7 +315,7 @@ Kiểm thử: node --test test/*.js.
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `test/battles.test.js` | 407 | Bước 8: vũ khí theo thời (logic/arms.js), kịch bản chiến tranh (logic/battles.js) … |  | `logic/arms.js` `logic/battles.js` `logic/brain.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/prosperity.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
-| `test/blackhole.test.js` | 52 | Nhịp và luật của Hố đen (magic/soul/blackhole/plan.js; design/ke-hoach-buoc-37.md) |  |  |
+| `test/blackhole.test.js` | 55 | Nhịp và luật của Hố đen (magic/soul/blackhole/plan.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/blaze.test.js` | 49 | Nhà cháy vì phép lửa (magic/fire/blaze.js; design/ke-hoach-buoc-37.md) | `BK.Siege` | `logic/siege.js` |
 | `test/bridges.test.js` | 150 | Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/island.js` `logic/schedule.js` `logic/war.js` `logic/world.js` |
 | `test/climate.test.js` | 110 | Khí hậu, thiên tai từng đảo và ngoại gen … |  | `logic/brain.js` `logic/climate.js` `logic/epigen.js` `logic/genes.js` `logic/island.js` `logic/people.js` `logic/rng.js` `logic/world.js` |

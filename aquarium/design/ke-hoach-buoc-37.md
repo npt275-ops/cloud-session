@@ -282,6 +282,13 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
     ngang; phần càng cao càng bị kéo nghiêng (thân cây uốn cong), lắc oằn oại; các mảnh tách hở dần (nứt); cả vật nhích lên
     (bật gốc). Rồi từng mảnh vụn rời ra (lệch giờ), lộn nhào, bay xoắn ốc về tâm; gần lõi bị kéo dài, mỏng đi, thu nhỏ vào lõi.
     Vật nhỏ (cỏ, đá) trước, cây, nhà sau. Shader tính cho cả bóng đổ; chỉ trên đảo bị hút.
+- Bị cuốn vào thì quay nhiều vòng quanh hố trước khi vào tâm (người chơi chốt: cảm giác bẻ cong không gian). Người, người
+  nhập hồn (plan.js spiral), mảnh vụn (warp3d.js) đi cùng một kiểu đường:
+  - Nhấc lên ngang mặt đĩa bồi tụ.
+  - Quay quanh hố nhiều vòng: người 3,5 vòng, mảnh vụn 2,5–4 vòng. Bán kính co dần về vòng trong (khoảng nửa cỡ hố, trong đĩa),
+    góc tăng nhanh dần (càng gần càng quay nhanh như vật chất trong đĩa bồi tụ).
+  - Rồi mới lao vào tâm, bị kéo dài như sợi.
+  - Một người bị cuốn 6–9 giây; người nhập hồn 8 giây (đo được 3,74 vòng trước khi vào lõi).
 - hole3d.js (theo ảnh tham khảo): lõi đen, vòng photon, đĩa bồi tụ trắng vàng → cam → đỏ thẫm xoáy ngả về máy quay, hai tia.
 - pull.js: người trong tầm hút bị cuốn lên xoắn ốc vào tâm, lộn nhào, kéo dài người. Dân cả đảo hoảng sợ.
 - Người nhập hồn: sau khi phát phép vẫn chạy tự do quan sát. Vào tầm hút thì bị giữ (không đi, không nhảy được, chỉ xoay
