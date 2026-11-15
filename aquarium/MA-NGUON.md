@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 235 tệp, 52957 dòng.
+Tổng: 236 tệp, 52952 dòng.
 
 ## (gốc)
 
@@ -34,7 +34,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/possess-swim.js` | 50 | Bơi của nhân vật đang nhập hồn (khi nước ngập quá DEPTH_IN: Đại hồng thuỷ, dưới biển) | `BK.PossessSwim` |  |
 | `game/possess.js` | 418 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `game/possess-swim.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/body/swim3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
-| `game/spellbook.js` | 263 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
+| `game/spellbook.js` | 264 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
 ## logic/
@@ -336,6 +336,7 @@ Kiểm thử: node --test test/*.js.
 | `test/siege.test.js` | 224 | Đánh thành (logic/siege.js, logic/war.js): cổng theo đường tới, công trình hư, vây nhà chính … |  | `logic/battles.js` `logic/brain.js` `logic/dramas.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
 | `test/soak.test.js` | 35 | Hậu quả của phép nước (magic/water/soak.js; design/ke-hoach-buoc-37.md) | `BK.Siege` `BK.Climate` | `logic/climate.js` `logic/siege.js` |
 | `test/spells.test.js` | 103 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
+| `test/staff-weight.test.js` | 42 | Sức nặng của gậy phép (render/magic/staff-weight.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/strategy.test.js` | 227 | Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu … |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/missiles.js` `logic/strategy.js` `logic/world.js` |
 | `test/timeline.test.js` | 102 | Ảnh chụp trận, tua lùi thời gian (magic/time/timeline.js; design/ke-hoach-buoc-37.md) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` `magic/time/timeline.js` |
 | `test/traits3d.test.js` | 57 | Nét riêng và tỉ lệ theo tuổi của thân mềm (render/body/traits3d.js; design/ke-hoach-buoc-34.md) |  | `render/body/traits3d.js` |
@@ -568,7 +569,7 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 153. `render/magic/recipes.js`
 154. `render/magic/sigils.js`
 155. `render/magic/vfx.js`
-156. `render/magic/staff-aura3d.js`
+156. `render/magic/staff-weight.js`
 157. `render/magic/staff3d.js`
 158. `render/magic/aim3d.js`
 159. `render/fx/magic-audio.js`

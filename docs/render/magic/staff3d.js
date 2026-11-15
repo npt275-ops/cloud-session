@@ -6,9 +6,11 @@
  *   đứng: chống gậy thẳng đứng, chân gậy chạm đất (trượt chỗ cầm dọc thân gậy cho vừa tầm tay)
  *   niệm phép (k 0..1): nghiêng về chỗ ngắm.
  * Hai dáng trộn liền theo f.staffK (0 chống .. 1 cầm chạy), ghi vào người để render/body/motion3d.js đặt tay phải cho khớp.
- * Linh lực riêng của gậy (quầng, đốm bay, vệt, ấn dưới chân gậy): render/magic/staff-aura3d.js.
+ * Sức nặng: hướng trên chỉ là hướng đích; hướng thật đi qua render/magic/staff-weight.js (đầu gậy trễ khi tăng tốc, văng tới
+ * khi phanh, quét theo sau khi rẽ, bập bênh theo bước, hơi trĩu). Chống gậy xuống đất: bụi nhỏ ở chân gậy (công thức
+ * staffThud) và tiếng gỗ (G.staff3d.onPlant, game/spellbook.js gắn tiếng thud của render/fx/magic-audio.js).
  * G.staff3d.update(người, hệ, hướng ngắm (hay null), k niệm phép), hide(), tip(out) (đầu gậy: đạn phép bay ra từ đây).
- * Cần: three.js, render/style/palette.js, render/magic/staff-aura3d.js. */
+ * Cần: three.js, render/style/palette.js, render/magic/staff-weight.js, render/magic/vfx.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const LEN = 1.08, // (đơn vị khung người) dài gậy
@@ -21,6 +23,8 @@
     SLIDE_MIN: -0.15, // lúc chống: chỗ cầm chỉ trượt trong khoảng này (tay thấp quá, cao quá thì gậy nhấc khỏi đất)
     SLIDE_MAX: 0.5,
     BLEND: 6, // (1/giây) tốc độ đổi dáng
+    PLANT_AT: 0.12, // f.staffK xuống dưới mức này (sau khi đã cầm chạy trên PLANT_FROM) là vừa chống gậy xuống đất
+    PLANT_FROM: 0.6,
   };
   function setup(G) {
     const { THREE, scene } = G;
@@ -56,14 +60,16 @@
       qAim = new THREE.Quaternion(),
       tipLocal = new THREE.Vector3(0, top + 0.08, 0),
       hand = new THREE.Vector3(),
-      tipW = new THREE.Vector3(),
       baseW = new THREE.Vector3(),
       ID = new THREE.Quaternion();
-    const aura = BK.StaffAura3D.setup(G, body, tipLocal);
+    const SW = BK.StaffWeight,
+      heavy = SW.state();
     let school = 'soul',
-      last = 0;
+      last = 0,
+      carried = 0; // (mức cầm chạy cao nhất gần đây: để biết lúc vừa chống gậy xuống)
     function update(f, sch, aim, k) {
       if (!f || !f.rig || !f.rig.nodes.wrR) return hide();
+      if (!grp.visible) SW.reset(heavy); // (vừa hiện lại: gậy đặt thẳng vào tay, không văng từ chỗ cũ)
       grp.visible = true;
       const now = performance.now(),
         sec = last ? Math.min(0.1, (now - last) / 1000) : 0;
@@ -74,35 +80,40 @@
       grp.scale.setScalar(s);
       // cầm chạy hay chống: theo tốc độ thật (render/body/motion3d.js), đang bay, đang bơi
       const spd = f.motion ? f.motion.spd : 0,
-        moving = spd > 0.3,
         want = (f.lift || 0) > 0.05 || (f.swimK || 0) > 0.3 ? 1 : Math.min(1, spd / HOLD.MOVE);
       const ck = (f.staffK = f.staffK == null ? want : f.staffK + (want - f.staffK) * Math.min(1, sec * HOLD.BLEND));
-      // hướng cầm chạy: tới trước theo hướng người, ngóc nhẹ, chếch ra ngoài
+      // hướng đích khi cầm chạy: tới trước theo hướng người, ngóc nhẹ, chếch ra ngoài
       const sy = Math.sin(f.yaw),
         cy = Math.cos(f.yaw);
       dir.set(sy - cy * HOLD.OUT, 0, cy + sy * HOLD.OUT).normalize().multiplyScalar(Math.cos(HOLD.TILT)).setY(Math.sin(HOLD.TILT));
       q.copy(ID).slerp(qAim.setFromUnitVectors(up, dir), ck);
       if (aim && k > 0) q.slerp(qAim.setFromUnitVectors(up, dir.copy(aim).normalize()), Math.min(1, k) * 0.75);
-      body.quaternion.copy(q);
+      dir.copy(up).applyQuaternion(q);
       // chỗ cầm: chống thì trượt cho chân gậy chạm đất, cầm chạy thì cầm gần giữa
       const gy = G.vfx ? G.vfx.groundAt(hand.x, hand.z) : f.rig.root.position.y;
-      const plant = Math.min(HOLD.SLIDE_MAX, Math.max(HOLD.SLIDE_MIN, BELOW + (gy - hand.y) / s));
-      dir.copy(up).applyQuaternion(q);
-      body.position.copy(dir).multiplyScalar(plant + (HOLD.CARRY_SLIDE - plant) * ck);
+      const plant = Math.min(HOLD.SLIDE_MAX, Math.max(HOLD.SLIDE_MIN, BELOW + (gy - hand.y) / s)),
+        slide = plant + (HOLD.CARRY_SLIDE - plant) * ck;
+      // sức nặng: hướng thật theo sau hướng đích qua lò xo (render/magic/staff-weight.js)
+      const real = SW.step(heavy, hand, dir, Math.max(0.3, tipLocal.y + slide) * s, sec);
+      dir.set(real.x, real.y, real.z);
+      body.quaternion.setFromUnitVectors(up, dir);
+      body.position.copy(dir).multiplyScalar(slide);
       if (sch && sch !== school) {
         school = sch;
         gem.emissive.set(BK.Palette.c(school + '.mid'));
       }
       gem.emissiveIntensity = 1.1 + 0.4 * Math.sin(now * 0.004) + (k > 0 ? 1.2 * k : 0);
-      grp.updateMatrixWorld(true);
-      tipW.copy(tipLocal).applyMatrix4(body.matrixWorld);
-      baseW.set(0, -BELOW, 0).applyMatrix4(body.matrixWorld);
-      aura.update(sec, { school, carry: ck, cast: Math.max(0, Math.min(1, k)), moving, tip: tipW, base: baseW, groundY: G.vfx ? G.vfx.groundAt(baseW.x, baseW.z) : gy, s });
+      // vừa chống gậy xuống đất: bụi nhỏ ở chân gậy, tiếng gỗ
+      carried = Math.max(carried * Math.exp(-sec * 0.8), ck);
+      if (ck < HOLD.PLANT_AT && carried > HOLD.PLANT_FROM) {
+        carried = 0;
+        grp.updateMatrixWorld(true);
+        baseW.set(0, -BELOW, 0).applyMatrix4(body.matrixWorld);
+        if (G.vfx) G.vfx.play('staffThud', baseW.setY(G.vfx.groundAt(baseW.x, baseW.z) + 0.02), { scale: s });
+        if (G.staff3d.onPlant) G.staff3d.onPlant(0.6);
+      }
     }
-    const hide = () => {
-      grp.visible = false;
-      aura.hide();
-    };
+    const hide = () => (grp.visible = false);
     const tip = (out) => {
       grp.updateMatrixWorld(true);
       return out.copy(tipLocal).applyMatrix4(body.matrixWorld);

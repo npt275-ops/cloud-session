@@ -35,6 +35,7 @@
     const { THREE, camera } = G;
     const SP = BK.Spells,
       audio = BK.MagicAudio ? BK.MagicAudio.create(G) : null;
+    if (G.staff3d && audio) G.staff3d.onPlant = (k) => audio.thud(k); // (tiếng gỗ khi chống gậy xuống)
     const st = { sel: 'soulBolt', aim: new THREE.Vector3(), aimOk: false, last: null, bolts: [] };
     const v1 = new THREE.Vector3(),
       v2 = new THREE.Vector3(),

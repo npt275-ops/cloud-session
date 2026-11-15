@@ -4,6 +4,7 @@
  *   impact(k)     tiếng bung khi phép chạm đích: k 0..1 độ mạnh
  *   deny()        tiếng "tịt" khi không dùng được (thiếu linh lực, đang hồi phép)
  *   page()        tiếng lật trang sách
+ *   thud(k)       tiếng gõ gỗ trầm khi chống gậy phép xuống đất (render/magic/staff3d.js): k 0..1 độ mạnh
  * Tiếng riêng của từng hệ nằm ở magic/<hệ>/sounds.js, tự thêm vào bằng add({ tên(kit, ...tham số) }): kit = { band, tone }
  * (hai bộ tạo tiếng bên dưới, đã gắn sẵn đường ra). Sau khi create, gọi như tiếng chung: audio.bell(true).
  * Cần: audio.js (G.audio). */
@@ -81,7 +82,14 @@
       if (!b) return;
       band(b, 2500, 5000, 0.8, [[0.03, 0.12], [0.2, 0.0001]], 0.22);
     }
-    const out = { cast, impact, deny, page };
+    function thud(k) {
+      const b = bus();
+      if (!b) return;
+      const v = 0.08 + 0.17 * (k == null ? 0.6 : k);
+      band(b, 900, 180, 1.5, [[0.005, v], [0.12, 0.0001]], 0.14);
+      tone(b, 150, 85, v * 0.9, 0.16, 'triangle');
+    }
+    const out = { cast, impact, deny, page, thud };
     // tiếng riêng của các hệ: kit gắn sẵn đường ra (âm thanh tắt thì không kêu)
     for (const k in EXTRA)
       out[k] = (...a) => {

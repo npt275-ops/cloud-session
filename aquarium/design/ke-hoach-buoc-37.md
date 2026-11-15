@@ -248,9 +248,13 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   - Đứng: chống gậy thẳng đứng, chân gậy chạm đất (chỗ cầm trượt dọc thân gậy cho vừa tầm tay); tay phải đưa tới, ra ngoài,
     nắm gậy ngang hông (motion3d STAFF.PLANT).
   - Niệm phép: vẫn nghiêng đầu gậy về chỗ ngắm như cũ.
-- Gậy có sức mạnh riêng, màu theo hệ phép đang chọn (render/magic/staff-aura3d.js AURA): ngọc có quầng sáng thở (niệm phép
-  bừng lên), ba đốm sáng bay vòng quanh ngọc; cầm chạy thì đầu gậy để vệt sáng; đứng chống thì đốm sáng bốc lên từ ngọc và
-  dưới chân gậy hiện vòng phù chú của hệ nằm sát đất, xoay chậm; lúc vừa chống gậy xuống có vòng sóng sáng toả trên đất.
+- Sức nặng riêng của gậy (người chơi chốt: "sức nặng riêng", không phải linh lực): gậy không xoay cứng theo tay, đầu gậy là
+  khối nặng nối với bàn tay bằng lò xo xoay (render/magic/staff-weight.js W, có kiểm thử test/staff-weight.test.js):
+  - tăng tốc thì đầu gậy trễ lại, phanh gấp thì văng tới trước rồi lắc về; rẽ thì quét theo sau một nhịp
+  - mỗi bước chạy tay nhún, đầu gậy bập bênh theo; cầm ngang thì hơi trĩu xuống; chạy đều thì không trễ
+  - đổi dáng (cầm chạy sang chống) đi qua cùng lò xo nên gậy quay xuống có đà; lúc chân gậy chạm đất: bụi nhỏ toả sát
+    đất, vài hạt sỏi nảy (render/magic/recipes.js staffThud) và tiếng gõ gỗ trầm (render/fx/magic-audio.js thud).
+  - Đã thử rồi bỏ: quầng sáng, đốm bay, vòng phù chú quanh gậy (không đúng ý người chơi).
 
 ## Hố đen (chuẩn bị, chờ người chơi chốt)
 Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole, giá 5 như mọi phép lúc làm game). Đề xuất:

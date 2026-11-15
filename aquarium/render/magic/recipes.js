@@ -21,6 +21,11 @@
       debris: { n: 10, size: [0.05, 0.13], speed: [2, 4.5], dir: 'up', spread: 1.6, life: [1.5, 2.5], color: 'earth.mid' },
       decal: [{ kind: 'disc', r: [0.4, 1.4], life: 3, color: 'earth.edge', alpha: 0.35 }],
     },
+    // chân gậy phép chống xuống đất (render/magic/staff3d.js): bụi nhỏ toả sát đất, vài hạt sỏi nảy
+    staffThud: {
+      soft: [{ n: 8, life: [0.4, 0.8], size: [0.06, 0.2], speed: [0.4, 0.9], dir: 'flat', up: 0.15, drag: 3, color: ['earth.soft', 'earth.soft'], alpha: 0.45 }],
+      debris: { n: 3, size: [0.012, 0.025], speed: [0.8, 1.4], dir: 'up', spread: 1.8, life: [0.5, 0.8], color: 'earth.mid' },
+    },
   };
   BK.MagicRecipes = Object.assign(BK.MagicRecipes || {}, R);
 })(typeof self !== 'undefined' ? self : globalThis);
