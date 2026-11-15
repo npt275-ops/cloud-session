@@ -269,6 +269,13 @@ Phép thứ hai của hệ linh hồn (magic/soul/spells.js blackHole). Toàn b�
   - Mỗi điểm ảnh lấy màu ở β = θ − R²/θ: cảnh quanh hố (tán cây, đồi) bị kéo lệch về phía tâm đen; xa vẫn cong nhẹ nên
     đường chân trời uốn như gương cầu lồi. Sát vành bóng đen, cảnh và đĩa bồi tụ bị kéo thành vòng sáng.
   - Bóng đen trên màn hình bằng 1,7 lần lõi; vành bồi tụ cam đỏ (hole3d.js) hiện ngay từ lúc mở hố.
+- Ánh sáng bị hút vào hố (người chơi chốt; render/fx/post3d.js pull, pullTint; blackhole.js đặt theo máy quay):
+  - Cả bầu trời, cảnh vật nhoè thành vệt chảy về phía hố. Hố trước mặt thì chảy về hố; hố sau lưng, bên cạnh thì chảy về mép
+    màn hình phía hố. Kênh đỏ bị kéo dài hơn kênh lam (ánh sáng lệch đỏ khi cố thoát khỏi trọng lực).
+  - Ánh sáng không thoát được nên ngả dần sang vàng cam của đĩa bồi tụ, sáng lên ở phía hố. Mạnh nhất khi quay lưng chạy khỏi
+    hố.
+  - Mạnh dần theo cỡ hố và độ gần: trong tầm hút là hết cỡ, ra ngoài tầm 25 đơn vị thì hết.
+  - Tính ngay trước khi vẽ (G.post.hook), lúc máy quay đã yên chỗ, nên bóng đen luôn khớp lõi.
 - Đất giữ nguyên, từng vật thể bị hút (người chơi sửa: bản đầu bẻ cong cả đất thành phễu, không đạt):
   - pieces.js: tách các khối lưới gộp của đảo thành từng vật (hàn đỉnh, gom mảnh dính nhau; mảnh chồng lên nhau gộp thành
     một vật, tối đa 7 đơn vị: thân và tán là một cây, tường và mái là một nhà; vật quá to cắt ô 2,4 thành mảng gạch đường).

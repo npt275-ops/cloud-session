@@ -13,7 +13,11 @@
  *            lensR: bán kính Einstein (theo chiều cao màn hình). Mỗi điểm ảnh lấy màu từ chỗ β = θ − R²/θ (θ: khoảng cách tới
  *            tâm): cảnh quanh hố bị kéo lệch về phía tâm, càng gần càng mạnh, xa vẫn cong nhẹ (đường chân trời uốn như gương cầu
  *            lồi); sát vành bóng đen cảnh, đĩa bồi tụ bị kéo thành vòng sáng; trong bán kính R là bóng đen
- * Mỗi hiệu ứng là một số trong G.post.fx; game/possess.js đặt các số đó theo dòng thời gian. Có khử răng cưa nhẹ (theo độ
+ *   pull     ánh sáng bị hút về hố (0..1): cả ảnh nhoè thành vệt chảy về điểm pullC (toạ độ màn hình, có thể ở ngoài màn hình:
+ *            hố sau lưng thì là mép gần hố), kênh đỏ bị kéo dài hơn kênh lam (ánh sáng lệch đỏ khi cố thoát khỏi trọng lực)
+ *   pullTint ánh sáng ngả dần sang màu pullColor [r, g, b] (vàng cam của đĩa bồi tụ), sáng lên ở phía hố
+ * Mỗi hiệu ứng là một số trong G.post.fx; game/possess.js đặt các số đó theo dòng thời gian. Hiệu ứng bám theo chỗ của một vật
+ * trên màn hình (thấu kính của Hố đen) thì đặt số trong G.post.hook(fn): fn chạy ngay trước khi vẽ, lúc máy quay đã yên chỗ. Có khử răng cưa nhẹ (theo độ
  * sáng) vì vẽ vào ảnh tạm thì mất khử răng cưa sẵn có của trình duyệt.
  * Cần: three.js, render/scene3d.js (renderer, scene, camera), render/perf3d.js (G.perf: hạ bớt khi máy chậm). */
 (function (root) {
@@ -38,6 +42,10 @@
     lens: 0,
     lensC: [0.5, 0.5],
     lensR: 0.1,
+    pull: 0,
+    pullC: [0.5, 0.5],
+    pullTint: 0,
+    pullColor: [1, 0.72, 0.32],
   };
   const VERT = 'varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
   const FRAG = [
@@ -46,6 +54,7 @@
     'uniform vec3 uTintC;',
     'uniform vec2 uCenter;',
     'uniform float uLens, uLensR; uniform vec2 uLensC;',
+    'uniform float uPull, uPullTint; uniform vec2 uPullC; uniform vec3 uPullCol;',
     'varying vec2 vUv;',
     'float viewZ(vec2 uv){ float d = texture2D(tDepth, uv).x; return (uNear * uFar) / ((uFar - uNear) * d - uFar); }',
     'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
@@ -74,6 +83,13 @@
     '   acc.r += texture2D(tColor, q + toC * uChroma * 0.012).r; acc.g += texture2D(tColor, q).g; acc.b += texture2D(tColor, q - toC * uChroma * 0.012).b; }',
     '  col = acc / 8.0; }',
     ' else if (uChroma > 0.001) { vec2 o = toC * uChroma * 0.012 * r; col = vec3(texture2D(tColor, uv + o).r, texture2D(tColor, uv).g, texture2D(tColor, uv - o).b); }',
+    // ánh sáng bị hút: 10 mẫu dọc đường tới điểm hút; đỏ kéo xa hơn, lam ngắn hơn (lệch đỏ)
+    ' else if (uPull > 0.001) { vec3 acc = vec3(0.0); vec2 toP = uPullC - uv; float k = uPull * 0.16;',
+    // (mỗi điểm ảnh lệch mẫu một chút, không thì vệt bị chia tầng thành sọc)
+    '  float jit = hash(uv * uRes) / 9.0;',
+    '  for (int i = 0; i < 10; i++) { float t = float(i) / 9.0 + jit; vec2 q = uv + toP * k * t * t;',
+    '   acc.r += texture2D(tColor, q + toP * k * 0.12 * t).r; acc.g += texture2D(tColor, q).g; acc.b += texture2D(tColor, q - toP * k * 0.08 * t).b; }',
+    '  col = acc / 10.0; }',
     ' else col = aa(uv);',
     // làm mờ hậu cảnh và mờ cả ảnh: 12 mẫu xoắn theo góc vàng, bán kính theo độ xa tiêu điểm
     ' float cr = uBlur * 14.0;',
@@ -87,6 +103,10 @@
     ' if (uGrade > 0.001) { float l = lum(col); vec3 g = mix(vec3(l), col, 1.22); g = (g - 0.5) * 1.12 + 0.5;',
     '  g += mix(vec3(-0.015, 0.0, 0.035), vec3(0.035, 0.018, -0.02), smoothstep(0.15, 0.85, l));',
     '  col = mix(col, clamp(g, 0.0, 1.0), uGrade); }',
+    // ánh sáng không thoát được khỏi hố: ngả dần sang vàng cam của đĩa bồi tụ, sáng lên ở phía hố
+    ' if (uPullTint > 0.001) { float l = lum(col); vec3 g = uPullCol * (0.25 + 1.1 * l) + col * 0.25;',
+    '  float side = clamp(1.0 - length((uPullC - uv) * vec2(uRes.x / uRes.y, 1.0)) * 0.6, 0.0, 1.0);',
+    '  col = mix(col, g, uPullTint * 0.75) + uPullCol * side * side * uPullTint * 0.22; }',
     // phép thời gian: nhạt màu, phủ màu
     ' if (uDesat > 0.001) col = mix(col, vec3(lum(col)), uDesat);',
     ' if (uTint > 0.001) col = mix(col, col * uTintC * 1.2 + uTintC * 0.04, uTint);',
@@ -157,6 +177,10 @@
       uLens: { value: 0 },
       uLensR: { value: 0.1 },
       uLensC: { value: new THREE.Vector2(0.5, 0.5) },
+      uPull: { value: 0 },
+      uPullTint: { value: 0 },
+      uPullC: { value: new THREE.Vector2(0.5, 0.5) },
+      uPullCol: { value: new THREE.Vector3(1, 0.72, 0.32) },
     };
     const quad = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
@@ -182,8 +206,14 @@
       fx.tint > 0.001 ||
       fx.ripple > 0.001 ||
       fx.lens > 0.001 ||
+      fx.pull > 0.001 ||
+      fx.pullTint > 0.001 ||
       (fx.ring > 0.001 && fx.ring < 0.999);
+    // hàm chạy ngay trước khi vẽ (máy quay đã ở chỗ cuối của khung hình): hook(fn) thêm, trả hàm gỡ
+    const hooks = new Set();
+    const hook = (fn) => (hooks.add(fn), () => hooks.delete(fn));
     function render() {
+      for (const fn of hooks) fn();
       if (!active()) {
         renderer.setRenderTarget(null);
         renderer.render(scene, camera);
@@ -219,11 +249,15 @@
       U.uLens.value = fx.lens;
       U.uLensR.value = fx.lensR;
       U.uLensC.value.set(fx.lensC[0], fx.lensC[1]);
+      U.uPull.value = fx.pull;
+      U.uPullTint.value = fx.pullTint;
+      U.uPullC.value.set(fx.pullC[0], fx.pullC[1]);
+      U.uPullCol.value.set(fx.pullColor[0], fx.pullColor[1], fx.pullColor[2]);
       renderer.render(qScene, qCam);
     }
     // về lại góc nhìn thượng đế: mọi hiệu ứng về 0
-    const reset = () => Object.assign(fx, FX0, { tintColor: [1, 1, 1], lensC: [0.5, 0.5] });
-    G.post = { fx, center, render, reset, active, depth: canDepth };
+    const reset = () => Object.assign(fx, FX0, { tintColor: [1, 1, 1], lensC: [0.5, 0.5], pullC: [0.5, 0.5], pullColor: [1, 0.72, 0.32] });
+    G.post = { fx, center, render, reset, active, hook, depth: canDepth };
   }
   BK.Post3D = { setup, FX0 };
 })(typeof self !== 'undefined' ? self : globalThis);
