@@ -20,7 +20,8 @@
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const RANGE = 22, // (đơn vị đảo) tầm ngắm xa nhất tính từ nhân vật
-    BOLT_SPEED = 16; // (đơn vị mỗi giây) tốc độ đạn phép
+    BOLT_SPEED = 16, // (đơn vị mỗi giây) tốc độ đạn phép
+    NEAR_SEA = 8; // (đơn vị) cách mép đảo không quá chừng này thì là gần biển
   // phù chú của hệ hiện ở đầu gậy lúc giơ gậy niệm phép: bám theo đầu gậy, quay mặt về máy quay, xoay chậm; hiện rõ chừng một
   // giây rồi mờ dần (người chơi kịp nhìn rõ hình của hệ: render/magic/sigils.js)
   const TIP_SIGIL = { size: 0.85, life: 1.8, spin: 0.35 },
@@ -47,7 +48,15 @@
       const V = G.villageOf(p.st.i);
       return V ? V.folk(p.st.id) : null;
     };
-    const ctx = () => ({ inside: inside(), nearSea: false }); // (gần biển: tính ở bước hệ nước)
+    // gần biển: nhân vật đứng cách mép đảo (L.rOf) không quá NEAR_SEA (phép chỉ dùng được ở gần biển: logic/spells.js need)
+    const nearSea = () => {
+      const f = folk(),
+        p = P();
+      if (!f || !p || p.st.i < 0) return false;
+      const L = G.lands[p.st.i];
+      return Math.hypot(f.pos.x, f.pos.z) > L.rOf(Math.atan2(f.pos.z, f.pos.x)) - NEAR_SEA;
+    };
+    const ctx = () => ({ inside: inside(), nearSea: nearSea() });
     const spell = () => SP.BY.get(st.sel);
     // mặt đất dưới (x, z) (toạ độ thế giới) của đảo đang ở
     function ground(x, z) {

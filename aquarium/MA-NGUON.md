@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 218 tệp, 51641 dòng.
+Tổng: 231 tệp, 52417 dòng.
 
 ## (gốc)
 
@@ -18,7 +18,7 @@ Gốc: biển, mây, âm thanh (dựng trước các phần khác).
 |---|---|---|---|---|
 | `audio.js` | 552 | Âm thanh tự sinh bằng Web Audio (không dùng file âm thanh nào) | `CityAudio` |  |
 | `clouds3d.js` | 495 | Mây trong bể kính | `Clouds3D` |  |
-| `sea3d.js` | 258 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
+| `sea3d.js` | 262 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
 
 ## game/
 
@@ -33,7 +33,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | `game/possess-jump.js` | 93 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
 | `game/possess.js` | 404 | Cú nhập hồn … | `BK.Possess` G: 2 dịch vụ | `game/cities.js` `game/nature.js` `game/possess-cam.js` `game/possess-jump.js` `logic/people.js` `render/body/motion3d.js` `render/body/softbody3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/near3d.js` `render/style/diorama3d.js` `ui/landbar.js` |
 | `game/seasons.js` | 41 | Bốn mùa: tên mùa, độ trộn giữa hai mùa (15 ngày đầu mùa trộn với mùa trước; năm đầu không trộn với mùa đông trước đó) … | `BK.GameSeasons` G: 1 dịch vụ | `game/nature.js` |
-| `game/spellbook.js` | 254 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
+| `game/spellbook.js` | 263 | Điều khiển sách phép thuật … | `BK.Spellbook` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `logic/spells.js` `render/fx/magic-audio.js` `render/magic/aim3d.js` `render/magic/recipes.js` `render/magic/staff3d.js` `render/magic/vfx.js` `ui/spellbook-ui.js` |
 | `game/world.js` | 56 | Bộ nhớ chung của game (G) mà mọi tệp trong game/, render/ và ui/ cùng đọc: hàm tiện dụng, sáu vùng đất, trạng thái thế … | `BK.GameWorld` G: 15 dịch vụ | `audio.js` |
 
 ## logic/
@@ -268,11 +268,29 @@ Hệ đất: trụ đá, rung đất.
 
 ## magic/water/
 
-Hệ nước: gọi mưa, cột nước, đại hồng thuỷ.
+Hệ nước: gọi mưa, cột nước (đại hồng thuỷ: magic/water/deluge/).
 
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
+| `magic/water/cast.js` | 76 | Phát phép hệ nước (đăng ký với sách: game/spellbook.js school; design/ke-hoach-buoc-37.md) |  | `game/cities.js` `game/nature.js` `game/spellbook.js` `magic/time/cast.js` `magic/water/deluge/deluge.js` `magic/water/geyser3d.js` `magic/water/rain3d.js` `magic/water/soak.js` |
+| `magic/water/geyser3d.js` | 66 | Hình ảnh phép Cột nước (chỉ vẽ; điều khiển ở magic/water/cast.js) | `BK.Geyser3D` G: 1 dịch vụ | `magic/water/stream-mat.js` `render/magic/vfx.js` `render/water/water3d.js` |
+| `magic/water/rain3d.js` | 61 | Hình ảnh phép Gọi mưa (chỉ vẽ; điều khiển ở magic/water/cast.js) | `BK.Rain3D` G: 1 dịch vụ | `render/magic/vfx.js` `render/water/water3d.js` |
+| `magic/water/recipes.js` | 56 | Công thức hiệu ứng hạt của hệ nước … | `BK.MagicRecipes` | `render/magic/recipes.js` `render/magic/vfx.js` |
+| `magic/water/soak.js` | 54 | Hậu quả của phép nước lên thế giới (luật, chạy được bằng Node; test/soak.test.js) | `BK.WaterSoak` | `logic/climate.js` `logic/siege.js` |
+| `magic/water/sounds.js` | 32 | Tiếng của phép nước (thêm vào render/fx/magic-audio.js bằng add) |  | `render/fx/magic-audio.js` |
 | `magic/water/spells.js` | 13 | Danh sách phép hệ nước (trang "Nước" của sách) |  | `logic/spells.js` |
+| `magic/water/stream-mat.js` | 49 | Vật liệu dòng nước dùng chung của hệ nước (cột nước, lốc xoáy) | `BK.WaterStream` |  |
+
+## magic/water/deluge/
+
+Đại hồng thuỷ: nhịp, lốc xoáy, sóng đập vào sáu đảo, điều khiển (mỗi pha một tệp).
+
+| Tệp | Dòng | Việc | Tạo ra | Dùng |
+|---|---|---|---|---|
+| `magic/water/deluge/deluge.js` | 83 | Điều khiển Đại hồng thuỷ: nối các pha theo nhịp (magic/water/deluge/plan.js) | `BK.Deluge` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `magic/water/deluge/plan.js` `magic/water/deluge/surge3d.js` `magic/water/deluge/vortex3d.js` `magic/water/soak.js` |
+| `magic/water/deluge/plan.js` | 52 | Nhịp của Đại hồng thuỷ (chỉ là số và đường cong; chạy được bằng Node) | `BK.DelugePlan` |  |
+| `magic/water/deluge/surge3d.js` | 49 | Sóng đập vào sáu đảo (phần hình của Đại hồng thuỷ, lúc nước đổ ập xuống) | `BK.Surge3D` G: 1 dịch vụ | `game/nature.js` `render/magic/vfx.js` `render/water/water3d.js` |
+| `magic/water/deluge/vortex3d.js` | 75 | Lốc xoáy nước giữa bể (phần hình của Đại hồng thuỷ) | `BK.Vortex3D` G: 1 dịch vụ | `game/nature.js` `magic/water/stream-mat.js` `render/magic/vfx.js` `render/water/water3d.js` |
 
 ## ui/
 
@@ -285,7 +303,7 @@ Giao diện: thanh đảo, bảng làng, máy quay bay, bảng dev.
 | `ui/landbar.js` | 59 | Thanh sáu vùng đất ở trên cùng: bấm một đảo để bay tới đảo đó; đảo đang xem được tô sáng (setFocus) | `BK.LandBar` G: 1 dịch vụ | `game/nature.js` `game/world.js` `ui/camera-fly.js` |
 | `ui/possess-ctl.js` | 234 | Nút và điều khiển của cú nhập hồn … | `BK.PossessCtl` G: 1 dịch vụ | `game/possess.js` `render/scene3d.js` |
 | `ui/race-dev.js` | 277 | Tin giữa các đảo và bảng dev "Cuộc đua" … | `BK.RaceDev` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/world.js` `logic/chronicle.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/temper.js` `logic/war.js` `ui/camera-fly.js` `ui/landbar.js` |
-| `ui/spellbook-ui.js` | 279 | Giao diện sách phép thuật … | `BK.SpellbookUi` G: 1 dịch vụ | `game/possess.js` `game/spellbook.js` `game/world.js` `logic/spells.js` `render/scene3d.js` `render/style/palette.js` |
+| `ui/spellbook-ui.js` | 320 | Giao diện sách phép thuật … | `BK.SpellbookUi` G: 1 dịch vụ | `game/possess.js` `game/spellbook.js` `game/world.js` `logic/spells.js` `render/scene3d.js` `render/style/palette.js` |
 | `ui/village-ui.js` | 346 | Bảng của một làng: thế hệ, số người, tình huống đang có, hội đồng 8 ghế, nhật ký, và các nút thử tình huống … | `BK.VillageUI` | `logic/brain.js` `logic/council.js` `logic/dramas.js` `logic/eras.js` `logic/genes.js` `logic/homes.js` `logic/jobs.js` `logic/people.js` `logic/rules.js` `logic/tasks.js` `logic/temper.js` |
 
 ## test/
@@ -299,6 +317,7 @@ Kiểm thử: node --test test/*.js.
 | `test/bridges.test.js` | 150 | Cầu do người đứng đầu quyết, xây thật, phá cầu; người qua lại (logic/diplomacy.js, logic/strategy.js) |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/island.js` `logic/schedule.js` `logic/war.js` `logic/world.js` |
 | `test/climate.test.js` | 110 | Khí hậu, thiên tai từng đảo và ngoại gen … |  | `logic/brain.js` `logic/climate.js` `logic/epigen.js` `logic/genes.js` `logic/island.js` `logic/people.js` `logic/rng.js` `logic/world.js` |
 | `test/code.test.js` | 50 | Giữ quy ước code dễ tìm, dễ sửa (README.md mục "Làm việc với code") |  |  |
+| `test/deluge.test.js` | 33 | Nhịp của Đại hồng thuỷ (magic/water/deluge/plan.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/earth.test.js` | 41 | Đất nhô của phép đất (magic/earth/shape.js, magic/earth/rise.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/ecology.test.js` | 236 | Hệ sinh thái hỗn loạn (logic/ecology.js): môi trường, chạy nạn, lấy vợ chồng khác đảo … |  | `logic/brain.js` `logic/climate.js` `logic/diplomacy.js` `logic/ecology.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/tasks.js` `logic/world.js` |
 | `test/economy.test.js` | 97 | Tài nguyên và lên cấp: mỗi đảo một nhịp, thiếu thứ gì thì kẹt ở đó (khi chưa có giao thương) |  | `logic/economy.js` `logic/family.js` `logic/island.js` `logic/world.js` |
@@ -313,6 +332,7 @@ Kiểm thử: node --test test/*.js.
 | `test/save.test.js` | 84 | Lưu và nạp lại trận (logic/save.js) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` |
 | `test/scenes.test.js` | 147 | Cảnh theo sự kiện (logic/scenes.js), cảnh đói (logic/tasks.js) |  | `logic/economy.js` `logic/island.js` `logic/posts.js` `logic/schedule.js` `logic/world.js` |
 | `test/siege.test.js` | 224 | Đánh thành (logic/siege.js, logic/war.js): cổng theo đường tới, công trình hư, vây nhà chính … |  | `logic/battles.js` `logic/brain.js` `logic/dramas.js` `logic/economy.js` `logic/island.js` `logic/people.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` |
+| `test/soak.test.js` | 35 | Hậu quả của phép nước (magic/water/soak.js; design/ke-hoach-buoc-37.md) | `BK.Siege` `BK.Climate` | `logic/climate.js` `logic/siege.js` |
 | `test/spells.test.js` | 103 | Luật sách phép thuật (logic/spells.js; design/ke-hoach-buoc-37.md) |  |  |
 | `test/strategy.test.js` | 227 | Người đứng đầu, quan hệ giữa các đảo, giao thương, hiệp ước, cầu … |  | `logic/diplomacy.js` `logic/economy.js` `logic/epigen.js` `logic/missiles.js` `logic/strategy.js` `logic/world.js` |
 | `test/timeline.test.js` | 102 | Ảnh chụp trận, tua lùi thời gian (magic/time/timeline.js; design/ke-hoach-buoc-37.md) |  | `logic/economy.js` `logic/island.js` `logic/save.js` `logic/world.js` `magic/time/timeline.js` |
@@ -334,7 +354,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
 | `tools/check-walk.js` | 187 | Người đi xuyên công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/world.js` `render/build/kit3d.js` `render/scene3d.js` |
 | `tools/clip.js` | 376 | Quay clip khung dọc điện thoại để xem bằng mắt … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/perf3d.js` `render/scene3d.js` `ui/landbar.js` |
-| `tools/code-map.js` | 181 | Lập bản đồ mã nguồn MA-NGUON.md (tự sinh từ code: đừng sửa tay tệp đó) | `BK.X` `X` |  |
+| `tools/code-map.js` | 182 | Lập bản đồ mã nguồn MA-NGUON.md (tự sinh từ code: đừng sửa tay tệp đó) | `BK.X` `X` |  |
 | `tools/scene-print.js` | 106 | Dấu vân tay hình học của cảnh: dùng khi dọn hay tách code để chắc hình vẽ không đổi … |  | `game/cities.js` `game/nature.js` `game/world.js` `render/scene3d.js` |
 
 ## Dịch vụ G (tên → tệp tạo ra)
@@ -379,6 +399,11 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `magic/time/cast.js`: `G.timeCtl`, `G.timeMagic`
 - `magic/fire/look3d.js`: `G.fire3d`
 - `magic/earth/look3d.js`: `G.earth3d`
+- `magic/water/rain3d.js`: `G.rain3d`
+- `magic/water/geyser3d.js`: `G.geyser3d`
+- `magic/water/deluge/vortex3d.js`: `G.vortex3d`
+- `magic/water/deluge/surge3d.js`: `G.surge3d`
+- `magic/water/deluge/deluge.js`: `G.deluge`
 - `ui/spellbook-ui.js`: `G.spellbookUi`
 - `game/loop.js`: `G.frameTime`
 
@@ -567,5 +592,16 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 179. `magic/earth/look3d.js`
 180. `magic/earth/cast.js`
 181. `magic/water/spells.js`
-182. `ui/spellbook-ui.js`
-183. `game/loop.js`
+182. `magic/water/soak.js`
+183. `magic/water/recipes.js`
+184. `magic/water/sounds.js`
+185. `magic/water/stream-mat.js`
+186. `magic/water/rain3d.js`
+187. `magic/water/geyser3d.js`
+188. `magic/water/deluge/plan.js`
+189. `magic/water/deluge/vortex3d.js`
+190. `magic/water/deluge/surge3d.js`
+191. `magic/water/deluge/deluge.js`
+192. `magic/water/cast.js`
+193. `ui/spellbook-ui.js`
+194. `game/loop.js`

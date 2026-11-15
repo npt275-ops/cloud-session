@@ -8,7 +8,7 @@ Muốn sửa phép nào thì mở thư mục của hệ đó. Không cần mở 
 | `magic/time/` | Thời gian | Dừng, Tua nhanh, Tua lùi |
 | `magic/fire/` | Lửa | Cầu lửa, Vòng lửa |
 | `magic/earth/` | Đất | Đất trồi, Núi đất |
-| `magic/water/` | Nước | Gọi mưa, Cột nước, Đại hồng thuỷ (sắp có) |
+| `magic/water/` | Nước | Gọi mưa, Cột nước, Đại hồng thuỷ (`magic/water/deluge/`: mỗi pha một tệp) |
 
 ## Trong một thư mục hệ
 
@@ -21,7 +21,7 @@ Tệp nào không cần thì không có.
 | `recipes.js` | Công thức hạt (chỉ số và màu) | Trình duyệt |
 | `sounds.js` | Tiếng riêng của hệ (`BK.MagicAudio.add`) | Trình duyệt |
 | `look3d.js` | Hình riêng không làm được bằng hạt (khối 3D, vòng lửa, trụ đá...) | Trình duyệt |
-| Tệp luật riêng | Tác động lên thế giới, ví dụ `time/timeline.js` (ảnh trận), `fire/blaze.js` (nhà cháy), `earth/rise.js` (gò đất trong trận), `earth/shape.js` (dáng gò) | Node, có kiểm thử |
+| Tệp luật riêng | Tác động lên thế giới, ví dụ `time/timeline.js` (ảnh trận), `fire/blaze.js` (nhà cháy), `water/soak.js` (dập lửa, hết hạn hán, lũ), `earth/rise.js` (gò đất trong trận), `earth/shape.js` (dáng gò) | Node, có kiểm thử |
 
 `setup(G, kit)` trả về:
 - `acts`: mỗi phép một mục `{ tap(chỗ ngắm) }` (bấm), `{ toggle(), on() }` (bật tắt) hoặc `{ hold(bật) }` (giữ);

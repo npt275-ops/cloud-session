@@ -204,3 +204,17 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
 - Lỗi 2: mặt đường cao hơn đất 0,155 (render/build/roads.js Y), người đứng trên đất nên bàn chân lút vào đường. Sửa: L.surfAt
   cộng mặt đường, vỉa hè (L.coverAt, render/build/roads.js surface theo bề rộng đường, vỉa hè của thời; mép dốc thoải 0,2).
   Đo: đứng giữa đường chân cao hơn đất 0,155 (đúng mặt đường); ra cỏ thì 0.
+
+## Hệ nước (đã làm)
+- Gọi mưa (ngắm): mây xám tụ trên chỗ ngắm, mưa rơi 7 giây, đất sẫm ướt, mưa xuống biển thì gợn nước. Hậu quả: nhà đang cháy
+  trong bán kính 5,5 tắt lửa, đảo hết hạn hán, hết cháy rừng (magic/water/soak.js rain). Đo: nhà cháy tắt, hạn hán tan.
+- Cột nước (ngắm): cột nước trong mờ có vệt chảy phun cao 8, đỉnh tung bọt, giọt văng, đổ sụp; trên biển thì gợn lớn. Hậu quả:
+  lửa trong bán kính 4 tắt ngay, người gần đó bị hất ra, bỏ chạy.
+- Đại hồng thuỷ (chỉ khi đứng cách mép đảo không quá 8: game/spellbook.js nearSea): magic/water/deluge/, mỗi pha một tệp:
+  plan.js (nhịp: sóng lớn dần 3 giây, dâng 5 giây, đứng 1,5 giây, rơi 1,5 giây, sóng tràn 7 giây), vortex3d.js (lốc xoáy
+  giữa bể), surge3d.js (sóng tung quanh mép sáu đảo), deluge.js (nối các pha). Đo: cả bể dâng 17,5 = 14 lần tầm mắt, rơi
+  nhanh dần, dội thấp hơn mặt biển rồi về đúng mực cũ. Hậu quả thật lên cả sáu đảo (soak.js flood): nhà ven biển mất 0,3
+  độ bền, trong đảo 0,08, lũ lụt 8 ngày (ít lương thực), lửa tắt, hết hạn hán, dân hoảng sợ, ghi biên niên.
+- Sóng dâng dùng chung: sea3d.js setSwell(k). Tiếng nước trùng tên tiếng lửa (roar) bị bộ đăng ký tiếng chặn: đổi seaRoar.
+- Thanh phép nhanh theo trang (ui/spellbook-ui.js): 11 phép đã mở không vừa 9 phím; thanh hiện phép của trang đang xem,
+  biểu tượng các trang bên trái (bấm hay phím Q sang trang kế), phím 1–9 chọn trong trang.

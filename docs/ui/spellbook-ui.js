@@ -26,7 +26,13 @@
 .sb-bar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); transform: translateX(-50%);
   display: none; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
 body.possessed.soul-in .sb-bar { display: flex; }
-.sb-slots { display: flex; gap: 6px; pointer-events: auto; }
+.sb-row { display: flex; gap: 10px; align-items: center; pointer-events: auto; }
+.sb-slots { display: flex; gap: 6px; }
+.sb-pages { display: flex; flex-direction: column; gap: 2px; }
+.sb-pages button { width: 22px; height: 18px; border: 0; border-radius: 6px; padding: 0; background: rgba(10,14,20,.42); cursor: pointer;
+  opacity: .5; display: flex; align-items: center; justify-content: center; }
+.sb-pages button svg { width: 13px; height: 13px; }
+.sb-pages button.on { opacity: 1; background: rgba(10,14,20,.7); box-shadow: 0 0 0 1.5px rgba(255,255,255,.7); }
 .sb-slot { position: relative; width: 46px; height: 46px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,.28);
   background: rgba(10,14,20,.42); backdrop-filter: blur(6px); color: #fff; cursor: pointer; padding: 0; overflow: hidden; }
 .sb-slot svg { width: 26px; height: 26px; margin-top: 2px; }
@@ -100,10 +106,38 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
       slots = el('div', 'sb-slots'),
       mana = el('div', 'sb-mana', '<i></i>'),
       toast = el('div', 'sb-toast');
-    bar.append(slots, mana);
-    const open = () => SP.SPELLS.filter((s) => s.open);
+    // thanh phép nhanh theo trang: hiện các phép đã mở của trang (hệ) đang xem, phím 1–9 chọn trong trang; bên trái là các trang
+    // (bấm, hay phím Q: sang trang kế có phép đã mở). Chọn phép ở trang khác (trong sách) thì thanh tự sang trang đó
+    const pages = el('div', 'sb-pages'),
+      row = el('div', 'sb-row');
+    row.append(pages, slots);
+    bar.append(row, mana);
+    const open = () => SP.SPELLS.filter((s) => s.open && s.school === barPage);
+    const hasOpen = (id) => SP.SPELLS.some((s) => s.open && s.school === id);
+    let barPage = (SP.BY.get(SB.st.sel) || { school: 'soul' }).school;
+    function setPage(id) {
+      barPage = id;
+      const first = open()[0];
+      if (first && (SP.BY.get(SB.st.sel) || {}).school !== id) SB.select(first.id);
+      buildSlots();
+    }
+    const nextPage = () => {
+      const ids = SP.SCHOOLS.map((c) => c.id).filter(hasOpen),
+        j = ids.indexOf(barPage);
+      if (ids.length) setPage(ids[(j + 1) % ids.length]);
+    };
     let slotEls = [];
     function buildSlots() {
+      pages.innerHTML = '';
+      for (const c of SP.SCHOOLS) {
+        if (!hasOpen(c.id)) continue;
+        const b = el('button', c.id === barPage ? 'on' : '', svg(c.id));
+        b.type = 'button';
+        b.title = c.name + ' (Q: trang kế)';
+        b.style.color = PAL.c(c.id + '.mid');
+        b.addEventListener('click', () => setPage(c.id));
+        pages.append(b);
+      }
       slots.innerHTML = '';
       slotEls = open()
         .slice(0, 9)
@@ -215,6 +249,11 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
           return;
         }
         if (isOpen()) return;
+        if (e.code === 'KeyQ') {
+          e.preventDefault();
+          nextPage();
+          return;
+        }
         const m = /^Digit([1-9])$/.exec(e.code);
         if (m && slotEls[+m[1] - 1]) {
           e.preventDefault();
@@ -261,6 +300,8 @@ body.possessed.soul-in.touch .sb-touch { display: block; }
         mana.firstChild.style.transform = 'scaleX(' + k.toFixed(3) + ')';
         manaBox.querySelector('i').style.width = (k * 100).toFixed(1) + '%';
       }
+      const selSchool = (SP.BY.get(SB.st.sel) || {}).school;
+      if (selSchool && selSchool !== barPage) setPage(selSchool); // (chọn phép trang khác trong sách: thanh sang trang đó)
       for (const x of slotEls) {
         x.b.classList.toggle('sel', SB.st.sel === x.s.id);
         const cd = SB.cooldown(x.s.id);

@@ -43,7 +43,7 @@ test('chỉ dùng được khi đang nhập hồn', () => {
 });
 
 test('phép chưa làm xong thì "sắp có"', () => {
-  assert.strictEqual(S.can({}, 'rain', IN).why, 'soon');
+  assert.strictEqual(S.can({}, 'blackHole', IN).why, 'soon');
   assert.ok(S.can({}, 'timeStop', IN).ok, 'phép thời gian đã mở');
 });
 

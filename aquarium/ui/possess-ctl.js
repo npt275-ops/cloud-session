@@ -62,7 +62,7 @@ body.possessed.soul-in.touch .soul-jump { display: block; }
     const hint = document.createElement('div');
     hint.className = 'soul-hint';
     hint.innerHTML =
-      '<span class="keys">WASD đi · Shift chạy · Space nhảy · B sách phép · E phát phép · bấm để khoá chuột · Esc thoát</span><button type="button">Thoát</button>';
+      '<span class="keys">WASD đi · Shift chạy · Space nhảy · B sách phép · 1–9, Q chọn phép · E phát phép · bấm để khoá chuột · Esc thoát</span><button type="button">Thoát</button>';
     hint.querySelector('button').onclick = () => P.exit();
     document.body.appendChild(hint);
     const stick = document.createElement('div'),

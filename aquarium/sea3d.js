@@ -210,11 +210,14 @@
 
     function animate(dt, t, night, storm) {
       tNow = t * 0.001 * (reduce ? 0.4 : 1); // (máy bật giảm chuyển động: sóng chậm lại như mây, không đứng yên)
-      ampNow += (1.15 + 0.75 * (storm || 0) - ampNow) * Math.min(1, (dt || 16) / 3000); // giông bão: sóng lớn dần
+      ampNow += ((1.15 + 0.75 * (storm || 0)) * swell - ampNow) * Math.min(1, (dt || 16) / (swell > 1 ? 900 : 3000)); // giông bão: sóng lớn dần
       U.uT.value = tNow;
       U.uAmp.value = ampNow;
       seaBodyMat.emissiveIntensity = wallMat.emissiveIntensity = 0.26 + night * 0.25;
     }
+    // sóng dâng (phép nước: magic/water/deluge/): độ lớn sóng nhân thêm k (1: bình thường), lên xuống mượt
+    let swell = 1;
+    const setSwell = (k) => (swell = Math.max(0.2, k));
     function setSea(dy, tiltX, tiltZ) {
       seaDy = dy;
       water.position.y = SEA_Y + dy;
@@ -239,6 +242,7 @@
       waves: { glsl: waves, rim: rimGLSL, glassBrk, EG, AMAX, list: WAVES, QS },
       animate,
       setSea,
+      setSwell,
       setUnder,
       heightAt,
       surface,

@@ -390,8 +390,63 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/magic/water/cast.js",
+  "src": "magic/water/cast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/deluge/deluge.js",
+  "src": "magic/water/deluge/deluge.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/deluge/plan.js",
+  "src": "magic/water/deluge/plan.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/deluge/surge3d.js",
+  "src": "magic/water/deluge/surge3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/deluge/vortex3d.js",
+  "src": "magic/water/deluge/vortex3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/geyser3d.js",
+  "src": "magic/water/geyser3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/rain3d.js",
+  "src": "magic/water/rain3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/recipes.js",
+  "src": "magic/water/recipes.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/soak.js",
+  "src": "magic/water/soak.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/sounds.js",
+  "src": "magic/water/sounds.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/magic/water/spells.js",
   "src": "magic/water/spells.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/magic/water/stream-mat.js",
+  "src": "magic/water/stream-mat.js",
   "mode": 420
  },
  {
