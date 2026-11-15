@@ -885,6 +885,31 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/water/passes3d.js",
+  "src": "render/water/passes3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/water/ripples3d.js",
+  "src": "render/water/ripples3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/water/surface3d.js",
+  "src": "render/water/surface3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/water/under3d.js",
+  "src": "render/water/under3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/water/water3d.js",
+  "src": "render/water/water3d.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/work3d.js",
   "src": "render/work3d.js",
   "mode": 420

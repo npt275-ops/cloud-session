@@ -19,7 +19,7 @@
      * phía máy (heightAt) cho thuyền nhấp nhô, chòng chành đúng con sóng. Sát bờ đảo sóng dịu dần (aShore: khoảng cách tới mép đảo
      * gần nhất). Sát vách kính sóng dồn lên, đập vào kính rồi dội lại (chỉ lên xuống, không dồn ngang qua kính), bọt trắng bám
      * theo vách. Giông bão (stormK) sóng lớn hơn. Bọt trắng: dải quanh chân đảo vỗ theo nhịp, dải bọt sát vách kính, vệt trắng
-     * trên ngọn sóng cao. Nước giữ kiểu mặt phẳng low-poly (flatShading). */
+     * trên ngọn sóng cao (bọt vẽ ở render/water/surface3d.js theo công thức ở đây). */
     const WAVES = [
       [0.8, 0.6, 38, 0.44],
       [-0.45, 0.9, 27, 0.32],
@@ -64,39 +64,18 @@
     const waterGeo = new THREE.RingGeometry(0.6, EDGE_R, 420, 120);
     waterGeo.rotateX(-Math.PI / 2);
     const wpos = waterGeo.attributes.position,
-      wcol = [],
       wsh = new Float32Array(wpos.count * 2);
-    const deepC = C('#1c5a86'),
-      shallowC = C('#3aa6c4'),
-      outC = C('#2a86ad'),
-      tmpC = new THREE.Color();
     for (let i = 0; i < wpos.count; i++) {
       const x = wpos.getX(i),
         z = wpos.getZ(i),
-        r = Math.hypot(x, z),
         sd = shoreD(x, z);
       wsh[i * 2] = ampAt(x, z, sd);
       wsh[i * 2 + 1] = Math.max(-2, Math.min(30, sd));
-      tmpC
-        .copy(deepC)
-        .lerp(shallowC, clamp((r - 26) / 26, 0, 1))
-        .lerp(outC, clamp((r - 150) / 40, 0, 1))
-        .lerp(shallowC, 0.35 * clamp((6 - sd) / 6, 0, 1));
-      wcol.push(tmpC.r, tmpC.g, tmpC.b);
     }
-    waterGeo.setAttribute('color', new THREE.Float32BufferAttribute(wcol, 3));
     waterGeo.setAttribute('aShore', new THREE.BufferAttribute(wsh, 2)); // (độ lớn sóng chỗ đó, khoảng cách tới bờ)
-    // không bóng loáng, không nhận bóng đổ: hết những mảng lóe trắng khi xoay
-    // (hai mặt: lặn xuống đáy bể nhìn lên vẫn thấy mặt nước, render/deep3d.js)
-    const waterMat = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.62,
-      metalness: 0,
-      flatShading: true,
-      emissive: '#0b3550',
-      emissiveIntensity: 0.28,
-      side: THREE.DoubleSide,
-    });
+    // Màu, ánh sáng của mặt nước: lớp nước quang học render/water/surface3d.js (phản chiếu, khúc xạ, hấp thụ theo độ sâu, gợn);
+    // ở đây chỉ giữ công thức sóng, bọt dùng chung (out.waves) và vật liệu tạm cho tới khi lớp nước thay vào
+    const waterMat = new THREE.MeshBasicMaterial({ color: '#2a86ad', side: THREE.DoubleSide });
     const U = { uT: { value: 0 }, uAmp: { value: 1 } };
     const glsl = (v) => v.toFixed(5),
       EG = glsl(EDGE_R);
@@ -112,38 +91,6 @@
       `off *= clamp(gd / 5.0, 0.0, 1.0); }\n`;
     // bọt bám vách kính: mảng vỡ theo vòng quanh vách (gb), thay nhau theo thời gian
     const glassBrk = 'float gan = atan(vXZ.y, vXZ.x), gb = 0.5 + 0.5 * sin(gan * 53.0 + sin(gan * 17.0 - uT * 0.6) * 2.5 + uT * 0.8);\n';
-    waterMat.onBeforeCompile = (sh) => {
-      sh.uniforms.uT = U.uT;
-      sh.uniforms.uAmp = U.uAmp;
-      sh.vertexShader =
-        'uniform float uT;\nuniform float uAmp;\nattribute vec2 aShore;\nvarying float vWave;\nvarying float vShore;\nvarying vec2 vXZ;\n' +
-        sh.vertexShader.replace(
-          '#include <begin_vertex>',
-          '#include <begin_vertex>\n{ vec2 p0 = transformed.xz; float amp = aShore.x * uAmp, h = 0.0; vec2 off = vec2(0.0);\n' +
-            waves +
-            rimGLSL +
-            ' transformed.xz += off; transformed.y += h; vWave = h / (' +
-            glsl(AMAX) +
-            ' * max(uAmp, 0.01)); vShore = aShore.y; vXZ = p0; }',
-        );
-      // bọt: ngọn sóng cao (crest); quanh chân đảo (band); sát vách kính (glass): dải bọt bám vách, các vệt bọt dội ra, ngọn
-      // sóng đập vào kính tung bọt
-      sh.fragmentShader =
-        'uniform float uT;\nvarying float vWave;\nvarying float vShore;\nvarying vec2 vXZ;\n' +
-        sh.fragmentShader.replace(
-          '#include <color_fragment>',
-          '#include <color_fragment>\n{ float crest = smoothstep(0.35, 0.75, vWave), brk = 0.5 + 0.5 * sin(vXZ.x * 0.9 + sin(vXZ.y * 0.6) * 2.0 + uT * 0.7) * sin(vXZ.y * 0.8 - uT * 0.5),\n' +
-            '  band = smoothstep(2.4, 0.2, vShore) * (0.35 + 0.65 * brk) + smoothstep(1.2, 0.0, abs(vShore - 2.5 - 1.6 * fract(uT * 0.18 + brk * 0.3))) * 0.6 * brk;\n' +
-            '  float gd = ' +
-            EG +
-            ' - length(vXZ);\n  ' +
-            glassBrk +
-            '  float glass = smoothstep(2.2, 0.15, gd) * (0.45 + 0.55 * gb) + smoothstep(1.0, 0.0, abs(gd - 1.2 - 2.4 * fract(uT * 0.22 + gb * 0.25))) * 0.55 * gb\n' +
-            '    + smoothstep(4.0, 0.5, gd) * smoothstep(0.1, 0.6, vWave) * 0.8;\n' +
-            '  diffuseColor.rgb *= 0.72 + 0.5 * clamp(vWave * 0.5 + 0.5, 0.0, 1.0);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.93, 0.97, 1.0), clamp(crest * 0.55 + band * 0.75 + glass * 0.85, 0.0, 0.92)); }',
-        );
-    };
-    waterMat.customProgramCacheKey = () => 'seaWaves';
     // độ cao mặt biển (so với mặt biển lặng) tại (x, z) ở lúc này: cùng công thức với shader (bỏ phần dồn ngang)
     let tNow = 0,
       ampNow = 1.15;
@@ -266,7 +213,6 @@
       ampNow += (1.15 + 0.75 * (storm || 0) - ampNow) * Math.min(1, (dt || 16) / 3000); // giông bão: sóng lớn dần
       U.uT.value = tNow;
       U.uAmp.value = ampNow;
-      waterMat.emissiveIntensity = 0.22 + night * 0.25;
       seaBodyMat.emissiveIntensity = wallMat.emissiveIntensity = 0.26 + night * 0.25;
     }
     function setSea(dy, tiltX, tiltZ) {
@@ -284,6 +230,13 @@
       wallMat.opacity = on ? 0.94 : seaBodyMat.opacity;
     }
     const out = {
+      // (lớp nước quang học render/water/ thay vật liệu mặt nước, dùng lại đúng công thức sóng và bọt ở đây)
+      water,
+      wall,
+      glassWall,
+      glassFloor,
+      U,
+      waves: { glsl: waves, rim: rimGLSL, glassBrk, EG, AMAX, list: WAVES, QS },
       animate,
       setSea,
       setUnder,

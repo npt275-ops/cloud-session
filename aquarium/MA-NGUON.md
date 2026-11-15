@@ -8,7 +8,7 @@ Cột "Tạo ra": `BK.X` là mô-đun dùng chung, tên in hoa không có `BK.` 
 vụ tệp thêm vào đối tượng G của game (tên từng dịch vụ: mục "Dịch vụ G" cuối trang). Cột "Dùng": các tệp mà tệp
 này cần (dò theo tên trong code).
 
-Tổng: 213 tệp, 51079 dòng.
+Tổng: 218 tệp, 51641 dòng.
 
 ## (gốc)
 
@@ -18,7 +18,7 @@ Gốc: biển, mây, âm thanh (dựng trước các phần khác).
 |---|---|---|---|---|
 | `audio.js` | 552 | Âm thanh tự sinh bằng Web Audio (không dùng file âm thanh nào) | `CityAudio` |  |
 | `clouds3d.js` | 495 | Mây trong bể kính | `Clouds3D` |  |
-| `sea3d.js` | 305 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
+| `sea3d.js` | 258 | Biển trong bể kính: mặt nước phủ kín đáy bể tới mép trong vách kính, sóng, chậu kính trong suốt chứa nước | `BK.SEA_Y` `BK.seaAt` `Sea3D` |  |
 
 ## game/
 
@@ -27,7 +27,7 @@ Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy c
 | Tệp | Dòng | Việc | Tạo ra | Dùng |
 |---|---|---|---|---|
 | `game/cities.js` | 1109 | Sáu thành phố chạy theo đồng hồ của trận … | `BK.GameCities` G: 26 dịch vụ | `game/seasons.js` `game/world.js` `logic/arms.js` `logic/climate.js` `logic/construction.js` `logic/diplomacy.js` `logic/dramas.js` `logic/economy.js` `logic/eras.js` `logic/island.js` `logic/missiles.js` `logic/rules.js` `logic/save.js` `logic/schedule.js` `logic/siege.js` `logic/war.js` `logic/world.js` `render/build/isles/compose.js` `render/build/plains/common.js` `render/buildings3d.js` `render/engines3d.js` `render/hpbars3d.js` `render/map/map3d.js` `render/missiles3d.js` `render/prosper3d.js` `render/shots3d.js` `render/travel3d.js` `render/village3d.js` `render/war3d.js` `ui/camera-fly.js` `ui/landbar.js` `ui/village-ui.js` |
-| `game/loop.js` | 134 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `magic/time/cast.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
+| `game/loop.js` | 136 | Khởi động game và nhịp mỗi khung hình | `BK.GameLoop` G: 1 dịch vụ | `game/cities.js` `game/nature.js` `game/possess.js` `game/seasons.js` `game/spellbook.js` `game/world.js` `magic/time/cast.js` `render/body/softbody3d.js` `render/fx/particles3d.js` `render/fx/post3d.js` `render/fx/soul-fx.js` `render/look3d.js` `render/magic/aim3d.js` `render/magic/staff3d.js` `render/magic/vfx.js` `render/map/map3d.js` `render/near3d.js` `render/neon3d.js` `render/perf3d.js` `render/scene3d.js` `render/sky3d.js` `render/snow3d.js` `render/style/diorama3d.js` `render/tank3d.js` `render/water/water3d.js` `sea3d.js` `ui/camera-fly.js` `ui/hud.js` `ui/landbar.js` `ui/possess-ctl.js` `ui/race-dev.js` `ui/spellbook-ui.js` |
 | `game/nature.js` | 57 | Dựng phần thiên nhiên của bể: bản đồ sáu đảo (render/map/), cầu (render/build/bridges3d.js, logic bắc cầu nào thì … | `BK.GameNature` G: 7 dịch vụ | `clouds3d.js` `game/world.js` `render/build/bridges3d.js` `render/deep3d.js` `render/map/map3d.js` `render/scene3d.js` `render/tank3d.js` `sea3d.js` |
 | `game/possess-cam.js` | 123 | Máy quay chính: sau vai nhân vật đang nhập hồn … | `BK.PossessCam` |  |
 | `game/possess-jump.js` | 93 | Nhảy của nhân vật đang nhập hồn … | `BK.PossessJump` |  |
@@ -113,6 +113,18 @@ Vẽ 3D: người, làng, trận đánh, trời, đáy bể.
 | `render/village3d.js` | 1720 | Người của một làng trên đảo: mỗi người một khung khớp (render/rig3d.js, nét vẽ đã chốt, trang phục theo thời và nhóm) … | `BK.Village3D` | `logic/arms.js` `logic/brain.js` `logic/island.js` `logic/people.js` `render/anim3d.js` `render/body/motion3d.js` `render/gestures3d.js` `render/nav3d.js` `render/rig3d.js` `render/shots3d.js` `render/work3d.js` |
 | `render/war3d.js` | 249 | Quân đi đánh, vây cổng, cờ của đảo cai quản … | `BK.War3D` | `render/map/map3d.js` |
 | `render/work3d.js` | 344 | Hai thứ tách bạch (design/npc-song-that.md mục 2, 3, 7.1) … | `BK.Work3D` | `render/gestures3d.js` |
+
+## render/water/
+
+Nước quang học của bể kính: phản chiếu, khúc xạ, hấp thụ theo độ sâu, gợn, caustics (sáu quy tắc).
+
+| Tệp | Dòng | Việc | Tạo ra | Dùng |
+|---|---|---|---|---|
+| `render/water/passes3d.js` | 115 | Ba lượt vẽ của nước (quy tắc 3: cảnh vẽ ba lần, mỗi lần cắt bởi mặt nước) | `BK.WaterPasses` G: 1 dịch vụ | `game/nature.js` `render/fx/post3d.js` `render/tank3d.js` |
+| `render/water/ripples3d.js` | 158 | Gợn nước mô phỏng (quy tắc 6: vật chạm nước phải để lại dấu) | `BK.seaAt` `BK.WaterRipples` G: 1 dịch vụ | `sea3d.js` |
+| `render/water/surface3d.js` | 202 | Chất liệu quang học của mặt nước (sáu quy tắc, design/ke-hoach-buoc-38.md) | `BK.WaterSurface` G: 1 dịch vụ | `game/nature.js` `render/sky3d.js` `render/water/passes3d.js` `render/water/ripples3d.js` |
+| `render/water/under3d.js` | 80 | Vật dưới nước: ánh sáng bị nước hấp thụ và vân sáng caustics (quy tắc 6) | `BK.WaterUnder` G: 1 dịch vụ | `game/nature.js` `render/sky3d.js` `render/water/surface3d.js` |
+| `render/water/water3d.js` | 51 | Lớp nước quang học của bể kính: ghép các phần … | `BK.Water3D` G: 1 dịch vụ | `game/nature.js` `render/perf3d.js` `render/water/passes3d.js` `render/water/ripples3d.js` `render/water/surface3d.js` `render/water/under3d.js` |
 
 ## render/map/
 
@@ -322,7 +334,7 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 | `tools/check-scene.js` | 175 | Kiểm tra cảnh bằng trình duyệt không giao diện … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/dramas.js` `logic/world.js` `render/build/place3d.js` `render/scene3d.js` |
 | `tools/check-walk.js` | 187 | Người đi xuyên công trình: 6 đảo × 12 thời … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/world.js` `render/build/kit3d.js` `render/scene3d.js` |
 | `tools/clip.js` | 376 | Quay clip khung dọc điện thoại để xem bằng mắt … |  | `game/cities.js` `game/nature.js` `game/world.js` `logic/economy.js` `logic/island.js` `logic/strategy.js` `logic/war.js` `logic/world.js` `render/perf3d.js` `render/scene3d.js` `ui/landbar.js` |
-| `tools/code-map.js` | 180 | Lập bản đồ mã nguồn MA-NGUON.md (tự sinh từ code: đừng sửa tay tệp đó) | `BK.X` `X` |  |
+| `tools/code-map.js` | 181 | Lập bản đồ mã nguồn MA-NGUON.md (tự sinh từ code: đừng sửa tay tệp đó) | `BK.X` `X` |  |
 | `tools/scene-print.js` | 106 | Dấu vân tay hình học của cảnh: dùng khi dọn hay tách code để chắc hình vẽ không đổi … |  | `game/cities.js` `game/nature.js` `game/world.js` `render/scene3d.js` |
 
 ## Dịch vụ G (tên → tệp tạo ra)
@@ -339,6 +351,11 @@ Công cụ đo, quét lỗi, đóng gói (chạy tay).
 - `render/neon3d.js`: `G.neonCity`
 - `render/perf3d.js`: `G.perf`
 - `render/tank3d.js`: `G.DOME`, `G.tank`
+- `render/water/passes3d.js`: `G.waterPasses`
+- `render/water/ripples3d.js`: `G.waterRipples`
+- `render/water/surface3d.js`: `G.waterSurface`
+- `render/water/under3d.js`: `G.waterUnder`
+- `render/water/water3d.js`: `G.water`
 - `game/nature.js`: `G.lands3d`, `G.lands`, `G.bridges3d`, `G.sea3d`, `G.deep3d`, `G.clouds3d`, `G.nature`
 - `game/seasons.js`: `G.seasons`
 - `render/snow3d.js`: `G.snow`
@@ -495,55 +512,60 @@ Tệp sau dùng được những gì tệp trước tạo ra. Thêm tệp mới:
 124. `render/neon3d.js`
 125. `render/perf3d.js`
 126. `render/tank3d.js`
-127. `game/nature.js`
-128. `game/seasons.js`
-129. `render/snow3d.js`
-130. `ui/camera-fly.js`
-131. `render/fx/post3d.js`
-132. `render/fx/particles3d.js`
-133. `render/fx/soul-audio.js`
-134. `render/fx/soul-fx.js`
-135. `render/near3d.js`
-136. `render/style/diorama3d.js`
-137. `ui/landbar.js`
-138. `ui/race-dev.js`
-139. `game/cities.js`
-140. `ui/hud.js`
-141. `game/possess-jump.js`
-142. `game/possess-cam.js`
-143. `game/possess.js`
-144. `ui/possess-ctl.js`
-145. `render/style/palette.js`
-146. `render/magic/recipes.js`
-147. `render/magic/sigils.js`
-148. `render/magic/vfx.js`
-149. `render/magic/staff3d.js`
-150. `render/magic/aim3d.js`
-151. `render/fx/magic-audio.js`
-152. `logic/spells.js`
-153. `game/spellbook.js`
-154. `magic/soul/spells.js`
-155. `magic/soul/recipes.js`
-156. `magic/soul/cast.js`
-157. `magic/time/spells.js`
-158. `magic/time/timeline.js`
-159. `magic/time/recipes.js`
-160. `magic/time/sounds.js`
-161. `magic/time/look3d.js`
-162. `magic/time/cast.js`
-163. `magic/fire/spells.js`
-164. `magic/fire/blaze.js`
-165. `magic/fire/recipes.js`
-166. `magic/fire/sounds.js`
-167. `magic/fire/look3d.js`
-168. `magic/fire/cast.js`
-169. `magic/earth/spells.js`
-170. `magic/earth/shape.js`
-171. `magic/earth/rise.js`
-172. `magic/earth/recipes.js`
-173. `magic/earth/sounds.js`
-174. `magic/earth/look3d.js`
-175. `magic/earth/cast.js`
-176. `magic/water/spells.js`
-177. `ui/spellbook-ui.js`
-178. `game/loop.js`
+127. `render/water/passes3d.js`
+128. `render/water/ripples3d.js`
+129. `render/water/surface3d.js`
+130. `render/water/under3d.js`
+131. `render/water/water3d.js`
+132. `game/nature.js`
+133. `game/seasons.js`
+134. `render/snow3d.js`
+135. `ui/camera-fly.js`
+136. `render/fx/post3d.js`
+137. `render/fx/particles3d.js`
+138. `render/fx/soul-audio.js`
+139. `render/fx/soul-fx.js`
+140. `render/near3d.js`
+141. `render/style/diorama3d.js`
+142. `ui/landbar.js`
+143. `ui/race-dev.js`
+144. `game/cities.js`
+145. `ui/hud.js`
+146. `game/possess-jump.js`
+147. `game/possess-cam.js`
+148. `game/possess.js`
+149. `ui/possess-ctl.js`
+150. `render/style/palette.js`
+151. `render/magic/recipes.js`
+152. `render/magic/sigils.js`
+153. `render/magic/vfx.js`
+154. `render/magic/staff3d.js`
+155. `render/magic/aim3d.js`
+156. `render/fx/magic-audio.js`
+157. `logic/spells.js`
+158. `game/spellbook.js`
+159. `magic/soul/spells.js`
+160. `magic/soul/recipes.js`
+161. `magic/soul/cast.js`
+162. `magic/time/spells.js`
+163. `magic/time/timeline.js`
+164. `magic/time/recipes.js`
+165. `magic/time/sounds.js`
+166. `magic/time/look3d.js`
+167. `magic/time/cast.js`
+168. `magic/fire/spells.js`
+169. `magic/fire/blaze.js`
+170. `magic/fire/recipes.js`
+171. `magic/fire/sounds.js`
+172. `magic/fire/look3d.js`
+173. `magic/fire/cast.js`
+174. `magic/earth/spells.js`
+175. `magic/earth/shape.js`
+176. `magic/earth/rise.js`
+177. `magic/earth/recipes.js`
+178. `magic/earth/sounds.js`
+179. `magic/earth/look3d.js`
+180. `magic/earth/cast.js`
+181. `magic/water/spells.js`
+182. `ui/spellbook-ui.js`
+183. `game/loop.js`

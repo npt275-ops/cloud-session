@@ -54,7 +54,7 @@
       for (const f of floaters) f.m.position.y = f.y + (reduce ? 0 : Math.sin(t * 0.0005 + f.ph) * 1.6);
     }
     G.DOME = DOME;
-    G.tank = { animate };
+    G.tank = { animate, dome }; // (dome: lớp nước render/water/passes3d.js ẩn vòm lúc vẽ ảnh phản chiếu, ảnh dưới nước)
   }
   BK.Tank3D = { setup };
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -19,6 +19,7 @@
     BK.Perf3D.setup(G); // render/perf3d.js
     BK.Tank3D.setup(G); // render/tank3d.js
     BK.GameNature.setup(G); // game/nature.js
+    BK.Water3D.setup(G); // render/water/water3d.js (nước quang học: phản chiếu, khúc xạ, hấp thụ, gợn, caustics)
     BK.GameSeasons.setup(G); // game/seasons.js
     BK.Snow3D.setup(G); // render/snow3d.js
     BK.CameraFly.setup(G); // ui/camera-fly.js
@@ -95,6 +96,7 @@
       G.spellbookUi.sync();
       G.perf.shadowTick();
       const f1 = performance.now();
+      G.water.frame(Math.min(0.1, dt / 1000)); // (vẽ trước ảnh dưới nước, ảnh phản chiếu cho mặt nước)
       G.post.render(); // render/fx/post3d.js: không có hiệu ứng thì vẽ thẳng như renderer.render(scene, camera)
       const f2 = performance.now(),
         FT = G.frameTime || (G.frameTime = { js: 0, gl: 0, n: 0 }),

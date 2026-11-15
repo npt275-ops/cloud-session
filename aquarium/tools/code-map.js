@@ -16,6 +16,7 @@ const FOLDERS = [
   ['game', 'Ghép game: vòng lặp, thế giới, mùa, thiên nhiên, các đảo chạy cùng logic'],
   ['logic', 'Logic ngầm (chạy được trong Node, không vẽ): người, đảo, kinh tế, chiến tranh, quyền năng'],
   ['render', 'Vẽ 3D: người, làng, trận đánh, trời, đáy bể'],
+  ['render/water', 'Nước quang học của bể kính: phản chiếu, khúc xạ, hấp thụ theo độ sâu, gợn, caustics (sáu quy tắc)'],
   ['render/map', 'Bản đồ sáu đảo: dáng đất, cao độ, nước, núi, cây'],
   ['render/deep', 'Đáy bể: địa hình, phế tích, đường hầm (ghép ở render/deep3d.js)'],
   ['render/build', 'Công trình dùng chung mọi đảo: bộ ghép khối, đường, cổng, cầu, xe, kỳ quan'],
