@@ -11,6 +11,7 @@
   const LOOK = {
     TILT: 0.22, // (rad) đĩa nghiêng
     FACE: 0.45, // pháp tuyến đĩa ngả về phía máy quay chừng này (nhìn từ đâu cũng thấy mặt đĩa như ảnh tham khảo, không thấy cạnh)
+    TURN: 0.6, // (1/giây) đĩa xoay theo máy quay thật chậm, có quán tính (máy quay nhún theo bước chạy thì đĩa không rung theo)
     DISK_IN: 1.25, // mép trong đĩa: lần bán kính lõi
     RING: 1.08, // vòng photon: lần bán kính lõi
     HALO: 1.9, // quầng cam quanh lõi: lần bán kính lõi
@@ -37,11 +38,12 @@ void main(){
   if (u < 0.0 || u > 1.0) discard;
   float sp = a * 3.0 + log(r) * 9.0 - uT * ${LOOK.SPIN.toFixed(2)} / (0.25 + r);
   float s = n(vec2(sp * 2.2, u * 18.0)) * 0.6 + n(vec2(sp * 5.0, u * 40.0)) * 0.4;
-  vec3 hot = vec3(1.0, 0.96, 0.82), mid = vec3(1.0, 0.55, 0.16), cool = vec3(0.62, 0.1, 0.04);
+  vec3 hot = vec3(1.0, 0.96, 0.82), mid = vec3(1.0, 0.55, 0.16), cool = vec3(0.95, 0.28, 0.08);
   vec3 col = u < 0.35 ? mix(hot, mid, u / 0.35) : mix(mid, cool, (u - 0.35) / 0.65);
   float side = 0.75 + 0.45 * sin(a + 0.6);
   col *= (0.55 + 0.8 * s) * side * (1.0 + 1.6 * exp(-u * 9.0));
-  float al = smoothstep(0.0, 0.04, u) * (1.0 - smoothstep(0.55, 1.0, u)) * (0.55 + 0.45 * s);
+  // (mép ngoài mờ hẳn trước khi kịp tối: không thành vành tối đục quanh hố)
+  float al = smoothstep(0.0, 0.04, u) * (1.0 - smoothstep(0.3, 0.85, u)) * (0.55 + 0.45 * s);
   gl_FragColor = vec4(col, al * uFade);
 #include <logdepthbuf_fragment>
 }`;
@@ -107,7 +109,9 @@ void main(){
     scene.add(grp);
     const v = new THREE.Vector3(),
       up = new THREE.Vector3(0, 1, 0),
-      nrm = new THREE.Vector3();
+      nrm = new THREE.Vector3(),
+      want = new THREE.Vector3();
+    let last = 0;
     // tâm, cỡ cả hố (mép ngoài đĩa), cỡ lõi, giây, mức còn (0..1)
     function show(c, outer, hz, t, fade) {
       grp.visible = fade > 0.001;
@@ -120,7 +124,12 @@ void main(){
       for (const j of jets) j.scale.set(outer * LOOK.JET_W, outer * LOOK.JET_LEN * fade, outer * LOOK.JET_W);
       // pháp tuyến đĩa: trục đứng nghiêng TILT, ngả về phía máy quay FACE
       v.copy(camera.position).sub(c).normalize();
-      nrm.set(Math.sin(LOOK.TILT), Math.cos(LOOK.TILT), 0).lerp(v, LOOK.FACE).normalize();
+      want.set(Math.sin(LOOK.TILT), Math.cos(LOOK.TILT), 0).lerp(v, LOOK.FACE).normalize();
+      const now = performance.now(),
+        sec = last ? Math.min(0.1, (now - last) / 1000) : 1;
+      last = now;
+      if (!grp.visible || nrm.lengthSq() < 0.5) nrm.copy(want);
+      else nrm.lerp(want, Math.min(1, sec * LOOK.TURN)).normalize();
       tilt.quaternion.setFromUnitVectors(up, nrm);
       spinG.rotation.y = t * 0.05;
       for (const u of [dU, rU, jU]) {

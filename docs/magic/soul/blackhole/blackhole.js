@@ -6,10 +6,9 @@
  *   hút người     pull.js: người trong tầm (hố lớn hơn người) bị cuốn lên xoắn vào tâm; dân cả đảo hoảng sợ bỏ chạy
  *   người nhập hồn (nếu ở đảo này): vẫn chạy tự do quan sát; vào tầm hút thì bị giữ (không đi được, chỉ xoay nhìn:
  *                 game/possess.js setHeld), lơ lửng rồi bị hút; qua lõi thì vào trong hố (inside.js), linh hồn rời thân
- *   bẻ cong ánh sáng  lượt hậu kỳ (render/fx/post3d.js lens): thấu kính hấp dẫn quanh lõi, theo chỗ hố trên màn hình
- *   ánh sáng bị hút   (post3d.js pull, pullTint): cả bầu trời, cảnh vật nhoè thành vệt chảy về phía hố (hố sau lưng thì về mép màn
- *                 hình phía hố); ánh sáng không thoát được nên ngả dần sang vàng cam của đĩa bồi tụ. Mạnh dần theo cỡ hố và độ gần
- *                 (trong tầm hút là hết cỡ, ra ngoài nhạt dần); ngả màu mạnh nhất khi quay lưng chạy khỏi hố
+ *   màu ánh sáng  (render/fx/post3d.js voidTint): ánh sáng không thoát được nên cả ảnh ngả dần sang vàng cam của đĩa bồi tụ. Mạnh
+ *                 dần theo cỡ hố và độ gần (trong tầm hút là hết cỡ, ra ngoài nhạt dần); mạnh nhất khi quay lưng chạy khỏi hố. Chỉ
+ *                 đổi màu, đổi từ từ; không làm méo, không nhoè màn hình (người chơi chốt: màn hình chính không có hiệu ứng động)
  *   hạt           vật chất cuốn về tâm theo đĩa, bụi bốc lên ở mặt hút; tiếng ù trầm (magic/soul/sounds.js)
  *   tan           sau HOLD_END hố tan dần, trả lại đảo (bản thử, để thử lại được)
  * Thời gian dừng (đứng): mọi thứ đứng im giữa chừng. Cần: plan.js, warp3d.js, pieces.js, hole3d.js, pull.js, inside.js. */
@@ -18,10 +17,9 @@
   const FX = {
     STREAM: 70, // (hạt/giây) vật chất cuốn vào theo đĩa
     DUST: 30, // (hạt/giây) bụi bốc lên ở mép tầm hút
-    LENS_R: 1.7, // bóng đen trên màn hình (bán kính Einstein) bằng chừng này lần lõi đen
-    PULL: 0.85, // ánh sáng bị hút (nhoè thành vệt về phía hố) lớn nhất
     TINT: 0.8, // ngả vàng cam lớn nhất (quay lưng chạy khỏi hố thì mạnh nhất)
-    PULL_EDGE: 25, // (đơn vị) ngoài tầm hút chừng này thì hết bị
+    TINT_EDGE: 25, // (đơn vị) ngoài tầm hút chừng này thì hết ngả màu
+    TINT_RATE: 1.5, // (1/giây) màu đổi từ từ theo chừng này
   };
   function setup(G, kit) {
     const { THREE } = G;
@@ -33,12 +31,11 @@
       pull = BK.BlackHolePull.create(G),
       pieces = BK.BlackHolePieces.create(G);
     const hole = { on: false, t: 0, c: new THREE.Vector3(), aim: new THREE.Vector3(), R: 30, i: -1, isle: { x: 0, z: 0, r: 30 } };
-    const st = { acc: 0, dust: 0, player: null, sucked: false, inside: false };
+    const st = { acc: 0, dust: 0, player: null, sucked: false, inside: false, tint: 0, lt: 0, fade: 1, unhook: null };
     const sound = (name, ...a) => kit.audio && kit.audio[name] && kit.audio[name](...a);
     const v1 = new THREE.Vector3(),
       v2 = new THREE.Vector3(),
-      v3 = new THREE.Vector3(),
-      v4 = new THREE.Vector3();
+      v3 = new THREE.Vector3();
     function start(aim) {
       if (hole.on) return false;
       const i = kit.island(),
@@ -49,7 +46,7 @@
       Object.assign(hole, { on: true, t: 0, i, R: r / 24 });
       hole.aim.copy(aim);
       hole.isle = { x: L.center.x, z: L.center.z, r: hole.R };
-      Object.assign(st, { acc: 0, dust: 0, player: null, sucked: false, inside: false });
+      Object.assign(st, { acc: 0, dust: 0, player: null, sucked: false, inside: false, tint: 0, lt: 0 });
       hole.pieces = pieces.prepare(i);
       const V = G.villageOf(i);
       if (V && V.spook) V.spook(aim, 999, P.HOLD_END, 10);
@@ -60,7 +57,7 @@
       hole.on = false;
       Warp.off();
       pieces.restore();
-      if (G.post) Object.assign(G.post.fx, { lens: 0, pull: 0, pullTint: 0 });
+      if (G.post) G.post.fx.voidTint = 0;
       if (st.unhook) st.unhook();
       st.unhook = null;
       G.hole3d.hide();
@@ -92,37 +89,25 @@
         G.vfx.spawn('soft', v1, v2, { life: [1.5, 2.5], size: [0.6, 1.6], color: ['#b9a58a', '#5a4a3c'], alpha: 0.5 });
       }
     }
-    // bẻ cong ánh sáng quanh hố (render/fx/post3d.js lens): tâm, bán kính Einstein trên màn hình theo chỗ hố, cỡ lõi
-    function lens(hz, fade) {
-      const fx = G.post && G.post.fx;
+    // ánh sáng không thoát được khỏi hố (render/fx/post3d.js voidTint): cả ảnh ngả dần sang vàng cam. Chỉ đổi màu, đổi từ từ
+    // (TINT_RATE), không làm méo, không nhoè màn hình
+    function light() {
+      const fx = G.post && G.post.fx,
+        cam = G.camera;
       if (!fx) return;
-      const cam = G.camera;
-      v1.copy(hole.c).project(cam);
-      v2.copy(cam.up).applyQuaternion(cam.quaternion).multiplyScalar(hz * FX.LENS_R).add(hole.c).project(cam);
-      // (sau máy quay thì thôi; máy quay chưa có ma trận hợp lệ khung này thì thôi, đừng để số hỏng làm đen cả màn hình)
-      const bad = !Number.isFinite(v1.x + v1.y + v1.z + v2.x + v2.y);
-      fx.lens = bad || v1.z > 1 || v1.z < -1 ? 0 : fade;
-      if (bad) return void Object.assign(fx, { pull: 0, pullTint: 0 });
-      fx.lensC = [v1.x * 0.5 + 0.5, v1.y * 0.5 + 0.5];
-      fx.lensR = Math.min(0.9, Math.abs(v2.y - v1.y) * 0.5 + Math.abs(v2.x - v1.x) * 0.5 * (cam.aspect || 1));
-      // ánh sáng bị hút: điểm hút trên màn hình (hố trước mặt: chỗ hố; sau lưng, bên cạnh: mép màn hình phía hố)
+      const now = performance.now(),
+        sec = st.lt ? Math.min(0.1, (now - st.lt) / 1000) : 0;
+      st.lt = now;
       const dir = v2.copy(hole.c).sub(cam.position),
         dist = Math.hypot(dir.x, dir.z),
-        fwd = v3.set(0, 0, -1).applyQuaternion(cam.quaternion);
-      dir.normalize();
-      const facing = dir.dot(fwd);
-      if (facing > 0.2 && Math.abs(v1.x) < 1.2 && Math.abs(v1.y) < 1.2) fx.pullC = [v1.x * 0.5 + 0.5, v1.y * 0.5 + 0.5];
-      else {
-        const dx = dir.dot(v4.set(1, 0, 0).applyQuaternion(cam.quaternion)),
-          dy = dir.dot(v4.set(0, 1, 0).applyQuaternion(cam.quaternion)),
-          n = Math.hypot(dx, dy) || 1;
-        fx.pullC = n < 0.05 ? [0.5, -0.4] : [0.5 + (dx / n) * 0.9, 0.5 + (dy / n) * 0.9];
-      }
+        facing = dir.normalize().dot(v3.set(0, 0, -1).applyQuaternion(cam.quaternion));
       const reach = Plan.reach(hole.t, hole.R),
-        near = Math.max(0, Math.min(1, 1 - (dist - reach) / FX.PULL_EDGE)),
+        near = Math.max(0, Math.min(1, 1 - (dist - reach) / FX.TINT_EDGE)),
         grow = Math.min(1, hole.t / 6) * (0.4 + 0.6 * Math.min(1, Plan.outer(hole.t, hole.R) / (hole.R * 0.25)));
-      fx.pull = FX.PULL * fade * near * grow;
-      fx.pullTint = FX.TINT * fade * near * grow * (0.35 + 0.65 * (1 - facing) * 0.5);
+      let want = FX.TINT * st.fade * near * grow * (0.35 + 0.65 * (1 - facing) * 0.5);
+      if (!Number.isFinite(want)) want = 0;
+      st.tint += (want - st.tint) * Math.min(1, sec * FX.TINT_RATE);
+      fx.voidTint = st.tint;
     }
     // người nhập hồn ở đảo này: lơ lửng, bị hút, vào trong hố
     function player() {
@@ -155,10 +140,9 @@
         hz = Plan.horizon(t, hole.R);
       hole.c.set(hole.aim.x, kit.ground(hole.aim.x, hole.aim.z) + Plan.height(t, hole.R), hole.aim.z);
       G.hole3d.show(hole.c, outer, hz, t, fade);
-      // (bẻ cong, hút ánh sáng: tính ngay trước khi vẽ, lúc máy quay đã yên chỗ: render/fx/post3d.js hook)
-      st.hz = hz;
+      // (màu ánh sáng theo hướng nhìn: tính ngay trước khi vẽ, lúc máy quay đã yên chỗ: render/fx/post3d.js hook)
       st.fade = fade;
-      if (!st.unhook && G.post && G.post.hook) st.unhook = G.post.hook(() => hole.on && lens(st.hz, st.fade));
+      if (!st.unhook && G.post && G.post.hook) st.unhook = G.post.hook(() => hole.on && light());
       Warp.set({ center: hole.c, reach: Plan.reach(t, hole.R), band: P.BAND, outer, size: P.SIZE, time: t, isle: hole.isle, fade });
       if (fade < 1) pull.releaseAll(); // (hố đang tan: trả người lại)
       else {

@@ -16,7 +16,7 @@
  *   - THREE.ShaderChunk.project_vertex: chiếu đỉnh đã dời (khi bkHoleB.x > 0)
  *   - onBeforeCompile của mọi vật liệu (cả vật liệu tự gắn onBeforeCompile riêng): gắn uniform dùng chung; khoá bộ nhớ đệm chương
  *     trình vẫn theo hàm riêng của từng vật liệu. Vật liệu có userData.noVoid (lõi đen của hố) gắn uniform riêng bằng 0.
- * Ánh sáng bị bẻ cong quanh hố (thấu kính hấp dẫn) là việc của lượt hậu kỳ (render/fx/post3d.js lens), không ở đây.
+ * Màu ánh sáng quanh hố là việc của lượt hậu kỳ (render/fx/post3d.js voidTint), không ở đây.
  * BK.VoidWarp.set({ center, reach, band, outer, size, time, isle: {x, z, r}, fade }), off(). Cần: three.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
