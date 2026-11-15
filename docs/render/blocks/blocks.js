@@ -6,7 +6,8 @@
  *   SKINS   lớp vỏ của từng đảo: mỗi bậc một bảng màu (tường, mái, viền, đá, màu cờ, màu sáng); thêm đảo thì thêm một mục ở đây,
  *           hình dáng không đổi
  *   shape(id, fn)   mỗi loại một tệp hình dáng render/blocks/shapes/<id>.js đăng ký fn(k, P, t, H): vẽ các mảnh vào bộ gom k
- *                   (render/build/kit3d.js Kit) theo bảng màu P, bậc t (0..3); H: mảnh dùng chung (bệ, cờ, cửa, răng tường)
+ *                   (render/build/kit3d.js Kit) theo bảng màu P, bậc t (0..3); H: mảnh dùng chung (render/blocks/parts.js)
+ *   bậc neon (TIERS[i].neon): sau khi gộp, mọi cạnh gãy của khối có viền neon (màu glow ở chân chuyển dần sang accent ở đỉnh)
  *   build(loại, bậc, đảo)   trả một THREE.Group đã gộp (một khối); group.userData.block = { kind, tier, skin, hp, hpMax }
  *   next(khối)      khối cùng loại ở bậc kế (nâng cấp), hay null nếu đã bậc cuối
  * Gốc toạ độ của khối: giữa chân đế, sát đất; mặt trước quay về +z. Cần: three.js, render/build/kit3d.js. */
@@ -15,7 +16,7 @@
   const KINDS = [
     { id: 'hall', name: 'Nhà chính', hp: 10, size: [8, 8], use: 'Mất là thua. Cấp nhà chính mở khoá cấp của các công trình khác.' },
     { id: 'house', name: 'Nhà dân', hp: 5, size: [4, 4], use: 'Dân ở. Mất nhà thì mất số dân đang sống trong đó.' },
-    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [6, 6], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
+    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [8, 7], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
     { id: 'workshop', name: 'Xưởng xe', hp: 7, size: [6, 6], use: 'Sinh xe tấn công: xe phá cổng, máy bắn đá, về sau là xe tăng.' },
     { id: 'gate', name: 'Cổng thành', hp: 8, size: [10, 4], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
     { id: 'wall', name: 'Tường bao', hp: 10, size: [4, 1.4], use: 'Bao kín thành. Mỗi đoạn là một khối cùng mẫu, nối khít nhau.' },
@@ -25,7 +26,7 @@
     { name: 'Gỗ tre', eras: 'thời 1–3' },
     { name: 'Đá', eras: 'thời 4–6' },
     { name: 'Gạch thép', eras: 'thời 7–9' },
-    { name: 'Tương lai', eras: 'thời 10–12' },
+    { name: 'Tương lai', eras: 'thời 10–12', neon: true },
   ];
   // bảng màu một bậc: wall tường, wall2 tường phụ, roof mái, trim viền gỗ/sắt, stone bệ đá, dark cửa và bóng, accent cờ,
   // glow phần phát sáng (bậc tương lai), metal sắt thép
@@ -36,7 +37,7 @@
         { wall: '#c39a62', wall2: '#a57c48', roof: '#d2ae52', trim: '#6e4b2b', stone: '#a39a86', dark: '#3b2a1c', accent: '#c8402f', glow: '#ffd27a', metal: '#7d6a50' },
         { wall: '#c2bcab', wall2: '#9d9684', roof: '#a9573c', trim: '#6b5645', stone: '#8f8878', dark: '#3a2f27', accent: '#c8402f', glow: '#ffd27a', metal: '#6f6a62' },
         { wall: '#b9684c', wall2: '#93503b', roof: '#4d5a66', trim: '#39424b', stone: '#8b8a86', dark: '#262b30', accent: '#c8402f', glow: '#ffe2a0', metal: '#8a96a2' },
-        { wall: '#e9eff3', wall2: '#bccad4', roof: '#3b4c5f', trim: '#2a3644', stone: '#9fb0bd', dark: '#1d2733', accent: '#ff5a48', glow: '#5fdcff', metal: '#8fa4b5' },
+        { wall: '#323b4c', wall2: '#262d3b', roof: '#1b212c', trim: '#3d475c', stone: '#4c5668', dark: '#0e1219', accent: '#ff3fa4', glow: '#3ff0ff', metal: '#7a879c' },
       ],
     },
   };
@@ -50,38 +51,6 @@
     SHAPES[id] = fn;
   }
   const kind = (id) => KINDS.find((k) => k.id === id);
-  /* ---------- Mảnh dùng chung cho mọi loại (H) ---------- */
-  const PLINTH = 0.22; // (đơn vị) bệ cao chừng này; mọi khối dựng từ mặt bệ
-  const H = {
-    PLINTH,
-    // bệ chuẩn: mọi khối đứng trên một bệ đá cùng kiểu (nhìn là biết công trình quan trọng, bấm được)
-    plinth(k, P, w, d) {
-      const K = BK.BuildKit;
-      k.add(K.box(w, PLINTH, d, 0.07, true), P.stone, 0, 0, 0);
-    },
-    // cờ: cột và lá cờ (size: bề ngang lá cờ)
-    flag(k, P, x, y, z, h, size) {
-      const K = BK.BuildKit;
-      k.add(K.post(0.05, h, 5), P.dark, x, y, z);
-      k.add(K.box(size, size * 0.62, 0.05, 0.01), P.accent, x + size / 2 + 0.04, y + h - size * 0.36, z);
-    },
-    // cửa: tấm sẫm áp mặt trước (z: mặt tường trước)
-    door(k, P, x, y, z, w, h) {
-      const K = BK.BuildKit;
-      k.add(K.box(w + 0.16, h + 0.08, 0.1, 0.02, true), P.trim, x, y, z + 0.02);
-      k.add(K.box(w, h, 0.1, 0.02, true), P.dark, x, y, z + 0.06);
-    },
-    // răng tường (lỗ châu mai) dọc trục x: n răng từ x0 tới x1 ở độ cao y
-    crenels(k, color, x0, x1, y, z, n, w, h, d) {
-      const K = BK.BuildKit;
-      for (let i = 0; i < n; i++) k.add(K.box(w, h, d, 0.03, true), color, x0 + ((x1 - x0) * i) / Math.max(1, n - 1), y, z);
-    },
-    // ô sáng (cửa sổ, dải đèn): màu sáng, bậc tương lai thì phát sáng thật
-    lightBox(k, P, t, w, h, d, x, y, z) {
-      const K = BK.BuildKit;
-      k.add(K.box(w, h, d, 0.01), t === 3 ? P.glow : '#ffe9a8', x, y, z, t === 3 ? { glow: true } : null);
-    },
-  };
   // dựng một khối: loại, bậc 0..3, đảo
   function build(id, tier, skin) {
     const K = BK.BuildKit,
@@ -91,11 +60,36 @@
     const t = Math.max(0, Math.min(TIERS.length - 1, tier | 0)),
       k = new K.Kit();
     k.noBalcony = true; // (ban công tự thêm của nhà phố: khối quan trọng tự vẽ đủ chi tiết)
-    SHAPES[id](k, S.tiers[t], t, H);
+    SHAPES[id](k, S.tiers[t], t, BK.Blocks.H);
     const g = k.bake(4);
+    if (TIERS[t].neon) neonEdges(g, S.tiers[t]);
     g.name = def.name + ' · ' + TIERS[t].name;
     g.userData.block = { kind: id, tier: t, skin: skin || 'plains', hp: def.hp, hpMax: def.hp };
     return g;
+  }
+  // viền neon dọc các cạnh gãy của khối chính (như thành phố neon từ thời 10, render/build/neon.js): glow ở chân, accent ở đỉnh
+  function neonEdges(g, P) {
+    const T = root.THREE,
+      m = g.userData.main;
+    if (!m) return;
+    const e = new T.EdgesGeometry(m.geometry, 32),
+      pos = e.attributes.position;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    const y0 = m.geometry.boundingBox.min.y,
+      h = Math.max(1, m.geometry.boundingBox.max.y - y0),
+      A = new T.Color(P.glow),
+      B = new T.Color(P.accent),
+      c = new T.Color(),
+      col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      c.copy(A).lerp(B, Math.min(1, Math.max(0, (pos.getY(i) - y0) / h)));
+      col.set([c.r, c.g, c.b], i * 3);
+    }
+    e.setAttribute('color', new T.BufferAttribute(col, 3));
+    const line = new T.LineSegments(e, BK.BuildKit.neonMat());
+    line.renderOrder = 3;
+    g.add(line);
+    g.userData.neon = line;
   }
   // nâng cấp: khối cùng loại, cùng đảo ở bậc kế; đã bậc cuối thì null (bên gọi thay khối cũ bằng khối mới ở đúng chỗ)
   function next(g) {
@@ -107,5 +101,5 @@
     for (; o; o = o.parent) if (o.userData && o.userData.block) return o;
     return null;
   }
-  BK.Blocks = { KINDS, TIERS, SKINS, WALL_H, WALL_D, kind, shape, build, next, of, H };
+  BK.Blocks = { KINDS, TIERS, SKINS, WALL_H, WALL_D, kind, shape, build, next, of, H: null }; // (H: render/blocks/parts.js)
 })(typeof self !== 'undefined' ? self : globalThis);

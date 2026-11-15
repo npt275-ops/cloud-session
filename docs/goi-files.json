@@ -510,6 +510,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/blocks/parts.js",
+  "src": "render/blocks/parts.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/blocks/shapes/barracks.js",
   "src": "render/blocks/shapes/barracks.js",
   "mode": 420

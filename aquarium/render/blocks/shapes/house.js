@@ -1,36 +1,109 @@
 /* Bể Kính · render/blocks/shapes/house.js · Hình khối Nhà dân (render/blocks/blocks.js)
- * Dáng nhận diện: thấp, nhỏ, mái dốc hai phía, có ống khói, cửa nhỏ và một ô cửa sổ.
- *   bậc 0 gỗ tre   vách gỗ, mái rơm      bậc 1 đá       tường đá, mái ngói cong nhẹ, ống khói đá
- *   bậc 2 gạch thép hai tầng gạch, mái đá đen, mái hiên   bậc 3 tương lai nhà kén tròn trắng, dải cửa sáng */
+ * Người chơi chốt: nhà dân lớn dần theo thời: nhà nhỏ một tầng, rồi hai tầng, rồi ba tầng; bậc tương lai là nhà neon.
+ * Chung mọi bậc: bệ 3,6 × 3,6, cửa ở mặt trước (+z), có chỗ sinh hoạt bên ngoài (chum nước, ghế, ban công, vườn mái).
+ *   bậc 0 gỗ tre    nhà sàn một tầng vách tre, mái rơm, thang gỗ, rơm và chum nước, hàng rào tre
+ *   bậc 1 đá        hai tầng: tầng dưới đá, tầng trên khung gỗ chìa ra, mái ngói cong nhẹ, ống khói đá, hộp hoa, ghế
+ *   bậc 2 gạch thép ba tầng gạch: gờ tầng, ban công lan can sắt tầng 2 và 3, mái hiên cửa, mái bằng có tường chắn, bồn nước
+ *   bậc 3 tương lai ba tầng lệch nhau chìa ra (nhà neon), dải kính sáng, vườn trên mái, ăng-ten (viền neon: blocks.js) */
 (function (root) {
   const BK = root.BK;
+  const K = () => BK.BuildKit;
+  const TIER = [
+    // nhà sàn tre
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        fl = y0 + 0.45;
+      for (const x of [-1.0, 1.0]) for (const z of [-0.8, 0.8]) k.add(B.post(0.08, 0.45, 5), P.trim, x, y0, z);
+      k.add(B.box(2.5, 0.1, 2.1, 0.02, true), P.trim, 0, fl - 0.1, 0);
+      k.add(B.box(2.2, 1.3, 1.8, 0.05, true), P.wall, 0, fl, -0.1);
+      for (const x of [-1.05, -0.35, 0.35, 1.05]) k.add(B.box(0.06, 1.3, 0.06, 0.01), P.wall2, x, fl, 0.82); // nẹp tre
+      k.add(B.roof(3.0, 1.3, 2.6, 0.08, 2.4, 0.2, 0.35), P.roof, 0, fl + 1.3, -0.1);
+      H.door(k, P, -0.45, fl, 0.8, 0.55, 0.95);
+      H.win(k, P, 0, 0.5, fl + 0.7, 0.8, 0.45, 0.35);
+      for (let i = 0; i < 4; i++) k.add(B.box(0.5, 0.05, 0.08, 0.01), P.trim, -0.45, y0 + 0.08 + i * 0.12, 1.1 + i * 0.03); // thang
+      k.add(B.cone(0.45, 0.7, 7), '#d8bf78', 1.25, y0, 1.25); // đống rơm
+      k.add(B.lathe([[0.18, 0], [0.25, 0.18], [0.2, 0.38], [0.14, 0.42]], 8), '#9a5a36', -1.3, y0, 1.3); // chum nước
+      for (let i = 0; i < 9; i++) k.add(B.post(0.04, 0.45, 4), P.wall2, -1.7 + i * 0.425, y0, -1.7); // rào tre sau nhà
+    },
+    // nhà hai tầng đá và gỗ
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        f2 = y0 + 1.3;
+      k.add(B.box(2.6, 1.3, 2.2, 0.06, true), P.wall, 0, y0, -0.2);
+      k.add(B.box(2.9, 0.12, 2.5, 0.02, true), P.trim, 0, f2, -0.2); // dầm chìa
+      k.add(B.box(2.8, 1.15, 2.4, 0.05, true), '#e6d9bc', 0, f2 + 0.12, -0.2);
+      for (const x of [-1.35, -0.45, 0.45, 1.35]) k.add(B.box(0.08, 1.15, 0.06, 0.01), P.trim, x, f2 + 0.12, 1.02); // khung gỗ
+      k.add(B.roof(3.4, 1.0, 3.0, 0.08, 3.0, 0.25, 0.3), P.roof, 0, f2 + 1.27, -0.2);
+      k.add(B.box(0.45, 1.3, 0.45, 0.04, true), P.stone, 0.85, f2 + 1.0, -0.8); // ống khói
+      k.add(B.box(0.55, 0.1, 0.55, 0.02, true), P.dark, 0.85, f2 + 2.3, -0.8);
+      H.door(k, P, -0.55, y0, 0.9, 0.6, 1.0);
+      H.win(k, P, 1, 0.55, y0 + 0.75, 0.9, 0.5, 0.45);
+      for (const x of [-0.75, 0.75]) {
+        H.win(k, P, 1, x, f2 + 0.6, 1.0, 0.5, 0.45);
+        k.add(B.box(0.6, 0.14, 0.18, 0.02), '#7a4a2a', x, f2 + 0.42, 1.12); // hộp hoa
+        k.add(B.ball(0.08, 0), P.accent, x - 0.15, f2 + 0.6, 1.12);
+        k.add(B.ball(0.08, 0), '#e7c34a', x + 0.15, f2 + 0.6, 1.12);
+      }
+      k.add(B.box(0.9, 0.08, 0.3, 0.01, true), P.trim, 0.6, y0 + 0.35, 1.35); // ghế
+      for (const x of [0.25, 0.95]) k.add(B.box(0.06, 0.35, 0.25, 0.01, true), P.trim, x, y0, 1.35);
+    },
+    // nhà phố ba tầng gạch
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        hf = 1.15,
+        zf = 0.85;
+      k.add(B.box(2.6, hf * 3, 2.4, 0.06, true), P.wall, 0, y0, -0.35);
+      for (let f = 1; f <= 3; f++) k.add(B.box(2.7, 0.1, 2.5, 0.02, true), '#e8e0d0', 0, y0 + hf * f - 0.05, -0.35); // gờ tầng
+      k.add(B.box(2.7, 0.35, 2.5, 0.03, true), P.wall2, 0, y0 + hf * 3, -0.35); // tường chắn mái
+      // tầng trệt: cửa, mái hiên, cửa sổ
+      H.door(k, P, -0.6, y0, zf, 0.6, 0.95);
+      k.add(B.box(1.0, 0.06, 0.45, 0.01), P.roof, -0.6, y0 + 1.0, zf + 0.22, { rot: [0.2, 0, 0] });
+      H.win(k, P, 2, 0.6, y0 + 0.5, zf, 0.6, 0.5);
+      // tầng 2 và 3: hai cửa sổ, ban công lan can sắt
+      for (let f = 1; f <= 2; f++) {
+        const yf = y0 + hf * f;
+        for (const x of [-0.6, 0.6]) H.win(k, P, 2, x, yf + 0.35, zf, 0.5, 0.55);
+        k.add(B.box(2.2, 0.08, 0.45, 0.01, true), '#e8e0d0', 0, yf, zf + 0.22);
+        H.rail(k, P.metal, -1.08, 1.08, yf + 0.08, zf + 0.42, 0.38, 9);
+      }
+      // trên mái: chòi cầu thang, bồn nước, ống khói
+      k.add(B.box(0.9, 0.7, 0.8, 0.04, true), P.wall2, -0.6, y0 + hf * 3, -0.9);
+      k.add(B.post(0.32, 0.6, 10), P.metal, 0.7, y0 + hf * 3 + 0.35, -0.9, { rot: [0, 0, Math.PI / 2] });
+      for (const x of [0.45, 0.95]) k.add(B.box(0.08, 0.35, 0.08, 0.01, true), P.metal, x, y0 + hf * 3, -0.9);
+      k.add(B.box(0.3, 0.6, 0.3, 0.03, true), P.stone, 1.0, y0 + hf * 3, 0.3);
+    },
+    // nhà neon ba tầng lệch
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        hf = 1.2;
+      const floors = [
+        [0, -0.2, 2.6, 2.4],
+        [0.35, 0.1, 2.5, 2.3],
+        [-0.3, -0.25, 2.3, 2.1],
+      ]; // [lệch x, lệch z, rộng, sâu]: mỗi tầng chìa ra một phía
+      floors.forEach(([dx, dz, w, d], f) => {
+        const yf = y0 + hf * f;
+        k.add(B.box(w, hf - 0.08, d, 0.05, true), f === 1 ? P.wall2 : P.wall, dx, yf, dz);
+        k.add(B.box(w + 0.06, 0.08, d + 0.06, 0.01, true), P.roof, dx, yf + hf - 0.08, dz);
+        H.lightBox(k, P, 3, w - 0.5, 0.36, 0.06, dx, yf + 0.45, dz + d / 2 + 0.02); // dải kính sáng mặt trước
+        H.lightBox(k, P, 3, 0.06, 0.36, d - 0.6, dx + w / 2 + 0.02, yf + 0.45, dz);
+      });
+      H.door(k, P, -0.7, y0, 1.0, 0.55, 0.95, 3);
+      // vườn trên mái, ăng-ten, đèn tím ở góc
+      const yr = y0 + hf * 3;
+      k.add(B.box(1.6, 0.18, 1.4, 0.02, true), '#3c6a3a', -0.3, yr, -0.25);
+      for (const [x, z] of [[-0.8, -0.6], [0.1, 0.1], [-0.5, 0.2]]) k.add(B.ball(0.24, 0), '#5aa04a', x, yr + 0.35, z);
+      k.add(B.post(0.04, 1.2, 4), P.metal, 0.75, yr, -0.9);
+      k.add(B.ball(0.1, 0), P.accent, 0.75, yr + 1.25, -0.9, { glow: true });
+      k.add(B.box(0.08, hf * 3, 0.08, 0.01, true), P.accent, 1.3, y0, 0.98, { glow: true });
+    },
+  ];
   BK.Blocks.shape('house', (k, P, t, H) => {
-    const K = BK.BuildKit,
-      y0 = H.PLINTH;
     H.plinth(k, P, 3.6, 3.6);
-    if (t === 3) {
-      // nhà kén: thân tròn bo, vành sáng, cửa
-      k.add(K.lathe([[1.25, 0], [1.45, 0.5], [1.4, 1.3], [0.95, 1.9], [0.02, 2.1]], 10), P.wall, 0, y0, 0);
-      k.add(K.lathe([[1.47, 0.95], [1.46, 1.2]], 10), P.glow, 0, y0, 0, { glow: true });
-      H.door(k, P, 0, y0, 1.38, 0.6, 1.0);
-      k.add(K.post(0.05, 0.9, 5), P.metal, -0.6, y0 + 1.9, -0.4);
-      return;
-    }
-    const w = 2.6,
-      d = 2.2,
-      h = t === 2 ? 2.5 : 1.55 + 0.1 * t;
-    k.add(K.box(w, h, d, 0.07, true), P.wall, 0, y0, 0);
-    const yr = y0 + h;
-    k.add(K.roof(w + 0.6, t === 0 ? 1.3 : 1.05, d + 0.6, 0.08, w + 0.3, 0.3, t === 1 ? 0.25 : 0), P.roof, 0, yr, 0);
-    // ống khói
-    k.add(K.box(0.42, 1.2, 0.42, 0.04, true), t === 0 ? P.trim : P.stone, 0.75, yr + 0.1, -0.45);
-    k.add(K.box(0.5, 0.12, 0.5, 0.03, true), P.dark, 0.75, yr + 1.3, -0.45);
-    // cửa, cửa sổ
-    H.door(k, P, -0.5, y0, d / 2, 0.6, 1.1);
-    H.lightBox(k, P, t, 0.55, 0.5, 0.08, 0.6, y0 + 0.95, d / 2 + 0.03);
-    if (t === 2) {
-      for (const x of [-0.6, 0.6]) H.lightBox(k, P, t, 0.5, 0.5, 0.08, x, y0 + 1.95, d / 2 + 0.03);
-      k.add(K.box(1.0, 0.08, 0.5, 0.02), P.roof, -0.5, y0 + 1.3, d / 2 + 0.25, { rot: [0.25, 0, 0] }); // mái hiên
-    }
+    TIER[t](k, P, H);
   });
 })(typeof self !== 'undefined' ? self : globalThis);
