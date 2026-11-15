@@ -93,9 +93,12 @@
     tgt.hy = (tgt.hy || 0) + clamp(m.yawRate * 0.12, -0.5, 0.5);
     // phanh gấp, lao đi: ngực ngả theo gia tốc
     tgt.cx += clamp(m.acc * 0.03, -0.18, 0.2);
-    // nhảy (game/possess-jump.js: f.prep, f.flip, f.glide, f.landK). Lấy đà: khuỵu gối, ngả tới, vung tay ra sau. Bay: lên
-    // thì duỗi chân, tay vung lên; gần đỉnh co gối; rơi thì duỗi chân với xuống đất. Lộn: ôm gối tròn người. Lượn: dang tay,
-    // chân thả lỏng. Chạm đất: khuỵu gối sâu theo độ mạnh cú rơi, nén người, rồi nhún lên lại
+    // nhảy (game/possess-jump.js: f.prep, f.flip, f.glide, f.landK). Lấy đà: khuỵu gối, ngả tới, vung tay ra sau. Bay (người
+    // chơi chốt: đẹp mắt, có hồn): bật lên là dáng nhảy vọt (một gối co cao, chân kia duỗi ra sau, tay cầm gậy vươn lên trước,
+    // tay kia vung ra sau, ưỡn ngực ngẩng đầu); ở đỉnh dang tay giữ thăng bằng, lắc nhẹ; rơi thì chân đạp nhẹ như chạy trên
+    // không, tay giơ chao giữ thăng bằng, duỗi chân đón đất. Lộn: ôm gối tròn người, cúi đầu. Lượn: bay kiểu siêu nhân (người
+    // ngả tới, tay dang như cánh vẫy nhẹ, chân duỗi về sau khép lại, thân chao nghiêng theo nhịp). Chạm đất: khuỵu gối sâu theo
+    // độ mạnh cú rơi, nén người, rồi nhún lên lại
     const vyNow = (lift0 - m.ly) / dt;
     if (f.prep > 0 && !air) {
       const k = Math.sin((f.prep * Math.PI) / 2);
@@ -107,34 +110,51 @@
       tgt.exL = tgt.exR = 0.25;
     }
     if (air) {
+      const T = m.t;
       if (f.flip) {
-        tgt.kxL = tgt.kxR = 1.9;
-        tgt.hxL = tgt.hxR = 1.55;
-        tgt.sxL = tgt.sxR = 0.95;
-        tgt.szL = tgt.szR = 0.15;
-        tgt.exL = tgt.exR = 1.7;
-        tgt.cx = 0.5;
-        tgt.hx = -0.2;
+        tgt.kxL = tgt.kxR = 2.05;
+        tgt.hxL = tgt.hxR = 1.7;
+        tgt.sxL = tgt.sxR = 1.05;
+        tgt.szL = tgt.szR = 0.12;
+        tgt.exL = tgt.exR = 1.8;
+        tgt.cx = 0.65;
+        tgt.hx = 0.35;
       } else if (f.glide) {
-        tgt.kxL = 0.35;
-        tgt.kxR = 0.15;
-        tgt.hxL = 0.25;
-        tgt.hxR = -0.05;
-        tgt.sxL = tgt.sxR = 0.2;
-        tgt.szL = tgt.szR = 1.35;
-        tgt.exL = tgt.exR = 0.15;
-        tgt.cx = -0.06;
+        tgt.rx = 0.6; // (ngả tới như đang bay)
+        tgt.hx = -0.5;
+        tgt.cx = -0.12;
+        tgt.prz = Math.sin(T * 1.3) * 0.14; // (chao nghiêng)
+        tgt.sxL = tgt.sxR = 0.3 + Math.sin(T * 4) * 0.08;
+        tgt.szL = 1.35 + Math.sin(T * 4) * 0.14; // (tay như cánh, vẫy nhẹ)
+        tgt.szR = 1.35 + Math.sin(T * 4 + 0.3) * 0.14;
+        tgt.exL = tgt.exR = 0.18;
+        tgt.hxL = -0.25 + Math.sin(T * 2.2) * 0.08;
+        tgt.hxR = -0.25 - Math.sin(T * 2.2) * 0.08;
+        tgt.kxL = 0.3 + Math.max(0, Math.sin(T * 2.2)) * 0.15;
+        tgt.kxR = 0.3 + Math.max(0, -Math.sin(T * 2.2)) * 0.15;
       } else {
-        const up = clamp(vyNow / 5, -1, 1), // 1 đang lên nhanh, 0 ở đỉnh, -1 rơi nhanh
+        const up = clamp(vyNow / 6, -1, 1), // 1 đang lên nhanh, 0 ở đỉnh, -1 rơi nhanh
+          rise = Math.max(0, up),
+          fall = Math.max(0, -up),
           apex = 1 - Math.abs(up);
-        tgt.kxL = 0.25 + 0.75 * apex;
-        tgt.kxR = 0.45 + 0.55 * apex;
-        tgt.hxL = 0.25 + 0.4 * apex;
-        tgt.hxR = 0.05 + 0.3 * apex;
-        tgt.sxL = tgt.sxR = 0.4 + 0.6 * Math.max(0, up);
-        tgt.szL = tgt.szR = 0.3 + 0.35 * Math.max(0, -up);
-        tgt.exL = tgt.exR = 0.45;
-        tgt.cx = 0.08;
+        // chân: bật lên (gối trái co cao, chân phải duỗi sau) → đỉnh co nhẹ cả hai → rơi đạp như chạy trên không, duỗi đón đất
+        const run = Math.sin(T * 9) * fall;
+        tgt.hxL = 1.15 * rise + 0.55 * apex + (0.3 + 0.35 * run) * fall;
+        tgt.kxL = 1.55 * rise + 0.9 * apex + (0.35 + 0.3 * Math.max(0, run)) * fall;
+        tgt.hxR = -0.4 * rise + 0.3 * apex + (0.3 - 0.35 * run) * fall;
+        tgt.kxR = 0.35 * rise + 0.7 * apex + (0.35 + 0.3 * Math.max(0, -run)) * fall;
+        // tay: tay phải (cầm gậy) vươn lên trước, tay trái vung ra sau → dang tay giữ thăng bằng → giơ chao khi rơi
+        const flap = Math.sin(T * 12) * 0.14 * fall;
+        tgt.sxR = 1.9 * rise + 0.6 * apex + 1.0 * fall;
+        tgt.szR = 0.25 * rise + 1.0 * apex + (0.75 + flap) * fall;
+        tgt.sxL = -0.65 * rise + 0.6 * apex + 1.0 * fall;
+        tgt.szL = 0.55 * rise + 1.0 * apex + (0.75 - flap) * fall;
+        tgt.exL = 0.35 * rise + 0.3 * apex + 0.45 * fall;
+        tgt.exR = 0.2 * rise + 0.3 * apex + 0.45 * fall;
+        // thân: ưỡn ngực ngẩng đầu khi bật lên, lắc nhẹ ở đỉnh, hơi gập khi rơi
+        tgt.cx = -0.12 * rise + 0.05 * apex + 0.14 * fall;
+        tgt.hx = -0.28 * rise + 0.05 * fall;
+        tgt.prz = Math.sin(T * 3.2) * 0.08 * apex;
       }
     } else if (m.land > 0) {
       const LT = m.landT || LAND_T,

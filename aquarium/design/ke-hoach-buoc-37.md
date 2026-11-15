@@ -232,3 +232,10 @@ Người chơi đã chọn (sau ảnh tham khảo): sách chỉ hiện khi bấm
   vòng xoắn chạy lên, sáng theo nắng; chân tung bụi nước xoáy, giọt văng xoắn ra; đỉnh nối vào mây giông xoáy.
 - Chạy 5 → 7,5 đơn vị mỗi giây (game/possess.js RUN); nhảy lần 1 cao chừng 1 → 1,6 (game/possess-jump.js V1 7, V2 6,2).
   Dọn: vận tốc nhảy, trọng lực chỉ còn ghi ở game/possess-jump.js (bỏ JUMP_V, GRAV trùng ở game/possess.js).
+
+## Máy quay rộng hơn, dáng bay đẹp hơn (người chơi chốt)
+- Máy quay chính: lùi sau đầu 4,2 → 4,9, góc nhìn 52 → 58 (game/possess.js CAM).
+- Dáng bay (render/body/motion3d.js, chỉ phần trên không): bật lên là dáng nhảy vọt (gối trái co cao, chân phải duỗi sau, tay
+  cầm gậy vươn lên trước, tay kia vung sau, ưỡn ngực ngẩng đầu); ở đỉnh dang tay giữ thăng bằng, lắc nhẹ; rơi thì chân đạp
+  như chạy trên không, tay giơ chao, duỗi chân đón đất; lộn ôm gối gọn hơn, cúi đầu; lượn kiểu siêu nhân (ngả người tới, tay
+  dang như cánh vẫy nhẹ, chân duỗi sau, thân chao nghiêng theo nhịp). Ba pha trên chuyển mượt theo vận tốc đứng.

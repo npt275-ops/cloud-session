@@ -17,7 +17,7 @@
   // máy quay sau vai (game/possess-cam.js): lùi sau đầu BACK, cao hơn đầu UP, lệch phải SIDE (đơn vị đảo; người cao 1,4); tường
   // che thì trượt vào gần nhưng không gần hơn NEAR_MIN; góc nhìn khi ở trong thân; tốc độ đi, chạy (đơn vị mỗi giây thật)
   const CAM = {
-    BACK: 4.2,
+    BACK: 4.9, // (người chơi chốt: rộng hơn một chút; trước đây 4,2, góc nhìn 52)
     UP: 0.85,
     SIDE: 0.7,
     NEAR_MIN: 1.7,
@@ -25,7 +25,7 @@
     ACC: 6, // tăng tốc, hãm (hệ số mỗi giây): đi tới đủ tốc độ chừng 0,4 giây, dừng chừng 0,3 giây
     DEC: 9,
     RUN: 7.5, // (đơn vị mỗi giây) chạy (Shift); nhảy, trọng lực: game/possess-jump.js
-    FOV: 52,
+    FOV: 58,
     FOV_GOD: 34,
     PITCH_MIN: -0.55,
     PITCH_MAX: 0.75,
