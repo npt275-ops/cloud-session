@@ -84,5 +84,5 @@
     H.orbit(k, P, 'spin' + Math.round(x * 10), x, y + 1.3, z, 1.1, 3);
   };
   S.BY_TIER = [S.ram, S.catapult, S.tank, S.hoverTank, S.golem];
-  BK.Siege = S;
+  BK.Machines = S;
 })(typeof self !== 'undefined' ? self : globalThis);

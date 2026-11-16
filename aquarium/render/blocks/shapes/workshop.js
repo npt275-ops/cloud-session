@@ -71,13 +71,13 @@
       for (const dx of [-1.0, 1.0]) for (const dz of [-1.3, 1.3]) k.add(B.post(0.08, 2.0, 5), P.trim, ANNEX.x + dx, y0, ANNEX.z + dz);
       H.roof(k, P, 0, { w: ANNEX.w + 0.5, h: 0.9, d: ANNEX.d + 0.5, tw: ANNEX.w, td: 0.2, x: ANNEX.x, y: y0 + 2.0, z: ANNEX.z });
       bench(k, P, ANNEX.x, y0, ANNEX.z - 0.3);
-      BK.Siege.wheel(k, P, 0, ANNEX.x - 1.0, y0 + 0.75, ANNEX.z + 0.6, 0.7, [0, Math.PI / 2 - 0.15, 0]);
+      BK.Machines.wheel(k, P, 0, ANNEX.x - 1.0, y0 + 0.75, ANNEX.z + 0.6, 0.7, [0, Math.PI / 2 - 0.15, 0]);
       // cần trục chữ A có dây và móc
       for (const s of [-1, 1]) k.add(B.box(0.12, 3.4, 0.12, 0.01, true), '#7a5232', -1.4 + s * 0.6, y0, 1.6, { rot: [0, 0, -s * 0.18] });
       k.add(B.box(0.14, 0.14, 2.4, 0.01), '#7a5232', -1.4, y0 + 3.3, 2.3);
       k.add(B.box(0.02, 1.4, 0.02, 0.01, true), '#d8c8a0', -1.4, y0 + 1.9, 3.4);
       k.add(B.box(0.5, 0.4, 0.4, 0.02, true), '#a77b48', -1.4, y0 + 1.5, 3.4);
-      BK.Siege.ram(k, P, 2.4, y0, 2.4);
+      BK.Machines.ram(k, P, 2.4, y0, 2.4);
       lumber(k, -3.6, y0, 2.4);
       bench(k, P, -3.4, y0, 0.6);
       H.guard(k, P, 0, -2.6, y0, 0.9);
@@ -101,9 +101,9 @@
       k.add(B.box(0.7, 0.35, 0.06, 0.01), '#ff8a3a', ANNEX.x, y0 + 0.1, ANNEX.z + 1.54, { glow: true });
       k.add(B.box(0.5, 0.3, 0.25, 0.02, true), '#3a3a3a', ANNEX.x + 0.7, y0 + 0.35, ANNEX.z + 2.1); // đe
       k.add(B.box(0.25, 0.35, 0.2, 0.02, true), '#5a4a3a', ANNEX.x + 0.7, y0, ANNEX.z + 2.1);
-      BK.Siege.catapult(k, P, 2.4, y0, 2.3);
+      BK.Machines.catapult(k, P, 2.4, y0, 2.3);
       for (let i = 0; i < 6; i++) k.add(B.ball(0.22, 0), P.stone, -1.2 + (i % 3) * 0.42, y0 + 0.2 + Math.floor(i / 3) * 0.32, 3.3 - (i % 2) * 0.1);
-      for (const z of [1.0, 1.5]) BK.Siege.wheel(k, P, 1, -3.9, y0 + 0.6, z, 0.55, [0, Math.PI / 2 - 0.2, 0]);
+      for (const z of [1.0, 1.5]) BK.Machines.wheel(k, P, 1, -3.9, y0 + 0.6, z, 0.55, [0, Math.PI / 2 - 0.2, 0]);
       bench(k, P, -2.6, y0, 2.9);
       H.guard(k, P, 1, -1.6, y0, 1.6);
       H.banner(k, P, MAIN.x, y0 + h - 0.1, ZF, 0.7, 0.3);
@@ -136,7 +136,7 @@
       k.add(B.box(6.6, 0.22, 0.24, 0.02, true), '#d8a830', 1.0, y0 + 3.6, 3.6);
       k.add(B.box(0.4, 0.3, 0.4, 0.02, true), '#3a3a3a', 0.4, y0 + 3.3, 3.6);
       k.add(B.box(0.03, 1.4, 0.03, 0.01, true), '#2a2a2a', 0.4, y0 + 1.9, 3.6);
-      BK.Siege.tank(k, P, 2.6, y0, 2.0);
+      BK.Machines.tank(k, P, 2.6, y0, 2.0);
       for (let i = 0; i < 4; i++) H.barrel(k, P, 2, -3.9 + (i % 2) * 0.5, y0, 1.0 + Math.floor(i / 2) * 0.55);
       for (const [x, z, s] of [[-2.6, 3.4, 0.6], [-2.0, 3.5, 0.45]]) H.crate(k, P, 2, x, y0, z, s);
       H.guard(k, P, 2, -1.2, y0, 2.0);
@@ -164,7 +164,7 @@
       k.add(B.box(0.18, 1.5, 0.18, 0.02, true), P.wall, -1.6, y0 + 0.4, 2.0, { rot: [0, 0, 0.35] });
       k.add(B.box(0.16, 1.2, 0.16, 0.02, true), P.wall, -2.1, y0 + 1.7, 2.0, { rot: [0, 0, -0.9] });
       k.add(B.box(0.25, 0.1, 0.25, 0.01), P.glow, -1.2, y0 + 2.3, 2.0, { glow: true });
-      BK.Siege.hoverTank(k, P, 2.4, y0, 2.3);
+      BK.Machines.hoverTank(k, P, 2.4, y0, 2.3);
       for (const [x, y, z] of [[-3.2, 2.6, 2.6], [-0.4, 3.4, 3.4]]) {
         k.add(B.box(0.5, 0.1, 0.5, 0.02), P.wall2, x, y0 + y, z); // máy bay nhỏ
         for (const e of [-1, 1]) H.torus(k, P.glow, 0.15, 0.02, x + e * 0.3, y0 + y + 0.08, z, { glow: true });

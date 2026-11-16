@@ -43,7 +43,7 @@
     const r = id === 'siege' ? 1.7 : 0.45;
     k.add(Kit.post(r, 0.06, 18), P.stone, 0, 0, 0);
     B.H.torus(k, (I.flag && I.flag.color) || P.accent, r - 0.03, 0.035, 0, 0.07, 0);
-    if (id === 'siege') BK.Siege.BY_TIER[t](k, P, 0, 0.06, 0);
+    if (id === 'siege') BK.Machines.BY_TIER[t](k, P, 0, 0.06, 0);
     else BK.Body.person(k, P, 0, 0.06, 0, ((LOOKS[I.key] || LOOKS.plains)[id] || [])[t] || {});
     const g = k.bake(2);
     g.name = (def.names ? def.names[t] : def.name) + ' · ' + B.TIERS[t].name;
