@@ -46,6 +46,7 @@
     if (id === 'siege') BK.Machines.BY_TIER[t](k, P, 0, 0.06, 0);
     else BK.Body.person(k, P, 0, 0.06, 0, ((LOOKS[I.key] || LOOKS.plains)[id] || [])[t] || {});
     const g = k.bake(2);
+    if (id !== 'siege' && g.userData.main) g.userData.main.material = BK.Body.softMat(); // (người: nhựa mờ nhẵn như trong bể)
     g.name = (def.names ? def.names[t] : def.name) + ' · ' + B.TIERS[t].name;
     g.userData.block = { kind: id, tier: t, skin: I.key, hp: def.hp, hpMax: def.hp, unit: true };
     return g;

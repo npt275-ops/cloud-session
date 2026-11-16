@@ -105,7 +105,9 @@ công trình. Máu đề xuất (thang 10): dân nam 5, dân nữ 5, lính đán
 | Tương lai | áo liền vạch sáng, bảng sáng | tóc búi, bảng sáng | giáp sẫm, mũ kính sáng, kiếm sáng | súng sáng | xe tăng bay |
 | Huyền ảo | áo dài trắng, vầng sáng, đèn | áo dài trắng, vầng sáng | giáp vàng, đại kiếm sáng, cánh sáng | gậy phép cầu sáng | cỗ máy đá bay |
 
-Màu cờ đảo đi theo dải chéo, áo choàng, khiên (có ký hiệu đảo), tua giáo, cờ và nắp xe. Trang mẫu: nút "Nhân vật"
+Người dựng theo dáng đồ chơi mềm như người trong bể (người chơi chốt lần 7: mặt và người mịn, không lộ khối đa giác): đầu to
+tròn, thân tròn, tay chân viên nang, mắt có đốm sáng, má hồng, miệng cười, tóc ôm đầu; khối nhiều mặt và chất liệu nhựa mờ có
+viền sáng (render/units/body.js softMat). Màu cờ đảo đi theo dải chéo, áo choàng, khiên (có ký hiệu đảo), tua giáo, cờ và nắp xe. Trang mẫu: nút "Nhân vật"
 (`?xem=nhanvat`), tạm chỉ Lúa Vàng; duyệt rồi mới làm trang phục 5 đảo còn lại (render/units/isles/<đảo>.js).
 
 ## Cách thêm

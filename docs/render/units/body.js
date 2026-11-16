@@ -1,5 +1,7 @@
 /* Bể Kính · render/units/body.js · Thân người và đồ cầm tay cho nhân vật (dân, lính) của các khối nhân vật
- * Một người cao chừng 1,75 đứng ở (x, y, z), mặt quay về +z. Dựng từ mảnh của render/build/kit3d.js, gộp chung một khối.
+ * Một người cao chừng 1,7 đứng ở (x, y, z), mặt quay về +z, dáng đồ chơi mềm như người trong bể (render/body/softbody3d.js):
+ * đầu to tròn, thân tròn, tay chân viên nang, bàn tay tròn, giày bo; mặt có mắt đốm sáng, mày, mũi, má hồng, miệng cười,
+ * tai; tóc ôm đầu. Khối tròn nhiều mặt (nhẵn) và chất liệu nhựa mờ có viền sáng (softMat) nên không thấy cạnh đa giác.
  *   person(k, P, x, y, z, o)   vẽ một người theo dáng o (render/units/isles/<đảo>.js LOOK):
  *       skin, hair (màu), hairStyle (short | bun | long | none), hat (non | quaithao | khan | helm | cap | helmet | visor |
  *       halo | band | none), hatColor, top (màu áo), topStyle (tunic | dress | armor | suit | robe), legs, shoes, sash
@@ -16,8 +18,8 @@
   const K = () => BK.BuildKit;
   const H = () => BK.Blocks.H;
   const team = (P) => (P.flag && P.flag.color) || P.accent;
-  const R = [0.3, 0.95, 0.27], // bàn tay phải khi cầm đồ (so với gốc người)
-    L = [-0.3, 0.95, 0.22];
+  const R = [0.3, 0.84, 0.26], // bàn tay phải khi cầm đồ (so với gốc người)
+    L = [-0.3, 0.84, 0.22];
   /* ---------- đồ cầm tay, đeo lưng (gốc ở chân người: x, y, z) ---------- */
   const GEAR = {
     spear(k, P, x, y, z) {
@@ -53,9 +55,9 @@
       const B = K(),
         cx = x + L[0] - 0.05,
         cz = z + L[2] + 0.08;
-      k.add(B.box(0.5, 0.85, 0.04, 0.02, true), '#2e3640', cx, y + 0.5, cz);
-      k.add(B.box(0.4, 0.2, 0.045, 0.01, true), '#9fc4d8', cx, y + 1.05, cz);
-      k.add(B.box(0.5, 0.08, 0.05, 0.01, true), team(P), cx, y + 0.75, cz);
+      k.add(B.box(0.5, 0.85, 0.04, 0.02, true), '#2e3640', cx, y + 0.4, cz);
+      k.add(B.box(0.4, 0.2, 0.045, 0.01, true), '#9fc4d8', cx, y + 0.95, cz);
+      k.add(B.box(0.5, 0.08, 0.05, 0.01, true), team(P), cx, y + 0.65, cz);
     },
     baton(k, P, x, y, z) {
       k.add(K().post(0.025, 0.55, 6), '#1e1e1e', x + R[0], y + R[1] - 0.1, z + R[2], { rot: [0.5, 0, 0] });
@@ -63,7 +65,7 @@
     crossbow(k, P, x, y, z) {
       const B = K(),
         cx = x + 0.08,
-        cy = y + 1.0,
+        cy = y + 0.9,
         cz = z + 0.36;
       k.add(B.box(0.07, 0.07, 0.7, 0.01), '#7a5232', cx, cy, cz);
       k.add(B.box(0.7, 0.05, 0.05, 0.01), '#5a3c22', cx, cy + 0.02, cz + 0.3, { rot: [0, 0.12, 0] });
@@ -81,14 +83,14 @@
     quiver(k, P, x, y, z) {
       const B = K(),
         o = { rot: [-0.3, 0, -0.25] };
-      k.add(B.post(0.08, 0.55, 8), '#6a4228', x + 0.12, y + 0.95, z - 0.2, o);
-      for (const dx of [-0.03, 0.02, 0.06]) k.add(B.post(0.012, 0.75, 4), '#d8c8a0', x + 0.12 + dx, y + 0.98, z - 0.2, o);
-      for (const dx of [-0.03, 0.02, 0.06]) k.add(B.box(0.04, 0.08, 0.01, 0.005), team(P), x + 0.12 + dx + 0.2, y + 1.68, z - 0.42, o);
+      k.add(B.post(0.08, 0.55, 8), '#6a4228', x + 0.12, y + 0.8, z - 0.22, o);
+      for (const dx of [-0.03, 0.02, 0.06]) k.add(B.post(0.012, 0.75, 4), '#d8c8a0', x + 0.12 + dx, y + 0.83, z - 0.22, o);
+      for (const dx of [-0.03, 0.02, 0.06]) k.add(B.box(0.04, 0.08, 0.01, 0.005), team(P), x + 0.12 + dx + 0.2, y + 1.53, z - 0.44, o);
     },
     rifle(k, P, x, y, z, glow) {
       const B = K(),
         cx = x + 0.16,
-        cy = y + 1.12,
+        cy = y + 1.0,
         cz = z + 0.32;
       k.add(B.box(0.07, 0.12, 0.85, 0.01), glow ? P.wall : '#3a3226', cx, cy, cz);
       k.add(B.post(0.022, 0.4, 6), glow ? P.metal : '#2a2a2a', cx, cy + 0.03, cz + 0.42, { rot: [Math.PI / 2, 0, 0] });
@@ -109,20 +111,20 @@
       const B = K();
       for (const e of [-1, 1]) {
         const o = { rot: [0.2, e * 0.5, e * 0.5] };
-        k.add(B.box(0.9, 0.5, 0.03, 0.01, true), P.wall, x + e * 0.5, y + 1.05, z - 0.25, o);
-        k.add(B.box(0.9, 0.05, 0.035, 0.005), P.glow, x + e * 0.5, y + 1.55, z - 0.25, Object.assign({ glow: true }, o));
+        k.add(B.box(0.9, 0.5, 0.03, 0.01, true), P.wall, x + e * 0.5, y + 0.9, z - 0.25, o);
+        k.add(B.box(0.9, 0.05, 0.035, 0.005), P.glow, x + e * 0.5, y + 1.4, z - 0.25, Object.assign({ glow: true }, o));
       }
     },
     hoe(k, P, x, y, z) {
       const B = K();
-      k.add(B.post(0.022, 1.4, 5), '#8a6038', x + 0.24, y + 0.85, z - 0.15, { rot: [0.9, 0, 0] });
-      k.add(B.box(0.18, 0.2, 0.03, 0.01), P.metal, x + 0.24, y + 1.75, z + 0.3, { rot: [0.9, 0, 0] });
+      k.add(B.post(0.022, 1.4, 5), '#8a6038', x + 0.24, y + 0.7, z - 0.2, { rot: [0.9, 0, 0] });
+      k.add(B.box(0.18, 0.2, 0.03, 0.01), P.metal, x + 0.24, y + 1.6, z + 0.25, { rot: [0.9, 0, 0] });
     },
     pole(k, P, x, y, z) {
       const B = K();
-      k.add(B.box(1.6, 0.04, 0.05, 0.01), '#a07a4e', x, y + 1.36, z - 0.02);
+      k.add(B.box(1.6, 0.04, 0.05, 0.01), '#a07a4e', x, y + 1.16, z - 0.02);
       for (const e of [-1, 1]) {
-        k.add(B.box(0.01, 0.6, 0.01, 0.005), '#5a3c22', x + e * 0.72, y + 0.76, z - 0.02, { rot: [0, 0, 0] });
+        k.add(B.box(0.01, 0.5, 0.01, 0.005), '#5a3c22', x + e * 0.72, y + 0.91, z - 0.02);
         k.add(B.lathe([[0.12, 0], [0.22, 0.15], [0.24, 0.3]], 10), '#b8925a', x + e * 0.72, y + 0.45, z - 0.02);
         k.add(B.ball(0.18, 1), '#e8c234', x + e * 0.72, y + 0.72, z - 0.02, { sc: [1, 0.4, 1] }); // thóc trong thúng
       }
@@ -151,105 +153,158 @@
   // đồ ở tay phải / tay trái: cầm ra trước hay vác (đòn gánh, cuốc, đồ xách, cánh, ống tên không cần gập tay)
   const HOLD_R = ['spear', 'sword', 'energySword', 'greatsword', 'baton', 'crossbow', 'rifle', 'laserRifle', 'staff', 'lantern'],
     HOLD_L = ['shieldRound', 'riotShield', 'bow', 'crossbow', 'rifle', 'laserRifle', 'basket', 'tablet'];
-  /* ---------- mũ ---------- */
+  /* ---------- khối tròn nhẵn (như thân mềm trong bể: render/body/softbody3d.js) ---------- */
+  const CACHE = new Map();
+  const cached = (key, fn) => CACHE.get(key) || (CACHE.set(key, fn()), CACHE.get(key));
+  const sph = (r, cap) => cached('s' + r + ',' + (cap || 0), () => new root.THREE.SphereGeometry(r, 22, 16, 0, Math.PI * 2, 0, cap || Math.PI));
+  // viên nang bán kính r, từ y0 tới y1 (dọc trục y)
+  function capsule(r, y0, y1) {
+    return cached('c' + r + ',' + y0 + ',' + y1, () => {
+      const V = root.THREE.Vector2,
+        pts = [],
+        n = 8;
+      for (let i = 0; i <= n; i++) {
+        const a = -Math.PI / 2 + (i / n) * (Math.PI / 2);
+        pts.push(new V(Math.max(1e-4, Math.cos(a) * r), y0 + Math.sin(a) * r));
+      }
+      for (let i = 0; i <= n; i++) {
+        const a = (i / n) * (Math.PI / 2);
+        pts.push(new V(Math.max(1e-4, Math.cos(a) * r), y1 + Math.sin(a) * r));
+      }
+      return new root.THREE.LatheGeometry(pts, 16);
+    });
+  }
+  const lathe = (prof) => new root.THREE.LatheGeometry(prof.map(([r, y]) => new root.THREE.Vector2(Math.max(1e-4, r), y)), 22);
+  // chi (tay, chân) từ điểm a tới điểm b, bán kính r: viên nang xoay theo hướng a→b
+  function limb(k, color, r, a, b) {
+    const T = root.THREE,
+      d = new T.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]),
+      L = d.length(),
+      q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize()),
+      e = new T.Euler().setFromQuaternion(q);
+    k.add(capsule(r, 0, L), color, a[0], a[1], a[2], { rot: [e.x, e.y, e.z] });
+  }
+  /* ---------- mũ (đỉnh đầu ở HT) ---------- */
+  const HY = 1.43, // tâm đầu
+    HR = 0.24, // bán kính đầu (đầu to như đồ chơi)
+    HT = HY + HR; // đỉnh đầu
   function hat(k, o, x, y, z, P) {
-    const B = K(),
+    const T = root.THREE,
       c = o.hatColor || '#d8bf78',
-      hy = y + 1.68;
+      hy = y + HT;
     switch (o.hat) {
       case 'non': // nón lá
-        k.add(B.cone(0.36, 0.22, 12), c, x, hy - 0.04, z);
+        k.add(new T.ConeGeometry(0.42, 0.26, 24).translate(0, 0.13, 0), c, x, hy - 0.1, z);
         break;
       case 'quaithao': // nón quai thao: vành phẳng rộng, chóp thấp
-        k.add(B.post(0.4, 0.04, 16), c, x, hy - 0.02, z);
-        k.add(B.post(0.17, 0.1, 12), c, x, hy, z);
+        k.add(new T.CylinderGeometry(0.46, 0.46, 0.04, 28), c, x, hy - 0.06, z);
+        k.add(new T.CylinderGeometry(0.2, 0.22, 0.12, 22).translate(0, 0.06, 0), c, x, hy - 0.06, z);
         break;
       case 'khan': // khăn đóng
-        k.add(B.lathe([[0.18, 0], [0.19, 0.08], [0.17, 0.13], [0.01, 0.14]], 12), c, x, hy - 0.08, z);
+        k.add(lathe([[0.25, 0], [0.26, 0.07], [0.235, 0.14], [0.01, 0.15]]), c, x, hy - 0.13, z);
         break;
       case 'helm': // mũ sắt có chỏm, tua màu cờ
-        k.add(B.lathe([[0.2, 0], [0.2, 0.1], [0.14, 0.2], [0.01, 0.24]], 10), c, x, hy - 0.1, z);
-        k.add(B.cone(0.05, 0.16, 5), team(P), x, hy + 0.14, z);
+        k.add(sph(HR + 0.025, Math.PI * 0.55), c, x, y + HY + 0.05, z);
+        k.add(new T.ConeGeometry(0.05, 0.18, 12).translate(0, 0.09, 0), team(P), x, hy, z);
         break;
       case 'cap':
-        k.add(B.post(0.18, 0.12, 10), c, x, hy - 0.06, z);
-        k.add(B.box(0.26, 0.025, 0.14, 0.01), c, x, hy - 0.05, z + 0.17);
+        k.add(sph(HR + 0.015, Math.PI * 0.5), c, x, y + HY + 0.08, z);
+        k.add(new T.CylinderGeometry(0.14, 0.14, 0.025, 18), c, x, y + HY + 0.1, z + 0.2, { sc: [1.2, 1, 1] });
         break;
       case 'helmet': // mũ lính tròn có vành
-        k.add(B.ball(0.21, 1), c, x, hy - 0.06, z, { sc: [1, 0.7, 1.05] });
-        k.add(B.post(0.23, 0.03, 12), c, x, hy - 0.1, z);
+        k.add(sph(HR + 0.03, Math.PI * 0.52), c, x, y + HY + 0.06, z);
+        k.add(new T.CylinderGeometry(HR + 0.06, HR + 0.06, 0.025, 24), c, x, y + HY + 0.07, z);
         break;
       case 'visor':
-        k.add(B.ball(0.21, 1), c, x, hy - 0.08, z, { sc: [1, 0.85, 1.05] });
-        k.add(B.box(0.3, 0.07, 0.05, 0.01), P.glow, x, hy - 0.11, z + 0.17, { glow: true });
+        k.add(sph(HR + 0.03, Math.PI * 0.62), c, x, y + HY, z);
+        k.add(new T.CylinderGeometry(HR + 0.035, HR + 0.035, 0.07, 24, 1, true, -0.9, 1.8), P.glow, x, y + HY + 0.02, z, { glow: true });
         break;
       case 'halo':
-        H().torus(k, P.glow, 0.17, 0.025, x, hy + 0.2, z, { glow: true });
+        H().torus(k, P.glow, 0.2, 0.025, x, hy + 0.14, z, { glow: true });
         break;
       case 'band':
-        k.add(B.post(0.185, 0.05, 12), team(P), x, hy - 0.1, z);
-        k.add(B.box(0.04, 0.16, 0.02, 0.01), team(P), x - 0.05, hy - 0.2, z - 0.18, { rot: [0.3, 0, 0.3] });
+        k.add(new T.CylinderGeometry(HR + 0.012, HR + 0.012, 0.06, 24), team(P), x, y + HY + 0.07, z);
         break;
     }
   }
-  /* ---------- một người ---------- */
+  /* ---------- một người (dáng đồ chơi mềm: đầu to, thân tròn, tay chân viên nang) ---------- */
   function person(k, P, x, y, z, o) {
-    const B = K(),
-      T = root.THREE,
-      skin = o.skin || '#e0b48a',
+    const skin = o.skin || '#eab890',
       top = o.top || '#8a6a3a',
       legs = o.legs || '#3a3026',
-      slim = o.female ? 0.88 : 1;
-    // chân, giày
+      hair = o.hair || '#2a1e16',
+      slim = o.female ? 0.9 : 1,
+      Y = (v) => y + v;
+    // giày bo tròn, chân
     for (const e of [-1, 1]) {
-      k.add(B.box(0.13, 0.08, 0.24, 0.02, true), o.shoes || '#2a2018', x + e * 0.1, y, z + 0.03);
-      k.add(B.post(0.068, 0.7, 6, 0.06), legs, x + e * 0.1, y + 0.06, z);
+      k.add(sph(0.1), o.shoes || '#3a2a1e', x + e * 0.1, Y(0.06), z + 0.04, { sc: [1, 0.7, 1.45] });
+      limb(k, legs, 0.075, [x + e * 0.1, Y(0.1), z], [x + e * 0.1, Y(0.6), z]);
     }
     // váy, áo dài, áo choàng phủ chân
     if (o.topStyle === 'dress' || o.topStyle === 'robe')
-      k.add(B.lathe([[0.3, 0], [0.27, 0.35], [0.2 * slim, 0.75], [0.01, 0.76]], 10), o.skirt || top, x, y + 0.08, z);
-    k.add(B.box(0.34 * slim, 0.16, 0.22, 0.03, true), o.topStyle === 'dress' ? o.skirt || top : legs, x, y + 0.7, z);
-    // thân áo
-    k.add(B.lathe([[0.17 * slim, 0], [0.2 * slim, 0.22], [0.22 * slim, 0.44], [0.17 * slim, 0.56], [0.01, 0.57]], 10), top, x, y + 0.78, z, { sc: [1, 1, 0.8] });
-    k.add(B.post(0.19 * slim, 0.05, 10), o.belt || '#3a2a1a', x, y + 0.8, z, { sc: [1, 1, 0.82] });
+      k.add(lathe([[0.31, 0], [0.29, 0.25], [0.24, 0.5], [0.19 * slim, 0.66], [0.01, 0.67]]), o.skirt || top, x, Y(0.05), z);
+    k.add(sph(0.2), o.topStyle === 'dress' ? o.skirt || top : legs, x, Y(0.66), z, { sc: [slim, 0.55, 0.8] }); // hông
+    // thân áo tròn, đai
+    k.add(lathe([[0.01, 0], [0.18 * slim, 0.03], [0.21 * slim, 0.2], [0.21 * slim, 0.36], [0.16 * slim, 0.5], [0.01, 0.55]]), top, x, Y(0.64), z, { sc: [1, 1, 0.82] });
+    k.add(new root.THREE.TorusGeometry(0.2 * slim, 0.025, 8, 24), o.belt || '#3a2a1a', x, Y(0.7), z, { rot: [Math.PI / 2, 0, 0], sc: [1, 0.82, 1] });
     if (o.topStyle === 'armor') {
-      k.add(B.box(0.36, 0.38, 0.06, 0.02, true), o.plate || P.metal, x, y + 0.86, z + 0.16); // giáp ngực
-      for (let i = 0; i < 3; i++) k.add(B.box(0.38, 0.02, 0.07, 0.005, true), '#2a2a2a', x, y + 0.92 + i * 0.1, z + 0.17);
-      for (const e of [-1, 1]) k.add(B.ball(0.11, 1), o.plate || P.metal, x + e * 0.24, y + 1.3, z, { sc: [1.1, 0.7, 1] }); // giáp vai
+      k.add(sph(0.2, Math.PI * 0.5), o.plate || P.metal, x, Y(0.86), z + 0.04, { rot: [Math.PI / 2, 0, 0], sc: [1, 0.55, 1.1] }); // giáp ngực
+      for (const e of [-1, 1]) k.add(sph(0.11), o.plate || P.metal, x + e * 0.22, Y(1.12), z, { sc: [1.1, 0.7, 1] }); // giáp vai
     }
-    if (o.glow) for (const e of [-1, 1]) k.add(B.box(0.025, 0.45, 0.02, 0.005), P.glow, x + e * 0.1, y + 0.85, z + 0.17, { glow: true });
-    if (o.sash) k.add(B.box(0.08, 0.7, 0.03, 0.01), o.sash, x, y + 1.05, z + 0.17, { rot: [0, 0, 0.6] });
-    if (o.cape) k.add(B.box(0.46, 0.95, 0.04, 0.02), o.cape, x, y + 0.85, z - 0.2, { rot: [0.12, 0, 0] });
+    if (o.glow) for (const e of [-1, 1]) k.add(capsule(0.012, 0, 0.42), P.glow, x + e * 0.1, Y(0.74), z + 0.17, { glow: true });
+    if (o.sash) k.add(capsule(0.035, -0.32, 0.32), o.sash, x, Y(0.94), z + 0.15, { rot: [0, 0, 0.65], sc: [1.4, 1, 0.45] });
+    if (o.cape) k.add(lathe([[0.3, 0], [0.26, 0.4], [0.18, 0.62], [0.01, 0.63]]), o.cape, x, Y(0.5), z - 0.06, { sc: [1, 1, 0.45] });
     // tay: có đồ thì gập ra trước, không thì buông
     for (const e of [-1, 1]) {
       const busy = (e > 0 ? HOLD_R : HOLD_L).includes(e > 0 ? o.right : o.left),
-        sx = x + e * 0.26 * slim,
-        hand = busy ? (e > 0 ? R : L) : [e * 0.3, 0.68, 0.04];
-      k.add(B.post(0.06, 0.33, 6, 0.05), top, sx, y + 0.98, z, { rot: [0, 0, e * 0.12] });
-      if (busy) k.add(B.post(0.05, 0.24, 6, 0.045), top, x + e * 0.29, y + 0.98, z + 0.02, { rot: [Math.PI / 2, 0, 0] });
-      else k.add(B.post(0.05, 0.28, 6, 0.045), top, x + e * 0.29, y + 0.7, z + 0.02);
-      k.add(B.ball(0.055, 1), skin, x + hand[0] * (busy ? 1 : slim), y + hand[1], z + hand[2]);
+        sh = [x + e * 0.22 * slim, Y(1.1), z],
+        el = [x + e * 0.27, Y(0.86), z + (busy ? 0.02 : 0)],
+        hand = busy ? [x + (e > 0 ? R : L)[0], Y((e > 0 ? R : L)[1]), z + (e > 0 ? R : L)[2]] : [x + e * 0.29 * slim, Y(0.62), z + 0.03];
+      limb(k, top, 0.062, sh, el);
+      limb(k, o.topStyle === 'armor' ? o.plate || P.metal : top, 0.055, el, hand);
+      k.add(sph(0.066), skin, ...hand);
     }
     // cổ, đầu, mặt
-    k.add(B.post(0.06, 0.1, 6), skin, x, y + 1.33, z);
-    k.add(B.ball(0.17, 1), skin, x, y + 1.56, z, { sc: [1, 1.08, 1] });
+    limb(k, skin, 0.07, [x, Y(1.12), z], [x, Y(1.24), z]);
+    k.add(sph(HR), skin, x, Y(HY), z, { sc: [1, 0.98, 0.96] });
+    const fz = z + HR * 0.9;
     for (const e of [-1, 1]) {
-      k.add(B.ball(0.024, 0), '#1e1a16', x + e * 0.062, y + 1.58, z + 0.155); // mắt
-      k.add(B.box(0.06, 0.012, 0.01, 0.003), o.hair || '#1e1a16', x + e * 0.062, y + 1.63, z + 0.158); // lông mày
-      k.add(B.ball(0.035, 0), skin, x + e * 0.17, y + 1.56, z); // tai
+      k.add(sph(0.038), '#1e1a16', x + e * 0.085, Y(HY + 0.02), fz, { sc: [1, 1.3, 0.6] }); // mắt
+      k.add(sph(0.012), '#ffffff', x + e * 0.075, Y(HY + 0.04), fz + 0.025); // đốm sáng trong mắt
+      limb(k, hair, 0.012, [x + e * 0.05, Y(HY + 0.095), fz + 0.01], [x + e * 0.12, Y(HY + 0.085 + (o.female ? 0.01 : 0)), fz - 0.01]); // mày
+      k.add(sph(0.046), '#f0a090', x + e * 0.135, Y(HY - 0.05), fz - 0.04, { sc: [1, 0.6, 0.4] }); // má hồng
+      k.add(sph(0.05), skin, x + e * HR, Y(HY), z, { sc: [0.6, 1, 0.8] }); // tai
     }
-    k.add(B.ball(0.026, 0), skin, x, y + 1.53, z + 0.17); // mũi
-    k.add(B.box(0.06, 0.012, 0.01, 0.003), '#a0544a', x, y + 1.47, z + 0.155); // miệng
-    // tóc
+    k.add(sph(0.03), skin, x, Y(HY - 0.03), fz + 0.03); // mũi
+    k.add(new root.THREE.TorusGeometry(0.04, 0.011, 6, 12, Math.PI), '#9a3a3a', x, Y(HY - 0.08), fz - 0.005, { rot: [0, 0, Math.PI] }); // miệng cười
+    // tóc ôm đỉnh và sau đầu (chừa trán), búi, tóc dài
     if (o.hairStyle !== 'none') {
-      k.add(B.ball(0.182, 1), o.hair || '#1e1a16', x, y + 1.64, z - 0.03, { sc: [1.04, 0.78, 1.04] }); // (phủ kín đỉnh đầu)
-      if (o.hairStyle === 'bun') k.add(B.ball(0.08, 1), o.hair || '#1e1a16', x, y + 1.7, z - 0.17);
-      if (o.hairStyle === 'long') k.add(B.box(0.3, 0.45, 0.07, 0.03, true), o.hair || '#1e1a16', x, y + 1.15, z - 0.14);
+      k.add(sph(HR + 0.018, Math.PI * 0.5), hair, x, Y(HY + 0.01), z - 0.02, { rot: [-0.45, 0, 0] });
+      if (o.hairStyle === 'bun') k.add(sph(0.09), hair, x, Y(HY + 0.16), z - 0.2);
+      if (o.hairStyle === 'long') limb(k, hair, 0.12, [x, Y(HY - 0.02), z - 0.13], [x, Y(1.0), z - 0.14]);
     }
     hat(k, o, x, y, z, P);
     // đồ cầm, đồ đeo
     for (const g of [o.right, o.left, o.back]) if (g && GEAR[g] && !(g === o.left && g === o.right)) GEAR[g](k, P, x, y, z);
     if (o.right && o.right === o.left) GEAR[o.right](k, P, x, y, z); // (đồ cầm hai tay: vẽ một lần)
   }
-  BK.Body = { person, GEAR };
+  // chất liệu nhựa mờ của nhân vật (như thân mềm trong bể): sáng tối chuyển mềm, viền sáng quanh người, ấm ở chỗ da
+  let SOFT = null;
+  function softMat() {
+    if (SOFT) return SOFT;
+    const T = root.THREE;
+    SOFT = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0 });
+    SOFT.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace(
+        '#include <emissivemap_fragment>',
+        '#include <emissivemap_fragment>\n' +
+          '{ float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.6);\n' +
+          '  float warm = clamp((diffuseColor.r - diffuseColor.b) * 2.0, 0.0, 1.0);\n' +
+          '  totalEmissiveRadiance += mix(vec3(0.55, 0.62, 0.72), vec3(0.95, 0.55, 0.42), warm) * fr * 0.28 * diffuseColor.rgb + vec3(0.03) * fr; }\n',
+      );
+    };
+    SOFT.customProgramCacheKey = () => 'unit-soft';
+    return SOFT;
+  }
+  BK.Body = { person, GEAR, softMat };
 })(typeof self !== 'undefined' ? self : globalThis);
