@@ -86,7 +86,8 @@
 
 <canvas id="scene"></canvas>
 <div class="bar">
-  <div class="name"><b>Khối công trình</b><span>Lúa Vàng · 7 loại × 4 bậc · bản dev</span></div>
+  <div class="name"><b>Khối công trình</b><span id="sub">Lúa Vàng · 7 loại × 4 bậc · bản dev</span></div>
+  <div class="seg" id="isles" aria-label="Chọn đảo"></div>
   <div class="seg" id="tiers" aria-label="Lọc theo bậc"></div>
   <div class="seg"><button type="button" id="home">Toàn cảnh</button></div>
 </div>
@@ -109,6 +110,15 @@
 <script src="render/build/kit3d.js"></script>
 <script src="render/blocks/blocks.js"></script>
 <script src="render/blocks/parts.js"></script>
+<script src="render/blocks/style.js"></script>
+<script src="render/blocks/spire.js"></script>
+<script src="render/blocks/isles/props.js"></script>
+<script src="render/blocks/isles/plains.js"></script>
+<script src="render/blocks/isles/forest.js"></script>
+<script src="render/blocks/isles/mountain.js"></script>
+<script src="render/blocks/isles/tundra.js"></script>
+<script src="render/blocks/isles/coast.js"></script>
+<script src="render/blocks/isles/desert.js"></script>
 <script src="render/blocks/shapes/hall.js"></script>
 <script src="render/blocks/shapes/house.js"></script>
 <script src="render/blocks/shapes/barracks.js"></script>
@@ -161,23 +171,33 @@
     function xOf(i) { return (i - (KN - 1) / 2) * SX; }
     function zOf(t) { return (t - (TN - 1) / 2) * SZ; }
     // dựng các khối: cột theo loại, hàng theo bậc
-    const slots = []; // { kind, x, z, g }
+    const slots = []; // { kind, x, z, tier, g }
+    // đảo đang xem: ?dao=forest chọn sẵn (mặc định Lúa Vàng)
+    let isle = B.ISLES[new URLSearchParams(location.search).get('dao')] ? new URLSearchParams(location.search).get('dao') : 'plains';
     function place(kind, tier, x, z) {
-      const g = B.build(kind, tier, 'plains');
+      const g = B.build(kind, tier, isle);
       g.position.set(x, 0, z);
       g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       scene.add(g);
       return g;
     }
-    B.KINDS.forEach((K, i) => {
-      for (let t = 0; t < TN; t++) {
-        const x = xOf(i), z = zOf(t);
-        if (K.id === 'wall') {
-          // ba đoạn tường nối khít nhau, tính là ba khối cùng mẫu
-          for (const dx of [-4, 0, 4]) slots.push({ kind: K.id, x: x + dx, z, tier: t, g: place(K.id, t, x + dx, z) });
-        } else slots.push({ kind: K.id, x, z, tier: t, g: place(K.id, t, x, z) });
-      }
-    });
+    // dựng lại cả bãi theo đảo: bỏ khối cũ, đổi trời và nền cỏ theo đảo
+    function buildAll() {
+      for (const s of slots.splice(0)) { scene.remove(s.g); BK.BuildKit.dispose(s.g); }
+      const I = B.ISLES[isle];
+      scene.background.set(I.sky); scene.fog.color.set(I.sky); ground.material.color.set(I.ground);
+      B.KINDS.forEach((K, i) => {
+        for (let t = 0; t < TN; t++) {
+          const x = xOf(i), z = zOf(t);
+          if (K.id === 'wall') {
+            // ba đoạn tường nối khít nhau, tính là ba khối cùng mẫu
+            for (const dx of [-4, 0, 4]) slots.push({ kind: K.id, x: x + dx, z, tier: t, g: place(K.id, t, x + dx, z) });
+          } else slots.push({ kind: K.id, x, z, tier: t, g: place(K.id, t, x, z) });
+        }
+      });
+      document.getElementById('sub').textContent = I.name + ' · 7 loại × 4 bậc · bản dev';
+      document.querySelectorAll('#isles button').forEach((b) => b.classList.toggle('on', b.dataset.k === isle));
+    }
     // nhãn bậc ở đầu mỗi hàng
     function label(text, x, z) {
       const c = document.createElement('canvas');
@@ -193,6 +213,15 @@
     }
     B.TIERS.forEach((tr, t) => label('Bậc ' + (t + 1) + ' · ' + tr.name + ' (' + tr.eras + ')', xOf(0) - 13.5, zOf(t)));
     B.KINDS.forEach((K, i) => label(K.name, xOf(i) + 2.5, zOf(TN - 1) + 8.5));
+    B.ISLE_KEYS.forEach((key) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.k = key;
+      b.textContent = B.ISLES[key].name;
+      b.addEventListener('click', () => { if (key !== isle) { isle = key; show(null); buildAll(); } });
+      document.getElementById('isles').appendChild(b);
+    });
+    buildAll();
 
     /* ---------- máy quay bay tới ---------- */
     const HOME = { pos: new T.Vector3(0, 98, 122), target: new T.Vector3(0, 0, 4) };

@@ -17,8 +17,11 @@
       if (t === 2) for (const y of [0.3, 0.6, 0.9]) k.add(K.lathe([[r + 0.05, h * y], [r + 0.05, h * y + 0.08]], 10), P.trim, x, yb, z);
       if (t === 3) k.add(K.lathe([[r + 0.04, h * 0.5], [r + 0.04, h * 0.58]], 10), P.glow, x, yb, z, { glow: true });
       const yr = yb + h;
-      if (t <= 1) k.add(K.cone(r + 0.3, 1.1, 10), P.roof, x, yr, z);
-      else k.add(K.lathe([[r + 0.05, 0], [r * 0.8, r * 0.45], [0.01, r * 0.62]], 10), t === 3 ? P.glow : P.roof, x, yr, z, t === 3 ? { glow: true } : null);
+      const cap = (kk) =>
+        t <= 1
+          ? kk.add(K.cone(r + 0.3, 1.1, 10), P.roof, x, yr, z)
+          : kk.add(K.lathe([[r + 0.05, 0], [r * 0.8, r * 0.45], [0.01, r * 0.62]], 10), t === 3 ? P.glow : P.roof, x, yr, z, t === 3 ? { glow: true } : null);
+      H.roofRound(k, P, t, { r: r + 0.05, h: 1.1, x, y: yr, z, native: cap });
       H.door(k, P, x, yb, z + r - 0.05, 0.5, 0.8);
       if (t === 2) for (let i = 0; i < 7; i++) k.add(K.box(0.36, 0.04, 0.04, 0.01), P.dark, x + r + 0.05, yb + 0.3 + i * 0.42, z, { rot: [0, Math.PI / 2, 0] });
     };

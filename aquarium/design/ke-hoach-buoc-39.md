@@ -37,10 +37,27 @@ lối đi trên tường có lính, lính gác đứng đất trước cổng.
 Bậc tương lai: bảng màu sẫm, mọi cạnh có viền neon (blocks.js `neonEdges`). Mảnh chung (lính gác, cửa sổ, lan can, vành tròn):
 `render/blocks/parts.js`.
 
+## Sáu đảo (người chơi chốt: 6 đảo × 4 bậc, không đảo nào giống đảo nào; chưa đưa vào bể kính)
+
+Cùng loại thì cùng máu, cùng công dụng, cùng bố cục; khác nhau ở kiểu mái, kiểu tường, bệ, màu, áo lính, đồ trang trí, công
+trình biểu tượng cạnh nhà chính và dáng tháp bậc 4. Mỗi đảo một tệp `render/blocks/isles/<đảo>.js`; kiểu dáng chung ở
+`render/blocks/style.js` (mái, tường, bệ), `render/blocks/spire.js` (tháp bậc 4), đồ trang trí `render/blocks/isles/props.js`.
+
+| Đảo | Mái (bậc 1→4) | Tường (bậc 1→3) | Bệ | Tháp bậc 4 | Biểu tượng | Lính |
+| --- | --- | --- | --- | --- | --- | --- |
+| Lúa Vàng | hình gốc | hình gốc | đá | thân thon ba đĩa | (không) | nón lá, mũ sắt |
+| Thông Xanh | lá dốc, hai dốc, nhọn, vòm lá | gỗ cây, ván dọc, khung gỗ | sàn gỗ viền rêu | cây ba tán | cây cổ thụ | mũ cắm lông |
+| Đá Mây | đá bằng, ngói cong, hai tầng cong, bậc thang | đá xếp lớp | đá tảng | khối đá chồng xoay | tháp đá | mũ lông, mũ sắt |
+| Tuyết Trắng | vòm băng, dốc đứng phủ tuyết ×2, vòm kính | khối tuyết, gỗ cây, ván sơn đỏ | tuyết | pha lê | cột tô-tem, cột cực quang | mũ lông trùm |
+| Cửa Sóng | lá dừa, ngói bốn dốc, bằng, buồm | ván, trát trắng viền xanh | cát, lối ván | cánh buồm | giàn lưới, hải đăng | khăn buộc trán |
+| Cát Hồng | lều vải, vòm đất, bằng, củ hành | đất bo tròn, đầu xà | gạch nung | kim tự tháp bậc | giếng, cột đá, tháp gọi, kim tự tháp sáng | khăn quấn |
+
+Trang mẫu: hàng nút chọn đảo (`?dao=forest` chọn sẵn).
+
 ## Cách thêm
 
 - Loại mới: một mục trong `KINDS` + một tệp `render/blocks/shapes/<id>.js` gọi `BK.Blocks.shape(id, (k, P, t, H) => …)`.
-- Đảo mới: một mục trong `SKINS` (bốn bảng màu), hình dáng không đổi.
+- Đảo mới: một tệp `render/blocks/isles/<đảo>.js` gọi `BK.Blocks.isle(key, { name, tiers, S, deco })`.
 
 ## Trang mẫu
 

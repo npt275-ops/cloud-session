@@ -1,12 +1,13 @@
 /* Bể Kính · render/blocks/parts.js · Mảnh dùng chung cho các khối công trình (H trong render/blocks/shapes/*.js)
  * Mảnh nào hai loại khối trở lên cùng dùng thì để ở đây, mảnh riêng của một loại thì để trong tệp hình dáng của loại đó.
- *   PLINTH, plinth      bệ đá chuẩn dưới mọi khối (nhìn là biết công trình quan trọng, bấm được)
+ *   PLINTH              độ cao bệ dưới mọi khối (hình bệ theo đảo: render/blocks/style.js plinth)
  *   flag                cột cờ và lá cờ
  *   door, win           cửa ra vào; ô cửa sổ có khung, bậu (bậc tương lai: ô kính phát sáng)
  *   crenels             hàng răng tường (lỗ châu mai)
  *   lightBox            ô sáng, dải đèn: bậc tương lai thì phát sáng thật
  *   rail                lan can: thanh trên và các song đứng dọc trục x
- *   guard               lính gác đứng (cao ~1,25, quay mặt về +z): quần áo, mũ, vũ khí theo bậc
+ *   guard               lính gác đứng (cao ~1,25, quay mặt về +z): quần áo, mũ, vũ khí theo bậc; đảo đổi áo và kiểu mũ qua
+ *                       P.S.guard[t] = { coat, legs, hat, form } (form: cone, helm, cap, visor, hood, turban, feather, band)
  *   torus               vòng tròn nằm ngang (vành sáng, bánh xe) dựng bằng three.js
  *   barrel, crate       thùng gỗ, hòm (đồ đạc sân lính, kho, cổng)
  *   banner, torch       cờ treo dọc áp tường, đuốc
@@ -22,11 +23,27 @@
     { coat: '#4a6040', legs: '#2f3a2c', hat: '#4a6040', skin: '#e0b48a' },
     { coat: '#232a36', legs: '#161b24', hat: '#2e3646', skin: '#d9b28c' },
   ];
+  // mũ lính theo kiểu: nón lá, mũ sắt, mũ lính, kính sáng, mũ lông, khăn quấn, mũ cắm lông, khăn buộc trán
+  function hat(k, B, P, c, form, x, y, z) {
+    if (form === 'cone') k.add(B.cone(0.3, 0.16, 8), c.hat, x, y + 1.2, z);
+    else if (form === 'helm') k.add(B.lathe([[0.18, 0], [0.19, 0.1], [0.12, 0.22], [0.01, 0.3]], 8), c.hat, x, y + 1.12, z);
+    else if (form === 'cap') {
+      k.add(B.post(0.17, 0.14, 8), c.hat, x, y + 1.18, z);
+      k.add(B.box(0.3, 0.03, 0.16, 0.01), c.hat, x, y + 1.18, z + 0.14);
+    } else if (form === 'visor') {
+      k.add(B.post(0.18, 0.2, 8), c.hat, x, y + 1.08, z);
+      k.add(B.box(0.3, 0.07, 0.04, 0.01), P.glow, x, y + 1.14, z + 0.16, { glow: true });
+    } else if (form === 'hood') k.add(B.ball(0.22, 1), c.hat, x, y + 1.16, z - 0.03, { sc: [1, 0.9, 1] });
+    else if (form === 'turban') {
+      k.add(B.lathe([[0.18, 0], [0.21, 0.08], [0.17, 0.2], [0.01, 0.24]], 8), c.hat, x, y + 1.14, z);
+      k.add(B.ball(0.04, 0), P.accent, x, y + 1.26, z + 0.17);
+    } else if (form === 'feather') {
+      k.add(B.post(0.17, 0.12, 8), c.hat, x, y + 1.18, z);
+      k.add(B.cone(0.04, 0.4, 4), P.accent, x + 0.12, y + 1.25, z - 0.05, { rot: [0, 0, -0.4] });
+    } else k.add(B.post(0.175, 0.07, 8), c.hat, x, y + 1.17, z); // band: khăn buộc trán
+  }
   const H = {
     PLINTH,
-    plinth(k, P, w, d) {
-      k.add(K().box(w, PLINTH, d, 0.07, true), P.stone, 0, 0, 0);
-    },
     // cờ: cột và lá cờ (size: bề ngang lá cờ)
     flag(k, P, x, y, z, h, size) {
       k.add(K().post(0.05, h, 5), P.dark, x, y, z);
@@ -88,21 +105,14 @@
     // lính gác đứng ở (x, y, z), mặt về +z. Vũ khí theo bậc: giáo tre, giáo sắt, súng trường, gậy sáng
     guard(k, P, t, x, y, z) {
       const B = K(),
-        c = GUARD[t];
+        c = Object.assign({}, GUARD[t], P.S && P.S.guard && P.S.guard[t]),
+        form = c.form || ['cone', 'helm', 'cap', 'visor'][t];
       for (const s of [-1, 1]) k.add(B.box(0.13, 0.5, 0.16, 0.01, true), c.legs, x + s * 0.09, y, z);
       k.add(B.box(0.42, 0.5, 0.26, 0.04, true), c.coat, x, y + 0.48, z);
       k.add(B.box(0.44, 0.07, 0.28, 0.01, true), t === 3 ? P.glow : P.dark, x, y + 0.5, z, t === 3 ? { glow: true } : null); // thắt lưng
       for (const s of [-1, 1]) k.add(B.box(0.1, 0.44, 0.12, 0.01, true), c.coat, x + s * 0.27, y + 0.53, z);
       k.add(B.ball(0.16, 1), c.skin, x, y + 1.12, z);
-      if (t === 0) k.add(B.cone(0.3, 0.16, 8), c.hat, x, y + 1.2, z); // nón lá
-      else if (t === 1) k.add(B.lathe([[0.18, 0], [0.19, 0.1], [0.12, 0.22], [0.01, 0.3]], 8), c.hat, x, y + 1.12, z); // mũ sắt
-      else if (t === 2) {
-        k.add(B.post(0.17, 0.14, 8), c.hat, x, y + 1.18, z); // mũ lính
-        k.add(B.box(0.3, 0.03, 0.16, 0.01), c.hat, x, y + 1.18, z + 0.14);
-      } else {
-        k.add(B.post(0.18, 0.2, 8), c.hat, x, y + 1.08, z);
-        k.add(B.box(0.3, 0.07, 0.04, 0.01), P.glow, x, y + 1.14, z + 0.16, { glow: true }); // kính che mắt sáng
-      }
+      hat(k, B, P, c, form, x, y, z);
       // vũ khí cầm tay phải
       const xr = x + 0.32;
       if (t <= 1) {

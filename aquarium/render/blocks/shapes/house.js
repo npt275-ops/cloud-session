@@ -16,9 +16,9 @@
         fl = y0 + 0.45;
       for (const x of [-1.0, 1.0]) for (const z of [-0.8, 0.8]) k.add(B.post(0.08, 0.45, 5), P.trim, x, y0, z);
       k.add(B.box(2.5, 0.1, 2.1, 0.02, true), P.trim, 0, fl - 0.1, 0);
-      k.add(B.box(2.2, 1.3, 1.8, 0.05, true), P.wall, 0, fl, -0.1);
-      for (const x of [-1.05, -0.35, 0.35, 1.05]) k.add(B.box(0.06, 1.3, 0.06, 0.01), P.wall2, x, fl, 0.82); // nẹp tre
-      k.add(B.roof(3.0, 1.3, 2.6, 0.08, 2.4, 0.2, 0.35), P.roof, 0, fl + 1.3, -0.1);
+      if (H.wall(k, P, 0, { w: 2.2, h: 1.3, d: 1.8, x: 0, y: fl, z: -0.1 }) === 'native')
+        for (const x of [-1.05, -0.35, 0.35, 1.05]) k.add(B.box(0.06, 1.3, 0.06, 0.01), P.wall2, x, fl, 0.82); // nẹp tre
+      H.roof(k, P, 0, { w: 3.0, h: 1.3, d: 2.6, tw: 2.4, td: 0.2, lift: 0.35, x: 0, y: fl + 1.3, z: -0.1 });
       H.door(k, P, -0.45, fl, 0.8, 0.55, 0.95);
       H.win(k, P, 0, 0.5, fl + 0.7, 0.8, 0.45, 0.35);
       for (let i = 0; i < 4; i++) k.add(B.box(0.5, 0.05, 0.08, 0.01), P.trim, -0.45, y0 + 0.08 + i * 0.12, 1.1 + i * 0.03); // thang
@@ -31,11 +31,11 @@
       const B = K(),
         y0 = H.PLINTH,
         f2 = y0 + 1.3;
-      k.add(B.box(2.6, 1.3, 2.2, 0.06, true), P.wall, 0, y0, -0.2);
+      H.wall(k, P, 1, { w: 2.6, h: 1.3, d: 2.2, x: 0, y: y0, z: -0.2 });
       k.add(B.box(2.9, 0.12, 2.5, 0.02, true), P.trim, 0, f2, -0.2); // dầm chìa
-      k.add(B.box(2.8, 1.15, 2.4, 0.05, true), '#e6d9bc', 0, f2 + 0.12, -0.2);
-      for (const x of [-1.35, -0.45, 0.45, 1.35]) k.add(B.box(0.08, 1.15, 0.06, 0.01), P.trim, x, f2 + 0.12, 1.02); // khung gỗ
-      k.add(B.roof(3.4, 1.0, 3.0, 0.08, 3.0, 0.25, 0.3), P.roof, 0, f2 + 1.27, -0.2);
+      if (H.wall(k, P, 1, { w: 2.8, h: 1.15, d: 2.4, x: 0, y: f2 + 0.12, z: -0.2, color: P.upper || '#e6d9bc' }) === 'native')
+        for (const x of [-1.35, -0.45, 0.45, 1.35]) k.add(B.box(0.08, 1.15, 0.06, 0.01), P.trim, x, f2 + 0.12, 1.02); // khung gỗ
+      H.roof(k, P, 1, { w: 3.4, h: 1.0, d: 3.0, tw: 3.0, td: 0.25, lift: 0.3, x: 0, y: f2 + 1.27, z: -0.2 });
       k.add(B.box(0.45, 1.3, 0.45, 0.04, true), P.stone, 0.85, f2 + 1.0, -0.8); // ống khói
       k.add(B.box(0.55, 0.1, 0.55, 0.02, true), P.dark, 0.85, f2 + 2.3, -0.8);
       H.door(k, P, -0.55, y0, 0.9, 0.6, 1.0);
@@ -55,9 +55,11 @@
         y0 = H.PLINTH,
         hf = 1.15,
         zf = 0.85;
-      k.add(B.box(2.6, hf * 3, 2.4, 0.06, true), P.wall, 0, y0, -0.35);
+      H.wall(k, P, 2, { w: 2.6, h: hf * 3, d: 2.4, x: 0, y: y0, z: -0.35 });
       for (let f = 1; f <= 3; f++) k.add(B.box(2.7, 0.1, 2.5, 0.02, true), '#e8e0d0', 0, y0 + hf * f - 0.05, -0.35); // gờ tầng
-      k.add(B.box(2.7, 0.35, 2.5, 0.03, true), P.wall2, 0, y0 + hf * 3, -0.35); // tường chắn mái
+      const flat = H.form(P, 'roof', 2) === 'native'; // (hình gốc: mái bằng có tường chắn, đồ trên mái)
+      if (flat) k.add(B.box(2.7, 0.35, 2.5, 0.03, true), P.wall2, 0, y0 + hf * 3, -0.35); // tường chắn mái
+      else H.roof(k, P, 2, { w: 3.0, h: 1.1, d: 2.8, tw: 3.0, td: 0.25, x: 0, y: y0 + hf * 3, z: -0.35 });
       // tầng trệt: cửa, mái hiên, cửa sổ
       H.door(k, P, -0.6, y0, zf, 0.6, 0.95);
       k.add(B.box(1.0, 0.06, 0.45, 0.01), P.roof, -0.6, y0 + 1.0, zf + 0.22, { rot: [0.2, 0, 0] });
@@ -70,6 +72,7 @@
         H.rail(k, P.metal, -1.08, 1.08, yf + 0.08, zf + 0.42, 0.38, 9);
       }
       // trên mái: chòi cầu thang, bồn nước, ống khói
+      if (!flat) return;
       k.add(B.box(0.9, 0.7, 0.8, 0.04, true), P.wall2, -0.6, y0 + hf * 3, -0.9);
       k.add(B.post(0.32, 0.6, 10), P.metal, 0.7, y0 + hf * 3 + 0.35, -0.9, { rot: [0, 0, Math.PI / 2] });
       for (const x of [0.45, 0.95]) k.add(B.box(0.08, 0.35, 0.08, 0.01, true), P.metal, x, y0 + hf * 3, -0.9);
@@ -95,8 +98,10 @@
       H.door(k, P, -0.7, y0, 1.0, 0.55, 0.95, 3);
       // vườn trên mái, ăng-ten, đèn tím ở góc
       const yr = y0 + hf * 3;
-      k.add(B.box(1.6, 0.18, 1.4, 0.02, true), '#3c6a3a', -0.3, yr, -0.25);
-      for (const [x, z] of [[-0.8, -0.6], [0.1, 0.1], [-0.5, 0.2]]) k.add(B.ball(0.24, 0), '#5aa04a', x, yr + 0.35, z);
+      if (H.form(P, 'roof', 3) === 'native') {
+        k.add(B.box(1.6, 0.18, 1.4, 0.02, true), '#3c6a3a', -0.3, yr, -0.25);
+        for (const [x, z] of [[-0.8, -0.6], [0.1, 0.1], [-0.5, 0.2]]) k.add(B.ball(0.24, 0), '#5aa04a', x, yr + 0.35, z);
+      } else H.roof(k, P, 3, { w: 2.3, h: 0.9, d: 2.1, tw: 2.3, td: 0.3, x: -0.3, y: yr, z: -0.25 });
       k.add(B.post(0.04, 1.2, 4), P.metal, 0.75, yr, -0.9);
       k.add(B.ball(0.1, 0), P.accent, 0.75, yr + 1.25, -0.9, { glow: true });
       k.add(B.box(0.08, hf * 3, 0.08, 0.01, true), P.accent, 1.3, y0, 0.98, { glow: true });

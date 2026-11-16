@@ -510,6 +510,41 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/blocks/isles/coast.js",
+  "src": "render/blocks/isles/coast.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/desert.js",
+  "src": "render/blocks/isles/desert.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/forest.js",
+  "src": "render/blocks/isles/forest.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/mountain.js",
+  "src": "render/blocks/isles/mountain.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/plains.js",
+  "src": "render/blocks/isles/plains.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/props.js",
+  "src": "render/blocks/isles/props.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/isles/tundra.js",
+  "src": "render/blocks/isles/tundra.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/blocks/parts.js",
   "src": "render/blocks/parts.js",
   "mode": 420
@@ -547,6 +582,16 @@
  {
   "path": "BeKinh/render/blocks/shapes/workshop.js",
   "src": "render/blocks/shapes/workshop.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/spire.js",
+  "src": "render/blocks/spire.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/blocks/style.js",
+  "src": "render/blocks/style.js",
   "mode": 420
  },
  {

@@ -81,19 +81,36 @@
     k.add(B.box(g * 2 + 0.5, 0.25, 0.4, 0.03, true), color, 0, y0 + h, YARD.z1);
     k.add(B.box(1.2, 0.35, 0.05, 0.01), t === 3 ? P.glow : P.accent, 0, y0 + h - 0.42, YARD.z1 + 0.2, t === 3 ? { glow: true } : null);
   }
+  // nhà chứa gốc bậc 4 (Lúa Vàng): mái vòm nửa ống nằm dọc trục x, dải sáng uốn theo mái
+  function hangar(k, P, B, y0) {
+    const vault = new root.THREE.CylinderGeometry(1.45, 1.45, MAIN.w, 14, 1, false, 0, Math.PI);
+    k.add(vault, P.wall, MAIN.x, y0 + 0.6, MAIN.z, { rot: [0, 0, Math.PI / 2] });
+    const arc = new root.THREE.TorusGeometry(1.48, 0.05, 4, 16, Math.PI);
+    for (const dx of [-3.0, -1.5, 0, 1.5, 3.0]) k.add(arc, dx === 0 ? P.accent : P.glow, MAIN.x + dx, y0 + 0.6, MAIN.z, { glow: true, rot: [0, Math.PI / 2, 0] });
+  }
+  // tháp điều khiển gốc bậc 4: thân vuông, cabin có dải sáng, cửa sổ, đĩa ăng-ten
+  function control(k, P, H, B, y0) {
+    k.add(B.box(1.6, 3.6, 1.6, 0.05, true), P.wall2, SIDE.x, y0, SIDE.z);
+    k.add(B.box(2.3, 0.9, 2.3, 0.05, true), P.wall, SIDE.x, y0 + 3.6, SIDE.z);
+    H.lightBox(k, P, 3, 2.34, 0.4, 2.34, SIDE.x, y0 + 3.85, SIDE.z);
+    for (const y of [1.0, 2.0, 3.0]) H.lightBox(k, P, 3, 0.9, 0.12, 0.06, SIDE.x, y0 + y, SIDE.z + 0.82);
+    k.add(B.lathe([[0.01, 0], [0.55, 0.25], [0.6, 0.3]], 10), P.metal, SIDE.x + 0.5, y0 + 4.6, SIDE.z, { rot: [0.5, 0, 0] });
+    k.add(B.post(0.04, 1.2, 4), P.metal, SIDE.x - 0.6, y0 + 4.5, SIDE.z - 0.6);
+    k.add(B.ball(0.09, 0), P.accent, SIDE.x - 0.6, y0 + 5.75, SIDE.z - 0.6, { glow: true });
+  }
   const TIER = [
     // trại gỗ
     (k, P, H) => {
       const B = K(),
         y0 = H.PLINTH;
-      k.add(B.box(MAIN.w, 1.7, MAIN.d, 0.06, true), P.wall, MAIN.x, y0, MAIN.z);
-      for (let i = 0; i < 12; i++) k.add(B.box(0.05, 1.7, 0.05, 0.01), P.wall2, MAIN.x - 3.3 + i * 0.6, y0, MZF + 0.02); // nẹp vách
-      k.add(B.roof(MAIN.w + 0.8, 1.5, MAIN.d + 0.9, 0.08, MAIN.w + 0.2, 0.25, 0.45), P.roof, MAIN.x, y0 + 1.7, MAIN.z);
+      if (H.wall(k, P, 0, { w: MAIN.w, h: 1.7, d: MAIN.d, x: MAIN.x, y: y0, z: MAIN.z }) === 'native')
+        for (let i = 0; i < 12; i++) k.add(B.box(0.05, 1.7, 0.05, 0.01), P.wall2, MAIN.x - 3.3 + i * 0.6, y0, MZF + 0.02); // nẹp vách
+      H.roof(k, P, 0, { w: MAIN.w + 0.8, h: 1.5, d: MAIN.d + 0.9, tw: MAIN.w + 0.2, td: 0.25, lift: 0.45, x: MAIN.x, y: y0 + 1.7, z: MAIN.z });
       H.door(k, P, MAIN.x, y0, MZF, 1.0, 1.25);
       for (const dx of [-2.6, -1.4, 1.4, 2.6]) H.win(k, P, 0, MAIN.x + dx, y0 + 0.8, MZF, 0.45, 0.4);
       // lán vũ khí: bốn cột, mái rơm, giá giáo và khiên bên trong
       for (const dx of [-1.0, 1.0]) for (const dz of [-1.2, 1.2]) k.add(B.post(0.08, 1.7, 5), P.trim, SIDE.x + dx, y0, SIDE.z + dz);
-      k.add(B.roof(2.8, 0.9, 3.3, 0.06, 2.3, 0.2, 0.3), P.roof, SIDE.x, y0 + 1.7, SIDE.z);
+      H.roof(k, P, 0, { w: 2.8, h: 0.9, d: 3.3, tw: 2.3, td: 0.2, lift: 0.3, x: SIDE.x, y: y0 + 1.7, z: SIDE.z });
       rack(k, P, 0, SIDE.x, y0, SIDE.z - 0.6, 5);
       for (const dx of [-0.6, 0.1, 0.8]) k.add(B.post(0.3, 0.07, 10), P.accent, SIDE.x + dx, y0 + 0.35, SIDE.z + 0.6, { rot: [1.3, 0, 0] });
       // chòi canh góc trước trái
@@ -102,7 +119,7 @@
       for (const dx of [-0.45, 0.45]) for (const dz of [-0.45, 0.45]) k.add(B.post(0.07, 3.4, 5), P.trim, cx + dx, y0, cz + dz);
       k.add(B.box(1.2, 0.1, 1.2, 0.02, true), P.trim, cx, y0 + 2.1, cz);
       H.rail(k, P.trim, cx - 0.55, cx + 0.55, y0 + 2.2, cz + 0.55, 0.4, 4);
-      k.add(B.cone(0.95, 0.8, 4), P.roof, cx, y0 + 3.4, cz, { rot: [0, Math.PI / 4, 0] });
+      H.roof(k, P, 0, { w: 1.5, h: 0.85, d: 1.5, tw: 0.08, td: 0.08, x: cx, y: y0 + 3.4, z: cz });
       H.guard(k, P, 0, cx, y0 + 2.2, cz);
       const stake = (x, z) => {
         k.add(B.post(0.08, 1.0, 5), P.trim, x, y0, z);
@@ -122,15 +139,16 @@
       const B = K(),
         y0 = H.PLINTH,
         h = 2.2;
-      k.add(B.box(MAIN.w, h, MAIN.d, 0.06, true), P.wall, MAIN.x, y0, MAIN.z);
+      H.wall(k, P, 1, { w: MAIN.w, h, d: MAIN.d, x: MAIN.x, y: y0, z: MAIN.z });
       k.add(B.box(MAIN.w + 0.2, 0.18, MAIN.d + 0.2, 0.03, true), P.wall2, MAIN.x, y0 + h, MAIN.z);
-      H.crenels(k, P.wall2, MAIN.x - 3.5, MAIN.x + 3.5, y0 + h + 0.18, MZF - 0.05, 11, 0.38, 0.34, 0.3);
+      if (H.form(P, 'roof', 1) !== 'native') H.roof(k, P, 1, { w: MAIN.w + 0.5, h: 1.2, d: MAIN.d + 0.6, x: MAIN.x, y: y0 + h + 0.18, z: MAIN.z });
+      else H.crenels(k, P.wall2, MAIN.x - 3.5, MAIN.x + 3.5, y0 + h + 0.18, MZF - 0.05, 11, 0.38, 0.34, 0.3);
       H.door(k, P, MAIN.x, y0, MZF, 1.1, 1.5);
       for (const dx of [-2.8, -1.8, 1.8, 2.8]) H.win(k, P, 1, MAIN.x + dx, y0 + 1.1, MZF, 0.32, 0.6);
       for (const dx of [-1.0, 1.0]) H.banner(k, P, MAIN.x + dx, y0 + 2.0, MZF, 0.5, 1.0);
       // kho vũ khí mái ngói, khiên treo
-      k.add(B.box(SIDE.w, 1.9, SIDE.d, 0.05, true), P.wall2, SIDE.x, y0, SIDE.z);
-      k.add(B.roof(SIDE.w + 0.5, 0.9, SIDE.d + 0.5, 0.06, 0.4, SIDE.d, 0.3), P.roof, SIDE.x, y0 + 1.9, SIDE.z);
+      H.wall(k, P, 1, { w: SIDE.w, h: 1.9, d: SIDE.d, x: SIDE.x, y: y0, z: SIDE.z, color: P.wall2 });
+      H.roof(k, P, 1, { w: SIDE.w + 0.5, h: 0.9, d: SIDE.d + 0.5, tw: 0.4, td: SIDE.d, lift: 0.3, x: SIDE.x, y: y0 + 1.9, z: SIDE.z });
       H.door(k, P, SIDE.x, y0, SZF, 0.8, 1.3);
       for (const s of [-1, 1]) {
         k.add(B.post(0.3, 0.08, 10), P.accent, SIDE.x + s * 0.75, y0 + 1.3, SZF + 0.04, { rot: [Math.PI / 2, 0, 0] });
@@ -149,7 +167,7 @@
       for (const s of [-1, 1]) H.torch(k, P, 1, s * (YARD.gate + 0.45), y0 + 0.75, YARD.z1);
       k.add(B.lathe([[0.5, 0], [0.5, 0.55], [0.38, 0.55], [0.38, 0.1]], 10), P.stone, 0, y0, 1.6);
       for (const s of [-1, 1]) k.add(B.post(0.05, 1.2, 4), P.trim, s * 0.42, y0 + 0.55, 1.6);
-      k.add(B.roof(1.2, 0.4, 1.0, 0.03, 0.2, 1.0), P.roof, 0, y0 + 1.75, 1.6);
+      H.roof(k, P, 1, { w: 1.2, h: 0.4, d: 1.0, tw: 0.2, td: 1.0, x: 0, y: y0 + 1.75, z: 1.6 });
       H.flag(k, P, MAIN.x + 3.4, y0 + h + 0.18, MAIN.z - 0.8, 1.8, 1.1);
     },
     // doanh trại gạch
@@ -157,16 +175,16 @@
       const B = K(),
         y0 = H.PLINTH,
         hf = 1.3;
-      k.add(B.box(MAIN.w, hf * 2, MAIN.d, 0.06, true), P.wall, MAIN.x, y0, MAIN.z);
+      H.wall(k, P, 2, { w: MAIN.w, h: hf * 2, d: MAIN.d, x: MAIN.x, y: y0, z: MAIN.z });
       k.add(B.box(MAIN.w + 0.1, 0.1, MAIN.d + 0.1, 0.02, true), '#e8e0d0', MAIN.x, y0 + hf, MAIN.z);
-      k.add(B.roof(MAIN.w + 0.4, 0.9, MAIN.d + 0.5, 0.05, MAIN.w, 0.3), P.roof, MAIN.x, y0 + hf * 2, MAIN.z);
+      H.roof(k, P, 2, { w: MAIN.w + 0.4, h: 0.9, d: MAIN.d + 0.5, tw: MAIN.w, td: 0.3, x: MAIN.x, y: y0 + hf * 2, z: MAIN.z });
       for (const dx of [-2.5, 2.5]) k.add(B.box(0.35, 0.9, 0.35, 0.03, true), P.wall2, MAIN.x + dx, y0 + hf * 2 + 0.4, MAIN.z - 0.4);
       for (const dx of [-3.0, -2.2, -1.4, 1.4, 2.2, 3.0]) for (const f of [0, 1]) H.win(k, P, 2, MAIN.x + dx, y0 + 0.5 + f * hf, MZF, 0.42, 0.55);
       H.door(k, P, MAIN.x, y0, MZF, 1.2, 1.1);
       k.add(B.box(1.8, 0.08, 0.7, 0.01), P.roof, MAIN.x, y0 + 1.15, MZF + 0.35, { rot: [0.15, 0, 0] });
       // nhà ăn: một tầng, mái dốc, ống khói, cửa sổ
-      k.add(B.box(SIDE.w, 1.6, SIDE.d, 0.05, true), P.wall2, SIDE.x, y0, SIDE.z);
-      k.add(B.roof(SIDE.w + 0.4, 0.8, SIDE.d + 0.4, 0.05, 0.3, SIDE.d + 0.4), P.roof, SIDE.x, y0 + 1.6, SIDE.z);
+      H.wall(k, P, 2, { w: SIDE.w, h: 1.6, d: SIDE.d, x: SIDE.x, y: y0, z: SIDE.z, color: P.wall2 });
+      H.roof(k, P, 2, { w: SIDE.w + 0.4, h: 0.8, d: SIDE.d + 0.4, tw: 0.3, td: SIDE.d + 0.4, x: SIDE.x, y: y0 + 1.6, z: SIDE.z });
       k.add(B.box(0.3, 0.8, 0.3, 0.02, true), P.stone, SIDE.x + 0.6, y0 + 1.9, SIDE.z - 0.6);
       H.door(k, P, SIDE.x - 0.5, y0, SZF, 0.6, 1.05);
       H.win(k, P, 2, SIDE.x + 0.5, y0 + 0.6, SZF, 0.6, 0.5);
@@ -202,22 +220,15 @@
     (k, P, H) => {
       const B = K(),
         y0 = H.PLINTH;
-      // nhà chứa mái vòm (nửa ống nằm dọc trục x), dải sáng uốn theo mái
+      // nhà chứa: nền, mái theo đảo (kiểu mái bậc 4) hay mái vòm gốc, cửa sáng
       k.add(B.box(MAIN.w, 0.6, MAIN.d + 0.2, 0.05, true), P.wall2, MAIN.x, y0, MAIN.z);
-      const vault = new root.THREE.CylinderGeometry(1.45, 1.45, MAIN.w, 14, 1, false, 0, Math.PI);
-      k.add(vault, P.wall, MAIN.x, y0 + 0.6, MAIN.z, { rot: [0, 0, Math.PI / 2] });
-      const arc = new root.THREE.TorusGeometry(1.48, 0.05, 4, 16, Math.PI);
-      for (const dx of [-3.0, -1.5, 0, 1.5, 3.0]) k.add(arc, dx === 0 ? P.accent : P.glow, MAIN.x + dx, y0 + 0.6, MAIN.z, { glow: true, rot: [0, Math.PI / 2, 0] });
+      if (H.form(P, 'roof', 3) !== 'native') H.roof(k, P, 3, { w: MAIN.w, h: 1.3, d: MAIN.d + 0.2, x: MAIN.x, y: y0 + 0.6, z: MAIN.z });
+      else hangar(k, P, B, y0);
       H.lightBox(k, P, 3, 2.4, 1.3, 0.06, MAIN.x, y0 + 0.6, MAIN.z + 1.42);
       H.lightBox(k, P, 3, MAIN.w, 0.08, 0.06, MAIN.x, y0 + 0.5, MAIN.z + 1.42);
-      // tháp điều khiển: thân thon, dải cửa sáng, đĩa ăng-ten
-      k.add(B.box(1.6, 3.6, 1.6, 0.05, true), P.wall2, SIDE.x, y0, SIDE.z);
-      k.add(B.box(2.3, 0.9, 2.3, 0.05, true), P.wall, SIDE.x, y0 + 3.6, SIDE.z);
-      H.lightBox(k, P, 3, 2.34, 0.4, 2.34, SIDE.x, y0 + 3.85, SIDE.z);
-      for (const y of [1.0, 2.0, 3.0]) H.lightBox(k, P, 3, 0.9, 0.12, 0.06, SIDE.x, y0 + y, SIDE.z + 0.82);
-      k.add(B.lathe([[0.01, 0], [0.55, 0.25], [0.6, 0.3]], 10), P.metal, SIDE.x + 0.5, y0 + 4.6, SIDE.z, { rot: [0.5, 0, 0] });
-      k.add(B.post(0.04, 1.2, 4), P.metal, SIDE.x - 0.6, y0 + 4.5, SIDE.z - 0.6);
-      k.add(B.ball(0.09, 0), P.accent, SIDE.x - 0.6, y0 + 5.75, SIDE.z - 0.6, { glow: true });
+      // tháp điều khiển: dáng theo đảo (render/blocks/spire.js) hay thân thon, dải cửa sáng, đĩa ăng-ten
+      if (H.hasSpire(P)) H.spire(k, P, SIDE.x, y0, SIDE.z, 4.6, 0.85);
+      else control(k, P, H, B, y0);
       // bãi đáp có xe bay đậu
       k.add(B.post(1.4, 0.06, 16), P.stone, 0, y0, 1.7);
       H.torus(k, P.glow, 1.3, 0.05, 0, y0 + 0.07, 1.7, { glow: true });

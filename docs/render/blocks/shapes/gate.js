@@ -21,16 +21,17 @@
   // tường: hai đoạn hai bên vòm (giữa hai trụ) và hai đoạn đầu khối (ngoài trụ), xà trên vòm. Trả độ cao vòm.
   function walls(k, P, t, wallH) {
     const B = K(),
-      y0 = BK.Blocks.H.PLINTH,
+      H = BK.Blocks.H,
+      y0 = H.PLINTH,
       D = BK.Blocks.WALL_D,
       gh = Math.min(wallH - 0.5, 2.6),
       inner = XS - TW / 2 - GW / 2, // đoạn giữa vòm và trụ
       outer = END - XS - TW / 2; // đoạn ngoài trụ
     for (const s of [-1, 1]) {
-      k.add(B.box(inner, wallH, D, 0.05, true), P.wall, s * (GW / 2 + inner / 2), y0, 0);
-      k.add(B.box(outer, wallH, D, 0.05, true), P.wall, s * (END - outer / 2), y0, 0);
+      H.wall(k, P, t, { w: inner, h: wallH, d: D, x: s * (GW / 2 + inner / 2), y: y0, z: 0 });
+      H.wall(k, P, t, { w: outer, h: wallH, d: D, x: s * (END - outer / 2), y: y0, z: 0 });
     }
-    k.add(B.box(GW, wallH - gh, D, 0.05, true), P.wall, 0, y0 + gh, 0);
+    H.wall(k, P, t, { w: GW, h: wallH - gh, d: D, x: 0, y: y0 + gh, z: 0 });
     k.add(B.box(GW + 0.4, 0.24, D + 0.14, 0.04, true), t >= 2 ? P.metal : P.trim, 0, y0 + gh - 0.12, 0);
     return gh;
   }
@@ -77,7 +78,7 @@
           k.add(B.box(2.5, 0.14, 2.5, 0.02, true), P.trim, x, f - 0.14, 0);
           for (const dz of [-1.2, 1.2]) H.rail(k, P.wall2, x - 1.2, x + 1.2, f, dz, 0.5, 7);
         }
-        k.add(B.cone(1.9, 1.3, 4), P.roof, x, f2 + 1.4, 0, { rot: [0, Math.PI / 4, 0] });
+        H.roof(k, P, 0, { w: 2.9, h: 1.3, d: 2.9, tw: 0.1, td: 0.1, x, y: f2 + 1.4, z: 0 });
         for (let i = 0; i < 9; i++) k.add(B.box(0.5, 0.05, 0.08, 0.01), P.trim, x - s * 1.45, y0 + 0.2 + i * 0.4, 1.1); // thang
         for (const dx of [-0.5, 0.5]) H.guard(k, P, 0, x + dx, f1, 0.2);
         H.guard(k, P, 0, x, f2, 0.1);
@@ -91,7 +92,7 @@
         k.add(B.box(0.04, wallH, 0.04, 0.01), P.trim, x, y0, BK.Blocks.WALL_D / 2 + 0.02);
         k.add(B.cone(0.12, 0.3, 5), P.wall, x, y0 + wallH, 0);
       }
-      gatehouse(k, P, 0, wallH, (y) => k.add(B.roof(GW + 1.2, 1.0, 2.0, 0.06, GW, 0.2, 0.3), P.roof, 0, y, 0));
+      gatehouse(k, P, 0, wallH, (y) => H.roof(k, P, 0, { w: GW + 1.2, h: 1.0, d: 2.0, tw: GW, td: 0.2, lift: 0.3, x: 0, y, z: 0 }));
       H.guard(k, P, 0, 0, y0 + wallH, 0.95);
       // cánh cổng đôi bằng cọc, chông chắn trước cổng
       for (let i = 0; i < 9; i++) k.add(B.post(0.15, gh, 5, 0.05), P.trim, -1.36 + i * 0.34, y0, 0.3);
@@ -109,7 +110,7 @@
       for (const s of [-1, 1]) {
         const x = s * XS;
         k.add(B.box(TW + 0.3, 0.5, TW + 0.3, 0.06, true), P.stone, x, y0, 0); // chân trụ
-        k.add(B.box(TW, th, TW, 0.07, true), P.wall2, x, y0, 0);
+        H.wall(k, P, 1, { w: TW, h: th, d: TW, x, y: y0, z: 0, color: P.wall2 });
         k.add(B.box(TW + 0.4, 0.3, TW + 0.4, 0.04, true), P.stone, x, y0 + th - 0.3, 0); // gờ đỡ
         for (const d of [-1, 1]) {
           H.crenels(k, P.wall2, x - 1.0, x + 1.0, y0 + th, d * 1.05, 4, 0.36, 0.42, 0.3);
@@ -148,12 +149,12 @@
         th = wallH + 2.0;
       for (const s of [-1, 1]) {
         const x = s * XS;
-        k.add(B.box(TW, th, TW, 0.07, true), P.wall, x, y0, 0);
+        H.wall(k, P, 2, { w: TW, h: th, d: TW, x, y: y0, z: 0 });
         for (const u of [0.3, 0.65]) k.add(B.box(TW + 0.06, 0.12, TW + 0.06, 0.02, true), '#e8e0d0', x, y0 + th * u, 0);
         k.add(B.box(TW + 0.5, 0.18, TW + 0.5, 0.03, true), P.metal, x, y0 + th, 0);
         for (const dx of [-1.15, 1.15]) for (const dz of [-1.15, 1.15]) k.add(B.post(0.07, 1.6, 5), P.metal, x + dx, y0 + th + 0.18, dz);
         for (const dz of [-1.15, 1.15]) H.rail(k, P.metal, x - 1.15, x + 1.15, y0 + th + 0.18, dz, 0.5, 6);
-        k.add(B.roof(3.1, 1.5, 3.1, 0.05, 0.15, 0.15), P.roof, x, y0 + th + 1.78, 0);
+        H.roof(k, P, 2, { w: 3.1, h: 1.5, d: 3.1, tw: 0.15, td: 0.15, x, y: y0 + th + 1.78, z: 0 });
         for (const dx of [-0.45, 0.45]) H.guard(k, P, 2, x + dx, y0 + th + 0.18, 0.2);
         k.add(B.box(0.35, 0.3, 0.5, 0.02, true), P.metal, x + s * 0.9, y0 + th + 1.0, 0.9); // đèn pha
         k.add(B.box(0.28, 0.24, 0.04, 0.01), '#fff4c8', x + s * 0.9, y0 + th + 1.03, 1.16, { glow: true });
@@ -163,7 +164,7 @@
       const gh = walls(k, P, 2, wallH);
       endCrenels(k, P.wall2, wallH);
       walkway(k, P, 2, wallH, P.wall2);
-      gatehouse(k, P, 2, wallH, (y) => k.add(B.roof(GW + 1.0, 0.8, BK.Blocks.WALL_D + 0.7, 0.05, GW, 0.3), P.roof, 0, y, 0));
+      gatehouse(k, P, 2, wallH, (y) => H.roof(k, P, 2, { w: GW + 1.0, h: 0.8, d: BK.Blocks.WALL_D + 0.7, tw: GW, td: 0.3, x: 0, y, z: 0 }));
       // cổng song sắt, chốt gác, thanh chắn, bao cát, cột đèn
       for (let i = 0; i < 9; i++) k.add(B.box(0.08, gh - 0.05, 0.08, 0.01, true), P.metal, -1.36 + i * 0.34, y0, 0.3);
       for (const y of [0.6, 1.5]) k.add(B.box(GW - 0.1, 0.08, 0.08, 0.01, true), P.metal, 0, y0 + y, 0.3);
@@ -188,8 +189,11 @@
       const rAt = (u) => (u <= 0.7 ? 1.25 - (0.07 * u) / 0.7 : 1.18 - (0.3 * (u - 0.7)) / 0.3); // bán kính thân theo độ cao
       for (const s of [-1, 1]) {
         const x = s * XS;
-        k.add(B.lathe([[1.25, 0], [1.18, th * 0.7], [0.88, th], [0.01, th]], 8), P.wall, x, y0, 0, { rot: [0, Math.PI / 8, 0] });
-        for (const u of [0.25, 0.5, 0.75]) H.torus(k, u === 0.5 ? P.accent : P.glow, rAt(u) + 0.03, 0.05, x, y0 + th * u, 0, { glow: true });
+        if (H.hasSpire(P)) H.spire(k, P, x, y0, 0, th, 1.25); // (dáng trụ theo đảo: render/blocks/spire.js)
+        else {
+          k.add(B.lathe([[1.25, 0], [1.18, th * 0.7], [0.88, th], [0.01, th]], 8), P.wall, x, y0, 0, { rot: [0, Math.PI / 8, 0] });
+          for (const u of [0.25, 0.5, 0.75]) H.torus(k, u === 0.5 ? P.accent : P.glow, rAt(u) + 0.03, 0.05, x, y0 + th * u, 0, { glow: true });
+        }
         k.add(B.lathe([[0.4, -0.25], [1.5, 0], [1.5, 0.14], [0.01, 0.14]], 12), P.roof, x, y0 + th, 0);
         H.torus(k, P.glow, 1.45, 0.04, x, y0 + th + 0.65, 0, { glow: true });
         for (const dx of [-0.5, 0.5]) H.guard(k, P, 3, x + dx, y0 + th + 0.14, 0.3);

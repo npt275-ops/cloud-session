@@ -28,7 +28,7 @@
       k.add(K.box(L, 0.22, d, 0.04, true), P.wall2, 0, y0, 0);
       return;
     }
-    k.add(K.box(L, h, d, 0.04, true), P.wall, 0, y0, 0);
+    H.wall(k, P, t, { w: L, h, d, x: 0, y: y0, z: 0 });
     if (t === 2) for (const y of [0.05, h - 0.12]) k.add(K.box(L, 0.12, d + 0.06, 0.02, true), P.metal, 0, y0 + y, 0);
     for (const z of [-d / 2 + 0.17, d / 2 - 0.17]) H.crenels(k, P.wall2, -L / 2 + 0.3, L / 2 - 0.3, y0 + h, z, 5, 0.46, 0.4, 0.34);
   });

@@ -15,9 +15,10 @@
       h = 2.6 + 0.2 * t,
       zb = -0.7,
       zf = zb + d / 2;
-    k.add(K.box(w, h, d, 0.07, true), P.wall, 0, y0, zb);
+    H.wall(k, P, t, { w, h, d, x: 0, y: y0, z: zb });
     const yr = y0 + h;
-    if (t <= 1) k.add(K.roof(w + 0.7, t === 0 ? 1.7 : 1.3, d + 0.6, 0.1, w + 0.4, 0.4, t === 1 ? 0.3 : 0), P.roof, 0, yr, zb);
+    if (t <= 1) H.roof(k, P, t, { w: w + 0.7, h: t === 0 ? 1.7 : 1.3, d: d + 0.6, tw: w + 0.4, td: 0.4, lift: t === 1 ? 0.3 : 0, x: 0, y: yr, z: zb });
+    else if (H.form(P, 'roof', t) !== 'native') H.roof(k, P, t, { w: w + 0.4, h: 1.2, d: d + 0.4, x: 0, y: yr, z: zb });
     else if (t === 2) {
       for (let i = 0; i < 3; i++) k.add(K.roof(w + 0.3, 0.9, 1.2, 0.05, w + 0.3, 0.12), P.roof, 0, yr, zb - 1.2 + i * 1.2);
       k.add(K.post(0.26, 2.4, 7, 0.2), P.wall2, 1.5, yr, zb - 1.2);
