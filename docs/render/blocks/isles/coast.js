@@ -34,14 +34,17 @@
       { wall: '#24384a', wall2: '#1a2a3a', roof: '#122030', trim: '#2a4a64', stone: '#3a5468', dark: '#0a121a', accent: '#4a9aff', glow: '#3affd8', metal: '#7a9ab0' },
       { wall: '#e8fbff', wall2: '#9ae6f0', roof: '#3ac8d8', trim: '#2a7aa0', stone: '#f0e6c8', dark: '#0a2a4a', accent: '#ff9ab8', glow: '#8affea', metal: '#d8f8ff' }, // bậc 5 huyền ảo
     ],
-    // cờ xanh nước biển, ký hiệu cửa sóng (vòm cổng trên hai trụ, hàng sóng dưới chân)
+    // cờ xanh nước biển, ký hiệu một con sóng lớn: thân sóng vồng lên rồi cuộn móc vào trong, lọn xoáy ở lòng sóng, mặt
+    // nước kéo sang trái, ba giọt bọt bắn trên ngọn
     flag: {
       color: '#2a7ac8',
       mark: '#ffffff',
       emblem(m) {
-        m.arc(0, 0.0, 0.16, 0.04);
-        for (const u of [-0.16, 0.16]) m.bar(u, -0.06, 0.13, 0.04, Math.PI / 2);
-        for (const u of [-0.13, 0, 0.13]) m.arc(u, -0.2, 0.06, 0.03);
+        m.arc(0, -0.13, 0.16, 0.07);
+        m.arc(0.08, -0.13, 0.08, 0.065, Math.PI);
+        m.arc(0.035, -0.13, 0.035, 0.05);
+        m.bar(-0.2, -0.13, 0.12, 0.06);
+        for (const [u, v] of [[0.1, 0.1], [0.17, 0.07], [0.2, 0.0]]) m.circ(u, v, 0.022);
       },
     },
     S: {

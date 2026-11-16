@@ -40,14 +40,15 @@
       { wall: '#3a3236', wall2: '#2c2629', roof: '#1e1a1c', trim: '#4a3e44', stone: '#564c50', dark: '#120e10', accent: '#ff3a7a', glow: '#ff8a4a', metal: '#8a7a80' },
       { wall: '#ece8f6', wall2: '#b8b0d8', roof: '#7a6ad8', trim: '#4a3a7a', stone: '#9a94b0', dark: '#2a2244', accent: '#ff8ad0', glow: '#c8b4ff', metal: '#d0c8f0' }, // bậc 5 huyền ảo
     ],
-    // cờ xám, ký hiệu núi đá và mây (hai đỉnh trắng, ba cụm mây)
+    // cờ xám, ký hiệu một ngọn núi đá đỉnh tuyết quấn đai mây ngang sườn
     flag: {
       color: '#7f868e',
-      mark: '#f4f6f8',
+      mark: '#3a4046',
       emblem(m) {
-        m.tri(-0.08, -0.07, 0.19);
-        m.tri(0.12, -0.11, 0.14);
-        for (const [u, v, r] of [[0.06, 0.16, 0.06], [0.14, 0.15, 0.045], [-0.01, 0.15, 0.045]]) m.circ(u, v, r, '#c9ced4');
+        m.tri(0, -0.02, 0.24);
+        m.tri(0, 0.145, 0.075, 0, '#f4f6f8');
+        for (const [u, v, r] of [[-0.15, -0.1, 0.055], [-0.06, -0.08, 0.075], [0.05, -0.09, 0.065], [0.15, -0.11, 0.05]]) m.circ(u, v, r, '#f4f6f8');
+        m.bar(0, -0.14, 0.38, 0.05, 0, '#f4f6f8');
       },
     },
     S: {

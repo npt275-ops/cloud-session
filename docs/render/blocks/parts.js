@@ -69,6 +69,9 @@
       const m = {
         // tam giác đều bán kính r, mặc định đỉnh hướng lên; rot: xoay trong mặt lá cờ
         tri: (u, v, r, rot, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 3), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, Math.PI + (rot || 0), 0] }),
+        // bầu dục bán trục rx (ngang), ry (dọc), xoay rot trong mặt lá cờ (hạt lúa, lá)
+        oval: (u, v, rx, ry, rot, c) =>
+          k.add(new T.CylinderGeometry(w, w, D, 12), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, rot || 0, 0], sc: [rx, 1, ry] }),
         circ: (u, v, r, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 14), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, 0, 0] }),
         // nửa hình tròn đặc, phần cong hướng lên (đụn cát, đồi)
         half: (u, v, r, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 12, 1, false, 0, Math.PI), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, Math.PI / 2, 0] }),

@@ -75,13 +75,14 @@ trọng, xe tăng, xe tăng bay; cần trục chữ A, giàn cẩu, tay máy; đ
 
 | Đảo | Màu cờ | Ký hiệu |
 | --- | --- | --- |
-| Lúa Vàng | vàng | bông lúa nâu |
+| Lúa Vàng | vàng | một bông lúa trĩu hạt (thân, bông rủ, hạt xương cá, lá) |
 | Thông Xanh | xanh lá | cây thông kem |
-| Đá Mây | xám | hai đỉnh núi trắng và mây |
+| Đá Mây | xám | một ngọn núi đá đỉnh tuyết quấn đai mây |
 | Tuyết Trắng | trắng | bông tuyết xanh |
-| Cửa Sóng | xanh nước biển | vòm cổng trắng và hàng sóng |
-| Cát Hồng | hồng | mặt trời trên hai đụn cát |
+| Cửa Sóng | xanh nước biển | một con sóng cuộn móc vào trong, bọt bắn |
+| Cát Hồng | hồng | đồng hồ cát (cát hồng nhạt chảy) |
 
+Người chơi duyệt cây thông và bông tuyết; bốn đảo còn lại làm lại theo kiểu một biểu tượng duy nhất như hai mẫu đó.
 Mỗi đảo khai báo `flag: { color, mark, emblem(m) }` trong tệp đảo; mọi lá cờ (H.flag) và cờ treo tường (H.banner) ở cả 5 bậc
 dùng màu và ký hiệu đó (render/blocks/parts.js emblem: nét tam giác, tròn, nửa tròn, thẳng, cung).
 
