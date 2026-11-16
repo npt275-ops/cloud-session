@@ -86,6 +86,28 @@ Người chơi duyệt cây thông và bông tuyết; bốn đảo còn lại l�
 Mỗi đảo khai báo `flag: { color, mark, emblem(m) }` trong tệp đảo; mọi lá cờ (H.flag) và cờ treo tường (H.banner) ở cả 5 bậc
 dùng màu và ký hiệu đó (render/blocks/parts.js emblem: nét tam giác, tròn, nửa tròn, thẳng, cung).
 
+## Lần 6: nhà cảng, nhân vật thử trên Lúa Vàng
+
+**Nhà cảng** (render/blocks/shapes/port.js, máu 7/10, 10 × 9, `coast: true`: chỉ xây ở mép biển, mặt trước +z quay ra biển).
+Nửa sau trên bờ: nhà kho mái theo đảo, cần cẩu ở mép bờ, hàng hoá; nửa trước: cầu tàu trên cọc, cọc buộc, tàu đậu cạnh cầu.
+Tàu theo bậc: thuyền nan mui cong, thuyền buồm (buồm màu cờ đảo), tàu hơi nước (ống khói sọc màu cờ), tàu lướt đáy sáng,
+thuyền mây bay lơ lửng; bậc 5 có hải đăng pha lê mang biểu tượng đảo.
+
+**Nhân vật** (render/units/: units.js sổ nhân vật, body.js thân người và đồ cầm tay, siege.js cỗ máy chiến tranh dùng chung với
+xưởng xe, isles/plains.js trang phục Lúa Vàng). Mỗi nhân vật là một khối trên đế tròn viền màu cờ đảo, bấm và nâng cấp như
+công trình. Máu đề xuất (thang 10): dân nam 5, dân nữ 5, lính đánh gần 7, lính đánh xa 5, xe tấn công 8.
+
+| Bậc | Dân nam | Dân nữ | Lính đánh gần | Lính đánh xa | Xe tấn công |
+| --- | --- | --- | --- | --- | --- |
+| Gỗ tre | nón lá, vác cuốc | nón lá, gánh thóc | khăn buộc trán, giáo, khiên mây | nón lá, nỏ, ống tên | xe phá cổng |
+| Đá | khăn đóng, áo dài | nón quai thao, xách giỏ | mũ sắt, giáp lá, kiếm, khiên, áo choàng | mũ sắt, cung dài | máy bắn đá |
+| Gạch thép | mũ lưỡi trai, hộp đồ nghề | váy, túi xách | mũ lính, dùi cui, khiên chống bạo động | súng trường | xe tăng |
+| Tương lai | áo liền vạch sáng, bảng sáng | tóc búi, bảng sáng | giáp sẫm, mũ kính sáng, kiếm sáng | súng sáng | xe tăng bay |
+| Huyền ảo | áo dài trắng, vầng sáng, đèn | áo dài trắng, vầng sáng | giáp vàng, đại kiếm sáng, cánh sáng | gậy phép cầu sáng | cỗ máy đá bay |
+
+Màu cờ đảo đi theo dải chéo, áo choàng, khiên (có ký hiệu đảo), tua giáo, cờ và nắp xe. Trang mẫu: nút "Nhân vật"
+(`?xem=nhanvat`), tạm chỉ Lúa Vàng; duyệt rồi mới làm trang phục 5 đảo còn lại (render/units/isles/<đảo>.js).
+
 ## Cách thêm
 
 - Loại mới: một mục trong `KINDS` + một tệp `render/blocks/shapes/<id>.js` gọi `BK.Blocks.shape(id, (k, P, t, H) => …)`.

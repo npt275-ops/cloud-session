@@ -7,7 +7,7 @@
  *   bậc 2 gạch thép nhà máy mái răng cưa, hai ống khói, cửa cuốn kéo lên nửa, giàn cẩu, xe tăng, thùng dầu
  *   bậc 3 tương lai nhà chứa, cửa sáng, phòng máy, tay máy, xe tăng bay trên bãi có vành sáng, máy bay nhỏ
  *   bậc 4 huyền ảo  xưởng vòm kính có sườn sáng, cổng không gian, hai bánh răng bay quay, xe bay (render/blocks/mythic.js)
- * Tường, mái, bệ theo đảo (render/blocks/style.js). */
+ * Tường, mái, bệ theo đảo (render/blocks/style.js); cỗ máy ở sân: render/units/siege.js (cùng mẫu với xe tấn công). */
 (function (root) {
   const BK = root.BK;
   const K = () => BK.BuildKit;
@@ -16,15 +16,6 @@
     ZF = MAIN.z + MAIN.d / 2, // mặt trước xưởng chính
     DW = 3.4; // bề ngang cửa lớn
   /* ---------- mảnh riêng của xưởng ---------- */
-  // bánh xe: vành, nan chữ thập, trục (rot: hướng mặt bánh)
-  function wheel(k, P, t, x, y, z, r, rot) {
-    const B = K(),
-      fut = t >= 3;
-    k.add(new root.THREE.TorusGeometry(r, r * 0.14, 5, 14), fut ? P.glow : P.trim, x, y, z, { rot, glow: fut });
-    k.add(B.box(r * 1.9, r * 0.12, r * 0.12, 0.01), P.wall2, x, y, z, { rot });
-    k.add(B.box(r * 0.12, r * 1.9, r * 0.12, 0.01), P.wall2, x, y, z, { rot });
-    k.add(B.post(r * 0.2, r * 0.3, 6), P.metal, x, y, z, { rot: [rot[0] + Math.PI / 2, rot[1], rot[2]] });
-  }
   // cửa lớn: ô cửa tối (thấy lòng xưởng), khung, lanh tô; t0/t1 hai cánh mở xoè ra ngoài; t2 cửa cuốn kéo lên nửa; t3 viền sáng
   function bigDoor(k, P, t, y0) {
     const B = K(),
@@ -65,51 +56,6 @@
     const g = new root.THREE.CylinderGeometry(0.13, 0.13, 1.8, 6);
     for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - r; i++) k.add(g, '#8a6038', x, y + 0.13 + r * 0.23, z + (i - (3 - r) / 2) * 0.27, { rot: [0, 0, Math.PI / 2] });
   }
-  /* ---------- cỗ máy chiến tranh của từng thời (đỗ ở sân phải, đầu quay ra +z) ---------- */
-  function ram(k, P, x, y, z) {
-    const B = K();
-    k.add(B.box(1.2, 0.1, 2.2, 0.02), P.trim, x, y + 0.4, z);
-    for (const dz of [-0.75, 0.75]) for (const s of [-1, 1]) wheel(k, P, 0, x + s * 0.68, y + 0.38, z + dz, 0.36, [0, Math.PI / 2, 0]);
-    for (const dx of [-0.5, 0.5]) for (const dz of [-0.9, 0.9]) k.add(B.post(0.05, 1.3, 5), P.trim, x + dx, y + 0.45, z + dz);
-    k.add(B.roof(1.5, 0.7, 2.4, 0.03, 0.2, 2.4), P.roof, x, y + 1.75, z); // mái che
-    k.add(B.post(0.17, 2.6, 7, 0.17), '#8a6038', x, y + 0.85, z - 1.3, { rot: [Math.PI / 2, 0, 0] });
-    k.add(B.cone(0.22, 0.4, 7), P.metal, x, y + 0.85, z + 1.3, { rot: [Math.PI / 2, 0, 0] });
-  }
-  function catapult(k, P, x, y, z) {
-    const B = K();
-    k.add(B.box(1.3, 0.14, 2.0, 0.02), P.trim, x, y + 0.35, z);
-    for (const dz of [-0.7, 0.7]) for (const s of [-1, 1]) wheel(k, P, 1, x + s * 0.72, y + 0.34, z + dz, 0.32, [0, Math.PI / 2, 0]);
-    for (const s of [-1, 1]) {
-      k.add(B.box(0.1, 1.6, 0.1, 0.01, true), P.trim, x + s * 0.5, y + 0.42, z - 0.1, { rot: [0.25, 0, 0] });
-      k.add(B.box(0.1, 1.6, 0.1, 0.01, true), P.trim, x + s * 0.5, y + 0.42, z + 0.3, { rot: [-0.25, 0, 0] });
-    }
-    k.add(B.box(1.1, 0.08, 0.08, 0.01), P.metal, x, y + 1.95, z + 0.1);
-    k.add(B.box(0.1, 0.1, 2.6, 0.01), '#8a6038', x, y + 1.95, z + 0.5, { rot: [0.55, 0, 0] }); // cần ném
-    k.add(B.box(0.55, 0.5, 0.5, 0.03, true), P.stone, x, y + 1.0, z - 0.75); // đối trọng
-    k.add(B.lathe([[0.01, 0], [0.25, 0.05], [0.25, 0.15]], 8), '#5a3c22', x, y + 2.55, z + 1.6);
-  }
-  function tank(k, P, x, y, z) {
-    const B = K(),
-      c = '#566b46';
-    for (const s of [-1, 1]) {
-      k.add(B.box(0.4, 0.5, 2.4, 0.08, true), '#2b2b2b', x + s * 0.75, y, z); // xích
-      for (let i = 0; i < 4; i++) k.add(B.post(0.17, 0.42, 8), '#444', x + s * 0.75, y + 0.25, z - 0.8 + i * 0.53, { rot: [0, 0, Math.PI / 2] });
-    }
-    k.add(B.box(1.4, 0.45, 2.2, 0.06, true), c, x, y + 0.42, z);
-    k.add(B.box(0.9, 0.4, 1.0, 0.08, true), c, x, y + 0.87, z - 0.15); // tháp pháo
-    k.add(B.post(0.07, 1.4, 6), '#3a4a32', x, y + 1.05, z + 0.3, { rot: [Math.PI / 2, 0, 0] });
-    k.add(B.box(0.3, 0.12, 0.3, 0.01, true), P.accent, x, y + 1.27, z - 0.3); // nắp có dấu
-  }
-  function hoverTank(k, P, x, y, z) {
-    const B = K(),
-      H = BK.Blocks.H;
-    k.add(B.post(1.3, 0.06, 16), P.stone, x, y, z);
-    H.torus(k, P.glow, 1.2, 0.05, x, y + 0.07, z, { glow: true });
-    k.add(B.box(1.4, 0.45, 2.2, 0.12, true), P.wall, x, y + 0.55, z);
-    k.add(B.box(1.5, 0.06, 2.3, 0.01, true), P.glow, x, y + 0.5, z, { glow: true });
-    k.add(B.box(0.9, 0.38, 1.0, 0.1, true), P.wall2, x, y + 1.0, z - 0.15);
-    k.add(B.box(0.1, 0.1, 1.3, 0.01), P.accent, x, y + 1.18, z + 0.55, { glow: true });
-  }
   /* ---------- năm bậc ---------- */
   const TIER = [
     // nhà kho gỗ
@@ -125,13 +71,13 @@
       for (const dx of [-1.0, 1.0]) for (const dz of [-1.3, 1.3]) k.add(B.post(0.08, 2.0, 5), P.trim, ANNEX.x + dx, y0, ANNEX.z + dz);
       H.roof(k, P, 0, { w: ANNEX.w + 0.5, h: 0.9, d: ANNEX.d + 0.5, tw: ANNEX.w, td: 0.2, x: ANNEX.x, y: y0 + 2.0, z: ANNEX.z });
       bench(k, P, ANNEX.x, y0, ANNEX.z - 0.3);
-      wheel(k, P, 0, ANNEX.x - 1.0, y0 + 0.75, ANNEX.z + 0.6, 0.7, [0, Math.PI / 2 - 0.15, 0]);
+      BK.Siege.wheel(k, P, 0, ANNEX.x - 1.0, y0 + 0.75, ANNEX.z + 0.6, 0.7, [0, Math.PI / 2 - 0.15, 0]);
       // cần trục chữ A có dây và móc
       for (const s of [-1, 1]) k.add(B.box(0.12, 3.4, 0.12, 0.01, true), '#7a5232', -1.4 + s * 0.6, y0, 1.6, { rot: [0, 0, -s * 0.18] });
       k.add(B.box(0.14, 0.14, 2.4, 0.01), '#7a5232', -1.4, y0 + 3.3, 2.3);
       k.add(B.box(0.02, 1.4, 0.02, 0.01, true), '#d8c8a0', -1.4, y0 + 1.9, 3.4);
       k.add(B.box(0.5, 0.4, 0.4, 0.02, true), '#a77b48', -1.4, y0 + 1.5, 3.4);
-      ram(k, P, 2.4, y0, 2.4);
+      BK.Siege.ram(k, P, 2.4, y0, 2.4);
       lumber(k, -3.6, y0, 2.4);
       bench(k, P, -3.4, y0, 0.6);
       H.guard(k, P, 0, -2.6, y0, 0.9);
@@ -155,9 +101,9 @@
       k.add(B.box(0.7, 0.35, 0.06, 0.01), '#ff8a3a', ANNEX.x, y0 + 0.1, ANNEX.z + 1.54, { glow: true });
       k.add(B.box(0.5, 0.3, 0.25, 0.02, true), '#3a3a3a', ANNEX.x + 0.7, y0 + 0.35, ANNEX.z + 2.1); // đe
       k.add(B.box(0.25, 0.35, 0.2, 0.02, true), '#5a4a3a', ANNEX.x + 0.7, y0, ANNEX.z + 2.1);
-      catapult(k, P, 2.4, y0, 2.3);
+      BK.Siege.catapult(k, P, 2.4, y0, 2.3);
       for (let i = 0; i < 6; i++) k.add(B.ball(0.22, 0), P.stone, -1.2 + (i % 3) * 0.42, y0 + 0.2 + Math.floor(i / 3) * 0.32, 3.3 - (i % 2) * 0.1);
-      for (const z of [1.0, 1.5]) wheel(k, P, 1, -3.9, y0 + 0.6, z, 0.55, [0, Math.PI / 2 - 0.2, 0]);
+      for (const z of [1.0, 1.5]) BK.Siege.wheel(k, P, 1, -3.9, y0 + 0.6, z, 0.55, [0, Math.PI / 2 - 0.2, 0]);
       bench(k, P, -2.6, y0, 2.9);
       H.guard(k, P, 1, -1.6, y0, 1.6);
       H.banner(k, P, MAIN.x, y0 + h - 0.1, ZF, 0.7, 0.3);
@@ -190,7 +136,7 @@
       k.add(B.box(6.6, 0.22, 0.24, 0.02, true), '#d8a830', 1.0, y0 + 3.6, 3.6);
       k.add(B.box(0.4, 0.3, 0.4, 0.02, true), '#3a3a3a', 0.4, y0 + 3.3, 3.6);
       k.add(B.box(0.03, 1.4, 0.03, 0.01, true), '#2a2a2a', 0.4, y0 + 1.9, 3.6);
-      tank(k, P, 2.6, y0, 2.0);
+      BK.Siege.tank(k, P, 2.6, y0, 2.0);
       for (let i = 0; i < 4; i++) H.barrel(k, P, 2, -3.9 + (i % 2) * 0.5, y0, 1.0 + Math.floor(i / 2) * 0.55);
       for (const [x, z, s] of [[-2.6, 3.4, 0.6], [-2.0, 3.5, 0.45]]) H.crate(k, P, 2, x, y0, z, s);
       H.guard(k, P, 2, -1.2, y0, 2.0);
@@ -218,7 +164,7 @@
       k.add(B.box(0.18, 1.5, 0.18, 0.02, true), P.wall, -1.6, y0 + 0.4, 2.0, { rot: [0, 0, 0.35] });
       k.add(B.box(0.16, 1.2, 0.16, 0.02, true), P.wall, -2.1, y0 + 1.7, 2.0, { rot: [0, 0, -0.9] });
       k.add(B.box(0.25, 0.1, 0.25, 0.01), P.glow, -1.2, y0 + 2.3, 2.0, { glow: true });
-      hoverTank(k, P, 2.4, y0, 2.3);
+      BK.Siege.hoverTank(k, P, 2.4, y0, 2.3);
       for (const [x, y, z] of [[-3.2, 2.6, 2.6], [-0.4, 3.4, 3.4]]) {
         k.add(B.box(0.5, 0.1, 0.5, 0.02), P.wall2, x, y0 + y, z); // máy bay nhỏ
         for (const e of [-1, 1]) H.torus(k, P.glow, 0.15, 0.02, x + e * 0.3, y0 + y + 0.08, z, { glow: true });

@@ -1,7 +1,8 @@
 /* Bể Kính · render/blocks/blocks.js · Khối công trình quan trọng (design/ke-hoach-buoc-39.md)
  * Người chơi chốt: mỗi công trình quan trọng là MỘT KHỐI riêng: bấm vào được (đưa máy quay tới, hiện nâng cấp), có máu, có
  * công dụng; cùng loại thì cùng máu, cùng công dụng, chỉ khác hình ảnh (theo bậc và theo đảo) để nhân bản ra sáu đảo.
- *   KINDS   bảy loại: id, tên, máu (thang 10), cỡ chân đế [ngang, sâu], công dụng
+ *   KINDS   tám loại: id, tên, máu (thang 10), cỡ chân đế [ngang, sâu], chỗ trống đặt đồ trang trí, công dụng; coast: chỉ xây
+ *           ở mép biển (nhà cảng, mặt trước +z quay ra biển)
  *   TIERS   năm bậc hình ảnh: gỗ tre (thời 1–3), đá (4–6), gạch thép (7–9), tương lai (10–12), huyền ảo (sau thời 12: công
  *           trình lơ lửng trên đá bay, pha lê bay quanh, biểu tượng đảo trên đỉnh)
  *   ISLES   sáu đảo (thứ tự logic/world.js KEYS); mỗi đảo một tệp render/blocks/isles/<đảo>.js gọi isle(key, def): tên, bốn bảng
@@ -26,6 +27,7 @@
     { id: 'gate', name: 'Cổng thành', hp: 8, size: [14, 5], spots: [[-2.6, -1.7], [2.6, -1.7]], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
     { id: 'wall', name: 'Tường bao', hp: 10, size: [4, 1.4], spots: [], use: 'Bao kín thành. Mỗi đoạn là một khối cùng mẫu, nối khít nhau.' },
     { id: 'granary', name: 'Kho lương', hp: 6, size: [6, 6], spots: [[2.35, 2.35], [2.4, -2.3]], use: 'Nuôi dân và lính; về sau là nguồn tiền nâng cấp. Mất kho thì dân đói, lính yếu.' },
+    { id: 'port', name: 'Nhà cảng', hp: 7, size: [10, 9], coast: true, spots: [[-4.3, -3.9], [4.3, -3.9]], use: 'Chỉ xây ở mép biển. Bến cho thuyền buôn và thuyền chở quân; mất cảng thì mất đường biển.' },
   ];
   const TIERS = [
     { name: 'Gỗ tre', eras: 'thời 1–3' },

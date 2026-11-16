@@ -87,6 +87,7 @@
 <canvas id="scene"></canvas>
 <div class="bar">
   <div class="name"><b>Khối công trình</b><span id="sub">Lúa Vàng · 7 loại × 4 bậc · bản dev</span></div>
+  <div class="seg" id="modes" aria-label="Chế độ xem"><button type="button" data-m="blocks">Công trình</button><button type="button" data-m="units">Nhân vật</button></div>
   <div class="seg" id="isles" aria-label="Chọn đảo"></div>
   <div class="seg" id="tiers" aria-label="Lọc theo bậc"></div>
   <div class="seg"><button type="button" id="home">Toàn cảnh</button></div>
@@ -127,6 +128,11 @@
 <script src="render/blocks/shapes/gate.js"></script>
 <script src="render/blocks/shapes/wall.js"></script>
 <script src="render/blocks/shapes/granary.js"></script>
+<script src="render/blocks/shapes/port.js"></script>
+<script src="render/units/siege.js"></script>
+<script src="render/units/body.js"></script>
+<script src="render/units/units.js"></script>
+<script src="render/units/isles/plains.js"></script>
 <script>
   (() => {
     const T = THREE,
@@ -152,23 +158,23 @@
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 220 });
     scene.add(sun);
-    // nền cỏ, mỗi bậc một dải đất
-    const SX = 18,
-      SZ = 17,
-      KN = B.KINDS.length,
-      TN = B.TIERS.length;
+    // chế độ xem: công trình (BK.Blocks) hay nhân vật (BK.Units, thử trên Lúa Vàng); mỗi chế độ một cỡ ô và máy quay
+    const MODES = {
+      blocks: { reg: B, sx: 18, sz: 17, what: 'công trình', home: [0, 120, 150], minR: 4 },
+      units: { reg: BK.Units, sx: 5, sz: 6, what: 'nhân vật', home: [0, 22, 30], minR: 1.6, isles: ['plains'] },
+    };
+    let mode = new URLSearchParams(location.search).get('xem') === 'nhanvat' ? 'units' : 'blocks';
+    const M = () => MODES[mode],
+      REG = () => M().reg;
+    let SX, SZ, KN;
+    const TN = B.TIERS.length;
     const ground = new T.Mesh(new T.PlaneGeometry(400, 400), new T.MeshStandardMaterial({ color: '#8fbf63', roughness: 1 }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
     const laneCol = ['#c9b07a', '#b9b3a2', '#a9a49b', '#c7d0d6', '#d9cfee'];
-    for (let t = 0; t < TN; t++) {
-      const lane = new T.Mesh(new T.PlaneGeometry(SX * KN + 6, SZ - 3), new T.MeshStandardMaterial({ color: laneCol[t], roughness: 1 }));
-      lane.rotation.x = -Math.PI / 2;
-      lane.position.set(0, 0.01, zOf(t));
-      lane.receiveShadow = true;
-      scene.add(lane);
-    }
+    const decor = new T.Group(); // dải đất mỗi bậc, nhãn, mặt nước trước nhà cảng: dựng lại khi đổi chế độ
+    scene.add(decor);
     function xOf(i) { return (i - (KN - 1) / 2) * SX; }
     function zOf(t) { return (t - (TN - 1) / 2) * SZ; }
     // dựng các khối: cột theo loại, hàng theo bậc
@@ -176,31 +182,14 @@
     // đảo đang xem: ?dao=forest chọn sẵn (mặc định Lúa Vàng)
     let isle = B.ISLES[new URLSearchParams(location.search).get('dao')] ? new URLSearchParams(location.search).get('dao') : 'plains';
     function place(kind, tier, x, z) {
-      const g = B.build(kind, tier, isle);
+      const g = REG().build(kind, tier, isle);
       g.position.set(x, 0, z);
       g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       scene.add(g);
       return g;
     }
-    // dựng lại cả bãi theo đảo: bỏ khối cũ, đổi trời và nền cỏ theo đảo
-    function buildAll() {
-      for (const s of slots.splice(0)) { scene.remove(s.g); BK.BuildKit.dispose(s.g); }
-      const I = B.ISLES[isle];
-      scene.background.set(I.sky); scene.fog.color.set(I.sky); ground.material.color.set(I.ground);
-      B.KINDS.forEach((K, i) => {
-        for (let t = 0; t < TN; t++) {
-          const x = xOf(i), z = zOf(t);
-          if (K.id === 'wall') {
-            // ba đoạn tường nối khít nhau, tính là ba khối cùng mẫu
-            for (const dx of [-4, 0, 4]) slots.push({ kind: K.id, x: x + dx, z, tier: t, g: place(K.id, t, x + dx, z) });
-          } else slots.push({ kind: K.id, x, z, tier: t, g: place(K.id, t, x, z) });
-        }
-      });
-      document.getElementById('sub').textContent = I.name + ' · 7 loại × 4 bậc · bản dev';
-      document.querySelectorAll('#isles button').forEach((b) => b.classList.toggle('on', b.dataset.k === isle));
-    }
-    // nhãn bậc ở đầu mỗi hàng
-    function label(text, x, z) {
+    // nhãn trên mặt đất (sprite luôn quay về máy quay)
+    function label(text, x, z, sc) {
       const c = document.createElement('canvas');
       c.width = 512; c.height = 96;
       const g = c.getContext('2d');
@@ -209,11 +198,59 @@
       g.fillStyle = '#1f2a27'; g.font = '600 40px "Be Vietnam Pro", system-ui, sans-serif'; g.textBaseline = 'middle';
       g.fillText(text, 26, 50);
       const s = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(c), depthTest: false }));
-      s.scale.set(10, 1.9, 1); s.position.set(x, 3, z); s.renderOrder = 9;
-      scene.add(s);
+      s.scale.set(10 * sc, 1.9 * sc, 1); s.position.set(x, 3 * sc, z); s.renderOrder = 9;
+      decor.add(s);
     }
-    B.TIERS.forEach((tr, t) => label('Bậc ' + (t + 1) + ' · ' + tr.name + ' (' + tr.eras + ')', xOf(0) - 13.5, zOf(t)));
-    B.KINDS.forEach((K, i) => label(K.name, xOf(i) + 2.5, zOf(TN - 1) + 8.5));
+    function buildDecor() {
+      for (const o of decor.children.splice(0)) { o.geometry && o.geometry.dispose(); o.material.map && o.material.map.dispose(); o.material.dispose(); }
+      const sc = mode === 'units' ? 0.35 : 1;
+      for (let t = 0; t < TN; t++) {
+        const lane = new T.Mesh(new T.PlaneGeometry(SX * KN + 6 * sc, SZ - 3 * sc), new T.MeshStandardMaterial({ color: laneCol[t], roughness: 1 }));
+        lane.rotation.x = -Math.PI / 2;
+        lane.position.set(0, 0.01, zOf(t));
+        lane.receiveShadow = true;
+        decor.add(lane);
+      }
+      B.TIERS.forEach((tr, t) => label('Bậc ' + (t + 1) + ' · ' + tr.name + ' (' + tr.eras + ')', xOf(0) - 13.5 * sc, zOf(t), sc));
+      REG().KINDS.forEach((K, i) => label(K.name, xOf(i) + 2.5 * sc, zOf(TN - 1) + 8.5 * sc, sc));
+      // nhà cảng ở mép biển: dải nước trước mặt khối (mặt trước +z quay ra biển)
+      if (mode === 'blocks')
+        REG().KINDS.forEach((K, i) => {
+          if (!K.coast) return;
+          for (let t = 0; t < TN; t++) {
+            const w = new T.Mesh(new T.PlaneGeometry(K.size[0] + 2, 4.6), new T.MeshStandardMaterial({ color: '#3a8ab8', roughness: 0.3, metalness: 0.1 }));
+            w.rotation.x = -Math.PI / 2;
+            w.position.set(xOf(i), 0.03, zOf(t) + 2.4);
+            decor.add(w);
+          }
+        });
+    }
+    // dựng lại cả bãi theo chế độ và đảo: bỏ khối cũ, đổi trời và nền cỏ theo đảo
+    function buildAll() {
+      for (const s of slots.splice(0)) { scene.remove(s.g); BK.BuildKit.dispose(s.g); }
+      if (M().isles && !M().isles.includes(isle)) isle = M().isles[0];
+      SX = M().sx; SZ = M().sz; KN = REG().KINDS.length;
+      buildDecor();
+      const I = B.ISLES[isle];
+      scene.background.set(I.sky); scene.fog.color.set(I.sky); ground.material.color.set(I.ground);
+      controls.minDistance = mode === 'units' ? 2 : 6;
+      REG().KINDS.forEach((K, i) => {
+        for (let t = 0; t < TN; t++) {
+          const x = xOf(i), z = zOf(t);
+          if (K.id === 'wall') {
+            // ba đoạn tường nối khít nhau, tính là ba khối cùng mẫu
+            for (const dx of [-4, 0, 4]) slots.push({ kind: K.id, x: x + dx, z, tier: t, g: place(K.id, t, x + dx, z) });
+          } else slots.push({ kind: K.id, x, z, tier: t, g: place(K.id, t, x, z) });
+        }
+      });
+      document.getElementById('sub').textContent = I.name + ' · ' + KN + ' ' + M().what + ' × ' + TN + ' bậc · bản dev';
+      document.querySelectorAll('#isles button').forEach((b) => {
+        b.classList.toggle('on', b.dataset.k === isle);
+        b.disabled = !!M().isles && !M().isles.includes(b.dataset.k); // (nhân vật: thử trên Lúa Vàng trước)
+      });
+      document.querySelectorAll('#modes button').forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
+      HOME.pos.set(...M().home);
+    }
     B.ISLE_KEYS.forEach((key) => {
       const b = document.createElement('button');
       b.type = 'button';
@@ -222,10 +259,19 @@
       b.addEventListener('click', () => { if (key !== isle) { isle = key; show(null); buildAll(); } });
       document.getElementById('isles').appendChild(b);
     });
-    buildAll();
+    document.querySelectorAll('#modes button').forEach((b) =>
+      b.addEventListener('click', () => {
+        if (b.dataset.m === mode) return;
+        mode = b.dataset.m;
+        show(null);
+        buildAll();
+        flyTo(HOME.pos, HOME.target);
+      }),
+    );
 
     /* ---------- máy quay bay tới ---------- */
-    const HOME = { pos: new T.Vector3(0, 110, 140), target: new T.Vector3(0, 0, 4) };
+    const HOME = { pos: new T.Vector3(0, 120, 150), target: new T.Vector3(0, 0, 4) };
+    buildAll();
     camera.position.copy(HOME.pos);
     controls.target.copy(HOME.target);
     let fly = null;
@@ -235,7 +281,7 @@
     function focus(s) {
       const box = new T.Box3().setFromObject(s.g),
         c = box.getCenter(new T.Vector3()),
-        r = Math.max(4, box.getSize(new T.Vector3()).length() * 0.62);
+        r = Math.max(M().minR, box.getSize(new T.Vector3()).length() * 0.62);
       flyTo(new T.Vector3(c.x + r * 0.9, c.y + r * 0.85, c.z + r * 1.55), c);
     }
 
@@ -255,16 +301,16 @@
       outline(s);
       if (!s) {
         $('c-tier').textContent = 'Chưa chọn khối';
-        $('c-name').textContent = 'Bấm vào một công trình';
+        $('c-name').textContent = 'Bấm vào một ' + M().what;
         $('c-use').textContent = 'Mỗi công trình là một khối riêng: bấm vào để máy quay bay tới, xem máu, công dụng và nâng cấp lên bậc kế.';
         $('c-hp').hidden = $('c-act').hidden = true;
         return;
       }
       const b = s.g.userData.block,
-        K = B.kind(b.kind),
+        K = REG().kind(b.kind),
         tr = B.TIERS[b.tier];
       $('c-tier').textContent = 'Bậc ' + (b.tier + 1) + ' · ' + tr.name + ' · ' + tr.eras;
-      $('c-name').textContent = K.name;
+      $('c-name').textContent = K.names ? K.names[b.tier] : K.name;
       $('c-use').textContent = K.use;
       $('c-hp').hidden = $('c-act').hidden = false;
       $('c-hpbar').style.width = (b.hp / 10) * 100 + '%';
@@ -275,7 +321,7 @@
     }
     function upgrade() {
       if (!sel) return;
-      const g = B.next(sel.g);
+      const g = REG().next(sel.g);
       if (!g) return;
       g.position.copy(sel.g.position);
       g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -300,7 +346,8 @@
       b.textContent = tr.name;
       b.addEventListener('click', () => {
         show(null);
-        flyTo(new T.Vector3(0, 34, zOf(t) + 52), new T.Vector3(0, 1.5, zOf(t)));
+        const f = mode === 'units' ? 0.3 : 1;
+        flyTo(new T.Vector3(0, 34 * f, zOf(t) + 52 * f), new T.Vector3(0, 1.5 * f, zOf(t)));
       });
       tiersEl.appendChild(b);
     });

@@ -580,6 +580,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/blocks/shapes/port.js",
+  "src": "render/blocks/shapes/port.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/blocks/shapes/wall.js",
   "src": "render/blocks/shapes/wall.js",
   "mode": 420
@@ -1082,6 +1087,26 @@
  {
   "path": "BeKinh/render/travel3d.js",
   "src": "render/travel3d.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/units/body.js",
+  "src": "render/units/body.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/units/isles/plains.js",
+  "src": "render/units/isles/plains.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/units/siege.js",
+  "src": "render/units/siege.js",
+  "mode": 420
+ },
+ {
+  "path": "BeKinh/render/units/units.js",
+  "src": "render/units/units.js",
   "mode": 420
  },
  {
