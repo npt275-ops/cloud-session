@@ -6,6 +6,7 @@
  *           trình lơ lửng trên đá bay, pha lê bay quanh, biểu tượng đảo trên đỉnh)
  *   ISLES   sáu đảo (thứ tự logic/world.js KEYS); mỗi đảo một tệp render/blocks/isles/<đảo>.js gọi isle(key, def): tên, bốn bảng
  *           màu (tường, mái, viền, đá, màu cờ, màu sáng), kiểu dáng S (mái, tường, bệ, tuyết, áo lính: render/blocks/style.js),
+ *           flag { color, mark, emblem(m) }: màu cờ cố định của đảo, màu ký hiệu, cách vẽ ký hiệu (render/blocks/parts.js emblem);
  *           deco(k, P, t, H, spots, loại) đồ riêng của đảo đặt vào các chỗ trống spots của từng loại (KINDS[i].spots)
  *   shape(id, fn)   mỗi loại một tệp hình dáng render/blocks/shapes/<id>.js đăng ký fn(k, P, t, H): vẽ các mảnh vào bộ gom k
  *                   (render/build/kit3d.js Kit) theo bảng màu P, bậc t (0..3); H: mảnh dùng chung (render/blocks/parts.js)
@@ -60,7 +61,7 @@
     const t = Math.max(0, Math.min(TIERS.length - 1, tier | 0)),
       k = new K.Kit();
     k.noBalcony = true; // (ban công tự thêm của nhà phố: khối quan trọng tự vẽ đủ chi tiết)
-    const P = Object.assign({ S: I.S, isle: I.key }, I.tiers[t]),
+    const P = Object.assign({ S: I.S, isle: I.key, flag: I.flag }, I.tiers[t]),
       H = BK.Blocks.H;
     SHAPES[id](k, P, t, H);
     if (I.deco && def.spots.length) I.deco(k, P, t, H, def.spots, id);

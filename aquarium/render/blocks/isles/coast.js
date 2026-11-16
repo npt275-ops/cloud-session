@@ -34,6 +34,16 @@
       { wall: '#24384a', wall2: '#1a2a3a', roof: '#122030', trim: '#2a4a64', stone: '#3a5468', dark: '#0a121a', accent: '#4a9aff', glow: '#3affd8', metal: '#7a9ab0' },
       { wall: '#e8fbff', wall2: '#9ae6f0', roof: '#3ac8d8', trim: '#2a7aa0', stone: '#f0e6c8', dark: '#0a2a4a', accent: '#ff9ab8', glow: '#8affea', metal: '#d8f8ff' }, // bậc 5 huyền ảo
     ],
+    // cờ xanh nước biển, ký hiệu cửa sóng (vòm cổng trên hai trụ, hàng sóng dưới chân)
+    flag: {
+      color: '#2a7ac8',
+      mark: '#ffffff',
+      emblem(m) {
+        m.arc(0, 0.0, 0.16, 0.04);
+        for (const u of [-0.16, 0.16]) m.bar(u, -0.06, 0.13, 0.04, Math.PI / 2);
+        for (const u of [-0.13, 0, 0.13]) m.arc(u, -0.2, 0.06, 0.03);
+      },
+    },
     S: {
       myth: 'wave', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'sail', // (dáng tháp bậc 4: render/blocks/spire.js)

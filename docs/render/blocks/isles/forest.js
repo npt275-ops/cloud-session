@@ -24,6 +24,17 @@
       { wall: '#26352c', wall2: '#1c2822', roof: '#14201a', trim: '#2f4436', stone: '#3e5246', dark: '#0c140f', accent: '#3affc8', glow: '#9dff6a', metal: '#6f8a7a' },
       { wall: '#dcf2d4', wall2: '#7ac87a', roof: '#4fb06a', trim: '#6a4a2a', stone: '#8a7a5a', dark: '#1a3a2a', accent: '#ffd27a', glow: '#b6ff9a', metal: '#c8e8b0' }, // bậc 5 huyền ảo
     ],
+    // cờ xanh lá, ký hiệu cây thông (ba tầng tán, thân)
+    flag: {
+      color: '#2f8a3a',
+      mark: '#f2ecd0',
+      emblem(m) {
+        m.tri(0, 0.12, 0.1);
+        m.tri(0, 0.03, 0.14);
+        m.tri(0, -0.07, 0.18);
+        m.bar(0, -0.2, 0.06, 0.08);
+      },
+    },
     S: {
       myth: 'tree', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'tree', // (dáng tháp bậc 4: render/blocks/spire.js)

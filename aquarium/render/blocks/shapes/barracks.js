@@ -206,8 +206,7 @@
       for (const z of [0.4, 2.8]) k.add(B.box(4.4, 0.03, 0.07, 0.01, true), '#f2efe6', 0, y0, Z(z));
       // đội hình hai hàng giữa sân, cột cờ
       for (let r = 0; r < 3; r++) for (let i = 0; i < 5; i++) H.guard(k, P, 2, -1.6 + i * 0.8, y0, Z(1.0) + r * 0.85);
-      k.add(B.post(0.06, 3.8, 6), P.metal, 0, y0, Z(-0.6));
-      k.add(B.box(1.2, 0.75, 0.04, 0.01), P.accent, 0.64, y0 + 3.2, Z(-0.6));
+      H.flag(k, P, 0, y0, Z(-0.6), 3.8, 1.2);
       // bãi vượt chướng ngại (bên trái thay hình nộm thứ ba): rào thấp, tường leo, khung dây
       for (const z of [1.6, 2.3, 3.0]) {
         for (const s of [-1, 1]) k.add(B.box(0.06, 0.5, 0.06, 0.01, true), P.trim, X(-3.4) + s * 0.35, y0, Z(z));

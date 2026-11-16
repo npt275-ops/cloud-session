@@ -71,6 +71,20 @@ Xưởng chính cửa rất rộng (gỗ: hai cánh mở xoè; gạch thép: c�
 (lán đồ nghề, lò rèn có lửa, kho, phòng máy), sân trước có cỗ máy của thời đó: xe phá cổng có mái che, máy bắn đá có đối
 trọng, xe tăng, xe tăng bay; cần trục chữ A, giàn cẩu, tay máy; đống gỗ, đạn đá, thùng dầu, bàn thợ, thợ đứng.
 
+## Lần 5: cờ của đảo (người chơi chốt: màu cờ không đổi theo thời, có ký hiệu riêng)
+
+| Đảo | Màu cờ | Ký hiệu |
+| --- | --- | --- |
+| Lúa Vàng | vàng | bông lúa nâu |
+| Thông Xanh | xanh lá | cây thông kem |
+| Đá Mây | xám | hai đỉnh núi trắng và mây |
+| Tuyết Trắng | trắng | bông tuyết xanh |
+| Cửa Sóng | xanh nước biển | vòm cổng trắng và hàng sóng |
+| Cát Hồng | hồng | mặt trời trên hai đụn cát |
+
+Mỗi đảo khai báo `flag: { color, mark, emblem(m) }` trong tệp đảo; mọi lá cờ (H.flag) và cờ treo tường (H.banner) ở cả 5 bậc
+dùng màu và ký hiệu đó (render/blocks/parts.js emblem: nét tam giác, tròn, nửa tròn, thẳng, cung).
+
 ## Cách thêm
 
 - Loại mới: một mục trong `KINDS` + một tệp `render/blocks/shapes/<id>.js` gọi `BK.Blocks.shape(id, (k, P, t, H) => …)`.

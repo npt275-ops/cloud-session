@@ -1,7 +1,7 @@
 /* Bể Kính · render/blocks/parts.js · Mảnh dùng chung cho các khối công trình (H trong render/blocks/shapes/*.js)
  * Mảnh nào hai loại khối trở lên cùng dùng thì để ở đây, mảnh riêng của một loại thì để trong tệp hình dáng của loại đó.
  *   PLINTH              độ cao bệ dưới mọi khối (hình bệ theo đảo: render/blocks/style.js plinth)
- *   flag                cột cờ và lá cờ
+ *   flag, emblem        cột cờ và lá cờ màu cờ của đảo; ký hiệu đảo trên lá cờ (P.flag: render/blocks/isles/<đảo>.js)
  *   door, win           cửa chính (khung, lanh tô, cánh theo bậc, tay nắm, bậc thềm); cửa sổ (ô lõm, kính, khung, song, bậu,
  *                       lanh tô, cánh chớp); bậc tương lai trở lên: kính, khe sáng
  *   porch               hiên trước cửa: sàn, cột, xà chéo, mái hiên, lan can, bậc lên
@@ -12,7 +12,7 @@
  *                       P.S.guard[t] = { coat, legs, hat, form } (form: cone, helm, cap, visor, hood, turban, feather, band)
  *   torus               vòng tròn nằm ngang (vành sáng, bánh xe) dựng bằng three.js
  *   barrel, crate       thùng gỗ, hòm (đồ đạc sân lính, kho, cổng)
- *   banner, torch       cờ treo dọc áp tường, đuốc
+ *   banner, torch       cờ treo dọc áp tường (màu và ký hiệu đảo), đuốc
  * Cần: three.js, render/build/kit3d.js, render/blocks/blocks.js. */
 (function (root) {
   const BK = root.BK;
@@ -45,12 +45,40 @@
       k.add(B.cone(0.04, 0.4, 4), P.accent, x + 0.12, y + 1.25, z - 0.05, { rot: [0, 0, -0.4] });
     } else k.add(B.post(0.175, 0.07, 8), c.hat, x, y + 1.17, z); // band: khăn buộc trán
   }
+  const flagColor = (P) => (P.flag && P.flag.color) || P.accent;
   const H = {
     PLINTH,
-    // cờ: cột và lá cờ (size: bề ngang lá cờ)
+    // cờ: cột và lá cờ (size: bề ngang lá cờ). Màu cờ và ký hiệu của đảo (P.flag, render/blocks/isles/<đảo>.js) không đổi theo
+    // thời; đảo không khai báo thì dùng màu nhấn của bậc
     flag(k, P, x, y, z, h, size) {
+      const cx = x + size / 2 + 0.04,
+        cy = y + h - size * 0.36;
       k.add(K().post(0.05, h, 5), P.dark, x, y, z);
-      k.add(K().box(size, size * 0.62, 0.05, 0.01), P.accent, x + size / 2 + 0.04, y + h - size * 0.36, z);
+      k.add(K().ball(0.07, 0), P.metal, x, y + h + 0.03, z); // núm đầu cột
+      k.add(K().box(size, size * 0.62, 0.05, 0.01), flagColor(P), cx, cy, z);
+      H.emblem(k, P, cx, cy, z, size);
+    },
+    // ký hiệu đảo trên lá cờ (giữa ở cx, cy; w: bề ngang lá cờ): đảo vẽ bằng các nét m (toạ độ u, v tính theo bề ngang lá
+    // cờ, gốc giữa lá cờ, v hướng lên). Nét dày hơn lá cờ nên thấy ở cả hai mặt.
+    emblem(k, P, cx, cy, z, w) {
+      const F = P.flag;
+      if (!F || !F.emblem) return;
+      const T = root.THREE,
+        D = 0.075,
+        at = (u, v) => [cx + u * w, cy + v * w, z];
+      const m = {
+        // tam giác đều bán kính r, mặc định đỉnh hướng lên; rot: xoay trong mặt lá cờ
+        tri: (u, v, r, rot, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 3), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, Math.PI + (rot || 0), 0] }),
+        circ: (u, v, r, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 14), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, 0, 0] }),
+        // nửa hình tròn đặc, phần cong hướng lên (đụn cát, đồi)
+        half: (u, v, r, c) => k.add(new T.CylinderGeometry(r * w, r * w, D, 12, 1, false, 0, Math.PI), c || F.mark, ...at(u, v), { rot: [Math.PI / 2, Math.PI / 2, 0] }),
+        // nét thẳng dài len, dày th, xoay rot
+        bar: (u, v, len, th, rot, c) => k.add(K().box(len * w, th * w, D, 0.005), c || F.mark, ...at(u, v), { rot: [0, 0, rot || 0] }),
+        // nửa vòng cung bán kính r, dày th, cong lên (sóng); kéo dày theo trục z bằng lá cờ để thấy ở hai mặt
+        arc: (u, v, r, th, rot, c) =>
+          k.add(new T.TorusGeometry(r * w, (th * w) / 2, 4, 14, Math.PI), c || F.mark, ...at(u, v), { rot: [0, 0, rot || 0], sc: [1, 1, D / (th * w)] }),
+      };
+      F.emblem(m);
     },
     // cửa chính áp mặt trước (y: chân cửa, z: mặt tường): ô cửa lõm sẫm, khung hai bên và lanh tô trên, cánh cửa (gỗ ván dọc
     // bậc 1; bốn ô nổi bậc 2; cánh sơn có ô kính trên bậc 3; khe sáng bậc tương lai), cửa rộng thì hai cánh, tay nắm, bậc thềm
@@ -169,11 +197,12 @@
       k.add(K().box(s, s, s, 0.02, true), t >= 3 ? P.wall2 : '#a77b48', x, y, z);
       k.add(K().box(s + 0.02, 0.06, s + 0.02, 0.01, true), t >= 3 ? P.glow : P.trim, x, y + s * 0.45, z, t >= 3 ? { glow: true } : null);
     },
-    // cờ treo dọc áp mặt tường trước (z: mặt tường): thanh treo, tấm vải, viền dưới
+    // cờ treo dọc áp mặt tường trước (y: thanh treo, z: mặt tường): thanh treo, tấm vải màu cờ đảo, ký hiệu đảo, tua dưới
     banner(k, P, x, y, z, w, h) {
       k.add(K().box(w + 0.2, 0.06, 0.06, 0.01), P.dark, x, y, z + 0.06);
-      k.add(K().box(w, h, 0.04, 0.01), P.accent, x, y - h, z + 0.05);
-      k.add(K().box(w * 0.5, w * 0.5, 0.03, 0.01), '#e8c75a', x, y - h * 0.45, z + 0.08, { rot: [0, 0, Math.PI / 4] });
+      k.add(K().box(w, h, 0.04, 0.01), flagColor(P), x, y - h / 2, z + 0.05);
+      k.add(new root.THREE.CylinderGeometry(w * 0.5, w * 0.5, 0.04, 3), flagColor(P), x, y - h, z + 0.05, { rot: [Math.PI / 2, 0, 0] });
+      H.emblem(k, P, x, y - h * 0.38, z + 0.05, w);
     },
     // đuốc (bậc tương lai: đèn cột sáng)
     torch(k, P, t, x, y, z) {

@@ -35,6 +35,19 @@
       { wall: '#2c3648', wall2: '#222a3a', roof: '#182030', trim: '#3a4660', stone: '#4a5670', dark: '#0c1018', accent: '#b48aff', glow: '#7ae8ff', metal: '#8a96b0' },
       { wall: '#eaf8ff', wall2: '#bfe8ff', roof: '#8ad8ff', trim: '#5a8ab8', stone: '#d8eef8', dark: '#1a2a4a', accent: '#c89aff', glow: '#a8f4ff', metal: '#e0f4ff' }, // bậc 5 huyền ảo
     ],
+    // cờ trắng, ký hiệu bông tuyết (ba nét chéo, nhánh ở sáu đầu, tâm tròn)
+    flag: {
+      color: '#f4f6f8',
+      mark: '#3a7ac8',
+      emblem(m) {
+        for (let i = 0; i < 3; i++) m.bar(0, 0, 0.44, 0.035, (i * Math.PI) / 3);
+        for (let i = 0; i < 6; i++) {
+          const a = (i * Math.PI) / 3;
+          for (const e of [-1, 1]) m.bar(Math.cos(a) * 0.14, Math.sin(a) * 0.14, 0.08, 0.025, a + e * 0.8);
+        }
+        m.circ(0, 0, 0.04);
+      },
+    },
     S: {
       myth: 'crystal', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'crystal', // (dáng tháp bậc 4: render/blocks/spire.js)

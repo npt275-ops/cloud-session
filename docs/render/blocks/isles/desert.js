@@ -44,6 +44,16 @@
       { wall: '#3e2a3a', wall2: '#2e202c', roof: '#1e141c', trim: '#4e3448', stone: '#5a4250', dark: '#140c12', accent: '#ffb84a', glow: '#ff6ac8', metal: '#a08090' },
       { wall: '#fff0e0', wall2: '#ffc8a8', roof: '#ff8a6a', trim: '#c86a4a', stone: '#f0d0b0', dark: '#4a1a3a', accent: '#ffd84a', glow: '#ffb0f0', metal: '#ffe0c0' }, // bậc 5 huyền ảo
     ],
+    // cờ hồng, ký hiệu cát hồng (mặt trời trên hai đụn cát)
+    flag: {
+      color: '#e87aa8',
+      mark: '#7a1f45',
+      emblem(m) {
+        m.circ(0.1, 0.12, 0.08, '#fff1c8');
+        m.half(-0.1, -0.22, 0.2);
+        m.half(0.16, -0.22, 0.14);
+      },
+    },
     S: {
       myth: 'sun', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'pyramid', // (dáng tháp bậc 4: render/blocks/spire.js)

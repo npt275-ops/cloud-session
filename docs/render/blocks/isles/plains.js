@@ -2,6 +2,7 @@
  * Đảo mẫu: dùng hình gốc của mọi tệp hình dáng (kiểu 'native', render/blocks/style.js), bệ đá, không thêm đồ trang trí.
  * Bảng màu một bậc: wall tường, wall2 tường phụ, roof mái, trim viền gỗ/sắt, stone bệ đá, dark cửa và bóng, accent cờ,
  * glow phần phát sáng, metal sắt thép; light (tuỳ chọn) đá trắng, vữa trắng; upper (tuỳ chọn) tầng trên nhà dân bậc 1.
+ * Cờ: màu và ký hiệu không đổi qua mọi thời (flag).
  * Cần: render/blocks/blocks.js. */
 (function (root) {
   root.BK.Blocks.isle('plains', {
@@ -15,6 +16,16 @@
       { wall: '#323b4c', wall2: '#262d3b', roof: '#1b212c', trim: '#3d475c', stone: '#4c5668', dark: '#0e1219', accent: '#ff3fa4', glow: '#3ff0ff', metal: '#7a879c' },
       { wall: '#f6e7c1', wall2: '#e0c27a', roof: '#e8b440', trim: '#b8892e', stone: '#cfc3a6', dark: '#4a3a6a', accent: '#ff7ad9', glow: '#fff1a8', metal: '#e8d08a' }, // bậc 5 huyền ảo
     ],
+    // cờ vàng, ký hiệu bông lúa (thân lúa cong, hạt so le, một lá)
+    flag: {
+      color: '#e8c234',
+      mark: '#8a4a14',
+      emblem(m) {
+        m.bar(0.02, -0.04, 0.44, 0.03, Math.PI / 2 - 0.2);
+        for (let i = 0; i < 5; i++) m.circ((i % 2 ? 0.06 : -0.02) + i * 0.012, -0.02 + i * 0.055, 0.035);
+        m.bar(-0.08, -0.13, 0.22, 0.03, 0.6);
+      },
+    },
     S: { base: 'slab', myth: 'lotus' }, // (myth: biểu tượng đỉnh bậc 5, render/blocks/mythic.js)
   });
 })(typeof self !== 'undefined' ? self : globalThis);
