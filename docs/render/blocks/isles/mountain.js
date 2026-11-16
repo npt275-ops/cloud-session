@@ -38,8 +38,10 @@
       { wall: '#b8b2a6', wall2: '#8f8a80', roof: '#3f4e5c', trim: '#6b2e2a', stone: '#8a857c', dark: '#2a2420', accent: '#d4a530', glow: '#ffd27a', metal: '#6e665c' },
       { wall: '#c9c2b4', wall2: '#9c9486', roof: '#2f3d4a', trim: '#7a2f2a', stone: '#8f8a80', dark: '#24201c', accent: '#d4a530', glow: '#ffe2a0', metal: '#8a8f96', light: '#dcd6ca', upper: '#c9c2b4' },
       { wall: '#3a3236', wall2: '#2c2629', roof: '#1e1a1c', trim: '#4a3e44', stone: '#564c50', dark: '#120e10', accent: '#ff3a7a', glow: '#ff8a4a', metal: '#8a7a80' },
+      { wall: '#ece8f6', wall2: '#b8b0d8', roof: '#7a6ad8', trim: '#4a3a7a', stone: '#9a94b0', dark: '#2a2244', accent: '#ff8ad0', glow: '#c8b4ff', metal: '#d0c8f0' }, // bậc 5 huyền ảo
     ],
     S: {
+      myth: 'peaks', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'stack', // (dáng tháp bậc 4: render/blocks/spire.js)
       base: 'rock',
       roof: ['flat', 'curved', 'tiered', 'stepped'],

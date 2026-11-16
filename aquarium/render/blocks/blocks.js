@@ -2,7 +2,8 @@
  * Người chơi chốt: mỗi công trình quan trọng là MỘT KHỐI riêng: bấm vào được (đưa máy quay tới, hiện nâng cấp), có máu, có
  * công dụng; cùng loại thì cùng máu, cùng công dụng, chỉ khác hình ảnh (theo bậc và theo đảo) để nhân bản ra sáu đảo.
  *   KINDS   bảy loại: id, tên, máu (thang 10), cỡ chân đế [ngang, sâu], công dụng
- *   TIERS   bốn bậc hình ảnh gom 12 thời: gỗ tre (1–3), đá (4–6), gạch thép (7–9), tương lai (10–12)
+ *   TIERS   năm bậc hình ảnh: gỗ tre (thời 1–3), đá (4–6), gạch thép (7–9), tương lai (10–12), huyền ảo (sau thời 12: công
+ *           trình lơ lửng trên đá bay, pha lê bay quanh, biểu tượng đảo trên đỉnh)
  *   ISLES   sáu đảo (thứ tự logic/world.js KEYS); mỗi đảo một tệp render/blocks/isles/<đảo>.js gọi isle(key, def): tên, bốn bảng
  *           màu (tường, mái, viền, đá, màu cờ, màu sáng), kiểu dáng S (mái, tường, bệ, tuyết, áo lính: render/blocks/style.js),
  *           deco(k, P, t, H, spots, loại) đồ riêng của đảo đặt vào các chỗ trống spots của từng loại (KINDS[i].spots)
@@ -12,13 +13,14 @@
  *   build(loại, bậc, đảo)   trả một THREE.Group đã gộp (một khối); group.userData.block = { kind, tier, skin, hp, hpMax }
  *                   (cùng loại thì cùng máu ở mọi đảo, mọi bậc: chỉ khác hình)
  *   next(khối)      khối cùng loại ở bậc kế (nâng cấp), hay null nếu đã bậc cuối
+ *   animate(khối, giây)  phần chuyển động của khối (Kit con tên 'float…' nhấp nhô, 'spin…' quay quanh trục đứng)
  * Gốc toạ độ của khối: giữa chân đế, sát đất; mặt trước quay về +z. Cần: three.js, render/build/kit3d.js. */
 (function (root) {
   const BK = root.BK || (root.BK = {});
   const KINDS = [
     { id: 'hall', name: 'Nhà chính', hp: 10, size: [8, 8], spots: [[-3.2, -3.2], [3.2, -3.2]], use: 'Mất là thua. Cấp nhà chính mở khoá cấp của các công trình khác.' },
     { id: 'house', name: 'Nhà dân', hp: 5, size: [4, 4], spots: [[1.45, -1.45]], use: 'Dân ở. Mất nhà thì mất số dân đang sống trong đó.' },
-    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [11, 9], spots: [[-2.0, 3.5]], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
+    { id: 'barracks', name: 'Nhà lính', hp: 7, size: [15, 12], spots: [[-2.6, 4.7]], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
     { id: 'workshop', name: 'Xưởng xe', hp: 7, size: [6, 6], spots: [[2.45, -2.3], [-2.3, 2.35]], use: 'Sinh xe tấn công: xe phá cổng, máy bắn đá, về sau là xe tăng.' },
     { id: 'gate', name: 'Cổng thành', hp: 8, size: [14, 5], spots: [[-2.6, -1.7], [2.6, -1.7]], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
     { id: 'wall', name: 'Tường bao', hp: 10, size: [4, 1.4], spots: [], use: 'Bao kín thành. Mỗi đoạn là một khối cùng mẫu, nối khít nhau.' },
@@ -29,6 +31,7 @@
     { name: 'Đá', eras: 'thời 4–6' },
     { name: 'Gạch thép', eras: 'thời 7–9' },
     { name: 'Tương lai', eras: 'thời 10–12', neon: true },
+    { name: 'Huyền ảo', eras: 'sau thời 12' }, // (bậc 5: render/blocks/mythic.js)
   ];
   // đảo: render/blocks/isles/<đảo>.js đăng ký (thứ tự hiển thị theo ISLE_KEYS)
   const ISLE_KEYS = ['plains', 'forest', 'mountain', 'tundra', 'coast', 'desert'],
@@ -39,7 +42,7 @@
   }
   // tường bao và cổng thành nối khít nhau: cùng độ cao theo bậc, cùng bề dày (người chơi chốt: tường kín và dày; thời gỗ
   // tre tường thấp, không đạt chuẩn)
-  const WALL_H = [2.2, 3.0, 3.4, 3.6],
+  const WALL_H = [2.2, 3.0, 3.4, 3.6, 3.8],
     WALL_D = 1.1;
   const SHAPES = {};
   function shape(id, fn) {
@@ -96,11 +99,24 @@
     const b = g && g.userData.block;
     return b && b.tier < TIERS.length - 1 ? build(b.kind, b.tier + 1, b.skin) : null;
   }
+  // phần chuyển động: Kit con 'float…' nhấp nhô quanh chỗ dựng, 'spin…' quay chậm (mỗi phần lệch pha theo tên)
+  function animate(g, sec) {
+    const subs = g.userData.subs;
+    if (!subs) return;
+    let i = 0;
+    for (const name in subs) {
+      const c = subs[name];
+      i++;
+      if (c.userData.y0 == null) c.userData.y0 = c.position.y;
+      if (name.startsWith('float')) c.position.y = c.userData.y0 + Math.sin(sec * 0.9 + i * 1.7) * 0.18;
+      else if (name.startsWith('spin')) c.rotation.y = sec * (0.35 + (i % 3) * 0.1) * (i % 2 ? 1 : -1);
+    }
+  }
   // khối chứa một vật thể con (bấm trúng mảnh nào thì ra khối đó)
   function of(o) {
     for (; o; o = o.parent) if (o.userData && o.userData.block) return o;
     return null;
   }
   // (H: render/blocks/parts.js, render/blocks/style.js)
-  BK.Blocks = { KINDS, TIERS, ISLE_KEYS, ISLES, isle, WALL_H, WALL_D, kind, shape, build, next, of, H: null };
+  BK.Blocks = { KINDS, TIERS, ISLE_KEYS, ISLES, isle, WALL_H, WALL_D, kind, shape, build, next, of, animate, H: null };
 })(typeof self !== 'undefined' ? self : globalThis);

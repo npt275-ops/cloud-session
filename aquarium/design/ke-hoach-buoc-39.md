@@ -12,7 +12,7 @@ chừng 20 phút. Mỗi công trình quan trọng là **một khối riêng**:
 | --- | --- | --- | --- |
 | Nhà chính | 10 | 8×8 | Mất là thua; cấp nhà chính mở khoá cấp công trình khác |
 | Nhà dân | 5 | 4×4 | Dân ở; mất nhà mất dân |
-| Nhà lính | 7 | 11×9 | Sinh lính đánh gần, đánh xa |
+| Nhà lính | 7 | 15×12 | Sinh lính đánh gần, đánh xa |
 | Xưởng xe | 7 | 6×6 | Xe phá cổng, máy bắn đá, về sau xe tăng |
 | Cổng thành | 8 | 14×5 | Lối vào duy nhất; hai chòi gác chỉ báo tin |
 | Tường bao | 10 | 4×1,4 | Bao kín; mỗi đoạn một khối, nối khít |
@@ -53,6 +53,17 @@ trình biểu tượng cạnh nhà chính và dáng tháp bậc 4. Mỗi đảo 
 | Cát Hồng | lều vải, vòm đất, bằng, củ hành | đất bo tròn, đầu xà | gạch nung | kim tự tháp bậc | giếng, cột đá, tháp gọi, kim tự tháp sáng | khăn quấn |
 
 Trang mẫu: hàng nút chọn đảo (`?dao=forest` chọn sẵn).
+
+## Lần 3 (người chơi chốt): nhà lính rộng hơn, cửa thật hơn, thêm bậc 5
+
+- Nhà lính 15 × 12: hai dãy nhà rộng thêm, sân tập dãn ra (đồ trong sân đặt theo lưới gốc rồi dãn bằng X, Z), thêm hình nộm,
+  bia, giá vũ khí, lính tập; đội hình bậc 3 thành 3 × 5.
+- Cửa chính, cửa sổ, lan can, hiên (render/blocks/parts.js): cửa có ô lõm, khung, lanh tô, cánh theo bậc (ván, ô nổi, ô kính
+  trên), tay nắm, bậc thềm; cửa sổ có ô lõm, kính, khung, song chữ thập, bậu, lanh tô, cánh chớp; lan can có trụ đầu, tay vịn
+  tròn, song tiện; hiên có sàn, cột, xà chéo, mái hiên, bậc lên (nhà dân bậc 2).
+- Bậc 5 Huyền ảo (render/blocks/mythic.js): công trình trên tảng đá bay, vòng chữ cổ, trụ sáng, bậc đá bay, pha lê bay quanh,
+  biểu tượng đỉnh theo đảo (sen vàng, cây linh hồn, núi bay có thác sáng, cụm pha lê, cầu nước, mặt trời vàng). Phần lơ lửng
+  nhấp nhô, phần bay quay (BK.Blocks.animate). Bảng màu bậc 5 riêng từng đảo.
 
 ## Cách thêm
 

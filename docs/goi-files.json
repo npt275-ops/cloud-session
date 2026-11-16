@@ -545,6 +545,11 @@
   "mode": 420
  },
  {
+  "path": "BeKinh/render/blocks/mythic.js",
+  "src": "render/blocks/mythic.js",
+  "mode": 420
+ },
+ {
   "path": "BeKinh/render/blocks/parts.js",
   "src": "render/blocks/parts.js",
   "mode": 420

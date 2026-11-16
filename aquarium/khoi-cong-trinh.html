@@ -112,6 +112,7 @@
 <script src="render/blocks/parts.js"></script>
 <script src="render/blocks/style.js"></script>
 <script src="render/blocks/spire.js"></script>
+<script src="render/blocks/mythic.js"></script>
 <script src="render/blocks/isles/props.js"></script>
 <script src="render/blocks/isles/plains.js"></script>
 <script src="render/blocks/isles/forest.js"></script>
@@ -152,15 +153,15 @@
     Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 220 });
     scene.add(sun);
     // nền cỏ, mỗi bậc một dải đất
-    const SX = 16,
-      SZ = 15,
+    const SX = 18,
+      SZ = 17,
       KN = B.KINDS.length,
       TN = B.TIERS.length;
     const ground = new T.Mesh(new T.PlaneGeometry(400, 400), new T.MeshStandardMaterial({ color: '#8fbf63', roughness: 1 }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
-    const laneCol = ['#c9b07a', '#b9b3a2', '#a9a49b', '#c7d0d6'];
+    const laneCol = ['#c9b07a', '#b9b3a2', '#a9a49b', '#c7d0d6', '#d9cfee'];
     for (let t = 0; t < TN; t++) {
       const lane = new T.Mesh(new T.PlaneGeometry(SX * KN + 6, SZ - 3), new T.MeshStandardMaterial({ color: laneCol[t], roughness: 1 }));
       lane.rotation.x = -Math.PI / 2;
@@ -224,7 +225,7 @@
     buildAll();
 
     /* ---------- máy quay bay tới ---------- */
-    const HOME = { pos: new T.Vector3(0, 98, 122), target: new T.Vector3(0, 0, 4) };
+    const HOME = { pos: new T.Vector3(0, 110, 140), target: new T.Vector3(0, 0, 4) };
     camera.position.copy(HOME.pos);
     controls.target.copy(HOME.target);
     let fly = null;
@@ -349,6 +350,7 @@
         if (pop.u >= 1) { pop.g.scale.set(1, 1, 1); pop = null; }
         outline(sel);
       }
+      for (const sl of slots) B.animate(sl.g, now / 1000); // (bậc 5: phần lơ lửng nhấp nhô, pha lê bay quanh)
       controls.update();
       renderer.render(scene, camera);
       requestAnimationFrame(frame);

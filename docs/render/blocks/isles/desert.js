@@ -42,8 +42,10 @@
       { wall: '#dba88c', wall2: '#c08a70', roof: '#d9a080', trim: '#6a3e28', stone: '#d8b89c', dark: '#38221a', accent: '#2a8a8a', glow: '#ffd27a', metal: '#8a6a50', upper: '#e4b498' },
       { wall: '#e8c0a8', wall2: '#c99a84', roof: '#2a8a8a', trim: '#7a4a32', stone: '#dcbca0', dark: '#2e1c14', accent: '#d4a530', glow: '#ffe2a0', metal: '#a08a70', light: '#f4e4d4' },
       { wall: '#3e2a3a', wall2: '#2e202c', roof: '#1e141c', trim: '#4e3448', stone: '#5a4250', dark: '#140c12', accent: '#ffb84a', glow: '#ff6ac8', metal: '#a08090' },
+      { wall: '#fff0e0', wall2: '#ffc8a8', roof: '#ff8a6a', trim: '#c86a4a', stone: '#f0d0b0', dark: '#4a1a3a', accent: '#ffd84a', glow: '#ffb0f0', metal: '#ffe0c0' }, // bậc 5 huyền ảo
     ],
     S: {
+      myth: 'sun', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'pyramid', // (dáng tháp bậc 4: render/blocks/spire.js)
       base: 'tile',
       roof: ['tent', 'dome', 'flat', 'onion'],

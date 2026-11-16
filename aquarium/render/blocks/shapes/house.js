@@ -4,7 +4,8 @@
  *   bậc 0 gỗ tre    nhà sàn một tầng vách tre, mái rơm, thang gỗ, rơm và chum nước, hàng rào tre
  *   bậc 1 đá        hai tầng: tầng dưới đá, tầng trên khung gỗ chìa ra, mái ngói cong nhẹ, ống khói đá, hộp hoa, ghế
  *   bậc 2 gạch thép ba tầng gạch: gờ tầng, ban công lan can sắt tầng 2 và 3, mái hiên cửa, mái bằng có tường chắn, bồn nước
- *   bậc 3 tương lai ba tầng lệch nhau chìa ra (nhà neon), dải kính sáng, vườn trên mái, ăng-ten (viền neon: blocks.js) */
+ *   bậc 3 tương lai ba tầng lệch nhau chìa ra (nhà neon), dải kính sáng, vườn trên mái, ăng-ten (viền neon: blocks.js)
+ *   bậc 4 huyền ảo  nhà kén tròn trên tảng đá bay, bậc đá bay, trụ sáng, biểu tượng đảo trên nóc (render/blocks/mythic.js) */
 (function (root) {
   const BK = root.BK;
   const K = () => BK.BuildKit;
@@ -19,7 +20,8 @@
       if (H.wall(k, P, 0, { w: 2.2, h: 1.3, d: 1.8, x: 0, y: fl, z: -0.1 }) === 'native')
         for (const x of [-1.05, -0.35, 0.35, 1.05]) k.add(B.box(0.06, 1.3, 0.06, 0.01), P.wall2, x, fl, 0.82); // nẹp tre
       H.roof(k, P, 0, { w: 3.0, h: 1.3, d: 2.6, tw: 2.4, td: 0.2, lift: 0.35, x: 0, y: fl + 1.3, z: -0.1 });
-      H.door(k, P, -0.45, fl, 0.8, 0.55, 0.95);
+      H.door(k, P, -0.45, fl, 0.8, 0.55, 0.95, 0);
+      H.rail(k, P.trim, 0.0, 1.2, fl, 1.0, 0.4, 5); // lan can sàn trước
       H.win(k, P, 0, 0.5, fl + 0.7, 0.8, 0.45, 0.35);
       for (let i = 0; i < 4; i++) k.add(B.box(0.5, 0.05, 0.08, 0.01), P.trim, -0.45, y0 + 0.08 + i * 0.12, 1.1 + i * 0.03); // thang
       k.add(B.cone(0.45, 0.7, 7), '#d8bf78', 1.25, y0, 1.25); // đống rơm
@@ -38,7 +40,8 @@
       H.roof(k, P, 1, { w: 3.4, h: 1.0, d: 3.0, tw: 3.0, td: 0.25, lift: 0.3, x: 0, y: f2 + 1.27, z: -0.2 });
       k.add(B.box(0.45, 1.3, 0.45, 0.04, true), P.stone, 0.85, f2 + 1.0, -0.8); // ống khói
       k.add(B.box(0.55, 0.1, 0.55, 0.02, true), P.dark, 0.85, f2 + 2.3, -0.8);
-      H.door(k, P, -0.55, y0, 0.9, 0.6, 1.0);
+      H.door(k, P, -0.55, y0 + 0.1, 0.9, 0.6, 1.0, 1);
+      H.porch(k, P, 1, -0.55, y0 + 0.1, 0.9, 1.3, 0.65, 1.05); // hiên trước cửa
       H.win(k, P, 1, 0.55, y0 + 0.75, 0.9, 0.5, 0.45);
       for (const x of [-0.75, 0.75]) {
         H.win(k, P, 1, x, f2 + 0.6, 1.0, 0.5, 0.45);
@@ -105,6 +108,24 @@
       k.add(B.post(0.04, 1.2, 4), P.metal, 0.75, yr, -0.9);
       k.add(B.ball(0.1, 0), P.accent, 0.75, yr + 1.25, -0.9, { glow: true });
       k.add(B.box(0.08, hf * 3, 0.08, 0.01, true), P.accent, 1.3, y0, 0.98, { glow: true });
+    },
+    // nhà kén lơ lửng: vòng chữ cổ, trụ sáng, ba bậc đá bay, kén tròn trên tảng đá bay, biểu tượng đảo nhỏ trên nóc
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        ry = y0 + 1.7;
+      H.runes(k, P, 0, y0, 0, 1.55);
+      H.beam(k, P, 0, y0, 0, 0.25, ry - 1.1 - y0 + 0.1);
+      const st = k.sub('float1', [0, 0, 0]);
+      for (let i = 0; i < 3; i++) st.add(B.box(0.6, 0.1, 0.4, 0.02, true), P.stone, 0.9 - i * 0.35, y0 + 0.35 + i * 0.45, 1.5 - i * 0.2);
+      const f = k.sub('float0', [0, ry, 0]);
+      H.floatRock(f, P, 0, 0, 0, 1.55, 1.1);
+      f.add(B.lathe([[1.0, 0], [1.15, 0.5], [1.05, 1.2], [0.7, 1.65], [0.01, 1.8]], 12), P.wall, 0, 0.1, 0);
+      H.torus(f, P.glow, 1.16, 0.04, 0, 0.75, 0, { glow: true });
+      for (const x of [0.62, -0.62]) H.win(f, P, 4, x, 1.2, 0.86, 0.26, 0.3);
+      H.door(f, P, 0, 0.1, 1.02, 0.45, 0.8, 4);
+      H.crown(f, P, 0, 1.85, 0, 0.6);
+      H.orbit(k, P, 'spin0', 0, ry + 1.2, 0, 1.8, 4);
     },
   ];
   BK.Blocks.shape('house', (k, P, t, H) => {

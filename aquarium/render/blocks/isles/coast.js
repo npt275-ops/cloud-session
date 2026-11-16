@@ -32,8 +32,10 @@
       { wall: '#e8e2d6', wall2: '#cfc6b4', roof: '#2f7a8a', trim: '#2a5a7a', stone: '#cfc2a2', dark: '#22303a', accent: '#2a8ac8', glow: '#ffd27a', metal: '#7a8a90', upper: '#e8e2d6' },
       { wall: '#f4f2ec', wall2: '#d8e4ea', roof: '#3a7ab8', trim: '#2a5a8a', stone: '#d8ccb0', dark: '#1c2a38', accent: '#e85a3a', glow: '#ffe2a0', metal: '#8aa0b0', light: '#ffffff' },
       { wall: '#24384a', wall2: '#1a2a3a', roof: '#122030', trim: '#2a4a64', stone: '#3a5468', dark: '#0a121a', accent: '#4a9aff', glow: '#3affd8', metal: '#7a9ab0' },
+      { wall: '#e8fbff', wall2: '#9ae6f0', roof: '#3ac8d8', trim: '#2a7aa0', stone: '#f0e6c8', dark: '#0a2a4a', accent: '#ff9ab8', glow: '#8affea', metal: '#d8f8ff' }, // bậc 5 huyền ảo
     ],
     S: {
+      myth: 'wave', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'sail', // (dáng tháp bậc 4: render/blocks/spire.js)
       base: 'sand',
       roof: ['thatch', 'hip', 'flat', 'sail'],

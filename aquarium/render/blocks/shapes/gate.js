@@ -10,6 +10,7 @@
  *                   chắn, bao cát, cột đèn
  *   bậc 3 tương lai hai trụ neon có vành sáng, sàn tròn và súng tháp; vòng biểu tượng sáng trên cổng; màn chắn năng lượng;
  *                   cọc chắn sáng (viền neon: blocks.js)
+ *   bậc 4 huyền ảo  hai tháp bay trên bệ có vòng chữ cổ, vòm năng lượng, màn sáng, biểu tượng đảo trên lầu cổng
  * Gốc khối: giữa cổng, mặt ngoài quay về +z. */
 (function (root) {
   const BK = root.BK;
@@ -217,6 +218,35 @@
         H.torus(k, P.glow, 0.16, 0.03, x, y0 + 0.55, 1.7, { glow: true });
       }
       for (const s of [-1, 1]) H.guard(k, P, 3, s * 1.8, y0, 1.2);
+    },
+    // cổng huyền ảo: hai tháp bay trên bệ có vòng chữ cổ và trụ sáng (dáng tháp của đảo, hay tháp vuông nhọn), lính đứng sàn tháp;
+    // vòm năng lượng trước cổng, màn sáng, biểu tượng đảo trên lầu cổng, pha lê bay quanh
+    (k, P, H, wallH) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        th = wallH + 2.6;
+      for (const s of [-1, 1]) {
+        const x = s * XS;
+        k.add(B.lathe([[1.3, 0], [1.3, 0.3], [1.0, 0.45], [0.01, 0.45]], 10), P.stone, x, y0, 0);
+        H.runes(k, P, x, y0 + 0.45, 0, 1.15);
+        H.beam(k, P, x, y0 + 0.45, 0, 0.3, 0.6);
+        const f = k.sub('float' + (s + 1), [x, y0 + 1.2, 0]);
+        if (H.hasSpire(P)) H.spire(f, P, 0, 0, 0, th - 1.0, 1.1);
+        else f.add(B.roof(1.9, th - 1.0, 1.9, 0.04, 0.9, 0.9), P.wall, 0, 0, 0);
+        f.add(B.lathe([[0.4, -0.25], [1.4, 0], [1.4, 0.14], [0.01, 0.14]], 12), P.roof, 0, th - 1.0, 0);
+        H.torus(f, P.glow, 1.35, 0.04, 0, th - 0.4, 0, { glow: true });
+        for (const dx of [-0.45, 0.45]) H.guard(f, P, 4, dx, th - 0.86, 0.2);
+        H.flag(f, P, -s * 0.9, th - 0.86, -0.9, 1.9, 0.9);
+      }
+      const gh = walls(k, P, 4, wallH);
+      walkway(k, P, 4, wallH, P.wall2);
+      H.lightBox(k, P, 4, END * 2 - 0.2, 0.08, 0.06, 0, y0 + wallH - 0.3, BK.Blocks.WALL_D / 2 + 0.02);
+      k.add(B.box(GW - 0.1, gh - 0.1, 0.06, 0.01, true), P.glow, 0, y0, 0, { glow: true });
+      const arch = new root.THREE.TorusGeometry(GW / 2 + 0.25, 0.12, 6, 28, Math.PI);
+      k.add(arch, P.accent, 0, y0, BK.Blocks.WALL_D / 2 + 0.25, { glow: true });
+      H.crown(k, P, 0, y0 + wallH, 0, 1.0);
+      H.orbit(k, P, 'spin0', 0, y0 + wallH + 1.8, 0, 1.5, 5);
+      for (const s of [-1, 1]) H.guard(k, P, 4, s * 1.9, y0, 1.2);
     },
   ];
   BK.Blocks.shape('gate', (k, P, t, H) => {

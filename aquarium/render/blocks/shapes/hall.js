@@ -5,7 +5,9 @@
  *   bậc 1 đá        cung đá: hai tầng nền đá, điện chính mái ngói hai tầng cong góc, hàng cột đỏ, hai đèn đá, hai cột cờ
  *   bậc 2 gạch thép dinh thự: hai tầng gạch, hiên cột trắng có trán tường, hai cánh nhà, tháp đồng hồ mái vòm đồng xanh
  *   bậc 3 tương lai tháp neon: bệ tròn, thân tháp thon sẫm có sọc sáng, ba đĩa sàn có vành sáng, đỉnh ăng-ten sáng
- *                   (viền neon dọc mọi cạnh: blocks.js) */
+ *                   (viền neon dọc mọi cạnh: blocks.js)
+ *   bậc 4 huyền ảo  điện trên tảng đá bay: vòng chữ cổ, trụ sáng, bậc đá bay, tháp của đảo hay chùa vàng ba tầng, biểu tượng
+ *                   đảo trên đỉnh, pha lê bay vòng quanh (render/blocks/mythic.js) */
 (function (root) {
   const BK = root.BK;
   const K = () => BK.BuildKit;
@@ -133,6 +135,46 @@
       k.add(B.ball(0.28, 1), P.accent, 0, y0 + 12.5, 0, { glow: true });
       H.torus(k, P.glow, 0.9, 0.04, 0, y0 + 11.2, 0, { glow: true });
       H.flag(k, P, 0.9, y0 + 9.0, 0, 1.6, 0.9);
+    },
+    // điện huyền ảo: vòng chữ cổ, trụ sáng, bậc đá bay lên tảng đá lơ lửng; trên đá là tháp của đảo (hay chùa vàng ba tầng),
+    // biểu tượng đảo trên đỉnh, pha lê bay vòng quanh
+    (k, P, H) => {
+      const B = K(),
+        y0 = H.PLINTH,
+        ry = y0 + 3.4; // mặt tảng đá
+      H.runes(k, P, 0, y0, 0, 3.4);
+      H.beam(k, P, 0, y0, 0, 0.6, ry - 2.4 - y0 + 0.2);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + 0.5;
+        k.add(B.cone(0.22, 1.3, 5), i % 2 ? P.wall2 : P.glow, Math.cos(a) * 3.1, y0, Math.sin(a) * 3.1, i % 2 ? null : { glow: true });
+      }
+      const st = k.sub('float1', [0, 0, 0]); // bậc đá bay
+      for (let i = 0; i < 6; i++) {
+        const a = 0.35 + i * 0.22;
+        st.add(B.box(0.9, 0.14, 0.5, 0.03, true), P.stone, Math.sin(a) * 3.4, y0 + 0.4 + i * 0.5, Math.cos(a) * 3.4, { rot: [0, a, 0] });
+      }
+      const f = k.sub('float0', [0, ry, 0]);
+      H.floatRock(f, P, 0, 0, 0, 3.0, 2.4);
+      let top;
+      if (H.hasSpire(P)) {
+        H.wall(f, P, 4, { w: 4.0, h: 1.7, d: 3.0, x: 0, y: 0.1, z: 0 });
+        for (const x of [-1.2, 0, 1.2]) H.lightBox(f, P, 4, 0.55, 1.1, 0.06, x, 0.75, 1.52);
+        H.spire(f, P, 0, 1.8, -0.2, 6.2, 1.25);
+        top = 8.1;
+      } else {
+        // chùa vàng ba tầng mái cong
+        [[3.8, 1.4, 3.0], [2.7, 1.1, 2.1], [1.7, 0.9, 1.3]].reduce((y, [w, h, d]) => {
+          H.wall(f, P, 4, { w, h, d, x: 0, y, z: 0 });
+          H.lightBox(f, P, 4, w * 0.6, h * 0.4, 0.06, 0, y + h * 0.55, d / 2 + 0.02);
+          H.roof(f, P, 4, { w: w + 1.0, h: 0.8, d: d + 0.9, tw: w * 0.5, td: 0.3, lift: 0.6, x: 0, y: y + h, z: 0 });
+          top = y + h + 0.8;
+          return y + h + 0.7;
+        }, 0.1);
+      }
+      H.door(f, P, 0, 0.1, 1.5, 0.9, 1.3, 4);
+      H.crown(f, P, 0, top, -0.2, 1.4);
+      H.flag(f, P, 2.4, 0.1, 1.2, 2.2, 0.9);
+      H.orbit(k, P, 'spin0', 0, ry + 3.0, 0, 4.0, 6);
     },
   ];
   // tháp gốc bậc 4 (Lúa Vàng): thân thon, sọc sáng dọc bốn mặt, ba đĩa sàn có vành sáng (nhỏ dần lên cao)

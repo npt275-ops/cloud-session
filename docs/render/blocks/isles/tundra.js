@@ -33,8 +33,10 @@
       { wall: '#8a6a4c', wall2: '#6a5038', roof: '#5a4a3e', trim: '#4a3a2c', stone: '#9aa6ae', dark: '#2a221c', accent: '#3a7ac8', glow: '#ffd27a', metal: '#7a8088' },
       { wall: '#c84a3a', wall2: '#9a3a2e', roof: '#3a4048', trim: '#f0f0ea', stone: '#9aa6ae', dark: '#22262a', accent: '#3a7ac8', glow: '#ffe2a0', metal: '#9aa4ae', light: '#f0f2f2', upper: '#c84a3a' },
       { wall: '#2c3648', wall2: '#222a3a', roof: '#182030', trim: '#3a4660', stone: '#4a5670', dark: '#0c1018', accent: '#b48aff', glow: '#7ae8ff', metal: '#8a96b0' },
+      { wall: '#eaf8ff', wall2: '#bfe8ff', roof: '#8ad8ff', trim: '#5a8ab8', stone: '#d8eef8', dark: '#1a2a4a', accent: '#c89aff', glow: '#a8f4ff', metal: '#e0f4ff' }, // bậc 5 huyền ảo
     ],
     S: {
+      myth: 'crystal', // (biểu tượng đỉnh bậc 5: render/blocks/mythic.js)
       spire: 'crystal', // (dáng tháp bậc 4: render/blocks/spire.js)
       base: 'snow',
       snow: true,
