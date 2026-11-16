@@ -21,7 +21,7 @@
     { id: 'hall', name: 'Nhà chính', hp: 10, size: [8, 8], spots: [[-3.2, -3.2], [3.2, -3.2]], use: 'Mất là thua. Cấp nhà chính mở khoá cấp của các công trình khác.' },
     { id: 'house', name: 'Nhà dân', hp: 5, size: [4, 4], spots: [[1.45, -1.45]], use: 'Dân ở. Mất nhà thì mất số dân đang sống trong đó.' },
     { id: 'barracks', name: 'Nhà lính', hp: 7, size: [15, 12], spots: [[-2.6, 4.7]], use: 'Sinh lính đánh gần và lính đánh xa. Nâng cấp thì lính mạnh hơn, đông hơn.' },
-    { id: 'workshop', name: 'Xưởng xe', hp: 7, size: [6, 6], spots: [[2.45, -2.3], [-2.3, 2.35]], use: 'Sinh xe tấn công: xe phá cổng, máy bắn đá, về sau là xe tăng.' },
+    { id: 'workshop', name: 'Xưởng xe', hp: 7, size: [10, 9], spots: [[4.3, -3.9], [-4.3, 3.9]], use: 'Sinh xe tấn công: xe phá cổng, máy bắn đá, về sau là xe tăng.' },
     { id: 'gate', name: 'Cổng thành', hp: 8, size: [14, 5], spots: [[-2.6, -1.7], [2.6, -1.7]], use: 'Lối vào duy nhất: địch phải phá cổng trước. Hai chòi gác hai bên báo tin.' },
     { id: 'wall', name: 'Tường bao', hp: 10, size: [4, 1.4], spots: [], use: 'Bao kín thành. Mỗi đoạn là một khối cùng mẫu, nối khít nhau.' },
     { id: 'granary', name: 'Kho lương', hp: 6, size: [6, 6], spots: [[2.35, 2.35], [2.4, -2.3]], use: 'Nuôi dân và lính; về sau là nguồn tiền nâng cấp. Mất kho thì dân đói, lính yếu.' },

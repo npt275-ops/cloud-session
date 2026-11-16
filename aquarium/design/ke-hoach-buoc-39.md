@@ -13,7 +13,7 @@ chừng 20 phút. Mỗi công trình quan trọng là **một khối riêng**:
 | Nhà chính | 10 | 8×8 | Mất là thua; cấp nhà chính mở khoá cấp công trình khác |
 | Nhà dân | 5 | 4×4 | Dân ở; mất nhà mất dân |
 | Nhà lính | 7 | 15×12 | Sinh lính đánh gần, đánh xa |
-| Xưởng xe | 7 | 6×6 | Xe phá cổng, máy bắn đá, về sau xe tăng |
+| Xưởng xe | 7 | 10×9 | Xe phá cổng, máy bắn đá, về sau xe tăng |
 | Cổng thành | 8 | 14×5 | Lối vào duy nhất; hai chòi gác chỉ báo tin |
 | Tường bao | 10 | 4×1,4 | Bao kín; mỗi đoạn một khối, nối khít |
 | Kho lương | 6 | 6×6 | Nuôi dân và lính; nguồn tiền nâng cấp |
@@ -64,6 +64,12 @@ Trang mẫu: hàng nút chọn đảo (`?dao=forest` chọn sẵn).
 - Bậc 5 Huyền ảo (render/blocks/mythic.js): công trình trên tảng đá bay, vòng chữ cổ, trụ sáng, bậc đá bay, pha lê bay quanh,
   biểu tượng đỉnh theo đảo (sen vàng, cây linh hồn, núi bay có thác sáng, cụm pha lê, cầu nước, mặt trời vàng). Phần lơ lửng
   nhấp nhô, phần bay quay (BK.Blocks.animate). Bảng màu bậc 5 riêng từng đảo.
+
+## Lần 4: xưởng xe lớn hơn (10 × 9)
+
+Xưởng chính cửa rất rộng (gỗ: hai cánh mở xoè; gạch thép: cửa cuốn kéo nửa; tương lai: lòng cửa sáng), nhà phụ bên trái
+(lán đồ nghề, lò rèn có lửa, kho, phòng máy), sân trước có cỗ máy của thời đó: xe phá cổng có mái che, máy bắn đá có đối
+trọng, xe tăng, xe tăng bay; cần trục chữ A, giàn cẩu, tay máy; đống gỗ, đạn đá, thùng dầu, bàn thợ, thợ đứng.
 
 ## Cách thêm
 
