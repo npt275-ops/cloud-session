@@ -1,0 +1,39 @@
+# SamBox
+
+Dự án mới, dựng lại từ đầu. Dự án cũ `aquarium/` giữ nguyên làm tư liệu, SamBox không dùng chung code với nó.
+
+## Cách làm: "ảnh mô phỏng đích"
+
+Mỗi phương án được chốt bằng một bản chạy được và ảnh chụp từ chính bản đó. Bước 1 là đồ hoạ và 3 hòn đảo trống
+(chưa có công trình, chưa có nhân vật).
+
+## Phong cách đồ hoạ (theo kho 15 ảnh tham chiếu)
+
+- Chính: ảnh 5–14 (đảo ấm áp, cây tán bông, cỏ/oải hương/lúa rung theo gió, viền sáng ngược nắng, trời tím vàng,
+  vách đá vẽ tay, bloom và chỉnh màu) và ảnh 15 (phong cảnh).
+- Ảnh 1: độ dễ đọc khi xây. Ảnh 2–4 (PBR nặng): chỉ lấy ý tưởng.
+- Nhẹ để chạy được trên điện thoại và máy tính: hai mức đồ hoạ Thấp/Cao, tự chọn theo máy, `?q=low|high` để ép.
+
+## Ba đảo
+
+| Đảo | Chất liệu | Điểm nhấn |
+| --- | --- | --- |
+| Đồng Bằng (plains) | núi đồi bậc thềm, vách đá vôi ấm | rừng cây tán bông, ruộng oải hương, lúa mì, hồ trên cao |
+| Sa Mạc (desert) | đồi cát, mesa nhiều vân đá | trụ đá, hẻm núi, ốc đảo có cọ |
+| Tuyết (tundra) | khối núi lớn, đá xám lộ dưới tuyết | rừng thông, hồ băng |
+
+## Chạy
+
+Mở `index.html` qua một máy chủ tĩnh bất kỳ (three.js đã đặt sẵn trong `vendor/`, không cần mạng).
+
+Tham số URL: `?dao=all|plains|desert|tundra`, `?buoi=dawn|noon|sunset|night`, `?q=low|high`.
+
+Kiểm thử: `npm test` (nhiễu tất định, thứ tự độ cao ba đảo, tỉ lệ đất, có vách dốc, đáy biển giữa các đảo).
+
+## Cấu trúc
+
+- `src/core/`: nhiễu có hạt giống, mức đồ hoạ, ghép hình học.
+- `src/world/`: hình dạng ba đảo (`islands/`), bố cục, địa hình, biển, trời, các buổi trong ngày.
+- `src/nature/`: cây, cỏ, gió, rải cây, đom đóm.
+- `src/fx/`: vật liệu kiểu tranh (viền sáng, xuyên sáng lá, gió) và hậu kỳ (bloom, chỉnh màu).
+- `src/ui/hud.js`: thanh chọn đảo, buổi, mức đồ hoạ, FPS.
