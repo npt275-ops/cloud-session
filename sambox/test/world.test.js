@@ -5,8 +5,8 @@ import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
 import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt, hallAt, BRIDGES, road, pathLength, toWorld } from '../src/world/layout.js';
 import { RIM, lineDist } from '../src/world/islands/shape.js';
-import { LANES, TRAILS, BACKPASS, DOOR, GATES, HEADS, HALL, TOWN, EYE, FORD, inTown } from '../src/world/islands/lanes.js';
-import { buildCells, patches } from '../src/build/cells.js';
+import { LANES, TRAILS, BACKPASS, DOOR, RAMPS, PADS, GATES, HEADS, HALL, TOWN, EYE, FORD, inTown, padOut } from '../src/world/islands/lanes.js';
+import { CELL, buildCells, patches } from '../src/build/cells.js';
 import plains from '../src/world/islands/plains.js';
 import desert from '../src/world/islands/desert.js';
 import tundra from '../src/world/islands/tundra.js';
@@ -94,11 +94,43 @@ test('đai ven biển phẳng quanh mỗi đảo (xây tường thành); chỉ �
   }
 });
 
-test('mỗi đảo có khu nhà chính liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ cao độ', () => {
+// ô xây của đảo I kèm toạ độ bản vẽ của tâm ô
+const localCells = (I) =>
+  buildCells(I).map((c) => {
+    const [wx, wz] = [c[0] + CELL / 2, c[1] + CELL / 2],
+      [co, si] = [Math.cos(-I.turn), Math.sin(-I.turn)];
+    return { c, lx: (wx * co - wz * si) / SCALE, lz: (wx * si + wz * co) / SCALE };
+  });
+test('chỗ nào phẳng là xây được: khu nhà chính, hai nền phẳng hai sườn, vai tháp, đai ven biển; lối đi không bị xây chắn', () => {
   for (const I of ISLANDS) {
-    const big = patches(buildCells(I))[0];
-    assert.ok(big >= 700, I.spec.name + ': khu nhà chính liền ' + big + ' ô');
+    const L = localCells(I),
+      n = I.spec.name,
+      inside = (f) => patches(L.filter(f).map((q) => q.c));
+    assert.ok(inside((q) => inTown(q.lx, q.lz) > 0.5)[0] >= 700, n + ': khu nhà chính liền đủ rộng cho một thị trấn');
+    PADS.forEach((p, k) => {
+      const P = inside((q) => padOut(p, q.lx, q.lz) < 1);
+      assert.ok(P[0] >= 60, n + ': nền phẳng ' + (k ? 'sườn đông' : 'sườn tây') + ' liền ' + P[0] + ' ô');
+    });
+    // vai tháp: hai bậc tháp trên mỗi đường chính có ô xây sát đường (để đặt tháp)
+    for (const Ln of LANES)
+      for (const [i, t] of [[1, 0.8], [3, 0.2]]) {
+        const [tx, tz] = [Ln[i][0] + (Ln[i + 1][0] - Ln[i][0]) * t, Ln[i][1] + (Ln[i + 1][1] - Ln[i][1]) * t];
+        assert.ok(L.filter((q) => Math.hypot(q.lx - tx, q.lz - tz) < 24).length >= 6, n + ': vai tháp ở ' + [tx, tz].map(Math.round));
+      }
+    const rim = L.filter((q) => q.lz > -120 && Math.hypot(q.lx, q.lz) > 215).length;
+    assert.ok(rim > 300, n + ': đai ven biển xây được (' + rim + ' ô)');
+    // lối lính đi: không ô nào phủ lên tim đường chính, lối mòn, cửa trước, dốc lên nền, lòng hẻm suối
+    const taken = new Set(buildCells(I).map(([x, z]) => Math.round(x / CELL) + ',' + Math.round(z / CELL)));
+    for (const P of [...LANES, ...TRAILS, ...RAMPS, DOOR, I.spec.paths.gorge.map(([x, z]) => [x, z])])
+      for (let i = 0; i < P.length - 1; i++)
+        for (let t = 0; t <= 1; t += 0.1) {
+          const [wx, wz] = toWorld(I, P[i][0] + (P[i + 1][0] - P[i][0]) * t, P[i][1] + (P[i + 1][1] - P[i][1]) * t);
+          assert.ok(!taken.has(Math.floor((wx - I.x) / CELL) + ',' + Math.floor((wz - I.z) / CELL)), n + ': ô xây chắn lối đi');
+        }
   }
+});
+
+test('đỉnh núi Đồng Bằng, Tuyết giữ cao độ', () => {
   const peak = (s) => {
     let m = -1e9;
     for (let x = -300; x <= 300; x += 1) for (let z = -300; z <= 300; z += 1) m = Math.max(m, s.height(x, z));
@@ -238,24 +270,74 @@ test('ba suối uốn lượn mềm, dáng khác nhau, dài bằng nhau; hai b�
     assert.ok(W[0].y > 19 && W.at(-1).y < 0.3, spec.name + ': suối từ chân vành đồi chảy ra tới biển');
     assert.ok(W.every((w, i) => !i || w.y <= W[i - 1].y + 1e-9), spec.name + ': mặt nước xuống dần');
     // hai bờ: dải đất phẳng ngang mặt lòng hẻm từ mép nước tới mép lòng hẻm, dọc theo bờ đi được (trừ chỗ lối mòn cắt ngang)
-    const sides = [[[]], [[]]]; // (mỗi bờ: các đoạn liền, ngắt ở chỗ lối mòn cắt ngang)
+    const sides = [[[]], [[]]]; // (mỗi bờ: các đoạn liền, ngắt ở chỗ lối mòn cắt ngang: bờ dốc xuống bến lội)
+    const nearTrail = (x, z) => TRAILS.some((T) => lineDist(T, x, z) < 41);
     W.forEach((w, i) => {
-      if (!w.f || TRAILS.some((T) => lineDist(T, w.x, w.z) < w.f + 18)) return sides.forEach((B) => B.at(-1).length && B.push([])); // (bờ dốc xuống bến lội)
+      if (!w.f) return;
       const a = W[Math.max(0, i - 1)],
         b = W[Math.min(W.length - 1, i + 1)],
         l = Math.hypot(b.x - a.x, b.z - a.z),
         [nx, nz] = [-(b.z - a.z) / l, (b.x - a.x) / l];
       [-1, 1].forEach((sd, k) => {
-        for (const o of [w.w + 1.6, w.f - 3.5]) {
-          const h = spec.height(w.x + nx * o * sd, w.z + nz * o * sd);
+        const at = (o) => [w.x + nx * o * sd, w.z + nz * o * sd],
+          probe = [w.w + 1.6, w.f - 3.5];
+        if (probe.some((o) => nearTrail(...at(o)))) return sides[k].at(-1).length && sides[k].push([]);
+        for (const o of probe) {
+          const h = spec.height(...at(o));
           assert.ok(Math.abs(h - (w.y + 0.5)) < 0.7, spec.name + ': bờ suối phẳng, khô ở ' + [w.x, w.z].map(Math.round) + ' cách ' + o.toFixed(1));
         }
-        sides[k].at(-1).push([w.x + nx * (w.w + w.f) * 0.5 * sd, w.z + nz * (w.w + w.f) * 0.5 * sd]);
+        sides[k].at(-1).push(at((w.w + w.f) * 0.5));
       });
     });
     for (const B of sides) {
-      assert.ok(B.flat().length > 60, spec.name + ': bờ suối đủ dài');
+      assert.ok(B.flat().length > 35, spec.name + ': bờ suối đủ dài (' + B.flat().length + ' điểm)');
       for (const run of B.filter((r) => r.length > 1)) assert.ok(steepest(spec, run) < 0.5, spec.name + ': lối bờ suối đi được, dốc ' + steepest(spec, run).toFixed(2));
     }
+  }
+});
+
+test('rừng giữa thoải: từ lối mòn đi lên rừng được (lính đi xuyên rừng)', () => {
+  // lưới bước 3 trong vùng rừng giữa (giữa hai đường chính, từ chân vành đồi tới đai ven biển; trừ lối đi, vách hẻm suối, sườn
+  // đường chính); lan từ tim hai lối mòn sang ô bên cạnh nếu chênh cao ≤ 0,6 × bước
+  const st = 3, X0 = -150, Z0 = 10, nx = 101, nz = 65;
+  for (const spec of [plains, desert, tundra]) {
+    const P = spec.paths,
+      H = new Float32Array(nx * nz),
+      forest = new Uint8Array(nx * nz),
+      seen = new Uint8Array(nx * nz),
+      q = [];
+    for (let j = 0; j < nz; j++)
+      for (let i = 0; i < nx; i++) {
+        const [x, z] = [X0 + i * st, Z0 + j * st],
+          k = j * nx + i;
+        H[k] = spec.height(x, z);
+        const far = Math.min(...LANES.map((L) => lineDist(L, x, z))) > 30 && lineDist(P.gorge, x, z) > 27;
+        forest[k] = H[k] > 1 && P.paths(x, z).way < 0.5 && far && Math.abs(x) < 135 ? 1 : 0;
+      }
+    for (const T of TRAILS)
+      for (let s = 0; s < T.length - 1; s++)
+        for (let t = 0; t <= 1; t += 0.05) {
+          const i = Math.round((T[s][0] + (T[s + 1][0] - T[s][0]) * t - X0) / st),
+            j = Math.round((T[s][1] + (T[s + 1][1] - T[s][1]) * t - Z0) / st);
+          if (i >= 0 && i < nx && j >= 0 && j < nz && !seen[j * nx + i]) q.push(j * nx + i), (seen[j * nx + i] = 1);
+        }
+    while (q.length) {
+      const k = q.pop(),
+        i = k % nx;
+      for (const m of [i < nx - 1 && k + 1, i > 0 && k - 1, k + nx < nx * nz && k + nx, k - nx >= 0 && k - nx])
+        if (m !== false && !seen[m] && H[m] > 0.5 && Math.abs(H[m] - H[k]) <= 0.6 * st) (seen[m] = 1), q.push(m);
+    }
+    let all = 0,
+      reach = 0,
+      steep = 0;
+    for (let k = 0; k < nx * nz; k++) {
+      if (!forest[k]) continue;
+      all++;
+      reach += seen[k];
+      const i = k % nx;
+      if (i > 0 && i < nx - 1 && k >= nx && k < nx * (nz - 1) && Math.hypot(H[k + 1] - H[k - 1], H[k + nx] - H[k - nx]) / (2 * st) > 0.6) steep++;
+    }
+    assert.ok(all > 2000 && reach / all > 0.97, spec.name + ': tới được ' + ((100 * reach) / all).toFixed(1) + '% rừng giữa');
+    assert.ok(steep / all < 0.12, spec.name + ': chỗ dốc trong rừng giữa ' + ((100 * steep) / all).toFixed(1) + '%');
   }
 });

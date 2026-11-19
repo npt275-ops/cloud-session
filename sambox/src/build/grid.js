@@ -1,5 +1,5 @@
-// SamBox · src/build/grid.js · Lưới ô xây hiện trên mặt đất (bật bằng nút "Lưới xây"): mỗi ô xây được là một ô xanh nhạt viền trắng
-// bám theo độ cao 4 góc (src/build/cells.js)
+// SamBox · src/build/grid.js · Lưới ô xây hiện trên mặt đất (bật bằng nút "Lưới xây"): mỗi ô xây được là một ô xanh lá viền xanh đậm
+// (rõ cả trên cỏ, cát, tuyết) bám theo độ cao 4 góc (src/build/cells.js)
 //   buildGrid(I)   Mesh lưới của đảo I;  .cells: số ô xây được
 import * as THREE from 'three';
 import { CELL, buildCells } from './cells.js';
@@ -13,7 +13,7 @@ const mat = new THREE.ShaderMaterial({
   fragmentShader: `varying vec2 vUv;
     void main() {
       float e = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y)), line = 1.0 - smoothstep(0.035, 0.09, e);
-      gl_FragColor = vec4(mix(vec3(0.62, 1.0, 0.62), vec3(1.0), line), 0.14 + 0.5 * line);
+      gl_FragColor = vec4(mix(vec3(0.3, 0.92, 0.36), vec3(0.06, 0.42, 0.14), line), 0.3 + 0.45 * line);
     }`,
 });
 export function buildGrid(I) {

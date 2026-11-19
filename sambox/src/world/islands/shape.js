@@ -11,11 +11,12 @@
 //   bump(x, z, cx, cz, r)         khối đồi hình chuông (Gauss) tâm (cx, cz), bán kính r
 //   lineDist(pts, x, z)           khoảng cách tới đường gấp khúc pts [[x, z], ...] (sông, hẻm vực, vịnh hẹp, thung băng)
 //   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu). Chỉ phụ thuộc hướng (nhiễu lấy
-//                                 trên một vòng tròn) nên đai ven biển đo theo bán kính rộng đều quanh đảo; mặt đảo dùng bờ chung (lanes.js FACE)
+//                                 trên một vòng tròn) nên đai ven biển đo theo bán kính rộng đều quanh đảo; mặt đảo dùng bờ chung, lưng
+//                                 và hai sườn có bờ tối thiểu (lanes.js FACE, BACK, SIDE)
 //   placed(spec, k, ky, turn)     đặt đảo vào bể: phóng ngang × k, cao × ky, xoay turn (radian, quanh trục đứng, chiều x → z);
 //                                 đảo vẽ theo bán kính gốc, mặt đảo (phía +z của bản vẽ) quay về hướng layout chọn
 import { smooth, lerp, fbm } from '../../core/noise.js';
-import { FACE, BACK } from './lanes.js';
+import { FACE, BACK, SIDE } from './lanes.js';
 
 export function rgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -55,7 +56,8 @@ export function lineDist(pts, x, z) {
 export function shoreEdge(x, z, R, seed, k = 1) {
   const a = Math.atan2(z, x),
     own = R * (0.8 + k * (0.07 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2.3))) + 30 * fbm(Math.cos(a) * 1.7 + seed, Math.sin(a) * 1.7, 3);
-  const e = lerp(own, FACE, smooth(0.5, 0.78, Math.sin(a))); // mặt đảo: bờ chung cả ba đảo (đầu cầu trùng khớp)
+  let e = lerp(own, FACE, smooth(0.5, 0.78, Math.sin(a))); // mặt đảo: bờ chung cả ba đảo (đầu cầu trùng khớp)
+  e = lerp(e, Math.max(e, SIDE), smooth(0.9, 0.95, Math.abs(Math.cos(a)))); // hai sườn đủ rộng cho nền phẳng (lanes.js PADS)
   return lerp(e, Math.max(e, BACK), smooth(-0.55, -0.8, Math.sin(a))); // lưng đảo đủ rộng cho núi chắn sau khu nhà chính
 }
 export function placed(spec, k, ky, turn = 0) {

@@ -30,13 +30,18 @@ Mỗi đảo có (đơn vị bản vẽ; × 1,2 ra độ cao thật). Khung đư
 hình xung quanh mỗi đảo một kiểu:
 
 - **Khu nhà chính** sau lưng đảo, núi chắn sau: lòng chảo **trũng** cao 22 (thấp hơn cổng), nhà chính trên nền 26 (cao nhất
-  khu). **Vành đồi kín** quanh khu (cao hơn khu ~38; Đồng Bằng: đồi bậc thềm, Sa Mạc: vách đá vân, Tuyết: sống băng): đứng trong
-  khu không thấy cổng, đầu cầu, cầu (cả cầu ở xa). Đây là **chỗ duy nhất xây công trình** (lưới xây chỉ hiện ở đây).
+  khu). **Vành đồi kín** quanh khu (cao hơn khu ~38; Đồng Bằng: đồi bậc thềm, Sa Mạc: vách đá vân có cát dồn ngoài, Tuyết: sống
+  băng): đứng trong khu không thấy cổng, đầu cầu, cầu (cả cầu ở xa).
 - **Ba lối vào khu, lối nào cũng gãy khúc** khi xuyên vành đồi (không có khe thẳng để nhìn ra): hai khe sau hai cổng, cửa trước
   (khe cua tay áo men sườn trong vành đồi, lên yên rồi xuống ngã ba chân vành đồi); đèo sau núi ở lưng khu.
 - **Hai đường chính** (lính đi theo đợt): từ hai đầu cầu men theo hai sườn đảo tới cổng ở chân vành đồi, lên dần theo bậc: bến
-  4 → nền tháp ngoài 12 → nền tháp trong 20 → cổng 24; sau cổng là khe đất (không lát) qua yên 27 xuống khu.
-- **Rừng núi ở giữa** hai đường để phục kích; **hẻm suối**: suối uốn lượn từ mạch nước dưới ngã ba chân vành đồi ra biển (giữa
+  4 → nền tháp ngoài 12 → nền tháp trong 20 → cổng 24; sau cổng là khe đất (không lát) qua yên 27 xuống khu. Ở hai bậc tháp, hai
+  bên đường có **vai phẳng** để đặt tháp.
+- **Hai nền phẳng hai sườn** (theo ảnh mốc: cao nguyên sườn tây, đồi sườn đông), cao 30, nhìn xuống đường chính, mỗi nền có dốc
+  thoải lên từ bậc tháp trong. Chung khung cho ba đảo (`lanes.js PADS, RAMPS`), mỗi đảo nặn một kiểu: Đồng Bằng cao nguyên vách đá
+  và đồi cỏ đỉnh bằng, Sa Mạc thềm cát và núi bàn thấp, Tuyết hai thềm băng dưới chân núi phụ và sống băng.
+- **Rừng núi ở giữa** hai đường để phục kích, **dốc thoải**: hai bên lối mòn xẻ, đắp thoai thoải nên từ lối mòn đi lên rừng được,
+  lính đi xuyên rừng (kiểm thử: lan từ lối mòn tới được trên 97% rừng giữa); **hẻm suối**: suối uốn lượn từ mạch nước dưới ngã ba chân vành đồi ra biển (giữa
   hai đầu cầu), lòng hẻm rộng, suối giữa, **hai bờ đi được** (lối nhỏ, không lát), có một vũng; **lối mòn trước** nối hai đường
   qua bến lội (suối nông); **lối mòn sau** men chân vành đồi nối hai đường vào ngã ba.
 - **Ba suối mỗi đảo một dáng** (`createPaths`): Đồng Bằng chữ S, Sa Mạc khúc trên gần thẳng rồi vòng cổ ngỗng lớn (khe vực vách
@@ -52,15 +57,17 @@ hình xung quanh mỗi đảo một kiểu:
 
 | Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |
-| Đồng Bằng (plains) | núi đồi bậc thềm, đá vôi ấm | vành đồi rừng; giữa: đồi tán bông, suối chữ S bờ cỏ; sườn: cao nguyên tây, đồi đông, hồ; sau: núi lớn, đèo |
-| Sa Mạc (desert) | đá vân hồng, cồn cát | vành vách đá vân; giữa: núi bàn, khe vực suối ốc đảo (hồ ở vòng cổ ngỗng); sườn: cột đá, chảo muối, hố cổ |
-| Tuyết (tundra) | khối núi lớn, đá xám dưới tuyết | vành sống băng; giữa: đồi thông, khe suối đóng băng (ao băng); sườn: núi phụ, sống băng, vịnh hẹp; sau: núi chính, đèo |
+| Đồng Bằng (plains) | núi đồi bậc thềm, đá vôi ấm | vành đồi rừng; giữa: đồi tán bông thoải, suối chữ S bờ cỏ; sườn: cao nguyên tây, đồi đông, hồ; sau: núi lớn |
+| Sa Mạc (desert) | biển cồn cát hồng, ít đá | vành đá vân; giữa: đồi cát hình sao, suối ốc đảo (hồ ở vòng cổ ngỗng); sườn: thềm cát, núi bàn thấp, cột đá, chảo muối, hố cổ; sau: đồi cát lớn |
+| Tuyết (tundra) | khối núi lớn, đá xám dưới tuyết | vành sống băng; giữa: đồi thông thoải, khe suối đóng băng (ao băng); sườn: thềm băng, núi phụ, sống băng, vịnh hẹp; sau: núi chính |
 
 ## Xây công trình (chuẩn bị)
 
-Mặt đất chia lưới ô 6 × 6 (`src/build/cells.js`): ô xây được khi nằm trong khu nhà chính, chênh cao trong ô không quá 1,2. Cỡ công
-trình theo ô: nhà dân 2×2, nhà lính 6×4 (có sân tập), nhà xe 4×4, cổng thành 4×2, tường 1 ô một đoạn, tháp canh 2×2. Nút
-**Lưới xây** hiện các ô này trên mặt đất (`src/build/grid.js`).
+**Chốt: chỗ nào phẳng là xây được** (trên cả đảo). Mặt đất chia lưới ô 6 × 6 (`src/build/cells.js`): ô xây được khi chênh cao trong
+ô không quá 1,2, trên mặt nước, và không nằm trên lối lính đi (đường chính, khe, lối mòn, lòng hẻm suối, cửa trước, đèo, dốc lên
+nền: không xây chắn lối). Chỗ xây lớn: khu nhà chính, đai ven biển, hai nền phẳng hai sườn, vai tháp, các bãi phẳng trong rừng. Cỡ
+công trình theo ô: nhà dân 2×2, nhà lính 6×4 (có sân tập), nhà xe 4×4, cổng thành 4×2, tường 1 ô một đoạn, tháp canh 2×2. Nút
+**Lưới xây** hiện các ô này trên mặt đất (`src/build/grid.js`). Chưa có logic game (chờ chốt phương án).
 
 ## Góc nhìn
 
@@ -79,7 +86,8 @@ Tham số URL: `?dao=all|plains|desert|tundra`, `?buoi=dawn|noon|sunset|night`, 
 Kiểm thử: `npm test` (nhiễu tất định, độ cao ba đảo, đáy biển giữa các đảo, đảo nằm trọn trong bể, mặt đảo hướng về tâm,
 đai ven biển phẳng, khu nhà chính đủ rộng, đỉnh núi giữ cao độ, tam giác đều ba nhà chính, lối lính và cầu bằng nhau,
 nhà chính cao nhất có núi chắn sau lưng, mọi lối đi được, chỉ lát đường tới cổng, khu nhà chính trũng không nhìn thấy cổng, đầu
-cầu, cầu; ba suối uốn mềm, dáng khác nhau, dài bằng nhau, hai bờ đi được, nước xuống dần ra biển).
+cầu, cầu; ba suối uốn mềm, dáng khác nhau, dài bằng nhau, hai bờ đi được, nước xuống dần ra biển; chỗ phẳng xây được ở khu nhà
+chính, hai nền sườn, vai tháp, đai ven biển, không ô nào chắn lối đi; rừng giữa thoải, từ lối mòn đi lên được).
 
 ## Cấu trúc
 

@@ -1,11 +1,12 @@
 // SamBox · src/world/islands/plains.js · Đảo Đồng Bằng (núi đồi, đồng cỏ, rừng tán bông): đảo mẫu theo ảnh đích (ảnh 5–14)
 // Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành đồi rừng bậc thềm; rừng giữa là
-// đồi tán bông, suối uốn chữ S chảy từ cửa trước khu nhà chính ra biển (hai bờ cỏ đi được, có vũng), gò rừng sát lối mòn; sườn tây là
-// cao nguyên mặt bàn, sườn đông là đồi cỏ (đất cao nhìn xuống hai đường chính); núi lớn nhiều bậc chắn sau khu nhà chính, có đèo; hồ
-// phía đông có suối ra biển; vài cột đá ngoài biển; quanh đảo là đai ven biển. Đồng oải hương, lúa mì ở hai sườn.
+// đồi tán bông thoai thoải (từ lối mòn đi lên rừng được, không bậc thềm), suối uốn chữ S từ chân vành đồi ra biển (hai bờ cỏ đi
+// được, có vũng), gò rừng sát lối mòn; sườn tây là cao nguyên mặt bàn vách đá, sườn đông là đồi cỏ đỉnh bằng (hai nền phẳng xây
+// được, nhìn xuống đường chính); núi lớn nhiều bậc chắn sau khu nhà chính, có đèo; hồ phía đông có suối ra biển; vài cột đá ngoài
+// biển; quanh đảo là đai ven biển. Đồng oải hương, lúa mì ở hai sườn.
 import { fbm, ridged, simplex2, smooth } from '../../core/noise.js';
 import { rgb, mix3, terrace, coast, bump, lineDist, shoreEdge, RIM, onRim, keepRim } from './shape.js';
-import { createPaths, inTown, EYE } from './lanes.js';
+import { createPaths, EYE, PADS, padOut } from './lanes.js';
 
 const R = 300;
 const P = createPaths({ bends: [0, 40, 0, 0], pool: 162, seed: 1 }); // suối chữ S: khúc trên lượn phải, khúc dưới lượn trái, vũng cuối khúc dưới
@@ -26,24 +27,27 @@ const edgeAt = (x, z) => shoreEdge(x, z, R, 1.3);
 // chỗ trống (không cây, không ruộng): khu nhà chính, các lối đi, bờ suối, đai ven biển
 const clear = (x, z) => {
   const p = P.paths(x, z);
-  return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.defile, p.trail, p.gorge, p.pass);
+  return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.defile, p.trail, p.gorge, p.pass, p.ramp, p.pad);
 };
 
 function height(x, z) {
   const d = Math.hypot(x, z),
     edge = edgeAt(x, z);
   if (d > edge + 45) return stacks(coast(0, d, edge, 0), x, z); // ngoài khơi: chỉ còn đáy biển và cột đá, khỏi tính nhiễu
-  let land = 12 + 14 * fbm(x * 0.006, z * 0.006, 4) + 6 * fbm(x * 0.025, z * 0.025, 3);
-  land += 22 * Math.max(0, fbm(x * 0.011 + 20, z * 0.011, 3)); // đồi cỏ lượn sóng
+  const mid = middle(x, z); // (rừng giữa: gồ ghề ít hơn, không bậc thềm: lính đi lên rừng được)
+  let land = 12 + 14 * (1 - 0.5 * mid) * fbm(x * 0.006, z * 0.006, 4) + 6 * (1 - 0.8 * mid) * fbm(x * 0.025, z * 0.025, 3);
+  land += 22 * (1 - 0.75 * mid) * Math.max(0, fbm(x * 0.011 + 20, z * 0.011, 3)); // đồi cỏ lượn sóng
   land += 109 * bump(x, z, -5, -212, 80) * (0.8 + 0.28 * ridged(x * 0.011, z * 0.011, 4)); // núi lớn sau lưng khu nhà chính
-  land += 58 * bump(x, z, 0, 60, 52) * (0.7 + 0.45 * ridged(x * 0.02, z * 0.02, 3)); // đồi rừng giữa
-  land += 34 * bump(x, z, -72, 132, 34) + 32 * bump(x, z, 74, 122, 32); // gò rừng trước
-  land += 30 * bump(x, z, -62, -12, 28) + 30 * bump(x, z, 64, -6, 28); // gò rừng sau, sát khu nhà chính
-  land = Math.max(land, 50 * smooth(40, 28, Math.hypot(x + 198, z - 30) + 8 * fbm(x * 0.03, z * 0.03, 2))); // cao nguyên sườn tây
-  land += 44 * bump(x, z, 212, 40, 30); // đồi sườn đông
+  // rừng giữa: đồi tròn thoải nằm giữa hai lối mòn (lối mòn chạy dưới thung giữa các đồi)
+  land += 20 * bump(x, z, 0, 55, 40) * (0.85 + 0.2 * ridged(x * 0.02, z * 0.02, 3)); // đồi rừng giữa (suối xẻ qua)
+  land += 17 * bump(x, z, -82, 48, 30) + 16 * bump(x, z, 82, 50, 30); // gò rừng hai bên suối
+  land += 15 * bump(x, z, -74, 152, 30) + 14 * bump(x, z, 76, 150, 30); // gò rừng trước
+  const n = 0.12 * fbm(x * 0.03, z * 0.03, 2);
+  land = Math.max(land, PADS[0].y * smooth(1.5, 1.2, padOut(PADS[0], x, z) + n)); // cao nguyên sườn tây: mặt bàn, vách quanh
+  land = Math.max(land, PADS[1].y * smooth(2.5, 1.05, padOut(PADS[1], x, z) + n)); // đồi sườn đông: đỉnh bằng, sườn thoải
   land = Math.max(land, P.ring(x, z) + 4 * fbm(x * 0.05, z * 0.05, 2)); // vành đồi quanh khu nhà chính (bậc thềm như các đồi khác)
-  const tk = 0.35 + 0.45 * smooth(-0.3, 0.4, fbm(x * 0.008 + 3, z * 0.008, 2));
-  land = (1 - tk) * land + tk * terrace(land, 15, 0.72); // bậc thềm không đều
+  const tk = (0.35 + 0.45 * smooth(-0.3, 0.4, fbm(x * 0.008 + 3, z * 0.008, 2))) * (1 - mid);
+  land = (1 - tk) * land + tk * terrace(land, 15, 0.72); // bậc thềm không đều (trừ rừng giữa)
   const cliff = 0.5 + 0.5 * simplex2(Math.atan2(z, x) * 1.6, 3.1);
   let h = coast(land, d, edge, smooth(-0.2, 0.3, cliff));
   h = P.channel(keepRim(P.withPaths(h, x, z), edge - d), x, z); // (sau bờ biển: lối đi ba đảo giống hệt nhau; suối khoét sau cùng)
@@ -65,7 +69,7 @@ function ground(x, z, y, slope) {
   const p = P.paths(x, z);
   if (p.lane > 0.5) return mix3(C.road2, C.road, 0.5 + 0.5 * fbm(x * 0.2, z * 0.2)); // đường chính lát đá
   if (p.stream > 0.5) return mix3(C.pebble, C.wet, 0.5 + 0.5 * fbm(x * 0.3, z * 0.3)); // lòng suối sỏi
-  if (p.trail > 0.5 || p.pass > 0.5) return C.dirt; // lối mòn, đèo
+  if (p.trail > 0.5 || p.pass > 0.5 || p.ramp > 0.5) return C.dirt; // lối mòn, đèo, dốc lên nền phẳng
   let g = mix3(C.grass, C.grass2, 0.5 + 0.5 * fbm(x * 0.03, z * 0.03, 3));
   if (p.defile > 0.5) return mix3(g, C.dirt, 0.45); // khe sau cổng: lối đất cỏ mọc
   if (p.gorge > 0.5) return mix3(g, C.moss, 0.55); // hai bờ suối: cỏ rêu (lối nhỏ, không lát)
@@ -85,7 +89,7 @@ export default {
   cliff: { colors: ['#cdb898', '#c2ab88', '#d6c2a2', '#bba282'], freq: 1 / 5, range: [0.5, 0.7] }, // đá vôi ấm, vân nhẹ
   eye: EYE,
   flag: '#e8b83a', // cờ vàng (lúa vàng)
-  buildZone: inTown, // chỉ xây trong khu nhà chính
+  buildZone: (x, z) => 1 - P.paths(x, z).way, // chỗ nào phẳng là xây được, trừ lối đi
   paths: P,
   height,
   ground,

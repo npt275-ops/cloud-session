@@ -1,8 +1,7 @@
 // SamBox · src/world/islands/lanes.js · Khung đường chiến thuật dùng chung cho ba đảo (thuần JS; toạ độ bản vẽ, mặt đảo phía +z).
 // Cùng một khung nên khi xoay vào bể: ba nhà chính thành tam giác đều, các lối đi trên ba đảo dài bằng nhau (cân bằng); địa hình
 // xung quanh và dáng suối mỗi đảo một kiểu (islands/*.js, createPaths).
-//   HALL, TOWN        nhà chính và khu nhà chính: lòng chảo trũng (thấp hơn cổng) sau lưng đảo, núi chắn sau: chỗ DUY NHẤT xây
-//                     công trình
+//   HALL, TOWN        nhà chính và khu nhà chính: lòng chảo trũng (thấp hơn cổng) sau lưng đảo, núi chắn sau
 //   RING              vành đồi kín quanh khu nhà chính (cao hơn khu up; đỉnh vành cách mép khu crest, chân vành foot): đứng trong khu
 //                     không thấy cổng, đầu cầu, cầu. Mọi lối vào khu đều gãy khúc khi xuyên vành (không có khe thẳng để nhìn ra)
 //   HEADS, GATES      hai đầu cầu (trên đai ven biển, hai bên cửa hẻm suối) và hai cổng (chân vành đồi, ngoài khe vào khu)
@@ -12,7 +11,12 @@
 //   TRAILS            lối mòn xuyên rừng giữa: lối trước nối hai đường qua bến lội FORD của suối; lối sau men chân vành đồi, nối hai
 //                     đường vào ngã ba (từ đó lên cửa trước vào khu, hay xuôi hẻm suối ra biển)
 //   BACKPASS          đèo sau núi: lưng khu nhà chính vượt yên đèo ra đai ven biển phía sau
-//   FACE, BACK, EYE   bán kính bờ chung ở mặt đảo, bán kính bờ tối thiểu ở lưng đảo, chỗ đứng tầm mắt (hiên nhà chính nhìn ra khu)
+//   PADS, RAMPS       hai nền phẳng hai sườn (cao nguyên tây, đồi sườn đông: đất cao nhìn xuống đường chính, xây được), mỗi nền có
+//                     dốc thoải lên từ bậc tháp trong của đường chính; mỗi đảo nặn quanh nền theo kiểu riêng (padOut: ≤ 1 trên nền)
+//   FACE, BACK, SIDE  bán kính bờ chung ở mặt đảo, bờ tối thiểu ở lưng đảo và ở hai sườn (đủ chỗ cho nền phẳng)
+//   EYE               chỗ đứng tầm mắt (góc sau khu nhà chính nhìn chéo qua khu)
+//   Xây công trình: chỗ nào phẳng là xây được (src/build/cells.js), trừ lối lính đi (paths().way: đường chính, khe, lối mòn, lòng
+//   hẻm suối, cửa trước, đèo, dốc lên nền). Bậc tháp trên đường chính có vai phẳng hai bên đường để đặt tháp
 //   inTown(x, z)      0..1: thuộc khu nhà chính
 //   route(side)       lối lính từ đầu cầu (0 trái, 1 phải) tới nhà chính: đường chính, qua cổng, qua khe, băng khu đất xây
 //   createPaths(o)    khung đường riêng của một đảo (dáng suối riêng, chiều dài bằng nhau): o.bends hệ số khúc uốn, o.pool chỗ vũng
@@ -20,12 +24,14 @@
 //     .gorge          tim hẻm suối [[x, z], ...]: ngã ba chân vành đồi → uốn lượn qua bến lội → cửa hẻm ở đai ven biển
 //     .stream         mặt nước suối [{ x, z, a, y, w, f }] (a: quãng đường từ ngã ba, y: mặt nước, w: nửa bề rộng mặt nước, f: nửa bề
 //                     rộng lòng hẻm: hai bờ đi được từ mép nước tới f), từ mạch nước dưới ngã ba ra tới biển
-//     .ring(x, z)     độ cao vành đồi (0 ngoài vành); đảo tự nặn theo chất đất của mình (bậc thềm, vân đá, sống băng) rồi lấy max
+//     .ring(x, z, foot)  độ cao vành đồi (0 ngoài vành; foot: chân vành xa hơn thì sườn ngoài thoải hơn); đảo tự nặn theo chất đất
+//                     của mình (bậc thềm, vân đá, sống băng) rồi lấy max
 //     .walls(x, z)    vách hai bên hẻm (o.canyon: cao hơn lòng hẻm bao nhiêu; 0 thì không có) cho đảo đất thấp
 //     .withPaths(land, x, z)  khoét khung đường vào đất: khu nhà chính, nền nhà chính, hẻm suối (lòng rộng: suối giữa, hai bờ đi
 //                     được), đèo, lối mòn, đường chính, khe sau cổng, cửa trước
 //     .channel(h, x, z)  khoét lòng suối (sau khi ép đai ven biển phẳng nên suối chảy qua đai ra biển; chỗ bến lội nông)
-//     .paths(x, z)    chỗ này thuộc lối nào: { lane, defile, trail, gorge, stream, pass, town } 0..1 (tô màu, dọn cây)
+//     .paths(x, z)    chỗ này thuộc lối nào: { lane, defile, trail, gorge, stream, pass, ramp, pad, town, way } 0..1 (tô màu, dọn cây;
+//                     way: lối lính đi, không xây chắn)
 import { smooth, lerp, fbm } from '../../core/noise.js';
 
 export const HALL = [0, -125];
@@ -34,7 +40,8 @@ export const RING = { up: 38, crest: 14, foot: 56 };
 export const HEADS = [[-70, 214], [70, 214]];
 export const FACE = 236;
 export const BACK = 268;
-export const EYE = { from: [-70, -145], to: [40, -70], up: 16 };
+export const SIDE = 256;
+export const EYE = { from: [-70, -145], to: [40, -70], up: 12 };
 const mirror = (P) => P.map(([x, z]) => [-x, z]);
 // đường chính trái: đầu cầu, khuỷu sườn, bến tháp ngoài (nối lối mòn trước), bến tháp trong (nối lối mòn sau), cổng, khe gãy khúc
 const LEFT = [HEADS[0], [-115, 152], [-150, 90], [-157, 10], [-162, -50], [-160, -96], [-132, -110], [-106, -110]];
@@ -48,6 +55,10 @@ const FRONT = [LEFT[2], [-108, 86], [-58, 106], FORD, [58, 106], [108, 86], mirr
 const REAR = [LEFT[3], [-108, 14], [-55, 12], CONF, [55, 12], [108, 14], mirror(LEFT)[3]];
 export const TRAILS = [FRONT, REAR];
 export const BACKPASS = [[0, -168], [-22, -205], [8, -240], [0, -272]];
+// nền phẳng hai sườn: tâm, bán trục ngang a, dọc b, độ cao (cao hơn đường chính bên dưới ~10); dốc lên từ bậc tháp trong
+export const PADS = [{ c: [-206, 30], a: 18, b: 34, y: 30 }, { c: [206, 30], a: 18, b: 34, y: 30 }];
+const RAMP = [[LEFT[3][0] + (LEFT[4][0] - LEFT[3][0]) * (16 / 60), -6], [-184, -12], [-204, 2]];
+export const RAMPS = [RAMP, mirror(RAMP)];
 // chiều dài hai khúc suối (ngã ba → bến lội, bến lội → cửa hẻm): ba đảo uốn khác nhau nhưng dài đúng bằng nhau
 const UPPER = 116,
   LOWER = 124,
@@ -97,16 +108,21 @@ const laneY = curve([[0, 4], [20, 4], [LA[2] - 38, 12], [LA[2] + 12, 12], [LA[3]
 const gorgeY = (a) => 20 - 16 * Math.pow(Math.min(1, Math.max(0, a / GORGE_LEN)), 1.25);
 // cửa trước: từ khu nhà chính lên yên khe giữa vành đồi rồi xuống ngã ba
 const DA = at(DOOR),
-  doorY = curve([[0, TOWN.level], [DA[1], TOWN.level + 0.5], [DA[3], 30], [DA[4], 30], [DA[6], 23], [DA[7], gorgeY(0)]]);
+  doorY = curve([[0, TOWN.level], [DA[1], TOWN.level + 0.5], [DA[3], 34], [DA[4], 34], [DA[6], 24], [DA[7], gorgeY(0)]]); // (yên cao hơn tầm mắt)
 const passY = curve([[0, TOWN.level], [0.3, 30], [0.45, 30], [1, 4]]);
+const rampY = curve([[0, laneY(LA[3] + Math.hypot(RAMP[0][0] - LEFT[3][0], RAMP[0][1] - LEFT[3][1]))], [1, PADS[0].y]]);
+// vai phẳng hai bên đường ở hai bậc tháp (ngoài 12, trong 20): nửa bề rộng phẳng 9 → 22
+const shoulder = (a) => Math.max(smooth(LA[2] - 38, LA[2] - 28, a) * smooth(LA[2] + 12, LA[2] + 2, a), smooth(LA[3] - 23, LA[3] - 13, a) * smooth(GATE_A - 26, GATE_A - 36, a));
 const trailY = [
-  curve([[0, 12], [0.15, 15], [0.38, 15], [0.5, gorgeY(UPPER)], [0.62, 15], [0.85, 15], [1, 12]]), // lối trước: xuống bến lội
+  curve([[0, 12], [0.15, 18], [0.38, 18], [0.5, gorgeY(UPPER)], [0.62, 18], [0.85, 18], [1, 12]]), // lối trước: xuống bến lội
   curve([[0, 20], [0.2, 21], [0.4, 21], [0.5, gorgeY(0)], [0.6, 21], [0.8, 21], [1, 20]]), // lối sau: men chân vành đồi tới ngã ba
 ];
-const lane = LANES.map((P) => poly(P, 30)),
-  trail = TRAILS.map((P) => poly(P, 16)),
+const lane = LANES.map((P) => poly(P, 44)),
+  trail = TRAILS.map((P) => poly(P, 44)),
   pass = poly(BACKPASS, 20),
-  door = poly(DOOR, 20);
+  door = poly(DOOR, 20),
+  ramp = RAMPS.map((P) => poly(P, 22));
+export const padOut = (p, x, z) => Math.hypot((x - p.c[0]) / p.a, (z - p.c[1]) / p.b); // (≤ 1: trên nền phẳng)
 const townOut = (x, z) => Math.hypot((x - TOWN.cx) / TOWN.rx, (z - TOWN.cz) / TOWN.rz) + 0.08 * fbm(x * 0.03 + 5, z * 0.03, 2);
 export const inTown = (x, z) => smooth(1.0, 0.94, townOut(x, z));
 // khoảng cách tính ra ngoài từ mép khu nhà chính (theo tia từ tâm khu; âm: trong khu)
@@ -183,11 +199,11 @@ export function createPaths({ bends, pool, seed = 0, canyon = 0 }) {
     stream.push({ x, z, a, y: b.water, w: b.we - t * (b.we - b.wb) + 0.3, f: a <= GORGE_LEN ? floorW(a) : 0 });
   }
   const crest = (x, z) => RING.up * (1 + 0.18 * fbm(x * 0.022 + seed * 7.1, z * 0.022 - seed * 3.3, 3));
-  const ring = (x, z) => {
+  const ring = (x, z, foot = RING.foot) => {
     const g = gap(x, z);
-    if (g > RING.foot) return 0;
+    if (g > foot) return 0;
     const top = TOWN.level + crest(x, z);
-    return Math.min(TOWN.level + (top - TOWN.level) * smooth(-2, RING.crest, g), top * smooth(RING.foot, RING.crest + 14, g));
+    return Math.min(TOWN.level + (top - TOWN.level) * smooth(-2, RING.crest, g), top * smooth(foot, RING.crest + 14, g));
   };
   // vách hẻm: đảo đất thấp (cồn cát) nâng hai bên hẻm cao hơn lòng hẻm canyon thành khe vực (đứng trong khu không nhìn thấu hẻm)
   const walls = (x, z) => {
@@ -202,12 +218,21 @@ export function createPaths({ bends, pool, seed = 0, canyon = 0 }) {
     if (x === kx && z === kz) return kv;
     kx = x;
     kz = z;
-    return (kv = { lane: lane.map((f) => f(x, z)), trail: trail.map((f) => f(x, z)), gorge: G(x, z), pass: pass(x, z), door: door(x, z), flow: S(x, z) });
+    return (kv = {
+      lane: lane.map((f) => f(x, z)),
+      trail: trail.map((f) => f(x, z)),
+      ramp: ramp.map((f) => f(x, z)),
+      gorge: G(x, z),
+      pass: pass(x, z),
+      door: door(x, z),
+      flow: S(x, z),
+    });
   };
   function withPaths(land, x, z) {
     const n = near(x, z);
     let h = lerp(land, TOWN.level, inTown(x, z)); // khu nhà chính: lòng chảo phẳng
     h = lerp(h, TOWN.hall, smooth(32, 26, Math.hypot(x - HALL[0], z - HALL[1]))); // nền nhà chính, cao nhất khu
+    for (const p of PADS) h = lerp(h, p.y, smooth(1, 0.86, padOut(p, x, z))); // nền phẳng hai sườn
     // hẻm suối, đèo: hai bên chỉ xẻ xuống (thành vách), lòng thì phẳng đúng dốc (đắp cả chỗ trũng: ba đảo đi như nhau)
     if (n.gorge.d < 32) {
       const y = gorgeY(n.gorge.a),
@@ -218,20 +243,23 @@ export function createPaths({ bends, pool, seed = 0, canyon = 0 }) {
       const y = passY(n.pass.s);
       h = lerp(lerp(h, Math.min(h, y), smooth(12, 4, n.pass.d)), y, smooth(7, 4, n.pass.d));
     }
+    // lối mòn: lòng lối phẳng, hai bên đắp hoặc xẻ thoai thoải (từ lối đi lên rừng được); dốc lên nền phẳng hai sườn
     n.trail.forEach((t, i) => {
-      if (t.d < 16) h = lerp(h, trailY[i](t.s), smooth(16, 4, t.d)); // lối mòn: lòng lối phẳng, hai bên đắp hoặc xẻ
+      if (t.d < 40) h = lerp(h, trailY[i](t.s), smooth(40, 5, t.d));
     });
+    for (const r of n.ramp) if (r.d < 20) h = lerp(h, rampY(r.s), smooth(20, 4, r.d));
     // cửa trước: khe vách dựng, lòng hẹp
     if (n.door.d < 17) {
       const y = doorY(n.door.a);
       h = lerp(lerp(h, Math.min(h, y), smooth(17, 8, n.door.d)), y, smooth(8, 5, n.door.d));
     }
-    // đường chính: tới cổng thì đắp, xẻ rộng hai bên; sau cổng là khe: vách dựng, lòng hẹp
+    // đường chính: tới cổng thì đắp, xẻ rộng hai bên (ở bậc tháp có vai phẳng); sau cổng là khe: vách dựng, lòng hẹp
     for (const l of n.lane)
-      if (l.d < 28) {
+      if (l.d < 42) {
         const y = laneY(l.a),
           k = smooth(GATE_A - 8, GATE_A + 8, l.a),
-          road = lerp(h, y, smooth(28, 9, l.d)),
+          fw = lerp(9, 22, shoulder(l.a)),
+          road = lerp(h, y, smooth(fw + 19, fw, l.d)),
           cut = lerp(lerp(h, Math.min(h, y), smooth(17, 8, l.d)), y, smooth(8, 5, l.d));
         h = lerp(road, cut, k);
       }
@@ -253,7 +281,17 @@ export function createPaths({ bends, pool, seed = 0, canyon = 0 }) {
       gorge: n.gorge.d < 32 ? smooth(floorW(n.gorge.a), floorW(n.gorge.a) - 3, n.gorge.d) : 0,
       stream: b ? smooth(b.we + 0.6, b.wb + 0.6, n.flow.d) : 0,
       pass: smooth(5, 3, n.pass.d),
+      ramp: Math.max(...n.ramp.map((r) => smooth(5, 3, r.d))),
+      pad: Math.max(...PADS.map((p) => smooth(1, 0.9, padOut(p, x, z)))),
       town: inTown(x, z),
+      way: Math.max(
+        ...n.lane.map((l) => smooth(11, 9, l.d)),
+        ...n.trail.map((t) => smooth(7, 5, t.d)),
+        ...n.ramp.map((r) => smooth(7, 5, r.d)),
+        n.gorge.d < 32 ? smooth(floorW(n.gorge.a), floorW(n.gorge.a) - 2, n.gorge.d) : 0,
+        smooth(9, 7, n.door.d),
+        smooth(8, 6, n.pass.d),
+      ),
     };
   }
   return { gorge, stream, ring, walls, withPaths, channel, paths, pool: pointAt(flow, POOL_A) };
