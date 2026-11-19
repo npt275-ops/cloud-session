@@ -1,9 +1,11 @@
 // SamBox · src/build/guides.js · Đường căn chỉnh (bật bằng nút "Căn chỉnh"): tam giác nối tâm ba nhà chính; trên mỗi đảo: hai đường
-// chính (trắng), lối mòn (cam), hẻm suối (xanh), đèo sau núi (tím); số đo để thấy ba đảo cân nhau (src/world/layout.js, lanes.js)
-//   buildGuides()   Group; .info: { sides: cạnh tam giác, roads: lối lính đầu cầu → nhà chính mỗi đảo, bridges: chiều dài ba cầu }
+// chính (trắng tới cổng, đứt nét qua khe), lối mòn (cam), hẻm suối riêng của đảo (xanh), đèo sau núi (tím); số đo để thấy ba đảo cân
+// nhau (src/world/layout.js, lanes.js)
+//   buildGuides()   Group; .info: { sides: cạnh tam giác, roads: lối lính đầu cầu → nhà chính mỗi đảo, bridges: chiều dài ba cầu,
+//                   gorges: chiều dài hẻm suối mỗi đảo }
 import * as THREE from 'three';
-import { ISLANDS, BRIDGES, hallAt, road, pathLength, toWorld } from '../world/layout.js';
-import { LANES, TRAILS, GORGE, BACKPASS } from '../world/islands/lanes.js';
+import { ISLANDS, BRIDGES, SCALE, hallAt, road, pathLength, toWorld } from '../world/layout.js';
+import { LANES, TRAILS, BACKPASS } from '../world/islands/lanes.js';
 
 const line = (pts, color, dashed) => {
   const g = new THREE.BufferGeometry().setFromPoints(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
@@ -50,18 +52,24 @@ export function buildGuides() {
       }
     return out;
   };
-  const roads = {};
+  const roads = {},
+    gorges = {};
   for (const I of ISLANDS) {
-    for (const L of LANES) g.add(line(drape(I, L), '#ffffff'));
+    for (const L of LANES) {
+      g.add(line(drape(I, L.slice(0, 5)), '#ffffff')); // tới cổng
+      g.add(line(drape(I, L.slice(4)), '#ffffff', true)); // khe sau cổng
+    }
     for (const T of TRAILS) g.add(line(drape(I, T), '#ffb347', true));
-    g.add(line(drape(I, GORGE), '#6fe7ff', true));
+    g.add(line(drape(I, I.spec.paths.gorge), '#6fe7ff', true));
     g.add(line(drape(I, BACKPASS), '#d59bff', true));
     roads[I.spec.key] = [0, 1].map((side) => pathLength(road(I, side)));
+    gorges[I.spec.key] = pathLength(I.spec.paths.gorge.map(([x, z]) => [x, 0, z])) * SCALE;
   }
   g.info = {
     sides: halls.map((p, i) => Math.hypot(p[0] - halls[(i + 1) % 3][0], p[2] - halls[(i + 1) % 3][2])),
     roads,
     bridges: BRIDGES.map((b) => Math.hypot(b.from[0] - b.to[0], b.from[1] - b.to[1])),
+    gorges,
   };
   g.name = 'căn chỉnh';
   return g;

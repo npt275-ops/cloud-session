@@ -1,5 +1,5 @@
 // SamBox · src/main.js · Ảnh mô phỏng đích: ba đảo trống (Đồng Bằng, Sa Mạc, Tuyết) theo hướng đồ hoạ đã chốt (ảnh đích 5–15)
-// Ghép: mức đồ hoạ (src/core/quality.js), trời (sky.js), biển (water.js), đất ba đảo (terrain.js + islands/*.js), cây cỏ
+// Ghép: mức đồ hoạ (src/core/quality.js), trời (sky.js), biển (water.js), suối (rivers.js), đất ba đảo (terrain.js + islands/*.js), cây cỏ
 // (nature/*), nắng và đèn bán cầu, bóng đổ theo chỗ đang nhìn, hậu kỳ (fx/post.js), bốn buổi (daytime.js), bảng điều khiển.
 // Máy quay: toàn cảnh, từng đảo nhìn từ tâm bể, hoặc tầm mắt (nút "Tầm mắt": đứng trên đảo nhìn xa); nút "Lưới xây" hiện ô xây được;
 // ba cầu nối mặt các đảo, nhà chính tạm ở đầu hẻm; nút "Căn chỉnh" hiện tam giác ba nhà chính và đường lính kèm số đo.
@@ -10,6 +10,7 @@ import { ISLANDS, RING, toWorld } from './world/layout.js';
 import { DAYTIME } from './world/daytime.js';
 import { buildTerrain } from './world/terrain.js';
 import { buildWater } from './world/water.js';
+import { buildRivers } from './world/rivers.js';
 import { buildTank } from './world/tank.js';
 import { buildBridges } from './world/bridges.js';
 import { buildSky } from './world/sky.js';
@@ -57,7 +58,8 @@ scene.add(sun, sun.target);
 const sky = buildSky();
 scene.add(sky, sky.clouds);
 const water = buildWater();
-scene.add(water);
+const rivers = buildRivers();
+scene.add(water, rivers);
 const tank = buildTank();
 scene.add(tank, buildBridges());
 
@@ -155,7 +157,7 @@ function showGuides(on) {
   if (on)
     box.textContent = `Tam giác nhà chính: ${i.sides.map(f).join(' · ')} — Đầu cầu → nhà chính: ${Object.values(i.roads)
       .map((r) => f(r[0]))
-      .join(' · ')} — Cầu: ${i.bridges.map(f).join(' · ')}`;
+      .join(' · ')} — Hẻm suối: ${Object.values(i.gorges).map(f).join(' · ')} — Cầu: ${i.bridges.map(f).join(' · ')}`;
 }
 
 const hud = buildHud({
@@ -213,6 +215,7 @@ function frame() {
   LIGHT.uSunView.value.copy(tmp.copy(sunDir).transformDirection(camera.matrixWorldInverse));
   WIND.uTime.value = sec;
   water.update(sec, P, sunDir);
+  rivers.update(sec, P, sunDir);
   sky.update(sec);
   tank.update(sec);
   sky.position.copy(camera.position);

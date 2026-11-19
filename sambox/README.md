@@ -29,24 +29,32 @@ ra thành kính. Đồng Bằng phía sau, Sa Mạc trước trái, Tuyết trư
 Mỗi đảo có (đơn vị bản vẽ; × 1,2 ra độ cao thật). Khung đường dùng chung cho cả ba đảo (`src/world/islands/lanes.js`), địa
 hình xung quanh mỗi đảo một kiểu:
 
-- **Khu nhà chính** sau lưng đảo, núi chắn sau: lòng chảo phẳng cao 40, nhà chính ở giữa trên nền 46 (cao nhất). Đây là **chỗ
-  duy nhất xây công trình** (lưới xây chỉ hiện ở đây). Hai cổng ở hai bên; sau cổng là đất xây, không còn đường.
-- **Hai đường chính** (lính đi theo đợt): từ hai đầu cầu men theo hai sườn đảo lên cổng, lên dần theo bậc: bến 4 → nền tháp
-  ngoài 18 → nền tháp trong 30 → cổng 40.
-- **Rừng núi ở giữa** hai đường để phục kích; **hẻm suối** từ biển (giữa hai đầu cầu) lên cửa sau khu nhà chính, đủ rộng dẫn
-  quân; **lối mòn trước** nối hai đường qua bến lội của hẻm suối; **lối mòn sau** nối hai đường vào thẳng cửa sau.
+- **Khu nhà chính** sau lưng đảo, núi chắn sau: lòng chảo **trũng** cao 22 (thấp hơn cổng), nhà chính trên nền 26 (cao nhất
+  khu). **Vành đồi kín** quanh khu (cao hơn khu ~38; Đồng Bằng: đồi bậc thềm, Sa Mạc: vách đá vân, Tuyết: sống băng): đứng trong
+  khu không thấy cổng, đầu cầu, cầu (cả cầu ở xa). Đây là **chỗ duy nhất xây công trình** (lưới xây chỉ hiện ở đây).
+- **Ba lối vào khu, lối nào cũng gãy khúc** khi xuyên vành đồi (không có khe thẳng để nhìn ra): hai khe sau hai cổng, cửa trước
+  (khe cua tay áo men sườn trong vành đồi, lên yên rồi xuống ngã ba chân vành đồi); đèo sau núi ở lưng khu.
+- **Hai đường chính** (lính đi theo đợt): từ hai đầu cầu men theo hai sườn đảo tới cổng ở chân vành đồi, lên dần theo bậc: bến
+  4 → nền tháp ngoài 12 → nền tháp trong 20 → cổng 24; sau cổng là khe đất (không lát) qua yên 27 xuống khu.
+- **Rừng núi ở giữa** hai đường để phục kích; **hẻm suối**: suối uốn lượn từ mạch nước dưới ngã ba chân vành đồi ra biển (giữa
+  hai đầu cầu), lòng hẻm rộng, suối giữa, **hai bờ đi được** (lối nhỏ, không lát), có một vũng; **lối mòn trước** nối hai đường
+  qua bến lội (suối nông); **lối mòn sau** men chân vành đồi nối hai đường vào ngã ba.
+- **Ba suối mỗi đảo một dáng** (`createPaths`): Đồng Bằng chữ S, Sa Mạc khúc trên gần thẳng rồi vòng cổ ngỗng lớn (khe vực vách
+  đá vân), Tuyết hai vòng cùng lượn một phía (suối đóng băng). Uốn mềm (bán kính cong ≥ 18), hai khúc (ngã ba → bến lội, bến lội →
+  biển) **dài đúng bằng nhau** trên ba đảo. Mặt nước suối: `src/world/rivers.js` (nước chảy, bọt ở mép và ghềnh; Tuyết là mặt
+  băng nứt).
 - **Đèo sau núi** từ lưng khu nhà chính ra đai ven biển phía sau; **đai ven biển** (phẳng, cao 4, rộng 18) chạy quanh đảo là
   lối sườn, cũng là chỗ xây tường thành (`shape.js RIM, coast, keepRim`).
 - Ba đảo dùng chung khung nên **ba nhà chính thành tam giác đều** quanh tâm bể (cạnh 1.353), **sáu lối lính từ đầu cầu lên nhà
-  chính dài bằng nhau** (662), **ba cầu dài bằng nhau** (400). Có kiểm thử: lối nào cũng đi được (không vách), đường chính dừng ở
-  cổng, đai ven biển phẳng hơn 95% vòng đảo.
+  chính dài bằng nhau** (726), **ba hẻm suối dài bằng nhau** (348), **ba cầu dài bằng nhau** (400). Có kiểm thử: lối nào cũng đi
+  được (không vách), chỉ lát đường tới cổng, khu nhà chính không nhìn thấy cổng và cầu, đai ven biển phẳng hơn 95% vòng đảo.
 - **Ba cầu** (`src/world/bridges.js`); **nhà chính tạm** (`src/build/hall.js`, cờ màu đảo) để căn chỉnh.
 
 | Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |
-| Đồng Bằng (plains) | núi đồi bậc thềm, vách đá vôi ấm | rừng giữa: đồi tán bông, gò rừng, hẻm suối; sườn: cao nguyên tây, đồi đông, hồ; sau lưng: núi lớn có đèo |
-| Sa Mạc (desert) | đá vân hồng, cồn cát | rừng giữa: mê cung núi bàn, khe vực, hồ ốc đảo bên bến lội; sườn: núi bàn, rừng cột đá, chảo muối, hố cổ; sau lưng: cao nguyên và núi bàn |
-| Tuyết (tundra) | khối núi lớn, đá xám lộ dưới tuyết | rừng giữa: đồi băng phủ thông, khe băng, ao băng; sườn: núi phụ tây, sống băng đông, vịnh hẹp; sau lưng: khối núi chính có đèo băng |
+| Đồng Bằng (plains) | núi đồi bậc thềm, đá vôi ấm | vành đồi rừng; giữa: đồi tán bông, suối chữ S bờ cỏ; sườn: cao nguyên tây, đồi đông, hồ; sau: núi lớn, đèo |
+| Sa Mạc (desert) | đá vân hồng, cồn cát | vành vách đá vân; giữa: núi bàn, khe vực suối ốc đảo (hồ ở vòng cổ ngỗng); sườn: cột đá, chảo muối, hố cổ |
+| Tuyết (tundra) | khối núi lớn, đá xám dưới tuyết | vành sống băng; giữa: đồi thông, khe suối đóng băng (ao băng); sườn: núi phụ, sống băng, vịnh hẹp; sau: núi chính, đèo |
 
 ## Xây công trình (chuẩn bị)
 
@@ -56,8 +64,9 @@ trình theo ô: nhà dân 2×2, nhà lính 6×4 (có sân tập), nhà xe 4×4, 
 
 ## Góc nhìn
 
-Toàn cảnh; từng đảo nhìn từ tâm bể; nút **Tầm mắt**: đứng ở ban công tháp nhà chính nhìn xuống rừng giữa. Nút **Căn chỉnh**: tam
-giác nối tâm ba nhà chính, các lối trên mỗi đảo (đường chính trắng, lối mòn cam, hẻm suối xanh, đèo tím), kèm số đo.
+Toàn cảnh; từng đảo nhìn từ tâm bể; nút **Tầm mắt**: đứng ở góc sau khu nhà chính nhìn chéo qua khu (nhà chính, đất xây, vành
+đồi che kín). Nút **Căn chỉnh**: tam giác nối tâm ba nhà chính, các lối trên mỗi đảo (đường chính trắng, đứt nét qua khe sau cổng;
+lối mòn cam; hẻm suối riêng của đảo xanh; đèo tím), kèm số đo.
 Sương xa mờ dần khi đứng sát đất (chiều sâu như ảnh đích), lùi theo khi máy quay lùi xa.
 
 ## Chạy
@@ -69,7 +78,8 @@ Tham số URL: `?dao=all|plains|desert|tundra`, `?buoi=dawn|noon|sunset|night`, 
 
 Kiểm thử: `npm test` (nhiễu tất định, độ cao ba đảo, đáy biển giữa các đảo, đảo nằm trọn trong bể, mặt đảo hướng về tâm,
 đai ven biển phẳng, khu nhà chính đủ rộng, đỉnh núi giữ cao độ, tam giác đều ba nhà chính, lối lính và cầu bằng nhau,
-nhà chính cao nhất có núi chắn sau lưng, mọi lối đi được, đường chính dừng ở cổng).
+nhà chính cao nhất có núi chắn sau lưng, mọi lối đi được, chỉ lát đường tới cổng, khu nhà chính trũng không nhìn thấy cổng, đầu
+cầu, cầu; ba suối uốn mềm, dáng khác nhau, dài bằng nhau, hai bờ đi được, nước xuống dần ra biển).
 
 ## Cấu trúc
 
@@ -78,5 +88,5 @@ nhà chính cao nhất có núi chắn sau lưng, mọi lối đi được, đư
 - `src/nature/`: cây, cỏ, gió, rải cây, đom đóm.
 - `src/fx/`: vật liệu kiểu tranh (viền sáng, xuyên sáng lá, gió) và hậu kỳ (bloom, chỉnh màu).
 - `src/build/`: lưới ô xây (`cells.js` thuần JS, `grid.js` vẽ lưới), nhà chính tạm (`hall.js`), đường căn chỉnh (`guides.js`).
-- `src/world/bridges.js`: ba cây cầu.
+- `src/world/bridges.js`: ba cây cầu; `src/world/rivers.js`: mặt nước suối ba đảo.
 - `src/ui/hud.js`: thanh chọn đảo, buổi, mức đồ hoạ, tầm mắt, lưới xây, FPS.

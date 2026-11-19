@@ -1,25 +1,24 @@
 // SamBox · src/world/islands/tundra.js · Đảo Tuyết: khối núi đá nhọn phủ tuyết, đồi băng phủ thông, khe băng, vịnh hẹp
-// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): rừng giữa là đồi băng phủ rừng thông, hẻm suối thành khe băng
-// (suối đóng băng), ao băng bên bến lội; sườn tây là núi phụ (đất cao) nối khối núi chính bằng sống núi; sườn đông là sống băng;
-// vịnh hẹp ăn vào bờ đông (xa đường chính); khối núi chính cao nhất bể chắn sau khu nhà chính, có đèo băng; quanh đảo là đai ven
-// biển. Tuyết phủ chỗ thoải, đá lộ ở vách dốc.
+// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành sống băng; rừng giữa là đồi băng
+// phủ rừng thông, khe băng có suối đóng băng uốn hai vòng cùng phía (ao băng ở vòng trên); sườn tây là núi phụ (đất cao) nối khối núi
+// chính bằng sống núi; sườn đông là sống băng; vịnh hẹp ăn vào bờ đông (xa đường chính); khối núi chính cao nhất bể chắn sau khu nhà
+// chính, có đèo băng; quanh đảo là đai ven biển. Tuyết phủ chỗ thoải, đá lộ ở vách dốc.
 import { fbm, ridged, smooth } from '../../core/noise.js';
 import { rgb, mix3, coast, bump, lineDist, shoreEdge, RIM, onRim, keepRim } from './shape.js';
-import { withPaths, paths, inTown, STREAM, EYE } from './lanes.js';
+import { createPaths, inTown, EYE } from './lanes.js';
 
 const R = 300;
-const POND = [34, 120]; // ao băng bên bến lội (lệch khỏi lối mòn)
+const P = createPaths({ bends: [-22, 4, -22, -4], pool: 58, seed: 3 }); // suối băng: hai vòng cùng lượn trái, vòng trên to hơn, ao băng
 const FJORD = [[330, -70], [262, -48]]; // vịnh hẹp bờ đông (dừng xa đường chính phải)
 const RIDGE = [[0, -215], [-95, -150], [-165, -40], [-185, 40]]; // sống núi từ khối núi chính sang núi phụ phía tây
 const C = {
   snow: rgb('#f3f7fc'), snow2: rgb('#dfe8f2'), rock: rgb('#6f7b8a'), rock2: rgb('#555f6c'), tundra: rgb('#99a98a'), ice: rgb('#cfe7f3'),
   beach: rgb('#a9a69c'), glacier: rgb('#bfe0f0'), road: rgb('#d9dfe6'), road2: rgb('#c4ccd6'), trail: rgb('#c9d2dc'),
 };
-const pondNear = (x, z) => smooth(13, 9, Math.hypot(x - POND[0], z - POND[1]));
 const edgeAt = (x, z) => shoreEdge(x, z, R, 2.2, 1.1);
 const clear = (x, z) => {
-  const p = paths(x, z);
-  return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.trail, p.gorge, p.pass);
+  const p = P.paths(x, z);
+  return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.defile, p.trail, p.gorge, p.pass);
 };
 // rừng thông: dày ở vùng giữa hai đường chính, thưa ở hai sườn
 const middle = (x, z) => smooth(150, 105, Math.abs(x)) * smooth(-70, -40, z) * smooth(225, 190, z);
@@ -36,23 +35,22 @@ function height(x, z) {
   land += 60 * bump(x, z, 205, 35, 28) * (0.6 + 0.4 * ridged(x * 0.02, z * 0.02, 3)); // sống băng sườn đông (đất cao)
   land += 50 * bump(x, z, 0, 60, 48) * (0.6 + 0.5 * ridged(x * 0.02 + 2, z * 0.02, 3)); // đồi băng giữa rừng
   land += 26 * bump(x, z, -72, 132, 30) + 26 * bump(x, z, 74, 122, 30) + 24 * bump(x, z, -62, -12, 26) + 24 * bump(x, z, 64, -6, 26); // gò
+  land = Math.max(land, P.ring(x, z) * (0.9 + 0.22 * ridged(x * 0.02 - 6, z * 0.02 + 1, 3))); // vành sống băng quanh khu nhà chính
   let h = coast(land, d, edge, 0.45);
-  h = keepRim(withPaths(h, x, z), edge - d); // (sau bờ biển: lối đi trên ba đảo giống hệt nhau, không lệch theo bờ riêng)
+  h = keepRim(P.withPaths(h, x, z), edge - d); // (sau bờ biển: lối đi trên ba đảo giống hệt nhau, không lệch theo bờ riêng)
   // vịnh hẹp: hai bên lòng vịnh là thềm phẳng cao bằng đai ven biển (xây tường được), sau thềm là vách dựng
   const fd = lineDist(FJORD, x, z) + 5 * fbm(x * 0.04, z * 0.04, 2);
   h = h + (RIM.level - h) * smooth(30, 26, fd);
   h = h + (-16 - h) * smooth(13, 10, fd);
-  h = h + (0.6 - h) * smooth(3.5, 1.8, lineDist(STREAM, x, z)); // suối đóng băng trong khe (mặt băng nhỉnh trên mặt biển)
-  h = h + (1 - h) * pondNear(x, z); // ao băng
-  return h;
+  return P.channel(h, x, z); // suối đóng băng (khoét sau cùng nên băng qua đai ven biển ra tới biển)
 }
 function ground(x, z, y, slope) {
-  if ((pondNear(x, z) > 0.5 || lineDist(STREAM, x, z) < 2.5) && y < 1.6) return C.ice;
+  const p = P.paths(x, z);
+  if (p.stream > 0.5) return C.ice; // lòng suối băng
   if (y < RIM.level + 0.6 && slope < 0.2 && edgeAt(x, z) - Math.hypot(x, z) < RIM.bank + 7) return C.beach; // đai ven biển: ngoài sỏi
-  const p = paths(x, z);
   if (p.lane > 0.5) return mix3(C.road2, C.road, 0.5 + 0.5 * fbm(x * 0.2, z * 0.2)); // đường chính tuyết nén, lộ đá
-  if (p.trail > 0.5 || p.pass > 0.5) return C.trail; // lối mòn, đèo: tuyết giẫm
-  if (p.gorge > 0.5) return mix3(C.glacier, C.snow2, 0.4); // lòng khe băng
+  if (p.trail > 0.5 || p.pass > 0.5 || p.defile > 0.5) return C.trail; // lối mòn, đèo, khe sau cổng: tuyết giẫm
+  if (p.gorge > 0.5) return mix3(C.glacier, C.snow2, 0.55); // hai bờ suối băng
   if (y < 1.8) return C.beach;
   if (slope > 0.6) return mix3(C.rock, C.rock2, 0.5 + 0.5 * fbm(x * 0.06, z * 0.06));
   const snowLine = 18 + 10 * fbm(x * 0.03, z * 0.03);
@@ -67,11 +65,12 @@ export default {
   eye: EYE,
   flag: '#f4f7fb', // cờ trắng (tuyết trắng)
   buildZone: inTown, // chỉ xây trong khu nhà chính
+  paths: P,
   height,
   ground,
   flora: [
-    { type: 'pine', count: 1700, where: (x, z, y, s) => (y > 2.5 && y < 80 && s < 0.5 ? forest(x, z) * (1 - pondNear(x, z)) * (1 - clear(x, z)) : 0) },
-    { type: 'snowGrass', count: 9000, where: (x, z, y, s) => (y > 2 && y < 40 && s < 0.45 ? 0.35 * (1 - pondNear(x, z)) * (1 - paths(x, z).lane) : 0) },
+    { type: 'pine', count: 1700, where: (x, z, y, s) => (y > 2.5 && y < 80 && s < 0.5 ? forest(x, z) * (1 - clear(x, z)) : 0) },
+    { type: 'snowGrass', count: 9000, where: (x, z, y, s) => (y > 2 && y < 40 && s < 0.45 ? 0.35 * (1 - P.paths(x, z).lane) * (1 - P.paths(x, z).stream) : 0) },
     { type: 'rock', count: 190, where: (x, z, y, s) => (y > 0 && s > 0.3 && s < 0.7 ? 0.8 : y > 0 && y < 2.5 ? 0.2 : 0) * (1 - clear(x, z)) },
   ],
 };

@@ -1,10 +1,11 @@
-// SamBox · test/world.test.js · Kiểm thử thuần JS: nhiễu ổn định, ba đảo có hình đúng ý (đỉnh, vách, phần nổi), đáy biển giữa đảo
+// SamBox · test/world.test.js · Kiểm thử thuần JS: nhiễu ổn định, ba đảo có hình đúng ý (đỉnh, vách, phần nổi), đáy biển giữa đảo,
+// khung đường cân bằng, khu nhà chính kín tầm nhìn, ba suối uốn lượn dài bằng nhau
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
 import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt, hallAt, BRIDGES, road, pathLength, toWorld } from '../src/world/layout.js';
-import { RIM } from '../src/world/islands/shape.js';
-import { LANES, TRAILS, GORGE, BACKPASS, GATES, HALL, TOWN, inTown, paths } from '../src/world/islands/lanes.js';
+import { RIM, lineDist } from '../src/world/islands/shape.js';
+import { LANES, TRAILS, BACKPASS, DOOR, GATES, HEADS, HALL, TOWN, EYE, FORD, inTown } from '../src/world/islands/lanes.js';
 import { buildCells, patches } from '../src/build/cells.js';
 import plains from '../src/world/islands/plains.js';
 import desert from '../src/world/islands/desert.js';
@@ -163,17 +164,98 @@ function steepest(spec, P) {
   }
   return worst;
 }
-test('đường chính, lối mòn, hẻm suối, đèo đều đi được trên cả ba đảo; đường chính dừng ở cổng', () => {
+test('đường chính (cả khe sau cổng), lối mòn, cửa trước, đèo đều đi được; chỉ lát đường tới cổng', () => {
   for (const spec of [plains, desert, tundra]) {
+    const p = spec.paths.paths;
     for (const L of LANES) assert.ok(steepest(spec, L) < 0.4, spec.name + ': đường chính dốc ' + steepest(spec, L).toFixed(2));
     for (const T of TRAILS) assert.ok(steepest(spec, T) < 0.6, spec.name + ': lối mòn dốc ' + steepest(spec, T).toFixed(2));
-    // (hẻm: tính từ dưới bậc đá đầu hẻm; suối nông giữa lòng hẻm, men theo mép lòng hẻm)
-    const G = GORGE.slice(0, -1).map(([x, z]) => [x - 4, z]); // (tới đai ven biển; điểm cuối là mép nước)
-    assert.ok(steepest(spec, G) < 0.8, spec.name + ': hẻm suối dốc ' + steepest(spec, G).toFixed(2));
+    assert.ok(steepest(spec, DOOR) < 0.45, spec.name + ': cửa trước dốc ' + steepest(spec, DOOR).toFixed(2));
     assert.ok(steepest(spec, BACKPASS.slice(0, -1)) < 0.8, spec.name + ': đèo dốc ' + steepest(spec, BACKPASS.slice(0, -1)).toFixed(2));
+    for (const L of LANES) {
+      const along = (P, i, t) => [P[i][0] + (P[i + 1][0] - P[i][0]) * t, P[i][1] + (P[i + 1][1] - P[i][1]) * t];
+      assert.ok(p(...along(L, 3, 0.5)).lane > 0.9, spec.name + ': trước cổng là đường lát');
+      const q = p(...along(L, 4, 0.5));
+      assert.ok(q.lane < 0.01 && q.defile > 0.9, spec.name + ': sau cổng là khe đất, không lát');
+    }
     for (const [gx, gz] of GATES) {
       const [mx, mz] = [(gx + HALL[0]) / 2, (gz + HALL[1]) / 2]; // giữa cổng và nhà chính
-      assert.ok(paths(mx, mz).lane < 0.01 && inTown(mx, mz) > 0.9, spec.name + ': sau cổng là đất xây, không còn đường');
+      assert.ok(p(mx, mz).lane < 0.01 && inTown(mx, mz) > 0.9, spec.name + ': sau cổng là đất xây, không còn đường');
+    }
+  }
+});
+
+test('khu nhà chính trũng, vành đồi che kín: đứng trong khu không thấy cổng, đầu cầu, cầu (cả ba cầu)', () => {
+  // tầm nhìn trong bể (toạ độ thế giới; chỉ đất chắn): người đứng trong khu cao 3,6; chỗ tầm mắt; đích cao hơn mặt đất/mặt cầu vài đơn vị
+  const blocked = (a, b) => {
+    const n = Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / 2.5);
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      if (heightAt(a[0] + (b[0] - a[0]) * t, a[2] + (b[2] - a[2]) * t) > a[1] + (b[1] - a[1]) * t) return true;
+    }
+    return false;
+  };
+  for (const I of ISLANDS) {
+    const at = (lx, lz, up) => {
+      const [x, z] = toWorld(I, lx, lz);
+      return [x, heightAt(x, z) + up, z];
+    };
+    const targets = [...HEADS, ...GATES].map(([x, z]) => at(x, z, 10));
+    for (const b of BRIDGES)
+      for (let t = 0; t <= 1.0001; t += 0.1) targets.push([b.from[0] + (b.to[0] - b.from[0]) * t, 9.6 + 9 * Math.sin(Math.PI * t), b.from[1] + (b.to[1] - b.from[1]) * t]);
+    const eyes = [at(EYE.from[0], EYE.from[1], EYE.up * SCALE_Y)];
+    for (let x = -108; x <= 108; x += 24) for (let z = -160; z <= -58; z += 17) if (inTown(x, z) > 0.999) eyes.push(at(x, z, 3.6));
+    assert.ok(eyes.length > 25, 'đủ chỗ đứng trong khu');
+    for (const e of eyes) for (const t of targets) assert.ok(blocked(e, t), I.spec.name + ': từ ' + e.map(Math.round) + ' thấy ' + t.map(Math.round));
+    const town = TOWN.level * SCALE_Y;
+    assert.ok(GATES.every(([x, z]) => at(x, z, 0)[1] > town), I.spec.name + ': cổng cao hơn khu nhà chính (khu trũng)');
+  }
+});
+
+test('ba suối uốn lượn mềm, dáng khác nhau, dài bằng nhau; hai bờ đi được; nước xuống dần ra biển', () => {
+  const S = [plains, desert, tundra].map((s) => s.paths);
+  const len = (P) => P.slice(1).reduce((a, p, i) => a + Math.hypot(p[0] - P[i][0], p[1] - P[i][1]), 0);
+  const cut = (P, z0, z1) => P.filter(([, z]) => z >= z0 && z <= z1);
+  const L = S.map((p) => [len(cut(p.gorge, -1e9, FORD[1])), len(cut(p.gorge, FORD[1], 1e9))]);
+  for (const k of [0, 1]) assert.ok(Math.max(...L.map((l) => l[k])) - Math.min(...L.map((l) => l[k])) < 0.01, 'hai khúc suối dài bằng nhau: ' + JSON.stringify(L));
+  assert.ok(L[0][0] + L[0][1] > (S[0].gorge.at(-1)[1] - S[0].gorge[0][1]) * 1.12, 'suối uốn lượn dài hơn đường thẳng');
+  for (const p of S) {
+    assert.ok(p.gorge.some(([x, z]) => Math.hypot(x - FORD[0], z - FORD[1]) < 0.5), 'bến lội nằm trên suối');
+    let r = 1e9; // bán kính cong nhỏ nhất (không gãy nhọn)
+    for (let i = 1; i < p.gorge.length - 1; i++) {
+      const [a, b, c] = [p.gorge[i - 1], p.gorge[i], p.gorge[i + 1]],
+        cross = Math.abs((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]));
+      if (cross > 1e-9) r = Math.min(r, (Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(c[0] - b[0], c[1] - b[1]) * Math.hypot(c[0] - a[0], c[1] - a[1])) / (2 * cross));
+    }
+    assert.ok(r > 18, 'suối uốn mềm: bán kính cong nhỏ nhất ' + r.toFixed(1));
+  }
+  for (let i = 0; i < 3; i++)
+    for (let j = i + 1; j < 3; j++) {
+      const d = Math.max(...S[i].gorge.map(([x], k) => Math.abs(x - S[j].gorge[k][0])));
+      assert.ok(d > 20, 'dáng suối khác nhau: lệch nhau ' + d.toFixed(1));
+    }
+  for (const spec of [plains, desert, tundra]) {
+    const W = spec.paths.stream;
+    assert.ok(W[0].y > 19 && W.at(-1).y < 0.3, spec.name + ': suối từ chân vành đồi chảy ra tới biển');
+    assert.ok(W.every((w, i) => !i || w.y <= W[i - 1].y + 1e-9), spec.name + ': mặt nước xuống dần');
+    // hai bờ: dải đất phẳng ngang mặt lòng hẻm từ mép nước tới mép lòng hẻm, dọc theo bờ đi được (trừ chỗ lối mòn cắt ngang)
+    const sides = [[[]], [[]]]; // (mỗi bờ: các đoạn liền, ngắt ở chỗ lối mòn cắt ngang)
+    W.forEach((w, i) => {
+      if (!w.f || TRAILS.some((T) => lineDist(T, w.x, w.z) < w.f + 18)) return sides.forEach((B) => B.at(-1).length && B.push([])); // (bờ dốc xuống bến lội)
+      const a = W[Math.max(0, i - 1)],
+        b = W[Math.min(W.length - 1, i + 1)],
+        l = Math.hypot(b.x - a.x, b.z - a.z),
+        [nx, nz] = [-(b.z - a.z) / l, (b.x - a.x) / l];
+      [-1, 1].forEach((sd, k) => {
+        for (const o of [w.w + 1.6, w.f - 3.5]) {
+          const h = spec.height(w.x + nx * o * sd, w.z + nz * o * sd);
+          assert.ok(Math.abs(h - (w.y + 0.5)) < 0.7, spec.name + ': bờ suối phẳng, khô ở ' + [w.x, w.z].map(Math.round) + ' cách ' + o.toFixed(1));
+        }
+        sides[k].at(-1).push([w.x + nx * (w.w + w.f) * 0.5 * sd, w.z + nz * (w.w + w.f) * 0.5 * sd]);
+      });
+    });
+    for (const B of sides) {
+      assert.ok(B.flat().length > 60, spec.name + ': bờ suối đủ dài');
+      for (const run of B.filter((r) => r.length > 1)) assert.ok(steepest(spec, run) < 0.5, spec.name + ': lối bờ suối đi được, dốc ' + steepest(spec, run).toFixed(2));
     }
   }
 });
