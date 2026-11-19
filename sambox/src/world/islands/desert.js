@@ -1,35 +1,29 @@
-// SamBox · src/world/islands/desert.js · Đảo Sa Mạc (cát hồng): biển cồn cát, đồi cát hình sao, suối ốc đảo, cột đá, chảo muối
+// SamBox · src/world/islands/desert.js · Đảo Sa Mạc (cát hồng): biển cồn cát, cồn cát thoải, suối ốc đảo, cột đá, chảo muối
 // Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): mặt đất là biển cát (sóng cồn dài uốn theo gió, đỉnh sắc chân
-// tròn); khu nhà chính trũng giữa vành đá vân có cát dồn ngoài; rừng giữa là núi cát hình sao cao (che tầm nhìn ra cầu; thung giữa
-// các núi và hai bên lối mòn thoải), suối ốc đảo xẻ qua núi cát giữa, khúc dưới vòng cổ ngỗng, hồ ốc đảo ở đỉnh vòng (bờ cỏ, cọ);
-// sườn tây là thềm cát phẳng, rừng cột đá, chảo
+// tròn); khu nhà chính trũng giữa vành đá vân có cát dồn ngoài; khu giữa là cồn cát thoải (hai cồn lớn hai bên, cồn dải, cồn con;
+// lưng đón gió thoải dài, mặt khuất gió dốc hơn; từ lối mòn đi lên được), đá tảng sa thạch nằm thành cụm; suối ốc đảo khúc dưới
+// vòng cổ ngỗng, hồ ốc đảo ở đỉnh vòng (bờ cỏ, cọ); sườn tây là thềm cát phẳng, rừng cột đá, chảo
 // muối; sườn đông là núi bàn thấp đỉnh phẳng, miệng hố cổ (hai nền phẳng xây được, nhìn xuống đường chính); sau khu nhà chính là
 // biển cát cao với hai đồi cát lớn chắn, có đèo; quanh đảo là đai ven biển. Đá chỉ còn ở vành khu, cột đá, núi bàn, hố cổ.
 import { fbm, smooth, rng, lerp } from '../../core/noise.js';
-import { rgb, mix3, terrace, coast, shoreEdge, RIM, onRim, keepRim } from './shape.js';
-import { createPaths, EYE, PADS, padOut, MOUNTS } from './lanes.js';
+import { rgb, mix3, terrace, coast, hills, shoreEdge, RIM, onRim, keepRim } from './shape.js';
+import { createPaths, EYE, PADS, padOut } from './lanes.js';
 
 const R = 300;
-const P = createPaths({ bends: [11, -39, 11, 0], pool: 156, seed: 2, canyon: 10 }); // suối: khúc trên lượn nhẹ trái, khúc dưới vòng lớn sang phải
-// đồi cát hình sao (đỉnh giữa, ba sống cát toả ra): núi giữa chung khung (lanes.js MOUNTS: cùng chỗ, cùng độ cao) [x, z, bán kính, cao,
-// xoay sống]; hai đồi cát lớn sau lưng khu nhà chính (chân loang rộng) [x, z, bán kính, cao]
-const STARS = MOUNTS.map(([x, z, ax, az, h], i) => [x, z, Math.sqrt(ax * az), h, i * 1.7]);
-const BACKDUNES = [[-70, -214, 93, 84], [72, -216, 87, 78]];
-function star(x, z, [cx, cz, r, h, rot]) {
-  const dx = x - cx,
-    dz = z - cz,
-    d = Math.hypot(dx, dz);
-  if (d > r * 1.5) return 0;
-  const u = (d / (r * 0.95)) ** 2;
-  let v = u < 1 ? h * (1 - u) ** 1.5 : 0; // đỉnh giữa
-  for (let a = 0; a < 3; a++) {
-    const t = rot + (a * 2 * Math.PI) / 3,
-      along = (dx * Math.cos(t) + dz * Math.sin(t)) / (r * 1.45),
-      across = Math.abs(-dx * Math.sin(t) + dz * Math.cos(t)) / (r * 0.62 * (1 - 0.5 * Math.min(1, Math.max(0, along))));
-    if (along > 0 && along < 1 && across < 1) v = Math.max(v, h * 0.62 * (1 - along) ** 1.3 * (1 - across)); // sống cát: đỉnh sắc
-  }
-  return v;
-}
+const P = createPaths({ bends: [11, -39, 11, 0], pool: 156, seed: 2 }); // suối: khúc trên lượn nhẹ trái, khúc dưới vòng lớn sang phải
+// cồn cát giữa [x, z, nửa dài, nửa ngang, cao thêm, hướng, lệch] (shape.js hills; lệch > 0: lưng đón gió thoải dài, mặt khuất gió dốc
+// hơn): to nhỏ, cao thấp, hướng khác nhau
+const DUNES = [
+  [78, 58, 30, 17, 19, 0.15, 0.45], // cồn lớn phía đông, giữa hai lối mòn
+  [116, 46, 16, 13, 9, 0.6], // cồn con tựa vào cồn lớn
+  [-78, 54, 34, 16, 16, -0.2, 0.4], // cồn dài phía tây
+  [-62, 156, 28, 22, 17, 0.9, 0.45], // cồn rộng phía trước tây (trong vòng cổ ngỗng)
+  [-100, 124, 17, 13, 9, -0.9],
+  [84, 136, 22, 13, 11, 1.0, 0.3], // cồn dải phía trước đông, nằm dọc theo đường chính
+  [50, 190, 12, 10, 6],
+  [-40, 196, 11, 9, 5],
+];
+const BACKDUNES = [[-70, -214, 93, 84], [72, -216, 87, 78]]; // hai đồi cát lớn sau lưng khu nhà chính (chân loang rộng) [x, z, bán kính, cao]
 const HOODOOS = (() => {
   const r = rng(77),
     out = [];
@@ -44,6 +38,8 @@ const C = {
   wet: rgb('#cf9a80'), salt: rgb('#f6ece4'), salt2: rgb('#e9d6cc'), road: rgb('#ecd2b4'), road2: rgb('#dcb998'), trail: rgb('#c99a78'),
 };
 const edgeAt = (x, z) => shoreEdge(x, z, R, 4.1, 0.8);
+// đá tảng sa thạch nằm thành cụm tự nhiên (đốm nhiễu): sườn cồn, ven lối
+const stony = (x, z) => smooth(0.2, 0.46, fbm(x * 0.021 + 57, z * 0.021 - 57, 2));
 const clear = (x, z) => {
   const p = P.paths(x, z);
   return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.defile, p.trail, p.gorge, p.pass, p.ramp, p.pad);
@@ -58,7 +54,7 @@ function wave(x, z) {
   const u = (x * 0.5 + z * 0.866 + 22 * fbm(x * 0.005 + 3, z * 0.005 - 1, 2)) * 0.05;
   return { u, k: Math.pow(0.5 + 0.5 * Math.cos(u), 1.7) };
 }
-// cát: biển cồn + đồi cát hình sao + thềm cát sườn tây + biển cát cao sau lưng + cát dồn ngoài vành đá + bờ cát hai bên suối
+// cát: biển cồn + cồn cát giữa + thềm cát sườn tây + biển cát cao sau lưng + cát dồn ngoài vành đá
 const memo = (f) => {
   let kx = NaN,
     kz = NaN,
@@ -68,15 +64,16 @@ const memo = (f) => {
 const sand = memo(sandAt),
   rock = memo(rockAt);
 function sandAt(x, z) {
-  let h = 9 + 4 * fbm(x * 0.009, z * 0.009, 3) + (5 + 8 * smooth(-0.35, 0.45, fbm(x * 0.007 - 5, z * 0.007 + 2, 2))) * wave(x, z).k;
-  for (const S of STARS) h = Math.max(h, star(x, z, S));
+  const w = wave(x, z).k;
+  let h = 9 + 4 * fbm(x * 0.009, z * 0.009, 3) + (5 + 8 * smooth(-0.35, 0.45, fbm(x * 0.007 - 5, z * 0.007 + 2, 2))) * w;
+  h += hills(DUNES, x, z, 2) * (0.86 + 0.28 * w); // cồn cát giữa: thoải, sóng cồn in lên thành sống cát
   for (const [cx, cz, r, hm] of BACKDUNES) {
     const d2 = (x - cx) ** 2 + (z - cz) ** 2;
     if (d2 < 9 * r * r) h = Math.max(h, hm * Math.exp((-1.2 * d2) / (r * r)));
   }
   h = Math.max(h, lerp(0, 50 + 6 * fbm(x * 0.01, z * 0.01, 3), smooth(-140, -176, z))); // biển cát cao sau lưng khu nhà chính
   h = Math.max(h, PADS[0].y * smooth(2.2, 1.1, padOut(PADS[0], x, z) + 0.15 * fbm(x * 0.03, z * 0.03, 2))); // thềm cát sườn tây
-  return Math.max(h, 0.8 * P.ring(x, z, 86), P.walls(x, z)); // cát dồn ngoài vành đá; bờ cát hai bên suối
+  return Math.max(h, 0.8 * P.ring(x, z, 86)); // cát dồn ngoài vành đá
 }
 // đá: vành khu nhà chính, núi bàn thấp sườn đông, cột đá, vành hố cổ (vân đá tầng tầng)
 function rockAt(x, z) {
@@ -136,5 +133,6 @@ export default {
     { type: 'cactus', count: 160, where: (x, z, y, s) => (y > 2 && y < 60 && s < 0.3 ? 0.4 * (1 - saltNear(x, z)) * (1 - clear(x, z)) : 0) },
     { type: 'dryGrass', count: 9000, where: (x, z, y, s) => (y > 1 && y < 60 && s < 0.4 ? (0.2 + 0.8 * oasisNear(x, z)) * (1 - saltNear(x, z)) * (1 - P.paths(x, z).lane) * (1 - P.paths(x, z).stream) : 0) },
     { type: 'rock', count: 120, where: (x, z, y, s) => (y > 0 && s > 0.25 && s < 0.6 && rock(x, z) > 2 ? 0.9 : 0) * (1 - clear(x, z)) },
+    { type: 'boulder', count: 70, where: (x, z, y, s) => (y > 2.5 && s < 0.5 ? stony(x, z) * (1 - clear(x, z)) : 0) },
   ],
 };

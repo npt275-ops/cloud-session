@@ -9,6 +9,9 @@
 //   onRim(u)                      0..1: điểm cách mép bờ u (đo vào trong) nằm trên đai ven biển (dọn cây, chừa chỗ tường thành)
 //   keepRim(h, u)                 ép lại đai ven biển phẳng sau khi khoét lối đi
 //   bump(x, z, cx, cz, r)         khối đồi hình chuông (Gauss) tâm (cx, cz), bán kính r
+//   hills(H, x, z, seed, warp)    đồi thoải tự nhiên: cộng các khối đồi H = [[x, z, nửa dài, nửa ngang, cao, hướng, lệch], ...] (chuông
+//                                 Gauss xoay; lệch > 0: đầu +dài dốc hơn, đầu kia thoải dài). Toạ độ bẻ bằng nhiễu nên chân đồi không
+//                                 tròn đều; đồi gần nhau liền thành dải có yên ngựa (không phải từng cục rời)
 //   lineDist(pts, x, z)           khoảng cách tới đường gấp khúc pts [[x, z], ...] (sông, hẻm vực, vịnh hẹp, thung băng)
 //   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu). Chỉ phụ thuộc hướng (nhiễu lấy
 //                                 trên một vòng tròn) nên đai ven biển đo theo bán kính rộng đều quanh đảo; mặt đảo dùng bờ chung, lưng
@@ -41,6 +44,24 @@ export const onRim = (u) => smooth(-1, 1, u) * smooth(RIM.bank + RIM.width + 8, 
 // giữ đai ven biển phẳng sau khi khoét lối đi (bờ đường đắp tới sát bờ biển không làm gợn đai)
 export const keepRim = (h, u) => lerp(h, RIM.level, smooth(RIM.bank, RIM.bank + 1, u) * smooth(RIM.bank + RIM.width + 1, RIM.bank + RIM.width, u));
 export const bump = (x, z, cx, cz, r) => Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (2 * r * r));
+export function hills(H, x, z, seed = 0, warp = 13) {
+  const wx = x + warp * fbm(x * 0.011 + seed * 3.7, z * 0.011 + seed, 2),
+    wz = z + warp * fbm(x * 0.011 - seed * 1.9, z * 0.011 + seed * 5.3 + 9, 2);
+  let h = 0;
+  for (const [cx, cz, a, b, hm, rot = 0, skew = 0] of H) {
+    const dx = wx - cx,
+      dz = wz - cz,
+      far = 3.6 * Math.max(a, b);
+    if (Math.abs(dx) > far || Math.abs(dz) > far) continue;
+    const c = Math.cos(rot),
+      si = Math.sin(rot),
+      u = (dx * c + dz * si) / a,
+      v = (-dx * si + dz * c) / b,
+      uu = u * (1 + skew * Math.tanh(u));
+    h += hm * Math.exp(-0.5 * (uu * uu + v * v));
+  }
+  return h;
+}
 export function lineDist(pts, x, z) {
   let best = 1e9;
   for (let i = 0; i < pts.length - 1; i++) {

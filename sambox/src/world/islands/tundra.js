@@ -1,16 +1,27 @@
 // SamBox · src/world/islands/tundra.js · Đảo Tuyết: khối núi đá nhọn phủ tuyết, đồi băng phủ thông, khe băng, vịnh hẹp
-// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành sống băng; rừng giữa là núi băng
-// đỉnh đá nhọn, chân phủ rừng thông (thung giữa các núi và hai bên lối mòn thoải: lính đi xuyên rừng), khe băng có suối đóng băng
-// uốn hai vòng cùng phía xẻ qua núi giữa (ao băng ở vòng trên);
+// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành sống băng; rừng giữa là đồi băng
+// thoải phủ rừng thông (hai quả đồi nối yên ngựa phía tây, một đồi thuôn dài phía đông, đồi bên suối, đồi thấp dần ra biển; vài
+// đỉnh đồi lộ mỏm đá), đá tảng nằm thành cụm; khe băng có suối đóng băng uốn hai vòng cùng phía (ao băng ở vòng trên);
 // sườn tây là thềm băng phẳng dưới chân núi phụ (núi phụ nối khối núi chính bằng sống núi), sườn đông là thềm băng trước sống băng
 // (hai nền phẳng xây được, nhìn xuống đường chính); vịnh hẹp ăn vào bờ đông (xa đường chính); khối núi chính cao nhất bể chắn sau
 // khu nhà chính, có đèo băng; quanh đảo là đai ven biển. Tuyết phủ chỗ thoải, đá lộ ở vách dốc.
 import { fbm, ridged, smooth } from '../../core/noise.js';
-import { rgb, mix3, coast, bump, lineDist, shoreEdge, RIM, onRim, keepRim } from './shape.js';
-import { createPaths, EYE, PADS, padOut, relief } from './lanes.js';
+import { rgb, mix3, coast, bump, hills, lineDist, shoreEdge, RIM, onRim, keepRim } from './shape.js';
+import { createPaths, EYE, PADS, padOut } from './lanes.js';
 
 const R = 300;
 const P = createPaths({ bends: [-22, 4, -22, -4], pool: 58, seed: 3 }); // suối băng: hai vòng cùng lượn trái, vòng trên to hơn, ao băng
+// đồi băng giữa [x, z, nửa dài, nửa ngang, cao thêm, hướng, lệch] (shape.js hills): to nhỏ, cao thấp, hướng khác nhau
+const HILLS = [
+  [66, 56, 26, 17, 18, -0.2, 0.2], // đồi lớn phía đông, sát suối
+  [112, 50, 20, 14, 12, 0.5], // đồi nhỏ hơn, nối đồi lớn bằng yên ngựa
+  [-92, 52, 30, 15, 14, 0.2, -0.3], // đồi thuôn dài phía tây
+  [54, 160, 26, 23, 16, -0.4, 0.2], // đồi rộng phía trước đông
+  [96, 128, 17, 12, 9, 0.9],
+  [-82, 138, 21, 14, 11, -1.0], // đồi trước tây, nằm dọc theo đường chính
+  [-50, 184, 12, 10, 6],
+  [32, 198, 11, 9, 5],
+];
 const FJORD = [[330, -70], [262, -48]]; // vịnh hẹp bờ đông (dừng xa đường chính phải)
 const RIDGE = [[0, -215], [-95, -150], [-170, -70], [-205, -42]]; // sống núi từ khối núi chính sang núi phụ phía tây
 const C = {
@@ -18,6 +29,8 @@ const C = {
   beach: rgb('#a9a69c'), glacier: rgb('#bfe0f0'), road: rgb('#d9dfe6'), road2: rgb('#c4ccd6'), trail: rgb('#c9d2dc'),
 };
 const edgeAt = (x, z) => shoreEdge(x, z, R, 2.2, 1.1);
+// đá tảng nằm thành cụm tự nhiên (đốm nhiễu): sườn đồi, bìa rừng, ven lối
+const stony = (x, z) => smooth(0.2, 0.46, fbm(x * 0.021 + 83, z * 0.021 - 83, 2));
 const clear = (x, z) => {
   const p = P.paths(x, z);
   return Math.max(onRim(edgeAt(x, z) - Math.hypot(x, z)), p.town, p.lane, p.defile, p.trail, p.gorge, p.pass, p.ramp, p.pad);
@@ -30,12 +43,12 @@ function height(x, z) {
   const d = Math.hypot(x, z),
     edge = edgeAt(x, z);
   if (d > edge + 45) return coast(0, d, edge, 0); // ngoài khơi: chỉ còn đáy biển, khỏi tính nhiễu
-  let land = 6 + 9 * fbm(x * 0.007, z * 0.007, 4);
+  let land = 6 + 9 * fbm(x * 0.007, z * 0.007, 4) + 9 * middle(x, z); // (rừng giữa: nền cao ngang lối mòn)
   land += 223 * bump(x, z, 0, -215, 90) * (0.45 + 0.55 * ridged(x * 0.006, z * 0.006, 5)); // khối núi chính sau lưng khu nhà chính
   land += 92 * bump(x, z, -205, -42, 40) * (0.5 + 0.5 * ridged(x * 0.01 + 5, z * 0.01, 4)); // núi phụ sườn tây, sau thềm băng
   land += 60 * smooth(40, 0, lineDist(RIDGE, x, z)) * (0.4 + 0.6 * ridged(x * 0.014 - 3, z * 0.014, 4)); // sống núi
   land += 60 * bump(x, z, 204, -58, 28) * (0.6 + 0.4 * ridged(x * 0.02, z * 0.02, 3)); // sống băng sườn đông, sau thềm băng
-  land = Math.max(land, relief(x, z) * (0.8 + 0.4 * ridged(x * 0.025 + 2, z * 0.025, 4))); // núi băng giữa (lanes.js MOUNTS): đỉnh đá nhọn
+  land += hills(HILLS, x, z, 3) * (0.86 + 0.32 * ridged(x * 0.028 + 2, z * 0.028, 3)); // đồi băng giữa: thoải, vài đỉnh lộ mỏm đá
   for (const p of PADS) land = Math.max(land, p.y * smooth(1.7, 1.15, padOut(p, x, z) + 0.15 * fbm(x * 0.03, z * 0.03, 2))); // thềm băng
   land = Math.max(land, P.ring(x, z) * (0.9 + 0.22 * ridged(x * 0.02 - 6, z * 0.02 + 1, 3))); // vành sống băng quanh khu nhà chính
   let h = coast(land, d, edge, 0.45);
@@ -74,5 +87,6 @@ export default {
     { type: 'pine', count: 1700, where: (x, z, y, s) => (y > 2.5 && y < 80 && s < 0.5 ? forest(x, z) * (1 - clear(x, z)) : 0) },
     { type: 'snowGrass', count: 9000, where: (x, z, y, s) => (y > 2 && y < 40 && s < 0.45 ? 0.35 * (1 - P.paths(x, z).lane) * (1 - P.paths(x, z).stream) : 0) },
     { type: 'rock', count: 190, where: (x, z, y, s) => (y > 0 && s > 0.3 && s < 0.7 ? 0.8 : y > 0 && y < 2.5 ? 0.2 : 0) * (1 - clear(x, z)) },
+    { type: 'boulder', count: 80, where: (x, z, y, s) => (y > 2.5 && s < 0.5 ? stony(x, z) * (1 - clear(x, z)) : 0) },
   ],
 };

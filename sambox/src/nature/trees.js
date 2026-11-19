@@ -4,6 +4,7 @@
 //   pine     thông: bốn tầng nón răng cưa, mặt trên phủ tuyết (đảo Tuyết)
 //   palm     dừa: thân cong nhiều đốt, chín tàu lá rủ, chùm quả (ốc đảo)
 //   cactus   xương rồng hai tay;  rock: tảng đá góc cạnh mặt trên rêu hay cát
+//   boulder  đá tảng ba dáng (phiến dẹt, khối đứng, tảng tròn) xen nhau; mỗi tảng một cỡ, méo, nghiêng khác nhau; mọc thành cụm
 //   buildTrees(type, points, island)  Group các InstancedMesh của loại đó tại các điểm mọc (src/nature/placement.js)
 import * as THREE from 'three';
 import { rng } from '../core/noise.js';
@@ -178,6 +179,38 @@ function rockGeo(island) {
   nonIdx.computeVertexNormals();
   return (GEO[key] = colorize(nonIdx, (x, y, z, nx, ny) => hex(ny > 0.55 ? top : base)));
 }
+// đá tảng: ba dáng (phiến dẹt, khối đứng, tảng tròn). Mặt đá có u lồi lớn và vài mặt vát phẳng như đá vỡ; đáy bằng, vùi xuống đất;
+// màu đá theo đảo, mặt ngửa lên phủ rêu, cát hay tuyết
+function boulderGeo(island, v) {
+  const key = 'boulder' + island + v;
+  if (GEO[key]) return GEO[key];
+  const r = rng(91 + v * 17),
+    g = new THREE.IcosahedronGeometry(1, 2),
+    p = g.attributes.position,
+    [sx, sy, sz] = [[1.5, 0.6, 1.15], [1, 1.15, 0.85], [1.25, 0.85, 1.1]][v],
+    ph = [r() * 6, r() * 6, r() * 6],
+    cuts = Array.from({ length: 5 }, () => {
+      const a = r() * Math.PI * 2,
+        e = (r() - 0.35) * 1.6;
+      return [Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e), 0.62 + r() * 0.23]; // [pháp tuyến, cách tâm]
+    });
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i),
+      y = p.getY(i),
+      z = p.getZ(i);
+    const k = 1 + 0.16 * Math.sin(2.6 * x + ph[0]) + 0.13 * Math.sin(3.1 * y + ph[1]) + 0.15 * Math.sin(2.3 * z + ph[2]);
+    [x, y, z] = [x * k, y * k, z * k];
+    for (const [nx, ny, nz, c] of cuts) {
+      const d = x * nx + y * ny + z * nz - c;
+      if (d > 0) [x, y, z] = [x - d * nx, y - d * ny, z - d * nz];
+    }
+    p.setXYZ(i, x * sx, (Math.max(y, -0.45) + 0.3) * sy, z * sz);
+  }
+  g.computeVertexNormals(); // (lưới không chỉ mục: mỗi mặt một pháp tuyến, đá có cạnh)
+  const base = { plains: ['#b3a184', '#9c8a6e', '#a89880'], desert: ['#c9805e', '#b86e50', '#d8956f'], tundra: ['#7a8592', '#69737f', '#858f9b'] }[island][v],
+    top = { plains: '#7fa64a', desert: '#e8b496', tundra: '#f0f4f8' }[island];
+  return (GEO[key] = colorize(g, (x, y, z, nx, ny) => hex(ny > 0.62 + 0.12 * Math.sin(3 * x + 2 * z) ? top : base)));
+}
 /* ---------- vật liệu ---------- */
 const MAT = {};
 const mat = (key, make) => MAT[key] || (MAT[key] = make());
@@ -218,5 +251,32 @@ export function buildTrees(type, pts, island) {
   else if (type === 'palm') g.add(instanced(palmGeo(), swayMat(), pts, 1.1));
   else if (type === 'cactus') g.add(instanced(cactusGeo(), solidMat(), pts, 1.0));
   else if (type === 'rock') g.add(instanced(rockGeo(island), solidMat(), pts, 1.3));
+  else if (type === 'boulder') return boulders(pts, island);
+  return g;
+}
+// đá tảng: mỗi tảng một cỡ (nhiều tảng nhỏ, ít tảng lớn), méo, nghiêng, sáng tối và vùi sâu khác nhau: cụm đá không tảng nào giống tảng nào
+function boulders(pts, island) {
+  const g = new THREE.Group(),
+    r = rng(513 + pts.length),
+    o = new THREE.Object3D(),
+    c = new THREE.Color(),
+    lists = [[], [], []];
+  for (const p of pts) lists[Math.floor(r() * 3)].push(p);
+  lists.forEach((list, v) => {
+    if (!list.length) return;
+    const m = new THREE.InstancedMesh(boulderGeo(island, v), solidMat(), list.length);
+    list.forEach((p, i) => {
+      const size = 0.9 + 3.4 * r() ** 2.4;
+      o.position.set(p.x, p.y - 0.22 * size, p.z);
+      o.rotation.set((r() - 0.5) * 0.5, p.rot, (r() - 0.5) * 0.5);
+      o.scale.set(size * (0.8 + 0.5 * r()), size * (0.7 + 0.5 * r()), size * (0.8 + 0.5 * r()));
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, c.setScalar(0.86 + 0.22 * r()));
+    });
+    m.castShadow = m.receiveShadow = true;
+    m.computeBoundingSphere();
+    g.add(m);
+  });
   return g;
 }
