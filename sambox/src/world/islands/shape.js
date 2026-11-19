@@ -7,7 +7,8 @@
 //   bump(x, z, cx, cz, r)         khối đồi hình chuông (Gauss) tâm (cx, cz), bán kính r
 //   lineDist(pts, x, z)           khoảng cách tới đường gấp khúc pts [[x, z], ...] (sông, hẻm vực, vịnh hẹp, thung băng)
 //   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu)
-//   scaled(spec, k, ky)           phóng cả đảo: ngang × k, cao × ky (đảo vẽ theo bán kính gốc, bể đặt theo cỡ thật)
+//   placed(spec, k, ky, turn)     đặt đảo vào bể: phóng ngang × k, cao × ky, xoay turn (radian, quanh trục đứng, chiều x → z);
+//                                 đảo vẽ theo bán kính gốc, mặt đảo (phía +z của bản vẽ) quay về hướng layout chọn
 import { smooth, lerp, fbm } from '../../core/noise.js';
 
 export function rgb(hex) {
@@ -44,13 +45,16 @@ export function shoreEdge(x, z, R, seed, k = 1) {
   const a = Math.atan2(z, x);
   return R * (0.8 + k * (0.07 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2.3))) + 30 * fbm(x * 0.007 + seed, z * 0.007, 3);
 }
-export function scaled(spec, k, ky) {
+export function placed(spec, k, ky, turn = 0) {
+  const c = Math.cos(turn) / k,
+    s = Math.sin(turn) / k,
+    local = (f) => (x, z, ...rest) => f(c * x + s * z, c * z - s * x, ...rest); // (toạ độ trong bể → toạ độ bản vẽ)
   return {
     ...spec,
     radius: spec.radius * k,
     cliff: { ...spec.cliff, freq: spec.cliff.freq / ky },
-    height: (x, z) => spec.height(x / k, z / k) * ky,
-    ground: (x, z, y, s) => spec.ground(x / k, z / k, y / ky, s),
-    flora: spec.flora.map((r) => ({ ...r, where: (x, z, y, s) => r.where(x / k, z / k, y / ky, s) })),
+    height: local((x, z) => spec.height(x, z) * ky),
+    ground: local((x, z, y, sl) => spec.ground(x, z, y / ky, sl)),
+    flora: spec.flora.map((r) => ({ ...r, where: local((x, z, y, sl) => r.where(x, z, y / ky, sl)) })),
   };
 }

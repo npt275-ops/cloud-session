@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { detectTier, TIERS } from './core/quality.js';
-import { ISLANDS } from './world/layout.js';
+import { ISLANDS, RING } from './world/layout.js';
 import { DAYTIME } from './world/daytime.js';
 import { buildTerrain } from './world/terrain.js';
 import { buildWater } from './world/water.js';
@@ -106,7 +106,11 @@ const VIEWS = {
 const allPos = () => VIEWS.all.pos.set(0, ...(innerWidth < innerHeight ? [1850, 3800] : [1300, 3300]));
 allPos();
 for (const I of ISLANDS)
-  VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 90, 520, I.z + 620), target: new THREE.Vector3(I.x, 40, I.z) };
+  // đứng phía tâm bể nhìn ra mặt đảo (núi đảo làm nền), lệch sang bên một chút
+  VIEWS[I.spec.key] = {
+    pos: new THREE.Vector3(I.x * (1 - 620 / RING) + I.z * (90 / RING), 520, I.z * (1 - 620 / RING) - I.x * (90 / RING)),
+    target: new THREE.Vector3(I.x, 40, I.z),
+  };
 camera.position.copy(VIEWS.all.pos);
 controls.target.copy(VIEWS.all.target);
 let fly = null;
@@ -156,7 +160,7 @@ function frame() {
   controls.update();
   // sương lùi theo máy quay: nhìn toàn bể từ xa (nhất là màn dọc) không bị mờ trắng
   const P = DAYTIME[daytime],
-    fk = Math.max(1, camera.position.distanceTo(controls.target) / 2900);
+    fk = Math.max(1, camera.position.distanceTo(controls.target) / 2000);
   scene.fog.near = P.fog.near * fk;
   scene.fog.far = P.fog.far * fk;
   // bóng đổ theo chỗ đang nhìn; hướng nắng trong không gian máy quay cho viền sáng

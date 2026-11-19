@@ -2,7 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
-import { ISLANDS, TANK, heightAt } from '../src/world/layout.js';
+import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt } from '../src/world/layout.js';
+import plains from '../src/world/islands/plains.js';
+import desert from '../src/world/islands/desert.js';
+import tundra from '../src/world/islands/tundra.js';
 
 const stats = (spec) => {
   let max = -1e9,
@@ -48,4 +51,16 @@ test('cả ba đảo nằm trọn trong bể kính tròn, không chồng lên nh
   for (const A of ISLANDS)
     for (const B of ISLANDS)
       if (A !== B) assert.ok(Math.hypot(A.x - B.x, A.z - B.z) > (A.spec.radius + B.spec.radius) * 1.15, 'lưới đất không chồng');
+});
+
+test('ba đảo quay mặt vào nhau: phía +z của bản vẽ nằm về phía tâm bể', () => {
+  const base = { plains, desert, tundra };
+  for (const I of ISLANDS) {
+    const [lx, lz] = [40, 150], // một điểm phía mặt đảo trên bản vẽ
+      wx = (lx * Math.cos(I.turn) - lz * Math.sin(I.turn)) * SCALE,
+      wz = (lx * Math.sin(I.turn) + lz * Math.cos(I.turn)) * SCALE;
+    assert.ok(Math.abs(I.spec.height(wx, wz) - base[I.spec.key].height(lx, lz) * SCALE_Y) < 1e-6, I.spec.name + ' xoay đúng');
+    const [fx, fz] = [-Math.sin(I.turn), Math.cos(I.turn)]; // hướng +z của bản vẽ sau khi xoay
+    assert.ok(fx * -I.x + fz * -I.z > 0.99 * Math.hypot(I.x, I.z), I.spec.name + ' mặt hướng thẳng về tâm');
+  }
 });

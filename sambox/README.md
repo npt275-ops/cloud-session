@@ -22,8 +22,9 @@ Ba đảo nằm chung trong một bể kính tròn, dáng bể theo dự án cũ
 - dưới mặt nước là chậu kính tròn (thành kính, đáy kính, vòng đồng ở chân) nhìn thấy khối nước và lớp cát đáy;
 - đá bay có cỏ lơ lửng quanh bể, mây bông vây quanh cả trên và dưới bể.
 
-Ba đảo xếp vòng quanh tâm bể, lệch nhau 120°. Mỗi đảo vẽ theo bán kính gốc 300 rồi phóng ngang × 1,45 (bán kính thật ~435),
-cao × 1,2 (`src/world/layout.js`).
+Ba đảo xếp vòng quanh tâm bể, lệch nhau 120°, quay mặt vào nhau: mặt đảo (bãi, hồ, đồng thấp) hướng về tâm bể, núi quay lưng
+ra thành kính. Đồng Bằng phía sau, Sa Mạc trước trái, Tuyết trước phải. Mỗi đảo vẽ theo bán kính gốc 300 rồi phóng ngang × 1,45
+(bán kính thật ~435), cao × 1,2, xoay về tâm (`src/world/layout.js`, `shape.js placed`).
 
 | Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |
