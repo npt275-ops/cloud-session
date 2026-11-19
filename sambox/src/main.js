@@ -8,6 +8,7 @@ import { ISLANDS } from './world/layout.js';
 import { DAYTIME } from './world/daytime.js';
 import { buildTerrain } from './world/terrain.js';
 import { buildWater } from './world/water.js';
+import { buildTank } from './world/tank.js';
 import { buildSky } from './world/sky.js';
 import { scatter } from './nature/placement.js';
 import { buildTrees } from './nature/trees.js';
@@ -28,13 +29,13 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog('#d6b8d8', 700, 3200);
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 1, 9000);
+scene.fog = new THREE.Fog('#d6b8d8', 1400, 6400);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 1, 12000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 25;
-controls.maxDistance = 2600;
+controls.maxDistance = 5200;
 
 // nắng (hay trăng) và đèn bán cầu: bóng ngả tím theo màu đất của đèn bán cầu
 const hemi = new THREE.HemisphereLight();
@@ -42,7 +43,7 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight();
 sun.castShadow = true;
 sun.shadow.mapSize.set(tier.shadow, tier.shadow);
-Object.assign(sun.shadow.camera, { left: -330, right: 330, top: 330, bottom: -330, near: 10, far: 2000 });
+Object.assign(sun.shadow.camera, { left: -450, right: 450, top: 450, bottom: -450, near: 10, far: 2400 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
@@ -51,6 +52,8 @@ const sky = buildSky();
 scene.add(sky);
 const water = buildWater();
 scene.add(water);
+const tank = buildTank();
+scene.add(tank);
 
 // ba đảo: đất, cây, cỏ
 const t0 = performance.now();
@@ -86,22 +89,24 @@ function applyDaytime(key) {
   hemi.groundColor.set(P.hemi.ground);
   hemi.intensity = P.hemi.intensity;
   scene.fog.color.set(P.fog.color);
-  scene.fog.near = P.fog.near;
-  scene.fog.far = P.fog.far;
   renderer.toneMappingExposure = P.exposure;
   LIGHT.uSunColor.value.set(P.sun.color);
   LIGHT.uRimK.value = P.rim;
   sky.apply(P, sunDir);
+  tank.apply(P);
   post.apply(P);
   fireflies.visible = !!P.fireflies;
 }
 
 /* ---------- máy quay: toàn cảnh, bay tới từng đảo ---------- */
 const VIEWS = {
-  all: { pos: new THREE.Vector3(0, 720, 1420), target: new THREE.Vector3(0, 0, 70) },
+  all: { pos: new THREE.Vector3(), target: new THREE.Vector3(0, -20, 120) },
 };
+// màn dọc (điện thoại) lùi xa hơn để thấy trọn bể kính
+const allPos = () => VIEWS.all.pos.set(0, ...(innerWidth < innerHeight ? [2050, 4350] : [1250, 2650]));
+allPos();
 for (const I of ISLANDS)
-  VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 70, 230, I.z + 480), target: new THREE.Vector3(I.x, 30, I.z) };
+  VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 90, 520, I.z + 620), target: new THREE.Vector3(I.x, 40, I.z) };
 camera.position.copy(VIEWS.all.pos);
 controls.target.copy(VIEWS.all.target);
 let fly = null;
@@ -129,6 +134,7 @@ function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = innerWidth / innerHeight;
   camera.fov = camera.aspect < 1 ? 60 : 42;
+  allPos();
   camera.updateProjectionMatrix();
   post.resize(innerWidth, innerHeight);
 }
@@ -148,12 +154,17 @@ function frame() {
     if (fly.u >= 1) fly = null;
   }
   controls.update();
+  // sương lùi theo máy quay: nhìn toàn bể từ xa (nhất là màn dọc) không bị mờ trắng
+  const P = DAYTIME[daytime],
+    fk = Math.max(1, camera.position.distanceTo(controls.target) / 2900);
+  scene.fog.near = P.fog.near * fk;
+  scene.fog.far = P.fog.far * fk;
   // bóng đổ theo chỗ đang nhìn; hướng nắng trong không gian máy quay cho viền sáng
   sun.target.position.copy(controls.target);
-  sun.position.copy(controls.target).addScaledVector(sunDir, 700);
+  sun.position.copy(controls.target).addScaledVector(sunDir, 1000);
   LIGHT.uSunView.value.copy(tmp.copy(sunDir).transformDirection(camera.matrixWorldInverse));
   WIND.uTime.value = sec;
-  water.update(sec, DAYTIME[daytime], sunDir);
+  water.update(sec, P, sunDir);
   sky.update(sec);
   sky.position.copy(camera.position);
   if (fireflies.visible) fireflies.update(sec);

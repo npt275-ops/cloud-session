@@ -14,7 +14,10 @@ Mỗi phương án được chốt bằng một bản chạy được và ảnh 
 - Ảnh 1: độ dễ đọc khi xây. Ảnh 2–4 (PBR nặng): chỉ lấy ý tưởng.
 - Nhẹ để chạy được trên điện thoại và máy tính: hai mức đồ hoạ Thấp/Cao, tự chọn theo máy, `?q=low|high` để ép.
 
-## Ba đảo (bán kính 300 mỗi đảo)
+## Bể kính và ba đảo
+
+Ba đảo nằm chung trong một bể kính (`src/world/tank.js`): thành kính trong, khung gỗ, khối nước nhìn qua thành bể, lớp cát
+đáy, bệ gỗ. Mỗi đảo vẽ theo bán kính gốc 300 rồi phóng ngang × 1,45 (bán kính thật ~435), cao × 1,2 (`src/world/layout.js`).
 
 | Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |

@@ -1,11 +1,11 @@
 // SamBox · src/world/water.js · Biển kiểu tranh vẽ (ảnh đích 5, 15): màu theo độ sâu, viền bọt sát bờ, gợn sóng, ánh nắng lấp lánh
-// Độ sâu lấy từ bản đồ độ cao cả thế giới (src/world/layout.js) nướng vào một ảnh 768 × 768 lúc dựng. Nước nông trong suốt nhẹ
+// Độ sâu lấy từ bản đồ độ cao cả thế giới (src/world/layout.js) nướng vào một ảnh 1024 × 1024 lúc dựng. Nước nông trong suốt nhẹ
 // (thấy cát dưới đáy), nước sâu đục; nhìn xiên thì phản màu chân trời.
 //   buildWater(daytime)  Mesh mặt biển ở y = 0;  water.update(giây, preset, sunDir)
 import * as THREE from 'three';
-import { WORLD, heightAt } from './layout.js';
+import { WORLD, TANK, heightAt } from './layout.js';
 
-const N = 768,
+const N = 1024,
   H0 = -40,
   H1 = 12; // (chỉ cần độ sâu: đất cao hơn 12 đều ghi 255)
 function heightTexture() {
@@ -80,9 +80,10 @@ export function buildWater() {
         #include <fog_fragment>
       }`,
   });
-  const g = new THREE.PlaneGeometry(6000, 6000, 1, 1);
+  const g = new THREE.PlaneGeometry(TANK.w, TANK.d, 1, 1); // mặt nước vừa lòng bể kính
   g.rotateX(-Math.PI / 2);
   const m = new THREE.Mesh(g, mat);
+  m.position.set(TANK.x, 0, TANK.z);
   m.renderOrder = 1;
   m.name = 'biển';
   m.update = (sec, P, sunDir) => {
