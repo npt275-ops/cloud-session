@@ -72,5 +72,6 @@ export function placed(spec, k, ky, turn = 0) {
     ground: local((x, z, y, sl) => spec.ground(x, z, y / ky, sl)),
     flora: spec.flora.map((r) => ({ ...r, where: local((x, z, y, sl) => r.where(x, z, y / ky, sl)) })),
     buildZone: spec.buildZone && local(spec.buildZone),
+    cliffMask: spec.cliffMask && local(spec.cliffMask),
   };
 }

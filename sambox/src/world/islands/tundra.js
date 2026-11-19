@@ -1,12 +1,13 @@
 // SamBox · src/world/islands/tundra.js · Đảo Tuyết: khối núi đá nhọn phủ tuyết, đồi băng phủ thông, khe băng, vịnh hẹp
-// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành sống băng; rừng giữa là đồi băng
-// thoai thoải phủ rừng thông (từ lối mòn đi lên rừng được), khe băng có suối đóng băng uốn hai vòng cùng phía (ao băng ở vòng trên);
+// Dáng (bán kính 300, mặt đảo phía +z; khung đường chung lanes.js): khu nhà chính trũng giữa vành sống băng; rừng giữa là núi băng
+// đỉnh đá nhọn, chân phủ rừng thông (thung giữa các núi và hai bên lối mòn thoải: lính đi xuyên rừng), khe băng có suối đóng băng
+// uốn hai vòng cùng phía xẻ qua núi giữa (ao băng ở vòng trên);
 // sườn tây là thềm băng phẳng dưới chân núi phụ (núi phụ nối khối núi chính bằng sống núi), sườn đông là thềm băng trước sống băng
 // (hai nền phẳng xây được, nhìn xuống đường chính); vịnh hẹp ăn vào bờ đông (xa đường chính); khối núi chính cao nhất bể chắn sau
 // khu nhà chính, có đèo băng; quanh đảo là đai ven biển. Tuyết phủ chỗ thoải, đá lộ ở vách dốc.
 import { fbm, ridged, smooth } from '../../core/noise.js';
 import { rgb, mix3, coast, bump, lineDist, shoreEdge, RIM, onRim, keepRim } from './shape.js';
-import { createPaths, EYE, PADS, padOut } from './lanes.js';
+import { createPaths, EYE, PADS, padOut, relief } from './lanes.js';
 
 const R = 300;
 const P = createPaths({ bends: [-22, 4, -22, -4], pool: 58, seed: 3 }); // suối băng: hai vòng cùng lượn trái, vòng trên to hơn, ao băng
@@ -34,8 +35,7 @@ function height(x, z) {
   land += 92 * bump(x, z, -205, -42, 40) * (0.5 + 0.5 * ridged(x * 0.01 + 5, z * 0.01, 4)); // núi phụ sườn tây, sau thềm băng
   land += 60 * smooth(40, 0, lineDist(RIDGE, x, z)) * (0.4 + 0.6 * ridged(x * 0.014 - 3, z * 0.014, 4)); // sống núi
   land += 60 * bump(x, z, 204, -58, 28) * (0.6 + 0.4 * ridged(x * 0.02, z * 0.02, 3)); // sống băng sườn đông, sau thềm băng
-  land += 26 * bump(x, z, 0, 60, 62) * (0.85 + 0.25 * ridged(x * 0.02 + 2, z * 0.02, 3)); // đồi băng giữa rừng (thoải)
-  land += 15 * bump(x, z, -72, 132, 36) + 15 * bump(x, z, 74, 122, 36) + 14 * bump(x, z, -62, -12, 32) + 14 * bump(x, z, 64, -6, 32); // gò
+  land = Math.max(land, relief(x, z) * (0.8 + 0.4 * ridged(x * 0.025 + 2, z * 0.025, 4))); // núi băng giữa (lanes.js MOUNTS): đỉnh đá nhọn
   for (const p of PADS) land = Math.max(land, p.y * smooth(1.7, 1.15, padOut(p, x, z) + 0.15 * fbm(x * 0.03, z * 0.03, 2))); // thềm băng
   land = Math.max(land, P.ring(x, z) * (0.9 + 0.22 * ridged(x * 0.02 - 6, z * 0.02 + 1, 3))); // vành sống băng quanh khu nhà chính
   let h = coast(land, d, edge, 0.45);

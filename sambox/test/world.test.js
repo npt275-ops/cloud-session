@@ -157,24 +157,21 @@ test('ba nhà chính thành tam giác đều quanh tâm bể; đường từ đ�
     }
 });
 
-test('nhà chính ở chỗ cao nhất khu nhà chính, núi chắn sau lưng', () => {
+test('nhà chính đặt trên đất bằng như mọi chỗ trong khu nhà chính, núi chắn sau lưng', () => {
   for (const I of ISLANDS) {
     const hall = hallAt(I)[1];
-    assert.ok(Math.abs(hall - TOWN.hall * SCALE_Y) < 1e-6, I.spec.name + ': nền nhà chính');
-    let back = -1e9,
-      top = -1e9;
+    assert.ok(Math.abs(hall - TOWN.level * SCALE_Y) < 1e-6, I.spec.name + ': nhà chính cùng độ cao khu nhà chính');
+    for (let a = 0; a < 6.283; a += 0.4)
+      for (const r of [8, 18, 28]) {
+        const [x, z] = toWorld(I, HALL[0] + r * Math.cos(a), HALL[1] + r * Math.sin(a));
+        assert.ok(Math.abs(heightAt(x, z) - hall) < 0.05, I.spec.name + ': quanh nhà chính bằng phẳng, không ụ nền');
+      }
+    let back = -1e9;
     for (let lx = -60; lx <= 60; lx += 4)
       for (let lz = -250; lz <= -170; lz += 4) {
         const [x, z] = toWorld(I, lx, lz);
         back = Math.max(back, heightAt(x, z));
       }
-    for (let lx = -120; lx <= 120; lx += 6)
-      for (let lz = -170; lz <= -50; lz += 6)
-        if (inTown(lx, lz) > 0.999) {
-          const [x, z] = toWorld(I, lx, lz);
-          top = Math.max(top, heightAt(x, z));
-        }
-    assert.ok(top <= hall + 1e-6, I.spec.name + ': không chỗ nào trong khu nhà chính cao hơn nền nhà chính');
     assert.ok(back > hall + 30, I.spec.name + ': núi sau lưng cao ' + back.toFixed(0) + ', nhà chính ' + hall.toFixed(0));
   }
 });
@@ -296,9 +293,10 @@ test('ba suối uốn lượn mềm, dáng khác nhau, dài bằng nhau; hai b�
   }
 });
 
-test('rừng giữa thoải: từ lối mòn đi lên rừng được (lính đi xuyên rừng)', () => {
+test('rừng giữa có núi cao chắn bớt tầm nhìn ra cầu; thung, chân núi đi được đều liền với lối mòn', () => {
   // lưới bước 3 trong vùng rừng giữa (giữa hai đường chính, từ chân vành đồi tới đai ven biển; trừ lối đi, vách hẻm suối, sườn
-  // đường chính); lan từ tim hai lối mòn sang ô bên cạnh nếu chênh cao ≤ 0,6 × bước
+  // đường chính); lan từ tim hai lối mòn sang ô bên cạnh nếu chênh cao ≤ 0,6 × bước. Ô đi được (dốc ≤ 0,6) phải liền với lối mòn:
+  // không có thung, bãi rừng nào bị núi vây kín
   const st = 3, X0 = -150, Z0 = 10, nx = 101, nz = 65;
   for (const spec of [plains, desert, tundra]) {
     const P = spec.paths,
@@ -327,17 +325,47 @@ test('rừng giữa thoải: từ lối mòn đi lên rừng được (lính đi
       for (const m of [i < nx - 1 && k + 1, i > 0 && k - 1, k + nx < nx * nz && k + nx, k - nx >= 0 && k - nx])
         if (m !== false && !seen[m] && H[m] > 0.5 && Math.abs(H[m] - H[k]) <= 0.6 * st) (seen[m] = 1), q.push(m);
     }
-    let all = 0,
-      reach = 0,
-      steep = 0;
+    let walk = 0,
+      linked = 0,
+      high = 0,
+      top = 0,
+      all = 0;
     for (let k = 0; k < nx * nz; k++) {
       if (!forest[k]) continue;
       all++;
-      reach += seen[k];
+      top = Math.max(top, H[k]);
+      if (H[k] > 45) high++;
       const i = k % nx;
-      if (i > 0 && i < nx - 1 && k >= nx && k < nx * (nz - 1) && Math.hypot(H[k + 1] - H[k - 1], H[k + nx] - H[k - nx]) / (2 * st) > 0.6) steep++;
+      if (i === 0 || i === nx - 1 || k < nx || k >= nx * (nz - 1)) continue;
+      if (Math.max(...[k + 1, k - 1, k + nx, k - nx].map((m) => Math.abs(H[m] - H[k]))) <= 0.6 * st) (walk++, (linked += seen[k]));
     }
-    assert.ok(all > 2000 && reach / all > 0.97, spec.name + ': tới được ' + ((100 * reach) / all).toFixed(1) + '% rừng giữa');
-    assert.ok(steep / all < 0.12, spec.name + ': chỗ dốc trong rừng giữa ' + ((100 * steep) / all).toFixed(1) + '%');
+    assert.ok(all > 2000 && walk > all * 0.4, spec.name + ': rừng giữa còn đủ chỗ đi (' + walk + '/' + all + ' ô)');
+    assert.ok(linked / walk > 0.95, spec.name + ': chỗ đi được liền lối mòn ' + ((100 * linked) / walk).toFixed(1) + '%');
+    assert.ok(top > 60 && high / all > 0.06, spec.name + ': núi giữa cao ' + top.toFixed(0) + ', ' + ((100 * high) / all).toFixed(1) + '% trên 45');
+  }
+  // tầm nhìn từ phía trong rừng giữa (lối mòn, rừng sau lối mòn trước; mắt cao 3,6) ra hai cầu của đảo và hai đầu cầu: núi che bớt
+  const vis = (a, b) => {
+    const n = Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / 2.5);
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      if (heightAt(a[0] + (b[0] - a[0]) * t, a[2] + (b[2] - a[2]) * t) > a[1] + (b[1] - a[1]) * t) return false;
+    }
+    return true;
+  };
+  for (const I of ISLANDS) {
+    const at = (lx, lz, up) => {
+        const [x, z] = toWorld(I, lx, lz);
+        return [x, heightAt(x, z) + up, z];
+      },
+      k = I.spec.key,
+      T = HEADS.map(([x, z]) => at(x, z, 8)),
+      V = [];
+    for (const b of BRIDGES)
+      if (b.a === k || b.b === k)
+        for (let t = 0; t <= 1.0001; t += 0.2) T.push([b.from[0] + (b.to[0] - b.from[0]) * t, 9.6 + 9 * Math.sin(Math.PI * t), b.from[1] + (b.to[1] - b.from[1]) * t]);
+    for (let x = -120; x <= 120; x += 24) for (let z = 20; z <= 110; z += 18) if (I.spec.paths.paths(x, z).gorge < 0.5) V.push(at(x, z, 3.6));
+    let seen = 0;
+    for (const v of V) for (const t of T) seen += vis(v, t);
+    assert.ok(seen / (V.length * T.length) < 0.3, I.spec.name + ': từ rừng giữa thấy ' + ((100 * seen) / (V.length * T.length)).toFixed(0) + '% điểm cầu');
   }
 });

@@ -4,7 +4,8 @@
 //                           đáy biển. Màu tô theo đỉnh (rẻ, hợp kiểu tranh vẽ), ánh sáng Lambert vá kiểu (stylize)
 //                           Vách đá (chỗ dốc) tô trong shader theo độ cao thật của từng điểm ảnh (spec.cliff): vân đá xếp tầng,
 //                           sọc lượn theo hướng ngang, vệt dọc, chân mỗi tầng tối hơn; không phụ thuộc độ mịn của lưới (vách dựng chỉ
-//                           có vài đỉnh lưới theo chiều đứng nên tô theo đỉnh không vẽ được vân)
+//                           có vài đỉnh lưới theo chiều đứng nên tô theo đỉnh không vẽ được vân). Đảo có spec.cliffMask(x, z) (0..1)
+//                           thì chỉ tô vân đá ở chỗ mặt nạ bằng 1 (Sa Mạc: đá thật; sườn cát dốc vẫn là cát)
 //   slopeAt(spec, x, z)     độ dốc 0 (phẳng) .. 1 (dựng đứng) từ chênh lệch độ cao (dùng chung cho tô màu và cây cỏ)
 import * as THREE from 'three';
 import { stylize } from '../fx/stylize.js';
@@ -21,16 +22,16 @@ function cliffShader(cl) {
     v = (c) => `vec3(${c.r.toFixed(4)}, ${c.g.toFixed(4)}, ${c.b.toFixed(4)})`;
   return (sh) => {
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;')
-      .replace('#include <project_vertex>', 'vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWN = normalize(mat3(modelMatrix) * objectNormal);\n#include <project_vertex>');
+      .replace('#include <common>', '#include <common>\nattribute float aCliff;\nvarying vec3 vWP;\nvarying vec3 vWN;\nvarying float vCliff;')
+      .replace('#include <project_vertex>', 'vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWN = normalize(mat3(modelMatrix) * objectNormal);\nvCliff = aCliff;\n#include <project_vertex>');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;\nvarying float vCliff;')
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
         {
           float steep = 1.0 - clamp(normalize(vWN).y, 0.0, 1.0);
-          float k = smoothstep(${cl.range[0].toFixed(3)}, ${cl.range[1].toFixed(3)}, steep);
+          float k = smoothstep(${cl.range[0].toFixed(3)}, ${cl.range[1].toFixed(3)}, steep) * vCliff;
           float b = vWP.y * ${cl.freq.toFixed(4)} + sin(vWP.x * 0.045) * 0.7 + sin(vWP.z * 0.038 + 1.7) * 0.7;
           float i = mod(floor(b), 4.0);
           vec3 rock = i < 0.5 ? ${v(C[0])} : i < 1.5 ? ${v(C[1])} : i < 2.5 ? ${v(C[2])} : ${v(C[3])};
@@ -48,7 +49,8 @@ export function buildTerrain(I, tier) {
     g = new THREE.PlaneGeometry(size, size, seg, seg);
   g.rotateX(-Math.PI / 2);
   const p = g.attributes.position,
-    col = new Float32Array(p.count * 3);
+    col = new Float32Array(p.count * 3),
+    rocky = new Float32Array(p.count).fill(1);
   const rMax = spec.radius * 1.15;
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i),
@@ -62,8 +64,10 @@ export function buildTerrain(I, tier) {
     const c = spec.ground(p.getX(i), p.getZ(i), p.getY(i), 1 - n.getY(i));
     const lin = new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace);
     col.set([lin.r, lin.g, lin.b], i * 3);
+    if (spec.cliffMask) rocky[i] = spec.cliffMask(p.getX(i), p.getZ(i));
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('aCliff', new THREE.BufferAttribute(rocky, 1));
   const mat = stylize(new THREE.MeshLambertMaterial({ vertexColors: true }), { rim: 0.35, key: spec.key, extra: cliffShader(spec.cliff) });
   const m = new THREE.Mesh(g, mat);
   m.position.set(I.x, 0, I.z);
