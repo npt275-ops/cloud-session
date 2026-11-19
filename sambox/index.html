@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700&display=swap">
 <style>
   /* SamBox · index.html · Ảnh mô phỏng đích: ba đảo trống. Cảnh 3D phủ màn hình; bảng nổi ở trên (tên, chọn đảo, chọn buổi) và góc
-     dưới (mức đồ hoạ, tầm mắt, lưới xây, khung hình/giây). */
+     dưới (mức đồ hoạ, tầm mắt, lưới xây, căn chỉnh và số đo, khung hình/giây). */
   :root {
     --panel: rgba(255, 250, 246, 0.82);
     --ink: #2b2433;
@@ -36,8 +36,12 @@
   button:hover { background: var(--line); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.on { background: var(--accent); color: var(--accent-ink); }
-  .foot { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: center; }
+  .foot { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; pointer-events: none; }
+  .foot > * { pointer-events: auto; }
   .foot .seg { padding: 4px 6px; align-items: center; font-size: 12px; color: var(--muted); }
+  .foot .info { max-width: 560px; padding: 6px 10px; color: var(--ink); line-height: 1.45; }
+  [hidden] { display: none !important; }
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 15px; color: #f1ecf7; pointer-events: none; }
   @media (max-width: 560px) { .name span { display: none; } }
 </style>
@@ -53,6 +57,7 @@
 <div class="foot">
   <div class="seg"><button type="button" id="quality">Đồ hoạ</button></div>
   <div class="seg" id="toggles" aria-label="Cách xem"></div>
+  <div class="seg info" id="info" hidden></div>
   <div class="seg" id="fps">…</div>
 </div>
 <script type="importmap">

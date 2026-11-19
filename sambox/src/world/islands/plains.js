@@ -1,17 +1,15 @@
 // SamBox · src/world/islands/plains.js · Đảo Đồng Bằng (núi đồi, đồng cỏ): đảo mẫu theo ảnh đích (đảo ấm cúng, ảnh 5–14)
-// Dáng (bán kính 300, mặt đảo phía +z): núi lớn nhiều bậc phía tây bắc, đồi phụ đông bắc, cao nguyên mặt bàn phía tây, đồi cỏ
-// lượn sóng phía đông; thung sông chảy từ chân núi ra vịnh tây nam; hồ phía đông có suối ra biển; vài cột đá ngoài biển. Mặt đảo
-// là nền xây ba bậc (bến · thị trấn · nền cao dưới chân núi) nối bằng dốc; quanh đảo là đai ven biển phẳng để xây tường thành.
-// Ngoài vùng xây: đồng oải hương, lúa mì, rừng cây tán bông thành từng đám.
+// Dáng (bán kính 300, mặt đảo phía +z): hẻm đồi chạy dọc giữa đảo từ cửa hẻm ở mặt đảo lên nhà chính gần lưng đảo (mẫu hẻm chung
+// shape.js VALLEY); núi lớn nhiều bậc chắn sau lưng nhà chính, đồi phụ phía đông bắc, cao nguyên mặt bàn phía tây, đồi cỏ lượn
+// sóng phía đông; sông chảy dọc sườn tây ra biển; hồ phía đông có suối ra biển; vài cột đá ngoài biển; quanh đảo là đai ven biển
+// phẳng để xây tường thành. Ngoài lòng hẻm: đồng oải hương, lúa mì, rừng cây tán bông thành từng đám.
 import { fbm, ridged, simplex2, smooth } from '../../core/noise.js';
-import { rgb, mix3, terrace, coast, bump, lineDist, shoreEdge, RIM, onRim, withTown, townZone } from './shape.js';
+import { rgb, mix3, terrace, coast, bump, lineDist, shoreEdge, RIM, onRim, VALLEY, withValley, valleyFloor } from './shape.js';
 
 const R = 300;
-const LAKE = [165, -30]; // (phía đông: chừa mặt đảo cho nền xây)
-const RIVER = [[-70, -10], [-95, 70], [-120, 150], [-150, 215], [-185, 260]]; // từ chân núi ra vịnh tây nam
-const BROOK = [LAKE, [230, -15], [300, 0]]; // suối từ hồ ra biển
-// nền xây: bến (cao bằng đai ven biển) · thị trấn +12 · nền cao +18; dốc nối bậc ở các x đã chọn
-const TOWN = { cx: 40, cz: 118, rx: 145, rz: 112, steps: [[175, 12, [-20, 125]], [58, 18, [60]]] };
+const LAKE = [175, -55]; // (phía đông, ngoài vách hẻm)
+const RIVER = [[-95, -175], [-140, -80], [-165, 20], [-170, 110], [-190, 195]]; // từ sườn tây núi lớn ra biển, ngoài vách hẻm
+const BROOK = [LAKE, [240, -50], [300, -45]]; // suối từ hồ ra biển
 const STACKS = [[288, -44, 9, 34], [274, 46, 6, 22], [-32, -302, 8, 28], [-294, -66, 7, 24]]; // cột đá ngoài biển (ngoài đai ven biển)
 const C = {
   grass: rgb('#8cc152'), grass2: rgb('#5e9e3e'), high: rgb('#86a35a'), sand: rgb('#ecd6a2'), wet: rgb('#c9ad7c'),
@@ -23,10 +21,10 @@ const wheat = (x, z) => smooth(0.28, 0.42, fbm(x * 0.012 - 7.7, z * 0.012 + 4.4,
 const forest = (x, z) => smooth(0.0, 0.4, fbm(x * 0.009 + 11, z * 0.009 - 3, 3));
 
 const edgeAt = (x, z) => shoreEdge(x, z, R, 1.3);
-const EYE = { from: [40, 40], to: [60, 170] }; // tầm mắt: đứng mép bậc nền cao nhìn xuống thị trấn, bến và biển
-// chỗ trống (không cây, không ruộng): nền xây, đai ven biển, chỗ đứng ngắm cảnh
+const EYE = VALLEY.eye;
+// chỗ trống (không cây, không ruộng): lòng hẻm, đai ven biển, chỗ đứng ngắm cảnh
 const clear = (x, z) =>
-  Math.max(townZone(TOWN, x, z), onRim(edgeAt(x, z) - Math.hypot(x, z)), smooth(30, 20, Math.hypot(x - EYE.from[0], z - EYE.from[1])));
+  Math.max(valleyFloor(x, z), onRim(edgeAt(x, z) - Math.hypot(x, z)), smooth(30, 20, Math.hypot(x - EYE.from[0], z - EYE.from[1])));
 
 function height(x, z) {
   const d = Math.hypot(x, z),
@@ -34,13 +32,13 @@ function height(x, z) {
   if (d > edge + 45) return stacks(coast(0, d, edge, 0), x, z); // ngoài khơi: chỉ còn đáy biển và cột đá, khỏi tính nhiễu
   let land = 10 + 12 * fbm(x * 0.005, z * 0.005, 4) + 5 * fbm(x * 0.025, z * 0.025, 3);
   land += 22 * Math.max(0, fbm(x * 0.011 + 20, z * 0.011, 3)) * smooth(-40, 80, x); // đồi cỏ lượn sóng phía đông
-  land += 112 * bump(x, z, -80, -75, 85) * (0.8 + 0.28 * ridged(x * 0.011, z * 0.011, 4)); // núi lớn
+  land += 109 * bump(x, z, -5, -212, 80) * (0.8 + 0.28 * ridged(x * 0.011, z * 0.011, 4)); // núi lớn sau lưng nhà chính
   land += 46 * bump(x, z, 125, -105, 50); // đồi phụ
   land = Math.max(land, 42 * smooth(68, 52, Math.hypot(x + 185, z - 55) + 10 * fbm(x * 0.03, z * 0.03, 2))); // cao nguyên mặt bàn
   // bậc lớn, không đều: bậc chỉ rõ ở chỗ nhiễu cho phép, chỗ khác là sườn đồi thoải
   const tk = 0.35 + 0.45 * smooth(-0.3, 0.4, fbm(x * 0.008 + 3, z * 0.008, 2));
   land = (1 - tk) * land + tk * terrace(land, 15, 0.72);
-  land = withTown(TOWN, land, x, z);
+  land = withValley(land, x, z, 45); // hẻm đồi lên nhà chính
   // thung sông: lòng thung hạ dần; dòng nước (thấp hơn mặt biển một chút) khoét sau cùng nên cắt qua đai ven biển ra tới biển
   const rv = lineDist(RIVER, x, z) + 4 * simplex2(x * 0.04, z * 0.04);
   land = land - (land - 3) * 0.75 * smooth(48, 12, rv);
@@ -48,7 +46,7 @@ function height(x, z) {
   let h = coast(land, d, edge, smooth(-0.2, 0.3, cliff));
   h = h + (-2.5 - h) * smooth(7, 3.5, rv);
   h = h + (-2 - h) * smooth(5, 2.5, lineDist(BROOK, x, z));
-  h = h + (-4 - h) * smooth(38, 27, Math.hypot(x - LAKE[0], z - LAKE[1])); // hồ
+  h = h + (-4 - h) * smooth(28, 19, Math.hypot(x - LAKE[0], z - LAKE[1])); // hồ
   return stacks(h, x, z);
 }
 function stacks(h, x, z) {
@@ -78,6 +76,7 @@ export default {
   radius: R,
   cliff: { colors: ['#cdb898', '#c2ab88', '#d6c2a2', '#bba282'], freq: 1 / 5, range: [0.5, 0.7] }, // đá vôi ấm, vân nhẹ
   eye: EYE,
+  flag: '#e8b83a', // cờ vàng (lúa vàng)
   height,
   ground,
   // luật mọc: số lượng (mức Cao) và xác suất ở một điểm

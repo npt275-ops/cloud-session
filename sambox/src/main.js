@@ -1,7 +1,8 @@
 // SamBox · src/main.js · Ảnh mô phỏng đích: ba đảo trống (Đồng Bằng, Sa Mạc, Tuyết) theo hướng đồ hoạ đã chốt (ảnh đích 5–15)
 // Ghép: mức đồ hoạ (src/core/quality.js), trời (sky.js), biển (water.js), đất ba đảo (terrain.js + islands/*.js), cây cỏ
 // (nature/*), nắng và đèn bán cầu, bóng đổ theo chỗ đang nhìn, hậu kỳ (fx/post.js), bốn buổi (daytime.js), bảng điều khiển.
-// Máy quay: toàn cảnh, từng đảo nhìn từ tâm bể, hoặc tầm mắt (nút "Tầm mắt": đứng trên đảo nhìn xa); nút "Lưới xây" hiện ô xây được.
+// Máy quay: toàn cảnh, từng đảo nhìn từ tâm bể, hoặc tầm mắt (nút "Tầm mắt": đứng trên đảo nhìn xa); nút "Lưới xây" hiện ô xây được;
+// ba cầu nối mặt các đảo, nhà chính tạm ở đầu hẻm; nút "Căn chỉnh" hiện tam giác ba nhà chính và đường lính kèm số đo.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { detectTier, TIERS } from './core/quality.js';
@@ -10,6 +11,7 @@ import { DAYTIME } from './world/daytime.js';
 import { buildTerrain } from './world/terrain.js';
 import { buildWater } from './world/water.js';
 import { buildTank } from './world/tank.js';
+import { buildBridges } from './world/bridges.js';
 import { buildSky } from './world/sky.js';
 import { scatter } from './nature/placement.js';
 import { buildTrees } from './nature/trees.js';
@@ -20,6 +22,8 @@ import { LIGHT } from './fx/stylize.js';
 import { buildPost } from './fx/post.js';
 import { buildHud } from './ui/hud.js';
 import { buildGrid } from './build/grid.js';
+import { buildHall } from './build/hall.js';
+import { buildGuides } from './build/guides.js';
 
 const tier = detectTier();
 const canvas = document.getElementById('scene');
@@ -55,7 +59,7 @@ scene.add(sky, sky.clouds);
 const water = buildWater();
 scene.add(water);
 const tank = buildTank();
-scene.add(tank);
+scene.add(tank, buildBridges());
 
 // ba đảo: đất, cây, cỏ
 const t0 = performance.now();
@@ -66,6 +70,7 @@ for (const I of ISLANDS) {
     const pts = scatter(I, rule, tier.flora);
     scene.add(GRASS_TYPES.includes(rule.type) ? buildGrass(rule.type, pts) : buildTrees(rule.type, pts, I.spec.key));
   }
+  scene.add(buildHall(I)); // nhà chính tạm để căn chỉnh
   if (I.spec.key === 'plains') plains = I;
 }
 const fireflies = buildFireflies(plains, tier.key === 'high' ? 260 : 90);
@@ -113,12 +118,12 @@ for (const I of ISLANDS) {
     pos: new THREE.Vector3(I.x * (1 - 620 / RING) + I.z * (90 / RING), 520, I.z * (1 - 620 / RING) - I.x * (90 / RING)),
     target: new THREE.Vector3(I.x, 40, I.z),
   };
-  // tầm mắt: mắt cao hơn mặt đất 4 đơn vị tại chỗ đứng của đảo (spec.eye), nhìn về điểm đã chọn
+  // tầm mắt: đứng ở chỗ của đảo (spec.eye), mắt cao hơn mặt đất eye.up, nhìn về điểm đã chọn
   const at = ([lx, lz], up) => {
     const [x, z] = toWorld(I, lx, lz);
     return new THREE.Vector3(x, I.spec.height(x - I.x, z - I.z) + up, z);
   };
-  VIEWS[I.spec.key + ':mat'] = { pos: at(I.spec.eye.from, 4), target: at(I.spec.eye.to, 2) };
+  VIEWS[I.spec.key + ':mat'] = { pos: at(I.spec.eye.from, I.spec.eye.up), target: at(I.spec.eye.to, 2) };
 }
 const QS = new URLSearchParams(location.search);
 let place = VIEWS[QS.get('dao')] ? QS.get('dao') : 'all',
@@ -138,24 +143,40 @@ function showGrid(on) {
   if (on && !grids.length) for (const I of ISLANDS) scene.add(grids[grids.push(buildGrid(I)) - 1]);
   for (const g of grids) g.visible = on;
 }
+// căn chỉnh: tam giác ba nhà chính, đường lính, số đo hiện ở góc dưới
+let guides = null;
+function showGuides(on) {
+  if (on && !guides) scene.add((guides = buildGuides()));
+  if (guides) guides.visible = on;
+  const box = document.getElementById('info'),
+    f = (v) => Math.round(v).toLocaleString('vi-VN'),
+    i = guides && guides.info;
+  box.hidden = !on;
+  if (on)
+    box.textContent = `Tam giác nhà chính: ${i.sides.map(f).join(' · ')} — Đầu cầu → nhà chính: ${Object.values(i.roads)
+      .map((r) => f(r[0]))
+      .join(' · ')} — Cầu: ${i.bridges.map(f).join(' · ')}`;
+}
 
 const hud = buildHud({
   tier,
   tiers: TIERS,
   islands: [{ key: 'all', name: 'Toàn cảnh' }, ...ISLANDS.map((I) => ({ key: I.spec.key, name: I.spec.name }))],
   daytimes: Object.entries(DAYTIME).map(([key, P]) => ({ key, name: P.name })),
-  toggles: [{ key: 'mat', name: 'Tầm mắt' }, { key: 'luoi', name: 'Lưới xây' }],
+  toggles: [{ key: 'mat', name: 'Tầm mắt' }, { key: 'luoi', name: 'Lưới xây' }, { key: 'cc', name: 'Căn chỉnh' }],
   onIsland: flyTo,
   onDaytime: applyDaytime,
   onToggle: (key, on) => {
     if (key === 'mat') {
       eye = on;
       flyTo(place);
-    } else showGrid(on);
+    } else if (key === 'luoi') showGrid(on);
+    else showGuides(on);
   },
 });
 applyDaytime(QS.get('buoi') || daytime);
 if (QS.get('luoi') === '1') showGrid(true);
+if (QS.get('cc') === '1') showGuides(true);
 
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);

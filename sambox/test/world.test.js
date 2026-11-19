@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
-import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt } from '../src/world/layout.js';
-import { RIM } from '../src/world/islands/shape.js';
+import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt, hallAt, BRIDGES, road, pathLength, toWorld } from '../src/world/layout.js';
+import { RIM, VALLEY, valleyLevel } from '../src/world/islands/shape.js';
 import { buildCells, patches } from '../src/build/cells.js';
 import plains from '../src/world/islands/plains.js';
 import desert from '../src/world/islands/desert.js';
@@ -92,7 +92,7 @@ test('đai ven biển phẳng quanh mỗi đảo (xây tường thành); chỉ �
   }
 });
 
-test('mỗi đảo có nền xây liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ nguyên', () => {
+test('mỗi đảo có nền xây liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ cao độ', () => {
   for (const I of ISLANDS) {
     const big = patches(buildCells(I))[0];
     assert.ok(big >= 900, I.spec.name + ': mảnh nền liền lớn nhất ' + big + ' ô');
@@ -102,6 +102,39 @@ test('mỗi đảo có nền xây liền đủ rộng cho một thị trấn; đ
     for (let x = -300; x <= 300; x += 1) for (let z = -300; z <= 300; z += 1) m = Math.max(m, s.height(x, z));
     return m;
   };
-  assert.ok(Math.abs(peak(plains) - 125.07) < 0.5, 'đỉnh Đồng Bằng');
-  assert.ok(Math.abs(peak(tundra) - 204.83) < 0.5, 'đỉnh Tuyết');
+  // (núi dời ra sau lưng nhà chính; cao độ đỉnh giữ gần như cũ: Đồng Bằng ~125, Tuyết ~205)
+  assert.ok(Math.abs(peak(plains) - 125) < 5, 'đỉnh Đồng Bằng ' + peak(plains).toFixed(1));
+  assert.ok(Math.abs(peak(tundra) - 205) < 5, 'đỉnh Tuyết ' + peak(tundra).toFixed(1));
+});
+
+test('ba nhà chính thành tam giác đều quanh tâm bể; đường từ đầu cầu lên nhà chính và ba cầu dài bằng nhau', () => {
+  const H = ISLANDS.map(hallAt),
+    side = (i) => Math.hypot(H[i][0] - H[(i + 1) % 3][0], H[i][2] - H[(i + 1) % 3][2]);
+  assert.ok(Math.abs(side(0) - side(1)) < 0.01 && Math.abs(side(1) - side(2)) < 0.01, 'ba cạnh bằng nhau');
+  assert.ok(Math.hypot((H[0][0] + H[1][0] + H[2][0]) / 3, (H[0][2] + H[1][2] + H[2][2]) / 3) < 0.01, 'tâm tam giác là tâm bể');
+  const roads = ISLANDS.flatMap((I) => [pathLength(road(I, 0)), pathLength(road(I, 1))]);
+  assert.ok(Math.max(...roads) - Math.min(...roads) < 0.01, 'đường lính bằng nhau: ' + roads.map((v) => v.toFixed(2)).join(' '));
+  const L = BRIDGES.map((b) => Math.hypot(b.from[0] - b.to[0], b.from[1] - b.to[1]));
+  assert.ok(Math.max(...L) - Math.min(...L) < 0.01, 'ba cầu bằng nhau');
+  for (const b of BRIDGES)
+    for (const [k, p] of [[b.a, b.from], [b.b, b.to]]) {
+      const I = ISLANDS.find((i) => i.spec.key === k);
+      assert.ok(Math.abs(I.spec.height(p[0] - I.x, p[1] - I.z) - RIM.level * SCALE_Y) < 0.05, 'đầu cầu nằm trên đai ven biển');
+    }
+});
+
+test('nhà chính ở chỗ cao nhất của hẻm, núi chắn sau lưng', () => {
+  let top = -1e9;
+  for (let x = -100; x <= 100; x += 5) for (let z = -120; z <= 220; z += 5) top = Math.max(top, valleyLevel(x, z));
+  assert.ok(Math.abs(valleyLevel(...VALLEY.hall) - top) < 1e-6, 'nền nhà chính là bậc cao nhất');
+  for (const I of ISLANDS) {
+    const hall = hallAt(I)[1];
+    let back = -1e9;
+    for (let lx = -60; lx <= 60; lx += 4)
+      for (let lz = -250; lz <= -170; lz += 4) {
+        const [x, z] = toWorld(I, lx, lz);
+        back = Math.max(back, heightAt(x, z));
+      }
+    assert.ok(back > hall + 30, I.spec.name + ': núi sau lưng cao ' + back.toFixed(0) + ', nhà chính ' + hall.toFixed(0));
+  }
 });
