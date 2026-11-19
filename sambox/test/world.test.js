@@ -40,5 +40,5 @@ test('ba đảo: đỉnh cao đúng tính cách, phần nổi vừa phải, có 
 
 test('giữa các đảo là đáy biển', () => {
   assert.ok(heightAt(0, -100) < -20);
-  assert.ok(heightAt(0, 250) > 0, 'giữa đảo Đồng Bằng nổi trên mặt nước');
+  for (const I of ISLANDS) assert.ok(heightAt(I.x, I.z) > 0, 'giữa đảo ' + I.spec.name + ' nổi trên mặt nước');
 });

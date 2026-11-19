@@ -1,13 +1,13 @@
 // SamBox · src/world/water.js · Biển kiểu tranh vẽ (ảnh đích 5, 15): màu theo độ sâu, viền bọt sát bờ, gợn sóng, ánh nắng lấp lánh
-// Độ sâu lấy từ bản đồ độ cao cả thế giới (src/world/layout.js) nướng vào một ảnh 512 × 512 lúc dựng. Nước nông trong suốt nhẹ
+// Độ sâu lấy từ bản đồ độ cao cả thế giới (src/world/layout.js) nướng vào một ảnh 768 × 768 lúc dựng. Nước nông trong suốt nhẹ
 // (thấy cát dưới đáy), nước sâu đục; nhìn xiên thì phản màu chân trời.
 //   buildWater(daytime)  Mesh mặt biển ở y = 0;  water.update(giây, preset, sunDir)
 import * as THREE from 'three';
 import { WORLD, heightAt } from './layout.js';
 
-const N = 512,
+const N = 768,
   H0 = -40,
-  H1 = 140;
+  H1 = 12; // (chỉ cần độ sâu: đất cao hơn 12 đều ghi 255)
 function heightTexture() {
   const d = new Uint8Array(N * N);
   for (let j = 0; j < N; j++)

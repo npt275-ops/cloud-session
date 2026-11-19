@@ -5,7 +5,9 @@
 //   coast(x, z, edge, cliff, deep) mặt cắt bờ biển: trong đất liền giữ độ cao, ra tới bờ thì dốc xuống đáy biển; cliff 0..1
 //                                 trộn giữa bãi thoải (0) và vách dựng (1); edge: bán kính bờ ở hướng đó
 //   bump(x, z, cx, cz, r)         khối đồi hình chuông (Gauss) tâm (cx, cz), bán kính r
-import { smooth, lerp } from '../../core/noise.js';
+//   lineDist(pts, x, z)           khoảng cách tới đường gấp khúc pts [[x, z], ...] (sông, hẻm vực, vịnh hẹp, thung băng)
+//   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu)
+import { smooth, lerp, fbm } from '../../core/noise.js';
 
 export function rgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -25,3 +27,19 @@ export function coast(land, d, edge, cliff) {
   return lerp(-12, land, k);
 }
 export const bump = (x, z, cx, cz, r) => Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (2 * r * r));
+export function lineDist(pts, x, z) {
+  let best = 1e9;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, az] = pts[i],
+      [bx, bz] = pts[i + 1],
+      dx = bx - ax,
+      dz = bz - az,
+      t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+    best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t));
+  }
+  return best;
+}
+export function shoreEdge(x, z, R, seed, k = 1) {
+  const a = Math.atan2(z, x);
+  return R * (0.8 + k * (0.07 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2.3))) + 30 * fbm(x * 0.007 + seed, z * 0.007, 3);
+}

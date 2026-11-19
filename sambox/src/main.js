@@ -28,13 +28,13 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog('#d6b8d8', 450, 2100);
+scene.fog = new THREE.Fog('#d6b8d8', 700, 3200);
 const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 1, 9000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 25;
-controls.maxDistance = 1700;
+controls.maxDistance = 2600;
 
 // nắng (hay trăng) và đèn bán cầu: bóng ngả tím theo màu đất của đèn bán cầu
 const hemi = new THREE.HemisphereLight();
@@ -42,7 +42,7 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight();
 sun.castShadow = true;
 sun.shadow.mapSize.set(tier.shadow, tier.shadow);
-Object.assign(sun.shadow.camera, { left: -230, right: 230, top: 230, bottom: -230, near: 10, far: 1600 });
+Object.assign(sun.shadow.camera, { left: -330, right: 330, top: 330, bottom: -330, near: 10, far: 2000 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
@@ -98,10 +98,10 @@ function applyDaytime(key) {
 
 /* ---------- máy quay: toàn cảnh, bay tới từng đảo ---------- */
 const VIEWS = {
-  all: { pos: new THREE.Vector3(0, 430, 860), target: new THREE.Vector3(0, 0, 40) },
+  all: { pos: new THREE.Vector3(0, 720, 1420), target: new THREE.Vector3(0, 0, 70) },
 };
 for (const I of ISLANDS)
-  VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 40, 120, I.z + 270), target: new THREE.Vector3(I.x, 25, I.z) };
+  VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 70, 230, I.z + 480), target: new THREE.Vector3(I.x, 30, I.z) };
 camera.position.copy(VIEWS.all.pos);
 controls.target.copy(VIEWS.all.target);
 let fly = null;

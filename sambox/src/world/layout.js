@@ -8,11 +8,11 @@ import tundra from './islands/tundra.js';
 import { SEA_FLOOR } from './islands/shape.js';
 
 export const ISLANDS = [
-  { spec: plains, x: 0, z: 250 },
-  { spec: desert, x: -300, z: -150 },
-  { spec: tundra, x: 300, z: -150 },
+  { spec: plains, x: 0, z: 420 },
+  { spec: desert, x: -390, z: -210 },
+  { spec: tundra, x: 390, z: -210 },
 ];
-export const WORLD = 1400; // (đơn vị) cạnh vuông bao cả ba đảo, tâm ở gốc toạ độ
+export const WORLD = 1700; // (đơn vị) cạnh vuông bao cả ba đảo, tâm ở gốc toạ độ
 export function island(x, z) {
   for (const I of ISLANDS) if (Math.hypot(x - I.x, z - I.z) < I.spec.radius * 1.15) return I;
   return null;

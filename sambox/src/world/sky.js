@@ -74,9 +74,9 @@ export function buildSky() {
     const m = new THREE.SpriteMaterial({ map: tex[i % 3], transparent: true, depthWrite: false, fog: false });
     const s = new THREE.Sprite(m),
       a = r() * Math.PI * 2,
-      d = 1100 + r() * 1500,
-      w = 260 + r() * 420;
-    s.position.set(Math.cos(a) * d, 140 + r() * 380, Math.sin(a) * d);
+      d = 1700 + r() * 1700,
+      w = 360 + r() * 560;
+    s.position.set(Math.cos(a) * d, 220 + r() * 520, Math.sin(a) * d);
     s.scale.set(w, w * 0.5, 1);
     s.userData = { a, d, speed: 0.004 + r() * 0.006 };
     clouds.push(s);

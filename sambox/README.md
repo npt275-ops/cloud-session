@@ -14,13 +14,13 @@ Mỗi phương án được chốt bằng một bản chạy được và ảnh 
 - Ảnh 1: độ dễ đọc khi xây. Ảnh 2–4 (PBR nặng): chỉ lấy ý tưởng.
 - Nhẹ để chạy được trên điện thoại và máy tính: hai mức đồ hoạ Thấp/Cao, tự chọn theo máy, `?q=low|high` để ép.
 
-## Ba đảo
+## Ba đảo (bán kính 300 mỗi đảo)
 
-| Đảo | Chất liệu | Điểm nhấn |
+| Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |
-| Đồng Bằng (plains) | núi đồi bậc thềm, vách đá vôi ấm | rừng cây tán bông, ruộng oải hương, lúa mì, hồ trên cao |
-| Sa Mạc (desert) | đồi cát, mesa nhiều vân đá | trụ đá, hẻm núi, ốc đảo có cọ |
-| Tuyết (tundra) | khối núi lớn, đá xám lộ dưới tuyết | rừng thông, hồ băng |
+| Đồng Bằng (plains) | núi đồi bậc thềm, vách đá vôi ấm | núi lớn nhiều bậc, đồi phụ, cao nguyên mặt bàn, đồi cỏ lượn sóng, thung sông ra vịnh, hồ có suối ra biển, mũi đất, vịnh, cột đá ngoài biển |
+| Sa Mạc (desert) | đồi cát, núi bàn nhiều vân đá | sáu núi bàn, hẻm vực dài xẻ ngang đảo, biển đụn cát cao, rừng cột đá, lòng chảo muối, miệng hố cổ, ốc đảo |
+| Tuyết (tundra) | khối núi lớn, đá xám lộ dưới tuyết | khối núi chính và núi phụ nối bằng dãy sống núi, sông băng trong thung chữ U, vịnh hẹp vách dựng, đồng rêu có hồ nhỏ đóng băng, hồ băng lớn |
 
 ## Chạy
 
