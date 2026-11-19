@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
 import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt, hallAt, BRIDGES, road, pathLength, toWorld } from '../src/world/layout.js';
-import { RIM, VALLEY, valleyLevel } from '../src/world/islands/shape.js';
+import { RIM } from '../src/world/islands/shape.js';
+import { LANES, TRAILS, GORGE, BACKPASS, GATES, HALL, TOWN, inTown, paths } from '../src/world/islands/lanes.js';
 import { buildCells, patches } from '../src/build/cells.js';
 import plains from '../src/world/islands/plains.js';
 import desert from '../src/world/islands/desert.js';
@@ -92,10 +93,10 @@ test('đai ven biển phẳng quanh mỗi đảo (xây tường thành); chỉ �
   }
 });
 
-test('mỗi đảo có nền xây liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ cao độ', () => {
+test('mỗi đảo có khu nhà chính liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ cao độ', () => {
   for (const I of ISLANDS) {
     const big = patches(buildCells(I))[0];
-    assert.ok(big >= 900, I.spec.name + ': mảnh nền liền lớn nhất ' + big + ' ô');
+    assert.ok(big >= 700, I.spec.name + ': khu nhà chính liền ' + big + ' ô');
   }
   const peak = (s) => {
     let m = -1e9;
@@ -123,18 +124,56 @@ test('ba nhà chính thành tam giác đều quanh tâm bể; đường từ đ�
     }
 });
 
-test('nhà chính ở chỗ cao nhất của hẻm, núi chắn sau lưng', () => {
-  let top = -1e9;
-  for (let x = -100; x <= 100; x += 5) for (let z = -120; z <= 220; z += 5) top = Math.max(top, valleyLevel(x, z));
-  assert.ok(Math.abs(valleyLevel(...VALLEY.hall) - top) < 1e-6, 'nền nhà chính là bậc cao nhất');
+test('nhà chính ở chỗ cao nhất khu nhà chính, núi chắn sau lưng', () => {
   for (const I of ISLANDS) {
     const hall = hallAt(I)[1];
-    let back = -1e9;
+    assert.ok(Math.abs(hall - TOWN.hall * SCALE_Y) < 1e-6, I.spec.name + ': nền nhà chính');
+    let back = -1e9,
+      top = -1e9;
     for (let lx = -60; lx <= 60; lx += 4)
       for (let lz = -250; lz <= -170; lz += 4) {
         const [x, z] = toWorld(I, lx, lz);
         back = Math.max(back, heightAt(x, z));
       }
+    for (let lx = -120; lx <= 120; lx += 6)
+      for (let lz = -170; lz <= -50; lz += 6)
+        if (inTown(lx, lz) > 0.999) {
+          const [x, z] = toWorld(I, lx, lz);
+          top = Math.max(top, heightAt(x, z));
+        }
+    assert.ok(top <= hall + 1e-6, I.spec.name + ': không chỗ nào trong khu nhà chính cao hơn nền nhà chính');
     assert.ok(back > hall + 30, I.spec.name + ': núi sau lưng cao ' + back.toFixed(0) + ', nhà chính ' + hall.toFixed(0));
+  }
+});
+
+// độ dốc lớn nhất dọc một lối (đơn vị bản vẽ): đi được thì không có vách
+function steepest(spec, P) {
+  let worst = 0;
+  for (let i = 0; i < P.length - 1; i++) {
+    const [ax, az] = P[i],
+      [bx, bz] = P[i + 1],
+      n = Math.ceil(Math.hypot(bx - ax, bz - az) / 2);
+    for (let k = 0; k < n; k++) {
+      const x0 = ax + ((bx - ax) * k) / n,
+        z0 = az + ((bz - az) * k) / n,
+        x1 = ax + ((bx - ax) * (k + 1)) / n,
+        z1 = az + ((bz - az) * (k + 1)) / n;
+      worst = Math.max(worst, Math.abs(spec.height(x1, z1) - spec.height(x0, z0)) / Math.hypot(x1 - x0, z1 - z0));
+    }
+  }
+  return worst;
+}
+test('đường chính, lối mòn, hẻm suối, đèo đều đi được trên cả ba đảo; đường chính dừng ở cổng', () => {
+  for (const spec of [plains, desert, tundra]) {
+    for (const L of LANES) assert.ok(steepest(spec, L) < 0.4, spec.name + ': đường chính dốc ' + steepest(spec, L).toFixed(2));
+    for (const T of TRAILS) assert.ok(steepest(spec, T) < 0.6, spec.name + ': lối mòn dốc ' + steepest(spec, T).toFixed(2));
+    // (hẻm: tính từ dưới bậc đá đầu hẻm; suối nông giữa lòng hẻm, men theo mép lòng hẻm)
+    const G = GORGE.slice(0, -1).map(([x, z]) => [x - 4, z]); // (tới đai ven biển; điểm cuối là mép nước)
+    assert.ok(steepest(spec, G) < 0.8, spec.name + ': hẻm suối dốc ' + steepest(spec, G).toFixed(2));
+    assert.ok(steepest(spec, BACKPASS.slice(0, -1)) < 0.8, spec.name + ': đèo dốc ' + steepest(spec, BACKPASS.slice(0, -1)).toFixed(2));
+    for (const [gx, gz] of GATES) {
+      const [mx, mz] = [(gx + HALL[0]) / 2, (gz + HALL[1]) / 2]; // giữa cổng và nhà chính
+      assert.ok(paths(mx, mz).lane < 0.01 && inTown(mx, mz) > 0.9, spec.name + ': sau cổng là đất xây, không còn đường');
+    }
   }
 });

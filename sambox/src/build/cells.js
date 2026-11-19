@@ -2,7 +2,8 @@
 //   CELL               cạnh một ô (đơn vị thế giới), rộng chừng hai người đứng cạnh nhau. Cỡ công trình tính theo ô: nhà dân 2×2,
 //                      nhà lính 6×4, nhà xe 4×4, cổng thành 4×2, tường 1 ô một đoạn, tháp canh 2×2
 //   FLAT, DRY          chênh cao lớn nhất trong một ô còn xây được; độ cao thấp nhất (trên mặt nước, có bờ)
-//   buildCells(I)      các ô xây được của đảo I: [[x, z, h00, h10, h01, h11], ...] (x, z: góc ô tính từ tâm đảo; h: độ cao 4 góc)
+//   buildCells(I)      các ô xây được của đảo I: [[x, z, h00, h10, h01, h11], ...] (x, z: góc ô tính từ tâm đảo; h: độ cao 4 góc);
+//                      chỉ trong vùng xây của đảo (spec.buildZone: khu nhà chính) nếu đảo có khai báo
 //   patches(cells)     số ô của từng mảnh liền nhau (chung cạnh), lớn trước
 export const CELL = 6,
   FLAT = 1.2,
@@ -18,7 +19,7 @@ export function buildCells(I) {
         c = [h(x, z), h(x + CELL, z), h(x, z + CELL), h(x + CELL, z + CELL)],
         lo = Math.min(...c, h(x + CELL / 2, z + CELL / 2)),
         hi = Math.max(...c, h(x + CELL / 2, z + CELL / 2));
-      if (lo > DRY && hi - lo <= FLAT) out.push([x, z, ...c]);
+      if (lo > DRY && hi - lo <= FLAT && (!I.spec.buildZone || I.spec.buildZone(x + CELL / 2, z + CELL / 2) > 0.5)) out.push([x, z, ...c]);
     }
   return out;
 }

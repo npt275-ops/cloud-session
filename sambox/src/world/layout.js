@@ -7,15 +7,17 @@
 //   WORLD        cạnh vuông (tâm ở gốc) của bản đồ độ sâu biển, phủ hết lòng bể
 //   heightAt(x, z)  độ cao mặt đất ở toạ độ thế giới (đáy biển giữa các đảo)
 //   toWorld(I, lx, lz)  điểm (lx, lz) trên bản vẽ đảo I (bán kính gốc 300, mặt đảo phía +z) → [x, z] trong bể
-//   hallAt(I)       tâm nền nhà chính của đảo I [x, y, z] (mẫu hẻm chung shape.js VALLEY: ba nhà chính thành tam giác đều)
+//   hallAt(I)       tâm nền nhà chính của đảo I [x, y, z] (khung đường chung lanes.js: ba nhà chính thành tam giác đều)
 //   BRIDGES         ba cây cầu [{ a, b, from, to }]: đầu cầu trái của đảo a nối đầu cầu phải của đảo kế bên b (toạ độ thế giới)
-//   road(I, side)   đường lính trên đảo I từ đầu cầu (0 trái, 1 phải) qua cửa hẻm lên nhà chính: điểm [x, y, z] cách nhau ~3
+//   road(I, side)   lối lính trên đảo I từ đầu cầu (0 trái, 1 phải) theo đường chính tới cổng rồi tới nhà chính: điểm [x, y, z]
+//                   cách nhau ~3
 //   pathLength(pts) chiều dài đường gấp khúc 3 chiều
 //   island(x, z)    đảo chứa điểm này (hay null)
 import plains from './islands/plains.js';
 import desert from './islands/desert.js';
 import tundra from './islands/tundra.js';
-import { SEA_FLOOR, placed, VALLEY, roadPath } from './islands/shape.js';
+import { SEA_FLOOR, placed } from './islands/shape.js';
+import { HALL, HEADS, route } from './islands/lanes.js';
 
 export const SCALE = 1.45,
   SCALE_Y = 1.2;
@@ -43,19 +45,19 @@ export function toWorld(I, lx, lz) {
   return [I.x + (lx * c - lz * s) * SCALE, I.z + (lx * s + lz * c) * SCALE];
 }
 export function hallAt(I) {
-  const [x, z] = toWorld(I, ...VALLEY.hall);
+  const [x, z] = toWorld(I, ...HALL);
   return [x, I.spec.height(x - I.x, z - I.z), z];
 }
 const by = (k) => ISLANDS.find((I) => I.spec.key === k);
 export const BRIDGES = [['plains', 'desert'], ['desert', 'tundra'], ['tundra', 'plains']].map(([a, b]) => ({
   a,
   b,
-  from: toWorld(by(a), ...VALLEY.heads[0]),
-  to: toWorld(by(b), ...VALLEY.heads[1]),
+  from: toWorld(by(a), ...HEADS[0]),
+  to: toWorld(by(b), ...HEADS[1]),
 }));
 export function road(I, side) {
   const pts = [];
-  const P = roadPath(side).map(([lx, lz]) => toWorld(I, lx, lz));
+  const P = route(side).map(([lx, lz]) => toWorld(I, lx, lz));
   for (let i = 0; i < P.length - 1; i++) {
     const [ax, az] = P[i],
       [bx, bz] = P[i + 1],

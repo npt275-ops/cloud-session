@@ -1,8 +1,9 @@
-// SamBox · src/build/guides.js · Đường căn chỉnh (bật bằng nút "Căn chỉnh"): tam giác nối tâm ba nhà chính, đường lính từ hai đầu cầu
-// của mỗi đảo qua cửa hẻm lên nhà chính, và số đo để thấy ba đảo cân nhau (src/world/layout.js)
-//   buildGuides()   Group; .info: { sides: cạnh tam giác, roads: chiều dài đường lính mỗi đảo, bridges: chiều dài ba cầu }
+// SamBox · src/build/guides.js · Đường căn chỉnh (bật bằng nút "Căn chỉnh"): tam giác nối tâm ba nhà chính; trên mỗi đảo: hai đường
+// chính (trắng), lối mòn (cam), hẻm suối (xanh), đèo sau núi (tím); số đo để thấy ba đảo cân nhau (src/world/layout.js, lanes.js)
+//   buildGuides()   Group; .info: { sides: cạnh tam giác, roads: lối lính đầu cầu → nhà chính mỗi đảo, bridges: chiều dài ba cầu }
 import * as THREE from 'three';
-import { ISLANDS, BRIDGES, hallAt, road, pathLength } from '../world/layout.js';
+import { ISLANDS, BRIDGES, hallAt, road, pathLength, toWorld } from '../world/layout.js';
+import { LANES, TRAILS, GORGE, BACKPASS } from '../world/islands/lanes.js';
 
 const line = (pts, color, dashed) => {
   const g = new THREE.BufferGeometry().setFromPoints(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
@@ -38,13 +39,24 @@ export function buildGuides() {
     ring.renderOrder = 9;
     g.add(ring);
   }
+  // các lối trên mỗi đảo, phủ theo mặt đất
+  const drape = (I, P) => {
+    const out = [];
+    for (let i = 0; i < P.length - 1; i++)
+      for (let k = 0; k <= 16; k++) {
+        const t = k / 16,
+          [x, z] = toWorld(I, P[i][0] + (P[i + 1][0] - P[i][0]) * t, P[i][1] + (P[i + 1][1] - P[i][1]) * t);
+        out.push([x, I.spec.height(x - I.x, z - I.z) + 1.5, z]);
+      }
+    return out;
+  };
   const roads = {};
   for (const I of ISLANDS) {
-    roads[I.spec.key] = [0, 1].map((side) => {
-      const pts = road(I, side);
-      g.add(line(pts.map((p) => up(p, 1.2)), '#ffffff', true));
-      return pathLength(pts);
-    });
+    for (const L of LANES) g.add(line(drape(I, L), '#ffffff'));
+    for (const T of TRAILS) g.add(line(drape(I, T), '#ffb347', true));
+    g.add(line(drape(I, GORGE), '#6fe7ff', true));
+    g.add(line(drape(I, BACKPASS), '#d59bff', true));
+    roads[I.spec.key] = [0, 1].map((side) => pathLength(road(I, side)));
   }
   g.info = {
     sides: halls.map((p, i) => Math.hypot(p[0] - halls[(i + 1) % 3][0], p[2] - halls[(i + 1) % 3][2])),
