@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
 import { ISLANDS, TANK, SCALE, SCALE_Y, heightAt } from '../src/world/layout.js';
+import { RIM } from '../src/world/islands/shape.js';
+import { buildCells, patches } from '../src/build/cells.js';
 import plains from '../src/world/islands/plains.js';
 import desert from '../src/world/islands/desert.js';
 import tundra from '../src/world/islands/tundra.js';
@@ -63,4 +65,43 @@ test('ba đảo quay mặt vào nhau: phía +z của bản vẽ nằm về phía
     const [fx, fz] = [-Math.sin(I.turn), Math.cos(I.turn)]; // hướng +z của bản vẽ sau khi xoay
     assert.ok(fx * -I.x + fz * -I.z > 0.99 * Math.hypot(I.x, I.z), I.spec.name + ' mặt hướng thẳng về tâm');
   }
+});
+
+test('đai ven biển phẳng quanh mỗi đảo (xây tường thành); chỉ đứt ở cửa sông, suối, vịnh hẹp', () => {
+  const L = RIM.level * SCALE_Y;
+  for (const I of ISLANDS) {
+    let ok = 0,
+      n = 0;
+    for (let a = 0; a < 360; a += 1, n++) {
+      const c = Math.cos((a * Math.PI) / 180),
+        s = Math.sin((a * Math.PI) / 180),
+        h = (r) => I.spec.height(c * r, s * r);
+      let r = I.spec.radius * 1.15;
+      for (;;) {
+        while (r > 0 && h(r) < L - 0.05) r -= 0.5; // đi từ ngoài biển vào tới mép đai
+        let k = 1; // (cột đá ngoài biển: sau nó lại là nước thì đi tiếp vào trong)
+        while (k <= 30 && h(r - k) >= 0) k++;
+        if (k > 30) break;
+        r -= k;
+      }
+      let flat = true;
+      for (let k = 1; k <= 14; k++) flat &&= Math.abs(h(r - k) - L) < 0.3;
+      if (flat) ok++;
+    }
+    assert.ok(ok / n > 0.95, I.spec.name + ': đai phẳng ' + Math.round((100 * ok) / n) + '% vòng đảo');
+  }
+});
+
+test('mỗi đảo có nền xây liền đủ rộng cho một thị trấn; đỉnh núi Đồng Bằng, Tuyết giữ nguyên', () => {
+  for (const I of ISLANDS) {
+    const big = patches(buildCells(I))[0];
+    assert.ok(big >= 900, I.spec.name + ': mảnh nền liền lớn nhất ' + big + ' ô');
+  }
+  const peak = (s) => {
+    let m = -1e9;
+    for (let x = -300; x <= 300; x += 1) for (let z = -300; z <= 300; z += 1) m = Math.max(m, s.height(x, z));
+    return m;
+  };
+  assert.ok(Math.abs(peak(plains) - 125.07) < 0.5, 'đỉnh Đồng Bằng');
+  assert.ok(Math.abs(peak(tundra) - 204.83) < 0.5, 'đỉnh Tuyết');
 });

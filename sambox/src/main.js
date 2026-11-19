@@ -1,10 +1,11 @@
 // SamBox · src/main.js · Ảnh mô phỏng đích: ba đảo trống (Đồng Bằng, Sa Mạc, Tuyết) theo hướng đồ hoạ đã chốt (ảnh đích 5–15)
 // Ghép: mức đồ hoạ (src/core/quality.js), trời (sky.js), biển (water.js), đất ba đảo (terrain.js + islands/*.js), cây cỏ
 // (nature/*), nắng và đèn bán cầu, bóng đổ theo chỗ đang nhìn, hậu kỳ (fx/post.js), bốn buổi (daytime.js), bảng điều khiển.
+// Máy quay: toàn cảnh, từng đảo nhìn từ tâm bể, hoặc tầm mắt (nút "Tầm mắt": đứng trên đảo nhìn xa); nút "Lưới xây" hiện ô xây được.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { detectTier, TIERS } from './core/quality.js';
-import { ISLANDS, RING } from './world/layout.js';
+import { ISLANDS, RING, toWorld } from './world/layout.js';
 import { DAYTIME } from './world/daytime.js';
 import { buildTerrain } from './world/terrain.js';
 import { buildWater } from './world/water.js';
@@ -18,6 +19,7 @@ import { WIND } from './nature/wind.js';
 import { LIGHT } from './fx/stylize.js';
 import { buildPost } from './fx/post.js';
 import { buildHud } from './ui/hud.js';
+import { buildGrid } from './build/grid.js';
 
 const tier = detectTier();
 const canvas = document.getElementById('scene');
@@ -105,18 +107,36 @@ const VIEWS = {
 // màn dọc (điện thoại) lùi xa hơn để thấy trọn bể kính
 const allPos = () => VIEWS.all.pos.set(0, ...(innerWidth < innerHeight ? [1850, 3800] : [1300, 3300]));
 allPos();
-for (const I of ISLANDS)
+for (const I of ISLANDS) {
   // đứng phía tâm bể nhìn ra mặt đảo (núi đảo làm nền), lệch sang bên một chút
   VIEWS[I.spec.key] = {
     pos: new THREE.Vector3(I.x * (1 - 620 / RING) + I.z * (90 / RING), 520, I.z * (1 - 620 / RING) - I.x * (90 / RING)),
     target: new THREE.Vector3(I.x, 40, I.z),
   };
-camera.position.copy(VIEWS.all.pos);
-controls.target.copy(VIEWS.all.target);
+  // tầm mắt: mắt cao hơn mặt đất 4 đơn vị tại chỗ đứng của đảo (spec.eye), nhìn về điểm đã chọn
+  const at = ([lx, lz], up) => {
+    const [x, z] = toWorld(I, lx, lz);
+    return new THREE.Vector3(x, I.spec.height(x - I.x, z - I.z) + up, z);
+  };
+  VIEWS[I.spec.key + ':mat'] = { pos: at(I.spec.eye.from, 4), target: at(I.spec.eye.to, 2) };
+}
+const QS = new URLSearchParams(location.search);
+let place = VIEWS[QS.get('dao')] ? QS.get('dao') : 'all',
+  eye = QS.get('mat') === '1';
+const view = (key) => VIEWS[eye && key !== 'all' ? key + ':mat' : key];
+camera.position.copy(view(place).pos);
+controls.target.copy(view(place).target);
 let fly = null;
 function flyTo(key) {
-  const v = VIEWS[key];
+  place = key;
+  const v = view(key);
   fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos, t1: v.target, u: 0 };
+}
+// lưới ô xây: dựng lần đầu khi bật (mỗi đảo vài trăm mili giây)
+const grids = [];
+function showGrid(on) {
+  if (on && !grids.length) for (const I of ISLANDS) scene.add(grids[grids.push(buildGrid(I)) - 1]);
+  for (const g of grids) g.visible = on;
 }
 
 const hud = buildHud({
@@ -124,15 +144,18 @@ const hud = buildHud({
   tiers: TIERS,
   islands: [{ key: 'all', name: 'Toàn cảnh' }, ...ISLANDS.map((I) => ({ key: I.spec.key, name: I.spec.name }))],
   daytimes: Object.entries(DAYTIME).map(([key, P]) => ({ key, name: P.name })),
+  toggles: [{ key: 'mat', name: 'Tầm mắt' }, { key: 'luoi', name: 'Lưới xây' }],
   onIsland: flyTo,
   onDaytime: applyDaytime,
+  onToggle: (key, on) => {
+    if (key === 'mat') {
+      eye = on;
+      flyTo(place);
+    } else showGrid(on);
+  },
 });
-applyDaytime(new URLSearchParams(location.search).get('buoi') || daytime);
-const startView = new URLSearchParams(location.search).get('dao');
-if (VIEWS[startView]) {
-  camera.position.copy(VIEWS[startView].pos);
-  controls.target.copy(VIEWS[startView].target);
-}
+applyDaytime(QS.get('buoi') || daytime);
+if (QS.get('luoi') === '1') showGrid(true);
 
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
@@ -158,11 +181,11 @@ function frame() {
     if (fly.u >= 1) fly = null;
   }
   controls.update();
-  // sương lùi theo máy quay: nhìn toàn bể từ xa (nhất là màn dọc) không bị mờ trắng
+  // sương: đứng sát đất thì xa mờ dần (chiều sâu như ảnh đích), máy quay lùi xa thì sương lùi theo (toàn bể không bị mờ trắng)
   const P = DAYTIME[daytime],
-    fk = Math.max(1, camera.position.distanceTo(controls.target) / 2000);
-  scene.fog.near = P.fog.near * fk;
-  scene.fog.far = P.fog.far * fk;
+    dist = camera.position.distanceTo(controls.target);
+  scene.fog.near = P.fog.near + 0.75 * dist;
+  scene.fog.far = P.fog.far + 2.2 * dist;
   // bóng đổ theo chỗ đang nhìn; hướng nắng trong không gian máy quay cho viền sáng
   sun.target.position.copy(controls.target);
   sun.position.copy(controls.target).addScaledVector(sunDir, 1000);
@@ -179,4 +202,4 @@ function frame() {
 }
 frame();
 // (cho công cụ chụp ảnh kiểm tra: đặt máy quay sát đất bằng tia dò)
-window.__sambox = { scene, camera, controls, flyTo, applyDaytime, Raycaster: THREE.Raycaster, V3: THREE.Vector3 };
+window.__sambox = { scene, camera, controls, renderer, flyTo, applyDaytime, Raycaster: THREE.Raycaster, V3: THREE.Vector3 };

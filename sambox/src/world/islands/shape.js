@@ -2,11 +2,19 @@
 //   rgb(hex)                      '#rrggbb' → [r, g, b] 0..1
 //   mix3(a, b, t)                 trộn hai màu
 //   terrace(h, step, k)           bậc thang: mặt phẳng rộng, vách dốc ở cuối mỗi bậc (k: phần phẳng của bậc, 0..1)
-//   coast(x, z, edge, cliff, deep) mặt cắt bờ biển: trong đất liền giữ độ cao, ra tới bờ thì dốc xuống đáy biển; cliff 0..1
-//                                 trộn giữa bãi thoải (0) và vách dựng (1); edge: bán kính bờ ở hướng đó
+//   RIM                           đai ven biển: dải đất phẳng chạy quanh mép mỗi đảo để xây tường thành { level: cao, bank: bờ kè,
+//                                 width: bề rộng } (đơn vị bản vẽ)
+//   coast(land, d, edge, cliff)   mặt cắt bờ: ngoài mép (edge: bán kính bờ ở hướng đó) dốc xuống đáy biển; từ mép vào là bờ kè ngắn
+//                                 lên đai ven biển phẳng, hết đai thì lên đất liền: vách dựng (cliff 1) hay sườn thoải (cliff 0)
+//   onRim(u)                      0..1: điểm cách mép bờ u (đo vào trong) nằm trên đai ven biển (dọn cây, chừa chỗ tường thành)
+//   withTown(T, land, x, z)       nền xây bậc thang ở mặt đảo (phương án 2): T = { cx, cz, rx, rz, steps: [[z mốc, cao thêm,
+//                                 [x các dốc]], ...] }. Bậc thấp nhất cao bằng đai ven biển; đi vào trong (z nhỏ dần) qua mỗi mốc
+//                                 lên một bậc, vách giữa hai bậc, dốc nối bậc ở các x dốc; núi cao hơn nền từ ~40 trở lên giữ nguyên
+//   townZone(T, x, z)             0..1: điểm nằm trong vùng nền xây (dọn cây, ruộng)
 //   bump(x, z, cx, cz, r)         khối đồi hình chuông (Gauss) tâm (cx, cz), bán kính r
 //   lineDist(pts, x, z)           khoảng cách tới đường gấp khúc pts [[x, z], ...] (sông, hẻm vực, vịnh hẹp, thung băng)
-//   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu)
+//   shoreEdge(x, z, R, seed, k)   bán kính bờ theo hướng: mũi đất và vịnh xen nhau (k: độ khúc khuỷu). Chỉ phụ thuộc hướng (nhiễu lấy
+//                                 trên một vòng tròn) nên đai ven biển đo theo bán kính rộng đều quanh đảo
 //   placed(spec, k, ky, turn)     đặt đảo vào bể: phóng ngang × k, cao × ky, xoay turn (radian, quanh trục đứng, chiều x → z);
 //                                 đảo vẽ theo bán kính gốc, mặt đảo (phía +z của bản vẽ) quay về hướng layout chọn
 import { smooth, lerp, fbm } from '../../core/noise.js';
@@ -22,11 +30,32 @@ export function terrace(h, step, k) {
   return base + smooth(k, 1, f) * step;
 }
 export const SEA_FLOOR = -38;
+export const RIM = { level: 4, bank: 3, width: 18 };
 export function coast(land, d, edge, cliff) {
-  const e = (edge - d) / 18; // (đơn vị 18: chiều sâu vào đất liền tính theo bậc)
-  if (e < 0) return Math.max(SEA_FLOOR, -12 + e * 14);
-  const k = lerp(smooth(0, 1.5, e), smooth(0, 0.1, e), cliff);
-  return lerp(-12, land, k);
+  const u = edge - d; // (đo vào trong từ mép bờ; âm: ngoài biển)
+  if (u < 0) return Math.max(SEA_FLOOR, -3 + u * 0.8);
+  if (u < RIM.bank) return lerp(-3, RIM.level, smooth(0, RIM.bank, u)); // bờ kè
+  const t = u - RIM.bank - RIM.width;
+  return t < 0 ? RIM.level : lerp(RIM.level, land, smooth(0, lerp(40, 5, cliff), t));
+}
+export const onRim = (u) => smooth(-1, 1, u) * smooth(RIM.bank + RIM.width + 8, RIM.bank + RIM.width + 2, u);
+export function townZone(T, x, z) {
+  return smooth(1.0, 0.86, Math.hypot((x - T.cx) / T.rx, (z - T.cz) / T.rz) + 0.1 * fbm(x * 0.02 + T.cx * 0.01, z * 0.02, 2));
+}
+function townLevel(T, x, z) {
+  const f = z + 10 * fbm(x * 0.015 + 7, z * 0.015, 2); // (mép bậc lượn theo nhiễu, không thẳng như kẻ)
+  let L = RIM.level;
+  for (const [zc, rise, ramps] of T.steps) {
+    const w = 5 + 45 * Math.max(0, ...ramps.map((r) => smooth(26, 14, Math.abs(x - r)))); // vách 5, dốc 50
+    L += rise * smooth(zc + w / 2, zc - w / 2, f);
+  }
+  return L;
+}
+export function withTown(T, land, x, z) {
+  const m = townZone(T, x, z);
+  if (m <= 0) return land;
+  const L = townLevel(T, x, z);
+  return land + (L - land) * m * smooth(L + 40, L + 16, land);
 }
 export const bump = (x, z, cx, cz, r) => Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (2 * r * r));
 export function lineDist(pts, x, z) {
@@ -43,7 +72,7 @@ export function lineDist(pts, x, z) {
 }
 export function shoreEdge(x, z, R, seed, k = 1) {
   const a = Math.atan2(z, x);
-  return R * (0.8 + k * (0.07 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2.3))) + 30 * fbm(x * 0.007 + seed, z * 0.007, 3);
+  return R * (0.8 + k * (0.07 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2.3))) + 30 * fbm(Math.cos(a) * 1.7 + seed, Math.sin(a) * 1.7, 3);
 }
 export function placed(spec, k, ky, turn = 0) {
   const c = Math.cos(turn) / k,
