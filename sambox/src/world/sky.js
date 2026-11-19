@@ -1,9 +1,11 @@
 // SamBox · src/world/sky.js · Bầu trời kiểu tranh vẽ (ảnh đích 8–11): trời chuyển màu, quầng mặt trời, mây bông, sao về đêm
-//   buildSky(tier)   Group gồm vòm trời (shader chuyển màu đỉnh → chân trời, quầng và đĩa mặt trời), mây bông (ảnh vẽ bằng
-//                    canvas: khối bông mặt trên sáng, đáy tối), sao (chỉ đêm)
+//   buildSky(tier)   Group đi theo máy quay gồm vòm trời (shader chuyển màu đỉnh → chân trời, quầng và đĩa mặt trời), sao (chỉ
+//                    đêm); sky.clouds: Group mây bông đứng yên trong thế giới (ảnh vẽ bằng canvas: khối bông mặt trên sáng, đáy
+//                    tối), xếp vòng ngoài bể kính, trên và dưới bể
 //   sky.apply(preset, sunDir)  đổi màu theo buổi;  sky.update(giây) mây trôi chậm
 import * as THREE from 'three';
 import { rng } from '../core/noise.js';
+import { TANK } from './layout.js';
 
 function cloudTexture(seed) {
   const c = document.createElement('canvas');
@@ -66,22 +68,24 @@ export function buildSky() {
   dome.renderOrder = -10;
   dome.frustumCulled = false;
   group.add(dome);
-  // mây bông: vòng quanh chân trời và trên đầu
-  const r = rng(99),
+  // mây bông: vòng ngoài bể kính (src/world/layout.js TANK), cao thấp quanh bể, trôi vòng chậm
+  const cloudGroup = new THREE.Group(),
+    r = rng(99),
     tex = [cloudTexture(1), cloudTexture(2), cloudTexture(3)],
     clouds = [];
   for (let i = 0; i < 46; i++) {
     const m = new THREE.SpriteMaterial({ map: tex[i % 3], transparent: true, depthWrite: false, fog: false });
     const s = new THREE.Sprite(m),
       a = r() * Math.PI * 2,
-      d = 2700 + r() * 1000,
+      d = TANK.r + 800 + r() * 1700,
       w = 420 + r() * 620;
-    s.position.set(Math.cos(a) * d, -250 + r() * 750, Math.sin(a) * d); // (vòm trời đi theo máy quay: mây quanh bể, cả dưới đáy bể)
+    s.position.set(Math.cos(a) * d, -450 + r() * 1100, Math.sin(a) * d);
     s.scale.set(w, w * 0.5, 1);
     s.userData = { a, d, speed: 0.004 + r() * 0.006 };
     clouds.push(s);
-    group.add(s);
+    cloudGroup.add(s);
   }
+  group.clouds = cloudGroup;
   // sao
   const sp = [];
   for (let i = 0; i < 1600; i++) {

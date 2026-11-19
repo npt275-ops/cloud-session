@@ -80,10 +80,9 @@ export function buildWater() {
         #include <fog_fragment>
       }`,
   });
-  const g = new THREE.PlaneGeometry(TANK.w, TANK.d, 1, 1); // mặt nước vừa lòng bể kính
+  const g = new THREE.CircleGeometry(TANK.r - 1, 192); // mặt nước tròn vừa lòng bể kính
   g.rotateX(-Math.PI / 2);
   const m = new THREE.Mesh(g, mat);
-  m.position.set(TANK.x, 0, TANK.z);
   m.renderOrder = 1;
   m.name = 'biển';
   m.update = (sec, P, sunDir) => {

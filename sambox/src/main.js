@@ -35,7 +35,7 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 25;
-controls.maxDistance = 5200;
+controls.maxDistance = 6000;
 
 // nắng (hay trăng) và đèn bán cầu: bóng ngả tím theo màu đất của đèn bán cầu
 const hemi = new THREE.HemisphereLight();
@@ -49,7 +49,7 @@ sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
 
 const sky = buildSky();
-scene.add(sky);
+scene.add(sky, sky.clouds);
 const water = buildWater();
 scene.add(water);
 const tank = buildTank();
@@ -93,17 +93,17 @@ function applyDaytime(key) {
   LIGHT.uSunColor.value.set(P.sun.color);
   LIGHT.uRimK.value = P.rim;
   sky.apply(P, sunDir);
-  tank.apply(P);
+  tank.apply(P, sunDir);
   post.apply(P);
   fireflies.visible = !!P.fireflies;
 }
 
 /* ---------- máy quay: toàn cảnh, bay tới từng đảo ---------- */
 const VIEWS = {
-  all: { pos: new THREE.Vector3(), target: new THREE.Vector3(0, -20, 120) },
+  all: { pos: new THREE.Vector3(), target: new THREE.Vector3(0, 300, 0) },
 };
 // màn dọc (điện thoại) lùi xa hơn để thấy trọn bể kính
-const allPos = () => VIEWS.all.pos.set(0, ...(innerWidth < innerHeight ? [2050, 4350] : [1250, 2650]));
+const allPos = () => VIEWS.all.pos.set(0, ...(innerWidth < innerHeight ? [1850, 3800] : [1300, 3300]));
 allPos();
 for (const I of ISLANDS)
   VIEWS[I.spec.key] = { pos: new THREE.Vector3(I.x + 90, 520, I.z + 620), target: new THREE.Vector3(I.x, 40, I.z) };
@@ -166,6 +166,7 @@ function frame() {
   WIND.uTime.value = sec;
   water.update(sec, P, sunDir);
   sky.update(sec);
+  tank.update(sec);
   sky.position.copy(camera.position);
   if (fireflies.visible) fireflies.update(sec);
   post.render();

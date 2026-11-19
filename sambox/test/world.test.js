@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rng, simplex2 } from '../src/core/noise.js';
-import { ISLANDS, heightAt } from '../src/world/layout.js';
+import { ISLANDS, TANK, heightAt } from '../src/world/layout.js';
 
 const stats = (spec) => {
   let max = -1e9,
@@ -41,4 +41,11 @@ test('ba đảo: đỉnh cao đúng tính cách, phần nổi vừa phải, có 
 test('giữa các đảo là đáy biển', () => {
   assert.ok(heightAt(0, -100) < -20);
   for (const I of ISLANDS) assert.ok(heightAt(I.x, I.z) > 0, 'giữa đảo ' + I.spec.name + ' nổi trên mặt nước');
+});
+
+test('cả ba đảo nằm trọn trong bể kính tròn, không chồng lên nhau', () => {
+  for (const I of ISLANDS) assert.ok(Math.hypot(I.x, I.z) + I.spec.radius * 1.15 < TANK.r - 10, I.spec.name + ' trong bể');
+  for (const A of ISLANDS)
+    for (const B of ISLANDS)
+      if (A !== B) assert.ok(Math.hypot(A.x - B.x, A.z - B.z) > (A.spec.radius + B.spec.radius) * 1.15, 'lưới đất không chồng');
 });

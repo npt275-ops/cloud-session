@@ -1,6 +1,7 @@
 // SamBox · src/world/terrain.js · Mặt đất của một đảo: lưới độ cao, màu đất theo độ cao và độ dốc (src/world/islands/*.js)
-//   buildTerrain(I, tier)   một Mesh đặt ở tâm đảo; lưới vuông cạnh 2,3 × bán kính, số ô theo mức đồ hoạ (tier.seg); mép lưới
-//                           chìm dưới đáy biển. Màu tô theo đỉnh (rẻ, hợp kiểu tranh vẽ), ánh sáng Lambert vá kiểu (stylize)
+//   buildTerrain(I, tier)   một Mesh đặt ở tâm đảo; lưới vuông cạnh 2,3 × bán kính, số ô theo mức đồ hoạ (tier.seg), bốn góc
+//                           kéo về vòng tròn bán kính 1,15 × bán kính (không lòi ra ngoài bể kính tròn); mép lưới chìm dưới
+//                           đáy biển. Màu tô theo đỉnh (rẻ, hợp kiểu tranh vẽ), ánh sáng Lambert vá kiểu (stylize)
 //                           Vách đá (chỗ dốc) tô trong shader theo độ cao thật của từng điểm ảnh (spec.cliff): vân đá xếp tầng,
 //                           sọc lượn theo hướng ngang, vệt dọc, chân mỗi tầng tối hơn; không phụ thuộc độ mịn của lưới (vách dựng chỉ
 //                           có vài đỉnh lưới theo chiều đứng nên tô theo đỉnh không vẽ được vân)
@@ -48,7 +49,13 @@ export function buildTerrain(I, tier) {
   g.rotateX(-Math.PI / 2);
   const p = g.attributes.position,
     col = new Float32Array(p.count * 3);
-  for (let i = 0; i < p.count; i++) p.setY(i, spec.height(p.getX(i), p.getZ(i)));
+  const rMax = spec.radius * 1.15;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i),
+      z = p.getZ(i),
+      k = Math.min(1, rMax / Math.hypot(x, z)); // (góc lưới vuông: dồn về vòng tròn, nằm dưới đáy biển nên không thấy)
+    p.setXYZ(i, x * k, spec.height(x * k, z * k), z * k);
+  }
   g.computeVertexNormals();
   const n = g.attributes.normal;
   for (let i = 0; i < p.count; i++) {

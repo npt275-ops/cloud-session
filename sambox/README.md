@@ -14,10 +14,16 @@ Mỗi phương án được chốt bằng một bản chạy được và ảnh 
 - Ảnh 1: độ dễ đọc khi xây. Ảnh 2–4 (PBR nặng): chỉ lấy ý tưởng.
 - Nhẹ để chạy được trên điện thoại và máy tính: hai mức đồ hoạ Thấp/Cao, tự chọn theo máy, `?q=low|high` để ép.
 
-## Bể kính và ba đảo
+## Bể kính tròn và ba đảo
 
-Ba đảo nằm chung trong một bể kính (`src/world/tank.js`): thành kính trong, khung gỗ, khối nước nhìn qua thành bể, lớp cát
-đáy, bệ gỗ. Mỗi đảo vẽ theo bán kính gốc 300 rồi phóng ngang × 1,45 (bán kính thật ~435), cao × 1,2 (`src/world/layout.js`).
+Ba đảo nằm chung trong một bể kính tròn, dáng bể theo dự án cũ (`src/world/tank.js`):
+
+- vòm kính bán cầu phủ trên mặt nước, vòng đồng và 18 núm đồng ở chân vòm;
+- dưới mặt nước là chậu kính tròn (thành kính, đáy kính, vòng đồng ở chân) nhìn thấy khối nước và lớp cát đáy;
+- đá bay có cỏ lơ lửng quanh bể, mây bông vây quanh cả trên và dưới bể.
+
+Ba đảo xếp vòng quanh tâm bể, lệch nhau 120°. Mỗi đảo vẽ theo bán kính gốc 300 rồi phóng ngang × 1,45 (bán kính thật ~435),
+cao × 1,2 (`src/world/layout.js`).
 
 | Đảo | Chất liệu | Địa hình |
 | --- | --- | --- |
