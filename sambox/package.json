@@ -1,9 +1,0 @@
-{
-  "name": "sambox",
-  "private": true,
-  "type": "module",
-  "description": "SamBox: game xây đảo và bảo vệ công trình trong bể, dựng lại từ đầu (dự án cũ aquarium/ giữ làm tư liệu)",
-  "scripts": {
-    "test": "node --test test/*.test.js"
-  }
-}
